@@ -1,0 +1,86 @@
+"""HARNESS r12 — chạy `python wrap.py.txt -m <module> [args]` trong cây mã PROBE_ROOT với:
+- chặn socket ra ngoài localhost;
+- fake AI ở BIÊN CUỐI: thay `pipelines.llm_gateway._client` (nhà máy client OpenAI-compatible mà gateway gọi SAU
+  khi qua mọi cổng kill/trần/feature) bằng client giả ĐẾM lời gọi chat + embeddings, ghi PROBE_LLM_LOG. Không mock
+  cổng rollout/kill — mọi kiểm tra của sản phẩm chạy thật; chỉ phần "gửi tới provider" bị thay.
+PROBE_LLM_RESPONSES (JSON list chuỗi) = câu trả lời chat theo lượt (hết thì lặp cái cuối)."""
+import json
+import os
+import runpy
+import socket
+import sys
+
+ROOT = os.environ["PROBE_ROOT"]
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+_orig = socket.socket.connect
+
+
+def _guard(self, addr):
+    host = addr[0] if isinstance(addr, tuple) else str(addr)
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        raise OSError(f"[wrap] chặn kết nối mạng ngoài tới {host}")
+    return _orig(self, addr)
+
+
+socket.socket.connect = _guard
+from types import SimpleNamespace as NS  # noqa: E402
+
+from pipelines import llm_gateway as g  # noqa: E402
+
+LOG = os.environ.get("PROBE_LLM_LOG")
+RESP = json.loads(os.environ.get("PROBE_LLM_RESPONSES") or "[]") or [
+    "Sâm Sâm gửi lời chào từ Quảng Nam — nội dung thử nghiệm Thử IT. Nội dung có sử dụng AI."]
+CALLS = []
+
+
+def _log(kind, kw):
+    CALLS.append({"kind": kind, "model": kw.get("model")})
+    if LOG:
+        with open(LOG, "w", encoding="utf-8") as f:
+            json.dump(CALLS, f, ensure_ascii=False)
+
+
+class _Chat:
+    def create(self, **kw):
+        i = sum(c["kind"] == "chat" for c in CALLS)
+        _log("chat", kw)
+        return NS(choices=[NS(message=NS(content=RESP[min(i, len(RESP) - 1)]))],
+                  usage=NS(prompt_tokens=100, completion_tokens=50))
+
+
+class _Emb:
+    def create(self, **kw):
+        _log("embed", kw)
+        n = len(kw["input"]) if isinstance(kw.get("input"), list) else 1
+        return NS(data=[NS(embedding=[1.0, 0.0, 0.0])] * n, usage=NS(prompt_tokens=1, completion_tokens=0))
+
+
+g._client = lambda *a, **k: NS(chat=NS(completions=_Chat()), embeddings=_Emb())
+os.environ.setdefault("OR_CHAT_MODEL", "openai/gpt-4o-mini")
+os.environ.setdefault("OR_EMBED_MODEL", "openai/text-embedding-3-small")
+os.environ.setdefault("OPENROUTER_API_KEY", "")
+if LOG:
+    with open(LOG, "w", encoding="utf-8") as f:
+        json.dump(CALLS, f)
+argv = sys.argv[1:]
+if argv[:1] != ["-m"]:
+    sys.exit("[wrap] cần -m <module>")
+# PROBE_SET="mod:ATTR=đường_dẫn|..." — FIXTURE: chuyển thư mục báo cáo/cấu hình của module về scratch (không ghi
+# data/ của cây mã). PROBE_CALL_MAIN=1: import module (đã vá) rồi gọi main(argv) — runpy tạo namespace __main__ MỚI
+# nên hằng của chính module đích không nhận bản vá (bài học harness r10).
+import importlib  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+for spec in filter(None, (os.environ.get("PROBE_SET") or "").split("|")):
+    lhs, val = spec.split("=", 1)
+    mname, attr = lhs.split(":", 1)
+    setattr(importlib.import_module(mname), attr, Path(val))
+    print(f"[wrap] FIXTURE {mname}.{attr} = {val}", file=sys.stderr)
+sys.argv = [argv[1]] + argv[2:]
+if os.environ.get("PROBE_CALL_MAIN") == "1":
+    m = importlib.import_module(argv[1])
+    sys.exit(m.main(argv[2:]))
+runpy.run_module(argv[1], run_name="__main__", alter_sys=True)

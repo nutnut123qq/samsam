@@ -1,0 +1,25 @@
+"""Sinh PDF 1 trang có lớp chữ ASCII (giấy tiếp nhận GIẢ — fixture thử IT) + ảnh PNG 'scan'."""
+import sys
+from pathlib import Path
+out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
+lines = ["GIAY TIEP NHAN DANG KY BAN CONG BO SAN PHAM - FIXTURE THU IT G5",
+         "So: 123/2026/DKSP", "Ten san pham: Mat ong sam Thu IT",
+         "Ha Noi, ngay 15 thang 10 nam 2026", "Tai lieu gia lap - khong co gia tri phap ly"]
+ops = ["BT /F1 11 Tf 50 780 Td 14 TL"] + [f"({l}) Tj T*" for l in lines] + ["ET"]
+stream = "\n".join(ops).encode()
+objs = [b"<< /Type /Catalog /Pages 2 0 R >>", b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+        b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+pdf = bytearray(b"%PDF-1.4\n"); offs = []
+for i, o in enumerate(objs, 1):
+    offs.append(len(pdf)); pdf += b"%d 0 obj\n" % i + o + b"\nendobj\n"
+x = len(pdf); pdf += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1)
+for o in offs: pdf += b"%010d 00000 n \n" % o
+pdf += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objs) + 1, x)
+d = out / "giay_tiep_nhan"; d.mkdir(exist_ok=True)
+(d / "gtn_thu_it.pdf").write_bytes(bytes(pdf))
+from PIL import Image
+Image.new("RGB", (200, 100), (250, 250, 250)).save(d / "scan_thu_it.png")
+import hashlib
+for p in sorted(d.iterdir()): print(hashlib.sha256(p.read_bytes()).hexdigest(), p.name)

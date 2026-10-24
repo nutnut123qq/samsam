@@ -283,18 +283,25 @@ def write_report(text: str, out_dir: Path, name: str, sample: bool) -> Path:
     return out_dir / name
 
 
-def write_weekly(conn, day, cfg, out_dir: Path) -> list[Path]:
+def write_weekly(conn, day, cfg, out_dir: Path
+                 ) -> tuple[list[Path], list[str]]:
+    """→ (file đã ghi, lý do bị chặn). r12 G1-L1: mỗi báo cáo kiểm cổng
+    RIÊNG — intel-03 tắt không làm mất intel-trend của intel-04.1."""
+    from pipelines.rollout import RolloutBlocked
     mon, sun, _s, _e = week_bounds(day)
     secs = {"intel-doithu-": section_competitor(conn, mon),
             "intel-trend-": section_trend(conn, sun, mon, cfg)}
-    out = []
+    out, blocked = [], []
     for pre, kinds, title in REPORTS:
         text = "\n".join([f"# Báo cáo tuần intel — {title} {mon} → {sun}",
                           "", "Nguồn: file nhập tay (chỉ đọc, không gửi ai).",
                           ""] + secs[pre])
-        out.append(write_report(text, out_dir, f"{pre}{mon}.md",
-                                sample=import_sample(conn, kinds)))
-    return out
+        try:
+            out.append(write_report(text, out_dir, f"{pre}{mon}.md",
+                                    sample=import_sample(conn, kinds)))
+        except RolloutBlocked as e:
+            blocked.append(str(e))
+    return out, blocked
 
 
 def summarize(payload: str) -> str | None:
@@ -684,19 +691,20 @@ def main(argv=None) -> int:
                   "`python scripts/apply_schema.py`", flush=True)
             return 1
         full, payload = render(conn, day, cfg)
-        paths = (write_weekly(conn, day, cfg, args.out_dir)
-                 if args.out_dir else [])
+        paths, blocked = (write_weekly(conn, day, cfg, args.out_dir)
+                          if args.out_dir else ([], []))
     except psycopg.Error as e:
         print(f"[err] lỗi DB: {type(e).__name__}", flush=True)
         return 1
-    except ValueError as e:     # RolloutBlocked — tính năng TẮT
-        print(f"[rollout] {e}", flush=True)
-        return 2
     finally:
         conn.close()
     print(full, flush=True)
     for p in paths:
         print(f"[done] {p}", flush=True)
+    if blocked:      # r12 G1-L1: báo TỪNG phần bị chặn, không báo thành công
+        for why in blocked:
+            print(f"[rollout] {why}", flush=True)
+        return 2
     if use_llm:
         s = summarize(payload)
         if s:

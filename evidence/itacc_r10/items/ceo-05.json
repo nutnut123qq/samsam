@@ -1,0 +1,161 @@
+{
+ "id": "ceo-05",
+ "ten": "Báo cáo HĐTV",
+ "khoi": "ceo",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Báo cáo HĐTV (P2): 'Tổng hợp tiến độ, quyết định, rủi ro, chi phí hằng tháng'",
+ "tieu_chi": [
+  "T1 `python -m agents.hdtv_report --month 2026-09 --submit --record --out-dir <scratch>` exit 0",
+  "T2 hdtv-2026-09.md có 7 mục (cockpit, tiến độ & sổ quyết định, rủi ro, chi so ngân sách, P&L, ép trình QA, kiểm soát BKS); số không nguồn bị chặn bởi grounding (exit 0 = mọi số có nguồn); mục thiếu nguồn ghi 'chưa có dữ liệu'/'không đọc được' không bịa; 1 mục ceo/hdtv_pack pending + audit_runs hdtv_pack",
+  "T3 ca âm: chạy lại không nộp trùng; kỳ chưa đóng exit 2; tắt → exit 2 không file/mục",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+  "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_ceo; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Gói tháng",
+   "lenh": "python -m agents.hdtv_report --month 2026-09 --submit --record --out-dir <scratch>/rep05",
+   "expected": "exit 0; 7 heading; mục hdtv_pack pending; audit_runs hdtv_pack",
+   "actual": "exit 0, 41 fact có nguồn; 7 mục đủ; mục #13 ceo/hdtv_pack created_by=agent:hdtv_report pending; audit_runs #1 hdtv_pack; cockpit/P&L thiếu số → [chưa có dữ liệu] — ĐẠT. NHƯNG mục 'Chi so ngân sách vận hành' in 'Thực chi 0đ … 0.0% trần' cho cả 6 phạm vi trong khi opex_entries=0 dòng và llm_usage=0 dòng (không có nguồn chi nào được nạp) — trái cam kết đầu trang 'thiếu số hiện [chưa có dữ liệu], không hiện số không' (spent = acts.get(scope, 0) trong sec_opscost). Thêm: file .md không có nhãn CHẠY THỬ (cùng gốc ceo-01)",
+   "exit": "0",
+   "ket_qua": "FAIL",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Chạy lại",
+   "lenh": "python -m agents.hdtv_report --month 2026-09 --submit --out-dir <scratch>/rep05",
+   "expected": "exit 0 '[skipped]', không mục thứ 2",
+   "actual": "[skipped] kỳ 2026-09 đã có mục #13 — vẫn 1 mục hdtv_pack",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Kỳ chưa đóng",
+   "lenh": "python -m agents.hdtv_report --month 2026-10 --out-dir <scratch>/rep05",
+   "expected": "exit 2",
+   "actual": "kỳ 2026-10 chưa đóng — exit 2",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Gói quý",
+   "lenh": "python -m agents.hdtv_report --quarter 2026-Q3 --out-dir <scratch>/rep05",
+   "expected": "exit 0 file hdtv-2026-Q3.md; số quý thiếu tháng → [chưa đủ dữ liệu]",
+   "actual": "hdtv-2026-Q3.md 84 fact; 3 cột tháng + cột Quý; thiếu tháng → [chưa đủ dữ liệu] (21 chỗ)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Tắt",
+   "lenh": "python -m agents.hdtv_report --month 2026-08 --submit --out-dir <scratch>/rep05",
+   "expected": "exit 2, không file/mục; bật lại",
+   "actual": "tắt ceo-05 → [blocked] exit 2, không hdtv-2026-08.md, vẫn 1 mục; bật lại",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Sửa sec_opscost: không có dòng chi/nguồn → [chưa có dữ liệu] (lỗi TRUNG BÌNH vì gói trình HĐTV); nhãn chạy thử cho hdtv-*.md (g1-L4). P2 — chưa đến giai đoạn",
+ "gioi_han": "Tháng 2026-09 gần như không dữ liệu nguồn → chủ yếu kiểm nhánh thiếu số",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo05_C01.txt",
+   "sha256": "0579dee10315b4c8b066acccd4feb342d872f0ef88fb2895eb5d3e594e3cc9a1"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo05_C02.txt",
+   "sha256": "c7d38db78ba5ffd2728b459b039ae04a8af87d7b6337adbf1be5635865e8b9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo05_C03.txt",
+   "sha256": "800cfecd554ebd5a571c2939a4a5d5016f2061c804ee1bdc17c6e3cc820b01d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo05_C04.txt",
+   "sha256": "b194769564936415427ec454131da8bd1e553a7096d516064431ce153c8bda8f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo05_C05.txt",
+   "sha256": "1f57e60c32ea1c05518ad2149eb26923d15ddc9cb74fa493272712b5f4f78516"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo05_C05a.txt",
+   "sha256": "94ff9604196f51cf68befa1ce3912ab0a596ccd0203294cb44da047df9670cf9"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo05_C05b.txt",
+   "sha256": "f7e0aaffd30abcde96f6bffc4ffb8872e85690dde27fd7103af2562cee430130"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/db_approval_queue_ceo.txt",
+   "sha256": "ce9ecb14195de2f4b39823c082b3e00346a79d5b08505db53e5b22f435d186a6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/hdtv-2026-09.md",
+   "sha256": "087df5fe1eb1095a30cc96ad7ff7778b7ad101d83634bd3121d106864fec04ef"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/hdtv-2026-Q3.md",
+   "sha256": "0bd5962bc92a7db30347189c2da097c1164855e63b1b50befcf5b5c76bd994ce"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "g1-L3",
+   "muc_do": "TRUNG BÌNH",
+   "tieu_de": "Gói HĐTV in 'Thực chi 0đ / 0.0% trần' khi KHÔNG có nguồn chi nào (opex_entries 0 dòng, llm_usage 0 dòng)",
+   "tai_hien": [
+    "python -m agents.hdtv_report --month 2026-09 --out-dir … trên DB không có opex_entries (out/ceo05_C01.txt, reports/hdtv-2026-09.md mục 'Chi so ngân sách vận hành')"
+   ],
+   "expected": "thiếu số → [chưa có dữ liệu] (đúng cam kết in ở đầu chính trang), không hiện 0",
+   "actual": "agents/hdtv_report.py sec_opscost: spent = acts.get(scope, 0) → 0đ cho cả 6 phạm vi",
+   "evidence": [
+    "out/ceo05_C01.txt",
+    "reports/hdtv-2026-09.md"
+   ]
+  },
+  {
+   "ma": "g1-L4",
+   "muc_do": "THẤP",
+   "tieu_de": "Báo cáo file ceo-<kỳ>.md (ceo-01) / hdtv-<kỳ>.md (ceo-05) không thuộc output_sources report → không nhãn 'CHẠY THỬ — KHÔNG GỬI', không qua cổng tắt, không vào report_outputs",
+   "tai_hien": [
+    "ceo_report --period week --ref 2026-10-12 --submit --out-dir → file không nhãn (out/ceo01_C06.txt, reports/ceo-2026-W42.md)",
+    "rollout --disable ceo-01 → ceo_report vẫn GHI ceo-2026-W41.md dù mục hàng duyệt bị chặn (out/ceo01_C09.txt)"
+   ],
+   "expected": "báo cáo .md của tính năng chạy thử mang nhãn trong nội dung (v15.2 P8.5) và không sinh khi tính năng tắt",
+   "actual": "không nhãn; file vẫn sinh khi tắt; report_outputs 0 dòng (chỉ mục hàng duyệt được cổng giai đoạn)",
+   "evidence": [
+    "out/ceo01_C06.txt",
+    "out/ceo01_C09.txt",
+    "reports/ceo-2026-W42.md",
+    "reports/hdtv-2026-09.md"
+   ]
+  }
+ ],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

@@ -1,0 +1,18 @@
+#!/bin/bash
+# HARNESS r12 UI — chạy app THẬT (AUTH_MODE=local, login UI dùng chung = svc_ui thật, DB thử r12) trên 127.0.0.1:<port>.
+# bash run_streamlit_r12.sh.txt <root> <runtime_dir> <db> <port>
+ROOT="$1"; RT="$2"; DB="$3"; PORT="$4"
+SP="/c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad"
+H="/d/code/samsam/evidence/itacc_r12/ui/harness"
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset DEPLOY APPROVAL_ENFORCE RED_ALERT_NOTIFY LLM_KILL_FEATURES ITACC_ADMIN
+export DATABASE_URL="$(python -c "import json,sys;print(json.load(open(sys.argv[1]))['svc_dsn'])" "$(cygpath -w "$RT/secrets.json")")"
+[ -n "$DATABASE_URL" ] || { echo "ABORT: DATABASE_URL rỗng"; exit 3; }
+export UI_ROOT="$(cygpath -w "$ROOT")" UI_TEST_DB="$DB" UI_TEST_OUT="$(cygpath -w "$RT/out")"
+mkdir -p "$RT/out/reports"
+export AUTH_MODE=local AUTH_USERS_FILE="$(cygpath -w "$RT/cfg/users.json")" UI_TEST_DIRECTORS="$(cygpath -w "$RT/cfg/directors")"
+export OPENROUTER_API_KEY="" PYTHONIOENCODING=utf-8
+cp "$H/launcher.py.txt" "$RT/launcher.py"   # streamlit đòi đuôi .py — bản chép nguyên văn
+cd "$ROOT"
+exec "$SP/r7/venv_ui/Scripts/python" -m streamlit run "$(cygpath -w "$RT/launcher.py")" --server.address 127.0.0.1 \
+  --server.port "$PORT" --server.headless true --browser.gatherUsageStats false

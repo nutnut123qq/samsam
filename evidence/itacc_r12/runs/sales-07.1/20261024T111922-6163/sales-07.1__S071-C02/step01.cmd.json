@@ -1,0 +1,40 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.kd_live",
+  "--channel",
+  "tiktok",
+  "--cart",
+  "ruou-sam-chai-thuy-tinh-500ml",
+  "--day",
+  "2026-10-27",
+  "--brief",
+  "Phiên live thử IT"
+ ],
+ "env_doi": [
+  "PROBE_LLM_LOG",
+  "PROBE_LLM_RESPONSES",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:19:45+07:00",
+ "ket_thuc": "2026-10-24T11:19:49+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "\\[refuse\\] ruou[^\\n]*\\(LLM 0 lời gọi\\)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "f4f68f5cc34d6352492477611f03e87308de3ef953b5e8b921b9342dcac8ccfa",
+ "stderr_sha256": "9ddaf341079c760b0022f56085135e4fb7d0ca5b4eb3e9d9564cfa37029aaa0f"
+}

@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from allocation_proposals where status <> 'pending'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approvals where object_type = 'allocation_run'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

@@ -1,0 +1,40 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/video_c1/*.mp4",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/scratch/video_c1/355a05bff071e050d4b33bc472b29cf21a3ad7388d212df32f9b2807d7da3edd.mp4",
+    "sha256": "355a05bff071e050d4b33bc472b29cf21a3ad7388d212df32f9b2807d7da3edd"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\marketing-02.2__C1\\out/llm.json",
+  "re": "\"kind\": \"chat\"",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from content_drafts where content_type = 'video' and created_by = 'agent:mkt04' and status = 'pending' and channel = 'facebook'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from content_drafts where content_type = 'video' and text like '%Nội dung có sử dụng AI%' and text like '%Quảng cáo%' and text not like '%150.000%' and text not like '%Giá chỉ%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from video_assets",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

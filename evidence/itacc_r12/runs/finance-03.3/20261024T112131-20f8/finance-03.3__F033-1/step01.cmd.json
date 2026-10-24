@@ -1,0 +1,30 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "agents.acc_ar",
+  "--reminders",
+  "--as-of",
+  "2026-10-23",
+  "--dry-run"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:21:36+07:00",
+ "ket_thuc": "2026-10-24T11:21:37+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?s)\\A(?=.*--- \\[dry-run\\] ar_reminder ar:IT-DL01:)(?=.*--- \\[dry-run\\] ar_reminder ar:IT-DL03:)(?=.*\\[skip\\] IT-DL02)(?=.*2 nháp \\(dry-run, không ghi\\))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "93b2e55902871f67ff3be02a9ad1a811893eea7b44c35b5d56bc7482f5fb705b",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

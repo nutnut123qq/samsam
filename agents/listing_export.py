@@ -8,7 +8,10 @@ sản phẩm, xuất ra mọi sàn đúng giá đã duyệt".
     thứ hai: tên/quy cách/ĐKSP/giá luôn từ golden.
   - XUẤT cho sàn (shopee|tiktok): mô tả = văn bản chuẩn NGUYÊN VĂN bỏ đúng
     dòng `Giá: …` (biến đổi tất định `bo_dong_gia`, ghi trong manifest) +
-    giá `list` của kênh đích từ golden (không floor/promo) ở cột riêng. Kênh
+    giá `list` của kênh đích ĐÃ duyệt còn hiệu lực trong `price_list` (đợt an
+    toàn S03: trước đây lấy golden JSON; không fallback JSON/kênh khác/floor/
+    promo/giá chờ duyệt; manifest ghi id dòng giá → `--verify` phát hiện giá
+    đổi/hết hiệu lực) ở cột riêng. Kênh
     đích phải qua `content.precheck` (readiness) + `guardrail.check_publish`
     (listing, kênh đích) — không đạt → từ chối, không ghi tệp. Cổng rollout
     sales-03 (biên DÙNG). Tệp CSV (utf-8-sig) + manifest JSON (sha nháp,
@@ -109,8 +112,10 @@ def describe(text: str) -> str:
                      if not ln.startswith("Giá:"))
 
 
-def build(conn, sku: str, channel: str, readiness=None) -> dict:
-    """→ {"row", "manifest"} — chưa ghi tệp. Từ chối → ExportError."""
+def build(conn, sku: str, channel: str, readiness=None, today=None) -> dict:
+    """→ {"row", "manifest"} — chưa ghi tệp. Từ chối → ExportError.
+    Giá = `list` kênh đích ĐÃ duyệt hiệu lực ngày `today` (mặc định hôm nay
+    giờ VN) trong `price_list` — không JSON/kênh khác/floor/promo."""
     from pipelines import rollout
     if channel not in CHANNELS:
         raise ExportError(f"kênh phải {CHANNELS}")
@@ -130,11 +135,15 @@ def build(conn, sku: str, channel: str, readiness=None) -> dict:
                           + ",".join(str(v.get("code"))
                                      for v in g.get("violations") or []))
     f = content.listing_fields(sku, channel)
-    gold = content._cfg()[0]["golden"][sku]
-    price = ((gold.get("prices") or {}).get(channel) or {}).get("list")
-    if not (isinstance(price, int) and not isinstance(price, bool)
-            and price > 0):
-        raise ExportError(f"{sku} × {channel}: golden thiếu giá list kênh")
+    today = today or _vn_today()
+    lp = channel_prices(conn, today, channel).get(sku)
+    if lp is None:
+        raise ExportError(f"{sku} × {channel}: chưa có giá list kênh còn hiệu"
+                          " lực trong price_list")
+    if not lp["approved"]:
+        raise ExportError(f"{sku} × {channel}: giá list #{lp['id']} đang CHỜ"
+                          " người duyệt — không xuất")
+    price = lp["price"]
     row = {"sku_key": sku, "ten_san_pham": f["name"], "mo_ta": desc,
            "quy_cach": f["pack_spec"] or "", "so_dksp": f["receipt_no"] or "",
            "gia_vnd": str(price)}
@@ -142,7 +151,10 @@ def build(conn, sku: str, channel: str, readiness=None) -> dict:
         "sku": sku, "channel": channel, "draft_id": did,
         "approved_sha256": _sha(text), "transform": TRANSFORM,
         "description_sha256": _sha(desc), "gia_vnd": price,
-        "gia_nguon": "data/golden_skus.json prices.<kênh>.list"}}
+        "gia_id": lp["id"], "gia_ngay_hieu_luc": today.isoformat(),
+        "gia_nguon": "price_list kênh đích loại list ĐÃ duyệt, hiệu lực theo"
+                     " ngày giờ VN (không fallback golden JSON/kênh khác/"
+                     "floor/promo)"}}
 
 
 def _csv(row: dict, cols: dict) -> bytes:
@@ -188,7 +200,8 @@ def verify(conn, manifest_path, readiness=None,
         b = build(conn, man["sku"], man["channel"], readiness)
     except ExportError as e:
         return [f"không dựng lại được: {e}"]
-    for k in ("draft_id", "approved_sha256", "description_sha256", "gia_vnd"):
+    for k in ("draft_id", "approved_sha256", "description_sha256", "gia_vnd",
+              "gia_id"):
         if b["manifest"][k] != man.get(k):
             bad.append(f"{k} lệch (hiện {b['manifest'][k]})")
     data = _csv(b["row"], load_map(map_path)["columns"][man["channel"]])
@@ -207,11 +220,11 @@ WEB = "web"
 FEED_VERSION = 1
 
 
-def web_prices(conn, today) -> dict:
-    """{sku: {price, id, approved}} giá `list` kênh web thường trực hiệu lực
-    ngày `today` (giờ VN) — CÙNG quy tắc `kd_listing.golden_prices` (dòng
-    mở mới nhất; `approved` = đã có người duyệt). Không đọc được bảng giá
-    (thiếu bảng/quyền/DB lỗi) → ExportError: không bán bằng giá đoán."""
+def channel_prices(conn, today, channel: str) -> dict:
+    """{sku: {price, id, approved}} giá `list` kênh `channel` thường trực
+    hiệu lực ngày `today` (giờ VN) — CÙNG quy tắc `kd_listing.golden_prices`
+    (dòng mở mới nhất; `approved` = đã có người duyệt). Không đọc được bảng
+    giá (thiếu bảng/quyền/DB lỗi) → ExportError: không bán bằng giá đoán."""
     from agents import kd_listing
     try:
         prices = kd_listing.golden_prices(conn, today)
@@ -219,7 +232,18 @@ def web_prices(conn, today) -> dict:
         raise ExportError("không đọc được bảng giá đã duyệt (price_list: "
                           f"{type(e).__name__}) — không xuất") from None
     return {sku: kinds["list"] for (sku, ch), kinds in prices.items()
-            if ch == WEB and "list" in kinds}
+            if ch == channel and "list" in kinds}
+
+
+def web_prices(conn, today) -> dict:
+    return channel_prices(conn, today, WEB)
+
+
+def _vn_today():
+    from datetime import datetime, timezone
+
+    from pipelines.period import vn_date
+    return vn_date(datetime.now(timezone.utc))
 
 
 def website_row(conn, sku: str, gold: dict, readiness, prices=None,
@@ -228,10 +252,7 @@ def website_row(conn, sku: str, gold: dict, readiness, prices=None,
     + giá web ĐÃ duyệt từ DB (`prices` của `web_prices`; None → tự đọc ngày
     `today`, mặc định hôm nay giờ VN)."""
     if prices is None:
-        from datetime import datetime, timezone
-
-        from pipelines.period import vn_date
-        prices = web_prices(conn, today or vn_date(datetime.now(timezone.utc)))
+        prices = web_prices(conn, today or _vn_today())
     alcohol = gold.get("category") == "alcohol"
     row = {"sku_key": sku, "ten_san_pham": gold.get("name"),
            "quy_cach": gold.get("pack_spec"), "so_dksp": gold.get("receipt_no"),

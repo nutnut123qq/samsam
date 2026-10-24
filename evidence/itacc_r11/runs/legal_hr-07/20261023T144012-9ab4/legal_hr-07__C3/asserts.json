@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'legal_doc_review' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue q join intel_items i on q.object_id = 'intel:' || i.id::text where q.object_type = 'legal_doc_review' and q.payload like '%Link: ' || i.url || '%' and q.payload like '%sha256 tiêu đề: ' || encode(sha256(convert_to(i.title, 'UTF8')), 'hex') || '%' and q.payload like '%KHÔNG diễn giải%' and q.payload like '%Nguồn: chinhphu-van-ban%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from llm_usage",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

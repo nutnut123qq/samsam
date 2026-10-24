@@ -1,0 +1,15 @@
+# db samsam_itacc_r10_prod
+> select count(*) from price_list
+[34]
+> select kind, count(*) from golden_discrepancies group by 1 order by 1
+["alcohol_online_listing", 2]
+["missing_price", 2]
+["price_mismatch", 15]
+["product_unmapped", 12]
+["sku_no_product", 8]
+["spec_mismatch", 2]
+> select pack_spec, version, source from sku_master where sku_key='savina-12v'
+["10 viên ngậm (tuýp PP)", 2, "golden_prod.json"]
+> select kind, sku_key, product_id, status, detail from golden_discrepancies where kind='spec_mismatch' order by id
+["spec_mismatch", "savina-12v", "nv-savina-tuyp-12-vien-bk", "pending", {"web": {"name": "SAVINA TUÝP 12 VIÊN", "spec": "12 viên"}, "golden": {"spec": "10 viên", "pack_spec": "10 viên ngậm (tuýp PP)"}}]
+["spec_mismatch", "savina-12v", "wc-349", "pending", {"web": {"name": "SAVINA TUÝP 12 VIÊN", "spec": "12 viên"}, "golden": {"spec": "10 viên", "pack_spec": "10 viên ngậm (tuýp PP)"}}]

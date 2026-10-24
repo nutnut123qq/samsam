@@ -1,0 +1,23 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import hashlib,sys\na=hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest()\nprint('file',a,'so',sys.argv[2])\nsys.exit(0 if a==sys.argv[2] else 1)",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\finance-06\\20261024T112307-bd29\\finance-06__F06-6b\\out/../../finance-06__F06-5/out/doi-soat-2026-Q3.md",
+  "f4cece49c70ff8319ed3ea44623c2f4862356dbbe84fb45db231fe6333951514"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:23:43+07:00",
+ "ket_thuc": "2026-10-24T11:23:43+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "21bcee2e333a0621712817a420cf77a8d61cfe5265a1a966100b920f27ef279b",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

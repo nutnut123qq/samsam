@@ -1,0 +1,11 @@
+# ma: TAT-disable-sales-06.1
+# luc: 2026-10-23T10:52:45+07:00
+# lenh: python -m pipelines.rollout --disable sales-06.1 --by Người Thử IT --note kiểm nhánh tắt r10 g2
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+[OK] sales-06.1: chạy thử → tắt
+
+## stderr
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)

@@ -1,0 +1,27 @@
+#!/bin/bash
+# HARNESS r12 — chạy lại probe 20 lỗi (đợt 1, 2, 3 v2, 4) + 7 probe hồi quy (S04/S04b/r8/B3/S03/F1/F2) trên MÃ CUỐI,
+# tuần tự, mỗi probe 1 DB mới (mkdb_r12 từ working tree). bash run_probes_final.sh.txt <hau_to_db> <log>
+SUF="$1"; LOG="$2"
+SP="/c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad"
+R="$SP/r12"; H="/d/code/samsam/evidence/itacc_r12/harness"; X="/d/code/samsam/evidence/itacc_r12/xuyen_suot"
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+export PYTHONIOENCODING=utf-8 OPENROUTER_API_KEY="" PROBE_EXT_DIR="$R/ext"
+cd /d/code/samsam
+{
+echo "# probe cuối r12 · $(date -Iseconds) · fp_code=$(bash $H/fp_code_r12.sh.txt) · fp_full=$(bash $H/fp_r12.sh.txt)"
+for p in dot1:probe_dot1.py.txt dot2:probe_dot2.py.txt dot3:probe_dot3_v2.py.txt dot4:probe_dot4.py.txt; do
+  n="${p%%:*}"; f="${p#*:}"; db="samsam_itacc_r12_pf${n}${SUF}"
+  bash $H/mkdb_r12.sh.txt /d/code/samsam "$db" "$R/secret/admin.sh" "$R/secret/env_$db.sh" "evidence/itacc_r12/runs/dung_db_$db.txt"
+  echo "## $n ($f) DB $db mkdb=$?"
+  python -I $H/$f "D:\\code\\samsam" "$R/secret/env_$db.sh" "${n}_cuoi" | tail -1
+  echo "   exit=${PIPESTATUS[0]}"
+done
+db="samsam_itacc_r12_pfxs${SUF}"
+bash $H/mkdb_r12.sh.txt /d/code/samsam "$db" "$R/secret/admin.sh" "$R/secret/env_$db.sh" "evidence/itacc_r12/runs/dung_db_$db.txt"
+echo "## hồi quy xuyên suốt DB $db mkdb=$?"
+for n in s04 s04b r8 b3 s03 f1 f2; do
+  python -I $H/legacy/probe_$n.py.txt "D:\\code\\samsam" "$X/probe_${n}_cuoi.json" "$R/secret/env_$db.sh" > "$X/probe_${n}_cuoi.txt" 2>&1
+  echo "   $n exit=$? PASS=$(grep -cE '^PASS' $X/probe_${n}_cuoi.txt) FAIL=$(grep -cE '^FAIL' $X/probe_${n}_cuoi.txt)"
+done
+echo "# xong $(date -Iseconds)"
+} 2>&1 | sed -E -e 's#(postgres(ql)?://[^:/@]+:)[^@]+@#\1***@#g' -e 's/(password=)[^ ]+/\1***/g' > "$LOG"

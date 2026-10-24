@@ -1,0 +1,167 @@
+{
+ "id": "marketing-02.2",
+ "ten": "Video 15–45 giây từ tư liệu thật",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Ảnh và video AI: 'video 15–45 giây từ tư liệu thật; luôn gắn nhãn AI'",
+ "tieu_chi": [
+  "T1 `python -m pipelines.video_studio` chạy được với ffmpeg (FFMPEG_BIN/imageio-ffmpeg), exit 0",
+  "T2 mp4 15–45 giây, không track âm thanh, không metadata vị trí; content_drafts content_type='video' created_by='agent:mkt04' pending + video_assets sha256 = sha file; caption có nhãn AI + nhãn QC; câu chạm giá bị bỏ; nhãn AI hiện trên khung trích (đầu/giữa/cuối) kiểm độc lập",
+  "T3 kịch bản LLM có từ cấm sau 1 lượt sửa → kich_ban, 0 file/dòng; brief cấm → brief_cam 0 LLM; TTS lạ → exit 2; tắt → không sinh",
+  "T4 không có đường gửi/đăng ra ngoài; harness chặn socket ngoài localhost; không lời gọi OpenRouter thật; B-roll chỉ dùng khi có license"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: LLM qua llm_gateway._client giả (gate/trần/llm_usage thật) — harness/run.py --fake-llm (fake/video.json, video_banned.json); ffmpeg = imageio-ffmpeg 7.1 (gói requirements, không cài global); FIXTURE: golden bản sao, packshot + B-roll MẪU có license MẪU",
+ "dau_vao": [
+  {
+   "ten": "harness/fake/video.json",
+   "sha256": "052beb8ea0444f44c67a89e4c522a0115540065489197a1675112e656c3ae1d1",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fake/video_banned.json",
+   "sha256": "7e162f75a351d874cbe8b16ac83c8184782aea3ea8d0157b1e126f9e54b48c0f",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/golden_fixture_food.json",
+   "sha256": "1f54d03c2617d31d5246dece8107eb7629bb1df802ab13e73851df9c0699554c",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "02.2-C1",
+   "mo_ta": "dựng video từ packshot/B-roll MẪU",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/video.json --llm-log evidence/itacc_r10/g3/out/02.2-C1.llmcalls.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel facebook --brief Video quà tặng mật ong sâm Thử IT cho gia đình",
+   "expected": "mp4 15–45s, nhãn mọi khung, T2",
+   "actual": "exit 0; mp4 sha 355a05…= video_assets.file_sha256, 16.0s, 1 stream video, 0 audio, không metadata vị trí/thời điểm; nháp #7 video agent:mkt04 pending, caption có nhãn AI+QC; câu '150.000đ' bị bỏ; vùng nhãn giống nhau ở t=0.5/6/10/15.5s (meandiff ≤5.4) + ảnh khung 10s",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02.2-C2",
+   "mo_ta": "LLM trả từ cấm cả 2 lượt",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/video_banned.json --llm-log evidence/itacc_r10/g3/out/02.2-C2.llmcalls.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief Video quà tặng Thử IT",
+   "expected": "kich_ban, 2 LLM, 0 mp4/dòng",
+   "actual": "refused kich_ban (bác sĩ, khuyên dùng…), 2 lời gọi, 0 dòng mới",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02.2-C3",
+   "mo_ta": "brief 'chữa bệnh'",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/video.json --llm-log evidence/itacc_r10/g3/out/02.2-C3.llmcalls.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief Mật ong sâm giúp chữa bệnh mất ngủ",
+   "expected": "brief_cam, 0 LLM",
+   "actual": "refused brief_cam, 0 lời gọi LLM, 0 dòng",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02.2-C4",
+   "mo_ta": "TTS_PROVIDER lạ",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/video.json --llm-log evidence/itacc_r10/g3/out/02.2-C4.llmcalls.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief Video quà tặng Thử IT",
+   "expected": "exit 2, 0 LLM",
+   "actual": "exit 2 'chưa cắm', 0 LLM, 0 dòng",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02.2-C5",
+   "mo_ta": "tính năng tắt",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/video.json --llm-log evidence/itacc_r10/g3/out/02.2-C5.llmcalls.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief Video quà tặng Thử IT",
+   "expected": "không sinh, 0 LLM",
+   "actual": "0 dòng NHƯNG đã gọi LLM 1 lần (llm_usage id 10 lúc tắt) + traceback exit 1 — chặn muộn ở save_draft (D1)",
+   "exit": 1,
+   "ket_qua": "FAIL"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Kiểm rollout.check_generate (tính năng tắt) TRƯỚC write_script/LLM trong video_studio (và mkt_youtube), bắt RolloutBlocked → exit 2.",
+ "gioi_han": "Packshot/B-roll là MẪU (tư liệu thật chưa có); TTS none (video không tiếng); LLM giả.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C1.txt",
+   "sha256": "876d5621b591e57efdebee411c0adf51cfd1334ead90e8b08369111b537cef99"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C1.db.json",
+   "sha256": "18a83b2be62ca40df07925a87f973e185b5b4882172c164566b9a8c5d4d1bc75"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C1.verify.txt",
+   "sha256": "809fd45f50e5d0603ef9efe46ce0d4487948637baa5c5eb1de09943f67436d74"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C1.llmcalls.json",
+   "sha256": "68fc269541b6e33d7a917905aeee9201c98b2535d6d7dd9fcd6afc84feafdf05"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C2.txt",
+   "sha256": "4f2514b1636b9853dced559ed1af3bc8e29d62923e43fd12e4234e54cbbaa75b"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C2.llmcalls.json",
+   "sha256": "1c79be651e3d72c7c1180f2a239159a7731a81f498219b450f2e7a9bf1c54453"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C3.txt",
+   "sha256": "d65fbccdb768601dd6694ee7c58a973da3842d4342c33218a8f289f1d40107a7"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C4.txt",
+   "sha256": "a27babbdc0098098e122d677b2d90dce1157bf8121e93c5046cf7c35259370c6"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C5a.txt",
+   "sha256": "3001bdda593719ff22ed284a1753577f8c832bc66d2e054706ab4260ff844bfe"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C5.txt",
+   "sha256": "4d5b05f03757575bbc71a6fdc5ce3581db4fa9eddaa33b6056ed8a574bcda01d"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C5.llmcalls.json",
+   "sha256": "68fc269541b6e33d7a917905aeee9201c98b2535d6d7dd9fcd6afc84feafdf05"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C5.llm_usage.json",
+   "sha256": "5c78f6204f404291704d2dbe4ab21de03f4c6d392cfb7aab4302fd938c48e1b6"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.2-C5b.txt",
+   "sha256": "da6bc2278a7b827f2376cde0bf4633cb681bfa16814495b03bc629535cb76572"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/verify_video.py",
+   "sha256": "cb2761f7d429c72812ab7a9554022286fbb1bd8c6f5ae7b0ac55183e7f1b9abf"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/media/02.2-C1-frame10s.png",
+   "sha256": "7f6dbb125c8267711f08f7b9c9e69aaa04997574fb0e9ea781f4da26ad4fb7ce"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/media/355a05bff071e050d4b33bc472b29cf21a3ad7388d212df32f9b2807d7da3edd.json",
+   "sha256": "54517fde952c42fbfc3862e15b8a5e0c20cf7a46037b39c689160c112e4b5339"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "D1",
+   "muc_do": "trung bình",
+   "mo_ta": "video_studio / mkt_youtube: khi tính năng TẮT vẫn gọi LLM gateway (phát sinh chi phí, ghi llm_usage) và dựng file trước khi bị chặn muộn ở store.save_draft → traceback RolloutBlocked, exit 1. Kỳ vọng (như content --daily): chặn TRƯỚC mọi lời gọi LLM, exit 2.",
+   "tai_hien": "python -m pipelines.rollout --disable marketing-02.2 --by X; python evidence/itacc_r10/g3/harness/run.py --fake-llm .../video.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief '...' (tương tự agents.mkt_youtube với marketing-07.2)",
+   "expected": "exit 2 [blocked], 0 lời gọi LLM, 0 dòng",
+   "actual": "exit 1 traceback RolloutBlocked; 1 lời gọi LLM (llm_usage id 10 feature marketing-02.2 lúc tắt); 0 dòng content_drafts",
+   "evidence": [
+    "evidence/itacc_r10/g3/out/02.2-C5.txt",
+    "evidence/itacc_r10/g3/out/02.2-C5.llm_usage.json",
+    "evidence/itacc_r10/g3/out/07.2-C5.txt"
+   ]
+  }
+ ]
+}

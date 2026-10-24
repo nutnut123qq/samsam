@@ -107,6 +107,15 @@ def _mask_pii(text: str) -> str:
     O(n): mọi scan (group parse, run-scan, left-run) đều trừ `budget`
     hoặc chặn bởi ')' group trước — pathological hết ngân sách thì đuôi
     có ngoặc thành '***' thay vì lọt raw."""
+    return _mask_email_oversize(_PII_RE.sub("***", _flatten_paren(text)[0]))
+
+
+def _flatten_paren(text: str) -> tuple[str, bool]:
+    """Bước bóc ngoặc/nối blob của `_mask_pii` (luật chống nối + ngân sách
+    tuyến tính ở docstring đó) → (text phẳng cho `_PII_RE`, cạn_ngân_sách).
+    r12-fix D2: guardrail đăng bài dùng chung để bắt SĐT dạng ngoặc;
+    cạn_ngân_sách = True khi đuôi còn '(' bị thay '***' (không kiểm hết →
+    caller fail-closed)."""
     n = len(text)
     out: list[str] = []
     # Tổng ký tự các lần scan duyệt (group + run + left-run) — vượt
@@ -192,10 +201,12 @@ def _mask_pii(text: str) -> str:
                            .replace('(', ' ').replace(')', ' '))
                 out.append(' ')
                 i = b
+    cut = False
     if i < n:
         tail = text[i:]
-        out.append('***' if '(' in tail else tail)
-    return _mask_email_oversize(_PII_RE.sub("***", ''.join(out)))
+        cut = '(' in tail
+        out.append('***' if cut else tail)
+    return ''.join(out), cut
 
 
 def _email_local_ch(c: str) -> bool:

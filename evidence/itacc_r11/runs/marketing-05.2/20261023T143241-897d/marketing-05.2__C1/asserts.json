@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ugc_reply' and status = 'pending' and title like '%[kenh=shopee]%'",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ },
+ {
+  "sql": "select string_agg(l, ',' order by l) from (select substring(title from '\\[lop=([a-z_]+)\\]') l from approval_queue where object_type = 'ugc_reply' and title like '%[kenh=shopee]%') x",
+  "expect": "che,claim_suc_khoe,hoi_gia,khen,sp_cam_qc",
+  "actual": "che,claim_suc_khoe,hoi_gia,khen,sp_cam_qc",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ugc_reply' and payload ~ 'thơm ngon|thất vọng|mất ngủ|biếu sếp|chữa|0900000401|Người Mua Thử IT'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

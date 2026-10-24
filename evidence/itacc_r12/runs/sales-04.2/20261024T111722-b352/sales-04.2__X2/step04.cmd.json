@@ -1,0 +1,36 @@
+{
+ "buoc": 4,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.crm",
+  "--handoff",
+  "3",
+  "--dealer",
+  "DLTHU01",
+  "--by",
+  "GĐ Bán Hàng Thử IT"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:18:49+07:00",
+ "ket_thuc": "2026-10-24T11:18:53+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\"question\"",
+   "khop": true
+  },
+  {
+   "out_re": "^(?![\\s\\S]*(Nguyễn Văn Mẫu|Bích|Ví Dụ|0905 123 456|\"(phone|name|email|address)\"\\s*:))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "affaf8df9131a0bce84a6d9d123f0dabac180a07b2fd108a29a1345100af0ea7",
+ "stderr_sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+}

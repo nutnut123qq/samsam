@@ -1,0 +1,12 @@
+# ca: DP08-08
+# env: DB thử khối dp (DSN che)
+# cmd: python -m pipelines.rollout --disable farming-05.4 --by agent:rollout
+# exit: 2
+# thoi_gian: 2026-10-23T10:52:07+0700
+usage: python -m pipelines.rollout [-h]
+                                   (--seed | --status | --promote ID | --severe ID | --disable ID | --dossier | --catalog | --outputs ID | --review-output ID)
+                                   [--key KEY] [--sha SHA]
+                                   [--decision {approved,rejected}] [--by BY]
+                                   [--reason {lo_pii,ruou_cong_khai,so_lieu_khong_nguon,thieu_khuyen_cao,thieu_nhan_ai,tpbvsk_chua_xnqc,tu_cam}]
+                                   [--note NOTE] [--phase {P1,P2}] [--out OUT]
+python -m pipelines.rollout: error: --by phải là tên NGƯỜI thật (1..100 ký tự, không 'agent:'/'system:')

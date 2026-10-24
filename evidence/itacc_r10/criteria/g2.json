@@ -1,0 +1,795 @@
+{
+ "_doc": "Tiêu chí cụ thể nhóm g2 (khối sales, 13 mục) — viết TRƯỚC khi chạy ca. Wrapper `run_mod.py` = harness (patch đường dẫn ra scratchpad, fake LLM ở biên, ép _FORCE_MODE khi ghi FIXTURE).",
+ "nhom": "g2",
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "items": [
+  {
+   "id": "sales-01",
+   "tieu_chi_cu_the": [
+    "Handler webhook THẬT (connectors.zalo.Handler / connectors.messenger) chạy trên 127.0.0.1 cổng động, DEPLOY tắt (send_text thật = dry-run, 0 request ra Zalo/Meta); LLM/embedding = FAKE ở biên (api.rag.chat/embed) — mức MOCK",
+    "Chạy thử (feature_rollout sales-01 = chay_thu): câu bot KHÔNG tới khách; khách nhận HOLD_TEXT; approval_queue sales/cskh_reply created_by agent:kd_a1 payload = câu bot đã che PII; sales/cskh_handoff lý do rollout",
+    "Luật trước LLM: rượu → template alcohol, sức khỏe → template health + cskh_handoff; 0 lời gọi fake LLM",
+    "Che PII: convlog (đường scratchpad) không chứa SĐT/email thô; stdout không in user_id thô",
+    "Chữ ký sai → 403, không xử lý; dedup cùng msg_id → xử lý 1 lần",
+    "Hạn chót: answer() vượt ngân sách → HANDOFF_TEXT + convlog error deadline:* + cskh_handoff lý do deadline (ngân sách rút ngắn trong harness, ghi FIXTURE)",
+    "Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có dòng Nguồn: <url fixture>; gửi vẫn dry-run (sent=false) → KHÔNG có file_output_evidence (không đếm đầu ra không gửi thật)",
+    "sales_director --run gom convlog answered:false → cskh_handoff created_by agent:sales_director; chạy lại không nhân đôi",
+    "data/conversations.jsonl và data/zalo_seen.db thật KHÔNG đổi (sha trước/sau)",
+    "Tắt (rollout --disable) → 0 lời gọi LLM, không cskh_reply"
+   ],
+   "ca": [
+    {
+     "ma": "S01-C01",
+     "mo_ta": "Zalo câu hỏi thường, chạy thử",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py zalo_e2e (Handler thật)",
+     "dau_vao": "event user_send_text ký mac đúng, chunk fixture example.com",
+     "expected": "HTTP 200; khách nhận HOLD_TEXT (dry-run); 1 cskh_reply agent:kd_a1 payload=câu fake đã che; 1 cskh_handoff; convlog rollout=chay_thu"
+    },
+    {
+     "ma": "S01-C02",
+     "mo_ta": "Chữ ký sai",
+     "entry_point": "Handler zalo",
+     "dau_vao": "mac sai",
+     "expected": "HTTP 403; 0 dòng convlog/queue mới"
+    },
+    {
+     "ma": "S01-C03",
+     "mo_ta": "Câu sức khỏe",
+     "entry_point": "Handler zalo",
+     "dau_vao": "câu hỏi bệnh",
+     "expected": "template health; cskh_handoff lý do health; fake LLM 0 lời gọi"
+    },
+    {
+     "ma": "S01-C04",
+     "mo_ta": "Câu rượu",
+     "entry_point": "Handler zalo",
+     "dau_vao": "câu hỏi rượu sâm",
+     "expected": "template alcohol; handoff alcohol; 0 lời gọi"
+    },
+    {
+     "ma": "S01-C05",
+     "mo_ta": "PII trong câu khách",
+     "entry_point": "Handler zalo",
+     "dau_vao": "câu có SĐT 0900000123 + email",
+     "expected": "convlog/payload không chứa SĐT/email thô; stdout không chứa user_id thô"
+    },
+    {
+     "ma": "S01-C06",
+     "mo_ta": "Dedup retry cùng msg_id",
+     "entry_point": "Handler zalo",
+     "dau_vao": "POST lại y hệt",
+     "expected": "HTTP 200 nhưng xử lý 1 lần (số lời gọi fake + số convlog không tăng)"
+    },
+    {
+     "ma": "S01-C07",
+     "mo_ta": "Hạn chót trả lời",
+     "entry_point": "Handler zalo + fake chat chậm",
+     "dau_vao": "ngân sách rút ngắn (FIXTURE)",
+     "expected": "HANDOFF_TEXT; convlog error deadline:*; cskh_handoff lý do deadline"
+    },
+    {
+     "ma": "S01-C08",
+     "mo_ta": "Ép van_hanh: câu trả lời có nguồn",
+     "entry_point": "Handler zalo + _FORCE_MODE=van_hanh (FIXTURE)",
+     "dau_vao": "câu hỏi thường",
+     "expected": "text gửi có 'Nguồn:' + URL fixture; sent=false (dry-run); file_output_evidence 0 dòng"
+    },
+    {
+     "ma": "S01-C09",
+     "mo_ta": "Messenger HMAC",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py messenger Handler thật",
+     "dau_vao": "X-Hub-Signature-256 đúng / sai",
+     "expected": "đúng → xử lý (cskh_reply kênh messenger); sai → 403"
+    },
+    {
+     "ma": "S01-C10",
+     "mo_ta": "sales_director gom handoff",
+     "entry_point": "python -m agents.sales_director --run (DATA_DIR → scratchpad)",
+     "dau_vao": "convlog fixture answered:false",
+     "expected": "cskh_handoff created_by agent:sales_director payload không câu khách; lần 2 0 mục mới"
+    },
+    {
+     "ma": "S01-C11",
+     "mo_ta": "/healthz /readyz",
+     "entry_point": "GET trên Handler",
+     "dau_vao": "-",
+     "expected": "200 up; readyz db ok"
+    },
+    {
+     "ma": "S01-C12",
+     "mo_ta": "Tắt tính năng",
+     "entry_point": "rollout --disable sales-01 rồi Handler zalo",
+     "dau_vao": "câu thường",
+     "expected": "0 lời gọi LLM; không cskh_reply mới; khách HOLD_TEXT"
+    }
+   ]
+  },
+  {
+   "id": "sales-02",
+   "tieu_chi_cu_the": [
+    "CLI thật `connectors.channels --suggest shopee|tiktok --by` (stdin) ghi 1 dòng san_suggestions: msg_ref sha (không tin buyer), answer đã che PII, guardrail_ok, stage=chay_thu, created_by = người MXH",
+    "Chạy thử: in nhãn CHẠY THỬ, không gợi ý lệnh --mark-sent; --mark-sent gợi ý chạy thử → exit 1",
+    "Câu gợi ý sàn không chứa URL/SĐT (san_violations rỗng)",
+    "LLM lỗi (key rỗng) → câu chuyển nhân viên, exit 0; stdin rỗng → exit 2",
+    "Ép van_hanh (FIXTURE) → --mark-sent ghi san_suggestion_uses; lặp lại → skip (idempotent)",
+    "Tắt → --suggest exit 2, 0 dòng"
+   ],
+   "ca": [
+    {
+     "ma": "S02-C01",
+     "mo_ta": "Gợi ý chat sàn, fake LLM",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py channels --suggest shopee --by 'MXH Thử IT'",
+     "dau_vao": "tin buyer hỏi sản phẩm",
+     "expected": "exit 0; nhãn CHẠY THỬ; 1 dòng san_suggestions stage chay_thu, msg_ref 32 hex, không URL/SĐT"
+    },
+    {
+     "ma": "S02-C02",
+     "mo_ta": "LLM không khả dụng (key rỗng, không fake)",
+     "entry_point": "python -m connectors.channels --suggest tiktok --by ...",
+     "dau_vao": "tin buyer",
+     "expected": "exit 0; câu san_handoff; dòng ghi handoff no_data"
+    },
+    {
+     "ma": "S02-C03",
+     "mo_ta": "Tin buyer có SĐT",
+     "entry_point": "--suggest shopee",
+     "dau_vao": "tin có 0900000222",
+     "expected": "DB không chứa SĐT; msg_ref không phải tin"
+    },
+    {
+     "ma": "S02-C04",
+     "mo_ta": "Câu sức khỏe",
+     "entry_point": "--suggest shopee",
+     "dau_vao": "hỏi bệnh",
+     "expected": "template health_san; 0 lời gọi LLM"
+    },
+    {
+     "ma": "S02-C05",
+     "mo_ta": "--mark-sent gợi ý chạy thử",
+     "entry_point": "python -m connectors.channels --mark-sent ID --by",
+     "dau_vao": "id chạy thử",
+     "expected": "exit 1 TỪ CHỐI; 0 dòng san_suggestion_uses"
+    },
+    {
+     "ma": "S02-C06",
+     "mo_ta": "Ép van_hanh + mark-sent + lặp",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py (FIXTURE _FORCE_MODE=van_hanh)",
+     "dau_vao": "gợi ý soạn khi van_hanh",
+     "expected": "exit 0 ghi uses; lặp lại exit 0 [skip], vẫn 1 dòng"
+    },
+    {
+     "ma": "S02-C07",
+     "mo_ta": "stdin rỗng",
+     "entry_point": "--suggest shopee",
+     "dau_vao": "rỗng",
+     "expected": "exit 2"
+    },
+    {
+     "ma": "S02-C08",
+     "mo_ta": "Tắt tính năng",
+     "entry_point": "rollout --disable sales-02 → --suggest",
+     "dau_vao": "tin buyer",
+     "expected": "exit 2, 0 dòng mới"
+    }
+   ]
+  },
+  {
+   "id": "sales-03",
+   "tieu_chi_cu_the": [
+    "Golden FIXTURE (bản sao scratchpad, nạp qua `ingest.golden_store --file`): 1 SKU food mở kênh web/tiktok/zalo + giá list; giá duyệt qua `golden_store --approve-price --by` (người thử)",
+    "`pipelines.content --listing --no-llm` sinh content_drafts content_type=listing created_by agent:mkt02 pending, giá = golden kênh; chạy lại = skipped; SKU rượu/CAM → refused",
+    "`ingest.market_csv` listing fixture + `agents.kd_listing --run` → approval_queue listing_sync (lệch giá/tiêu đề) + market_alert_s1 created_by agent:kd_listing; payload template không chép tiêu đề; lần 2 không nhân đôi; --dry-run không ghi",
+    "`agents.listing_export` chạy thử → từ chối (rollout), không ghi tệp; ép van_hanh (FIXTURE) + mô tả chuẩn web ĐÃ duyệt → CSV+manifest giá = price_list đã duyệt; --verify khớp; sửa tệp → lệch exit 1",
+    "Tắt → content listing/kd_listing không sinh"
+   ],
+   "ca": [
+    {
+     "ma": "S03-C01",
+     "mo_ta": "Sinh nháp listing web+shopee",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py content --listing --sku mat-ong-sam-300ml --channel web --channel shopee --no-llm",
+     "dau_vao": "golden fixture",
+     "expected": "exit 0; 2 nháp listing pending agent:mkt02, giá khớp golden"
+    },
+    {
+     "ma": "S03-C02",
+     "mo_ta": "Chạy lại idempotent",
+     "entry_point": "như C01",
+     "dau_vao": "-",
+     "expected": "skipped, 0 nháp mới"
+    },
+    {
+     "ma": "S03-C03",
+     "mo_ta": "SKU rượu / CAM",
+     "entry_point": "content --listing --sku ruou-...,saphraton-40v",
+     "dau_vao": "-",
+     "expected": "refused (ruou/readiness), 0 ghi"
+    },
+    {
+     "ma": "S03-C04",
+     "mo_ta": "kd_listing dry-run",
+     "entry_point": "python -m agents.kd_listing --run --dry-run",
+     "dau_vao": "snapshot listing fixture",
+     "expected": "exit 0, 0 dòng approval_queue mới"
+    },
+    {
+     "ma": "S03-C05",
+     "mo_ta": "kd_listing run",
+     "entry_point": "python -m agents.kd_listing --run",
+     "dau_vao": "listing lệch giá + rượu đang bán",
+     "expected": "listing_sync + market_alert_s1 agent:kd_listing; lần 2 0 mới"
+    },
+    {
+     "ma": "S03-C06",
+     "mo_ta": "listing_export chạy thử",
+     "entry_point": "python -m agents.listing_export --sku K --channel shopee --out DIR",
+     "dau_vao": "-",
+     "expected": "exit 1 từ chối rollout, không tệp"
+    },
+    {
+     "ma": "S03-C07",
+     "mo_ta": "listing_export ép van_hanh",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py listing_export (FIXTURE _FORCE_MODE=van_hanh)",
+     "dau_vao": "mô tả web đã duyệt + giá shopee đã duyệt",
+     "expected": "exit 0 CSV+manifest gia_id = price_list duyệt; --verify exit 0"
+    },
+    {
+     "ma": "S03-C08",
+     "mo_ta": "verify tệp bị sửa",
+     "entry_point": "listing_export --verify",
+     "dau_vao": "CSV sửa 1 byte",
+     "expected": "exit 1 LỆCH"
+    },
+    {
+     "ma": "S03-C09",
+     "mo_ta": "Export SKU chưa có mô tả duyệt",
+     "entry_point": "listing_export ép van_hanh",
+     "dau_vao": "saphraton-20v",
+     "expected": "exit 1 từ chối"
+    },
+    {
+     "ma": "S03-C10",
+     "mo_ta": "Tắt",
+     "entry_point": "rollout --disable sales-03 → content --listing",
+     "dau_vao": "-",
+     "expected": "không sinh nháp (RolloutBlocked)"
+    }
+   ]
+  },
+  {
+   "id": "sales-04.1",
+   "tieu_chi_cu_the": [
+    "`ingest.lead_store` (DATA_DIR → scratchpad convlog fixture) nạp leads; idempotent",
+    "`ingest.crm --owner LEAD --staff MÃ --by` ghi owner = MÃ (không tên) + owner_due_at = giờ làm việc theo cấu hình; agent_action_log; tên người làm --staff → exit 2 không ghi",
+    "`agents.sales_director --run` đẩy lead_followup created_by agent:sales_director cho lead chưa gán quá hạn, payload không câu khách; chạy lại không nhân đôi",
+    "--dry-run --now (giờ giả sau hạn) chỉ đọc: kế hoạch có lead_followup cho lead đã gán quá hạn, 0 ghi",
+    "Tắt → loader lead_store exit 2"
+   ],
+   "ca": [
+    {
+     "ma": "S041-C01",
+     "mo_ta": "Nạp lead từ convlog",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py lead_store (DATA_DIR scratchpad)",
+     "dau_vao": "convlog fixture 2 câu hỏi mua (ts hôm qua 09:00 VN — FIXTURE dữ liệu đầu vào)",
+     "expected": "exit 0; leads mới; chạy lại mới=0"
+    },
+    {
+     "ma": "S041-C02",
+     "mo_ta": "Gán người phụ trách",
+     "entry_point": "python -m ingest.crm --owner L --staff NVTHU01 --by 'Trưởng KD Thử IT'",
+     "dau_vao": "lead 1",
+     "expected": "exit 0; owner_staff=NVTHU01, owner_due_at>now; action log"
+    },
+    {
+     "ma": "S041-C03",
+     "mo_ta": "--staff là tên người",
+     "entry_point": "crm --owner L --staff 'Nguyen Van A'",
+     "dau_vao": "-",
+     "expected": "exit 2; không ghi"
+    },
+    {
+     "ma": "S041-C04",
+     "mo_ta": "sales_director lead_followup",
+     "entry_point": "python -m agents.sales_director --run (DATA_DIR scratchpad)",
+     "dau_vao": "lead chưa gán từ hôm qua",
+     "expected": "lead_followup agent:sales_director object lead:<id>:chua_gan; lần 2 0 mới"
+    },
+    {
+     "ma": "S041-C05",
+     "mo_ta": "Dry-run giờ giả",
+     "entry_point": "sales_director --run --dry-run --now <sau hạn>",
+     "dau_vao": "lead đã gán",
+     "expected": "kế hoạch có lead_followup lead đã gán; 0 dòng mới"
+    },
+    {
+     "ma": "S041-C06",
+     "mo_ta": "Tắt",
+     "entry_point": "rollout --disable sales-04.1 → lead_store",
+     "dau_vao": "-",
+     "expected": "exit 2 [rollout]"
+    }
+   ]
+  },
+  {
+   "id": "sales-04.2",
+   "tieu_chi_cu_the": [
+    "Sổ đại lý FIXTURE (scratchpad) nạp qua `crm --load-dealers PATH --by`",
+    "`crm --add-contact -` (stdin) lưu PII chỉ dạng ciphertext Fernet (khóa thử CONTACT_VAULT_KEY); bảng không chứa SĐT/email thô",
+    "`crm --assign LEAD --dealer --province` gán đại lý theo tỉnh",
+    "`crm --handoff` KHÔNG có đồng ý dai_ly đích danh → exit 1, không payload; có đồng ý → in payload (người tự chuyển, hệ thống không gửi), agent_action_log crm_handoff detail không PII",
+    "Rút đồng ý / đồng ý cho đại lý khác → handoff bị chặn; thiếu khóa vault → exit 2"
+   ],
+   "ca": [
+    {
+     "ma": "S042-C01",
+     "mo_ta": "Nạp sổ đại lý",
+     "entry_point": "python -m ingest.crm --load-dealers <fixture> --by",
+     "dau_vao": "2 đại lý thử",
+     "expected": "exit 0, dealers mới=2"
+    },
+    {
+     "ma": "S042-C02",
+     "mo_ta": "Thêm liên hệ",
+     "entry_point": "crm --add-contact - --lead L --by",
+     "dau_vao": "JSON PII giả",
+     "expected": "exit 0; contacts ciphertext, DB không chứa SĐT thô"
+    },
+    {
+     "ma": "S042-C03",
+     "mo_ta": "Gán đại lý theo tỉnh",
+     "entry_point": "crm --assign L --dealer DLTHU01 --province <tỉnh>",
+     "dau_vao": "-",
+     "expected": "exit 0"
+    },
+    {
+     "ma": "S042-C04",
+     "mo_ta": "Handoff chưa đồng ý",
+     "entry_point": "crm --handoff L --dealer DLTHU01 --by",
+     "dau_vao": "-",
+     "expected": "exit 1; không payload; không log crm_handoff"
+    },
+    {
+     "ma": "S042-C05",
+     "mo_ta": "Đồng ý dai_ly + handoff",
+     "entry_point": "crm --consent C --purpose dai_ly --grant --dealer DLTHU01 ... ; crm --handoff",
+     "dau_vao": "-",
+     "expected": "exit 0 payload; consents granted; agent_action_log crm_handoff không PII"
+    },
+    {
+     "ma": "S042-C06",
+     "mo_ta": "Đồng ý đại lý khác",
+     "entry_point": "crm --handoff L --dealer DLTHU02",
+     "dau_vao": "đồng ý chỉ cho DLTHU01",
+     "expected": "exit 1"
+    },
+    {
+     "ma": "S042-C07",
+     "mo_ta": "Rút đồng ý",
+     "entry_point": "crm --consent --withdraw; crm --handoff",
+     "dau_vao": "-",
+     "expected": "exit 1"
+    },
+    {
+     "ma": "S042-C08",
+     "mo_ta": "Thiếu khóa vault",
+     "entry_point": "crm --handoff (CONTACT_VAULT_KEY rỗng)",
+     "dau_vao": "-",
+     "expected": "exit 2"
+    }
+   ]
+  },
+  {
+   "id": "sales-05",
+   "tieu_chi_cu_the": [
+    "`kd_quote --check-matrix` exit 0 với ma trận GIẢ ĐỊNH",
+    "Form B2B mặc định TẮT (exit 2 trước bind); bật trên 127.0.0.1 → POST hợp lệ ghi b2b_requests + contacts mã hóa + consent b2b; sai content-type 415; honeypot 0 ghi",
+    "`kd_quote --quote REQ --submit` → approval_queue b2b_quote/b2b_quote_matrix (khối sales) + finance/b2b_margin_review khi thiếu giá vốn duyệt; nội dung có số do code, không PII",
+    "--export trước duyệt → exit 1; sau người duyệt → xuất; --verify-send khớp → b2b_quote_events da_gui; tệp sửa → exit 1",
+    "`kd_catalog --submit` → b2b_catalog không rượu; `da_b2b --import/--submit-batch` → org_prospect_batch; CSV có SĐT → exit 1 0 dòng",
+    "`kd_quote --followups` → b2b_followup created_by agent:kd_quote cho báo giá duyệt quá ngưỡng; chạy lại không nhân đôi",
+    "Tắt → không sinh"
+   ],
+   "ca": [
+    {
+     "ma": "S05-C01",
+     "mo_ta": "Kiểm ma trận",
+     "entry_point": "python -m agents.kd_quote --check-matrix",
+     "dau_vao": "data/b2b_pricing.json",
+     "expected": "exit 0"
+    },
+    {
+     "ma": "S05-C02",
+     "mo_ta": "Form tắt mặc định",
+     "entry_point": "python -m connectors.b2b_form",
+     "dau_vao": "không B2B_FORM_ENABLED",
+     "expected": "exit 2, không bind"
+    },
+    {
+     "ma": "S05-C03",
+     "mo_ta": "Form bật localhost POST",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py b2b_form (B2B_FORM_ENABLED=1, 127.0.0.1)",
+     "dau_vao": "form hợp lệ PII giả; form sai CT; honeypot",
+     "expected": "200 + 1 b2b_requests; 415; honeypot 0 ghi"
+    },
+    {
+     "ma": "S05-C04",
+     "mo_ta": "Lập báo giá + submit",
+     "entry_point": "python -m agents.kd_quote --quote REQ --submit",
+     "dau_vao": "yêu cầu từ form",
+     "expected": "exit 0; mục b2b_quote|b2b_quote_matrix sales (+ finance/b2b_margin_review nếu thiếu giá vốn)"
+    },
+    {
+     "ma": "S05-C05",
+     "mo_ta": "Export trước duyệt",
+     "entry_point": "kd_quote --export QID --out F.md",
+     "dau_vao": "-",
+     "expected": "exit 1"
+    },
+    {
+     "ma": "S05-C06",
+     "mo_ta": "Duyệt + export + verify-send",
+     "entry_point": "approval_queue --approve; kd_quote --export; --verify-send",
+     "dau_vao": "-",
+     "expected": "export ok; verify khớp exit 0 → b2b_quote_events da_gui; tệp sửa exit 1"
+    },
+    {
+     "ma": "S05-C07",
+     "mo_ta": "Catalog",
+     "entry_point": "kd_catalog --build --out-dir; --submit",
+     "dau_vao": "golden",
+     "expected": "b2b_catalog không rượu"
+    },
+    {
+     "ma": "S05-C08",
+     "mo_ta": "Danh sách tổ chức",
+     "entry_point": "da_b2b --import F --by; --submit-batch; CSV có SĐT",
+     "dau_vao": "CSV fixture",
+     "expected": "org_prospect_batch; CSV lỗi exit 1 0 dòng"
+    },
+    {
+     "ma": "S05-C09",
+     "mo_ta": "Nhắc chốt đơn",
+     "entry_point": "kd_quote --followups [--dry-run]",
+     "dau_vao": "báo giá đã duyệt quá ngưỡng (FIXTURE nếu cần mốc)",
+     "expected": "b2b_followup agent:kd_quote; lần 2 0 mới"
+    },
+    {
+     "ma": "S05-C10",
+     "mo_ta": "Tắt",
+     "entry_point": "rollout --disable sales-05 → kd_quote --quote --submit",
+     "dau_vao": "-",
+     "expected": "không sinh mục"
+    }
+   ]
+  },
+  {
+   "id": "sales-06.1",
+   "tieu_chi_cu_the": [
+    "`ingest.dealer_price --file --by` nạp dealer_price_obs; cùng file → skip; header/URL lỗi, đại lý lạ → exit 1 0 dòng",
+    "`kd_price --dealer-watch` → dealer_price_alert created_by agent:kd_price cho giá < floor golden; file --sample không sinh; chạy lại không nhân đôi",
+    "`kd_price --run` trên listing fixture → market_alert_s1 (below_floor) / price_change created_by agent:kd_price; --dry-run 0 ghi",
+    "`sales_director --run` → market_alert_s1/s2 (từ market_alerts) và price_review (golden_discrepancies) created_by agent:sales_director",
+    "Không đổi giá: price_list không đổi sau các lệnh",
+    "Tắt → loader dealer_price exit 2"
+   ],
+   "ca": [
+    {
+     "ma": "S061-C01",
+     "mo_ta": "Nạp giá đại lý",
+     "entry_point": "python -m ingest.dealer_price --file F --by 'MXH Thử IT'",
+     "dau_vao": "CSV fixture 2 dòng (1 dưới floor)",
+     "expected": "exit 0; 2 dòng; lần 2 [skip]"
+    },
+    {
+     "ma": "S061-C02",
+     "mo_ta": "File lỗi",
+     "entry_point": "dealer_price --file bad.csv",
+     "dau_vao": "URL có SĐT / cột lạ / đại lý lạ",
+     "expected": "exit 1; 0 dòng"
+    },
+    {
+     "ma": "S061-C03",
+     "mo_ta": "dealer-watch",
+     "entry_point": "python -m agents.kd_price --dealer-watch",
+     "dau_vao": "obs dưới floor",
+     "expected": "dealer_price_alert agent:kd_price; lần 2 0 mới; obs --sample không cảnh báo"
+    },
+    {
+     "ma": "S061-C04",
+     "mo_ta": "kd_price run",
+     "entry_point": "python -m agents.kd_price --run [--dry-run]",
+     "dau_vao": "listing fixture giá < floor",
+     "expected": "market_alert_s1/price_change agent:kd_price; dry-run 0 ghi"
+    },
+    {
+     "ma": "S061-C05",
+     "mo_ta": "sales_director",
+     "entry_point": "python -m agents.sales_director --run",
+     "dau_vao": "market_alerts open + golden_discrepancies",
+     "expected": "market_alert_s1/s2 + price_review agent:sales_director (nếu nguồn có)"
+    },
+    {
+     "ma": "S061-C06",
+     "mo_ta": "Không đổi giá",
+     "entry_point": "SQL đối chiếu price_list",
+     "dau_vao": "-",
+     "expected": "price_list không đổi do agent"
+    },
+    {
+     "ma": "S061-C07",
+     "mo_ta": "Tắt",
+     "entry_point": "rollout --disable sales-06.1 → dealer_price",
+     "dau_vao": "-",
+     "expected": "exit 2"
+    }
+   ]
+  },
+  {
+   "id": "sales-06.2",
+   "tieu_chi_cu_the": [
+    "`ingest.market_csv --kind order` (fixture, cột người mua bị bỏ) + `kd_orders --sync` → orders source market:<kênh>, không PII",
+    "`kd_orders --watch --dry-run --as-of` → kế hoạch order_anomaly khi tỷ lệ hủy vượt ngưỡng tuần đã đóng; 0 ghi",
+    "`kd_orders --watch` → order_anomaly created_by agent:kd_orders payload tỷ lệ/tuần; đơn trễ = chưa đo (không suy); chạy lại không nhân đôi",
+    "Dưới min_orders → không cảnh báo; file cột lạ → exit 1 0 dòng",
+    "Tắt → loader market_csv/--watch không sinh"
+   ],
+   "ca": [
+    {
+     "ma": "S062-C01",
+     "mo_ta": "Nạp đơn + sync",
+     "entry_point": "python -m ingest.market_csv --file F --channel shopee --kind order; python -m agents.kd_orders --sync",
+     "dau_vao": "12 đơn (5 hủy), có cột SĐT người mua",
+     "expected": "exit 0; orders market:shopee; DB không có SĐT"
+    },
+    {
+     "ma": "S062-C02",
+     "mo_ta": "File cột lạ",
+     "entry_point": "market_csv --file bad",
+     "dau_vao": "-",
+     "expected": "exit 1; 0 dòng"
+    },
+    {
+     "ma": "S062-C03",
+     "mo_ta": "watch dry-run as-of tuần sau",
+     "entry_point": "kd_orders --watch --dry-run --as-of",
+     "dau_vao": "-",
+     "expected": "kế hoạch có hủy vượt ngưỡng; 0 ghi"
+    },
+    {
+     "ma": "S062-C04",
+     "mo_ta": "watch thật",
+     "entry_point": "kd_orders --watch",
+     "dau_vao": "đơn ở tuần đã đóng (FIXTURE dời orders.ts nếu cần)",
+     "expected": "order_anomaly agent:kd_orders; lần 2 0 mới; trễ 'chưa đo'"
+    },
+    {
+     "ma": "S062-C05",
+     "mo_ta": "Dưới min_orders",
+     "entry_point": "kd_orders --watch --dry-run",
+     "dau_vao": "kênh tiktok 3 đơn",
+     "expected": "không cảnh báo tiktok"
+    },
+    {
+     "ma": "S062-C06",
+     "mo_ta": "Tắt",
+     "entry_point": "rollout --disable sales-06.2 → market_csv/--watch",
+     "dau_vao": "-",
+     "expected": "chặn"
+    }
+   ]
+  },
+  {
+   "id": "sales-07.1",
+   "tieu_chi_cu_the": [
+    "`agents.kd_live` (fake chat ở biên — MOCK) → content_drafts livestream_script pending created_by agent:kd_a9; giỏ + giá do code từ v_promotable (giá list ĐÃ duyệt); câu LLM chạm số/giá bị bỏ; câu hỏi sức khỏe → template",
+    "Giỏ có rượu / SKU không promotable → từ chối trước LLM (0 lời gọi, 0 ghi)",
+    "--dry-run không lưu; vượt trần phiên/tuần → từ chối",
+    "LLM không khả dụng (key rỗng) → exit 1 không nháp",
+    "Tắt → không sinh"
+   ],
+   "ca": [
+    {
+     "ma": "S071-C01",
+     "mo_ta": "Kịch bản livestream",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py kd_live --channel tiktok --cart mat-ong-sam-300ml --day D --brief ...",
+     "dau_vao": "fake JSON có câu chứa giá + câu sức khỏe",
+     "expected": "exit 0; nháp pending agent:kd_a9; giá = price_list duyệt; câu số bị bỏ; Q sức khỏe → template"
+    },
+    {
+     "ma": "S071-C02",
+     "mo_ta": "Giỏ rượu",
+     "entry_point": "kd_live --cart ruou-...",
+     "dau_vao": "-",
+     "expected": "exit 1 refuse ruou; 0 lời gọi"
+    },
+    {
+     "ma": "S071-C03",
+     "mo_ta": "SKU không promotable",
+     "entry_point": "kd_live --cart saphraton-20v",
+     "dau_vao": "-",
+     "expected": "exit 1 khong_promotable"
+    },
+    {
+     "ma": "S071-C04",
+     "mo_ta": "dry-run",
+     "entry_point": "kd_live --dry-run",
+     "dau_vao": "-",
+     "expected": "exit 0; 0 nháp"
+    },
+    {
+     "ma": "S071-C05",
+     "mo_ta": "Trần phiên/tuần",
+     "entry_point": "kd_live lần 2,3 cùng tuần",
+     "dau_vao": "max 2",
+     "expected": "lần vượt → vuot_tran_phien"
+    },
+    {
+     "ma": "S071-C06",
+     "mo_ta": "LLM không khả dụng",
+     "entry_point": "python -m agents.kd_live (không fake)",
+     "dau_vao": "-",
+     "expected": "exit 1; 0 nháp"
+    },
+    {
+     "ma": "S071-C07",
+     "mo_ta": "Tắt",
+     "entry_point": "rollout --disable sales-07.1 → kd_live",
+     "dau_vao": "-",
+     "expected": "không sinh nháp"
+    }
+   ]
+  },
+  {
+   "id": "sales-07.2",
+   "tieu_chi_cu_the": [
+    "`kd_care --record --by` ghi lần mua kênh sở hữu (stdin, contact_id — không PII)",
+    "`kd_care --run` → care_review (đồng ý cskh) + care_rebuy (đồng ý marketing + SKU promotable zalo) khối sales; khách KHÔNG đồng ý → không mục; payload không SĐT/tên",
+    "Chạy lại không nhân đôi; --plan/--dry-run 0 ghi",
+    "--verify-send trước duyệt → exit 1; sau người duyệt + tệp khớp + đồng ý còn → ok; rút đồng ý → fail",
+    "Tắt → không sinh"
+   ],
+   "ca": [
+    {
+     "ma": "S072-C01",
+     "mo_ta": "Ghi lần mua",
+     "entry_point": "python -m agents.kd_care --record --by 'CSKH Thử IT' < json",
+     "dau_vao": "3 lần mua thử",
+     "expected": "exit 0; care_purchases"
+    },
+    {
+     "ma": "S072-C02",
+     "mo_ta": "Plan/dry-run",
+     "entry_point": "kd_care --plan; --run --dry-run",
+     "dau_vao": "-",
+     "expected": "0 ghi"
+    },
+    {
+     "ma": "S072-C03",
+     "mo_ta": "Run",
+     "entry_point": "kd_care --run",
+     "dau_vao": "consents fixture",
+     "expected": "care_review/care_rebuy chỉ cho khách có đồng ý; lần 2 0 mới"
+    },
+    {
+     "ma": "S072-C04",
+     "mo_ta": "verify-send",
+     "entry_point": "kd_care --verify-send ID FILE",
+     "dau_vao": "trước/sau duyệt, tệp sửa",
+     "expected": "trước duyệt exit 1; sau duyệt khớp exit 0; sửa exit 1"
+    },
+    {
+     "ma": "S072-C05",
+     "mo_ta": "Tắt",
+     "entry_point": "rollout --disable sales-07.2 → kd_care --run",
+     "dau_vao": "-",
+     "expected": "không sinh"
+    }
+   ]
+  },
+  {
+   "id": "sales-07.3",
+   "tieu_chi_cu_the": [
+    "`pipelines.scenario --sku --channel --weeks 13 --json` trả thấp/cơ sở/cao (tất định)",
+    "`ingest.inventory_csv --file` tồn fixture; `agents.kd_forecast --write` (REPORTS_DIR → evidence) ghi kd-forecast-<start>.md có ô thấp–cơ sở–cao + đối chiếu tồn (THIẾU/THỪA), nhãn CHẠY THỬ, sổ report_outputs",
+    "SKU không có tồn → 'chưa có số tồn' (không suy 0); SKU lạ → exit 1; tồn từ file mẫu → nhãn MẪU, sample=true",
+    "Tắt → write_report chặn"
+   ],
+   "ca": [
+    {
+     "ma": "S073-C01",
+     "mo_ta": "Kịch bản 1 SKU",
+     "entry_point": "python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 --json",
+     "dau_vao": "giả định GIẢ ĐỊNH",
+     "expected": "exit 0; JSON low≤base≤high; chạy 2 lần trùng"
+    },
+    {
+     "ma": "S073-C02",
+     "mo_ta": "Nạp tồn",
+     "entry_point": "python -m ingest.inventory_csv --file F",
+     "dau_vao": "CSV fixture",
+     "expected": "exit 0"
+    },
+    {
+     "ma": "S073-C03",
+     "mo_ta": "Dự báo + ghi báo cáo",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py kd_forecast --write (REPORTS_DIR evidence)",
+     "dau_vao": "-",
+     "expected": "exit 0; file kd-forecast-*.md nhãn CHẠY THỬ; report_outputs sample=false"
+    },
+    {
+     "ma": "S073-C04",
+     "mo_ta": "SKU lạ",
+     "entry_point": "kd_forecast --sku khong-co",
+     "dau_vao": "-",
+     "expected": "exit 1"
+    },
+    {
+     "ma": "S073-C05",
+     "mo_ta": "Tồn mẫu",
+     "entry_point": "inventory_csv --source sample + kd_forecast --write",
+     "dau_vao": "-",
+     "expected": "nhãn MẪU; report_outputs sample=true"
+    },
+    {
+     "ma": "S073-C06",
+     "mo_ta": "Tắt",
+     "entry_point": "rollout --disable sales-07.3 → kd_forecast --write",
+     "dau_vao": "-",
+     "expected": "không ghi báo cáo"
+    }
+   ]
+  },
+  {
+   "id": "sales-08",
+   "tieu_chi_cu_the": [
+    "Phần nội bộ: `listing_export --website-feed --out` là NGUỒN DỮ LIỆU (không phải website): chạy thử → từ chối; ép van_hanh (FIXTURE) → JSON+manifest; rượu an_gia=true gio_hang=false; SKU không đủ điều kiện có ly_do, không bịa giá",
+    "Website (trang SP/giỏ/thanh toán) không ở repo này → BI_CHAN SEPARATE_REPO"
+   ],
+   "ca": [
+    {
+     "ma": "S08-C01",
+     "mo_ta": "Feed chạy thử",
+     "entry_point": "python -m agents.listing_export --website-feed --out DIR",
+     "dau_vao": "-",
+     "expected": "exit 1 từ chối rollout"
+    },
+    {
+     "ma": "S08-C02",
+     "mo_ta": "Feed ép van_hanh",
+     "entry_point": "python evidence/itacc_r10/g2/harness/run_mod.py listing_export --website-feed (FIXTURE)",
+     "dau_vao": "golden fixture",
+     "expected": "rượu ẩn giá + không giỏ; SKU thiếu điều kiện có ly_do"
+    },
+    {
+     "ma": "S08-C03",
+     "mo_ta": "Website thật",
+     "entry_point": "-",
+     "dau_vao": "-",
+     "expected": "NOT_RUN — repo riêng chưa giao"
+    }
+   ]
+  },
+  {
+   "id": "sales-09",
+   "tieu_chi_cu_the": [
+    "Không có module/entry point chatbot website trong repo (danh mục modules rỗng) → không có gì để chạy; BI_CHAN SEPARATE_REPO",
+    "Phần nội bộ liên quan: luật kênh chung (rượu/sức khỏe) đã kiểm ở sales-01 — không tính thay chatbot website"
+   ],
+   "ca": [
+    {
+     "ma": "S09-C01",
+     "mo_ta": "Rà entry point",
+     "entry_point": "grep repo (connectors/, api/) tìm adapter website chat",
+     "dau_vao": "-",
+     "expected": "không có adapter kênh web chat"
+    },
+    {
+     "ma": "S09-C02",
+     "mo_ta": "Chatbot website thật",
+     "entry_point": "-",
+     "dau_vao": "-",
+     "expected": "NOT_RUN — repo riêng chưa giao"
+    }
+   ]
+  }
+ ]
+}

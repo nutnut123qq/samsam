@@ -1,0 +1,928 @@
+{
+ "id": "ceo-04.3",
+ "ten": "So bài đăng/listing đang chạy với bản đã duyệt",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Kiểm soát nội bộ: 'Mỗi ngày so bài đăng ... đang chạy với bản đã duyệt'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/ceo-04.3.json",
+  "sha256": "422757ef246cf35034dd3af23c14f38935fbe2dbd5f5fd3417846e31457497bb"
+ },
+ "ly_do_chay_lai": "r10/r11 CODE_FAIL (g1-L1, g1-L2) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+ "fingerprint_code_luc_khoa": "3fda9aa991de6d2eeb799572bd7e8f7debd43be221c224ad39484f69c8549e0a",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_ceo_v2.json",
+ "tieu_chi_sha256": "ee6f013a935052c58dc33ec374a5aaa0140830cff5cbb5d0af6a59b5e9ec2139",
+ "tieu_chi_khoa": "r12_ceo_v2.json ee6f013a935052c58dc33ec374a5aaa0140830cff5cbb5d0af6a59b5e9ec2139 2026-10-24T10:57:40+07:00",
+ "tieu_chi": [
+  "T1 `python -m agents.ceo_audit --report --now <ISO> --out-dir <scratch>` exit 0",
+  "T2 ceo-audit-<ngày>.md phân loại đúng: bài khớp bản duyệt → khop; bài sửa sau duyệt → lech_ban_duyet; bài không bản duyệt → thieu_ban_duyet; listing tiêu đề khớp bản duyệt listing → khop; listing không có bản duyệt → thieu; listing không map SKU → khong_xac_dinh_sku; tỷ lệ tuân thủ theo kênh; không chép text bài",
+  "T3 ca âm: chỉ đọc (không ghi bảng); tính năng ceo-04.3 tắt → không sinh ceo-audit nhưng không được chặn đầu ra tính năng khác (ceo-gia của ceo-04.4)",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+  "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_c01/c021/c022/c03/c043/c044/c05 dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống, login owner thử như r10); OPENROUTER_API_KEY rỗng, DEPLOY/RED_ALERT_NOTIFY tắt; rollout --seed (tính năng = chạy thử); fake ở biên: CHỈ ceo-02.1 C09 ép rollout._FORCE_MODE='van_hanh' bằng force_vanhanh.py.txt (= r10); không gọi AI (--llm tắt). DB samsam_itacc_r12_c043.",
+ "run_id": "20261024T111226-2c2c",
+ "ca": [
+  {
+   "ma": "ceo-04.3__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:26+07:00",
+      "ket_thuc": "2026-10-24T11:12:27+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__S01"
+  },
+  {
+   "ma": "ceo-04.3__C01",
+   "nguon_r10": "C01",
+   "mo_ta": "Fixture: nháp đã duyệt (mk_drafts r10 lượt 2 → #4/#5/#6; r12 đặt sequence content_drafts=3 thay cho lượt 1 hỏng của r10 để id khớp draft_id trong it_g1_posts.csv nguyên văn) + bài đăng (ra_kenh) + listing (market_csv)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "SETVAL 3"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\"post_ok\": 4, \"post_sua\": 5, \"listing_mo\": 6"
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where id in (4, 5, 6) and status = 'approved'",
+      "expect": 3
+     },
+     {
+      "sql": "select count(*) from channel_posts",
+      "expect": 3
+     },
+     {
+      "sql": "select count(*) from market_rows",
+      "expect": 5
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5,autocommit=True); assert c.execute('select count(*) from content_drafts').fetchone()[0]==0, 'content_drafts không rỗng'; print('SETVAL', c.execute(\"select setval(pg_get_serial_sequence('content_drafts','id'), 3)\").fetchone()[0])",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "SETVAL 3",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:12:27+07:00",
+      "ket_thuc": "2026-10-24T11:12:28+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\fixtures/items/ceo-04.3/mk_drafts.py.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\"post_ok\": 4, \"post_sua\": 5, \"listing_mo\": 6",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:12:28+07:00",
+      "ket_thuc": "2026-10-24T11:12:32+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.store --approve 4 --by Người Duyệt Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:32+07:00",
+      "ket_thuc": "2026-10-24T11:12:37+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step03.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.store --approve 5 --by Người Duyệt Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:37+07:00",
+      "ket_thuc": "2026-10-24T11:12:41+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step04.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step04.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.store --approve 6 --by Người Duyệt Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:41+07:00",
+      "ket_thuc": "2026-10-24T11:12:45+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step05.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step05.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.ra_kenh --file evidence\\itacc_r12\\fixtures/items/ceo-04.3/it_g1_posts.csv --by Quản lý MXH Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:45+07:00",
+      "ket_thuc": "2026-10-24T11:12:49+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step06.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step06.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.market_csv --file evidence\\itacc_r12\\fixtures/items/ceo-04.3/it_g1_listing_shopee.csv --channel shopee --kind listing",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:49+07:00",
+      "ket_thuc": "2026-10-24T11:12:50+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step07.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step07.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where id in (4, 5, 6) and status = 'approved'",
+      "expect": 3,
+      "actual": 3,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from channel_posts",
+      "expect": 3,
+      "actual": 3,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from market_rows",
+      "expect": 5,
+      "actual": 5,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01"
+  },
+  {
+   "ma": "ceo-04.3__C02",
+   "nguon_r10": "C02",
+   "mo_ta": "Audit: số đếm khop/lech/thieu/khong_xac_dinh_sku đúng fixture, tỷ lệ theo kênh",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+      "count": 1
+     },
+     {
+      "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+      "re": "\\| facebook \\| 3 \\| 1 \\| 33,3% \\| 1 \\| 1 \\| 0 \\|",
+      "expect": true
+     },
+     {
+      "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+      "re": "\\| shopee \\| 5 \\| 1 \\| 20% \\| 0 \\| 3 \\| 1 \\|",
+      "expect": true
+     },
+     {
+      "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+      "re": "\\| tiktok \\| 0 \\| 0 \\| — \\| 0 \\| 0 \\| 0 \\| chưa có dữ liệu quan sát",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.ceo_audit --report --now 2026-10-23T10:00:00+07:00 --out-dir evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:50+07:00",
+      "ket_thuc": "2026-10-24T11:12:52+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-audit-2026-10-23.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/scratch/rep43/ceo-audit-2026-10-23.md",
+        "sha256": "3b9c1678887b59ae19d0c40ce4debf9f2c17107b3c648337570208d41800cb01"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-audit-2026-10-23.md",
+      "re": "\\| facebook \\| 3 \\| 1 \\| 33,3% \\| 1 \\| 1 \\| 0 \\|",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-audit-2026-10-23.md",
+      "re": "\\| shopee \\| 5 \\| 1 \\| 20% \\| 0 \\| 3 \\| 1 \\|",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-audit-2026-10-23.md",
+      "re": "\\| tiktok \\| 0 \\| 0 \\| — \\| 0 \\| 0 \\| 0 \\| chưa có dữ liệu quan sát",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C02"
+  },
+  {
+   "ma": "ceo-04.3__X02",
+   "nguon_r10": "MOI",
+   "mo_ta": "T2/T5 (r10 actual C02): không chép text bài/tiêu đề listing; nhãn CHẠY THỬ ceo-04.3; report_outputs ceo-04.3 (chỉ kiểm)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [],
+    "kiem": [
+     {
+      "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+      "re": "món quà Tết ấm áp|Hộp quà Tết Thử IT|Bài đăng không qua duyệt|Savina tuýp 12 viên|Saphraton 20 viên|Sản phẩm lạ Thử IT|Mật ong sâm 300ml hộp quà",
+      "expect": false
+     },
+     {
+      "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+      "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-04\\.3 ",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-04.3' and name = 'ceo-audit-2026-10-23.md'",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-audit-2026-10-23.md",
+      "re": "món quà Tết ấm áp|Hộp quà Tết Thử IT|Bài đăng không qua duyệt|Savina tuýp 12 viên|Saphraton 20 viên|Sản phẩm lạ Thử IT|Mật ong sâm 300ml hộp quà",
+      "expect": false,
+      "actual": false,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-audit-2026-10-23.md",
+      "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-04\\.3 ",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-04.3' and name = 'ceo-audit-2026-10-23.md'",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X02"
+  },
+  {
+   "ma": "ceo-04.3__C03",
+   "nguon_r10": "C03",
+   "mo_ta": "Chỉ đọc: băm nội dung approval_queue/red_alerts/channel_posts/market_alerts/content_drafts/approvals trước = sau ceo_audit --report",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "TRUOC"
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\bKHONG_DOI\\b"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); v=sorted((t, c.execute('select count(*)::text || chr(58) || md5(coalesce(string_agg(x::text, chr(10) order by x::text), chr(32))) from '+t+' x').fetchone()[0]) for t in sys.argv[2:]); c.close(); open(sys.argv[1],'w',encoding='utf-8').write(repr(v)); print('TRUOC', v) evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\ceo-04.3__C03\\out/truoc.txt approval_queue red_alerts channel_posts market_alerts content_drafts approvals",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "TRUOC",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:12:52+07:00",
+      "ket_thuc": "2026-10-24T11:12:53+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.ceo_audit --report --now 2026-10-23T10:00:00+07:00 --out-dir evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\ceo-04.3__C03\\out/rep",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:53+07:00",
+      "ket_thuc": "2026-10-24T11:12:54+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step02.stderr.txt"
+     },
+     {
+      "argv": "python -c import os,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); v=sorted((t, c.execute('select count(*)::text || chr(58) || md5(coalesce(string_agg(x::text, chr(10) order by x::text), chr(32))) from '+t+' x').fetchone()[0]) for t in sys.argv[2:]); c.close(); b=open(sys.argv[1],encoding='utf-8').read(); print('SAU', v); print('KHONG_DOI' if repr(v)==b else 'THAY_DOI'); sys.exit(0 if repr(v)==b else 1) evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\ceo-04.3__C03\\out/truoc.txt approval_queue red_alerts channel_posts market_alerts content_drafts approvals",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\bKHONG_DOI\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:12:54+07:00",
+      "ket_thuc": "2026-10-24T11:12:55+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step03.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03"
+  },
+  {
+   "ma": "ceo-04.3__C04",
+   "nguon_r10": "C04",
+   "mo_ta": "Tắt ceo-04.3 → không ceo-audit-2026-10-24.md; ceo-gia-2026-10-24.md VẪN sinh (ceo-04.4 độc lập — G1-L1 đã vá)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": [
+       0,
+       1,
+       2
+      ]
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/rep43/ceo-audit-2026-10-24.md",
+      "count": 0
+     },
+     {
+      "file_glob": "{SCR}/rep43/ceo-gia-2026-10-24.md",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable ceo-04.3 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:55+07:00",
+      "ket_thuc": "2026-10-24T11:12:56+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.ceo_audit --report --now 2026-10-24T10:00:00+07:00 --out-dir evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43",
+      "exit": 2,
+      "expect_exit": [
+       0,
+       1,
+       2
+      ],
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:56+07:00",
+      "ket_thuc": "2026-10-24T11:12:58+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-audit-2026-10-24.md",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-gia-2026-10-24.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/scratch/rep43/ceo-gia-2026-10-24.md",
+        "sha256": "33a9fedbdbd02c5a37ad006fd3f35c0a3565e22013d711d6561456837a48c9ee"
+       }
+      ],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04"
+  },
+  {
+   "ma": "ceo-04.3__X04",
+   "nguon_r10": "MOI",
+   "mo_ta": "RB/G1-L1: ceo-04.3 tắt → exit 2 '[rollout] … ceo-04.3', không traceback, ceo-gia vẫn sinh; bật lại",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*ceo-04\\.3\\b",
+      "stderr_re": "^(?![\\s\\S]*Traceback)"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{OUT}/ceo-audit-*",
+      "count": 0
+     },
+     {
+      "file_glob": "{OUT}/ceo-gia-2026-10-24.md",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.ceo_audit --report --now 2026-10-24T10:00:00+07:00 --out-dir evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\ceo-04.3__X04\\out",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*ceo-04\\.3\\b",
+        "khop": true
+       },
+       {
+        "stderr_re": "^(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:12:58+07:00",
+      "ket_thuc": "2026-10-24T11:12:59+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.rollout --promote ceo-04.3 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:59+07:00",
+      "ket_thuc": "2026-10-24T11:13:00+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\ceo-04.3__X04\\out/ceo-audit-*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\ceo-04.3__X04\\out/ceo-gia-2026-10-24.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/out/ceo-gia-2026-10-24.md",
+        "sha256": "33a9fedbdbd02c5a37ad006fd3f35c0a3565e22013d711d6561456837a48c9ee"
+       }
+      ],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Tiền đề đặt sequence content_drafts trong DB thử để khớp draft_id của fixture r10. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/asserts.json",
+   "sha256": "d63e32b5636150d7ef3412ac52350895e264c830c7b96e39eced7b2a3617a25d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/case.json",
+   "sha256": "4cf39771d109d9d9ac75c4cef7785f976395629c290bba21a700a0f28ec99d16"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step01.cmd.json",
+   "sha256": "d13726fb6adbf201efcae0b686ca1223c953c069f09f498b4d2fd448e4249d3c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step01.stdout.txt",
+   "sha256": "bd86bbac4f245efb6e589f4940c6b7097b25d2e87be76aa0ffd8f81c839329f1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step02.cmd.json",
+   "sha256": "b50e522730740ab9fca9d466d823d9adb33e4dbb040601b140e87c4ba2037ba3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step02.stdout.txt",
+   "sha256": "7713f9d641f877ae5ac903e8b614e3332da6bad1c897019e6534bf27658cd558"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step03.cmd.json",
+   "sha256": "3486fbb9a1fe1537b424d95494a97a713d2318a62c661fb65850c562f2024a8d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step03.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step03.stdout.txt",
+   "sha256": "c06793cd6de334381a81b5da353608e845fe2ecb7ee3bce6cae371e403b22013"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step04.cmd.json",
+   "sha256": "2b581c29f8e15fe38a9508b3b10a4f5577a10b071ea90ffaf872525adaba68c5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step04.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step04.stdout.txt",
+   "sha256": "2fea40214369a5680a950f1b274921ce93ae3ea9878f3d114f310f620d6093ba"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step05.cmd.json",
+   "sha256": "015e4567b3035eb829d1fc6a7f71e825f5e7055fcf942c30c5906ce04ed3b284"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step05.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step05.stdout.txt",
+   "sha256": "c026366a4b7a9113156f864aabe148b657add438f2bc080e07773a163c0a0663"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step06.cmd.json",
+   "sha256": "543d090cc97e100af1385234b4e6bf5b80caeaa89b900a45908a5c953d50c5a1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step06.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step06.stdout.txt",
+   "sha256": "a0b1ea2721dc4891230045897b29d79d19528a52087136596fd1c5b68cb20ebd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step07.cmd.json",
+   "sha256": "4a2e9344f372c71e39dec05c0c34a0e3814b3c4fddc51b5b7665d502c6bc3da7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step07.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C01/step07.stdout.txt",
+   "sha256": "876f19d609a7c3789b5bc2a3c1ea24b44e33e537686411cc6f8030ec95c646c9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C02/asserts.json",
+   "sha256": "9753fe40b908c2bcd1abf97696cade7b8ce22994962069ae317019bdb52b505e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C02/case.json",
+   "sha256": "88c0859f68609e3829e6235af4e27e2685c2d06e125a0a4eecfa18e3a6b54347"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C02/step01.cmd.json",
+   "sha256": "d6604fdde0902ff48884aa7ba827f2340f22b2681786bf5495d9b2cdc301ee29"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C02/step01.stdout.txt",
+   "sha256": "8b902b1e632861998ce2fe819a2b297ce2bfd8f19922b3e15b4d0d6fd0bd7528"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/case.json",
+   "sha256": "2eab2937edd31fb89b91807465101ebd07ebda05caf8bae04f5dd5ebbb51c8c6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/out/rep/ceo-audit-2026-10-23.md",
+   "sha256": "3b9c1678887b59ae19d0c40ce4debf9f2c17107b3c648337570208d41800cb01"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/out/rep/ceo-gia-2026-10-23.md",
+   "sha256": "bd9a34d4b56a88abfca63266f5d026fa1a127f1302d53d40362b54c64d64e010"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/out/truoc.txt",
+   "sha256": "d82fe248b16dbdd44d301ce1ec58a11248d2a4ea7f1e7c60c659c7b4cd8f0c94"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step01.cmd.json",
+   "sha256": "67ea1d4ca2eec12f56752203865b20c75696067cef58e2dcbdeceb9091a0cd89"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step01.stdout.txt",
+   "sha256": "c6f2f7d317b5caa122e7d3c7512c1f9b65c71acef1dce3684acc0ee18c73ac34"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step02.cmd.json",
+   "sha256": "b4d61f432ceee43ee04dd5f40b06a0c6d6f192f93c0cf0e27b1165874c394b81"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step02.stdout.txt",
+   "sha256": "a04bc9f9880638659b076ef8ad6bc7bc0a617b9021c8fa1d350131ecb62a1da2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step03.cmd.json",
+   "sha256": "f5110450f29cc1968e8b30947dc349e8db79389d10ea8b386a0541721099da21"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C03/step03.stdout.txt",
+   "sha256": "9eac8bef454c83d4ccea9905e74611e1c84c8ef6a177266a5623ff260230ccb3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/asserts.json",
+   "sha256": "ffcd34cb6648bf03e205882de475f270938cf990a0fd8fd6b7c27967005b9e91"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/case.json",
+   "sha256": "a77333d8099c193ac12b7b52ca18baec6e62d37e5f830d6f44669a17f22c5f1a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step01.cmd.json",
+   "sha256": "19485202c850da07a31dbb0e96efc1a2336fe4d5b57658e9543ea4134a25dac7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step01.stdout.txt",
+   "sha256": "fa317418ea22f84349538c5f41d12489f2f67701ce49a772b5a67ad6dabcbad3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step02.cmd.json",
+   "sha256": "37484ec0a4189e4419687c0e29a0b28fe68b1d22cf2589826c08e6acd2b41327"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__C04/step02.stdout.txt",
+   "sha256": "cb3ad0a5746856ae7a5f85bc09319156ceaf34e41fdff662a14886e25d919319"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__S01/case.json",
+   "sha256": "c136e5a3226eb605cd0404f195f1971d102974235f6c94ef3164bd2875cc0311"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__S01/step01.cmd.json",
+   "sha256": "f8fa159eac5931b098f43ff825cc21b90a9b9e8d192b33a304ab7a6cb09f3350"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X02/asserts.json",
+   "sha256": "bbf6866650d9fc38052d1f9aa3da881c9ed6d13e4c6264ce26fcb4dbfa95e657"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X02/case.json",
+   "sha256": "da78a1b4bfeb866d91a2cfd5675bc924b0c9e33d4ebac1cec9a46884b1ea45e3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/asserts.json",
+   "sha256": "3b6a1dc29bbd12d3d931565b927aa42e40b925dd1653a5128ccb0f903bed790d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/case.json",
+   "sha256": "da7610afc1324db03a3266ee429c2f25e20094a47613e7c78c9537a65210f840"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/out/ceo-gia-2026-10-24.md",
+   "sha256": "33a9fedbdbd02c5a37ad006fd3f35c0a3565e22013d711d6561456837a48c9ee"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step01.cmd.json",
+   "sha256": "917c84fe169a5c0f6c50267824baefbe1f1a00ea9cda36dba7d0608cd9087148"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step01.stdout.txt",
+   "sha256": "e7e8c85766bb2a9a251d419ab2f2263669bae24ffc932f4cac49725918e868b2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step02.cmd.json",
+   "sha256": "13af7aeda3dc716c7dcde1af953c6f4ee20678302bc05b4fe8e147b2cbb506fb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step02.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ceo-04.3__X04/step02.stdout.txt",
+   "sha256": "bed2cab91e1ab0e76f030a7d16854f6a2f14f38a821b501c500e29c7f2e12e49"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/ket_qua.json",
+   "sha256": "017f50f7def0dd5aa9b911256ef07d37e8f07a09914c468e1ec64ea4a110f4c3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/scratch/rep43/ceo-audit-2026-10-23.md",
+   "sha256": "3b9c1678887b59ae19d0c40ce4debf9f2c17107b3c648337570208d41800cb01"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/scratch/rep43/ceo-gia-2026-10-23.md",
+   "sha256": "bd9a34d4b56a88abfca63266f5d026fa1a127f1302d53d40362b54c64d64e010"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-04.3/20261024T111226-2c2c/scratch/rep43/ceo-gia-2026-10-24.md",
+   "sha256": "33a9fedbdbd02c5a37ad006fd3f35c0a3565e22013d711d6561456837a48c9ee"
+  }
+ ],
+ "loi_san_pham": []
+}

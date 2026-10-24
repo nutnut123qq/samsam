@@ -1,0 +1,156 @@
+"""Probe F1 — gợi ý chat sàn (sales-02) phải gắn đúng mã tính năng qua RAG/gateway.
+
+Chạy: python -I probe_f1.py <ROOT> <OUT.json>   (ROOT = snapshot trước sửa hoặc repo)
+Client GIẢ (FakeClient), kho chi tiêu GIẢ (theo agent/tính năng), không HTTP,
+không DB (retrieve_by_vector giả trả hit; channels._connect None). Entry thật:
+channels.respond / channels._suggest / zalo._answer_within / rag.answer.
+"""
+import json
+import os
+import sys
+import time
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG"):
+        os.environ[k] = ""
+os.environ["DATABASE_URL"] = Path(sys.argv[3]).read_text().split("'")[1]
+os.environ.update(OPENROUTER_API_KEY="", DEPLOY="0", LLM_KILL_FEATURES="")
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+from api import rag  # noqa: E402
+from connectors import channels, zalo  # noqa: E402
+from pipelines import llm_gateway as gw, rollout  # noqa: E402
+from tests.test_llm_gateway import FakeClient  # noqa: E402
+
+TMP = OUT.parent / "f1_cfg.json"
+HITS = [{"score": 1.0, "title": "Shop", "url": "https://example.test/p",
+         "content": "Shop có giao hàng toàn quốc."}]
+Q = "Shop giao hàng không?"
+HIST = [{"role": "user", "content": "Shop bán sâm gì?"},
+        {"role": "assistant", "content": "Shop bán sâm Ngọc Linh."}]
+
+
+class SpendConn:
+    """Kho chi tiêu giả: select spend theo tham số (agent hoặc tính năng)."""
+
+    def __init__(self, spends, rows):
+        self.spends, self.rows = spends, rows
+
+    def execute(self, sql, params=()):
+        if sql.lstrip().startswith("insert"):
+            self.rows.append(params)
+            return None
+        return SimpleNamespace(fetchone=lambda: (self.spends.get(params[0], 0.0),))
+
+    def commit(self):
+        pass
+
+    def close(self):
+        pass
+
+
+def run(name, fn, *, kill=(), fcaps=None, caps=None, spends=None, expect):
+    cfg = {"provider_only": ["azure"],
+           "monthly_cap_usd": caps or {"default": 10},
+           "feature_caps_usd": fcaps or {"default": 10},
+           "kill_features": list(kill), "kill": []}
+    TMP.write_text(json.dumps(cfg), encoding="utf-8")
+    client, rows = FakeClient(), []
+    res = {"case": name}
+    with patch.object(gw, "CONFIG", TMP), \
+            patch.object(gw, "_client", return_value=client), \
+            patch.object(gw, "_connect", side_effect=lambda: SpendConn(spends or {}, rows)), \
+            patch.object(rag, "retrieve_by_vector", return_value=HITS), \
+            patch.object(channels, "_connect", return_value=None), \
+            patch.object(rollout, "_FORCE_MODE", "van_hanh"):
+        try:
+            res["result"] = fn()
+        except Exception as e:  # noqa: BLE001
+            res["result"] = f"EXC {type(e).__name__}: {str(e)[:120]}"
+    res["client_calls"] = [k for k, _ in client.calls]
+    res["usage_feature_id"] = [r[-1] for r in rows]
+    dump = json.dumps([kw for _, kw in client.calls], ensure_ascii=False, default=str)
+    res["feature_in_payload"] = ("sales-0" in dump) or ("feature" in dump)
+    ok = expect(res)
+    res["verdict"] = "PASS" if ok else "FAIL"
+    return res
+
+
+def resp(ch):
+    return lambda: channels.respond(ch, "probe-user", Q).get("handoff")
+
+
+def suggest(ch):
+    return lambda: channels._suggest(ch, Q, by=None)
+
+
+def ans(feature=None, history=None):
+    kw = {} if feature is None else {"feature": feature}
+    return lambda: rag.answer(Q, history, **kw)["answer"]
+
+
+def zalo_hist():
+    return lambda: zalo._answer_within(rag.answer, Q, HIST, time.monotonic() + 30)["answer"]
+
+
+def uses(feat, n):
+    return lambda r: (r["usage_feature_id"] == [feat] * n
+                      and len(r["client_calls"]) == n and not r["feature_in_payload"])
+
+
+def zero(r):
+    return r["client_calls"] == [] and r["usage_feature_id"] == []
+
+
+S02, S01 = "sales-02", "sales-01"
+R = []
+for ch in ("shopee", "tiktok"):
+    R.append(run(f"{ch} respond, mở → embed+chat gắn sales-02", resp(ch), expect=uses(S02, 2)))
+    R.append(run(f"{ch} _suggest (CLI), mở → sales-02", suggest(ch), expect=uses(S02, 2)))
+    R.append(run(f"{ch} respond, kill sales-02 → 0 lời gọi", resp(ch), kill=[S02], expect=zero))
+    R.append(run(f"{ch} _suggest, kill sales-02 → 0 lời gọi", suggest(ch), kill=[S02], expect=zero))
+    R.append(run(f"{ch} respond, trần sales-02 = 0 → 0 lời gọi", resp(ch),
+                 fcaps={"default": 10, S02: 0}, expect=zero))
+    R.append(run(f"{ch} respond, sales-02 hết trần (chi 5/5) → 0 lời gọi", resp(ch),
+                 fcaps={"default": 10, S02: 5}, spends={S02: 5.0}, expect=zero))
+    R.append(run(f"{ch} respond, ĐỐI CHỨNG kill sales-01 → sales-02 vẫn chạy", resp(ch),
+                 kill=[S01], expect=uses(S02, 2)))
+    R.append(run(f"{ch} respond, trần AGENT chatbot hết → 0 lời gọi", resp(ch),
+                 caps={"default": 10, "chatbot": 1}, spends={"chatbot": 1.0}, expect=zero))
+for ch in ("zalo", "messenger"):
+    R.append(run(f"{ch} respond, mở → sales-01", resp(ch), expect=uses(S01, 2)))
+    R.append(run(f"{ch} respond, ĐỐI CHỨNG kill sales-02 → sales-01 vẫn chạy", resp(ch),
+                 kill=[S02], expect=uses(S01, 2)))
+    R.append(run(f"{ch} respond, kill sales-01 → 0 lời gọi", resp(ch), kill=[S01], expect=zero))
+R.append(run("zalo có history (rewrite) → rewrite+embed+chat sales-01", zalo_hist(),
+             expect=uses(S01, 3)))
+R.append(run("zalo có history, ĐỐI CHỨNG kill sales-02 → vẫn sales-01", zalo_hist(),
+             kill=[S02], expect=uses(S01, 3)))
+R.append(run("rag.answer có history, feature=sales-02 → rewrite+embed+chat sales-02",
+             ans(S02, HIST), expect=uses(S02, 3)))
+R.append(run("rag.answer có history, feature=sales-02, kill sales-02 → 0 lời gọi",
+             ans(S02, HIST), kill=[S02],
+             expect=lambda r: zero(r) and "GatewayBlocked" in str(r["result"])))
+R.append(run("rag.answer mã lạ 'sales-99' → từ chối, 0 lời gọi", ans("sales-99"),
+             expect=lambda r: zero(r) and ("ValueError" in str(r["result"])
+                                           or "GatewayError" in str(r["result"]))))
+R.append(run("rag.answer mặc định (không truyền) → sales-01", ans(), expect=uses(S01, 2)))
+
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1), encoding="utf-8")
+for r in R:
+    print(f"{r['verdict']}  {r['case']}  | calls={r['client_calls']} "
+          f"feature_id={r['usage_feature_id']} payload_has_feature={r['feature_in_payload']}"
+          f" | {str(r['result'])[:70]}")
+n_fail = sum(r["verdict"] == "FAIL" for r in R)
+print(f"TỔNG {len(R)} ca, FAIL {n_fail}")
+sys.exit(1 if n_fail else 0)

@@ -48,6 +48,7 @@ from agents.report import REPORTS_DIR, write_report
 from ingest.lead_store import connect
 from ingest.market_csv import _safe, _to_int
 from ingest.settlement_csv import CHANNELS, overlaps, round_half_up
+from pipelines import rollout
 from pipelines.period import VN_TZ, period_bounds, vn_date
 from pipelines.store import _db_msg
 
@@ -476,6 +477,10 @@ def main(argv=None) -> int:
                     print(f"  [chờ duyệt] #{v['id']} {v['sku_key']} "
                           f"{vnd(v['cost_vnd'])} từ {v['valid_from']}")
             return 0
+        # r12 RB: P&L tắt → chặn trước khi tính/in/ghi báo cáo.
+        why = rollout.blocked(conn, "P&L", fid="finance-04.1")
+        if why:
+            return rollout.say_blocked(why)
         res = compute(conn, month, args.channel)
         conn.commit()
         text = render(res)
@@ -497,6 +502,9 @@ def main(argv=None) -> int:
     finally:
         with suppress(Exception):
             conn.close()
+
+
+main = rollout.cli_entry(main)
 
 
 if __name__ == "__main__":

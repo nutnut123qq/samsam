@@ -1,0 +1,13 @@
+# ma: S062-C01b
+# luc: 2026-10-23T10:47:17+07:00
+# lenh: python -m ingest.market_csv --file evidence/itacc_r10/g2/fixtures/s062_orders_tiktok.csv --channel tiktok --kind order
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+[loader-gate] market_csv: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-05 chay_thu, sales-06.2 chay_thu → nạp
+[load] snapshot #4 tiktok/order s062_orders_tiktok.csv: 3 dòng, map golden 3
+[alerts] export order — không đối chiếu ở P1
+[done]
+
+## stderr

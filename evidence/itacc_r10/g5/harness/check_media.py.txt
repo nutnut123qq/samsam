@@ -1,0 +1,32 @@
+"""Assert tệp trong kho media (scratchpad): sha256 khớp tên, ảnh không EXIF/GPS,
+video không hộp vị trí. Dùng hàm kiểm của chính `scripts.garden_media`."""
+import hashlib
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+from scripts import garden_media as gm  # noqa: E402
+
+store = Path(sys.argv[1])
+Image, _ = gm._pil()
+bad = 0
+for sha in sys.argv[2:]:
+    hits = list(store.glob(f"{sha[:2]}/{sha}.*"))
+    if not hits:
+        print("MISSING", sha[:12]); bad += 1; continue
+    p = hits[0]
+    data = p.read_bytes()
+    ok_sha = hashlib.sha256(data).hexdigest() == sha
+    if p.suffix in (".mp4", ".mov"):
+        gps = gm.video_has_gps(data)
+        print(f"{sha[:12]} {p.suffix} sha_ok={ok_sha} video_has_gps={gps} "
+              f"has_xyz={b'\\xa9xyz' in data} has_location_str={b'+15.1234' in data}")
+        bad += (not ok_sha) or gps or (b'+15.1234' in data)
+    else:
+        with Image.open(p) as im:
+            n, g = gm._exif_stats(im)
+        print(f"{sha[:12]} {p.suffix} sha_ok={ok_sha} exif_tags={n} gps={g}")
+        bad += (not ok_sha) or n or g
+print("RESULT", "PASS" if not bad else "FAIL")

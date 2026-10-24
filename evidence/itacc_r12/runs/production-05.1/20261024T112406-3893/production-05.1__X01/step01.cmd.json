@@ -1,0 +1,39 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.sx_tracuu",
+  "--ask",
+  "bảo quản sâm khô độ ẩm",
+  "--out"
+ ],
+ "env_doi": [
+  "PROBE_CALL_MAIN",
+  "PROBE_LLM_LOG",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:24:54+07:00",
+ "ket_thuc": "2026-10-24T11:25:00+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*production-05\\.1",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*(Traceback|Chế độ:|\\[1\\] \\\"|Sâm khô sau khi sấy))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "1a0ca9cbe705c509bfe011e923d6308ca3f8e54d6464350d99a58af0c98eeca9",
+ "stderr_sha256": "2c09efa8c6f2454d00f5bf25781503c58379b1a0337b6b95e92b5a7da7e483cf"
+}

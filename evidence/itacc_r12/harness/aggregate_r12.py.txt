@@ -1,0 +1,107 @@
+"""HARNESS r12 — tổng hợp HIỆN HÀNH 96 mục: bản ghi r12 cho các id đã kiểm lại (evidence/itacc_r12/items/*.json), các id
+khác kế thừa nguồn hiện hành của r11 (evidence/itacc_r11/source_map.json — r10 hoặc r11) KHÔNG sửa.
+Ghi evidence/itacc_r12/source_map.json + tong_hop.json (r10/r11 giữ làm lịch sử).
+Kiểm: đủ đúng 96 id, 1 nguồn/id, tổng = 96; DAT không có FAIL/NOT_RUN; FAIL → BI_CHAN hoặc CHUA_KIEM (chưa xác minh);
+BI_CHAN có nguyên nhân + việc gỡ; evidence tồn tại + hash khớp (alias .py→.py.txt harness r10); bản ghi r12: hash tiêu chí
+= khóa, supersedes khớp hash bản ghi nguồn cũ, mọi log ca nằm dưới evidence/itacc_r12/runs/ và tồn tại; 12 mục bị chặn
+ngoài code KHÔNG thành DAT. python -I aggregate_r12.py.txt → exit 1 nếu vi phạm."""
+import collections
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = Path(__file__).resolve().parents[3]
+R10, R11, R12 = (ROOT / "evidence" / f"itacc_r1{n}" for n in (0, 1, 2))
+khung = {i["id"]: i for i in json.loads((R10 / "criteria" / "khung.json").read_text(encoding="utf-8"))["items"]}
+smap11 = json.loads((R11 / "source_map.json").read_text(encoding="utf-8"))["items"]
+th11 = {i["id"]: i for i in json.loads((R11 / "tong_hop.json").read_text(encoding="utf-8"))["items"]}
+NEW = sorted(p.stem for p in (R12 / "items").glob("*.json"))
+NONCODE = {"MISSING_ADAPTER", "EXTERNAL_INPUT", "SEPARATE_REPO", "NON_SOFTWARE"}
+
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def resolve(path_s):
+    p = Path(path_s)
+    p = p if p.is_absolute() else ROOT / p
+    if not p.exists() and p.suffix == ".py" and p.with_name(p.name + ".txt").exists():
+        p = p.with_name(p.name + ".txt")
+    return p
+
+
+errs, rows, smap, nref = [], [], {}, 0
+for fid, k in khung.items():
+    if fid in NEW:
+        src = R12 / "items" / f"{fid}.json"
+        smap[fid] = {"luot": "r12", "path": str(src.relative_to(ROOT)).replace("\\", "/"), "sha256": sha(src)}
+    else:
+        smap[fid] = dict(smap11[fid])
+        src = ROOT / smap[fid]["path"]
+        if sha(src) != smap[fid]["sha256"]:
+            errs.append(f"{fid}: bản ghi kế thừa bị sửa (hash ≠ source_map r11)")
+    r = json.loads(src.read_text(encoding="utf-8"))
+    st, ca = r.get("trang_thai"), r.get("ca") or []
+    kq = collections.Counter(c.get("ket_qua") for c in ca)
+    if r.get("id") != fid:
+        errs.append(f"{fid}: id trong file = {r.get('id')}")
+    if st not in ("DAT", "CHUA_KIEM", "BI_CHAN"):
+        errs.append(f"{fid}: trạng thái lạ {st}")
+    if not ca:
+        errs.append(f"{fid}: không có ca")
+    if st == "DAT" and (kq.get("FAIL") or kq.get("NOT_RUN") or kq.get("LOI_HARNESS") or not kq.get("PASS")):
+        errs.append(f"{fid}: DAT nhưng ca {dict(kq)}")
+    if kq.get("FAIL") and st == "DAT":
+        errs.append(f"{fid}: có FAIL nhưng DAT")
+    if st == "BI_CHAN" and not ((r.get("nguyen_nhan") or "").strip() and (r.get("can_de_go") or "").strip()):
+        errs.append(f"{fid}: BI_CHAN thiếu nguyên nhân/việc gỡ")
+    if th11[fid]["trang_thai"] == "BI_CHAN" and th11[fid]["nguyen_nhan"] in NONCODE and st == "DAT":
+        errs.append(f"{fid}: mục bị chặn NGOÀI code bị chuyển thành DAT")
+    for e in r.get("evidence") or []:
+        nref += 1
+        p = resolve(e.get("path", ""))
+        if not p.exists():
+            errs.append(f"{fid}: evidence không tồn tại {e.get('path')}")
+        elif e.get("sha256") and sha(p) != e["sha256"]:
+            errs.append(f"{fid}: hash evidence lệch {e['path']}")
+    if fid in NEW:
+        cp = ROOT / r["tieu_chi_file"]
+        lock = cp.with_name(cp.name.replace(".json", ".lock.txt")).read_text(encoding="utf-8").split()[1]
+        if not (sha(cp) == r["tieu_chi_sha256"] == lock):
+            errs.append(f"{fid}: hash tiêu chí ≠ khóa")
+        old = ROOT / r["supersedes"]["path"]
+        if r["supersedes"]["path"] != smap11[fid]["path"] or sha(old) != r["supersedes"]["sha256"]:
+            errs.append(f"{fid}: supersedes không khớp nguồn hiện hành r11")
+        for c in ca:
+            for b in c["actual"]["buoc"]:
+                for kk in ("stdout", "stderr"):
+                    if not b[kk].startswith("evidence/itacc_r12/runs/") or not (ROOT / b[kk]).exists():
+                        errs.append(f"{fid}: {c['ma']} log {kk} không phải log gốc r12 hiện có: {b[kk]}")
+    cause = r.get("nguyen_nhan") or ""
+    rows.append({"id": fid, "khoi": k["khoi"], "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"], "ten": k["ten"],
+                 "luot": smap[fid]["luot"], "trang_thai": st, "muc_kiem": r.get("muc_kiem"), "ca": dict(kq),
+                 "nguyen_nhan": cause.split(":")[0].split(" ")[0].strip() if st == "BI_CHAN" else "",
+                 "nguyen_nhan_day_du": cause, "loi": r.get("loi_san_pham") or []})
+tot = collections.Counter(r["trang_thai"] for r in rows)
+by_khoi, by_scope = collections.defaultdict(collections.Counter), collections.defaultdict(collections.Counter)
+for r in rows:
+    by_khoi[r["khoi"]][r["trang_thai"]] += 1
+    by_scope[f"AI {r['giai_doan']}" if r["pham_vi"] == "tinh_nang_ai" else "7 hạng mục khác"][r["trang_thai"]] += 1
+cause = collections.Counter(r["nguyen_nhan"] for r in rows if r["trang_thai"] == "BI_CHAN")
+summary = {"mau_so": len(khung), "nguon": dict(collections.Counter(v["luot"] for v in smap.values())),
+           "tong": dict(tot), "theo_khoi": {k: dict(v) for k, v in by_khoi.items()},
+           "theo_pham_vi": {k: dict(v) for k, v in by_scope.items()}, "nguyen_nhan_bi_chan": dict(cause),
+           "checkpoint_r11": json.loads((R11 / "tong_hop.json").read_text(encoding="utf-8"))["tom_tat"]["tong"],
+           "so_tham_chieu_evidence": nref, "loi_nhat_quan": errs}
+if len(rows) != 96 or sum(tot.values()) != 96:
+    errs.append("không đủ 96")
+(R12 / "source_map.json").write_text(json.dumps({"_doc": "Nguồn kết quả hiện hành từng id (r12 thay các id đã kiểm lại;"
+                                                 " id khác kế thừa nguồn r11/r10 không sửa).", "items": smap},
+                                                ensure_ascii=False, indent=1), encoding="utf-8")
+(R12 / "tong_hop.json").write_text(json.dumps({"tom_tat": summary, "items": rows}, ensure_ascii=False, indent=1),
+                                   encoding="utf-8")
+print(json.dumps(summary, ensure_ascii=False, indent=1))
+sys.exit(1 if errs else 0)

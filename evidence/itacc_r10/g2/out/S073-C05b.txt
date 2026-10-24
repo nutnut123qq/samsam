@@ -1,0 +1,32 @@
+# ma: S073-C05b
+# luc: 2026-10-23T10:52:24+07:00
+# lenh: python evidence/itacc_r10/g2/harness/run_mod.py --reports-dir evidence/itacc_r10/g2/out/s073 -m agents.kd_forecast --start 2026-11-09 --sku saphraton-20v --write
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+# Dự báo mùa SKU × kênh — 2026-11-09 → 2027-02-07 (13 tuần)
+
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+
+Khoảng thấp–cơ sở–cao (đơn vị, cộng cả kỳ) — KHÔNG phải doanh số cam kết; giả định số bán chưa phải số thật.
+
+| SKU | shopee | tiktok | web | facebook | zalo | chatbot | offline | Tổng |
+|---|---|---|---|---|---|---|---|---|
+| saphraton-20v | 147–218–315 | 0–0–0 | 0–0–0 | 0–0–0 | 0–0–0 | 0–0–0 | 88–136–191 | 235–354–506 |
+
+## Đối chiếu tồn
+
+- saphraton-20v: tồn 450 (MẪU) — RỦI RO (kịch bản cao) thiếu 56 nếu bán theo mức cao
+
+## Ghi chú engine kịch bản
+
+- saphraton-20v × tiktok: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × web: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × facebook: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × zalo: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × chatbot: kênh chưa có trong allowed_channels (golden)
+
+[write] evidence\itacc_r10\g2\out\s073\kd-forecast-2026-11-09.md
+
+## stderr

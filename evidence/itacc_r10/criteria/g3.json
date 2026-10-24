@@ -1,0 +1,1070 @@
+{
+ "nhom": "g3",
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "ghi_chu": "Tiêu chí viết TRƯỚC khi chạy ca (pha 1). FIXTURE/HARNESS: evidence/itacc_r10/g3/harness/. Ca thêm sau khóa ghi 'bổ sung sau khóa'.",
+ "items": [
+  {
+   "id": "marketing-01.1",
+   "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.content --daily --date D` chạy trên DB mkt thử, exit 0 khi đủ 3 nháp / 1 khi THIẾU (in lý do), không traceback",
+    "T2 mỗi nháp: content_drafts created_by='agent:mkt02', content_type='post', status='pending', brief mở đầu khóa `[daily D #slot]`, guardrail_result ok=true, is_ai=true, có prompt_version+prompt_sha256, text có nhãn AI",
+    "T2 trụ gắn SKU mà 0 SKU đủ readiness → bị từ chối có lý do, KHÔNG thay SKU khác (đúng blocker danh mục)",
+    "T3 chạy lại cùng ngày → skipped, 0 lời gọi LLM mới, 0 dòng mới; LLM trả từ cấm → failed không ghi; tính năng tắt → exit 2, 0 LLM, 0 dòng",
+    "T4 không có đường gửi/đăng ra ngoài; harness chặn socket ngoài localhost; không lời gọi OpenRouter thật; xếp lịch đăng nháp bị chặn khi tính năng chạy thử"
+   ],
+   "ca": [
+    {
+     "ma": "01.1-C1",
+     "mo_ta": "soạn nháp ngày 2026-10-23 (LLM giả trả văn bản sạch)",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --fake-llm clean -m pipelines.content --daily --date 2026-10-23",
+     "dau_vao": "fake LLM văn bản sạch; lịch data/marketing_calendar.json; golden repo",
+     "expected": "exit 0|1; ≥1 dòng content_drafts đúng T2; stdout [bị từ chối] cho trụ 'auto' lý do readiness; live+missing=3"
+    },
+    {
+     "ma": "01.1-C2",
+     "mo_ta": "chạy lại cùng ngày (idempotent)",
+     "entry_point": "như C1",
+     "dau_vao": "như C1",
+     "expected": "mọi slot đã có → skipped; số dòng content_drafts & llm_usage không đổi"
+    },
+    {
+     "ma": "01.1-C3",
+     "mo_ta": "LLM trả văn bản có từ cấm 'chữa bệnh' (ngày 2026-10-24)",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --fake-llm banned -m pipelines.content --daily --date 2026-10-24",
+     "dau_vao": "fake LLM luôn trả 'chữa bệnh'",
+     "expected": "slot failed (mã guardrail), 0 dòng ngày 2026-10-24, exit 1"
+    },
+    {
+     "ma": "01.1-C4",
+     "mo_ta": "tính năng tắt (rollout --disable marketing-01.1) rồi --daily 2026-10-25",
+     "entry_point": "python -m pipelines.rollout --disable marketing-01.1 --by ...; content --daily",
+     "dau_vao": "—",
+     "expected": "exit 2 [blocked], 0 lời gọi LLM, 0 dòng; bật lại bằng --promote"
+    },
+    {
+     "ma": "01.1-C5",
+     "mo_ta": "xếp lịch đăng nháp khi chạy thử",
+     "entry_point": "python -m pipelines.store --schedule <id> <ngày> --by 'Người Thử IT'",
+     "dau_vao": "nháp từ C1",
+     "expected": "bị chặn (rollout chạy thử) — không xếp lịch"
+    }
+   ]
+  },
+  {
+   "id": "marketing-01.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_director --briefs --today 2026-10-23` exit 0",
+    "T2 ≥1 mục approval_queue block='marketing', object_type='campaign_brief', created_by='agent:MKT-00', status='pending', object_id=id chiến dịch trong lịch, payload có mốc + ô kênh + 'Nguồn: data/marketing_calendar.json', due_at theo SLA cấu hình",
+    "T3 chạy lại → skip, 0 dòng mới; --dry-run → 0 dòng; tắt → exit≠0 và 0 dòng; lịch hỏng → exit 1 không ghi",
+    "T4 agent không tự duyệt (status pending), không đăng"
+   ],
+   "ca": [
+    {
+     "ma": "01.2-C1",
+     "mo_ta": "đẩy brief",
+     "entry_point": "python -m agents.mkt_director --briefs --today 2026-10-23",
+     "dau_vao": "lịch repo",
+     "expected": "exit 0; dòng đúng T2"
+    },
+    {
+     "ma": "01.2-C2",
+     "mo_ta": "chạy lại",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "[skip] đã có trong hàng; 0 dòng mới"
+    },
+    {
+     "ma": "01.2-C3",
+     "mo_ta": "dry-run",
+     "entry_point": "--briefs --dry-run --today 2026-10-23",
+     "dau_vao": "—",
+     "expected": "exit 0, in brief, 0 dòng DB mới"
+    },
+    {
+     "ma": "01.2-C4",
+     "mo_ta": "tính năng tắt",
+     "entry_point": "rollout --disable marketing-01.2 rồi --briefs --today 2026-11-05 --horizon-days 30",
+     "dau_vao": "—",
+     "expected": "exit≠0, 0 dòng mới (không sinh)"
+    },
+    {
+     "ma": "01.2-C5",
+     "mo_ta": "lịch hỏng (FIXTURE file JSON hỏng qua patch đường dẫn)",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --set <hằng lịch>=broken.json -m agents.mkt_director --briefs",
+     "dau_vao": "file JSON hỏng",
+     "expected": "exit 1 CalendarError, 0 dòng"
+    }
+   ]
+  },
+  {
+   "id": "marketing-02.1",
+   "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.image_studio` chạy được; nhánh nền AI (--scene / provider khác none) bị chặn exit 2 trước mọi provider",
+    "T2 (phần con, provider none) nháp ảnh: content_drafts content_type='image' created_by='agent:mkt03' pending + image_assets sha256 = sha file PNG; nhãn 'Nội dung có sử dụng AI' trong text_layer/sidecar; pixel packshot alpha 255 khớp tuyệt đối; PNG không EXIF/text chunk; ai_generated=false",
+    "T3 SKU TPBVSK → maket_xnqc, rượu → ruou, 0 file/0 dòng; chạy lại → skipped",
+    "T4 không gọi mạng; đầu ra AI thật CHƯA có (registry none) → mục tổng BI_CHAN MISSING_ADAPTER"
+   ],
+   "ca": [
+    {
+     "ma": "02.1-C1",
+     "mo_ta": "--scene khi IMAGE_PROVIDER none",
+     "entry_point": "python -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --headline X --scene 'vườn sâm'",
+     "dau_vao": "—",
+     "expected": "exit 2 [blocked], 0 file, 0 dòng"
+    },
+    {
+     "ma": "02.1-C2",
+     "mo_ta": "IMAGE_PROVIDER=vendor-la",
+     "entry_point": "IMAGE_PROVIDER=dalle ... image_studio",
+     "dau_vao": "—",
+     "expected": "exit 2 chưa cắm, 0 dòng"
+    },
+    {
+     "ma": "02.1-C3",
+     "mo_ta": "ghép packshot MẪU + nền gradient (FIXTURE readiness food qua golden_store với file golden bản sao)",
+     "entry_point": "PACKSHOT_DIR/IMAGE_OUT_DIR=scratch; image_studio --sku mat-ong-sam-300ml --channel facebook --channel shopee",
+     "dau_vao": "packshot MẪU make_sample_packshot; golden fixture",
+     "expected": "exit 0; T2 phần con đạt (kiểm độc lập pixel + EXIF + sha)"
+    },
+    {
+     "ma": "02.1-C4",
+     "mo_ta": "SKU TPBVSK và rượu",
+     "entry_point": "image_studio --sku saphraton-20v ...; --sku ruou-sam-chai-thuy-tinh-500ml",
+     "dau_vao": "—",
+     "expected": "refused maket_xnqc / ruou; 0 dòng mới"
+    },
+    {
+     "ma": "02.1-C5",
+     "mo_ta": "chạy lại C3",
+     "entry_point": "như C3",
+     "dau_vao": "—",
+     "expected": "skipped; 0 dòng mới"
+    }
+   ]
+  },
+  {
+   "id": "marketing-02.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.video_studio` chạy được với ffmpeg (FFMPEG_BIN/imageio-ffmpeg), exit 0",
+    "T2 mp4 15–45 giây, không track âm thanh, không metadata vị trí; content_drafts content_type='video' created_by='agent:mkt04' pending + video_assets sha256 = sha file; caption có nhãn AI + nhãn QC; câu chạm giá bị bỏ; nhãn AI hiện trên khung trích (đầu/giữa/cuối) kiểm độc lập",
+    "T3 kịch bản LLM có từ cấm sau 1 lượt sửa → kich_ban, 0 file/dòng; brief cấm → brief_cam 0 LLM; TTS lạ → exit 2; tắt → không sinh",
+    "T4 không có đường gửi/đăng ra ngoài; harness chặn socket ngoài localhost; không lời gọi OpenRouter thật; B-roll chỉ dùng khi có license"
+   ],
+   "ca": [
+    {
+     "ma": "02.2-C1",
+     "mo_ta": "dựng video từ packshot MẪU + B-roll MẪU có license, LLM giả trả 4 cảnh (1 cảnh chứa giá)",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --fake-llm video -m pipelines.video_studio --sku mat-ong-sam-300ml --channel facebook --brief ...",
+     "dau_vao": "packshot/B-roll MẪU (FIXTURE), golden fixture",
+     "expected": "exit 0; T2 đạt"
+    },
+    {
+     "ma": "02.2-C2",
+     "mo_ta": "LLM trả 'bác sĩ khuyên dùng' cả 2 lượt",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --fake-llm video_banned ...",
+     "dau_vao": "—",
+     "expected": "refused kich_ban, 2 lời gọi LLM, 0 mp4/dòng"
+    },
+    {
+     "ma": "02.2-C3",
+     "mo_ta": "brief có 'chữa bệnh'",
+     "entry_point": "video_studio --brief 'chữa bệnh ...'",
+     "dau_vao": "—",
+     "expected": "refused brief_cam, 0 lời gọi LLM, 0 dòng"
+    },
+    {
+     "ma": "02.2-C4",
+     "mo_ta": "TTS_PROVIDER lạ",
+     "entry_point": "TTS_PROVIDER=elevenlabs video_studio ...",
+     "dau_vao": "—",
+     "expected": "exit 2, 0 LLM, 0 dòng"
+    },
+    {
+     "ma": "02.2-C5",
+     "mo_ta": "tính năng tắt",
+     "entry_point": "rollout --disable marketing-02.2; video_studio ...",
+     "dau_vao": "—",
+     "expected": "không sinh mp4/dòng (exit≠0 hoặc failed/blocked), 0 LLM"
+    }
+   ]
+  },
+  {
+   "id": "marketing-03.1",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_ads --plan F --by <người> --month 2026-10` và `--propose` chạy trên DB có P&L fixture",
+    "T2 1 dòng ad_test_plans + 2 mục approval_queue cùng object_id adtest-<id>: marketing/ad_campaign + finance/budget_change (created_by budget = 'agent:mkt05_budget'), pending, ngân sách ≤ trần FP&A; --propose (FIXTURE ads_proposal) sinh phiếu created_by 'agent:mkt05'",
+    "T3 ngân sách > trần / SKU rượu → mã từ chối, 0 dòng; phiếu trùng → skip; ads_proposal thật CHƯA CHỐT → exit 2 BLOCKED 0 dòng; tắt → --propose exit 2",
+    "T4 không chi tiền, không gọi API quảng cáo; chỉ nháp chờ người duyệt"
+   ],
+   "ca": [
+    {
+     "ma": "03.1-C0",
+     "mo_ta": "mồi: P&L fixture (market_csv order + settlement_csv + fp_pnl cogs add/approve) + nháp image shopee đã duyệt",
+     "entry_point": "CLI loader thật + store --approve (dev)",
+     "dau_vao": "tests/fixtures/finance/*_MAU.csv (bản sao)",
+     "expected": "dữ liệu sẵn sàng; cap_for mat-ong×shopee code DE_XUAT"
+    },
+    {
+     "ma": "03.1-C1",
+     "mo_ta": "phiếu người lập hợp lệ",
+     "entry_point": "mkt_ads --plan plan_ok.json --by 'Người Thử IT' --month 2026-10",
+     "dau_vao": "plan fixture",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "03.1-C2",
+     "mo_ta": "ngân sách vượt trần",
+     "entry_point": "--plan plan_over.json",
+     "dau_vao": "—",
+     "expected": "exit 1 mã ADS_*, 0 dòng mới"
+    },
+    {
+     "ma": "03.1-C3",
+     "mo_ta": "SKU rượu",
+     "entry_point": "--plan plan_ruou.json",
+     "dau_vao": "—",
+     "expected": "exit 1 ADS_OFFLINE_ONLY, 0 dòng"
+    },
+    {
+     "ma": "03.1-C4",
+     "mo_ta": "nộp lại phiếu C1",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "skip, 0 dòng mới"
+    },
+    {
+     "ma": "03.1-C5",
+     "mo_ta": "--propose với data/ads_proposal.json thật (chưa chốt)",
+     "entry_point": "mkt_ads --propose --month 2026-10",
+     "dau_vao": "—",
+     "expected": "exit 2 BLOCKED, 0 dòng"
+    },
+    {
+     "ma": "03.1-C6",
+     "mo_ta": "--propose với ads_proposal FIXTURE (patch PROPOSAL_FILE)",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --set agents.mkt_ads.PROPOSAL_FILE=... -m agents.mkt_ads --propose --month 2026-10",
+     "dau_vao": "fixture chot_boi 'GĐ Marketing Thử IT'",
+     "expected": "exit 0; phiếu created_by agent:mkt05 + 2 mục, hoặc DA_CO/THIEU_* có lý do"
+    },
+    {
+     "ma": "03.1-C7",
+     "mo_ta": "tính năng tắt",
+     "entry_point": "rollout --disable marketing-03.1; --propose (fixture)",
+     "dau_vao": "—",
+     "expected": "exit 2, 0 dòng"
+    }
+   ]
+  },
+  {
+   "id": "marketing-03.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_ads --results F.csv --plan-id N --by <người>` exit 0",
+    "T2 1 mục approval_queue marketing/ad_result pending; quyết định dung|dat_muc_tieu|tiep|chua_du_lieu khớp phép tính độc lập CPA/CTR/CPC/đơn từ CSV; không có nhánh tăng ngân sách",
+    "T3 phiếu chưa duyệt đủ 2 mục → ADS_PLAN_NOT_APPROVED 0 dòng; CSV sai cột → exit 1 0 dòng; nạp lại → skip",
+    "T4 không chi tiền/không gọi API"
+   ],
+   "ca": [
+    {
+     "ma": "03.2-C1",
+     "mo_ta": "duyệt 2 mục phiếu C1 (dev) rồi nạp kết quả",
+     "entry_point": "approval_queue --approve x2 --by; mkt_ads --results res.csv --plan-id N --by",
+     "dau_vao": "CSV fixture",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "03.2-C2",
+     "mo_ta": "phiếu chưa duyệt",
+     "entry_point": "--results res.csv --plan-id <phiếu propose>",
+     "dau_vao": "—",
+     "expected": "exit 1 ADS_PLAN_NOT_APPROVED, 0 dòng"
+    },
+    {
+     "ma": "03.2-C3",
+     "mo_ta": "CSV sai cột",
+     "entry_point": "--results bad.csv",
+     "dau_vao": "—",
+     "expected": "exit 1, 0 dòng"
+    },
+    {
+     "ma": "03.2-C4",
+     "mo_ta": "nạp lại C1",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "skip, 0 dòng mới"
+    }
+   ]
+  },
+  {
+   "id": "marketing-04.1",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_koc --kit` và `python -m agents.kd_affiliate --issue` exit 0",
+    "T2 koc_brief pending block marketing (brief nguyên văn nháp đã duyệt, #quangcao, link/mã PLACEHOLDER, sha hợp đồng); affiliate_program pending block sales + affiliate_codes 'pending'",
+    "T3 hợp đồng thiếu điều khoản → KIT_CONTRACT; nháp chưa duyệt → *_CREATIVE_UNAPPROVED; 0 dòng",
+    "T4 --release ở chạy thử bị chặn (không file); chỉ khi ép van_hanh (FIXTURE) mới ra file kit vào thư mục thử; agent không gửi"
+   ],
+   "ca": [
+    {
+     "ma": "04.1-C1",
+     "mo_ta": "kit KOC-MAU-02 facebook từ nháp image facebook đã duyệt",
+     "entry_point": "mkt_koc --kit --koc KOC-MAU-02 --sku mat-ong-sam-300ml --draft-ids N --by 'Người Thử IT'",
+     "dau_vao": "nháp từ 02.1 đã duyệt",
+     "expected": "exit 0; T2 koc_brief"
+    },
+    {
+     "ma": "04.1-C2",
+     "mo_ta": "KOC-MAU-03 hợp đồng thiếu",
+     "entry_point": "--koc KOC-MAU-03 (tiktok) với nháp tiktok đã duyệt",
+     "dau_vao": "—",
+     "expected": "exit 1 KIT_CONTRACT, 0 dòng"
+    },
+    {
+     "ma": "04.1-C3",
+     "mo_ta": "nháp chưa duyệt",
+     "entry_point": "--draft-ids <pending>",
+     "dau_vao": "—",
+     "expected": "exit 1 KIT_CREATIVE_UNAPPROVED, 0 dòng"
+    },
+    {
+     "ma": "04.1-C4",
+     "mo_ta": "release khi chạy thử",
+     "entry_point": "approval_queue --approve <koc_brief> ; mkt_koc --release QID --by",
+     "dau_vao": "—",
+     "expected": "bị chặn, 0 file"
+    },
+    {
+     "ma": "04.1-C5",
+     "mo_ta": "release khi ép van_hanh (FIXTURE _FORCE_MODE)",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --set pipelines.rollout._FORCE_MODE=van_hanh --set <REPORTS_DIR>=scratch -m agents.mkt_koc --release QID",
+     "dau_vao": "—",
+     "expected": "exit 0, file koc-kit-*.md trong thư mục thử, không gửi"
+    },
+    {
+     "ma": "04.1-C6",
+     "mo_ta": "affiliate issue",
+     "entry_point": "crm --load-dealers (mồi) ; kd_affiliate --issue --dealer D --channel web --draft-ids N --by",
+     "dau_vao": "nháp web đã duyệt",
+     "expected": "exit 0; affiliate_program + affiliate_codes pending"
+    }
+   ]
+  },
+  {
+   "id": "marketing-04.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.ra_kenh --partner-file F --by <người>` exit 0",
+    "T2 mục approval_queue marketing/partner_post_review created_by='agent:mkt_doi_tac' pending cho bài vi phạm; sổ partner_post_scans chỉ sha256 URL/text + tên miền (không text thô)",
+    "T3 mã đối tác lạ + chính sách chưa chọn → từ chối cả file 0 dòng; cột lạ → 0 dòng; nạp lại → không nhân bản; tắt → exit 2",
+    "T4 agent không liên hệ đối tác/không gỡ bài"
+   ],
+   "ca": [
+    {
+     "ma": "04.2-C1",
+     "mo_ta": "file bài KOC-MAU-02 (1 vi phạm 'chữa bệnh', 1 sạch)",
+     "entry_point": "ra_kenh --partner-file partner_ok.csv --by 'Người Thử IT'",
+     "dau_vao": "fixture CSV",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "04.2-C2",
+     "mo_ta": "mã đối tác lạ",
+     "entry_point": "--partner-file partner_unknown.csv",
+     "dau_vao": "—",
+     "expected": "exit 1 (từ chối file), 0 dòng, cảnh báo chính sách"
+    },
+    {
+     "ma": "04.2-C3",
+     "mo_ta": "cột lạ 'ten_koc'",
+     "entry_point": "--partner-file partner_badcol.csv",
+     "dau_vao": "—",
+     "expected": "exit 1, 0 dòng"
+    },
+    {
+     "ma": "04.2-C4",
+     "mo_ta": "nạp lại C1",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "không thêm mục hàng duyệt mới"
+    },
+    {
+     "ma": "04.2-C5",
+     "mo_ta": "tắt",
+     "entry_point": "rollout --disable marketing-04.2; --partner-file",
+     "dau_vao": "—",
+     "expected": "exit 2, 0 dòng"
+    }
+   ]
+  },
+  {
+   "id": "marketing-05.1",
+   "tieu_chi_cu_the": [
+    "T1 `python -m ingest.intel_import --social F --channel fanpage` exit 0 (INTEL_HASH_SALT giá trị thử)",
+    "T2 social_mentions: nhãn luật (khen/che/hoi_gia/khieu_nai/hoi_suc_khoe/...) đúng với nội dung fixture; không lưu excerpt khi DPIA chưa ký; không cột định danh/SĐT thô trong DB",
+    "T3 thiếu muối → exit 1 0 dòng; cột lạ → exit 1 0 dòng; nạp lại → skip; tính năng tắt + loader_gate chưa cấu hình → exit 2",
+    "T4 không trả lời comment, không mạng"
+   ],
+   "ca": [
+    {
+     "ma": "05.1-C1",
+     "mo_ta": "nạp file social fixture",
+     "entry_point": "INTEL_HASH_SALT=<thử> intel_import --social social_ok.csv --channel fanpage",
+     "dau_vao": "fixture 6 dòng có SĐT giả 0900000xxx",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "05.1-C2",
+     "mo_ta": "thiếu muối",
+     "entry_point": "không đặt INTEL_HASH_SALT",
+     "dau_vao": "—",
+     "expected": "exit 1, 0 dòng"
+    },
+    {
+     "ma": "05.1-C3",
+     "mo_ta": "cột lạ",
+     "entry_point": "social_badcol.csv",
+     "dau_vao": "—",
+     "expected": "exit 1, 0 dòng"
+    },
+    {
+     "ma": "05.1-C4",
+     "mo_ta": "nạp lại",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "[skip], 0 dòng mới"
+    },
+    {
+     "ma": "05.1-C5",
+     "mo_ta": "tắt",
+     "entry_point": "rollout --disable marketing-05.1; intel_import --social file mới",
+     "dau_vao": "—",
+     "expected": "exit 2 (loader_gate), 0 dòng"
+    }
+   ]
+  },
+  {
+   "id": "marketing-05.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_ugc --reviews F --channel shopee --by` và `--mentions --since` exit 0",
+    "T2 mục marketing/ugc_reply pending theo lớp phân loại; câu hỏi sức khỏe không lặp claim; payload KHÔNG chép nội dung khách/PII; ugc_reuse chỉ khi can_contact marketing",
+    "T3 chạy lại → skip; --reuse không có đồng ý → bị chặn 0 dòng; thiếu muối → exit 1",
+    "T4 agent không tự trả lời/nhắn khách"
+   ],
+   "ca": [
+    {
+     "ma": "05.2-C1",
+     "mo_ta": "review file fixture",
+     "entry_point": "INTEL_HASH_SALT=.. mkt_ugc --reviews reviews.csv --channel shopee --by 'Người Thử IT'",
+     "dau_vao": "fixture 5 review (khen/chê/hỏi sức khỏe/rượu/hỏi giá)",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "05.2-C2",
+     "mo_ta": "từ social_mentions",
+     "entry_point": "mkt_ugc --mentions --since 2026-10-01 --by",
+     "dau_vao": "sau 05.1",
+     "expected": "exit 0; mục ugc_reply theo nhãn"
+    },
+    {
+     "ma": "05.2-C3",
+     "mo_ta": "chạy lại C1",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "skip, 0 dòng mới"
+    },
+    {
+     "ma": "05.2-C4",
+     "mo_ta": "--reuse không đồng ý",
+     "entry_point": "mkt_ugc --reuse REF --contact-id N --by",
+     "dau_vao": "contact không có consent marketing",
+     "expected": "bị chặn, 0 dòng ugc_reuse"
+    },
+    {
+     "ma": "05.2-C5",
+     "mo_ta": "thiếu muối",
+     "entry_point": "không đặt INTEL_HASH_SALT",
+     "dau_vao": "—",
+     "expected": "exit 1 trước connect, 0 dòng"
+    }
+   ]
+  },
+  {
+   "id": "marketing-06.1",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.seo_web --from-crawl --submit --out-dir <thử>` exit 0, 0 request mạng",
+    "T2 báo cáo seo-web-<ngày>.md + 1 mục marketing/seo_web_fix created_by 'agent:MKT-10' pending, payload chỉ URL/mã vấn đề/đề xuất, URL trong own_hosts",
+    "T3 chạy lại → skipped; tắt → không submit",
+    "T4 không ghi website; --fetch (mạng thật) không chạy"
+   ],
+   "ca": [
+    {
+     "ma": "06.1-C1",
+     "mo_ta": "rà từ dữ liệu crawl có sẵn",
+     "entry_point": "seo_web --from-crawl --submit --out-dir scratch",
+     "dau_vao": "data/*.jsonl repo",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "06.1-C2",
+     "mo_ta": "chạy lại",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "skipped, 0 mục mới"
+    },
+    {
+     "ma": "06.1-C3",
+     "mo_ta": "tắt",
+     "entry_point": "rollout --disable marketing-06.1; seo_web --submit",
+     "dau_vao": "—",
+     "expected": "không sinh mục (exit≠0 hoặc blocked)"
+    }
+   ]
+  },
+  {
+   "id": "marketing-06.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.cockpit --import F --by <người> --sample` và `--collect --period week --ref <kỳ đã đóng>` exit 0",
+    "T2 channel_snapshots: dòng manual_export (lượt xem/đơn/hủy theo file, cờ mẫu) + dòng số đo nội bộ (marketing từ content_drafts/approval_queue) cho kỳ đã đóng; số khớp đếm độc lập",
+    "T3 file lỗi → exit 1 0 dòng; kỳ chưa đóng → từ chối; insert-only",
+    "T4 không gọi API kênh"
+   ],
+   "ca": [
+    {
+     "ma": "06.2-C1",
+     "mo_ta": "import file kênh MẪU",
+     "entry_point": "cockpit --import kenh_MAU.csv --by 'Người Thử IT' --sample",
+     "dau_vao": "tests/fixtures/cockpit/kenh_MAU.csv (bản sao)",
+     "expected": "exit 0; dòng manual_export is_sample"
+    },
+    {
+     "ma": "06.2-C2",
+     "mo_ta": "file lỗi",
+     "entry_point": "cockpit --import kenh_loi.csv --by ..",
+     "dau_vao": "—",
+     "expected": "exit 1, 0 dòng"
+    },
+    {
+     "ma": "06.2-C3",
+     "mo_ta": "collect tuần đã đóng",
+     "entry_point": "cockpit --collect --period week --ref 2026-10-19",
+     "dau_vao": "—",
+     "expected": "exit 0; dòng snapshot nội bộ; số marketing khớp đếm SQL độc lập"
+    },
+    {
+     "ma": "06.2-C4",
+     "mo_ta": "kỳ chưa đóng",
+     "entry_point": "cockpit --collect --period week --ref 2026-10-23",
+     "dau_vao": "—",
+     "expected": "từ chối/không ghi kỳ chưa đóng"
+    }
+   ]
+  },
+  {
+   "id": "marketing-07.1",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.seo_san --run --sku all --channel shopee --out-dir <thử>` exit 0",
+    "T2 content_drafts content_type='listing' created_by='agent:MKT-11' pending, prompt_version 'seo-san-v1'; từ khóa qua guardrail; rượu bị từ chối; báo cáo seo-san-<ngày>.md chỉ in CODE từ khóa bị loại",
+    "T3 chạy lại → skipped; --dry-run → 0 dòng; tắt → không sinh",
+    "T4 không sửa sàn/không API"
+   ],
+   "ca": [
+    {
+     "ma": "07.1-C0",
+     "mo_ta": "mồi listing + trends related",
+     "entry_point": "market_csv --kind listing fixture_shopee_listing.csv; intel_import --trend relatedQueries_MAU.csv --seed <seed>",
+     "dau_vao": "bản sao fixture repo",
+     "expected": "nạp OK"
+    },
+    {
+     "ma": "07.1-C1",
+     "mo_ta": "gợi ý + nháp",
+     "entry_point": "seo_san --run --sku all --channel shopee --out-dir scratch",
+     "dau_vao": "—",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "07.1-C2",
+     "mo_ta": "chạy lại",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "skipped"
+    },
+    {
+     "ma": "07.1-C3",
+     "mo_ta": "dry-run",
+     "entry_point": "--run --dry-run",
+     "dau_vao": "—",
+     "expected": "0 dòng mới"
+    },
+    {
+     "ma": "07.1-C4",
+     "mo_ta": "tắt",
+     "entry_point": "rollout --disable marketing-07.1; --run",
+     "dau_vao": "—",
+     "expected": "0 dòng mới"
+    }
+   ]
+  },
+  {
+   "id": "marketing-07.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_youtube --brief ...` exit 0 (LLM giả)",
+    "T2 content_drafts channel='youtube' content_type='video' created_by='agent:mkt12' pending; chương bắt đầu 00:00 cộng dồn đúng; SRT 1 cue/phần; mô tả có nhãn AI + QC; privacyStatus 'private'; câu chạm giá bị bỏ",
+    "T3 brief nhắc rượu → 0 LLM; tổng thời lượng ngoài [300,900] → thoi_luong 0 dòng; tắt → không sinh",
+    "T4 không đăng YouTube; --render shorts dùng B-roll có license, có nhãn"
+   ],
+   "ca": [
+    {
+     "ma": "07.2-C1",
+     "mo_ta": "gói YouTube (LLM giả 4 phần 360s)",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --fake-llm yt -m agents.mkt_youtube --brief ...",
+     "dau_vao": "—",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "07.2-C2",
+     "mo_ta": "brief rượu",
+     "entry_point": "--brief 'rượu sâm ...'",
+     "dau_vao": "—",
+     "expected": "refused ruou, 0 LLM, 0 dòng"
+    },
+    {
+     "ma": "07.2-C3",
+     "mo_ta": "thời lượng 100s",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --fake-llm yt_short ...",
+     "dau_vao": "—",
+     "expected": "refused thoi_luong, 0 dòng"
+    },
+    {
+     "ma": "07.2-C4",
+     "mo_ta": "render shorts B-roll MẪU",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --fake-llm yt -m agents.mkt_youtube --brief ... --render --broll-dir scratch --out-dir scratch",
+     "dau_vao": "—",
+     "expected": "mp4 15–45s + sidecar + agent_action_log youtube_short_render"
+    },
+    {
+     "ma": "07.2-C5",
+     "mo_ta": "tắt",
+     "entry_point": "rollout --disable marketing-07.2; --brief",
+     "dau_vao": "—",
+     "expected": "0 dòng, 0 LLM"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-01",
+   "tieu_chi_cu_the": [
+    "T1 entry point thật `pipelines.guardrail.check/check_publish`, `guardrail_llm.check_publish_llm`, `kb_filter.is_alcohol` qua script harness (module API)",
+    "T2 từ cấm/claim y tế bị chặn (mã vi phạm), văn bản sạch ok; claim ngầm 'đối tượng bệnh + lời chứng' → ngam_y_suc_khoe ở check_publish; rượu bị nhận diện; SĐT trong văn bản đăng bị cờ PII; nháp thật (01.1) mang guardrail_result",
+    "T3 LLM-check (fake ở biên): luật đã chặn → skipped 0 call; LLM lỗi → llm_check_unavailable (fail-closed); LLM cờ → thêm violation, không bao giờ gỡ chặn luật; tắt mặc định (model rỗng) → off",
+    "T4 không gọi OpenRouter thật"
+   ],
+   "ca": [
+    {
+     "ma": "01-C1",
+     "mo_ta": "bộ ca luật cụ thể",
+     "entry_point": "python evidence/itacc_r10/g3/harness/guardrail_cases.py",
+     "dau_vao": "danh sách ca trong script",
+     "expected": "mọi ca khớp expected trong script"
+    },
+    {
+     "ma": "01-C2",
+     "mo_ta": "LLM-check qua fake",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --fake-llm ... -m <script>",
+     "dau_vao": "GUARDRAIL_LLM_MODEL=openai/gpt-4o-mini",
+     "expected": "skipped/flag/unavailable đúng"
+    },
+    {
+     "ma": "01-C3",
+     "mo_ta": "nháp thật mang kết quả guardrail",
+     "entry_point": "q.py content_drafts (DB mkt)",
+     "dau_vao": "sau 01.1",
+     "expected": "guardrail_result không null, ok=true cho nháp lưu"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-02",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.xnqc --draft --sku K --loai L --ten T [--maket F] --submit` exit 0",
+    "T2 1 mục approval_queue legal_hr/xnqc_dossier pending, payload nháp hồ sơ theo SKU TPBVSK (claim đã duyệt, danh mục giấy tờ), không tự nộp",
+    "T3 SKU không phải TPBVSK/SKU lạ → từ chối 0 dòng; không --submit → 0 dòng; nộp lại → không nhân bản",
+    "T4 agent không nộp cơ quan nhà nước"
+   ],
+   "ca": [
+    {
+     "ma": "02-C1",
+     "mo_ta": "nháp hồ sơ saphraton-20v",
+     "entry_point": "xnqc --draft --sku saphraton-20v --loai maket --ten 'maket fanpage Thử IT' --maket maket.txt --submit",
+     "dau_vao": "maket fixture",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "02-C2",
+     "mo_ta": "SKU thực phẩm/rượu",
+     "entry_point": "--sku mat-ong-sam-300ml",
+     "dau_vao": "—",
+     "expected": "exit 1, 0 dòng"
+    },
+    {
+     "ma": "02-C3",
+     "mo_ta": "không --submit",
+     "entry_point": "--draft ... (không submit)",
+     "dau_vao": "—",
+     "expected": "exit 0 in nháp, 0 dòng"
+    },
+    {
+     "ma": "02-C4",
+     "mo_ta": "nộp lại",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "không thêm mục pending trùng"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-03.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.xnqc --sync-golden` exit 0; `python -m ingest.golden_store` nạp golden",
+    "T2 hồ sơ lệch golden → mục legal_hr/golden_xnqc_sync created_by 'agent:phap_che_a1' pending; sau khi người sửa golden (FIXTURE file) + nạp → view sku_readiness đổi mức (MO_TA→QC_DAY_DU)",
+    "T3 chạy lại → không trùng; da_cap thiếu scan verified → từ chối; tính năng tắt + loader_gate chưa cấu hình → golden_store exit 2 không nạp",
+    "T4 agent không ghi file golden/sku_master"
+   ],
+   "ca": [
+    {
+     "ma": "03.2-C0",
+     "mo_ta": "mồi hồ sơ",
+     "entry_point": "xnqc --add --sku saphraton-20v --loai maket --ten .. --by 'Người Thử IT'; --set ID --status da_nop --ngay-nop 2026-10-20 --by",
+     "dau_vao": "—",
+     "expected": "dossier da_nop"
+    },
+    {
+     "ma": "03.2-C1",
+     "mo_ta": "đề xuất đồng bộ",
+     "entry_point": "xnqc --sync-golden",
+     "dau_vao": "—",
+     "expected": "exit 0; mục golden_xnqc_sync đúng T2"
+    },
+    {
+     "ma": "03.2-C2",
+     "mo_ta": "chạy lại",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "không thêm mục"
+    },
+    {
+     "ma": "03.2-C3",
+     "mo_ta": "da_cap thiếu scan",
+     "entry_point": "xnqc --set ID --status da_cap --so-giay X --ngay-cap 2026-10-21 --doc-sha <64 hex không có> --by",
+     "dau_vao": "—",
+     "expected": "exit 1, trạng thái không đổi"
+    },
+    {
+     "ma": "03.2-C4",
+     "mo_ta": "readiness theo golden (FIXTURE file golden bản sao xnqc approved)",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --set ingest.golden_store.GOLDEN_FILE=... -m ingest.golden_store",
+     "dau_vao": "—",
+     "expected": "sku_readiness saphraton-20v×shopee = QC_DAY_DU"
+    },
+    {
+     "ma": "03.2-C5",
+     "mo_ta": "tắt → loader bị chặn",
+     "entry_point": "rollout --disable legal_hr-03.2; ingest.golden_store",
+     "dau_vao": "—",
+     "expected": "exit 2, không nạp"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-04",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.ra_kenh --file F --by <người>` exit 0",
+    "T2 bài vi phạm → approval_queue legal_hr/channel_takedown pending, hạn 24 giờ đồng hồ; trang mặc định hosting → data_platform/hosting_fix; channel_posts snapshot; payload không chép đoạn vi phạm",
+    "T3 nạp lại → idempotent; file lỗi → exit 1 0 dòng; bản xuất lại sạch → đóng da_sua",
+    "T4 agent không gỡ bài/không gọi API kênh"
+   ],
+   "ca": [
+    {
+     "ma": "04-C1",
+     "mo_ta": "file bài kênh sở hữu (1 vi phạm, 1 trang mặc định hosting nếu hỗ trợ, 1 sạch)",
+     "entry_point": "ra_kenh --file posts.csv --by 'Người Thử IT'",
+     "dau_vao": "fixture CSV",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "04-C2",
+     "mo_ta": "nạp lại",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "0 mục mới"
+    },
+    {
+     "ma": "04-C3",
+     "mo_ta": "file lỗi",
+     "entry_point": "posts_bad.csv",
+     "dau_vao": "—",
+     "expected": "exit 1, 0 dòng"
+    },
+    {
+     "ma": "04-C4",
+     "mo_ta": "bản xuất lại sạch",
+     "entry_point": "posts_fixed.csv",
+     "dau_vao": "—",
+     "expected": "đợt vi phạm đóng da_sua"
+    },
+    {
+     "ma": "04-C5",
+     "mo_ta": "báo cáo tuần",
+     "entry_point": "ra_kenh --report --out-dir? (nếu hỗ trợ)",
+     "dau_vao": "—",
+     "expected": "exit 0 báo cáo"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-05.1",
+   "tieu_chi_cu_the": [
+    "T1 `python scripts/contract_check.py --kind koc|dai_ly --file F --out-dir <thử>` exit 0/1 đúng",
+    "T2 báo cáo hd-mau-<loại>-<sha8>.md chỉ mã điều khoản + sha256 file (không chép nội dung), nhãn CHẠY THỬ; report_outputs 1 dòng feature legal_hr-05.1",
+    "T3 hợp đồng thiếu điều khoản → exit 1 liệt kê id; file rỗng/đuôi lạ → exit 2; tắt → exit 2 không ghi báo cáo",
+    "T4 kiểm từ khóa, không thay luật sư"
+   ],
+   "ca": [
+    {
+     "ma": "05.1-C1",
+     "mo_ta": "hợp đồng mẫu KOC",
+     "entry_point": "contract_check --kind koc --file docs/legal/mau-hop-dong-koc-NHAP.md --out-dir scratch",
+     "dau_vao": "file repo",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "05.1-C2",
+     "mo_ta": "hợp đồng đại lý",
+     "entry_point": "--kind dai_ly --file docs/legal/mau-hop-dong-dai-ly-NHAP.md",
+     "dau_vao": "—",
+     "expected": "exit 0"
+    },
+    {
+     "ma": "05.1-C3",
+     "mo_ta": "thiếu điều khoản",
+     "entry_point": "--kind koc --file tests/fixtures/mkt/hop-dong-koc-thieu-MAU.md",
+     "dau_vao": "—",
+     "expected": "exit 1, liệt kê id"
+    },
+    {
+     "ma": "05.1-C4",
+     "mo_ta": "file rỗng / .pdf",
+     "entry_point": "—",
+     "dau_vao": "—",
+     "expected": "exit 2"
+    },
+    {
+     "ma": "05.1-C5",
+     "mo_ta": "tắt",
+     "entry_point": "rollout --disable legal_hr-05.1; --out-dir",
+     "dau_vao": "—",
+     "expected": "exit 2 [rollout], không file"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-05.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m ingest.crm --add-contact/--consent` (CONTACT_VAULT_KEY thử) và `python scripts/dpia_draft.py --out-dir <thử>` exit 0",
+    "T2 contacts chỉ ciphertext; consents append-only ghi grant/withdraw theo mục đích + nguồn + bằng chứng; can_contact True sau grant, False sau withdraw; DPIA/TIA NHÁP sinh tất định (2 lần byte y hệt)",
+    "T3 consent thiếu bằng chứng/phiên bản chính sách (nếu bắt buộc) → từ chối; map hỏng → exit 2 không ghi file; --check lệch → exit 1",
+    "T4 không gửi liên hệ; PII không in ra"
+   ],
+   "ca": [
+    {
+     "ma": "05.2-C1",
+     "mo_ta": "thêm liên hệ giả",
+     "entry_point": "echo JSON | crm --add-contact - --by 'Người Thử IT'",
+     "dau_vao": "tên 'Khách Thử IT', SĐT 0900000101, email it@example.com",
+     "expected": "exit 0; contacts ciphertext (không chứa SĐT thô)"
+    },
+    {
+     "ma": "05.2-C2",
+     "mo_ta": "grant marketing",
+     "entry_point": "crm --consent ID --purpose marketing --grant --source <nguồn> --evidence REF --policy-version v1 --by",
+     "dau_vao": "—",
+     "expected": "consents 1 dòng; can_contact True"
+    },
+    {
+     "ma": "05.2-C3",
+     "mo_ta": "withdraw",
+     "entry_point": "--withdraw",
+     "dau_vao": "—",
+     "expected": "dòng mới; can_contact False; dòng cũ còn (append-only)"
+    },
+    {
+     "ma": "05.2-C4",
+     "mo_ta": "grant thiếu evidence",
+     "entry_point": "--grant không --evidence",
+     "dau_vao": "—",
+     "expected": "từ chối (nếu bắt buộc) hoặc ghi rõ hành vi"
+    },
+    {
+     "ma": "05.2-C5",
+     "mo_ta": "DPIA/TIA nháp",
+     "entry_point": "dpia_draft.py --out-dir scratch (2 lần) ; --check",
+     "dau_vao": "data/data_flow_map.json",
+     "expected": "2 file, byte y hệt giữa 2 lần"
+    },
+    {
+     "ma": "05.2-C6",
+     "mo_ta": "map hỏng",
+     "entry_point": "dpia_draft.py --map broken.json --out-dir scratch2",
+     "dau_vao": "—",
+     "expected": "exit 2, 0 file"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-06.1",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.pc_hr --jd <vi_tri>` exit 0",
+    "T2 approval_queue legal_hr/hr_jd pending, payload theo template qua guardrail, kèm agent_action_log",
+    "T3 chạy lại → đã có mục chờ, không trùng; vị trí lạ → exit≠0 0 dòng; tắt → không sinh",
+    "T4 không đăng tuyển"
+   ],
+   "ca": [
+    {
+     "ma": "06.1-C1",
+     "mo_ta": "JD vị trí đầu tiên trong template",
+     "entry_point": "pc_hr --jd <vi_tri>",
+     "dau_vao": "data/hr/jd_templates.json",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "06.1-C2",
+     "mo_ta": "chạy lại",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "exit 0 đã có, 0 dòng mới"
+    },
+    {
+     "ma": "06.1-C3",
+     "mo_ta": "vị trí lạ",
+     "entry_point": "--jd khong-co",
+     "dau_vao": "—",
+     "expected": "exit≠0, 0 dòng"
+    },
+    {
+     "ma": "06.1-C4",
+     "mo_ta": "tắt",
+     "entry_point": "rollout --disable legal_hr-06.1; --jd",
+     "dau_vao": "—",
+     "expected": "0 dòng"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-06.2",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.pc_hr --screen --jd <vi_tri> --dir <ngoài repo>` exit 0",
+    "T2 approval_queue legal_hr/hr_screening pending: mã ứng viên = 12 hex đầu sha256 nội dung, xếp tất định (bắt buộc↓, ưu tiên↓, mã), KHÔNG tên/SĐT/email/tên file trong payload; file không đọc được đứng cuối 'cần người đọc tay'",
+    "T3 thư mục trong repo → exit 2; cấu hình có tiêu chí phân biệt đối xử → exit 1; không tự loại ai",
+    "T4 không liên hệ ứng viên"
+   ],
+   "ca": [
+    {
+     "ma": "06.2-C1",
+     "mo_ta": "3 CV giả + 1 file không UTF-8",
+     "entry_point": "pc_hr --screen --jd <vi_tri> --dir scratch/cv",
+     "dau_vao": "CV 'Ứng Viên Thử IT', 0900000201..",
+     "expected": "exit 0; T2; thứ tự khớp tính độc lập"
+    },
+    {
+     "ma": "06.2-C2",
+     "mo_ta": "thư mục trong repo",
+     "entry_point": "--dir evidence/itacc_r10/g3",
+     "dau_vao": "—",
+     "expected": "exit 2, 0 dòng"
+    },
+    {
+     "ma": "06.2-C3",
+     "mo_ta": "JD có tiêu chí 'giới tính'",
+     "entry_point": "python evidence/itacc_r10/g3/harness/run.py --set <hằng template>=jd_bad.json ...",
+     "dau_vao": "—",
+     "expected": "exit 1, 0 dòng"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-06.3",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.pc_hr --attendance F --month 2026-09` exit 0",
+    "T2 approval_queue legal_hr/hr_attendance pending: ngày công, đi trễ/về sớm (lần+phút), thiếu chấm, vắng theo luật ca khớp tính độc lập; chỉ mã NV",
+    "T3 file lỗi (header sai/ngày tương lai/mã NV dạng SĐT/trùng) → exit 1 0 dòng; chạy lại → không trùng",
+    "T4 không tính lương/không kỷ luật"
+   ],
+   "ca": [
+    {
+     "ma": "06.3-C1",
+     "mo_ta": "chấm công tháng 9 giả",
+     "entry_point": "pc_hr --attendance att.csv --month 2026-09",
+     "dau_vao": "fixture NV-IT01/NV-IT02",
+     "expected": "exit 0; T2"
+    },
+    {
+     "ma": "06.3-C2",
+     "mo_ta": "mã NV dạng SĐT",
+     "entry_point": "att_bad.csv",
+     "dau_vao": "—",
+     "expected": "exit 1, 0 dòng"
+    },
+    {
+     "ma": "06.3-C3",
+     "mo_ta": "chạy lại",
+     "entry_point": "như C1",
+     "dau_vao": "—",
+     "expected": "0 dòng mới"
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-07",
+   "tieu_chi_cu_the": [
+    "T1 `python -m crawler.intel --run --source chinhphu-van-ban --sources <fixture>` (RSS server giả 127.0.0.1) → `python -m pipelines.intel_alert --run` → `python -m pipelines.legal_updates --submit` exit đúng",
+    "T2 intel_items có tin văn bản; red_alerts source_agent='intel_red_alert' rules chứa 'legal_doc'; approval_queue legal_hr/legal_doc_review pending, payload template (nguồn, link, sha256 tiêu đề), không diễn giải",
+    "T3 thiếu người nhận cảnh báo → exit 1 fail-closed (dòng vẫn ghi); legal_updates chạy lại → skip; tin không thuộc chủ đề → không khớp; tắt → không sinh mục/cảnh báo legal_doc",
+    "T4 không mạng ngoài (chỉ 127.0.0.1), không gửi"
+   ],
+   "ca": [
+    {
+     "ma": "07-C1",
+     "mo_ta": "thu RSS giả",
+     "entry_point": "crawler.intel --run --source chinhphu-van-ban --sources sources_it.json --max-requests 5",
+     "dau_vao": "rss_it.xml: 1 tin nghị định quảng cáo TPBVSK + 1 tin không liên quan",
+     "expected": "exit 0; intel_items 2 dòng nguồn chinhphu-van-ban"
+    },
+    {
+     "ma": "07-C2",
+     "mo_ta": "quét cảnh báo",
+     "entry_point": "intel_alert --run",
+     "dau_vao": "—",
+     "expected": "red_alerts 1 dòng legal_doc; exit 1 (chưa routing — fail-closed)"
+    },
+    {
+     "ma": "07-C3",
+     "mo_ta": "đẩy hàng Pháp chế",
+     "entry_point": "legal_updates --submit",
+     "dau_vao": "—",
+     "expected": "exit 0; 1 mục legal_doc_review đúng T2 (chỉ tin khớp)"
+    },
+    {
+     "ma": "07-C4",
+     "mo_ta": "chạy lại legal_updates",
+     "entry_point": "như C3",
+     "dau_vao": "—",
+     "expected": "0 mục mới"
+    },
+    {
+     "ma": "07-C5",
+     "mo_ta": "tắt",
+     "entry_point": "rollout --disable legal_hr-07; thu tin mới; intel_alert --run; legal_updates --submit",
+     "dau_vao": "rss_it2.xml",
+     "expected": "không sinh cảnh báo legal_doc mới, không mục mới"
+    }
+   ]
+  }
+ ]
+}

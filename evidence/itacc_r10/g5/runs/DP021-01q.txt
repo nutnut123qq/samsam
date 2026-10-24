@@ -1,0 +1,12 @@
+# ca: DP021-01q
+# env: DB thử khối dp (DSN che)
+# cmd: python /d/code/samsam/evidence/itacc_r10/g5/harness/q.py select left(sha256,12),filename,doc_type,pages,text_source,pii_flag,status from documents order by created_at select left(sha256,12),field,value,confidence,verified from document_fields order by 1,2
+# exit: 0
+# thoi_gian: 2026-10-23T10:44:43+0700
+-- select left(sha256,12),filename,doc_type,pages,text_source,pii_flag,status from documents order by created_at
+('af03f4436115', 'gtn_thu_it.pdf', 'giay_tiep_nhan', 1, 'pdf_text', False, 'pending_review')
+('472d705c02fd', 'scan_thu_it.png', 'giay_tiep_nhan', 1, 'none', None, 'cho_ocr')
+-- select left(sha256,12),field,value,confidence,verified from document_fields order by 1,2
+('af03f4436115', 'ngay_cap', '2026-10-15', Decimal('1'), False)
+('af03f4436115', 'so_giay', '123/2026/DKSP', Decimal('1'), False)
+('af03f4436115', 'ten_san_pham', 'Mat ong sam Thu IT', Decimal('1'), False)

@@ -1,0 +1,83 @@
+# ca: DP90-01 — tài liệu/công cụ hạ tầng on-prem có trong repo (kiểm tĩnh, chỉ đọc)
+  deploy/onprem:
+  total 41
+  drwxr-xr-x 1 hahuy 197609     0 Oct 22 16:24 .
+  drwxr-xr-x 1 hahuy 197609     0 Oct 15 11:34 ..
+  -rw-r--r-- 1 hahuy 197609 15124 Oct 20 00:18 README.md
+  -rw-r--r-- 1 hahuy 197609 14047 Oct 22 16:24 jobs.json
+  drwxr-xr-x 1 hahuy 197609     0 Oct 22 16:24 systemd
+  -rw-r--r-- 1 hahuy 197609   689 Oct 21 09:35 webhook-env.example
+  
+  deploy/onprem/systemd:
+  total 51
+  drwxr-xr-x 1 hahuy 197609    0 Oct 22 16:24 .
+  drwxr-xr-x 1 hahuy 197609    0 Oct 22 16:24 ..
+  -rw-r--r-- 1 hahuy 197609  253 Oct 16 07:04 samsam-job-anchor_build.timer
+  -rw-r--r-- 1 hahuy 197609  380 Oct 19 15:40 samsam-job-b2b_followups.timer
+  -rw-r--r-- 1 hahuy 197609  235 Oct 15 23:58 samsam-job-backup.timer
+  -rw-r--r-- 1 hahuy 197609  370 Oct 20 00:18 samsam-job-ceo_audit.timer
+  -rw-r--r-- 1 hahuy 197609  368 Oct 19 15:40 samsam-job-ceo_promo.timer
+  -rw-r--r-- 1 hahuy 197609  251 Oct 15 23:58 samsam-job-ceo_weekly.timer
+  -rw-r--r-- 1 hahuy 197609  389 Oct 21 09:35 samsam-job-chain_watch.timer
+  -rw-r--r-- 1 hahuy 197609  396 Oct 21 09:35 samsam-job-channel_scan.timer
+  -rw-r--r-- 1 hahuy 197609  256 Oct 15 23:58 samsam-job-content_daily.timer
+  -rw-r--r-- 1 hahuy 197609  395 Oct 19 15:40 samsam-job-dealer_price_watch.timer
+  -rw-r--r-- 1 hahuy 197609  242 Oct 15 23:58 samsam-job-dr_drill.timer
+  -rw-r--r-- 1 hahuy 197609  382 Oct 20 00:18 samsam-job-garden_remind.timer
+  -rw-r--r-- 1 hahuy 197609  391 Oct 21 09:35 samsam-job-hdtv_month.timer
+  -rw-r--r-- 1 hahuy 197609  262 Oct 15 23:58 samsam-job-health_bulletin.timer
+  -rw-r--r-- 1 hahuy 197609  232 Oct 15 23:58 samsam-job-intel.timer
+  -rw-r--r-- 1 hahuy 197609  387 Oct 19 15:40 samsam-job-intel_keywords.timer
+  -rw-r--r-- 1 hahuy 197609  383 Oct 20 00:18 samsam-job-intel_weekly.timer
+  -rw-r--r-- 1 hahuy 197609  256 Oct 15 23:58 samsam-job-invoice_batch.timer
+  -rw-r--r-- 1 hahuy 197609  253 Oct 15 23:58 samsam-job-kpi_snapshot.timer
+  -rw-r--r-- 1 hahuy 197609  256 Oct 16 07:04 samsam-job-legal_updates.timer
+  -rw-r--r-- 1 hahuy 197609  382 Oct 20 00:18 samsam-job-listing_watch.timer
+  -rw-r--r-- 1 hahuy 197609  251 Oct 15 23:58 samsam-job-ops_monthly.timer
+  -rw-r--r-- 1 hahuy 197609  374 Oct 19 15:40 samsam-job-order_watch.timer
+  -rw-r--r-- 1 hahuy 197609  376 Oct 20 00:18 samsam-job-price_watch.timer
+  -rw-r--r-- 1 hahuy 197609  392 Oct 20 00:18 samsam-job-production_month.timer
+  -rw-r--r-- 1 hahuy 197609  392 Oct 20 00:18 samsam-job-production_week.timer
+  -rw-r--r-- 1 hahuy 197609  273 Oct 16 07:04 samsam-job-red_alert_escalate.timer
+  -rw-r--r-- 1 hahuy 197609  261 Oct 15 23:58 samsam-job-red_alert_sweep.timer
+  -rw-r--r-- 1 hahuy 197609  260 Oct 15 23:58 samsam-job-restore_drill.timer
+  -rw-r--r-- 1 hahuy 197609  370 Oct 19 15:40 samsam-job-sales_sla.timer
+  -rw-r--r-- 1 hahuy 197609  394 Oct 21 09:35 samsam-job-vt_harvest.timer
+  -rw-r--r-- 1 hahuy 197609  386 Oct 22 16:24 samsam-job-vt_pests.timer
+  -rw-r--r-- 1 hahuy 197609  390 Oct 21 09:35 samsam-job-vt_weather.timer
+  -rw-r--r-- 1 hahuy 197609  403 Oct 21 09:35 samsam-job-webhook_health.timer
+  -rw-r--r-- 1 hahuy 197609  649 Oct 15 23:58 samsam-job@.service
+  -rw-r--r-- 1 hahuy 197609 1418 Oct 21 09:35 samsam-webhook-messenger.service
+  -rw-r--r-- 1 hahuy 197609 1409 Oct 21 09:35 samsam-webhook-zalo.service
+deploy/onprem/README.md sha256=445b20a8f47276596e597d01efc3ebbe80f62e00a1ca736a66931ee9f6538e20 dong=204
+docs/handover/runbook-ha-tang.md sha256=33eed60cbc855e9ad87e5d0ec85e1de2f47bf12912d815dfe03575b8bb4c3127 dong=906
+deploy/onprem/jobs.json sha256=62ff34d6fc9b175ba290e72a82179d2691dd120ca7f88268806a6e38fb095d8a dong=213
+## mục trong README on-prem:
+1:# Triển khai hệ thống lõi trên server vật lý của Sâm Sâm (v12.6 — phương án CHÍNH)
+20:## 1. Phân quyền tài khoản (PL01 mục 8b, PL04 mục 3)
+34:## 2. Cài đặt trên server
+48:## 3. Đăng nhập nội bộ
+60:## 4. Backup hằng ngày + bản sao ngoài hệ thống (HĐ Điều 2, PL01 mục 8c)
+75:## 5. Diễn tập khôi phục (PL02 mục 2: 30/11/2026, 18/12/2026, sau đó mỗi quý)
+86:## 6. Giám sát — phát hiện sự cố trong 15 phút (PL02 mục 2)
+116:## 7. Lịch tự chạy (systemd timer)
+169:# /etc/systemd/system/samsam-backup.service
+176:# /etc/systemd/system/samsam-backup.timer
+195:## 8. Dịch vụ bên thứ ba và phương án khi bị ngắt (PL01 mục 8d)
+## runbook mục UPS/NAS/offsite/giám sát/tài khoản quản trị:
+15:Mọi lệnh chạy từ root repo.
+18:Sâm (Postgres tự quản trên server đó, tài khoản quản trị cao nhất do Sâm
+33:| 1 | Backup đêm qua | `python scripts/db_backup.py` (nếu chưa có lịch tự chạy) rồi mở dòng cuối `backup_runs.jsonl` trong `BACKUP_DIR` | `status=ok`, có `file` hôm nay | `fail`/`offsite_fail`/không có dòng hôm nay → S2 |
+68:| **S3** | Cảnh báo lẻ: `[warn]` chưa mã hóa/chưa offsite, 1 câu bot không trả lời được, cảnh báo 80% lần đầu | ≤ 1 ngày làm việc | ghi vào sổ, báo trong họp tuần | Ghi lại, theo dõi xem có lặp không — lặp 3 ngày → nâng S2 |
+100:  (lưu WAL liên tục ra ổ/NAS ngoài server của Sâm Sâm) — **external-dep**
+242:cloud = **external-dep**: cài extension cần quyền superuser/nhà cung cấp):
+336:  test_ben_a_login_reads_numbers_only` (login thật, không superuser).
+356:| Xóa MỌI bản sao dữ liệu Bên B do Bên A giữ (máy dev, backup offsite của Bên A, `BACKUP_DIR`/`GARDEN_MEDIA_DIR`/`HR_INBOX_DIR` bản sao, DB test) | 30 ngày | Bên A | biên bản xác nhận xóa có chữ ký hai bên (**external-dep**, mẫu PL05 chưa có) |
+417:  `DATABASE_URL`); login là superuser, thành viên role sở hữu bảng, hoặc
+523:- Login owner/superuser: `human_actor` nhận `--by` như cũ (owner vốn ghi thẳng
+595:  bằng login người (không superuser/owner, có EXECUTE) liệt kê + kiểm sớm
+801:**10.6 Đợt hoàn thiện 22/10/2026 — giám sát ngoài máy, lịch mới, DR dev**
+818:  — chỉ chứng minh CƠ CHẾ trên DB test nhỏ, backup chưa mã hóa/offsite; diễn tập
+833:   PASSWORD '<mới>'` bằng tài khoản quản trị, cập nhật nơi dùng ở bước 1, khởi
+895:  UNTIL, giới hạn kết nối ≠ 0, CONNECT, app_human, không superuser). Sau khi
+# exit: 0

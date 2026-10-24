@@ -1,0 +1,28 @@
+"""HARNESS r12 — tạo criteria/r12_farming_v3.json từ r12_farming_v2.json (đã khóa, chưa chạy, KHÔNG sửa) + khóa mới.
+Thêm 1 sửa lỗi HARNESS: farming-04__C08 stdout_re dùng `(?m)^…$` nhưng stdout tiến trình con Python trên Windows kết thúc dòng
+`\r\n` (runner giữ byte gốc) → `$` không khớp dù nội dung đúng (lượt 20261024T112800-228b: in đúng 1 dòng tư liệu + "[done] 1
+tư liệu đang được cấp"). v3: `$` → `\r?$` trong regex đó; kỳ vọng không đổi. python -I mk_farming_v3.py.txt <fingerprint_code>"""
+import datetime
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+C = Path(__file__).resolve().parents[1] / "criteria"
+d = json.loads((C / "r12_farming_v2.json").read_text(encoding="utf-8"))
+d["_doc"] = ("v3 (điều phối viên 24/10/2026): như v2 + farming-04__C08 `$`→`\\r?$` (CRLF stdout Windows); xem docstring "
+             "evidence/itacc_r12/harness/mk_farming_v3.py.txt. | " + d["_doc"])
+d["fingerprint_code"] = sys.argv[1]
+it = next(i for i in d["items"] if i["id"] == "farming-04")
+c = next(x for x in it["ca"] if x["ma"] == "farming-04__C08")
+b = c["buoc"][0]
+c["ky_vong_v2"] = {"stdout_re": b["stdout_re"]}
+new = b["stdout_re"].replace("$[", r"\r?$[")
+assert new != b["stdout_re"], b["stdout_re"]
+b["stdout_re"] = new
+s = json.dumps(d, ensure_ascii=False, indent=1)
+(C / "r12_farming_v3.json").write_text(s, encoding="utf-8", newline="\n")
+h = hashlib.sha256(s.encode("utf-8")).hexdigest()
+(C / "r12_farming_v3.lock.txt").write_text(
+    f"r12_farming_v3.json {h} {datetime.datetime.now().astimezone().isoformat(timespec='seconds')}\n", encoding="utf-8")
+print(h, new)

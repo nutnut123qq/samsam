@@ -1,0 +1,399 @@
+{
+ "id": "sales-05",
+ "ten": "Báo giá B2B quà Tết",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Báo giá B2B quà Tết: 'Nhận yêu cầu qua form, lập báo giá theo bảng chiết khấu, nhắc chốt đơn'",
+ "tieu_chi": [
+  "`kd_quote --check-matrix` exit 0 với ma trận GIẢ ĐỊNH",
+  "Form B2B mặc định TẮT (exit 2 trước bind); bật trên 127.0.0.1 → POST hợp lệ ghi b2b_requests + contacts mã hóa + consent b2b; sai content-type 415; honeypot 0 ghi",
+  "`kd_quote --quote REQ --submit` → approval_queue b2b_quote/b2b_quote_matrix (khối sales) + finance/b2b_margin_review khi thiếu giá vốn duyệt; nội dung có số do code, không PII",
+  "--export trước duyệt → exit 1; sau người duyệt → xuất; --verify-send khớp → b2b_quote_events da_gui; tệp sửa → exit 1",
+  "`kd_catalog --submit` → b2b_catalog không rượu; `da_b2b --import/--submit-batch` → org_prospect_batch; CSV có SĐT → exit 1 0 dòng",
+  "`kd_quote --followups` → b2b_followup created_by agent:kd_quote cho báo giá duyệt quá ngưỡng; chạy lại không nhân đôi",
+  "Tắt → không sinh"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: không LLM (template); form chạy thật trên 127.0.0.1:58791/58792",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s05_orgs.csv",
+   "sha256": "cdb24dce1603e43f1329909eb8dc51a66d9d37e38d9763753f11200076fe4783",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s05_orgs_bad.csv",
+   "sha256": "280c2ea8357e7a6e8ea7a63d7d5b8687763db94f766162a3ba5f05eb52e82b42",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "S05-C01",
+   "mo_ta": "Kiểm ma trận",
+   "lenh": "python -m agents.kd_quote --check-matrix",
+   "expected": "exit 0",
+   "actual": "exit 0 'ma trận v1 hợp lệ ... GIẢ ĐỊNH'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S05-C02",
+   "mo_ta": "Form tắt mặc định",
+   "lenh": "B2B_FORM_ENABLED= python -m connectors.b2b_form",
+   "expected": "exit 2",
+   "actual": "exit 2 '[fatal] form B2B mặc định TẮT'",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S05-C03",
+   "mo_ta": "Form bật localhost",
+   "lenh": "python evidence/itacc_r10/g2/harness/b2b_post.py http://127.0.0.1:58791/b2b ;; S05-C03-server",
+   "expected": "200 + 1 b2b_requests; 415; honeypot 0 ghi",
+   "actual": "GET 200 (3 SKU mật ong); POST hợp lệ 200 → b2b_requests #1 (contact_id 2, consent_id 3 b2b web), gửi lại cùng ngày 200 yc=1 (không ghi thêm); JSON → 415; honeypot 200 trang chung, 0 ghi; SKU rượu → 400; log chỉ hash IP",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S05-C04",
+   "mo_ta": "Lập báo giá + submit",
+   "lenh": "python -m agents.kd_quote --requests ;; python -m agents.kd_quote --quote 1 --out-dir evidence/itacc_r10/g2/out/s05 --dry-run ;; python -m agents.kd_quote --quote 1 --out-dir evidence/itacc_r10/g2/out/s05 --submit",
+   "expected": "b2b_quote|matrix + finance/b2b_margin_review",
+   "actual": "dry-run 0 ghi; submit → #50 sales/b2b_quote risk high (ngoài ma trận vì ma_tran_chua_xac_nhan) + #51 finance/b2b_margin_review (thiếu giá vốn duyệt), created_by agent:kd_quote, payload markdown số do code, không PII người liên hệ",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S05-C05",
+   "mo_ta": "Export trước duyệt",
+   "lenh": "python -m agents.kd_quote --export 50 --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/q50_pre.md",
+   "expected": "exit 1",
+   "actual": "exit 1 'không phải tài liệu ĐÃ duyệt — KHÔNG xuất'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S05-C06",
+   "mo_ta": "Duyệt + export + verify-send",
+   "lenh": "python -m pipelines.approval_queue --approve 50 --by GĐ Bán Hàng Thử IT ;; python -m agents.kd_quote --export 50 --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/q50_trial.md ;; python evidence/itacc_r10/g2/harness/run_mod.py --force-mode van_hanh -m agents.kd_quote --export 50 --out evidence/itacc_r10/g2/out/s05/q50_export.md ;; python evidence/itacc_r10/g2/harness/run_mod.py --force-mode van_hanh -m agents.kd_quote --verify-send 50 evidence/itacc_r10/g2/out/s05/q50_export.md --by GĐ Bán Hàng Thử IT ;; python evidence/itacc_r10/g2/harness/run_mod.py --force-mode van_hanh -m agents.kd_quote --verify-send 50 C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/q50_tamper.md --by GĐ Bán Hàng Thử IT",
+   "expected": "export ok; verify khớp → da_gui; sửa exit 1",
+   "actual": "approve #50 (người thử); export khi chạy thử → exit 1 (rollout từ chối; thông báo kèm '[warn] LỆCH bản duyệt' gây hiểu nhầm); export ép van_hanh (FIXTURE) exit 0; verify-send exit 0 → b2b_quote_events da_gui; tệp sửa exit 1",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S05-C07",
+   "mo_ta": "Catalog",
+   "lenh": "python -m agents.kd_catalog --build --out-dir evidence/itacc_r10/g2/out/s05 ;; python -m agents.kd_catalog --submit",
+   "expected": "b2b_catalog không rượu",
+   "actual": "catalog 3 mục, 0 chữ 'rượu', nhãn 'Quảng cáo'; --submit → #52 b2b_catalog risk high (xem L2 về SKU/giá)",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S05-C08",
+   "mo_ta": "Danh sách tổ chức",
+   "lenh": "python -m agents.da_b2b --import evidence/itacc_r10/g2/fixtures/s05_orgs_bad.csv --by NV KD Thử IT ;; python -m agents.da_b2b --import evidence/itacc_r10/g2/fixtures/s05_orgs.csv --by NV KD Thử IT ;; python -m agents.da_b2b --submit-batch",
+   "expected": "org_prospect_batch; CSV lỗi exit 1 0 dòng",
+   "actual": "CSV có SĐT → exit 1 'dòng 2 cột fit_reason: chứa SĐT/email' 0 dòng; CSV hợp lệ inserted=2; --submit-batch → #53 org_prospect_batch (payload còn chữ 'GĐ dự án' cũ)",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S05-C09",
+   "mo_ta": "Nhắc chốt đơn",
+   "lenh": "python -m agents.kd_quote --followups --dry-run ;; python -m agents.kd_quote --followups ;; python evidence/itacc_r10/g2/harness/fu_probe.py ;; python -m agents.kd_quote --outcome 50 chot --by GĐ Bán Hàng Thử IT ;; python evidence/itacc_r10/g2/harness/fu_probe.py",
+   "expected": "b2b_followup agent:kd_quote; lần 2 0 mới",
+   "actual": "CLI thật --followups (dry-run & thật): 0 (báo giá gửi 23/10 10:40 chưa đủ 24 giờ LV); probe CHỈ ĐỌC followup_items(now=28/10) → 1 mục fu:50:...:1 đúng mẫu; --outcome chot → probe 0. Đường GHI b2b_followup chưa thực chạy",
+   "exit": 0,
+   "ket_qua": "NOT_RUN",
+   "ly_do_not_run": "Cần ≥24 giờ làm việc thật sau lần gửi; CLI không có --now/--as-of; không lùi mốc thời gian"
+  },
+  {
+   "ma": "S05-C10",
+   "mo_ta": "Tắt",
+   "lenh": "python -m pipelines.rollout --disable sales-05 --by Người Thử IT --note kiểm nhánh tắt r10 g2 ;; python -m agents.kd_quote --quote 2 --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/q_tat --submit",
+   "expected": "không sinh mục",
+   "actual": "không mục mới (RolloutBlocked, traceback exit 1 — L4); 3 file báo giá vẫn ghi ra --out-dir scratchpad trước khi bị chặn",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S05-X1",
+   "mo_ta": "BỔ SUNG SAU KHÓA (phát hiện ở C07): giá báo giá/catalog phải là giá list ĐÃ duyệt; SKU CAM không vào catalog/form",
+   "lenh": "python evidence/itacc_r10/g2/harness/b2b_post2.py http://127.0.0.1:58792/b2b ;; python -m agents.kd_quote --quote 2 --dry-run",
+   "expected": "chặn hoặc reason 'giá chưa duyệt'",
+   "actual": "báo giá YC-2 dùng 745.000đ (price_list #24 chưa duyệt), reasons không nêu; form/catalog nhận SKU thực phẩm readiness CAM (L2)",
+   "exit": 0,
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Vá L2 (giá từ price_list đã duyệt + lọc readiness như S03/F2) rồi chạy lại S05-X1/C07; chạy --followups sau ≥24 giờ làm việc để ghi b2b_followup",
+ "gioi_han": "Ma trận chiết khấu + ngưỡng nhắc GIẢ ĐỊNH; export/verify-send chỉ ở van_hanh (FIXTURE); đường ghi b2b_followup chưa chạy (C09 NOT_RUN); form chỉ localhost (tên miền/DPIA = Bên B).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post.py",
+   "sha256": "09d71906afc3419051c2a7e3bfca166a96497b75be67087efc4640c102e6d9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post2.py",
+   "sha256": "1ab72f65b0881f3e20f7da54403a360f526728a95638f6dce6c6cf6ab872314e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/case.py",
+   "sha256": "0d5e5ea91967bf225c4ff3c733a5817c1ff87bb36095d808aa546fa8186b1340"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fake_llm.py",
+   "sha256": "adbc2f9799ed0ac98bf5ca1f83c7c11c2900579da8dc9bc2aa4ca3e91481cc81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fu_probe.py",
+   "sha256": "cd000fe41aa6172cf25198596a21d765938df14d3d1c2c9721812bc926b84953"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_golden_fixture.py",
+   "sha256": "82dcec52b25e0cb39b9111a0d2031d75c3d2b1c72ef60fcc71ebd747fdf0abb1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_items.py",
+   "sha256": "dfe2f77d4674e3134ba3fe9b26b320d6e1f8c54bebff43405b10cc98357b72c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/q.py",
+   "sha256": "1f522e8a212386aa99f6b6b44c4831b6aface0ecf34266af1c39eff527f274c1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/run_mod.py",
+   "sha256": "a5e9c3d3fdf5ad9706b50d5c01e7f1a66d8ab94ca05f8d449d57e6648519391b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/seed_chunk.py",
+   "sha256": "e2c8e72b3c8bd29336aa00af4138a19700aa0721aa993ef1286d2b235ad47b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/shift_orders.py",
+   "sha256": "b630f0394d2543a79471f4174f56d87461bb4c687718ff5d3da83a0d16791afe"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/zalo_e2e.py",
+   "sha256": "f6f1700f4569219eff9446fce3724d65f259fbddaba0930cc0ccc876ee416ae4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s05/bao-gia-BG-20261023-1-7e8576c2-noi-bo.md",
+   "sha256": "1183686d9479ec64c4386a1088303085faedb6283083702ce94daeddf70aeb41"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s05/bao-gia-BG-20261023-1-7e8576c2.html",
+   "sha256": "fa6e7bab3a6cbc9738bdc1d7690ac2f08de3c19f8603ae174d4442a849190367"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s05/bao-gia-BG-20261023-1-7e8576c2.md",
+   "sha256": "897eb1e53865de51450f9652a4e6a2dd19f924fe4f8bdc067871e91d617c4c5a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s05/catalog-tet-2026-10-23.html",
+   "sha256": "609a6e17a11ba53f0f042dc5649bfb6df45997f2b0cd821531abae33205985a1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s05/catalog-tet-2026-10-23.md",
+   "sha256": "53bdf8b28fa626f9b26962f39f59f20261f8fb14a06db30697499264aaa8cf23"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s05/q50_export.md",
+   "sha256": "897eb1e53865de51450f9652a4e6a2dd19f924fe4f8bdc067871e91d617c4c5a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C01.txt",
+   "sha256": "a47496ad6be65d1ff6f2a02b131736f414d363e14352853fdcb7eaaf796f6114"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C02.txt",
+   "sha256": "6e01566ba432ee71938fd34bdddf6398cb96aaad4071a4557d7dc56c807df60e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C03-db.json",
+   "sha256": "208bbd6439fc2edf44697b561b0d563231a6f0f0fa9844ef27d24764ada53082"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C03-server.txt",
+   "sha256": "ee7f97a83619f155ac2934b318cefa50954c51f56f9654cbc2aa7a00eebb505b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C03.json",
+   "sha256": "f0d86c1f7c3cfbe8a0360c3e7660c6edfd000cab460d7fb595773cc28f4f629c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C03.txt",
+   "sha256": "7f288aa402e4ecf737ab7fcb6ef7ba874f7e6001164548586c1a03b97cca3b08"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C04-db.json",
+   "sha256": "95cc5120062f3a2a2fd0bb926cf53f5ec870991fc507be805e1a56001baa87ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C04a.txt",
+   "sha256": "27d1df0beb3333b1d1902988e281c49ae629018a9ba82989c0884d9ac2eebfae"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C04b.txt",
+   "sha256": "22eee3838157c4c9176ff08fbc2fc7e12e1ba2466a4bed62311fc9ce74d1d48a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C04c.txt",
+   "sha256": "87ac4f0bd9c26debf741bf50be608008139e4f1e885f6d8eb1adae6468fed249"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C05.txt",
+   "sha256": "1d1069e0b72a757e50583c2c5e0a75dbc1d84ac5c711563712740447fa012a2a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C06-db.json",
+   "sha256": "d22e22b6909b5a958cfa4ea946da79cb6203b7e83adc95d05fda8a60740cb6be"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C06a.txt",
+   "sha256": "6d24525ba5561a4453dca22af4dea75e36bf795adaffab305e3108a1b11d3209"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C06b.txt",
+   "sha256": "feff5a6ea8ed7d04d443de5a5eef0d9ee3a28723ca1c2bce1732619fad53adab"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C06c.txt",
+   "sha256": "5fccf1bcbd7bf64c093953d8cb03665d9dd25c8476726be549ce8d80f5ee2234"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C06d.txt",
+   "sha256": "8154433640995e0b3df0e1408d9d1a3cd689a627ce331208e60b5aa419246fd8"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C06e.txt",
+   "sha256": "3289215b817f6981e2b7ae3824ce0eb517c24f41af7198c4c32da7c17add7410"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C07-db.json",
+   "sha256": "c28f3996b8a4c2acf156329e457d0d00ccfe28ae2636189d5cde2b3f93643e1a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C07a.txt",
+   "sha256": "b494650024f47baa955e023a5748b23509b88df3cc1f70f4aae4c4840a0695f0"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C07b.txt",
+   "sha256": "bdf30ebc35538a06988bb0f686c6a046910fcc9375ed16177e8ced8911c444a7"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C08-db.json",
+   "sha256": "90ef3c163883c7e2d73026b87ab9bb12ce05503ea86258b97e1e4413c6d0006a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C08a.txt",
+   "sha256": "1b990476a85586b0617edc2bed17b80b32c6ba0733c2013a52c14725bbce2882"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C08b.txt",
+   "sha256": "a724d139a4e30e85d64752f6b3f3bc5c1d9d20868ceb0ef7a4d6d1625bbffa68"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C08c.txt",
+   "sha256": "993fdb25c03a2270ce8c9629b2bc440ad357e1f45a10a56c07ece33ed180bdaf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C09a.txt",
+   "sha256": "4616e63f6e3c239e38f38a62e08d47d4bc02adf4addef16a6e12d7d2d1c301ec"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C09b.txt",
+   "sha256": "fc09539434451dbfea30411252c73f81fd4c1462254bd8bfc62dd41ccffa8136"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C09c.txt",
+   "sha256": "6e69ad15bab8d27cc686ad6f282fa069ad151708e0e47f7a8288f43b56c9f372"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C09d.txt",
+   "sha256": "175ab011194159b49513e2df5a48e40d557a0dd6f758b311806c2f5a3c5f53ef"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C09e.txt",
+   "sha256": "204860046f2502411365dc3099e6805ebc55cc4595d0ee264bdfb7f489f1be53"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-C10.txt",
+   "sha256": "074c5feb8610111170a30877cdc08bb9683338c48810ad27125784a3145c3d57"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-X1-db.json",
+   "sha256": "4c73d4726d7f5163dcfd45d9b8a3231497fc5e12f49112cb6322d7e27ec267b2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-X1a.txt",
+   "sha256": "9a307eee9ad5f4832d25bca61d1e66cd2e3b45fef162758b4cf4e5c84b004e5f"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S05-X1b.txt",
+   "sha256": "282e65594bb9d6adac2e2b959b3a4350066a14bf745f73b9ccd77bf7ca3b66a8"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt",
+   "sha256": "6318bbc062812637309bbc78e092657139921c2ff309792bd10b70bd6a306179"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt",
+   "sha256": "0627f43797cc5b00090dcdaddc96bf287ec3a0575fe234785a105ab05814f01c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/TAT-disable-sales-05.txt",
+   "sha256": "5cbbc01e7257736863492d165028b5669f7862358933191d1c8dfed925a8cdd0"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "L2",
+   "muc_do": "Trung bình",
+   "tom_tat": "Báo giá/catalog B2B (kd_quote/kd_catalog) lấy giá niêm yết từ data/golden_skus.json, KHÔNG kiểm price_list ĐÃ duyệt (cùng lớp lỗi đã vá ở listing_export S03 và website feed F2); báo giá SKU có giá list đang CHỜ duyệt không có reason cảnh báo. Catalog (tài liệu quảng cáo) + form B2B nhận SKU thực phẩm chưa tự công bố (sku_readiness=CAM mọi kênh).",
+   "tai_hien": "form B2B (127.0.0.1) yêu cầu mat-ong-sam-120ml-1hu ×50; kd_quote --quote 2 --dry-run; price_list id 24 approved_by null",
+   "expected": "giá từ price_list đã duyệt hoặc reason chặn/cảnh báo 'giá chưa duyệt'; SKU CAM không vào catalog/form",
+   "actual": "đơn giá 685.000đ tính từ 745.000đ (golden JSON), reasons chỉ ma_tran_chua_xac_nhan, thieu_gia_von_duyet; catalog-tet liệt kê 3 SKU mật ong (self_declaration chưa xác minh) với giá niêm yết chưa duyệt",
+   "evidence": [
+    "evidence/itacc_r10/g2/out/S05-X1b.txt",
+    "evidence/itacc_r10/g2/out/S05-X1-db.json",
+    "evidence/itacc_r10/g2/out/s05/catalog-tet-2026-10-23.md",
+    "evidence/itacc_r10/g2/out/S05-C03.json"
+   ],
+   "vi_tri_code": "agents/kd_quote.py price_lines (_sum_price trên golden JSON); agents/kd_catalog.py eligible (food → vào không xét readiness)"
+  },
+  {
+   "ma": "L4",
+   "muc_do": "Thấp",
+   "tom_tat": "Một số CLI không bắt RolloutBlocked khi tính năng TẮT → traceback Python (exit 1) thay vì thông báo/exit theo docstring (content: 'exit 2 ... tính năng tắt'). Kết quả an toàn vẫn đúng (không sinh đầu ra/không ghi file).",
+   "tai_hien": "rollout --disable; python -m pipelines.content --listing ...; python -m agents.kd_quote --quote 2 --submit; python -m agents.kd_forecast --write",
+   "expected": "thông báo [rollout] + exit 2 (hoặc exit 1 có thông báo), không traceback",
+   "actual": "Traceback ... pipelines.rollout.RolloutBlocked ... exit 1 (kd_quote còn ghi 3 file báo giá vào --out-dir trước khi bị chặn)",
+   "evidence": [
+    "evidence/itacc_r10/g2/out/S03-C10a.txt",
+    "evidence/itacc_r10/g2/out/S05-C10.txt",
+    "evidence/itacc_r10/g2/out/S073-C06.txt"
+   ],
+   "vi_tri_code": "pipelines/content.py main (--listing), agents/kd_quote.py _cmd_quote, agents/kd_forecast.py main"
+  }
+ ],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

@@ -1,0 +1,271 @@
+{
+ "id": "sales-04.2",
+ "ten": "Chuyển khách về đại lý gần nhất",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Quản lý khách và đại lý: 'chuyển khách về đại lý gần nhất khi khách đồng ý'",
+ "tieu_chi": [
+  "Sổ đại lý FIXTURE (scratchpad) nạp qua `crm --load-dealers PATH --by`",
+  "`crm --add-contact -` (stdin) lưu PII chỉ dạng ciphertext Fernet (khóa thử CONTACT_VAULT_KEY); bảng không chứa SĐT/email thô",
+  "`crm --assign LEAD --dealer --province` gán đại lý theo tỉnh",
+  "`crm --handoff` KHÔNG có đồng ý dai_ly đích danh → exit 1, không payload; có đồng ý → in payload (người tự chuyển, hệ thống không gửi), agent_action_log crm_handoff detail không PII",
+  "Rút đồng ý / đồng ý cho đại lý khác → handoff bị chặn; thiếu khóa vault → exit 2"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: không LLM; khóa vault Fernet THỬ (sinh trong scratchpad, không lưu evidence)",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s042_dealer_regions.json",
+   "sha256": "5e6849b5211fd9b5cdddc6ff00c62299f72846eb853a6417c31ba950bdd53a9f",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s042_contact.json",
+   "sha256": "c955cbd360f1dc027d370adfada3a86a3092f6bdf8b515f009295e1b7d7e83e8",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "S042-C01",
+   "mo_ta": "Nạp sổ đại lý",
+   "lenh": "python -m ingest.crm --load-dealers evidence/itacc_r10/g2/fixtures/s042_dealer_regions.json --by GĐ Bán Hàng Thử IT",
+   "expected": "dealers mới=2",
+   "actual": "exit 0 'mới=2'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S042-C02",
+   "mo_ta": "Thêm liên hệ",
+   "lenh": "CONTACT_VAULT_KEY=<set> python -m ingest.crm --add-contact - --lead 8 --by CSKH Thử IT",
+   "expected": "ciphertext, không SĐT thô",
+   "actual": "exit 0 contact #1; contacts có phone_hmac, ciphertext (vị trí SĐT thô trong cột enc = 0)",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S042-C03",
+   "mo_ta": "Gán đại lý theo tỉnh",
+   "lenh": "python -m ingest.crm --assign 8 --dealer DLTHU01 --province Đà Nẵng --by GĐ Bán Hàng Thử IT",
+   "expected": "exit 0",
+   "actual": "exit 0 'lead #8 → DLTHU01 (Đà Nẵng)'; log crm_assign",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S042-C04",
+   "mo_ta": "Handoff chưa đồng ý",
+   "lenh": "CONTACT_VAULT_KEY=<set> python -m ingest.crm --handoff 8 --dealer DLTHU01 --by GĐ Bán Hàng Thử IT",
+   "expected": "exit 1; không payload; không log crm_handoff",
+   "actual": "exit 0; payload KHÔNG có khóa PII (lead_id/dealer/tỉnh/ý định/câu đã che); agent_action_log crm_handoff pii_included=false — được bộ đếm tính là đầu ra (L1). Ghi chú: thiết kế docstring handoff_payload cho phép payload không PII — kỳ vọng khóa trước suy từ dau_ra 'payload chuyển (chỉ khi khách đồng ý)'",
+   "exit": 0,
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S042-C05",
+   "mo_ta": "Đồng ý dai_ly + handoff",
+   "lenh": "python -m ingest.crm --consent 1 --purpose dai_ly --grant --dealer DLTHU01 --source zalo --evidence BB-THU-IT-001 --policy-version nhap-2026-10 --by CSKH Thử IT ;; CONTACT_VAULT_KEY=<set> python -m ingest.crm --handoff 8 --dealer DLTHU01 --by GĐ Bán Hàng Thử IT",
+   "expected": "payload; consents granted; log không PII",
+   "actual": "consent #1 dai_ly granted recipient DLTHU01 (evidence_ref, policy_version); handoff exit 0 payload có phone/name/email/address (dữ liệu GIẢ fixture), in stdout cho người chuyển, hệ thống không gửi; log crm_handoff detail {dealer, lead_id, pii_included:true} không PII",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S042-C06",
+   "mo_ta": "Đại lý khác",
+   "lenh": "CONTACT_VAULT_KEY=<set> python -m ingest.crm --handoff 8 --dealer DLTHU02 --by GĐ Bán Hàng Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 'lead #8 không gán cho DLTHU02'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S042-C07",
+   "mo_ta": "Rút đồng ý",
+   "lenh": "python -m ingest.crm --consent 1 --purpose dai_ly --withdraw --dealer DLTHU01 --source zalo --by CSKH Thử IT ;; CONTACT_VAULT_KEY=<set> python -m ingest.crm --handoff 8 --dealer DLTHU01 --by GĐ Bán Hàng Thử IT",
+   "expected": "exit 1",
+   "actual": "consent #2 granted=false; handoff exit 0 payload KHÔNG PII (PII bị chặn đúng) nhưng vẫn ghi crm_handoff được đếm (L1)",
+   "exit": 0,
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S042-C08",
+   "mo_ta": "Thiếu khóa vault",
+   "lenh": "CONTACT_VAULT_KEY=<set> python -m ingest.crm --handoff 8 --dealer DLTHU01 --by GĐ Bán Hàng Thử IT",
+   "expected": "exit 2",
+   "actual": "exit 2 'thiếu CONTACT_VAULT_KEY'",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S042-X1",
+   "mo_ta": "BỔ SUNG SAU KHÓA: handoff lead không liên hệ/không đồng ý có bị đếm là đầu ra không",
+   "lenh": "python -m pipelines.rollout --outputs sales-04.2 ;; python -m pipelines.rollout --status ;; python -m ingest.crm --assign 7 --dealer DLTHU02 --province Đà Nẵng --by GĐ Bán Hàng Thử IT ;; CONTACT_VAULT_KEY=<set> python -m ingest.crm --handoff 7 --dealer DLTHU02 --by GĐ Bán Hàng Thử IT ;; python -m pipelines.rollout --status",
+   "expected": "không được tính đầu ra 'chuyển khi khách đồng ý'",
+   "actual": "rollout --status sales-04.2: 2 → 3 đầu ra sau handoff lead 7 (pii_included=false)",
+   "exit": 0,
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Vá L1 (lọc pii_included=true ở bộ đếm hoặc chặn/đổi action khi chưa đồng ý) rồi chạy lại S042-C04/C07/X1",
+ "gioi_han": "PII chỉ giải mã khi có đồng ý dai_ly đích danh — ĐẠT; lỗi nằm ở việc ghi/đếm handoff không đồng ý (L1). Sổ vùng–đại lý thật chưa có (fixture DLTHU01/02). Dev mode.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post.py",
+   "sha256": "09d71906afc3419051c2a7e3bfca166a96497b75be67087efc4640c102e6d9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post2.py",
+   "sha256": "1ab72f65b0881f3e20f7da54403a360f526728a95638f6dce6c6cf6ab872314e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/case.py",
+   "sha256": "0d5e5ea91967bf225c4ff3c733a5817c1ff87bb36095d808aa546fa8186b1340"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fake_llm.py",
+   "sha256": "adbc2f9799ed0ac98bf5ca1f83c7c11c2900579da8dc9bc2aa4ca3e91481cc81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fu_probe.py",
+   "sha256": "cd000fe41aa6172cf25198596a21d765938df14d3d1c2c9721812bc926b84953"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_golden_fixture.py",
+   "sha256": "82dcec52b25e0cb39b9111a0d2031d75c3d2b1c72ef60fcc71ebd747fdf0abb1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_items.py",
+   "sha256": "dfe2f77d4674e3134ba3fe9b26b320d6e1f8c54bebff43405b10cc98357b72c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/q.py",
+   "sha256": "1f522e8a212386aa99f6b6b44c4831b6aface0ecf34266af1c39eff527f274c1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/run_mod.py",
+   "sha256": "a5e9c3d3fdf5ad9706b50d5c01e7f1a66d8ab94ca05f8d449d57e6648519391b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/seed_chunk.py",
+   "sha256": "e2c8e72b3c8bd29336aa00af4138a19700aa0721aa993ef1286d2b235ad47b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/shift_orders.py",
+   "sha256": "b630f0394d2543a79471f4174f56d87461bb4c687718ff5d3da83a0d16791afe"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/zalo_e2e.py",
+   "sha256": "f6f1700f4569219eff9446fce3724d65f259fbddaba0930cc0ccc876ee416ae4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C01.txt",
+   "sha256": "be4d8d30422f2f6771f0a7989c9bdbfea5fce7c3bd60872f978d1e620ebe0683"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C02.txt",
+   "sha256": "9b3674c0b9311bb7ef8b6d1aeb8f205100ef2821d019366ff13acd0b8d1c5ccc"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C03.txt",
+   "sha256": "d40e380d960ffc3843679d1bc21350d62f9feaaa8b2e609b83a790a5e8e5118a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C04.txt",
+   "sha256": "6280a3559103f4468f69f5e731ca58fd495e198d1023a4becde71cab5fd09b81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C05a.txt",
+   "sha256": "b0edc94c6bddf30655c6083a682a9fa7b8c955da108fc8909fad20472c3f5e6c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C05b.txt",
+   "sha256": "b733d7b399cc2f074fd9a09f8633a3f0c62b9973b02ff7a50f67bd2478105da0"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C06.txt",
+   "sha256": "3d353b7b5b96f74793860ba9dc06fe3ee8ce0924493c364165d486d9fe6968ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C07a.txt",
+   "sha256": "2dbec4ba0ed9755a526e8f62b46f330ce5baf9707339864d2589813e9b3bfc86"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C07b.txt",
+   "sha256": "8a7838197d89bd559e7921151e92cfdea4a9dae5c55739b6bc645e23bc425ae5"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-C08.txt",
+   "sha256": "4cd2311896d9913a43a0e35f310c725d4e433678067c0c5422b1be8cb0607e94"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-db.json",
+   "sha256": "11dfa8ae011a3e849b46459d8bc6dae0e03719c8737b62990e71525686bb95a6"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-X-outputs.txt",
+   "sha256": "e82ad0ba3c29cea804f87044289a14545e442add944dd2d4a4efd0a0f2b15564"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-X-status.txt",
+   "sha256": "09cb017fa88d274cc0a6f2e3de8d00a0e774ab397c073f9d0fcaf0b9e43aabcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-X1-assign7.txt",
+   "sha256": "b73a3b0920b95cafd7c1ddb2edddd0a0db4807b4c01b157e7f12b01392348c0d"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-X1-db.json",
+   "sha256": "80cdb3929e3509b5edc641f1a93ff58fdd7b7d11eb5769dbf608afc6469d721d"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-X1-handoff7.txt",
+   "sha256": "e090eff8959305b725fca6e6372c51a2d3a5a8f54ec309618e504fa3b6f9e456"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S042-X1-status.txt",
+   "sha256": "ca2d0173f22f0663d6e8c9c997c35d46921b558703aa4b7c96f8b5e7df445151"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt",
+   "sha256": "6318bbc062812637309bbc78e092657139921c2ff309792bd10b70bd6a306179"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt",
+   "sha256": "0627f43797cc5b00090dcdaddc96bf287ec3a0575fe234785a105ab05814f01c"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "L1",
+   "muc_do": "Trung bình",
+   "tom_tat": "Bộ đếm đầu ra sales-04.2 (rollout _TABLES['agent_action_log'], nosample ghi 'NGƯỜI chuyển lead ĐÃ ĐỒNG Ý') chỉ lọc action=crm_handoff, KHÔNG lọc detail.pii_included → handoff khi khách CHƯA đồng ý dai_ly (thậm chí lead không có liên hệ) vẫn được đếm là đầu ra 'chuyển khách khi khách đồng ý' cho cổng PL02.",
+   "tai_hien": "crm --assign 7 --dealer DLTHU02 ...; crm --handoff 7 --dealer DLTHU02 --by ... (lead 7 không có contact/đồng ý); rollout --status: sales-04.2 2 → 3 đầu ra",
+   "expected": "handoff không đồng ý không được tính là đầu ra (hoặc bị từ chối)",
+   "actual": "exit 0, payload không PII, agent_action_log crm_handoff pii_included=false; rollout --status tăng 2→3",
+   "evidence": [
+    "evidence/itacc_r10/g2/out/S042-X-status.txt",
+    "evidence/itacc_r10/g2/out/S042-X1-status.txt",
+    "evidence/itacc_r10/g2/out/S042-X1-db.json",
+    "evidence/itacc_r10/g2/out/S042-X1-handoff7.txt"
+   ],
+   "vi_tri_code": "pipelines/rollout.py _TABLES['agent_action_log'] (filters chỉ action); docs/schema.sql crm_handoff_human ghi log cả khi v_ok=false"
+  }
+ ],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

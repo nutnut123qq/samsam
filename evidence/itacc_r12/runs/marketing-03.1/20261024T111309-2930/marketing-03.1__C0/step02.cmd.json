@@ -1,0 +1,26 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); print(c.execute(\"select setval(pg_get_serial_sequence('content_drafts','id'), 3)\").fetchone()[0]); c.commit(); c.close()"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:13:12+07:00",
+ "ket_thuc": "2026-10-24T11:13:14+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A3\\s*\\Z",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "063d9be28c4be6b6256c17a48cf60f5d59381751fe3e44a6e6e8287b710c9edc",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

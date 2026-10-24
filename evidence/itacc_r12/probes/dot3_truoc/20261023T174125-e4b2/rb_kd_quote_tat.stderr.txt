@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\agents\kd_quote.py", line 1235, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\agents\kd_quote.py", line 1149, in main
+    return _cmd_quote(conn, a)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\agents\kd_quote.py", line 1052, in _cmd_quote
+    ids = submit(conn, req, built, res)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\agents\kd_quote.py", line 721, in submit
+    ids.append(director.submit(hc, BLOCK, ot, qno, title,
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\director.py", line 172, in submit
+    return aq.enqueue(conn, object_type=object_type, object_id=object_id,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\approval_queue.py", line 88, in enqueue
+    _rollout().check_generate(conn, _feature_of((block, object_type, by)),
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\rollout.py", line 671, in check_generate
+    raise RolloutBlocked(_why(fid, "tat", what) + " — không sinh đầu ra")
+pipelines.rollout.RolloutBlocked: hàng duyệt sales/b2b_quote: tính năng sales-05 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra

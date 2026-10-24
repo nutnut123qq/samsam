@@ -1,0 +1,8 @@
+# db samsam_itacc_r10_fin
+> select * from v_promotable
+["mat-ong-sam-120ml-1hu", "shopee", "TP_THUONG", 24, 745000, "GĐ Bán hàng Thử IT"]
+["mat-ong-sam-300ml", "shopee", "TP_THUONG", 30, 2980000, "GĐ Bán hàng Thử IT"]
+> select sku_key, channel, readiness from sku_readiness where sku_key like 'mat-ong%' and channel='shopee'
+["mat-ong-sam-120ml-2hu", "shopee", "CAM"]
+["mat-ong-sam-120ml-1hu", "shopee", "TP_THUONG"]
+["mat-ong-sam-300ml", "shopee", "TP_THUONG"]

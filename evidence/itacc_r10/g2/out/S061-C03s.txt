@@ -1,0 +1,11 @@
+# ma: S061-C03s
+# luc: 2026-10-23T10:46:05+07:00
+# lenh: python -m ingest.dealer_price --file evidence/itacc_r10/g2/fixtures/s061_dealer_sample.csv --by MXH Thử IT --sample
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+[loader-gate] dealer_price: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: sales-06.1 chay_thu → nạp
+[ok] nạp 1 quan sát giá đại lý (MẪU — không sinh cảnh báo) — chạy `python -m agents.kd_price --dealer-watch` để so giá sàn
+
+## stderr

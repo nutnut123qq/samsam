@@ -1,0 +1,28 @@
+[
+ {
+  "sql": "select count(*) >= 1 from red_alerts where source_agent = 'intel_red_alert'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\intel-01.1\\20261024T111452-5196\\intel-01.1__C08\\out/repa/intel-bulletin-day-*.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/intel-01.1/20261024T111452-5196/intel-01.1__C08/out/repa/intel-bulletin-day-2026-10-24.md",
+    "sha256": "d28716d9d00bb2629e523317639ceae2dcb1c31280042e201390870ad5fee864"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-01.1\\20261024T111452-5196\\intel-01.1__C08\\out/repa/intel-bulletin-day-*.md",
+  "re": "## Cảnh báo đỏ đang mở \\(chưa xác nhận\\)\\n\\n- #\\d+ — ",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ }
+]

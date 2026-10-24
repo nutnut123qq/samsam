@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select string_agg(lot_code || ' v' || version || ' ' || cert_no, ',' order by lot_code, version) from lot_test_certificates",
+  "expect": "IT-LOT-001 v1 PKN-IT-001,IT-LOT-001 v2 PKN-IT-001-R1,IT-LOT-002 v1 PKN-IT-002",
+  "actual": "IT-LOT-001 v1 PKN-IT-001,IT-LOT-001 v2 PKN-IT-001-R1,IT-LOT-002 v1 PKN-IT-002",
+  "dat": true
+ }
+]

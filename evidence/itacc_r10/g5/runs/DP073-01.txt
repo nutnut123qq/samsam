@@ -1,0 +1,11 @@
+# ca: DP073-01
+# env: DB thử khối dp (DSN che)
+# cmd: timeout 600 python scripts/agent_eval.py --agent guardrail --allow-dirty
+# exit: 0
+# thoi_gian: 2026-10-23T10:51:18+0700
+[loader-gate] agent_eval: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-07.3 chay_thu → nạp
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=b530c2083697 model=rules judge=None
+[done] ghi eval_runs #1 commit_sha=16b33fc9b4f0e0ff45dbeab78972100909ec0340-dirty agent=guardrail passed=True
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)

@@ -526,6 +526,21 @@ def alcohol_names(golden) -> list[str]:
     return out
 
 
+def approved_golden(golden: dict, prices: dict) -> dict:
+    """r12 L2: bản golden mà `prices` CHỈ còn giá `price_list` ĐÃ duyệt hiệu
+    lực ngày lập (`kd_listing.golden_prices`) — không fallback giá trong
+    data/golden_skus.json (cùng lớp đã vá ở listing_export S03/F2). Thiếu
+    giá đã duyệt → dòng `thieu_gia_niem_yet` (không đoán giá)."""
+    by: dict = {}
+    for (sku, ch), kinds in prices.items():
+        for kind, v in kinds.items():
+            if v["approved"]:
+                by.setdefault(sku, {}).setdefault(ch, {})[kind] = v["price"]
+    return {**golden, "skus": [
+        {**s, "prices": by.get(s.get("sku_key"), {})} if isinstance(s, dict)
+        else s for s in golden.get("skus") or []]}
+
+
 def readiness_map(golden, channel: str = "web") -> dict:
     """(sku, kênh) → mức readiness tính từ golden ĐANG dùng (cổng XNQC khớp
     dữ liệu báo giá/catalog, không lệch golden file của guardrail)."""
@@ -1008,16 +1023,23 @@ def _cmd_quote(conn, a) -> int:
         conn.commit()
         print(f"[warn] không thấy yêu cầu YC-{a.quote}", file=sys.stderr)
         return 1
+    # r12 RB: sales-05 tắt → chặn TRƯỚC khi in/ghi 3 file báo giá.
+    from pipelines import rollout  # lười: rollout → director → ...
+    if why := rollout.blocked(conn, "báo giá B2B", fid=FEATURE_FOLLOWUP):
+        conn.commit()
+        return rollout.say_blocked(why)
     golden, why = read_golden(GOLDEN_FILE)
     matrix, why2 = read_matrix(MATRIX_FILE)
     if golden is None or matrix is None:
         conn.commit()
         print(f"[error] {why or why2}", file=sys.stderr)
         return 1
+    from agents import kd_listing  # lười: module lớn
+    day = a.date or _today_vn()
+    golden = approved_golden(golden, kd_listing.golden_prices(conn, day))
     combos = db_combos(conn)
     versions = fetch_versions(conn)
     conn.commit()
-    day = a.date or _today_vn()
     res = classify(req["items"], matrix, golden, combos, versions, day,
                    discount=a.discount)
     print(f"[quote] YC-{req['id']} ({len(res['lines'])} dòng hợp lệ):")

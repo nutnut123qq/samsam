@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'hr_jd' and status = 'pending' and created_by = 'agent:pc_hr' and guardrail->>'ok' = 'true'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) >= 1 from agent_action_log where action = 'queue_enqueue'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

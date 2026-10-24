@@ -1,0 +1,2837 @@
+{
+ "id": "sales-01",
+ "ten": "Chatbot chăm sóc khách (Zalo, Messenger)",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Chatbot chăm sóc khách: 'Trả lời khách 24/7 trên Zalo, website, Messenger bằng câu đã duyệt; câu hỏi sức khỏe chuyển cho người thật'",
+ "luot": "r12fix",
+ "supersedes": {
+  "path": "evidence/itacc_r12/items/sales-01.json",
+  "sha256": "25f32069718cb508afdb9874f3539b1ae20026c5ba781b31da37e12b62c9d4b0"
+ },
+ "ly_do_chay_lai": "L3 — sửa nhánh quá 30 giây ở connectors/zalo.py (Zalo + Messenger dùng chung _reply_turn)",
+ "fingerprint_code_luc_khoa": "8f9188ade140c8aea64162400a772ae3f41c2780f788edb40fc9b254ae82aed3",
+ "tieu_chi_file": "evidence/itacc_r12_fix_d2_l3/criteria/r12fix_v1.json",
+ "tieu_chi_sha256": "559aa67d5715dfb9f4bb52f992322261257d7086eb57c76800f42a05b57aef12",
+ "tieu_chi_khoa": "r12fix_v1.json 559aa67d5715dfb9f4bb52f992322261257d7086eb57c76800f42a05b57aef12 2026-10-24T14:31:57+07:00",
+ "tieu_chi_nguon": {
+  "tep": "evidence/itacc_r12/criteria/r12_sales_a_v4.json",
+  "sha256": "5c2679af0dd47c19562539c5f9201b33e71b77b9abe02f810df5e13637680406"
+ },
+ "tieu_chi": [
+  "T1 Handler webhook THẬT (connectors.zalo.Handler / connectors.messenger.Handler) chạy trên 127.0.0.1 cổng động trong harness zalo_e2e_r12 (bản chuyển r10 zalo_e2e), DEPLOY tắt (send_text thật = dry-run, sent=false); fake AI ở biên cuối llm_gateway._client (run_sa.py.txt --fake-llm), socket ngoài localhost bị chặn — mức MOCK như r10",
+  "T2 Chạy thử: câu bot KHÔNG tới khách; khách nhận HOLD_TEXT; approval_queue sales/cskh_reply created_by agent:kd_a1 payload = câu bot (fake) không PII; sales/cskh_handoff lý do chua_van_hanh (rollout)",
+  "T3 Luật trước LLM: rượu → template alcohol + handoff san_pham_han_che; sức khỏe → template health + handoff suc_khoe; 0 lời gọi AI",
+  "T4 Che PII: convlog (scratch) không SĐT/email/user_id thô; payload hàng duyệt không PII; stdout không user_id thô",
+  "T5 Chữ ký sai → 403, không xử lý; dedup cùng msg_id → xử lý 1 lần",
+  "T6 Hạn chót (FIXTURE CHAT_BUDGET_S=4, SEND_RESERVE_S=1, fake chat ngủ 6s): câu GỬI ở biên send_text KHÔNG hứa nhân viên + có hotline 1800577732 (r12-fix L3; r10/r12 v4 đòi HANDOFF_TEXT = hành vi controller bác) + convlog error deadline:* + cskh_handoff lý do qua_han_tra_loi đúng 1 mục; transport giả không mang provenance live",
+  "T7 Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có 'Nguồn:' + URL fixture; sent=false → file_output_evidence 0",
+  "T8 sales_director --run gom convlog answered:false → cskh_handoff created_by agent:sales_director, payload không câu khách; chạy lại 0 mới",
+  "T9 data/conversations.jsonl(.1), data/zalo_seen.db, data/zalo_tokens.json thật KHÔNG đổi (sha lần chạy đầu ↔ cuối)",
+  "T10 Tắt (rollout --disable) → 0 lời gọi AI, không cskh_reply",
+  "T11 (r12 L3, MOI) chatbot chỉ hứa 'nhân viên sẽ phản hồi' khi ĐÃ ghi được cskh_handoff; không ghi được (DB lỗi / tắt) → câu có hotline 1800577732, không hứa; tắt không traceback",
+  "T12 (r12-fix L3, MOI) như T6 trên đường Messenger (webhook Messenger thật → zalo.handle_text channel=messenger)"
+ ],
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r12fix (127.0.0.1:55452), DB mới mỗi mục, dựng bằng working tree bản vá (schema/roles ×2 + core + golden); không DB samsam, không provider, không gửi ra ngoài DB samsam_itacc_r12fix_s01.",
+ "run_id": "20261024T143352-ea1f",
+ "ca": [
+  {
+   "ma": "sales-01__S00",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout (mọi tính năng có code = chạy thử) — như r10 SETUP-rollout-seed",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'sales-01'",
+      "expect": "chay_thu"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:33:52+07:00",
+      "ket_thuc": "2026-10-24T14:33:53+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S00/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S00/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'sales-01'",
+      "expect": "chay_thu",
+      "actual": "chay_thu",
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S00"
+  },
+  {
+   "ma": "sales-01__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "FIXTURE 1 chunk KB example.com (bản chuyển r10 seed_chunk, vector 8 chiều = fake run_sa.VEC)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from chunks",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from chunks where doc_id = 'it-g2-fixture'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/seed_chunk_r12.py.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:33:53+07:00",
+      "ket_thuc": "2026-10-24T14:33:54+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from chunks",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from chunks where doc_id = 'it-g2-fixture'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S01"
+  },
+  {
+   "ma": "sales-01__C01",
+   "nguon_r10": "S01-C01",
+   "mo_ta": "Zalo câu hỏi thường, chạy thử",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_hold=true$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_sent=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_rollout=\"chay_thu\"$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_reply=1$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^q=cskh_reply\\|agent:kd_a1\\|sales$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^reply_payload_has_fake=true$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^queue_payload_pii=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^handoff_lydo=chua_van_hanh$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out C01_thuong",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:33:55+07:00",
+      "ket_thuc": "2026-10-24T14:34:01+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^ans_has_hold=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^conv_sent=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^conv_rollout=\"chay_thu\"$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^n_cskh_reply=1$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^q=cskh_reply\\|agent:kd_a1\\|sales$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^reply_payload_has_fake=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^queue_payload_pii=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C01\\out/facts.txt",
+      "re": "(?m)^handoff_lydo=chua_van_hanh$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01"
+  },
+  {
+   "ma": "sales-01__C02",
+   "nguon_r10": "S01-C02",
+   "mo_ta": "Chữ ký sai",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=403$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_new=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_queue=0$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C02\\out C02_badsig",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:34:01+07:00",
+      "ket_thuc": "2026-10-24T14:34:09+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C02\\out/facts.txt",
+      "re": "(?m)^http=403$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C02\\out/facts.txt",
+      "re": "(?m)^conv_new=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C02\\out/facts.txt",
+      "re": "(?m)^n_queue=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02"
+  },
+  {
+   "ma": "sales-01__C03",
+   "nguon_r10": "S01-C03",
+   "mo_ta": "Câu sức khỏe",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_route=\"health\"$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_tpl_health=true$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^handoff_lydo=suc_khoe$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C03\\out C03_health",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:34:09+07:00",
+      "ket_thuc": "2026-10-24T14:34:15+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C03\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C03\\out/facts.txt",
+      "re": "(?m)^conv_route=\"health\"$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C03\\out/facts.txt",
+      "re": "(?m)^ans_tpl_health=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C03\\out/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C03\\out/facts.txt",
+      "re": "(?m)^handoff_lydo=suc_khoe$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C03\\out/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C03\\out/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03"
+  },
+  {
+   "ma": "sales-01__C04",
+   "nguon_r10": "S01-C04",
+   "mo_ta": "Câu rượu",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_route=\"alcohol\"$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_tpl_alcohol=true$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^handoff_lydo=san_pham_han_che$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C04\\out C04_alcohol",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:34:15+07:00",
+      "ket_thuc": "2026-10-24T14:34:22+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C04\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C04\\out/facts.txt",
+      "re": "(?m)^conv_route=\"alcohol\"$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C04\\out/facts.txt",
+      "re": "(?m)^ans_tpl_alcohol=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C04\\out/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C04\\out/facts.txt",
+      "re": "(?m)^handoff_lydo=san_pham_han_che$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C04\\out/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C04\\out/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04"
+  },
+  {
+   "ma": "sales-01__C05",
+   "nguon_r10": "S01-C05",
+   "mo_ta": "PII trong câu khách (SĐT 0900000123 + email + tên, uid it-g2-uid-pii-777)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "^(?![\\s\\S]*it-g2-uid-pii-777)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^convlog_has_phone=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^convlog_has_email=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^convlog_has_raw_uid=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^queue_payload_pii=false$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C05\\out C05_pii",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "^(?![\\s\\S]*it-g2-uid-pii-777)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T14:34:22+07:00",
+      "ket_thuc": "2026-10-24T14:34:29+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C05\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C05\\out/facts.txt",
+      "re": "(?m)^convlog_has_phone=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C05\\out/facts.txt",
+      "re": "(?m)^convlog_has_email=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C05\\out/facts.txt",
+      "re": "(?m)^convlog_has_raw_uid=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C05\\out/facts.txt",
+      "re": "(?m)^queue_payload_pii=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05"
+  },
+  {
+   "ma": "sales-01__C06",
+   "nguon_r10": "S01-C06",
+   "mo_ta": "Dedup retry cùng msg_id",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=\\[200,\\ 200\\]$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^lan2_conv_tang=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^lan2_calls_tang=0$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C06\\out C06_dedup",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:34:29+07:00",
+      "ket_thuc": "2026-10-24T14:34:41+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C06\\out/facts.txt",
+      "re": "(?m)^http=\\[200,\\ 200\\]$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C06\\out/facts.txt",
+      "re": "(?m)^lan2_conv_tang=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C06\\out/facts.txt",
+      "re": "(?m)^lan2_calls_tang=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06"
+  },
+  {
+   "ma": "sales-01__C07",
+   "nguon_r10": "S01-C07",
+   "mo_ta": "Hạn chót trả lời (FIXTURE CHAT_BUDGET_S=4, SEND_RESERVE_S=1, fake chat ngủ 6s)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_error=\"deadline:",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^handoff_lydo=qua_han_tra_loi$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^sent_n=1$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^sent_last_has_promise=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^sent_last_has_hotline=true$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_provenance=(?!\"live\")",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12_fix_d2_l3\\harness/sales_a/zalo_e2e_r12fix_v3.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07\\out C07_deadline",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:34:41+07:00",
+      "ket_thuc": "2026-10-24T14:34:51+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07\\out/facts.txt",
+      "re": "(?m)^conv_error=\"deadline:",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07\\out/facts.txt",
+      "re": "(?m)^handoff_lydo=qua_han_tra_loi$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07\\out/facts.txt",
+      "re": "(?m)^sent_n=1$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07\\out/facts.txt",
+      "re": "(?m)^sent_last_has_promise=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07\\out/facts.txt",
+      "re": "(?m)^sent_last_has_hotline=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07\\out/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07\\out/facts.txt",
+      "re": "(?m)^conv_provenance=(?!\"live\")",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07"
+  },
+  {
+   "ma": "sales-01__C07M",
+   "nguon_r10": "MOI_R12FIX",
+   "mo_ta": "r12-fix L3: hạn chót trên đường Messenger (cùng fixture C07)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_error=\"deadline:",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^handoff_lydo=qua_han_tra_loi$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^sent_n=1$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^sent_last_has_promise=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^sent_last_has_hotline=true$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_provenance=(?!\"live\")",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_channel=\"messenger\"$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12_fix_d2_l3\\harness/sales_a/zalo_e2e_r12fix_v3.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out C07M_deadline_messenger",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:34:51+07:00",
+      "ket_thuc": "2026-10-24T14:35:00+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out/facts.txt",
+      "re": "(?m)^conv_error=\"deadline:",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out/facts.txt",
+      "re": "(?m)^handoff_lydo=qua_han_tra_loi$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out/facts.txt",
+      "re": "(?m)^sent_n=1$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out/facts.txt",
+      "re": "(?m)^sent_last_has_promise=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out/facts.txt",
+      "re": "(?m)^sent_last_has_hotline=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out/facts.txt",
+      "re": "(?m)^n_cskh_handoff=1$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out/facts.txt",
+      "re": "(?m)^conv_provenance=(?!\"live\")",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C07M\\out/facts.txt",
+      "re": "(?m)^conv_channel=\"messenger\"$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M"
+  },
+  {
+   "ma": "sales-01__C08",
+   "nguon_r10": "S01-C08",
+   "mo_ta": "Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có nguồn",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_nguon_url=true$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_sent=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^foe=0$",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C08\\out C08_vanhanh",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:35:00+07:00",
+      "ket_thuc": "2026-10-24T14:35:06+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C08\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C08\\out/facts.txt",
+      "re": "(?m)^ans_has_nguon_url=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C08\\out/facts.txt",
+      "re": "(?m)^conv_sent=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C08\\out/facts.txt",
+      "re": "(?m)^foe=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08"
+  },
+  {
+   "ma": "sales-01__C09",
+   "nguon_r10": "S01-C09",
+   "mo_ta": "Messenger HMAC đúng / sai",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http_bad=403$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^conv_channel=\"messenger\"$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_reply=1$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^q=cskh_reply\\|agent:kd_a1\\|sales$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C09\\out C09_messenger",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:35:06+07:00",
+      "ket_thuc": "2026-10-24T14:35:13+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C09\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C09\\out/facts.txt",
+      "re": "(?m)^http_bad=403$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C09\\out/facts.txt",
+      "re": "(?m)^conv_channel=\"messenger\"$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C09\\out/facts.txt",
+      "re": "(?m)^n_cskh_reply=1$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C09\\out/facts.txt",
+      "re": "(?m)^q=cskh_reply\\|agent:kd_a1\\|sales$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09"
+  },
+  {
+   "ma": "sales-01__C11",
+   "nguon_r10": "S01-C11",
+   "mo_ta": "/healthz /readyz",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=\\[200,\\ 200\\]$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^healthz=\\{\"status\":\\ \"up\"\\}$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^readyz=.*\"db\": \"ok\"",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C11\\out C11_endpoints",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:35:13+07:00",
+      "ket_thuc": "2026-10-24T14:35:18+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C11\\out/facts.txt",
+      "re": "(?m)^http=\\[200,\\ 200\\]$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C11\\out/facts.txt",
+      "re": "(?m)^healthz=\\{\"status\":\\ \"up\"\\}$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C11\\out/facts.txt",
+      "re": "(?m)^readyz=.*\"db\": \"ok\"",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11"
+  },
+  {
+   "ma": "sales-01__L3a",
+   "nguon_r10": "MOI",
+   "mo_ta": "r12 L3 — chạy thử, câu sức khỏe, KHÔNG ghi được cskh_handoff (FIXTURE channels._connect = None trong ca): không hứa nhân viên, có hotline, không traceback",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stderr_re": "^(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_handoff=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3a\\out L3_dbloi_suckhoe",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stderr_re": "^(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T14:35:18+07:00",
+      "ket_thuc": "2026-10-24T14:35:22+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3a\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3a\\out/facts.txt",
+      "re": "(?m)^n_cskh_handoff=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3a\\out/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3a\\out/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a"
+  },
+  {
+   "ma": "sales-01__C10",
+   "nguon_r10": "S01-C10",
+   "mo_ta": "sales_director gom handoff từ convlog harness (scratch)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "KHÔNG ghi DB"
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "đẩy 0 mục mới"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) >= 1 from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director'",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director' and (payload ilike '%mật ong%' or payload ilike '%tiểu đường%' or payload ilike '%rượu%' or payload ilike '%mất ngủ%')",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --data-dir evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv -m agents.sales_director --run --dry-run",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "KHÔNG ghi DB",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T14:35:22+07:00",
+      "ket_thuc": "2026-10-24T14:35:23+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --data-dir evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv -m agents.sales_director --run",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:35:23+07:00",
+      "ket_thuc": "2026-10-24T14:35:26+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --data-dir evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv -m agents.sales_director --run",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "đẩy 0 mục mới",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T14:35:26+07:00",
+      "ket_thuc": "2026-10-24T14:35:27+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) >= 1 from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director'",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director' and (payload ilike '%mật ong%' or payload ilike '%tiểu đường%' or payload ilike '%rượu%' or payload ilike '%mất ngủ%')",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10"
+  },
+  {
+   "ma": "sales-01__C12",
+   "nguon_r10": "S01-C12",
+   "mo_ta": "Tắt tính năng: rollout --disable sales-01 rồi câu thường",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stderr_re": "^(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_reply=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_handoff=0$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable sales-01 --by Người Thử R12 --note kiểm nhánh tắt r12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:35:27+07:00",
+      "ket_thuc": "2026-10-24T14:35:27+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C12\\out C12_tat",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stderr_re": "^(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T14:35:27+07:00",
+      "ket_thuc": "2026-10-24T14:35:32+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C12\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C12\\out/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C12\\out/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C12\\out/facts.txt",
+      "re": "(?m)^n_cskh_reply=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C12\\out/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C12\\out/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__C12\\out/facts.txt",
+      "re": "(?m)^n_cskh_handoff=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12"
+  },
+  {
+   "ma": "sales-01__X1",
+   "nguon_r10": "S01-X1",
+   "mo_ta": "Câu sức khỏe khi chatbot TẮT: không hứa nhân viên, có hotline, 0 cskh_handoff (HĐ 6.7), không ngoại lệ",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stderr_re": "^(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_cskh_handoff=0$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__X1\\out X1_tat_health",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stderr_re": "^(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T14:35:32+07:00",
+      "ket_thuc": "2026-10-24T14:35:38+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__X1\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__X1\\out/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__X1\\out/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__X1\\out/facts.txt",
+      "re": "(?m)^n_cskh_handoff=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1"
+  },
+  {
+   "ma": "sales-01__L3b",
+   "nguon_r10": "MOI",
+   "mo_ta": "r12 L3 — chatbot TẮT, câu thường: 0 lời gọi AI, 0 mục hàng duyệt, không hứa nhân viên, có hotline, không traceback",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stderr_re": "^(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_queue=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3b\\out L3_tat_thuong",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stderr_re": "^(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T14:35:38+07:00",
+      "ket_thuc": "2026-10-24T14:35:42+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3b\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3b\\out/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3b\\out/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3b\\out/facts.txt",
+      "re": "(?m)^n_queue=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3b\\out/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3b\\out/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b"
+  },
+  {
+   "ma": "sales-01__L3c",
+   "nguon_r10": "MOI",
+   "mo_ta": "r12 L3 — chatbot TẮT, câu sức khỏe: 0 lời gọi AI, 0 mục, không hứa, có hotline, không traceback",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stderr_re": "^(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^n_queue=0$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3c\\out L3_tat_suckhoe",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stderr_re": "^(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T14:35:42+07:00",
+      "ket_thuc": "2026-10-24T14:35:48+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3c\\out/facts.txt",
+      "re": "(?m)^http=200$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3c\\out/facts.txt",
+      "re": "(?m)^calls_chat=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3c\\out/facts.txt",
+      "re": "(?m)^calls_embed=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3c\\out/facts.txt",
+      "re": "(?m)^n_queue=0$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3c\\out/facts.txt",
+      "re": "(?m)^ans_has_promise=false$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__L3c\\out/facts.txt",
+      "re": "(?m)^ans_has_hotline=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c"
+  },
+  {
+   "ma": "sales-01__T9",
+   "nguon_r10": "MOI",
+   "mo_ta": "T9 — data/ thật (convlog, seen db, token store) không đổi so với sha lần chạy harness đầu",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/facts.txt",
+      "re": "(?m)^data_khong_doi=true$",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt --fake-llm --path evidence\\itacc_r12\\harness/sales_a/zalo_e2e_r12.py.txt evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\scratch/conv evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__T9\\out T9",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T14:35:48+07:00",
+      "ket_thuc": "2026-10-24T14:35:52+07:00",
+      "stdout": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\sales-01\\20261024T143352-ea1f\\sales-01__T9\\out/facts.txt",
+      "re": "(?m)^data_khong_doi=true$",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9"
+  },
+  {
+   "ma": "sales-01__UI02",
+   "nguon_r10": "MOI",
+   "mo_ta": "UI-02: tab 'Chat Sâm Sâm' Streamlit chế độ thực (login in role svc_ui) trả lời câu thường không lỗi quyền chunks, không lộ traceback; câu sức khỏe vẫn chuyển người",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": [],
+    "ui": [
+     {
+      "step": "chat_cau_thuong_co_tra_loi",
+      "verdict": "PASS",
+      "run": "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553",
+      "shot": "19_chat_cau_thuong_co_tra_loi.png",
+      "ke_thua_r12": true
+     },
+     {
+      "step": "chat_cau_suc_khoe_chuyen_nguoi_che_pii",
+      "verdict": "PASS",
+      "run": "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553",
+      "shot": "20_chat_cau_suc_khoe_chuyen_nguoi_che_pii.png",
+      "ke_thua_r12": true
+     },
+     {
+      "step": "UI02_loi_doc_kb_khong_lo_traceback",
+      "verdict": "PASS",
+      "run": "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553",
+      "shot": "24_UI02_loi_doc_kb_khong_lo_traceback.png",
+      "ke_thua_r12": true
+     }
+    ]
+   },
+   "exit": [],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__UI02"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Phần UI ghép từ lượt UI thật evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553 theo ánh xạ khai trước; C07 (v4) bọc send_text nên provenance lượt đó không 'live' (C07 không kiểm provenance). Kiểm lại lượt r12-fix (sau vá D2/L3) trên Postgres Docker riêng samsam-itacc-r12fix; fixture/dữ liệu THỬ, AI giả ở biên, transport giả (không provenance live), không gửi ra ngoài. Ca UI02 kế thừa lượt UI thật r12 (ui_sau_full_v3, mã trước r12-fix; app/streamlit_app.py không đổi ở lượt này, đường chat UI không đi qua nhánh quá 30 giây của zalo). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/ket_qua.json",
+   "sha256": "00078d5258ba278f3dd0f7edd746b617cce79f191ebfd369ad5c1c9c13d99b0d"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/asserts.json",
+   "sha256": "61bc5e226d8ec4c357ac3fc36f56fe645326e3552460a76bcd10be5b31e80271"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/case.json",
+   "sha256": "b7181b6ae94cc2a08aa0e6b4d7e273f4cf7f5f04543eedeec84f46272acd21dc"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/out/facts.txt",
+   "sha256": "4d028749e939c7092da502fae72f1979dcc2c118a4d9c4f3041229c526fde7ec"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/out/fake_calls.jsonl",
+   "sha256": "0044e2fedb2bddc35261e1010b9615d42d90d8161decfbd00698c12147b08d06"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/out/sales-01_C01_thuong.json",
+   "sha256": "7ad035cc52472f9c255bd6904ff21777069e37e90cb16521c43d61832311322a"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/step01.cmd.json",
+   "sha256": "b6ba0b44ada3a8b1e174fb376ee9bb58772ba078a5aca14cb87b67b0d24e3c46"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C01/step01.stdout.txt",
+   "sha256": "947eefcd2332a20ca0e95599c2916634e3c8da79423377b3732c585b2a71c9f5"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02/asserts.json",
+   "sha256": "ee4702ccd703021bd351ea28ccd112ab8f76e72fe71534920de4a9b6baad06c6"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02/case.json",
+   "sha256": "aba512fc8ec1d7927c34732c2af98f523004f732595fa41274e5aa84b55df4f1"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02/out/facts.txt",
+   "sha256": "ed4c3053fa4ae1be45d5e24b5febe69066699876e552f24ea48d5ec6e7fb4564"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02/out/sales-01_C02_badsig.json",
+   "sha256": "c60d96c660059ffa331dedb02edbee9ee882feeffdbb539a85f74e37104158d7"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02/step01.cmd.json",
+   "sha256": "8b9f692f6032015f1c31c40cc1bb27d847928972b0bc4465e9b13e95d6b7d338"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C02/step01.stdout.txt",
+   "sha256": "820b3b075ecf234ff1c00d757a3822f45b3a609a1d491b1271c201662d608c75"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03/asserts.json",
+   "sha256": "e2f365c2a2e543b2fba731ec0d47c8c4e8c58433812ea33ee300ff214b60220e"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03/case.json",
+   "sha256": "8b27f500a4ca31cc38053f55a61aefe35933999ba60475f37a4144d636a0d6f4"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03/out/facts.txt",
+   "sha256": "7fa150c9930df7b032c833a16a468dce1ff52dde38f77f24a43f76f5594d3c7e"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03/out/sales-01_C03_health.json",
+   "sha256": "a7ee29ce86385ce93b641e0965ad423f6d6d0c08d4235285247d23320a9f1cf1"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03/step01.cmd.json",
+   "sha256": "b41ab82525cffc6cb8f182e051e58fef6e947748b10051e0fe82ca07aac18b87"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C03/step01.stdout.txt",
+   "sha256": "30f0d36bbab685a33e50353276f4887a65e5b5654fc64346f27a4e85cecca0c7"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04/asserts.json",
+   "sha256": "a8f8dd921b9f4e633c7d8d495f9fbac41d82b3d07bbe2ac291539a9a5e39b050"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04/case.json",
+   "sha256": "fad26046495dc4c3ca17bc911977eb6aeb0d615984c79e0ce5d3dda634adcf77"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04/out/facts.txt",
+   "sha256": "12ee0a1ad5237422c0ea96fea9613a5e127a4a9e1f1701195d0f5658960c4787"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04/out/sales-01_C04_alcohol.json",
+   "sha256": "e64901e112d859b52c0cfb97eb39513ab2c6fd4264b60689737546ead6c81301"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04/step01.cmd.json",
+   "sha256": "fb8ff5a0b3919ca45d8b5d47078e9d0e9a52af36ab2024057ba3a65dfa8ad77b"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C04/step01.stdout.txt",
+   "sha256": "db2911a88a308b39f923313323c85ff417484edbfb13f7232ad58f676335fb2e"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/asserts.json",
+   "sha256": "3a83dfbaa4ab9e417f4f78d0bd14ed728cdf2472a2cc3cb70ff68e29af77dea1"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/case.json",
+   "sha256": "b92557a37b19a0668f921c9df3094f6e7a75996060cfd208763b6e201d1a0698"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/out/facts.txt",
+   "sha256": "9253b3819d3024de490e07c09eda0ac34ee9603fdcad4eba4eaced3dc303a06b"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/out/fake_calls.jsonl",
+   "sha256": "0044e2fedb2bddc35261e1010b9615d42d90d8161decfbd00698c12147b08d06"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/out/sales-01_C05_pii.json",
+   "sha256": "8ae11f445167664299580bf264e05fd4636d32d28cbce4fcc4f98ebe107ee77f"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/step01.cmd.json",
+   "sha256": "d04fd05efa3d5fc8c9a7f560f6730a6ddedb20f88be74bf081a6161f09b61ff0"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C05/step01.stdout.txt",
+   "sha256": "aea73b240c463df8afdb1f2d80c98180adcf2d2e5b2335ded55bd8860249d5df"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/asserts.json",
+   "sha256": "f57f163b555cc604d10b194195972cb7fca67cbd69e0c29518ca7fe3e662bee1"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/case.json",
+   "sha256": "0f32357ae5db61e91521a9c28606fd3b8374dbe5858cd4d4a30a4901be7ea24c"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/out/facts.txt",
+   "sha256": "e1845bf70013f8e968d2ff24cc14c8ad2309c370d2b1ddb1ef2af95b85c21635"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/out/fake_calls.jsonl",
+   "sha256": "0044e2fedb2bddc35261e1010b9615d42d90d8161decfbd00698c12147b08d06"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/out/sales-01_C06_dedup.json",
+   "sha256": "740e004775ec83d748a6649f5b16a8d9efbc624e4ee9a6ab19b27cb0ed29447a"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/step01.cmd.json",
+   "sha256": "c41719b1ce5083d6507c1b09ae771c462e0e226b0930964296c1e3494f672f3d"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C06/step01.stdout.txt",
+   "sha256": "097444269633404dbd96f944defceef1b254823c5aac38fd4ef74fed18b38a77"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/asserts.json",
+   "sha256": "ff0c49d19314f4255727c1f49e023e6e130b01c4835985d2f89641b92d2c9231"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/case.json",
+   "sha256": "74b49b20112a02726c1fccebea4a6788c8faed764c80cc71756fe6c1354b9017"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/out/facts.txt",
+   "sha256": "5f6a3776c4b1be72b4f42780d0c8374e34736adbb345e1b78eab06c09bb568ef"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/out/fake_calls.jsonl",
+   "sha256": "87d7312a5c59ea16f7cd03412eaef131d0e05a4c1dd7dfebdefd44d120756fa2"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/out/sales-01_C07_deadline.json",
+   "sha256": "2ba7287670fe23cb239e94c8b61b62723c0c1889fe1998aa425d43b341f199d7"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/step01.cmd.json",
+   "sha256": "6cdb5de3063a93b8bac9b573b3a72444af3c2b7b4c276521320cd08695b63e6b"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07/step01.stdout.txt",
+   "sha256": "c24d726a84376e667298a26de3979dd992450c302b8259d88ef1c53d83bd1b46"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/asserts.json",
+   "sha256": "e43974ce462ee4149ca5b98a16fda3c2cea8c9eeeac7b635cc723f7f8244e5a7"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/case.json",
+   "sha256": "46db95dfc399aebba8b8b809de83fdcb76f4e84ebad5c181890e2412f1c2aee6"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/out/facts.txt",
+   "sha256": "15d48b1de749fab494fd5adcec0576734e198cd9cd9976f80c51edc39c37a29b"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/out/fake_calls.jsonl",
+   "sha256": "87d7312a5c59ea16f7cd03412eaef131d0e05a4c1dd7dfebdefd44d120756fa2"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/out/sales-01_C07M_deadline_messenger.json",
+   "sha256": "0b3eebf7bd8611a1a13d3b47e6902688cf637ad7abc48b36cecbb572bb2a5632"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/step01.cmd.json",
+   "sha256": "a68a434c8436d4b265c4ca01c5255d46e7dba0fb742afe82e71fa73e93a050ac"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C07M/step01.stdout.txt",
+   "sha256": "8dea7b4ddac0955c269b9e2ecdee5aaaddc2b5ac43267591a3dfa6d8bb0568e8"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/asserts.json",
+   "sha256": "5defdd997c4b38387f1418f46e551b26dd30d0693b57875e5f3221b9c36b4647"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/case.json",
+   "sha256": "78a004240e6b7d65770c6e1d3149f9767e659acacd4ac95f52a548a9a8db1b4d"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/out/facts.txt",
+   "sha256": "bc86301e0f4057c74c9b2da5acb7e6352e3da3fd9eda8f9363262f955afb50f1"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/out/fake_calls.jsonl",
+   "sha256": "0044e2fedb2bddc35261e1010b9615d42d90d8161decfbd00698c12147b08d06"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/out/sales-01_C08_vanhanh.json",
+   "sha256": "a574ffd730e1426a660936c7bbe2977b819accdc662e783cd04f3ba718e4b60c"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/step01.cmd.json",
+   "sha256": "8f7cc0a651447343571a9be8fc57efc08fc41e6e35cace2d6f96a580b299faef"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C08/step01.stdout.txt",
+   "sha256": "dbcdc100f26375bd5cf3a5bc11b25c2e685ebe581bab0c38056614437d524ca8"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/asserts.json",
+   "sha256": "fb33e45263cbfe0c20c916dfb141f673c8abc07fd279418a800a7786e371261a"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/case.json",
+   "sha256": "35b159fcbb0062354d6093637f5293888d9b9acaaf11c5550dda5a173f077e68"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/out/facts.txt",
+   "sha256": "ba0005a107f05618a8b0379d810663bacd52930ba6a3e94f51cd5605dae82779"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/out/fake_calls.jsonl",
+   "sha256": "0044e2fedb2bddc35261e1010b9615d42d90d8161decfbd00698c12147b08d06"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/out/sales-01_C09_messenger.json",
+   "sha256": "12efa1dce7c6249d9e67c8a5fb63ca4d6617d8ca6d3b412c2f3f202cd10f8fa6"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/step01.cmd.json",
+   "sha256": "7df3547167e9a1d2747a255c63cfcbc165455c9f787bd3ba9380eff1f6040a10"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C09/step01.stdout.txt",
+   "sha256": "f67def42accbca36e79b88050d838c2c8fbaa1a7ddb6d203737de232a9816b98"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/asserts.json",
+   "sha256": "9c4c1336f56e9a5eaadb0f3f5543cf8677fa239a7ab8b8e31129a13dfb004049"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/case.json",
+   "sha256": "6af4b7df13f95278fcb47c0bd9771ea2014a09121786e7b283c8361521f0a936"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step01.cmd.json",
+   "sha256": "df331360617d6e6d333982353f82179ffeb0d513241886c361d231ce5b8da47a"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step01.stderr.txt",
+   "sha256": "2f448132e1295ca48d37d40c9bc372628e6a9d6dcfdc405f032260e585440285"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step01.stdout.txt",
+   "sha256": "834c029dc7a4b33b88dae0db2b5e10da2db84d31a9861b0e2e8ca486323f428f"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step02.cmd.json",
+   "sha256": "dc2fcd50bfba738487133dc0c25b7af0557fa24b0de355a576384e92f7f3400e"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step02.stderr.txt",
+   "sha256": "2f448132e1295ca48d37d40c9bc372628e6a9d6dcfdc405f032260e585440285"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step02.stdout.txt",
+   "sha256": "83dce3a9b9b33931ef3978ec7397ab0ed0b785eca0b527c0723b60bae4e4b2ee"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step03.cmd.json",
+   "sha256": "3f12907f76ea1554d05c0f8bd071a949092f5dd9415af1052ec87f975fbe28a1"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step03.stderr.txt",
+   "sha256": "2f448132e1295ca48d37d40c9bc372628e6a9d6dcfdc405f032260e585440285"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C10/step03.stdout.txt",
+   "sha256": "83b31581f5241d11c5c26c675bb1522278a4d256d59de1293afb64c280acc2e3"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11/asserts.json",
+   "sha256": "b070c5e1ca078bebe4250bdc0341a319da7cbb7dff6baa862e5333428e339590"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11/case.json",
+   "sha256": "2bb6c4f8db8dc87ce6092d9797462e865e15e4949e6faf8e1741aab5e56dab8a"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11/out/facts.txt",
+   "sha256": "d3bdabc8d1c97b85c693519199895821bbc3abc63a7db9551a5dd42e4a66dd3d"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11/out/sales-01_C11_endpoints.json",
+   "sha256": "11e4b5f2d429cd626758fe702cc45fd2e0c2c6c09a402083dc00183df724ec02"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11/step01.cmd.json",
+   "sha256": "af203d6323efa4a17e380e63a5f099d3467ab525e953d9b60c0a5295a0cad9c2"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C11/step01.stdout.txt",
+   "sha256": "ae884d98fbf5ca20bb1284d04697aaf5be6abf853d6c170db97da492176989f6"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/asserts.json",
+   "sha256": "ee5404cccda30d73aa1e842d5a43c2612b234523faf00aaa93046855900c196d"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/case.json",
+   "sha256": "57f408357b6f08f923f612126c9c53d0f81baca165b24edad47f6b57143a90aa"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/out/facts.txt",
+   "sha256": "1c34c3226bab91ed8c9232bea2317a9c35fb3ed4a6c90e6babaa23fc65ef3ffb"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/out/sales-01_C12_tat.json",
+   "sha256": "35c697132f1e5b4c88921ee9917c46464bade7c974105f276f2a5e745d0880b4"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step01.cmd.json",
+   "sha256": "c35441632b6379ed6cae5bd1803205c2e13d8285ca775593135575248294fd06"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step01.stdout.txt",
+   "sha256": "935480250f98a6ae0ed75dd617d4e0919e0b252e31f61cbbe8f1c3ec7e131aa6"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step02.cmd.json",
+   "sha256": "623de5d44bae9c6b483a568e2d1f73e27ec882a31e0c17e892b72ea9aeee9b84"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__C12/step02.stdout.txt",
+   "sha256": "3b2bf73db0db04570a03f5bfb902bd42e27c0a334afa26f1597b380a78dc8ea3"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a/asserts.json",
+   "sha256": "d904706aa8e0704996c9c663f8761c9982deb201473e6331e45659e37b7431f9"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a/case.json",
+   "sha256": "01a96536fe8f052008562302a9d63b73c5948c562aac0dfaaa7880b86e0df42d"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a/out/facts.txt",
+   "sha256": "73fd3c562f248e41c88de9d33f951c09c10acedfa455646111f31fef9784bf59"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a/out/sales-01_L3_dbloi_suckhoe.json",
+   "sha256": "a653181f0bd825fb705ab0097d7ddb7dabdd90d5f6a33448fa6564b2cee4be42"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a/step01.cmd.json",
+   "sha256": "81054ac94e24518b80b16b6d8b3e8b1785c0209275ea09497ed7a1448e66e1a6"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3a/step01.stdout.txt",
+   "sha256": "7f852bbc597d8e1e1038ced1c9f4bbf935381f129fcc68108c09f4cc70915c4d"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b/asserts.json",
+   "sha256": "3c1d49a624be051d434492d554c8a5ead021fbdbb1101c84643687d889cda4dc"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b/case.json",
+   "sha256": "5935bbf9eeab82853f677551179ede0e3c4704c561503a65d0b3abfc8cb76f0b"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b/out/facts.txt",
+   "sha256": "25dff76b22e7ba184c105feba93a16b00007733c25e36e492b4bcd7694a2e1f4"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b/out/sales-01_L3_tat_thuong.json",
+   "sha256": "0294ade7e66d82c3ea80a6b2fcca068ca1566df4a29f17bf17fa6dbd2644932b"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b/step01.cmd.json",
+   "sha256": "27ff0db90fe6f9bdff7ed7836c2b5bb798555b0d791afc93d8b4a7a2e24b3bc7"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3b/step01.stdout.txt",
+   "sha256": "96216b197dd0b754f73d243963c26bb821d862859225dd430ec309f64258a90d"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c/asserts.json",
+   "sha256": "37de396ceaf3a052c3d7f4ccac3fd0c040172ac634321552bd86411e57307eda"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c/case.json",
+   "sha256": "b5a16e63b12c13769a4bc95fe27ecf5659095234e5216011a867c257211389d1"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c/out/facts.txt",
+   "sha256": "73fd3c562f248e41c88de9d33f951c09c10acedfa455646111f31fef9784bf59"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c/out/sales-01_L3_tat_suckhoe.json",
+   "sha256": "27e5317dc4916fa6772d7bfa8dee3c97776bf269aaa008f5dbab85f003db8cf4"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c/step01.cmd.json",
+   "sha256": "ce43b3c80336fced58cd39756f9b52300165ac5af217096af134177c60feaa54"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__L3c/step01.stdout.txt",
+   "sha256": "7b2b2e55875c95f6435fa5bbf0b3fa1fc0895dbb8ef2f54b524ad397701885c2"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S00/asserts.json",
+   "sha256": "4e489f25bc77a4ab81ef5b501270b3c807dc28bdd00b7c9df9dcf4287170eed6"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S00/case.json",
+   "sha256": "10950681c9b12de1597d9ea4c3215257c186eeb99a16f7e084822cbdc564886a"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S00/step01.cmd.json",
+   "sha256": "f2cc8457814e705ef6b08c62d2782e491c9fca64b0ef53eb79dbc8723ffa6591"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S00/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S00/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S01/asserts.json",
+   "sha256": "4855366a5f1f01c7f1b265cbbe7ee0d25f5f95fe88fcffd200f52d12c14611c7"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S01/case.json",
+   "sha256": "bc43f509b03fc4ebcc00de6889f932f6f74e22cb5e2af7d01f94578b68aa8dd5"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S01/step01.cmd.json",
+   "sha256": "7ed67303c52e7a74446d4df24d321d691547c327f36232d034fcaca0fffd375e"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__S01/step01.stdout.txt",
+   "sha256": "2768dcb7c748cb772d38538360128f91c01f82f7ca08c1cffbde3a21618dfc48"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9/asserts.json",
+   "sha256": "c16eb3604ec2dc7910361e4f236824f81b222700b1285956645688aa7c6696f7"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9/case.json",
+   "sha256": "7ba576c972c7f3e9c92b009a774da5ec0419737d7d5496c924901878873e5615"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9/out/facts.txt",
+   "sha256": "174ef02e40e50a011f91be0c42e446301f7d5e0b5b6b550c906d5970129e0e5f"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9/out/sales-01_T9.json",
+   "sha256": "d79a594aa479d39b39ffcdbfb3d185152f690b555d1c59468f9799308e6e09ad"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9/step01.cmd.json",
+   "sha256": "ea55b38c72473ba61b94f81306c0dd01f21e0c31e79a5c1fb770585014d1e13b"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__T9/step01.stdout.txt",
+   "sha256": "c7854f2d9a7f749725cb8edca9dc9617508a3e2b48fb05b47de849232590d88a"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__UI02/case.json",
+   "sha256": "6197612bf542cb6cdd66df1ebead8c9147b964683af455ca672d9a7dfa2fe327"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1/asserts.json",
+   "sha256": "dc96acd1733168d9993144826214ca832f29f5acc9532012cb4e5631d3559a60"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1/case.json",
+   "sha256": "ce0132db0899eb1cd328c4820079c357f7868474d76a5831a7fe498aa538d104"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1/out/facts.txt",
+   "sha256": "73fd3c562f248e41c88de9d33f951c09c10acedfa455646111f31fef9784bf59"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1/out/sales-01_X1_tat_health.json",
+   "sha256": "49ca30b6c5826c8914cce318d1be818fb343f7e94f992bd98a0c8acab7975599"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1/step01.cmd.json",
+   "sha256": "3764f7a36f814ebc4cc902a6a1209baf9b143e2e3d3195cb88dcf7f90c3ce653"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/sales-01__X1/step01.stdout.txt",
+   "sha256": "c70b966b3aee9796c84aee53bf0f6bf4aee1427839bfb1c7d041297b7c0a7f22"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/scratch/conv/conversations.jsonl",
+   "sha256": "7cd1fd64d2432b4b88cb172a9ef7dd57abec6bd4f11f1d5be9e8b63b2cdddba8"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/scratch/conv/data_sha0.json",
+   "sha256": "0d0e127d66939e8de112a2a13481ed73d75887b1e7db2af37bbe83cfeac95143"
+  },
+  {
+   "path": "evidence/itacc_r12_fix_d2_l3/runs/sales-01/20261024T143352-ea1f/scratch/conv/zalo_seen.db",
+   "sha256": "1f7c379ea502573ea0bddbb663db2a2d1ea5d17835f817ac9b4272568c34e75d"
+  }
+ ],
+ "loi_san_pham": []
+}

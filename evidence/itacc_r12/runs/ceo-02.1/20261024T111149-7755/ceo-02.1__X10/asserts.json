@@ -1,0 +1,22 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\ceo-02.1\\20261024T111149-7755\\ceo-02.1__X10\\out/*",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\ceo-02.1\\20261024T111149-7755\\scratch/rep7/*",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

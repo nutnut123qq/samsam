@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from intel_items",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from intel_items where url like '%/van-ban/nd-thu-it-01' and source = 'chinhphu-van-ban' and title like 'Nghị định mới quy định quảng cáo thực phẩm bảo vệ sức khỏe%' and 'tpbvsk' = any(topics)",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from intel_items where url like '%tb-thu-it-02%' or title like 'Thông báo lịch họp%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

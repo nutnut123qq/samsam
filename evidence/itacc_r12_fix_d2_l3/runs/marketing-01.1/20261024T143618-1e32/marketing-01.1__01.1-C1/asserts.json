@@ -1,0 +1,28 @@
+[
+ {
+  "sql": "select count(*) >= 1 from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected' and not (created_by = 'agent:mkt02' and content_type = 'post' and status = 'pending' and (guardrail->>'ok')::boolean and is_ai and prompt_version is not null and prompt_sha256 is not null and text like '%Nội dung có sử dụng AI%')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected' and sku is not null",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12_fix_d2_l3\\runs\\marketing-01.1\\20261024T143618-1e32\\marketing-01.1__01.1-C1\\out/llm.json",
+  "re": "\"kind\": \"chat\"",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ }
+]

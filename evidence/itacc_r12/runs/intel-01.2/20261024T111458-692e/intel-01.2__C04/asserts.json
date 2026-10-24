@@ -1,0 +1,21 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like 'week-%' and status = 'pending'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\intel-01.2\\20261024T111458-692e\\intel-01.2__C04\\out/repiw/intel-bulletin-week-*.md",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from report_outputs where name like 'intel-bulletin-week-%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

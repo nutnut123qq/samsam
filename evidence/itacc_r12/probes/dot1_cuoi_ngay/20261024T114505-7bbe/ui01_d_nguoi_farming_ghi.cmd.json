@@ -1,0 +1,18 @@
+{
+ "ca": "ui01_d_nguoi_farming_ghi",
+ "argv": [
+  "python",
+  "-c",
+  "import psycopg,os,sys; from datetime import datetime,timezone; from agents import garden as g;c=psycopg.connect(os.environ['DATABASE_URL']);lid,w=g.add_log_human(c,'KV-A01',datetime.now(timezone.utc),'tưới nước','tưới thử R12',sys.argv[1]); c.commit(); print(lid)",
+  "Nông Dân Thử R12"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "bat_dau": "2026-10-24T11:45:15+07:00",
+ "ket_thuc": "2026-10-24T11:45:16+07:00",
+ "exit": 0,
+ "llm_calls": null,
+ "stdout_sha256": "e0c18a6a8d48da87994c100bbb324c758d413e95f0fa5135bd0738a692b4d56f",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

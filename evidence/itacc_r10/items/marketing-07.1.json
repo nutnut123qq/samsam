@@ -1,0 +1,123 @@
+{
+ "id": "marketing-07.1",
+ "ten": "SEO sàn",
+ "khoi": "marketing",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / SEO và báo cáo kênh: 'SEO sàn'",
+ "tieu_chi": [
+  "T1 `python -m agents.seo_san --run --sku all --channel shopee --out-dir <thử>` exit 0",
+  "T2 content_drafts content_type='listing' created_by='agent:MKT-11' pending, prompt_version 'seo-san-v1'; từ khóa qua guardrail; rượu bị từ chối; báo cáo seo-san-<ngày>.md chỉ in CODE từ khóa bị loại",
+  "T3 chạy lại → skipped; --dry-run → 0 dòng; tắt → không sinh",
+  "T4 không sửa sàn/không API"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); mồi listing + trends qua CLI thật (bản sao fixture repo)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/fixture_shopee_listing.csv",
+   "sha256": "697c4ea7f099075b23a61517640e50a0cdc04f16cf6ec369db3bf362ef2c4063",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/relatedQueries_MAU.csv",
+   "sha256": "e7de84882c8f0472bbe135b17d333274be536f7c78c476effc60de6e01aea530",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "07.1-C0",
+   "mo_ta": "mồi",
+   "lenh": "python -m ingest.intel_import --trend evidence/itacc_r10/g3/harness/fixtures/relatedQueries_MAU.csv --seed nhân sâm",
+   "expected": "nạp OK",
+   "actual": "market_csv listing snapshot #3; trend_related 6 dòng",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07.1-C1",
+   "mo_ta": "gợi ý + nháp",
+   "lenh": "python -m agents.seo_san --run --sku all --channel shopee --out-dir evidence/itacc_r10/g3/reports",
+   "expected": "listing agent:MKT-11 T2",
+   "actual": "8 nháp listing (#8-#15) agent:MKT-11 pending, prompt_version seo-san-v1, guardrail ok; rượu refused ruou; 'sâm ngọc linh' loại ngoc_linh_chua_xac_nhan×2, ruou×1 (chỉ CODE); báo cáo nhãn CHẠY THỬ, report_outputs marketing-07.1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07.1-C2",
+   "mo_ta": "chạy lại",
+   "lenh": "python -m agents.seo_san --run --sku all --channel shopee --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/seo_san2",
+   "expected": "skipped",
+   "actual": "skipped=8",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07.1-C3",
+   "mo_ta": "dry-run",
+   "lenh": "python -m agents.seo_san --run --dry-run --sku all --channel shopee --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/seo_san3",
+   "expected": "0 dòng",
+   "actual": "dry_run=8, tổng vẫn 8",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07.1-C4",
+   "mo_ta": "tắt",
+   "lenh": "python -m agents.seo_san --run --sku all --channel tiktok --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/seo_san3",
+   "expected": "0 dòng",
+   "actual": "exit 1 '[error] RolloutBlocked: nháp listing… tắt', tổng vẫn 8",
+   "exit": 1,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "Listing/Trends là file MẪU; giới hạn ký tự GIẢ ĐỊNH.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/07.1-C0a.txt",
+   "sha256": "eba5b05172b6888a6f1b857d0ea9bbcff1ae341ddbd077f218686b7232440ea5"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.1-C0b.txt",
+   "sha256": "c081de22fdf1efa028f462c2d5a94fc193ee7108f387b8f8fe4c4a37c44bfe79"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.1-C1.txt",
+   "sha256": "a8214335c4984beff279ed3d35541981d8a954c15e2312c6843efab38988e014"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.1-C1.db.json",
+   "sha256": "48987629ed10a3f9252e8aebd4ac49decea36ca628fd9c938cb0083a79e08784"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/reports/seo-san-2026-10-23.md",
+   "sha256": "c1b16d434532b71a5ca9f34e6845f5a5e9950015d5824e5acfe9b2c436413202"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.1-C2.txt",
+   "sha256": "6d6947ed0348409336e05a75c8533bac964f8e880134043e363162c6a371f11c"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.1-C3.txt",
+   "sha256": "13477ce5e32283e214b4295c2739fc7288df5d5580fa4b0562605b643585d888"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.1-C4a.txt",
+   "sha256": "71a617b333c7329f7ac461c1d3312d1276439dda0c929dbeb35219cacc8ae41b"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.1-C4.txt",
+   "sha256": "381198ff5b7c3248a38c37e3a3217ecab41e4e3b852b14b34f61f037688d72dd"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.1-C4b.txt",
+   "sha256": "c531c4cfc53299274d57bbb9f7b37de4e5f8c99933951c87be25991801306da3"
+  }
+ ],
+ "loi_san_pham": []
+}

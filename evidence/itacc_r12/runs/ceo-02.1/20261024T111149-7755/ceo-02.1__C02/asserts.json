@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board' and object_id = 'board:2026-W46' and created_by = 'agent:da_pmo' and status = 'pending' and position('## Mốc trễ' in payload) > 0 and position('## Mốc chưa có ngày' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select string_agg(code, ',' order by due_date, code) from project_milestones where due_date < '2026-11-10' and status <> 'xong'",
+  "expect": "DA-01,MOC-A,MOC-B,DUYET-1111",
+  "actual": "DA-01,MOC-A,MOC-B,DUYET-1111",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from project_milestones m where m.due_date < '2026-11-10' and m.status <> 'xong' and not exists (select 1 from approval_queue q where q.object_type = 'weekly_board' and q.status = 'pending' and position('- **TRỄ** ' || m.code || ' —' in q.payload) > 0)",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from project_milestones m where (m.due_date >= '2026-11-10' or m.status = 'xong') and exists (select 1 from approval_queue q where q.object_type = 'weekly_board' and q.status = 'pending' and position('- **TRỄ** ' || m.code || ' —' in q.payload) > 0)",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

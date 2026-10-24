@@ -89,6 +89,8 @@ Nghĩa vụ ngoài code: `docs/handover/so-nghia-vu-hop-dong.md`.
 | D-DL-08 | Bên B (GĐ sản xuất) — danh mục 14 HỒ SƠ GỐC: mã, tên, thành phần, quy cách, số công bố, SKU golden ứng với hồ sơ, người xác nhận + căn cứ | `data/product_dossiers.json` `danh_muc_ho_so_goc`, `sku[].ho_so_goc` | `python -m ingest.product_dossiers --check` exit 2 (BLOCKED 0/14) |
 | D-DL-09 | GĐ bán hàng — giá `list` kênh `web` trong `price_list` ĐÃ duyệt (`golden_store --approve-price`) còn hiệu lực + `allowed_channels` gồm web trong golden; mô tả chuẩn listing kênh web được người duyệt (vá controller 22/10 F2: giá JSON không còn được dùng) | `price_list` (nạp từ `data/golden_skus.json` rồi người duyệt), hàng duyệt nội dung | `listing_export --website-feed`: hiện 0 SKU bán được (ghi ly_do) |
 | D-DL-10 | Bên B / owner website — định dạng xuất ĐƠN website (cột, trạng thái, mã đơn, không PII) để nhập về `orders`/đối soát | (chưa có adapter — không đoán) | nhập đơn web BLOCKED |
+| D-DL-11 (đợt an toàn S02, 22/10/2026) | DBA/quản trị viên Bên B — bản backup/dump `samsam` CÓ TRƯỚC 20/10/2026 03:03 UTC (nếu có) + quyền đọc BẢN SAO cô lập để đối soát sự cố test | ngoài repo | không có → sự cố giữ UNVERIFIED vĩnh viễn | `docs/handover/su-co-db-samsam.md` mục 5 |
+| D-DL-09 (cập nhật S03) | GĐ bán hàng — giá `list` ĐÃ duyệt còn hiệu lực cho TỪNG kênh xuất (shopee, tiktok, web) trong `price_list`; từ đợt an toàn S03 tệp xuất sàn cũng KHÔNG dùng giá JSON | `golden_store --approve-price` (NGƯỜI) | thiếu → `listing_export` từ chối, không tệp | `tests/test_contract_c04_listing_export.py` |
 
 ## F. Hạ tầng (Bên B — PL01 mục 8, PL02 mục 2)
 
@@ -102,6 +104,9 @@ Nghĩa vụ ngoài code: `docs/handover/so-nghia-vu-hop-dong.md`.
 | D-HT-06 | Diễn tập khôi phục 30/11/2026, 18/12/2026, sau đó mỗi quý — trên hạ tầng Bên B | `db_restore_drill.py` log trên server (Docker máy dev KHÔNG thay được) |
 | D-HT-07 | Máy giám sát NGOÀI server + kênh báo của máy đó (PL01 giám sát lỗi; server sập thì cảnh báo trong server không gửi được) | máy chạy `webhook_probe.py --url … --dry-run` theo lịch (runbook 10.6); thử tắt webhook → nhận báo |
 | D-HT-05 (cập nhật 22/10/2026) | Kiểm boolean: mật khẩu DB trong `.env` máy dev VẪN TRÙNG giá trị đã lộ trong lịch sử Git repo public — checklist rotation runbook 10.7 (quản trị viên làm, agent không đổi credential) | đăng nhập mật khẩu cũ bị từ chối; biên bản đổi (không ghi giá trị) |
+| D-HT-05 (cập nhật đợt an toàn S01) | Quản trị viên TỪNG môi trường chạy gói `scripts/db_rotate_password.py` (runbook 10.8): check → rotate → cập nhật nơi dùng → verify-consumers → verify (mới ok, sai+cũ 28P01); ghi ngày/môi trường/role/người/exit, không giá trị | dev 22/10: CÒN trùng (exit 1); server/CI/máy khác: chưa kiểm |
+| D-HT-08 (đợt an toàn S05) | Người giữ khóa mã hóa backup (passphrase/`age`) + nơi lưu bản sao ngoài hệ thống — trạng thái RIÊNG với backup chạy được | `BACKUP_PASSPHRASE_FILE`, `BACKUP_OFFSITE` trên server; `backup_runs.jsonl` ghi `encrypted` + offsite |
+| D-HT-09 (đợt an toàn S04) | Login Postgres RIÊNG cho từng người duyệt (`in role app_human`) + dòng `human_logins` (owner ghi theo văn bản ủy quyền) + `db_login` trong `data/users.json`; quyết định kiến trúc nối SSO/proxy ↔ danh tính DB (chưa làm) | UI chế độ thực mở quyền bằng login người; `svc_ui` không ghi tên người (DB 42501) |
 
 ## V. Lựa chọn nhà cung cấp — tiêu chí kỹ thuật cho người có thẩm quyền
 

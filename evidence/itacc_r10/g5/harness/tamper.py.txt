@@ -1,0 +1,13 @@
+"""Thử sửa/xóa lén plot_logs bằng login OWNER (mạnh nhất) — mong đợi trigger chặn."""
+import os, sys, psycopg
+sys.stdout.reconfigure(encoding="utf-8")
+lid = int(sys.argv[1])
+for sql in (f"update plot_logs set detail = 'SỬA LÉN thử IT' where id = {lid}",
+            f"delete from plot_logs where id = {lid}"):
+    with psycopg.connect(os.environ["DATABASE_URL"]) as c:
+        try:
+            n = c.execute(sql).rowcount
+            c.rollback()
+            print("NOT_BLOCKED", sql, "rowcount", n, "(rolled back)")
+        except psycopg.Error as e:
+            print("BLOCKED", sql.split()[0], type(e).__name__, (str(e).splitlines() or [''])[0][:160])

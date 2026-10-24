@@ -1,0 +1,135 @@
+[
+ {
+  "sql": "select id, ts, status, total_vnd, source, note from orders where source like 'market:%' order by id",
+  "rows": [
+   {
+    "id": "shopee:04df87ec98f4b7b3",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "Hoàn thành",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:0b0879c8d48f4b76",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "Hoàn thành",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:2057792e4d7ded0d",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "cancelled",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:256e8f80a1a7b94c",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "Hoàn thành",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:5b291a084826c650",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "cancelled",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:67c24f7894a3eab1",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "cancelled",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:7f8daea8ecef2a09",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "Hoàn thành",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:90eda5aad2be8d71",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "Hoàn thành",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:979929c7a8c759ac",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "cancelled",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:a5253497ef66b471",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "Hoàn thành",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:ba734bce08ab1db9",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "Hoàn thành",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "shopee:e13162411ddbc7a7",
+    "ts": "2026-10-23 03:47:17.595462+00:00",
+    "status": "cancelled",
+    "total_vnd": 2980000,
+    "source": "market:shopee",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "tiktok:39ba9fbc7ac98379",
+    "ts": "2026-10-23 03:47:18.637195+00:00",
+    "status": "Completed",
+    "total_vnd": 2980000,
+    "source": "market:tiktok",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "tiktok:95a3db8fcb61df40",
+    "ts": "2026-10-23 03:47:18.637195+00:00",
+    "status": "cancelled",
+    "total_vnd": 2980000,
+    "source": "market:tiktok",
+    "note": "mat-ong-sam-300ml"
+   },
+   {
+    "id": "tiktok:bfafd8c178a02b9c",
+    "ts": "2026-10-23 03:47:18.637195+00:00",
+    "status": "Completed",
+    "total_vnd": 2980000,
+    "source": "market:tiktok",
+    "note": "mat-ong-sam-300ml"
+   }
+  ]
+ },
+ {
+  "sql": "select count(*) n_phone from market_rows where raw::text like '%09000005%' or raw::text like '%Người Nhận%'",
+  "rows": [
+   {
+    "n_phone": 0
+   }
+  ]
+ }
+]

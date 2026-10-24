@@ -1,0 +1,72 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/scratch/rep05/hdtv-2026-09.md",
+    "sha256": "91eb357bdada7d6b584f9e751cf1178d802b34aa8fb1c7c6a3cbd93149f76f7d"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+  "re": "## Chỉ số cockpit[\\s\\S]*## Tiến độ & Sổ quyết định[\\s\\S]*## Rủi ro pháp lý mở[\\s\\S]*## Chi so ngân sách vận hành[\\s\\S]*## P&L tóm tắt[\\s\\S]*## Ép trình QA \\(override_qa\\)[\\s\\S]*## Kiểm soát BKS",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack' and object_id like '%2026-09%' and status = 'pending' and created_by = 'agent:hdtv_report'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from audit_runs where kind = 'hdtv_pack' and period_label = '2026-09'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select (select count(*) from opex_entries) + (select count(*) from llm_usage)",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+  "re": "## Chi so ngân sách vận hành\\n(?:(?!\\n## )[\\s\\S])*?(?:\\|\\s*0đ\\s*\\||0\\.0%)",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+  "re": "## Chi so ngân sách vận hành\\n(?:(?!\\n## )[\\s\\S])*?\\| 2026-09 \\| `tong` \\| \\[chưa có dữ liệu\\] \\|",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+  "re": "## P&L tóm tắt(?:(?!\\n## )[\\s\\S])*?\\[chưa có dữ liệu\\]",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+  "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-05 ",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ }
+]

@@ -1,0 +1,143 @@
+{
+ "id": "ceo-04.4",
+ "ten": "So giá (và mô tả) listing đang chạy với bản đã duyệt",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Kiểm soát nội bộ: 'Mỗi ngày so ... giá ... đang chạy với bản đã duyệt'",
+ "tieu_chi": [
+  "T1 cùng lần chạy `agents.ceo_audit --report` exit 0",
+  "T2 ceo-gia-<ngày>.md: giá listing = giá list ĐÃ DUYỆT hiệu lực → khop; khác → lech kèm 'file X / duyệt Y (price_list #id)'; giá chưa duyệt → khong_so_duoc (không kết luận khớp); mô tả → khong_so_duoc vì file chưa có cột",
+  "T3 ca âm: giá chưa duyệt không được coi khớp; tính năng ceo-04.4 tắt → không sinh ceo-gia nhưng ceo-audit (ceo-04.3) vẫn sinh",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+  "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_ceo; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [
+  {
+   "ten": "it_g1_listing_shopee.csv",
+   "sha256": "a9da8214a604cbaa9181516f18cd8b69f94898d4ba8f09880079d3c9dae9950a",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Duyệt giá list (người)",
+   "lenh": "python -m ingest.golden_store --approve-price 2 --by Người Duyệt Giá Thử IT",
+   "expected": "exit 0, approved_by set",
+   "actual": "golden_store --approve-price id=2 (savina 159000) & id=5 (saphraton-20v 299000) bởi 'Người Duyệt Giá Thử IT' (ceo044_C01_5)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "So giá",
+   "lenh": "python -m agents.ceo_audit --report --now 2026-10-23T10:00:00+07:00 --out-dir <scratch>/rep43",
+   "expected": "khop / lech (file 289000 / duyệt 299000) / khong_so_duoc; mô tả khong_so_duoc",
+   "actual": "ceo-gia-2026-10-23.md: giá khop 1 (savina 159000=duyệt), lech 1 'file 289000 / duyệt 299000 (price_list #5)', khong_so_duoc 2 (sapentol, mật ong 300ml: list chưa duyệt — không kết luận khớp); mô tả khong_so_duoc 4 'file xuất chưa có cột mô tả'; nhãn CHẠY THỬ ceo-04.4; report_outputs ceo-04.4",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Tắt ceo-04.4",
+   "lenh": "python -m agents.ceo_audit --report --now 2026-10-25T10:00:00+07:00 --out-dir <scratch>/rep43",
+   "expected": "không ceo-gia-2026-10-25.md; ceo-audit-2026-10-25.md vẫn sinh; bật lại",
+   "actual": "tắt ceo-04.4 → không ceo-gia-2026-10-25.md; ceo-audit-2026-10-25.md vẫn sinh; ghi chú: kết thúc bằng traceback RolloutBlocked exit 1",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "bổ sung sau khóa",
+   "lenh": "python -m agents.ceo_audit --report --now 2026-10-24T10:00:00+07:00 --out-dir <scratch>/rep43",
+   "expected": "(bổ sung sau khóa — xem actual)",
+   "actual": "BỔ SUNG SAU KHÓA (lý do: lỗi phát hiện ở ceo-04.3 C04 chặn trực tiếp đầu ra ceo-04.4): khi CHỈ ceo-04.3 tắt, ceo-gia-<ngày>.md của ceo-04.4 (đang chạy thử) không được sinh vì ceo_audit ghi ceo-audit trước và RolloutBlocked dừng cả lệnh",
+   "exit": "1",
+   "ket_qua": "FAIL",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Cùng sửa g1-L1. Ngoài code: listing thật có cột mô tả (hiện 'Mô tả sản phẩm' bị drop trong mapping → mô tả luôn không so được); giá list golden do người duyệt",
+ "gioi_han": "So mô tả chưa kiểm được nhánh khop/lech (file không có cột)",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_listing_shopee.csv",
+   "sha256": "a9da8214a604cbaa9181516f18cd8b69f94898d4ba8f09880079d3c9dae9950a"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C02.txt",
+   "sha256": "a4f3d4cdeb8c6e0c018548138686d5af66293407bf01112ee8b9c40f67a7c606"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C04.txt",
+   "sha256": "5ac3550a67ebf295cfce88304298ac88000795f301c596f3df6254e12b99d474"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C04a.txt",
+   "sha256": "6a39dc74b31659ccc15f2bc79d108ba9f019a2848f228c93b64051cbd65b3a8a"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C04b.txt",
+   "sha256": "a16eb697ca0a322f39129d14520edc3b70a45e47500e1af3c8ae80d526eb679c"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo044_C01_2.txt",
+   "sha256": "a86b0bd292731d63ee910ba8d99871a0cb77c51b81bc764c2b71e1c94a6a038e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo044_C03.txt",
+   "sha256": "e6e2172381625fd0277b102e0cfd49300e50bf18204e35a31808620c38d2aa9b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo044_C03a.txt",
+   "sha256": "b8e83e054be2769f11b9b306d8bdb26aa22d05a86148b3230dec9cd850094dc0"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo044_C03b.txt",
+   "sha256": "0ea19213e2c2e2454cf17c3fafd37be95b4fd51cd1ebc4d6096292b71c52dca8"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/ceo-gia-2026-10-23.md",
+   "sha256": "65cd96571f950df93044a713725419110ed46b90ce25c74ccd8d7c2f720769c4"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "g1-L1",
+   "muc_do": "TRUNG BÌNH",
+   "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+   "tai_hien": [
+    "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+    "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+    "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+   ],
+   "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+   "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+   "evidence": [
+    "out/ceo043_C04.txt",
+    "out/intel03_C06.txt",
+    "out/intel012_C03.txt"
+   ]
+  }
+ ],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

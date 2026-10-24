@@ -1,0 +1,231 @@
+{
+ "id": "ceo-01",
+ "ten": "Báo cáo tuần tự động",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Báo cáo tuần tự động: '1 trang mỗi sáng thứ Hai: doanh số, đơn hàng, việc trễ, rủi ro; mọi con số có nguồn'",
+ "tieu_chi": [
+  "T1 `python -m pipelines.cockpit --import/--collect` + `python -m agents.ceo_report --period week --ref 2026-10-12 --submit --out-dir <scratch>` chạy trên DB thử, exit 0",
+  "T2 đúng 1 mục approval_queue block=ceo object_type=weekly_report created_by=agent:ceo_report status=pending; payload chứa số GMV/đơn từ CSV fixture đúng giá trị (định dạng VN) + cột Nguồn `manual_export · <ref file> · chụp <ngày>`; chỉ số không có số hiện `[chưa có dữ liệu]` (không 0); có 3 section Tiến độ/Rủi ro/Audit; dòng ĐỎ khi chưa có người nhận cảnh báo độc lập",
+  "T3 ca âm: CSV lỗi ô → exit 1 & 0 dòng; nạp lại khác số → exit 1 không ghi đè; kỳ chưa đóng → exit 2 không file/mục; nộp lại cùng kỳ không tạo mục trùng; tính năng tắt → không sinh mục",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+  "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_ceo; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [
+  {
+   "ten": "it_g1_cockpit.csv",
+   "sha256": "90476ba534e487e20c82c9072619527e1ff663c4f39898d818da9fe7472c3053",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_cockpit_sua.csv",
+   "sha256": "1af9581acba47584bdcd0a2873ae60716cc3d7ed27a9c7c89ebdb44b0f58c71f",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_cockpit_loi.csv",
+   "sha256": "a7338cf82e17e4e2575b5306aa41b479d487166c0a49cf3d3ead012e2fc48806",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Nạp CSV số kênh ngoài (fixture) 2 tuần đã đóng",
+   "lenh": "python -m pipelines.cockpit --import evidence/itacc_r10/g1/harness/it_g1_cockpit.csv --by Người Thử IT",
+   "expected": "exit 0, inserted=N, channel_snapshots có N dòng source=manual_export",
+   "actual": "inserted=5; channel_snapshots 5 dòng manual_export source_ref it_g1_cockpit.csv#sha256:90476ba534e4",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Nạp lại đúng file (idempotent)",
+   "lenh": "python -m pipelines.cockpit --import evidence/itacc_r10/g1/harness/it_g1_cockpit.csv --by Người Thử IT",
+   "expected": "exit 0, inserted=0 unchanged=N, số dòng không đổi",
+   "actual": "inserted=0 unchanged=5; số dòng không đổi",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Nạp file sửa 1 giá trị đã nạp",
+   "lenh": "python -m pipelines.cockpit --import evidence/itacc_r10/g1/harness/it_g1_cockpit_sua.csv --by Người Thử IT",
+   "expected": "exit 1, 0 dòng mới, giá trị cũ giữ nguyên",
+   "actual": "[fail] 1 dòng khác giá trị đã nạp — 0 dòng; giá trị 12500000 giữ nguyên",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "CSV ô lỗi (chữ trong value)",
+   "lenh": "python -m pipelines.cockpit --import evidence/itacc_r10/g1/harness/it_g1_cockpit_loi.csv --by Người Thử IT",
+   "expected": "exit 1, thông báo dòng/cột không in giá trị, 0 dòng",
+   "actual": "dòng 2, cột value: phải là số nguyên — không in giá trị; chưa kết nối DB; 0 dòng",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Chụp số nội bộ tuần đã đóng",
+   "lenh": "python -m pipelines.cockpit --collect --period week --ref 2026-10-12",
+   "expected": "exit 0; channel_snapshots có dòng channel=noi_bo source=api source_ref db:/file:",
+   "actual": "inserted=13 dòng noi_bo source=api source_ref db:<bảng>/file:conversations.jsonl",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C06",
+   "mo_ta": "Lập + nộp báo cáo tuần",
+   "lenh": "python -m agents.ceo_report --period week --ref 2026-10-12 --submit --out-dir <scratch>/rep",
+   "expected": "exit 0; file ceo-2026-W42.md có nhãn CHẠY THỬ; 1 mục ceo/weekly_report pending, payload kiểm như T2",
+   "actual": "Mục #1 ceo/weekly_report object_id 2026-W42 created_by=agent:ceo_report pending, payload có '12.500.000 đ' (+25,0%), nguồn manual_export·it_g1_cockpit.csv#sha256:90476ba534e4, [chưa có dữ liệu] cho chỉ số thiếu, 3 section, dòng ĐỎ tuyến cảnh báo — ĐẠT. NHƯNG file ceo-2026-W42.md KHÔNG có nhãn 'CHẠY THỬ — KHÔNG GỬI' (expected trong ca) vì tên ceo-<kỳ>.md không thuộc output_sources report; report_outputs 0 dòng",
+   "exit": "0",
+   "ket_qua": "FAIL",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C07",
+   "mo_ta": "Kỳ chưa đóng",
+   "lenh": "python -m agents.ceo_report --period week --ref 2026-10-21 --submit --out-dir <scratch>/rep7",
+   "expected": "exit 2, không file mới, không mục mới",
+   "actual": "[error] kỳ chưa đóng; 0 file, 0 mục mới",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C08",
+   "mo_ta": "Nộp lại cùng kỳ",
+   "lenh": "python -m agents.ceo_report --period week --ref 2026-10-12 --submit --out-dir <scratch>/rep",
+   "expected": "không có mục weekly_report pending thứ 2 cho cùng kỳ (exit ≠0 hoặc bỏ qua)",
+   "actual": "UniqueViolation approval_queue_pending_uq → exit 1, vẫn 1 mục weekly_report (ghi chú: file .md vẫn bị ghi lại)",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C09",
+   "mo_ta": "Tính năng ceo-01 tắt",
+   "lenh": "python -m agents.ceo_report --period week --ref 2026-10-05 --submit --out-dir <scratch>/rep7",
+   "expected": "không mục weekly_report mới (exit ≠0); bật lại sau ca",
+   "actual": "tắt ceo-01 → 'tính năng ceo-01 đang tắt — không sinh đầu ra', 0 mục mới; bật lại chay_thu. Ghi chú: file ceo-2026-W41.md VẪN được ghi khi tắt (cùng gốc lỗi C06)",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Đưa ceo-<kỳ>.md vào output_sources report của ceo-01 (hoặc gắn nhãn/cổng tắt cho file) — lỗi THẤP; đầu ra thiết yếu (mục ceo/weekly_report có số + nguồn) đã đạt. Ngoài code: số kênh ngoài thật do người xuất CSV; người nhận cảnh báo độc lập (routing)",
+ "gioi_han": "Số liệu là fixture; chatbot.* đọc data/conversations.jsonl của repo (chỉ đọc); không kiểm LLM (--llm tắt, không key)",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_cockpit.csv",
+   "sha256": "90476ba534e487e20c82c9072619527e1ff663c4f39898d818da9fe7472c3053"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_cockpit_loi.csv",
+   "sha256": "a7338cf82e17e4e2575b5306aa41b479d487166c0a49cf3d3ead012e2fc48806"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_cockpit_sua.csv",
+   "sha256": "1af9581acba47584bdcd0a2873ae60716cc3d7ed27a9c7c89ebdb44b0f58c71f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C01.txt",
+   "sha256": "52a0032dd0e6ecc3d5522faa28985bcc3a5c5cf97a533135a945037c4c52a1e6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C02.txt",
+   "sha256": "feeacd7108ef00ba6169fd40311c686ea2641ebdd676d11cd9a0728915cbb223"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C03.txt",
+   "sha256": "88433edc71945a19fc65a5aebdfde6298c6d0466e397cbb77b4b6010ff05072c"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C04.txt",
+   "sha256": "d230affdb114270f07c2c26f1db78bf1709aed3d72b66404211b5ae3c8280416"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C05.txt",
+   "sha256": "53149d49617caaf74c84140e11c2d92b0328d30bc7eda66aab4ad3de0f32e457"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C06.txt",
+   "sha256": "08e2bc0a653b263df62e460606503963be9f726a5de7a04ff09466c820ef5040"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C07.txt",
+   "sha256": "45a3c1b034bc5223c19432aa86a28b73f774fd6c69238f4321e34f94b7aeedb6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C08.txt",
+   "sha256": "46b7f8ecd21c18d01d5397a7b9a6b14c9b1bf751534572d04676dec6a4e0fab4"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C09.txt",
+   "sha256": "e3790df2c90787f8b95aee5e50bd9f26ee0e0839bfbc1131460af7f54511c416"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C09a.txt",
+   "sha256": "334c29d6e68550b586a4cea069fd7ec1bd8dcefc2f652e57a559efc08462d468"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo01_C09b.txt",
+   "sha256": "ae82e6f6d408edac7475de46952529bfe9bb90f4d98305c2e4825cdff2b2e156"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo_seed_rollout.txt",
+   "sha256": "f25764bb5779cae983d60dd5637843510f635f4923e6e4d098c7f69756067af3"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/db_approval_queue_ceo.txt",
+   "sha256": "ce9ecb14195de2f4b39823c082b3e00346a79d5b08505db53e5b22f435d186a6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/ceo-2026-W42.md",
+   "sha256": "79523f7da1cfee0c1797517d71cd7c2f4ac7bce1875555d830fe818b4c12acf7"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "g1-L4",
+   "muc_do": "THẤP",
+   "tieu_de": "Báo cáo file ceo-<kỳ>.md (ceo-01) / hdtv-<kỳ>.md (ceo-05) không thuộc output_sources report → không nhãn 'CHẠY THỬ — KHÔNG GỬI', không qua cổng tắt, không vào report_outputs",
+   "tai_hien": [
+    "ceo_report --period week --ref 2026-10-12 --submit --out-dir → file không nhãn (out/ceo01_C06.txt, reports/ceo-2026-W42.md)",
+    "rollout --disable ceo-01 → ceo_report vẫn GHI ceo-2026-W41.md dù mục hàng duyệt bị chặn (out/ceo01_C09.txt)"
+   ],
+   "expected": "báo cáo .md của tính năng chạy thử mang nhãn trong nội dung (v15.2 P8.5) và không sinh khi tính năng tắt",
+   "actual": "không nhãn; file vẫn sinh khi tắt; report_outputs 0 dòng (chỉ mục hàng duyệt được cổng giai đoạn)",
+   "evidence": [
+    "out/ceo01_C06.txt",
+    "out/ceo01_C09.txt",
+    "reports/ceo-2026-W42.md",
+    "reports/hdtv-2026-09.md"
+   ]
+  }
+ ],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

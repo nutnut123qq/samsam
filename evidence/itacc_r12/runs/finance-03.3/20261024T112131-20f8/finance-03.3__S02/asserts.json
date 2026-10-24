@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from dealer_ar",
+  "expect": 7,
+  "actual": 7,
+  "dat": true
+ },
+ {
+  "sql": "select string_agg(code, ',' order by code) from dealers",
+  "expect": "IT-DL01,IT-DL03",
+  "actual": "IT-DL01,IT-DL03",
+  "dat": true
+ }
+]

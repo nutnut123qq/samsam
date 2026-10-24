@@ -1,0 +1,120 @@
+{
+ "id": "legal_hr-04",
+ "ten": "Quét kênh, gỡ bài",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Quét kênh, gỡ bài: 'Quét web, Fanpage, listing; mở yêu cầu gỡ bài vi phạm trong 24 giờ'",
+ "tieu_chi": [
+  "T1 `python -m agents.ra_kenh --file F --by <người>` exit 0",
+  "T2 bài vi phạm → approval_queue legal_hr/channel_takedown pending, hạn 24 giờ đồng hồ; trang mặc định hosting → data_platform/hosting_fix; channel_posts snapshot; payload không chép đoạn vi phạm",
+  "T3 nạp lại → idempotent; file lỗi → exit 1 0 dòng; bản xuất lại sạch → đóng da_sua",
+  "T4 agent không gỡ bài/không gọi API kênh"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_legal; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); báo cáo tuần: --set agents.ra_kenh.REPORTS_DIR → evidence/itacc_r10/g3/reports (dòng in vẫn ghi 'data/reports/…' cố định)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/posts.csv",
+   "sha256": "e0e249651fc54542fbf2b58f3b406f271f3ce23fcb36572b474e37e8c31e10c9",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/posts_fixed.csv",
+   "sha256": "884d19bfb2ce7148c8cde9b3719032c84c665d8dc4cf774e004ad771859419d9",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/posts_bad.csv",
+   "sha256": "dddb949bb947e8bcf355b577d243e3a63c8b01fdf3c6cc8ca7cdebff388a411f",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "04-C1",
+   "mo_ta": "3 bài (vi phạm / trang mặc định / sạch)",
+   "lenh": "python -m agents.ra_kenh --file evidence/itacc_r10/g3/harness/fixtures/posts.csv --by Pháp Chế Thử IT",
+   "expected": "channel_takedown + hosting_fix, hạn 24h",
+   "actual": "#4 legal_hr/channel_takedown S1 tu_cam, #5 data_platform/hosting_fix S2; due_at = created + 24h; payload không chép đoạn vi phạm; red_alert S1 ghi (thiếu người nhận — fail-closed cảnh báo)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "04-C2",
+   "mo_ta": "nạp lại",
+   "lenh": "python -m agents.ra_kenh --file evidence/itacc_r10/g3/harness/fixtures/posts.csv --by Pháp Chế Thử IT",
+   "expected": "0 mục mới",
+   "actual": "bỏ qua 3",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "04-C3",
+   "mo_ta": "file thiếu cột",
+   "lenh": "python -m agents.ra_kenh --file evidence/itacc_r10/g3/harness/fixtures/posts_bad.csv --by Pháp Chế Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 thiếu cột 'kenh', 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "04-C4",
+   "mo_ta": "bản xuất lại sạch",
+   "lenh": "python -m agents.ra_kenh --file evidence/itacc_r10/g3/harness/fixtures/posts_fixed.csv --by Pháp Chế Thử IT",
+   "expected": "đóng da_sua",
+   "actual": "bài #1 closed da_sua",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "04-C5",
+   "mo_ta": "báo cáo tuần",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --set agents.ra_kenh.REPORTS_DIR=evidence/itacc_r10/g3/reports -m agents.ra_kenh --report",
+   "expected": "exit 0",
+   "actual": "reports/phap-che-tuan-2026-10-23.md: mở S2 1, đóng đúng hạn 1, hạ tầng 1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "Fanpage Graph API chưa có adapter (CSV --file); --scan-auto web/listing không chạy (mạng thật).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/L-04-C1.txt",
+   "sha256": "eec05418755bdd6f16db3ab5257d06111d448a8e106e46c7dcb40bb19c825007"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-04-C1.db.json",
+   "sha256": "83e11346715077710848be9ae41f00c64fb44df57168ed998e87fb1fb1c166be"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-04-C1.posts.json",
+   "sha256": "30370f3d184cf8ad0dea1cf8c796bbfcaa5ba471602f50cf89fc6dbc8d5b0c54"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-04-C2.txt",
+   "sha256": "3ba8318f6a4259fd17ab6fd07a38c7778c71ffe9e616e78baf5e021aa528fb2d"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-04-C3.txt",
+   "sha256": "65491999c4386659daaf2096f16af95fc0d2721cfa05867471d20246c24ab26d"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-04-C4.txt",
+   "sha256": "da6e7aaa903cc36ebec4d40f35b6cd3cdda64bd4071af4da8ec2d9e3e41976e7"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-04-C5.txt",
+   "sha256": "006a11ab07e139ae342d268d61a1a66cc9c83d16e161d6c1d512248ca68fbb29"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/reports/phap-che-tuan-2026-10-23.md",
+   "sha256": "0cd48875e52b6d125d601da55942f10799001b1effeeef8e7ea17ee7278275e6"
+  }
+ ],
+ "loi_san_pham": []
+}

@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected' and brief like '[daily 2026-10-23 #1]%' and status = 'approved' and scheduled_date is null",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

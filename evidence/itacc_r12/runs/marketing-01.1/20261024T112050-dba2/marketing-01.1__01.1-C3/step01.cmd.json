@@ -1,0 +1,38 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "pipelines.content",
+  "--daily",
+  "--date",
+  "2026-10-24"
+ ],
+ "env_doi": [
+  "PROBE_LLM_LOG",
+  "PROBE_LLM_RESPONSES",
+  "PROBE_ROOT"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:21:21+07:00",
+ "ket_thuc": "2026-10-24T11:21:28+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "failed: [^\\n]*tu_cam",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "7bb7c7849c2d522ae1b99f703bbd07022fcb5841fd475f327b8eb3ff5db25505",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

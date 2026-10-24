@@ -338,8 +338,10 @@ def zfiles(monkeypatch, tmp_path):
     monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
     zalo._histories.clear()
     handoffs = []
+    # r12 L3: câu hứa chỉ khi ghi được handoff → stub trả id (đã ghi).
     monkeypatch.setattr(channels, "record_handoff",
-                        lambda inb, reason, msg_id="": handoffs.append(reason))
+                        lambda inb, reason, msg_id="":
+                        handoffs.append(reason) or 13)
     yield tmp_path, handoffs
     zalo._histories.clear()
 
@@ -350,7 +352,8 @@ def _log(tmp_path):
 
 
 def test_zalo_slow_answer_handoff_within_budget(zfiles, monkeypatch):
-    """Câu trả lời treo (không chịu timeout) → khách nhận HANDOFF trong
+    """Câu trả lời treo (không chịu timeout) → khách nhận câu hotline (r12-fix
+    L3: không hứa nhân viên vì lúc gửi chưa ghi handoff) trong
     ngân sách, có mục người xử lý; kết quả về muộn bị bỏ (không gửi lần 2,
     không vào history). Chờ theo sự kiện — code cũ treo tới khi nhả."""
     tmp_path, handoffs = zfiles
@@ -375,11 +378,11 @@ def test_zalo_slow_answer_handoff_within_budget(zfiles, monkeypatch):
     release.set()
     th.join(10)
     assert not alive, "không có hạn chót — chờ câu trả lời treo"
-    assert out["r"]["text"] == zalo.HANDOFF_TEXT
+    assert out["r"]["text"] == zalo.NO_HANDOFF_TEXT
     assert out["r"]["deadline"] == "tra_loi"
     assert handoffs == ["deadline"]
     assert finished.wait(10)
-    assert sent == [zalo.HANDOFF_TEXT]                 # kết quả muộn bị bỏ
+    assert sent == [zalo.NO_HANDOFF_TEXT]              # kết quả muộn bị bỏ
     assert not zalo._histories.get("u1")              # không vào history
     rec = _log(tmp_path)[-1]
     assert rec["answered"] is False and rec["error"] == "deadline:tra_loi"
@@ -394,7 +397,7 @@ def test_zalo_lock_wait_counts_toward_budget(zfiles, monkeypatch):
     r = zalo._reply("u2", "Saphraton giá bao nhiêu?", "m2",
                     send=lambda u, t: sent.append(t) or True,
                     t_recv=time.monotonic() - 31)     # đã chờ lock 31 giây
-    assert r["deadline"] == "cho_lock" and sent == [zalo.HANDOFF_TEXT]
+    assert r["deadline"] == "cho_lock" and sent == [zalo.NO_HANDOFF_TEXT]
     assert handoffs == ["deadline"]
     assert _log(tmp_path)[-1]["error"] == "deadline:cho_lock"
 

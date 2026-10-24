@@ -1,0 +1,12 @@
+# ma: S073-C02
+# luc: 2026-10-23T10:51:49+07:00
+# lenh: python -m ingest.inventory_csv --file evidence/itacc_r10/g2/fixtures/s073_inventory.csv
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 1
+## stdout
+[err] dòng 2: kho (phải là slug ascii a-z0-9-); captured_at (YYYY-MM-DD)
+[err] dòng 3: kho (phải là slug ascii a-z0-9-); captured_at (YYYY-MM-DD)
+[err] 2 lỗi — không connect, không nạp gì.
+
+## stderr

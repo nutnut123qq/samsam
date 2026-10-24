@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from ad_test_plans where id = 1",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ad_campaign' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'finance' and object_type = 'budget_change' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

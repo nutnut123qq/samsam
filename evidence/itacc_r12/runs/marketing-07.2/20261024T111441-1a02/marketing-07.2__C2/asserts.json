@@ -1,0 +1,16 @@
+[
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\marketing-07.2\\20261024T111441-1a02\\marketing-07.2__C2\\out/llm.json",
+  "re": "\\A\\[\\]\\s*\\Z",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from content_drafts where channel = 'youtube'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

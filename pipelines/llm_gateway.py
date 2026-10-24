@@ -223,6 +223,23 @@ def _gate_feature(cfg: dict, feature: str) -> None:
     """Nút tắt + trần tháng theo TÍNH NĂNG (PL01 Cổng AI an toàn)."""
     if feature in cfg["kill_features"]:
         raise GatewayBlocked(f"tính năng '{feature}' đang bị nút tắt khẩn")
+    # r12 D1: tính năng đang TẮT trong sổ triển khai (HĐ 6.7) → chặn TRƯỚC khi
+    # gọi provider — caller quên cổng sớm vẫn 0 lời gọi AI. Đúng mã tính năng
+    # caller truyền (không ép giai đoạn chung); DB lỗi → `mode` = chạy thử
+    # (không chặn sinh — chi tiêu ở trên đã fail-closed khi DB lỗi).
+    from pipelines import rollout  # lười: rollout → agents.report → …
+    try:
+        conn = _connect()
+    except Exception:  # noqa: BLE001 — như _month_spend: không đọc được DB
+        conn = None
+    try:
+        md = rollout.mode(conn, feature)
+    finally:
+        if conn is not None:
+            conn.close()
+    if md == "tat":
+        raise GatewayBlocked(f"tính năng '{feature}' đang TẮT (sổ triển khai, "
+                             "HĐ 6.7) — không gọi AI")
     fcaps = cfg["feature_caps_usd"]
     try:
         cap = float(fcaps.get(feature, fcaps["default"]))

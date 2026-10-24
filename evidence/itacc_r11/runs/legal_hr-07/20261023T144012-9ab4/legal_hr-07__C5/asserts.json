@@ -1,0 +1,32 @@
+[
+ {
+  "sql": "select count(*) from intel_items",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from red_alerts where source_agent = 'intel_red_alert' and detail->'rules' ? 'legal_doc'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from red_alerts r join intel_items i on r.detail->>'intel_item_id' = i.id::text where i.url like '%tt-thu-it-03' and r.detail->'rules' ? 'regulation' and not (r.detail->'rules' ? 'legal_doc')",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'legal_doc_review'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from llm_usage",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

@@ -1,0 +1,18 @@
+{
+ "ca": "ui01_e_nguoi_sales_bi_chan",
+ "argv": [
+  "python",
+  "-c",
+  "import psycopg,os,sys; from datetime import datetime,timezone; from agents import garden as g;c=psycopg.connect(os.environ['DATABASE_URL']);lid,w=g.add_log_human(c,'KV-A01',datetime.now(timezone.utc),'tưới nước','tưới thử R12',sys.argv[1]); c.commit(); print(lid)",
+  "Bán Hàng Thử R12"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "bat_dau": "2026-10-23T16:04:06+07:00",
+ "ket_thuc": "2026-10-23T16:04:07+07:00",
+ "exit": 1,
+ "llm_calls": null,
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "3f532c15dcdbd6cbbe23a095dc06a58f246f67956dae6541156692739cb83114"
+}

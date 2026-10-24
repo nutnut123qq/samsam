@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' and status = 'approved' and decided_by = 'Người Duyệt Thử IT'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select due_date::text from project_milestones where code = 'MOC-A'",
+  "expect": "2026-10-31",
+  "actual": "2026-10-31",
+  "dat": true
+ }
+]

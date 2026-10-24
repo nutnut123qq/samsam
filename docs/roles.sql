@@ -744,3 +744,28 @@ grant insert (url, channel, content_type, posted_on, is_ai, is_sponsored, sku,
   to svc_job;
 grant update (closed_at, close_reason, closed_by, queue_id, alert_id)
   on channel_posts to svc_job;
+
+-- Đợt an toàn S04 (22/10/2026): `svc_ui` KHÔNG còn được tin tên người
+-- (schema.sql `person_login()` bỏ miễn trừ) — login UI dùng chung chỉ đọc/ghi
+-- dòng không mang tên người; quyết định ở UI chế độ thực đi bằng login
+-- Postgres RIÊNG của người (`auth.person_connect`). Không thêm quyền nào cho
+-- `svc_ui`/dịch vụ. Agent ghi cột `block` của draft lúc tạo (không UPDATE).
+grant insert (block) on content_drafts to agent_writer;
+grant execute on function human_whoami() to app_human;
+
+-- Vòng r8: phiên người ghi bằng chứng đăng nhập thật (không mật khẩu).
+grant execute on function human_login_check() to app_human;
+
+-- ===== Vòng r12 (UI-01/UI-02): login UI dùng chung `svc_ui` — ít quyền nhất =====
+-- Tab "Nhật ký vườn": ĐỌC đúng các cột module agents.garden đọc (khoảnh active,
+-- nhật ký gần nhất, bất thường) — KHÔNG SELECT mọi cột plots, KHÔNG INSERT
+-- plot_logs; GHI đi bằng login người qua `plot_log_add_human` (app_human — svc_ui
+-- kế thừa nhưng không ánh xạ người nên DB từ chối).
+grant select (id, location, status) on plots to svc_ui;
+grant select (id, plot_id, ts, activity, detail, author, source) on plot_logs
+  to svc_ui;
+grant execute on function plot_log_add_human(text, timestamptz, text, text, text)
+  to app_human;
+-- Tab "Chat Sâm Sâm": KB CÔNG KHAI `chunks` (như svc_webhook) — KHÔNG
+-- `chunks_internal`.
+grant select on chunks to svc_ui;

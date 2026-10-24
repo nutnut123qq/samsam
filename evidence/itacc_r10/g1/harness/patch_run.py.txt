@@ -1,0 +1,19 @@
+"""HARNESS: monkeypatch hằng đường dẫn/thuộc tính module rồi chạy main(argv).
+Dùng: patch_run.py <module> <ATTR>=<giá trị đường dẫn> [...] -- <argv...>
+Giá trị bắt đầu 'path:' → Path; 'force:' → đặt rollout._FORCE_MODE. CHỈ trỏ file FIXTURE trong scratch/evidence."""
+import importlib, sys
+from pathlib import Path
+sys.path.insert(0, r"D:\code\samsam")
+args = sys.argv[1:]
+sep = args.index("--")
+modname, patches, argv = args[0], args[1:sep], args[sep + 1:]
+mod = importlib.import_module(modname)
+for p in patches:
+    k, v = p.split("=", 1)
+    if k == "FORCE_MODE":
+        from pipelines import rollout; rollout._FORCE_MODE = v; continue
+    tgt = mod
+    if ":" in k:
+        m2, k = k.split(":", 1); tgt = importlib.import_module(m2)
+    setattr(tgt, k, Path(v))
+raise SystemExit(mod.main(argv))

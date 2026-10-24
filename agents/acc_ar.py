@@ -284,14 +284,17 @@ def aging(entries: list[dict], as_of: date, term_days: int) -> list[dict]:
     out = []
     for code, d in open_items(entries, as_of, term_days).items():
         buckets = dict.fromkeys(BUCKETS, 0)
+        od_buckets = dict.fromkeys(BUCKETS, 0)
         overdue = 0
         for it in d["items"]:
-            buckets[age_bucket(it["entry"]["doc_date"], as_of)] += \
-                it["con_lai"]
+            b = age_bucket(it["entry"]["doc_date"], as_of)
+            buckets[b] += it["con_lai"]
             if it["qua_han"]:
                 overdue += it["con_lai"]
+                od_buckets[b] += it["con_lai"]
         out.append({"dealer_code": code, "dealer_type": d["type"],
-                    "buckets": buckets, "qua_han": overdue,
+                    "buckets": buckets, "qua_han_buckets": od_buckets,
+                    "qua_han": overdue,
                     "du_co": d["du_co"], "con_no": sum(buckets.values())})
     return out
 
@@ -345,12 +348,14 @@ def overdue_section(rows: list[dict], as_of: date) -> list[str]:
     L = [f"## Công nợ đại lý quá hạn (tính tới {as_of:%d/%m/%Y})", ""]
     if not od:
         return L + ["- (không có)"]
-    L += ["| Đại lý | Quá hạn | 31-60 | 61-90 | >90 |", "|---|---|---|---|---|"]
+    # r12 F031-6: cột tuổi = tuổi (ngày chứng từ) của RIÊNG phần quá hạn, đủ
+    # 4 nhóm kể cả 0-30 (kỳ hạn < 30 ngày) → mỗi dòng cộng khớp cột Quá hạn.
+    L += ["| Đại lý | Quá hạn | " + " | ".join(BUCKETS) + " |",
+          "|---|---|" + "---|" * len(BUCKETS)]
     for r in sorted(od, key=lambda x: -x["qua_han"]):
-        b = r["buckets"]
+        b = r["qua_han_buckets"]
         L.append(f"| `{r['dealer_code']}` | {_vnd(r['qua_han'])} | "
-                 f"{_vnd(b['31-60'])} | {_vnd(b['61-90'])} | "
-                 f"{_vnd(b['>90'])} |")
+                 + " | ".join(_vnd(b[k]) for k in BUCKETS) + " |")
     L += ["", (f"Tổng quá hạn: {_vnd(sum(r['qua_han'] for r in od))} — "
                "nguồn: sổ công nợ nạp tay (`dealer_ar`); thư nhắc nợ do kế "
                "toán gửi tay, agent không gửi.")]

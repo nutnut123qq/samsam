@@ -1,0 +1,7 @@
+$ python -m agents.ceo_decisions --propose
+[đề xuất] 2 mục khối ceo đã quyết trong 30 ngày chưa có trong sổ — agent KHÔNG tự ghi; NGƯỜI chạy lệnh --record:
+- approval_queue #5 `milestone_change` approved — Đổi hạn MOC-A: 31/10/2026 → 14/11/2026 — người quyết Người Duyệt Thử IT ngày 23/10/2026
+    python -m agents.ceo_decisions --record --basis approval_queue:5 --topic "..." --decision "..." --by "<tên người ghi>" [--due YYYY-MM-DD]
+- approval_queue #1 `weekly_report` approved — Báo cáo tuần 2026-W42 — TGĐ — người quyết TGĐ Duyệt Thử IT ngày 23/10/2026
+    python -m agents.ceo_decisions --record --basis approval_queue:1 --topic "..." --decision "..." --by "<tên người ghi>" [--due YYYY-MM-DD]
+[exit=0]

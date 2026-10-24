@@ -1,0 +1,164 @@
+"""Probe vòng r8 — D1 cùng NGƯỜI nhiều login không tự duyệt; D2 login không dùng được
+không READY. Chạy: python -I probe_r8.py <ROOT> <OUT.json> <dsn_file>
+Fixture `live` của tests/test_safety_s04_identity.py (schema tạm ĐÃ COMMIT + login
+Postgres THẬT tạm, dọn cuối). Owner chỉ dùng để dựng dữ liệu/ánh xạ; mọi quyết định
+chạy bằng login thật tương ứng. Ca lỗi setup = ERROR (không phải FAIL bất biến)."""
+import json
+import os
+import sys
+import uuid
+from pathlib import Path
+from unittest.mock import patch
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG"):
+        os.environ[k] = ""
+os.environ.update(DATABASE_URL=Path(sys.argv[3]).read_text().split("'")[1],
+                  OPENROUTER_API_KEY="", DEPLOY="0")
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+import psycopg  # noqa: E402
+from psycopg import sql  # noqa: E402
+
+from pipelines import acceptance as a  # noqa: E402
+from pipelines import auth  # noqa: E402
+from tests import test_safety_s04_identity as t  # noqa: E402
+
+R = []
+OK_ENV = {"E1": None, "E2": None, "E3": None}
+
+
+def rec(case, ok, **kw):
+    R.append({"case": case, "verdict": "PASS" if ok else "FAIL", **kw})
+
+
+def try_(live, who, q, args=()):
+    try:
+        return "ok", t._as(live, who, q, args)
+    except psycopg.Error as e:
+        return "denied", f"{e.sqlstate} {str(e).splitlines()[0][:100]}"
+
+
+def counts(live):
+    return t._q(live, "select (select count(*) from approvals), (select count(*)"
+                " from decisions), (select count(*) from approval_queue where status"
+                " <> 'pending'), (select count(*) from content_drafts where status <>"
+                " 'pending'), (select count(*) from cogs_versions where approved_by is"
+                " not null)")[0]
+
+
+ENQ = ("select enqueue_item('price_review', %s, %s, 'mục', 'p', 'low',"
+       " '{\"ok\": true}'::jsonb, %s, %s, 24)")
+COGS = ("insert into cogs_versions (sku_key, cost_vnd, valid_from, created_by)"
+        " values ('r8-sku', 1000, current_date, %s) returning id")
+
+g = t.live.__wrapped__()
+live = next(g)
+try:
+    L = live["logins"]
+    t._q(live, "insert into sku_master (sku_key, name, category, source) values"
+         " ('r8-sku', 'SKU r8', 'food', 'manual') on conflict do nothing")
+    t._q(live, "update human_logins set blocks = '{marketing,finance}' where"
+         " db_login in (%s, %s)", (L["mkt"][0], L["mkt2"][0]))
+    # ---- D1: cùng NGƯỜI hai login (mkt2 ánh xạ về P_MKT)
+    t._q(live, "update human_logins set person = %s where db_login = %s", (t.P_MKT, L["mkt2"][0]))
+    for qa in ("none", "fail"):
+        before = counts(live)
+        ins = try_(live, "mkt", ENQ, (uuid.uuid4().hex[:8], "marketing", qa, "agent:controller"))
+        if ins[0] != "ok":
+            R.append({"case": f"D1 setup enqueue qa={qa}", "verdict": "ERROR", "ins": ins})
+            continue
+        qid = ins[1][0][0]
+        if qa == "none":
+            d = try_(live, "mkt2", "select decide_item(%s, %s, 'approved')", (qid, t.P_MKT))
+            rec("D1a hàng duyệt: login A nhãn agent, login B CÙNG NGƯỜI quyết → chặn",
+                d[0] == "denied" and counts(live) == before, decide=d)
+        else:
+            d = try_(live, "mkt2", "select override_qa(%s, %s, 'lý do kiểm thử đủ dài r8')", (qid, t.P_MKT))
+            rec("D1b override QA: login B CÙNG NGƯỜI override mục do login A tạo → chặn",
+                d[0] == "denied" and counts(live) == before, override=d)
+    ins = try_(live, "mkt", t.INS_D, (t.P_MKT, "marketing"))
+    if ins[0] == "ok":
+        did = ins[1][0][0]
+        d = try_(live, "mkt2", "select approve_draft(%s, %s, null)", (did, t.P_MKT))
+        rec("D1c draft: login B CÙNG NGƯỜI duyệt draft login A tạo → chặn", d[0] == "denied", approve=d)
+    else:
+        R.append({"case": "D1c setup draft", "verdict": "ERROR", "ins": ins})
+    for lab in ("agent:controller", t.P_MKT):
+        before = counts(live)
+        ins = try_(live, "mkt", COGS, (lab,))
+        d = None
+        if ins[0] == "ok":
+            d = try_(live, "mkt2", "select approve_cogs(%s, %s, null)", (ins[1][0][0], t.P_MKT))
+        blocked = ins[0] == "denied" or (d and d[0] == "denied")
+        rec(f"D1d giá vốn: login A tạo ({lab}), login B CÙNG NGƯỜI duyệt → chặn",
+            blocked and counts(live) == before, insert=ins, approve=d)
+    # đối chứng dương: người KHÁC đúng khối; agent/dịch vụ tạo → người duyệt
+    t._q(live, "update human_logins set person = %s where db_login = %s", (t.P_MKT2, L["mkt2"][0]))
+    ins = try_(live, "mkt", ENQ, (uuid.uuid4().hex[:8], "marketing", "none", "agent:controller"))
+    d = try_(live, "mkt2", "select decide_item(%s, %s, 'approved')", (ins[1][0][0], t.P_MKT2)) if ins[0] == "ok" else None
+    rec("D1+ người KHÁC đúng khối quyết mục login A tạo → được", bool(d) and d[0] == "ok", decide=d)
+    ins = try_(live, "mkt", COGS, (t.P_MKT,))
+    d = try_(live, "mkt2", "select approve_cogs(%s, %s, null)", (ins[1][0][0], t.P_MKT2)) if ins[0] == "ok" else None
+    rec("D1+ người KHÁC khối finance duyệt giá vốn người lập → được", bool(d) and d[0] == "ok", insert=ins, approve=d)
+    ins = try_(live, "job", ENQ, (uuid.uuid4().hex[:8], "marketing", "none", "agent:mkt02"))
+    d = try_(live, "mkt", "select decide_item(%s, %s, 'approved')", (ins[1][0][0], t.P_MKT)) if ins[0] == "ok" else None
+    rec("D1+ svc_job đẩy mục agent → người đúng khối quyết → được", bool(d) and d[0] == "ok", decide=d)
+
+    # ---- D2: ma trận
+    data = OUT.parent / "r8_matrix_data"
+    (data / "directors").mkdir(parents=True, exist_ok=True)
+    (data / "directors" / "ceo.json").write_text(json.dumps({"approvers": [t.P_MKT2]}, ensure_ascii=False), encoding="utf-8")
+    feat = next(f for f in a.catalog() if f["id"] == "ceo-02.2")
+    t._q(live, "update human_logins set blocks = '{ceo}' where db_login = %s", (L["mkt2"][0],))
+
+    def mrow():
+        with psycopg.connect(live["base"], connect_timeout=5) as c, \
+                patch.object(a, "env_state", return_value=OK_ENV):
+            r = a.rows([feat], data=data, conn=c)[0]
+        return r["status"], r["thieu"]
+
+    def can_login():
+        try:
+            pc, *_ = auth.person_connect(live["base"], *L["mkt2"])
+            pc.close()
+            return True
+        except auth.PersonSessionError:
+            return False
+
+    works = can_login()           # đăng nhập THẬT một lần (bằng chứng đăng nhập)
+    st, miss = mrow()
+    rec("D2+ login hợp lệ, đúng người/khối, đã đăng nhập thật → READY",
+        works and st == a.READY, status=st, thieu=miss, login_works=works)
+    for name, stmt, undo in (
+            ("VALID UNTIL quá khứ", "alter role {} valid until '2000-01-01'", "alter role {} valid until 'infinity'"),
+            ("CONNECTION LIMIT 0", "alter role {} connection limit 0", "alter role {} connection limit -1"),
+            ("NOLOGIN", "alter role {} nologin", "alter role {} login")):
+        t._q(live, sql.SQL(stmt).format(sql.Identifier(L["mkt2"][0])))
+        works = can_login()
+        st, miss = mrow()
+        rec(f"D2 {name}: login thật bị từ chối → không READY + lý do",
+            (not works) and st == a.NOT_READY and bool(miss), status=st, thieu=miss, login_works=works)
+        t._q(live, sql.SQL(undo).format(sql.Identifier(L["mkt2"][0])))
+    with patch.object(a, "env_state", return_value=OK_ENV):
+        r = a.rows([feat], data=data)[0]
+    rec("D2 offline (không DB) → không READY", r["status"] == a.NOT_READY, status=r["status"], thieu=r["thieu"])
+finally:
+    try:
+        next(g)
+    except StopIteration:
+        pass
+
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+for r in R:
+    extra = {k: v for k, v in r.items() if k not in ("case", "verdict")}
+    print(f"{r['verdict']}  {r['case']}  | {json.dumps(extra, ensure_ascii=False, default=str)[:230]}")
+n = sum(r["verdict"] != "PASS" for r in R)
+print(f"TỔNG {len(R)} ca, không PASS {n} (ERROR {sum(r['verdict'] == 'ERROR' for r in R)})")
+sys.exit(1 if n else 0)

@@ -1,0 +1,198 @@
+{
+ "id": "finance-05.1",
+ "ten": "So chi phí AI, quảng cáo với ngân sách",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Chi phí và dòng tiền: 'So chi phí AI, quảng cáo với ngân sách'",
+ "tieu_chi": [
+  "C1 fp_opscost --load file chi phí → opex_entries; --report: cảnh báo ≥80% (warn) và ≥100% (stop) mỗi scope, AI quy đổi USD→VND từ llm_usage",
+  "C2 --submit-over-x: khoản > X → 1 mục finance/opex_over_x created_by agent:fp_opscost, pending; chạy lại không nhân",
+  "C3 khoản đã 'duyệt' bởi người KHÔNG có vai trò TGĐ → vẫn 'cho_tgd_ky' (fail-closed)",
+  "C4 file lỗi → exit 1 0 dòng; fin_director --weekly gộp mục chi phí vào director-finance; không chi tiền"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/opex_ok.csv",
+   "sha256": "5f29207a87e5be1a56601d7b8a3d32c346c5184393b8069dcd56568983589fc3",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/opex_bad.csv",
+   "sha256": "cc0196010524eb1ad4a33743d8900d9201ade56fac973b0a7d8dfa723ee4ea22",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F051-1",
+   "mo_ta": "ÂM file chi phí lỗi",
+   "lenh": "[F051-1] python -m agents.fp_opscost --load evidence/itacc_r10/g4/fixtures/opex_bad.csv",
+   "expected": "exit 1, 0 dòng",
+   "actual": "exit 1 (category, amount_vnd); opex_entries 0",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F051-2",
+   "mo_ta": "nạp chi phí + llm_usage fixture",
+   "lenh": "[F051-2] python -m agents.fp_opscost --load evidence/itacc_r10/g4/fixtures/opex_ok.csv || [F051-2-q] python evidence/itacc_r10/g4/harness/q.py insert into llm_usage (ts, agent_id, model, tokens_in, tokens_out, cost_usd, ok, error, feature_id) values ('2026-10-10 10:00+07','chatbot','fixture/thu-it',100 ; select count(*), sum(amount_vnd) from opex_entries ; select agent_id, sum(cost_usd) from llm_usage group by 1",
+   "expected": "exit 0, 3 dòng",
+   "actual": "exit 0 3 dòng (12.000.000); llm_usage fixture 168 USD (chatbot 100, content 68)",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F051-3",
+   "mo_ta": "báo cáo trần",
+   "lenh": "[F051-3] python -m agents.fp_opscost --report --month 2026-10",
+   "expected": "cloud 87,5% cảnh báo 80%; saas 107% vượt; ai 4.200.000 84%",
+   "actual": "exit 0; ai 4.200.000đ 84,0% [CẢNH BÁO 80%]; cloud 87,5% [CẢNH BÁO 80%]; saas 107,1% [VƯỢT TRẦN 100%]; khoản > X: 1 chờ TGĐ",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F051-4",
+   "mo_ta": "đẩy khoản > X",
+   "lenh": "[F051-4] python -m agents.fp_opscost --submit-over-x --month 2026-10 || [F051-4-q] python evidence/itacc_r10/g4/harness/q.py select id, block, object_type, object_id, status, created_by, risk, title, payload from approval_queue where object_type='opex_over_x'",
+   "expected": "1 opex_over_x pending agent:fp_opscost",
+   "actual": "exit 0; #11 finance/opex_over_x pending agent:fp_opscost risk high (saas 7.500.000)",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F051-5",
+   "mo_ta": "ÂM idempotent",
+   "lenh": "[F051-5] python -m agents.fp_opscost --submit-over-x --month 2026-10",
+   "expected": "0 mới",
+   "actual": "exit 0 '0 mục mới'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F051-6",
+   "mo_ta": "ÂM người không phải TGĐ duyệt",
+   "lenh": "[F051-6a] python -m pipelines.approval_queue --approve 11 --by Kế toán Thử IT || [F051-6b] python -m agents.fp_opscost --status --month 2026-10",
+   "expected": "status cho_tgd_ky",
+   "actual": "approve exit 0 (dev); --status: 'cho_tgd_ky — đã duyệt bởi vai trò khác — cần TGĐ'",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F051-7",
+   "mo_ta": "bản tin tuần GĐ tài chính",
+   "lenh": "[F051-7] python evidence/itacc_r10/g4/harness/run.py --reports-dir evidence/itacc_r10/g4/out/rep_f051 -- agents.fin_director --weekly --as-of 2026-10-23",
+   "expected": "các mục công nợ/P&L/chi phí/dòng tiền/ads",
+   "actual": "exit 0; director-finance-2026-10-23.md có đủ 5 mục; mục chi phí nêu 3 cảnh báo + 1 khoản chờ TGĐ ký",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Trần ngân sách/ngưỡng X GIẢ ĐỊNH; chi phí AI lấy từ llm_usage fixture. Nhánh 'được chi' (TGĐ có vai trò tgd ký đúng mục) chưa chạy — cần users.json vai trò tgd (danh tính chế độ thực do điều phối viên kiểm); chỉ kiểm nhánh fail-closed.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-1.txt",
+   "sha256": "2b3ca6aa98b8b1bb8a0df26b29fe71f2e9b1f7f36c83638aa0930a45f4ee1885"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-2.txt",
+   "sha256": "46d7fa46bcdbdb87412f5ae7c7859b5377fdbbda56a2b580238f2005cd311eb4"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-2-q.txt",
+   "sha256": "dbf429fe8defb66ddf3326a424e47efa60e5257db06c1d9a1ddb4da9270786f8"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-3.txt",
+   "sha256": "9aafa8c983c6b172074c99fb16afcc2739e68da1749bbc470e146fc8d7bb8511"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-4.txt",
+   "sha256": "dafd1444f438366f52b06383a1aa4e0703ed2e7003d818498babe1d58b31aa71"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-4-q.txt",
+   "sha256": "e70b01ee8c26ebb242c96b1d589f4430267508bf915544b5871c143cc99e58d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-5.txt",
+   "sha256": "cb1634525ff7cb27c852da75126256e3dcd8a7c266e24272ba16bde1d685df2c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-6a.txt",
+   "sha256": "4e41852cdb0d66af153dafa74ba68e2d7a422a117870907246bf1bb3c0afab9a"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-6b.txt",
+   "sha256": "02f500a6dd17a03538af8ec5c995b756b2a0ee2c1e9b366e3c14b7f866fa002f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F051-7.txt",
+   "sha256": "756b05b9642affae63144f4f001ead093702b0646966e5981736f8edbf92d7b7"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_f051/director-finance-2026-10-23.md",
+   "sha256": "cdf8d377f40175a78bb97f666401d046227a2f97fa97994a8fef8126b753b276"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": []
+}

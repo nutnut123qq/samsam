@@ -1,0 +1,257 @@
+{
+ "id": "production-01",
+ "ten": "Báo cáo sản xuất",
+ "khoi": "production",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Sản xuất, R&D / Báo cáo sản xuất: 'Báo cáo tuần, tháng về tồn kho, lô, tiến độ; người quyết định phân bổ'",
+ "tieu_chi": [
+  "C1 inventory_csv nạp tồn fixture → allocate --cutoff ghi allocation_proposals pending (run_id, SKU×kênh, tồn, nhu cầu thấp/cơ sở/cao, đề xuất); rượu online = 0",
+  "C2 NGƯỜI approve run qua function DB (approvals); agent:… bị từ chối",
+  "C3 bulletin --out-dir ghi sx-bantin-tuan-<ngày>.md có tồn/lô/tiến độ kế hoạch; nhãn CHẠY THỬ",
+  "C4 file tồn lỗi → exit 1 0 dòng; allocate lại → không nhân dòng; tắt → không ghi; không chuyển kho/lệnh SX"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_prod; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/inv_ok.csv",
+   "sha256": "8c99aa25500bb50fa46d447ca7b33eb7945e8959ec8d6c484c0eec61f304f1c4",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/inv_bad.csv",
+   "sha256": "a9e11d7b1f174cf6248ff0c63a2e77ac8a1e36725280e2735c91fd53380a4b6b",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/lots_ok.json",
+   "sha256": "84c233b779a86a617789df66b32d9d790f3a0845d283475772494685367a96fa",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "P01-1",
+   "mo_ta": "ÂM file tồn lỗi",
+   "lenh": "[P01-1] python -m ingest.inventory_csv --file evidence/itacc_r10/g4/fixtures/inv_bad.csv",
+   "expected": "exit 1, 0 dòng",
+   "actual": "exit 1 (qty âm, sku lạ, ngày sai); inventory_snapshots 0",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P01-2",
+   "mo_ta": "nạp tồn",
+   "lenh": "[P01-2] python -m ingest.inventory_csv --file evidence/itacc_r10/g4/fixtures/inv_ok.csv",
+   "expected": "exit 0",
+   "actual": "exit 0 4 dòng manual_export",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P01-3",
+   "mo_ta": "đề xuất phân bổ",
+   "lenh": "[P01-3] python -m pipelines.production allocate --cutoff chot_11_11 --start 2026-10-26 || [P01-3-q] python evidence/itacc_r10/g4/harness/q.py select run_id, sku_key, channel, stock_total, demand_low, demand_base, demand_high, proposed_qty, note, status, is_sample from allocation_proposals order by sku",
+   "expected": "allocation_proposals pending; rượu online 0",
+   "actual": "exit 0 run 0401169a5ab8: 91 dòng pending (13 SKU × 7 kênh) có tồn/nhu cầu thấp-cơ sở-cao/đề xuất/ghi chú; rượu × shopee/tiktok/web… proposed 0 'rượu: chỉ kênh offline'; SKU chưa có tồn ghi 'chưa có số tồn — không kết luận thiếu'",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P01-4",
+   "mo_ta": "ÂM idempotent",
+   "lenh": "[P01-4] python -m pipelines.production allocate --cutoff chot_11_11 --start 2026-10-26",
+   "expected": "không thêm dòng",
+   "actual": "exit 0 '[skip] run đã có (91 dòng)'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P01-5",
+   "mo_ta": "ÂM agent duyệt",
+   "lenh": "[P01-5] python -m pipelines.production approve --run 0401169a5ab8 --by agent:sx",
+   "expected": "exit !=0",
+   "actual": "exit 1 \"'agent:sx' không phải người\"",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P01-6",
+   "mo_ta": "người duyệt run",
+   "lenh": "[P01-6] python -m pipelines.production approve --run 0401169a5ab8 --by GĐ Sản xuất Thử IT --note duyệt thử IT || [P01-6-q] python evidence/itacc_r10/g4/harness/q.py select status, decided_by, count(*) from allocation_proposals group by 1,2 ; select * from approvals order by id",
+   "expected": "approved, approvals ghi",
+   "actual": "exit 0; 91 dòng approved decided_by 'GĐ Sản xuất Thử IT'; approvals #1 allocation_run",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P01-7",
+   "mo_ta": "kế hoạch SX + bản tin",
+   "lenh": "[P01-7a] python -m pipelines.production plan-add --code KH-IT-001 --sku savina-12v --qty 500 --start 2026-09-01 --due 2026-11-30 --note kế hoạch thử IT --by GĐ Sản xuất Thử IT || [P01-7b] python -m pipelines.production plan-link --plan KH-IT-001 --lot IT-LOT-003 --by GĐ Sản xuất Thử IT || [P01-7c] python -m pipelines.production bulletin --date 2026-10-23 --out-dir evidence/itacc_r10/g4/out/rep_prod || [P01-7c-lap] python -m pipelines.production bulletin --date 2026-10-23 --out-dir evidence/itacc_r10/g4/out/rep_prod || [P01-7d-chandoan] python -m pipelines.production bulletin --date 2028-12-01 --out-dir evidence/itacc_r10/g4/out/rep_prod_diag",
+   "expected": "sx-bantin-tuan-*.md có tồn/lô/tiến độ; report_outputs production-01",
+   "actual": "plan-add/plan-link exit 0; bulletin --date 2026-10-23 --out-dir: exit 1 CRASH 'TypeError: argument of type int is not iterable' (production.py collect, dòng 861) — KHÔNG ghi sx-bantin/sx-canhan; chạy lại tái hiện y hệt; chẩn đoán: --date 2028-12-01 (không lô cận hạn) chạy được và ra file có đủ mục tồn-thiếu/lô/tiến độ/phiếu",
+   "exit": [
+    0,
+    0,
+    1,
+    1,
+    0
+   ],
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P01-8",
+   "mo_ta": "ÂM tắt production-01 (chạy cuối)",
+   "lenh": "[TAT-production-01] python -m pipelines.rollout --disable production-01 --by Người Thử IT --note kiem nhanh tat IT r10 || [P01-8] python -m pipelines.production allocate --cutoff ke_hoach_tet --start 2026-10-26 || [TAT-prod-q] python evidence/itacc_r10/g4/harness/q.py select count(*) from allocation_proposals ; select feature_id, stage from feature_rollout where stage='tat'",
+   "expected": "exit !=0 không ghi",
+   "actual": "exit 1 '… production-01 đang tắt … không ghi'; allocation_proposals vẫn 91",
+   "exit": [
+    0,
+    1,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Sửa lỗi đè biến `stock` trong pipelines/production.collect (vòng allocation_proposals) — sửa sản phẩm.",
+ "gioi_han": "Mốc production_config + kịch bản GIẢ ĐỊNH; tồn kho fixture.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-1.txt",
+   "sha256": "e22410dff048527d4e4f041eb48fa32d37fb46051e1364c2f7e89428ec9b8152"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-2.txt",
+   "sha256": "ae0b29066a3cc8305a4d56ab70f56db2a44047884e9ede61be94eb91e0049fe3"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-3.txt",
+   "sha256": "72a8d79ce693a38496b0527a5ae420ba39595ed47c7fca5ecd76b052f91ee4e4"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-3-q.txt",
+   "sha256": "10c006184ea6e1e6695e3aa4fbbc903071d593525b37c4b6b57fdce7a361b096"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-4.txt",
+   "sha256": "7992f29b08a2b0ad3165a5561791dc538879c2a93865676216f0437f43b522e1"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-5.txt",
+   "sha256": "153253f6b56cbaae6e3c7cbacf9ca065e9d7b282921bca10ff1888632d0e48d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-6.txt",
+   "sha256": "f304ce514adcdfc0c1ad6cd5749249e458c479475d70215d66e5b9e40bf89b44"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-6-q.txt",
+   "sha256": "217a4b230b156bf70f4e97897ab07754e8666bd401ccf2f04d627eabc35669f0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-7a.txt",
+   "sha256": "4fd816d0c1ce99667615d66934a7716dd9d93f1e857a37701ce2a41d552f117f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-7b.txt",
+   "sha256": "741b07a9abf2f17302f1ad974e5b07ac69a8f0ea2ab8b89be5d331dc36868d48"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-7c.txt",
+   "sha256": "2a7df89725e68fca9160eb39797488190665872f3c988cf3da183366cb6f523c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-7c-lap.txt",
+   "sha256": "986cea34a6576de01d70f654e71bf3a407cca7b9bd6a025052c2e3d432e91cc7"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-7d-chandoan.txt",
+   "sha256": "c86478b97e53753d26edb5c50793a9c867c5a48de5ce681662bd57ce549ed8e1"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-8.txt",
+   "sha256": "267bca5fe0bab8db75e0f0777d8b6897b347d003de9098b1f6a2e3348bd29748"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-production-01.txt",
+   "sha256": "0e74c2b98d833d76b48c75954186ab62f89513aaa61a75433aaf07bd8a6236fd"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-prod-q.txt",
+   "sha256": "fc1f2ddc7d4b9b5f52f30313f11bb507455af758bfc2a8b3180d2162d90f5003"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_prod_diag/sx-bantin-tuan-2028-12-01.md",
+   "sha256": "3ec4cd362ca25cf47117cf3c5b74dc6092e0c5d20b2e273efe9c129d4711b486"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-prod.txt",
+   "sha256": "602c88845811a35b82861c29168029e190441247d92c4c6f4f60caf7340c5824"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "muc_do": "cao",
+   "mo_ta": "pipelines.production.collect: vòng đọc allocation_proposals dùng tên biến `stock` cho cột min(stock_total) (production.py ~dòng 820) đè dict tồn kho `stock` (inventory_csv.current_stock); mục cận hạn sau đó `sku in stock` (dòng 861) → TypeError. Hễ DB có ≥1 run phân bổ VÀ có lô passed trong cửa sổ cận hạn thì `production bulletin` crash: không ra bản tin sx-bantin-* (production-01) lẫn mục 'Hàng cận hạn (FEFO)' sx-canhan-* (production-04.3) — đúng lúc cần cảnh báo.",
+   "tai_hien": "inventory_csv --file inv_ok.csv; production allocate --cutoff chot_11_11 --start 2026-10-26; lots --load lots_ok.json; intake IT-LOT-001/002 passed; production bulletin --date 2026-10-23 --out-dir D",
+   "expected": "exit 0, ghi sx-bantin-tuan-2026-10-23.md + sx-canhan-2026-10-23.md có IT-LOT-002 (HSD 01/10/2026) và IT-LOT-001 (01/12/2026)",
+   "actual": "exit 1 traceback TypeError: argument of type 'int' is not iterable; không ghi file. Đối chứng --date 2028-12-01 (không lô cận hạn) chạy được",
+   "evidence": [
+    "evidence/itacc_r10/g4/out/P01-7c.txt",
+    "evidence/itacc_r10/g4/out/P01-7c-lap.txt",
+    "evidence/itacc_r10/g4/out/P01-7d-chandoan.txt"
+   ]
+  }
+ ]
+}

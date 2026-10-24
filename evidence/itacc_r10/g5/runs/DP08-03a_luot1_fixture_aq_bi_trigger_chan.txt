@@ -1,0 +1,10 @@
+# ca: DP08-03a
+# env: DB thử khối dp (DSN che)
+# cmd: python /d/code/samsam/evidence/itacc_r10/g5/harness/rollout_fixture.py
+# exit: 0
+# thoi_gian: 2026-10-23T10:52:38+0700
+disable@T0: {'from': 'chay_thu', 'to': 'tat'}
+promote tat->chay_thu@T0+1m: {'from': 'tat', 'to': 'chay_thu'}
+inserted fixture outputs: 50 days: ['2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22']
+stage now: ('chay_thu', datetime.datetime(2026, 10, 12, 1, 1, tzinfo=datetime.timezone.utc))
+db recount: {'days': 9, 'human': 0, 'stage': 'chay_thu', 'severe': 0, 'outputs': 50, 'has_spec': True, 'out_days': 1, 'unapproved': 0, 'unreviewed': 0, 'sql_sources': 1, 'file_sources': 0}

@@ -1,0 +1,327 @@
+"""HARNESS g2 — Pha 3: sinh evidence/itacc_r10/items/<id>.json từ kết quả
+đã đo (out/*.txt|json). Kết quả PASS/FAIL do người kiểm (agent g2) quyết sau
+khi đọc output; script chỉ ghép + tính sha256."""
+import hashlib, json, re, sys
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+R = Path(r"D:\code\samsam")
+E = R / "evidence/itacc_r10/g2"
+O = E / "out"
+FX = E / "fixtures"
+FP = "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001"
+NOW = datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+khung = {x["id"]: x for x in json.loads((R / "evidence/itacc_r10/criteria/khung.json").read_text(encoding="utf-8"))["items"]}
+crit = {x["id"]: x for x in json.loads((R / "evidence/itacc_r10/criteria/g2.json").read_text(encoding="utf-8"))["items"]}
+ENV = ("Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); "
+       "DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: {fake}")
+
+
+def sha(p: Path) -> str:
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def rel(p: Path) -> str:
+    return p.relative_to(R).as_posix()
+
+
+def lenh(name: str) -> str:
+    p = O / f"{name}.txt"
+    if not p.exists():
+        return name
+    m = re.search(r"^# lenh: (.*)$", p.read_text(encoding="utf-8"), re.M)
+    return m.group(1).strip() if m else name
+
+
+def case(ma, mo_ta, files, expected, actual, exit_, kq, ly=None):
+    cmds = [lenh(f) for f in files if (O / f"{f}.txt").exists()]
+    return {"ma": ma, "mo_ta": mo_ta, "lenh": " ;; ".join(cmds) or "(xem evidence)",
+            "expected": expected, "actual": actual, "exit": exit_, "ket_qua": kq,
+            "ly_do_not_run": ly, "_files": files}
+
+
+def write(iid, cases, trang_thai, muc, fake, inputs, extra_ev, gioi_han, can_de_go="", nguyen_nhan=None, loi=()):
+    k = khung[iid]
+    ev = set()
+    for c in cases:
+        for f in c.pop("_files"):
+            for ext in (".txt", ".json"):
+                if (O / f"{f}{ext}").exists():
+                    ev.add(O / f"{f}{ext}")
+    for x in extra_ev:
+        p = R / x
+        if p.is_dir():
+            ev.update(q for q in p.rglob("*") if q.is_file())
+        elif p.exists():
+            ev.add(p)
+    rec = {"id": iid, "ten": k["ten"], "khoi": k["khoi"], "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"],
+           "can_cu": k["can_cu"], "tieu_chi": crit[iid]["tieu_chi_cu_the"], "fingerprint": FP, "thoi_gian": NOW,
+           "moi_truong": ENV.format(fake=fake),
+           "dau_vao": [{"ten": rel(FX / n), "sha256": sha(FX / n), "provenance": "fixture thử IT"} for n in inputs],
+           "ca": cases, "trang_thai": trang_thai, "muc_kiem": muc,
+           "nguyen_nhan": nguyen_nhan, "can_de_go": can_de_go, "gioi_han": gioi_han,
+           "evidence": [{"path": rel(p), "sha256": sha(p)} for p in sorted(ev)],
+           "loi_san_pham": list(loi),
+           "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"}
+    out = R / "evidence/itacc_r10/items" / f"{iid}.json"
+    out.write_text(json.dumps(rec, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    fails = sum(c["ket_qua"] == "FAIL" for c in cases)
+    print(f"{iid}: {trang_thai} {muc} ca={len(cases)} FAIL={fails} ev={len(ev)}")
+
+
+HARN = ["evidence/itacc_r10/g2/harness"]
+GOLD = ["golden_fixture.json"]
+SETUP = ["evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt", "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt"]
+
+L3 = {"ma": "L3", "muc_do": "Trung bình",
+      "tom_tat": "Chatbot sales-01 ở giai đoạn TẮT: khách vẫn nhận câu hứa 'nhân viên sẽ phản hồi' (HOLD_TEXT / template sức khỏe) nhưng KHÔNG có mục cskh_handoff; RolloutBlocked thoát khỏi channels.record_handoff (docstring: 'không raise') → traceback trong luồng trả lời. Trái PL01 'câu hỏi sức khỏe chuyển cho người thật' và docstring _reply_held ('+ mục handoff'). sales_director cũng bị chặn sinh cskh_handoff cùng tính năng → không ai được báo.",
+      "tai_hien": "rollout --disable sales-01 --by 'Người Thử IT'; POST user_send_text câu sức khỏe/câu thường vào Handler zalo thật (harness zalo_e2e.py X1_tat_health / C12_tat)",
+      "expected": "khách nhận template + 1 mục cskh_handoff (lý do suc_khoe/rollout), không ngoại lệ",
+      "actual": "convlog answered=false route=health; approval_queue +0; stderr 'Exception in thread ... RolloutBlocked: hàng duyệt sales/cskh_handoff: tính năng sales-01 đang tắt'",
+      "evidence": ["evidence/itacc_r10/g2/out/S01-X1.txt", "evidence/itacc_r10/g2/out/sales-01_X1_tat_health.json", "evidence/itacc_r10/g2/out/S01-C12.txt"],
+      "vi_tri_code": "connectors/channels.py record_handoff (chỉ bắt psycopg.Error); pipelines/approval_queue.py enqueue → rollout.check_generate"}
+L1 = {"ma": "L1", "muc_do": "Trung bình",
+      "tom_tat": "Bộ đếm đầu ra sales-04.2 (rollout _TABLES['agent_action_log'], nosample ghi 'NGƯỜI chuyển lead ĐÃ ĐỒNG Ý') chỉ lọc action=crm_handoff, KHÔNG lọc detail.pii_included → handoff khi khách CHƯA đồng ý dai_ly (thậm chí lead không có liên hệ) vẫn được đếm là đầu ra 'chuyển khách khi khách đồng ý' cho cổng PL02.",
+      "tai_hien": "crm --assign 7 --dealer DLTHU02 ...; crm --handoff 7 --dealer DLTHU02 --by ... (lead 7 không có contact/đồng ý); rollout --status: sales-04.2 2 → 3 đầu ra",
+      "expected": "handoff không đồng ý không được tính là đầu ra (hoặc bị từ chối)",
+      "actual": "exit 0, payload không PII, agent_action_log crm_handoff pii_included=false; rollout --status tăng 2→3",
+      "evidence": ["evidence/itacc_r10/g2/out/S042-X-status.txt", "evidence/itacc_r10/g2/out/S042-X1-status.txt", "evidence/itacc_r10/g2/out/S042-X1-db.json", "evidence/itacc_r10/g2/out/S042-X1-handoff7.txt"],
+      "vi_tri_code": "pipelines/rollout.py _TABLES['agent_action_log'] (filters chỉ action); docs/schema.sql crm_handoff_human ghi log cả khi v_ok=false"}
+L2 = {"ma": "L2", "muc_do": "Trung bình",
+      "tom_tat": "Báo giá/catalog B2B (kd_quote/kd_catalog) lấy giá niêm yết từ data/golden_skus.json, KHÔNG kiểm price_list ĐÃ duyệt (cùng lớp lỗi đã vá ở listing_export S03 và website feed F2); báo giá SKU có giá list đang CHỜ duyệt không có reason cảnh báo. Catalog (tài liệu quảng cáo) + form B2B nhận SKU thực phẩm chưa tự công bố (sku_readiness=CAM mọi kênh).",
+      "tai_hien": "form B2B (127.0.0.1) yêu cầu mat-ong-sam-120ml-1hu ×50; kd_quote --quote 2 --dry-run; price_list id 24 approved_by null",
+      "expected": "giá từ price_list đã duyệt hoặc reason chặn/cảnh báo 'giá chưa duyệt'; SKU CAM không vào catalog/form",
+      "actual": "đơn giá 685.000đ tính từ 745.000đ (golden JSON), reasons chỉ ma_tran_chua_xac_nhan, thieu_gia_von_duyet; catalog-tet liệt kê 3 SKU mật ong (self_declaration chưa xác minh) với giá niêm yết chưa duyệt",
+      "evidence": ["evidence/itacc_r10/g2/out/S05-X1b.txt", "evidence/itacc_r10/g2/out/S05-X1-db.json", "evidence/itacc_r10/g2/out/s05/catalog-tet-2026-10-23.md", "evidence/itacc_r10/g2/out/S05-C03.json"],
+      "vi_tri_code": "agents/kd_quote.py price_lines (_sum_price trên golden JSON); agents/kd_catalog.py eligible (food → vào không xét readiness)"}
+L4 = {"ma": "L4", "muc_do": "Thấp",
+      "tom_tat": "Một số CLI không bắt RolloutBlocked khi tính năng TẮT → traceback Python (exit 1) thay vì thông báo/exit theo docstring (content: 'exit 2 ... tính năng tắt'). Kết quả an toàn vẫn đúng (không sinh đầu ra/không ghi file).",
+      "tai_hien": "rollout --disable; python -m pipelines.content --listing ...; python -m agents.kd_quote --quote 2 --submit; python -m agents.kd_forecast --write",
+      "expected": "thông báo [rollout] + exit 2 (hoặc exit 1 có thông báo), không traceback",
+      "actual": "Traceback ... pipelines.rollout.RolloutBlocked ... exit 1 (kd_quote còn ghi 3 file báo giá vào --out-dir trước khi bị chặn)",
+      "evidence": ["evidence/itacc_r10/g2/out/S03-C10a.txt", "evidence/itacc_r10/g2/out/S05-C10.txt", "evidence/itacc_r10/g2/out/S073-C06.txt"],
+      "vi_tri_code": "pipelines/content.py main (--listing), agents/kd_quote.py _cmd_quote, agents/kd_forecast.py main"}
+L5 = {"ma": "L5", "muc_do": "Thấp",
+      "tom_tat": "kd_live khi sales-07.1 TẮT vẫn gọi LLM (1 lời gọi, tốn phí khi chạy thật) rồi mới bị chặn ở save_draft.",
+      "tai_hien": "rollout --disable sales-07.1; kd_live (fake LLM) → IT_FAKE_LOG ghi 1 lời gọi; exit 1 RolloutBlocked",
+      "expected": "kiểm giai đoạn trước LLM (0 lời gọi) như content --daily",
+      "actual": "1 lời gọi chat feature sales-07.1, sau đó [error] RolloutBlocked",
+      "evidence": ["evidence/itacc_r10/g2/out/S071-C07.txt"], "vi_tri_code": "agents/kd_live.py write_script/generate"}
+
+# ---------------------------------------------------------------- sales-01
+c = [
+ case("S01-C01", "Zalo câu hỏi thường, chạy thử", ["S01-E2E-all", "sales-01_C01_thuong"], crit["sales-01"]["ca"][0]["expected"],
+      "HTTP 200; convlog (scratchpad) answer = câu chào/chính sách + HOLD_TEXT, sent=false (dry-run), rollout=chay_thu, provenance live; approval_queue +cskh_reply agent:kd_a1 payload 'Mật ong sâm 300ml là thực phẩm đóng hũ 300ml của Sâm Sâm [1].\\nNguồn: https://example.com/it-g2/mat-ong-sam-300ml' + cskh_handoff lý do chua_van_hanh (payload không câu khách); fake: 1 embed + 1 chat feature sales-01", 0, "PASS"),
+ case("S01-C02", "Chữ ký sai", ["S01-E2E-all", "sales-01_C02_badsig"], "HTTP 403; 0 convlog/queue", "HTTP 403; convlog +0; queue +0; fake +0", 0, "PASS"),
+ case("S01-C03", "Câu sức khỏe", ["S01-E2E-all", "sales-01_C03_health"], "template health; handoff health; 0 lời gọi", "route=health, câu template sức khỏe; cskh_handoff lý do suc_khoe; fake +0", 0, "PASS"),
+ case("S01-C04", "Câu rượu", ["S01-E2E-all", "sales-01_C04_alcohol"], "template alcohol; 0 lời gọi", "route=alcohol, template cố định; cskh_handoff lý do san_pham_han_che; fake +0", 0, "PASS"),
+ case("S01-C05", "PII trong câu khách", ["S01-E2E-all", "sales-01_C05_pii"], "convlog/payload không SĐT/email thô; stdout không user_id thô",
+      "convlog question 'Tôi tên ***, SĐT ***, email ***, ...'; grep SĐT/email/uid thô trong convlog=False, trong stdout harness=0; payload cskh_reply không PII", 0, "PASS"),
+ case("S01-C06", "Dedup retry cùng msg_id", ["S01-E2E-all", "sales-01_C06_dedup"], "xử lý 1 lần", "POST 200/200; lần 2: convlog +0, fake +0", 0, "PASS"),
+ case("S01-C07", "Hạn chót trả lời (FIXTURE CHAT_BUDGET_S=4, SEND_RESERVE_S=1, fake chat ngủ 6s)", ["S01-E2E-all", "sales-01_C07_deadline"], "HANDOFF_TEXT; error deadline:*; handoff deadline",
+      "convlog error=deadline:tra_loi sau ~4.8s, answered=false; stdout '[deadline] ... chuyển người'; cskh_handoff lý do qua_han_tra_loi", 0, "PASS"),
+ case("S01-C08", "Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có nguồn", ["S01-E2E-all", "sales-01_C08_vanhanh", "sales-01_tail_all"], "có 'Nguồn:' + URL; sent=false; file_output_evidence 0",
+      "convlog answer chứa 'Nguồn: https://example.com/it-g2/mat-ong-sam-300ml', answered=true, sent=false; file_output_evidence=0", 0, "PASS"),
+ case("S01-C09", "Messenger HMAC", ["S01-E2E-all", "sales-01_C09_messenger"], "đúng → cskh_reply messenger; sai → 403", "HTTP 200 → cskh_reply + cskh_handoff kênh messenger; chữ ký sai HTTP 403", 0, "PASS"),
+ case("S01-C10", "sales_director gom handoff", ["S01-C10-dryrun", "S01-C10-run1", "S01-C10-run2", "S01-db"], "cskh_handoff agent:sales_director; lần 2 0 mới",
+      "dry-run 0 ghi; run1 đẩy 24 (7 cskh_handoff agent:sales_director gom/khách/ngày, payload chỉ kênh/giờ/mã tham chiếu + 17 price_review); run2 0 mới", 0, "PASS"),
+ case("S01-C11", "/healthz /readyz", ["S01-E2E-all", "sales-01_C11_endpoints"], "200 up; db ok", "healthz 200 {status: up}; readyz 200 {config ok, db ok}", 0, "PASS"),
+ case("S01-C12", "Tắt tính năng", ["TAT-disable-sales-01", "S01-C12", "sales-01_C12_tat"], "0 lời gọi; không cskh_reply; khách HOLD_TEXT",
+      "fake +0; queue +0 (không cskh_reply); convlog rollout=tat, khách nhận HOLD_TEXT (dry-run) — NHƯNG traceback RolloutBlocked trong luồng, không có cskh_handoff (xem S01-X1/L3)", 0, "PASS"),
+ case("S01-X1", "BỔ SUNG SAU KHÓA (phát hiện ở C12): câu sức khỏe khi chatbot TẮT phải vẫn chuyển người (PL01, docstring record_handoff 'không raise')", ["S01-X1", "sales-01_X1_tat_health"],
+      "template sức khỏe + 1 mục cskh_handoff, không ngoại lệ", "khách nhận template hứa nhân viên phản hồi; approval_queue +0; Exception in thread ... RolloutBlocked (L3)", 0, "FAIL"),
+]
+write("sales-01", c, "BI_CHAN", "MOCK", "LLM/embedding fake (harness fake_llm.py) + chunk KB fixture example.com; OA/Meta secret giả; send_text thật dry-run", ["fake_rag_answer.txt"],
+      HARN + SETUP, "Webhook chạy bằng Handler thật trên 127.0.0.1 (không qua main() vì main bind 0.0.0.0); không gửi thật tới Zalo/Meta (DEPLOY tắt) nên file_output_evidence nguồn conversations không thể sinh (đúng thiết kế); câu trả lời LLM là fake; vận hành 24/7 + secret OA/Meta = blocker danh mục C01.",
+      can_de_go="Vá L3 (bắt RolloutBlocked ở record_handoff hoặc cho cskh_handoff đi đường riêng khi tắt) rồi chạy lại S01-X1; secret OA/Meta + server Bên B để kiểm gửi thật", nguyen_nhan="CODE_FAIL", loi=[L3])
+
+# ---------------------------------------------------------------- sales-02
+c = [
+ case("S02-C01", "Gợi ý chat sàn, fake LLM", ["S02-C01", "S02-db"], crit["sales-02"]["ca"][0]["expected"],
+      "exit 0; in nhãn 'CHẠY THỬ — ... KHÔNG dán gửi khách'; san_suggestions #1 shopee stage=chay_thu msg_ref 32 hex, answer không URL/SĐT, guardrail_ok=true, created_by 'MXH Thử IT'; fake 1 embed+1 chat feature sales-02", 0, "PASS"),
+ case("S02-C02", "LLM không khả dụng", ["S02-C02", "S02-db"], "exit 0; câu chuyển nhân viên; handoff no_data", "exit 0; [warn] GatewayError → câu san_handoff; dòng #2 handoff=no_data", 0, "PASS"),
+ case("S02-C03", "Tin buyer có SĐT", ["S02-C03", "S02-db"], "DB không SĐT", "san_suggestions #3 msg_ref hash, answer không SĐT; không cột lưu tin buyer", 0, "PASS"),
+ case("S02-C04", "Câu sức khỏe", ["S02-C04", "S02-db"], "template; 0 lời gọi", "template health_san, handoff=health; fake log không tăng", 0, "PASS"),
+ case("S02-C05", "--mark-sent gợi ý chạy thử", ["S02-C05"], "exit 1 TỪ CHỐI", "exit 1 '[TỪ CHỐI] gợi ý soạn lúc CHẠY THỬ'; uses 0", 1, "PASS"),
+ case("S02-C06", "Ép van_hanh (FIXTURE) + mark-sent + lặp", ["S02-C06a", "S02-C06b", "S02-C06c", "S02-db"], "uses 1 dòng; lặp skip",
+      "gợi ý #5 stage van_hanh (FIXTURE); mark-sent exit 0 → san_suggestion_uses 1 dòng used_by 'MXH Thử IT'; lặp exit 0 [skip], vẫn 1 dòng", 0, "PASS"),
+ case("S02-C07", "stdin rỗng", ["S02-C07"], "exit 2", "exit 2 'STDIN rỗng'", 2, "PASS"),
+ case("S02-C08", "Tắt tính năng", ["TAT-disable-sales-02", "S02-C08"], "exit 2, 0 dòng", "exit 2 '[blocked] ... đang TẮT'; fake log không được tạo (0 lời gọi)", 2, "PASS"),
+]
+write("sales-02", c, "DAT", "MOCK", "LLM/embedding fake (harness) cho C01/C03/C06; C02 dùng gateway thật với key rỗng", ["s02_buyer1.txt", "s02_buyer_pii.txt", "s02_buyer_health.txt", "s02_buyer2.txt", "empty.txt", "fake_rag_answer.txt"],
+      HARN + SETUP, "Câu gợi ý do fake LLM; --mark-sent dương tính chỉ chạy với _FORCE_MODE=van_hanh (FIXTURE) — chế độ thực (approvers + db_login) do điều phối viên kiểm; API chat sàn chưa có (MXH dán tay).")
+
+# ---------------------------------------------------------------- sales-03
+c = [
+ case("S03-C01", "Sinh nháp listing web+shopee", ["S03-C01", "S03-drafts"], crit["sales-03"]["ca"][0]["expected"],
+      "exit 0; content_drafts #1 (web) #2 (shopee) listing pending created_by agent:mkt02 prompt listing_*@1, 'Giá: 2.980.000 đ' = golden, guardrail ok", 0, "PASS"),
+ case("S03-C02", "Chạy lại idempotent", ["S03-C02"], "skipped", "skipped #1 #2, created 0", 0, "PASS"),
+ case("S03-C03", "SKU rượu / CAM", ["S03-C03"], "refused, 0 ghi", "refused ruou (Luật 44/2019) + refused readiness CAM; created 0", 0, "PASS"),
+ case("S03-C04", "kd_listing dry-run", ["S03-C04"], "0 dòng mới", "in 10 phát hiện, 'KHÔNG ghi DB'; approval_queue max id 35 trước/sau", 0, "PASS"),
+ case("S03-C05", "kd_listing run", ["S03-SETUP-approve-draft1", "S03-SETUP-approve-draft2", "S03-SETUP-market-listing", "S03-C05a", "S03-C05b", "S03-kdlisting", "S03-SETUP-market-listing-v2", "S03-C05c", "S03-C05d", "S03-kdlisting-s1"],
+      "listing_sync + market_alert_s1 agent:kd_listing; lần 2 0 mới",
+      "9 listing_sync (price_drift 2.800.000 vs 2.980.000 nháp #2, title_drift, no_approved_draft, missing_listing) + market_alert_s1 #45 unready_listed (SKU CAM, payload chỉ mã sàn, không sku_key); rượu trùng market_alerts → không enqueue (đúng thiết kế); lần chạy lại 0 mới", 0, "PASS"),
+ case("S03-C06", "listing_export chạy thử", ["S03-C06"], "exit 1, không tệp", "exit 1 '[từ chối] ... sales-03 đang chạy thử'; thư mục out không được tạo", 1, "PASS"),
+ case("S03-C07", "listing_export ép van_hanh (FIXTURE)", ["S03-C07a", "S03-C07b"], "CSV+manifest gia_id duyệt; verify exit 0",
+      "exit 0; manifest draft_id 1, gia_id 30 (price_list shopee list đã duyệt), transform bo_dong_gia, mapping CHƯA XÁC MINH; CSV không dòng 'Giá:' trong mô tả; --verify exit 0 'khớp'", 0, "PASS"),
+ case("S03-C08", "verify tệp bị sửa", ["S03-C08"], "exit 1", "exit 1 '[LỆCH] tệp CSV đã bị sửa'", 1, "PASS"),
+ case("S03-C09", "Export SKU chưa có mô tả duyệt", ["S03-C09"], "exit 1", "exit 1 'chưa có mô tả chuẩn (listing web) được người duyệt'", 1, "PASS"),
+ case("S03-C10", "Tắt", ["TAT-disable-sales-03", "S03-C10a", "S03-C10b"], "không sinh nháp", "content --listing: RolloutBlocked, 0 nháp (traceback exit 1 — L4 Thấp); kd_listing --run 0 mục mới", 1, "PASS"),
+]
+write("sales-03", c, "DAT", "LOCAL", "không LLM (--no-llm); golden FIXTURE (mat-ong-sam-300ml mở web/tiktok/zalo) qua bản sao guardrail.DATA_DIR", GOLD + ["s03_listing_shopee.csv", "s03_listing_shopee_v2.csv"],
+      HARN + SETUP + ["evidence/itacc_r10/g2/out/s03_export"] + [f"evidence/itacc_r10/g2/out/SETUP-approve-price-{i}.txt" for i in (4, 5, 29, 30, 35, 36, 37, 38, 39, 40)],
+      "Golden thật: kênh web CAM với MỌI SKU → mô tả chuẩn (listing web) không thể sinh trên dữ liệu thật — phải dùng golden FIXTURE; tiêu đề cột data/listing_export_map.json UNVERIFIED_LIVE; xuất chỉ chạy được ở van_hanh (FIXTURE); duyệt nháp/giá ở dev mode; L4 (traceback khi tắt) ghi Thấp.",
+      loi=[L4])
+
+# ---------------------------------------------------------------- sales-04.1
+c = [
+ case("S041-C01", "Nạp lead từ convlog", ["S041-C01x-sample-a", "S041-C01a", "S041-C01b", "S041-C01c", "S041-leads"], crit["sales-04.1"]["ca"][0]["expected"],
+      "convlog thật của harness sales-01 (provenance live): mới=3, chạy lại mới=0 trùng=3; convlog fixture hôm qua (FIXTURE provenance live, ghi chú trong dòng): mới=2; (bổ sung) dòng provenance sample → 0 lead (đúng: mẫu không thành vận hành)", 0, "PASS"),
+ case("S041-C02", "Gán người phụ trách", ["S041-C02", "S041-owner"], "owner=MÃ, due>now, log", "lead #7 owner_code NVTHU01, owner_due_at 26/10 08:30 VN (8 giờ LV từ T6 10:30), agent_action_log crm_owner actor 'Trưởng KD Thử IT'", 0, "PASS"),
+ case("S041-C03", "--staff là tên người", ["S041-C03"], "exit 2 không ghi", "exit 2 '--staff phải là MÃ nhân viên ... không ghi gì'", 2, "PASS"),
+ case("S041-C04", "sales_director lead_followup", ["S041-C04a", "S041-C04b", "S041-followup"], "lead_followup agent:sales_director; lần 2 0 mới",
+      "#49 lead_followup object lead:8:chua_gan created_by agent:sales_director, payload chỉ mã lead/kênh/ý định/hạn (không câu khách); lần 2 đẩy 0", 0, "PASS"),
+ case("S041-C05", "Dry-run giờ giả", ["S041-C05"], "kế hoạch có lead đã gán; 0 ghi",
+      "--now 26/10 09:00: 'sẽ đẩy lead_followup 4 — KHÔNG ghi DB' (= lead 1,2,3 chưa gán + lead 7 đã gán quá hạn 08:30; lead 8 đã có mục); approval_queue max id không đổi", 0, "PASS"),
+ case("S041-C06", "Tắt", ["TAT-disable-sales-04.1", "S041-C06", "S041-C06b", "S041-C06c"], "exit 2", "lead_store exit 2 '[rollout] ... tính năng TẮT: sales-04.1 → KHÔNG nạp'", 2, "PASS"),
+]
+write("sales-04.1", c, "DAT", "LOCAL", "không LLM", ["s041_convlog.jsonl", "s041_convlog_live_homqua.jsonl"], HARN + SETUP,
+      "Lead quá hạn thật cần ≥4 giờ làm việc → dùng 2 dòng convlog FIXTURE 'live' ts hôm qua (ghi chú FIXTURE trong dòng) — chỉ kiểm logic SLA, KHÔNG là bằng chứng ngày chạy thử/đầu ra vận hành; lead đã gán quá hạn chỉ kiểm bằng --dry-run --now; staff_codes rỗng (chỉ kiểm mẫu mã); quyền chế độ thực do điều phối viên kiểm.")
+
+# ---------------------------------------------------------------- sales-04.2
+c = [
+ case("S042-C01", "Nạp sổ đại lý", ["S042-C01"], "dealers mới=2", "exit 0 'mới=2'", 0, "PASS"),
+ case("S042-C02", "Thêm liên hệ", ["S042-C02", "S042-db"], "ciphertext, không SĐT thô", "exit 0 contact #1; contacts có phone_hmac, ciphertext (vị trí SĐT thô trong cột enc = 0)", 0, "PASS"),
+ case("S042-C03", "Gán đại lý theo tỉnh", ["S042-C03"], "exit 0", "exit 0 'lead #8 → DLTHU01 (Đà Nẵng)'; log crm_assign", 0, "PASS"),
+ case("S042-C04", "Handoff chưa đồng ý", ["S042-C04", "S042-db"], "exit 1; không payload; không log crm_handoff",
+      "exit 0; payload KHÔNG có khóa PII (lead_id/dealer/tỉnh/ý định/câu đã che); agent_action_log crm_handoff pii_included=false — được bộ đếm tính là đầu ra (L1). Ghi chú: thiết kế docstring handoff_payload cho phép payload không PII — kỳ vọng khóa trước suy từ dau_ra 'payload chuyển (chỉ khi khách đồng ý)'", 0, "FAIL"),
+ case("S042-C05", "Đồng ý dai_ly + handoff", ["S042-C05a", "S042-C05b", "S042-db"], "payload; consents granted; log không PII",
+      "consent #1 dai_ly granted recipient DLTHU01 (evidence_ref, policy_version); handoff exit 0 payload có phone/name/email/address (dữ liệu GIẢ fixture), in stdout cho người chuyển, hệ thống không gửi; log crm_handoff detail {dealer, lead_id, pii_included:true} không PII", 0, "PASS"),
+ case("S042-C06", "Đại lý khác", ["S042-C06"], "exit 1", "exit 1 'lead #8 không gán cho DLTHU02'", 1, "PASS"),
+ case("S042-C07", "Rút đồng ý", ["S042-C07a", "S042-C07b"], "exit 1",
+      "consent #2 granted=false; handoff exit 0 payload KHÔNG PII (PII bị chặn đúng) nhưng vẫn ghi crm_handoff được đếm (L1)", 0, "FAIL"),
+ case("S042-C08", "Thiếu khóa vault", ["S042-C08"], "exit 2", "exit 2 'thiếu CONTACT_VAULT_KEY'", 2, "PASS"),
+ case("S042-X1", "BỔ SUNG SAU KHÓA: handoff lead không liên hệ/không đồng ý có bị đếm là đầu ra không", ["S042-X-outputs", "S042-X-status", "S042-X1-assign7", "S042-X1-handoff7", "S042-X1-status", "S042-X1-db"],
+      "không được tính đầu ra 'chuyển khi khách đồng ý'", "rollout --status sales-04.2: 2 → 3 đầu ra sau handoff lead 7 (pii_included=false)", 0, "FAIL"),
+]
+write("sales-04.2", c, "BI_CHAN", "LOCAL", "không LLM; khóa vault Fernet THỬ (sinh trong scratchpad, không lưu evidence)", ["s042_dealer_regions.json", "s042_contact.json"], HARN + SETUP,
+      "PII chỉ giải mã khi có đồng ý dai_ly đích danh — ĐẠT; lỗi nằm ở việc ghi/đếm handoff không đồng ý (L1). Sổ vùng–đại lý thật chưa có (fixture DLTHU01/02). Dev mode.",
+      can_de_go="Vá L1 (lọc pii_included=true ở bộ đếm hoặc chặn/đổi action khi chưa đồng ý) rồi chạy lại S042-C04/C07/X1", nguyen_nhan="CODE_FAIL", loi=[L1])
+
+# ---------------------------------------------------------------- sales-05
+c = [
+ case("S05-C01", "Kiểm ma trận", ["S05-C01"], "exit 0", "exit 0 'ma trận v1 hợp lệ ... GIẢ ĐỊNH'", 0, "PASS"),
+ case("S05-C02", "Form tắt mặc định", ["S05-C02"], "exit 2", "exit 2 '[fatal] form B2B mặc định TẮT'", 2, "PASS"),
+ case("S05-C03", "Form bật localhost", ["S05-C03", "S05-C03-server", "S05-C03-db"], "200 + 1 b2b_requests; 415; honeypot 0 ghi",
+      "GET 200 (3 SKU mật ong); POST hợp lệ 200 → b2b_requests #1 (contact_id 2, consent_id 3 b2b web), gửi lại cùng ngày 200 yc=1 (không ghi thêm); JSON → 415; honeypot 200 trang chung, 0 ghi; SKU rượu → 400; log chỉ hash IP", 0, "PASS"),
+ case("S05-C04", "Lập báo giá + submit", ["S05-C04a", "S05-C04b", "S05-C04c", "S05-C04-db"], "b2b_quote|matrix + finance/b2b_margin_review",
+      "dry-run 0 ghi; submit → #50 sales/b2b_quote risk high (ngoài ma trận vì ma_tran_chua_xac_nhan) + #51 finance/b2b_margin_review (thiếu giá vốn duyệt), created_by agent:kd_quote, payload markdown số do code, không PII người liên hệ", 0, "PASS"),
+ case("S05-C05", "Export trước duyệt", ["S05-C05"], "exit 1", "exit 1 'không phải tài liệu ĐÃ duyệt — KHÔNG xuất'", 1, "PASS"),
+ case("S05-C06", "Duyệt + export + verify-send", ["S05-C06a", "S05-C06b", "S05-C06c", "S05-C06d", "S05-C06e", "S05-C06-db"], "export ok; verify khớp → da_gui; sửa exit 1",
+      "approve #50 (người thử); export khi chạy thử → exit 1 (rollout từ chối; thông báo kèm '[warn] LỆCH bản duyệt' gây hiểu nhầm); export ép van_hanh (FIXTURE) exit 0; verify-send exit 0 → b2b_quote_events da_gui; tệp sửa exit 1", 0, "PASS"),
+ case("S05-C07", "Catalog", ["S05-C07a", "S05-C07b", "S05-C07-db"], "b2b_catalog không rượu", "catalog 3 mục, 0 chữ 'rượu', nhãn 'Quảng cáo'; --submit → #52 b2b_catalog risk high (xem L2 về SKU/giá)", 0, "PASS"),
+ case("S05-C08", "Danh sách tổ chức", ["S05-C08a", "S05-C08b", "S05-C08c", "S05-C08-db"], "org_prospect_batch; CSV lỗi exit 1 0 dòng",
+      "CSV có SĐT → exit 1 'dòng 2 cột fit_reason: chứa SĐT/email' 0 dòng; CSV hợp lệ inserted=2; --submit-batch → #53 org_prospect_batch (payload còn chữ 'GĐ dự án' cũ)", 0, "PASS"),
+ case("S05-C09", "Nhắc chốt đơn", ["S05-C09a", "S05-C09b", "S05-C09c", "S05-C09d", "S05-C09e"], "b2b_followup agent:kd_quote; lần 2 0 mới",
+      "CLI thật --followups (dry-run & thật): 0 (báo giá gửi 23/10 10:40 chưa đủ 24 giờ LV); probe CHỈ ĐỌC followup_items(now=28/10) → 1 mục fu:50:...:1 đúng mẫu; --outcome chot → probe 0. Đường GHI b2b_followup chưa thực chạy", 0, "NOT_RUN",
+      "Cần ≥24 giờ làm việc thật sau lần gửi; CLI không có --now/--as-of; không lùi mốc thời gian"),
+ case("S05-C10", "Tắt", ["TAT-disable-sales-05", "S05-C10"], "không sinh mục", "không mục mới (RolloutBlocked, traceback exit 1 — L4); 3 file báo giá vẫn ghi ra --out-dir scratchpad trước khi bị chặn", 1, "PASS"),
+ case("S05-X1", "BỔ SUNG SAU KHÓA (phát hiện ở C07): giá báo giá/catalog phải là giá list ĐÃ duyệt; SKU CAM không vào catalog/form", ["S05-X1a", "S05-X1b", "S05-X1-db"],
+      "chặn hoặc reason 'giá chưa duyệt'", "báo giá YC-2 dùng 745.000đ (price_list #24 chưa duyệt), reasons không nêu; form/catalog nhận SKU thực phẩm readiness CAM (L2)", 0, "FAIL"),
+]
+write("sales-05", c, "BI_CHAN", "LOCAL", "không LLM (template); form chạy thật trên 127.0.0.1:58791/58792", ["s05_orgs.csv", "s05_orgs_bad.csv"], HARN + SETUP + ["evidence/itacc_r10/g2/out/s05"],
+      "Ma trận chiết khấu + ngưỡng nhắc GIẢ ĐỊNH; export/verify-send chỉ ở van_hanh (FIXTURE); đường ghi b2b_followup chưa chạy (C09 NOT_RUN); form chỉ localhost (tên miền/DPIA = Bên B).",
+      can_de_go="Vá L2 (giá từ price_list đã duyệt + lọc readiness như S03/F2) rồi chạy lại S05-X1/C07; chạy --followups sau ≥24 giờ làm việc để ghi b2b_followup", nguyen_nhan="CODE_FAIL", loi=[L2, L4])
+
+# ---------------------------------------------------------------- sales-06.1
+c = [
+ case("S061-C01", "Nạp giá đại lý", ["S061-C01a", "S061-C01b", "S061-obs"], "2 dòng; lần 2 skip", "exit 0 nạp 2; lần 2 '[skip] file đã nạp'; dealer_price_obs created_by 'MXH Thử IT' source manual_export", 0, "PASS"),
+ case("S061-C02", "File lỗi", ["S061-C02a", "S061-C02b"], "exit 1 0 dòng", "URL chứa SĐT → exit 1 (không connect); đại lý lạ → exit 1 'không nạp dòng nào'", 1, "PASS"),
+ case("S061-C03", "dealer-watch", ["S061-C03s", "S061-C03a", "S061-C03b", "S061-C03c", "S061-C03-db"], "dealer_price_alert agent:kd_price; lần 2 0; mẫu không cảnh báo",
+      "dry-run 0 ghi; run → #54 dealer_price_alert dp:DLTHU01:saphraton-20v:shopee:2026-10-23 (200.000 < floor 236.000 đã duyệt, chỉ mã + tên miền nguồn); lần 2 0 mới; quan sát --sample (150.000) không được tính", 0, "PASS"),
+ case("S061-C04", "kd_price run", ["S061-C04a", "S061-C04b", "S061-C04c", "S061-C04-db"], "market_alert_s1/price_change agent:kd_price; dry-run 0 ghi",
+      "dry-run 0 ghi; run → #55 market_alert_s1 a5:below_floor (giá 200.000 < floor); 2 list_deviation trùng market_alerts price_mismatch → chỉ báo cáo (đúng thiết kế); lần 2 0 mới", 0, "PASS"),
+ case("S061-C05", "sales_director", ["S041-C04a", "S061-sd-alerts", "S01-C10-run1", "S01-db"], "market_alert_s1/s2 + price_review agent:sales_director",
+      "#46/#48 market_alert_s2 + #47 market_alert_s1 (ma:<id>:<opened_at>) và 17 price_review (gd:<id>) created_by agent:sales_director, payload template không chép tiêu đề", 0, "PASS"),
+ case("S061-C06", "Không đổi giá", ["S061-C06-before", "S061-C06-after"], "price_list không đổi", "md5 price_list trước/sau kd_price/dealer-watch giống nhau (42 dòng)", 0, "PASS"),
+ case("S061-C07", "Tắt", ["TAT-disable-sales-06.1", "S061-C07", "S061-C07b"], "exit 2", "dealer_price exit 2 '[rollout] ... KHÔNG nạp'; dealer-watch exit 2 '[rollout] ... không sinh đầu ra'", 2, "PASS"),
+]
+write("sales-06.1", c, "DAT", "LOCAL", "không LLM", ["s061_dealer.csv", "s061_dealer_bad_url.csv", "s061_dealer_unknown.csv", "s061_dealer_sample.csv", "s03_listing_shopee_v2.csv"] + GOLD, HARN + SETUP,
+      "price_change agent:kd_price không tái hiện: list_deviation luôn trùng market_alerts price_mismatch đang mở (thiết kế chỉ báo cáo) và floor golden ≥ ~67–79% list nên listing_promo_over_cap (>40%) không đạt; price_review sinh từ golden_discrepancies của golden FIXTURE; nguồn giá đại lý tự động chưa có (chỉ file quan sát tay); ngưỡng GIẢ ĐỊNH.")
+
+# ---------------------------------------------------------------- sales-06.2
+c = [
+ case("S062-C01", "Nạp đơn + sync", ["S062-C01a", "S062-C01b", "S062-C01c", "S062-C01-db"], "orders market:shopee; không SĐT",
+      "snapshot #3 shopee 12 dòng, #4 tiktok 3 dòng; --sync thêm 15 đơn source market:<kênh>, mã đơn chỉ hash, 5 'cancelled'; market_rows không chứa SĐT/tên người nhận (0 dòng)", 0, "PASS"),
+ case("S062-C02", "File cột lạ", ["S062-C02"], "exit 1 0 dòng", "exit 1 'cột lạ ... không connect, không nạp gì'", 1, "PASS"),
+ case("S062-C03", "watch dry-run as-of tuần sau", ["S062-C03"], "kế hoạch có hủy vượt ngưỡng; 0 ghi", "'[shopee] tuần 2026-10-19: đơn hủy 5/12 (41.7%)' · đẩy 0 — KHÔNG ghi DB; 'Đơn trễ: CHƯA ĐO'", 0, "PASS"),
+ case("S062-C04", "watch thật (FIXTURE dời orders.ts 7 ngày)", ["S062-C04pre", "S062-C04-fixture", "S062-C04a", "S062-C04b", "S062-C04-db"], "order_anomaly agent:kd_orders; lần 2 0; trễ chưa đo",
+      "trước fixture: 0 (tuần hiện tại chưa đóng — đúng); sau dời ts: #56 order_anomaly ow:shopee:cancel:2026-10-12:5 created_by agent:kd_orders payload 12 đơn hủy 5 (41.7%) > 15% GIẢ ĐỊNH, 'Đơn trễ: CHƯA ĐO'; lần 2 0 mới", 0, "PASS"),
+ case("S062-C05", "Dưới min_orders", ["S062-C05", "S062-C03"], "không cảnh báo tiktok", "tiktok 3 đơn (1 hủy) không xuất hiện trong phát hiện", 0, "PASS"),
+ case("S062-C06", "Tắt", ["TAT-disable-sales-06.2", "S062-C06a", "S062-C06b"], "chặn", "market_csv exit 2 '[rollout] ... KHÔNG nạp'; --watch exit 2 '[rollout] ... không sinh đầu ra'", 2, "PASS"),
+]
+write("sales-06.2", c, "DAT", "LOCAL", "không LLM", ["s062_orders_shopee.csv", "s062_orders_tiktok.csv", "s062_orders_bad.csv"], HARN + SETUP,
+      "File xuất Seller Center chưa có cột ngày đặt → orders.ts = lúc nạp; để kiểm tuần ĐÃ ĐÓNG phải dời ts 7 ngày (FIXTURE harness shift_orders.py, ghi rõ) — không là bằng chứng vận hành; đơn trễ chưa đo (thiết kế); tên trạng thái hoàn/trả + ngưỡng GIẢ ĐỊNH; mapping cột chưa xác minh với file thật.")
+
+# ---------------------------------------------------------------- sales-07.1
+c = [
+ case("S071-C01", "Kịch bản livestream (fake LLM)", ["S071-C01", "S071-db"], crit["sales-07.1"]["ca"][0]["expected"],
+      "exit 0; nháp #3 livestream_script pending created_by agent:kd_a9 prompt livestream_script@1 guardrail ok; giỏ 'Mật ong sâm 300ml — Giá: 2.980.000 đ' (price_list tiktok đã duyệt); câu LLM '...giá chỉ 2.500.000đ' bị bỏ; câu hỏi 'chữa tiểu đường' → placeholder + template sức khỏe; nhãn Quảng cáo + AI", 0, "PASS"),
+ case("S071-C02", "Giỏ rượu", ["S071-C02"], "refuse ruou 0 lời gọi", "exit 1 '[refuse] ruou ... (LLM 0 lời gọi)'", 1, "PASS"),
+ case("S071-C03", "SKU không promotable", ["S071-C03"], "khong_promotable", "exit 1 '[refuse] khong_promotable: saphraton-20v ... (LLM 0 lời gọi)'", 1, "PASS"),
+ case("S071-C04", "dry-run", ["S071-C04", "S071-db"], "0 nháp", "exit 0 'dry-run, KHÔNG lưu'; không có nháp phiên 28/10 từ lệnh này", 0, "PASS"),
+ case("S071-C05", "Trần phiên/tuần", ["S071-C05a", "S071-C05b", "S071-db"], "lần vượt bị từ chối", "phiên 2 (28/10) → nháp #4; phiên 3 (29/10) exit 1 'vuot_tran_phien ... (LLM 0 lời gọi)'", 1, "PASS"),
+ case("S071-C06", "LLM không khả dụng", ["S071-C06", "S071-db"], "exit 1; 0 nháp", "exit 1 'llm: GatewayError: thiếu OPENROUTER_API_KEY'; không nháp mới", 1, "PASS"),
+ case("S071-C07", "Tắt", ["TAT-disable-sales-07.1", "S071-C07"], "không sinh nháp", "exit 1 '[error] RolloutBlocked: nháp livestream_script ... đang tắt'; 0 nháp (fake log ghi 1 lời gọi trước khi chặn — L5 Thấp)", 1, "PASS"),
+]
+write("sales-07.1", c, "DAT", "MOCK", "chat LLM fake ở biên (harness fake_llm.py, JSON fixture fake_live.json); golden FIXTURE mat-ong-sam-300ml promotable tiktok", ["fake_live.json"] + GOLD, HARN + SETUP,
+      "Lời dẫn do fake LLM; golden thật không có SKU nào promotable (TPBVSK chưa XNQC, thực phẩm chưa tự công bố) → dùng golden FIXTURE; tài khoản live sàn = external-dep (không lên sóng).", loi=[L5])
+
+# ---------------------------------------------------------------- sales-07.2
+c = [
+ case("S072-C01", "Ghi lần mua", ["S072-SETUP-cA", "S072-SETUP-cB", "S072-SETUP-consent-cskh", "S072-SETUP-consent-marketing", "S072-C01-p1", "S072-C01-p2", "S072-C01-p3", "S072-C01-san"], "care_purchases",
+      "3 lần mua kênh zalo ghi #1–#3 (chỉ contact_id); kênh shopee → exit 1 'khách sàn chăm sóc bằng công cụ của sàn'", 0, "PASS"),
+ case("S072-C02", "Plan/dry-run", ["S072-C02a", "S072-C02b"], "0 ghi", "plan/dry-run liệt kê 3 nháp, bỏ qua consent ×2 (khách #5); không ghi", 0, "PASS"),
+ case("S072-C03", "Run", ["S072-C03a", "S072-C03b", "S072-db"], "chỉ khách có đồng ý; lần 2 0",
+      "#57 care_rebuy (marketing, mat-ong promotable zalo) + #58/#59 care_review (cskh) created_by agent:kd_a7, payload chỉ contact_id/mục đích/giờ gửi (không SĐT/tên), TPBVSK có câu khuyến cáo; khách #5 không đồng ý → 0 mục; lần 2 0", 0, "PASS"),
+ case("S072-C04", "verify-send", ["S072-C04a", "S072-C04-approve", "S072-C04b", "S072-C04c", "S072-C04d", "S072-C04e-withdraw", "S072-C04e"], "trước duyệt 1; sau duyệt khớp 0; sửa 1",
+      "trước duyệt exit 1 chua_duyet; sau duyệt khi chạy thử exit 1 (rollout từ chối); ép van_hanh (FIXTURE) exit 0 ok; tệp sửa exit 1 sha; rút đồng ý cskh → exit 1 consent", 0, "PASS"),
+ case("S072-C05", "Tắt", ["TAT-disable-sales-07.2", "S072-C05", "S072-C05a", "S072-C05b", "S072-C05c"], "không sinh", "có lần mua mới đủ điều kiện (plan 1 nháp) → --run exit 1 '[error] hàng duyệt sales/care_rebuy: ... đang tắt'; 0 mục", 1, "PASS"),
+]
+write("sales-07.2", c, "DAT", "LOCAL", "không LLM; khóa vault Fernet THỬ", ["s072_contactA.json", "s072_contactB.json", "s072_p1.json", "s072_p2.json", "s072_p3.json", "s072_p4_san.json", "s072_p5.json"] + GOLD,
+      HARN + SETUP + ["evidence/itacc_r10/g2/out/s072"],
+      "Rebuy cần SKU promotable zalo → golden FIXTURE; verify-send dương tính chỉ ở van_hanh (FIXTURE); gửi Zalo OA/ZNS do người (external-dep); luật care_rules GIẢ ĐỊNH.")
+
+# ---------------------------------------------------------------- sales-07.3
+c = [
+ case("S073-C01", "Kịch bản 1 SKU", ["S073-C01a", "S073-C01b"], "JSON low≤base≤high; tất định", "13 tuần, mọi dòng low≤base≤high, sự kiện 11.11/12.12/tet_2027; 2 lần chạy output trùng", 0, "PASS"),
+ case("S073-C02", "Nạp tồn", ["S073-C02-HARNESS-LOI-fixture-sai-dinh-dang", "S073-C02"], "exit 0",
+      "lượt 1 exit 1 do FIXTURE sai định dạng (kho không slug, ngày ISO giờ) — lỗi harness, giữ log; lượt sửa: exit 0 '2 dòng tồn'", 0, "PASS"),
+ case("S073-C03", "Dự báo + ghi báo cáo", ["S073-C03x-truoc-khi-co-ton", "S073-C03", "S073-C03-db", "S073-db"], "file nhãn CHẠY THỬ; report_outputs sample=false",
+      "kd-forecast-2026-11-02.md (REPORTS_DIR → evidence) dòng đầu 'CHẠY THỬ — KHÔNG GỬI', ô thấp–cơ sở–cao theo kênh; saphraton-20v tồn 50 THIẾU, mat-ong-sam-300ml tồn 5000 THỪA, SKU khác 'chưa có số tồn — không kết luận thiếu'; report_outputs feature sales-07.3 is_sample=false", 0, "PASS"),
+ case("S073-C04", "SKU lạ", ["S073-C04"], "exit 1", "exit 1 'SKU khong-co-sku không có trong golden'", 1, "PASS"),
+ case("S073-C05", "Tồn mẫu", ["S073-C05a", "S073-C05b", "S073-db"], "nhãn MẪU; sample=true", "inventory [MẪU]; kd-forecast-2026-11-09.md 'tồn 450 (MẪU)' (cộng cả tồn thật 50 + mẫu 400, có nhãn); report_outputs is_sample=true", 0, "PASS"),
+ case("S073-C06", "Tắt", ["TAT-disable-sales-07.3", "S073-C06"], "không ghi báo cáo", "RolloutBlocked ở write_report, thư mục --reports-dir không được tạo (traceback exit 1 — L4)", 1, "PASS"),
+]
+write("sales-07.3", c, "DAT", "LOCAL", "không LLM", ["s073_inventory.csv", "s073_inventory_sample.csv"], HARN + SETUP + ["evidence/itacc_r10/g2/out/s073"],
+      "Giả định số bán data/scenario_assumptions.json GIẢ ĐỊNH (chờ GĐ KD/TC); tồn từ file fixture; báo cáo ghi qua patch agents.report.REPORTS_DIR (CLI không có --out-dir).", loi=[L4])
+
+# ---------------------------------------------------------------- sales-08
+c = [
+ case("S08-C01", "Feed chạy thử", ["S08-C01"], "exit 1", "exit 1 '[từ chối] xuất nguồn dữ liệu website: sales-03 đang chạy thử'", 1, "PASS"),
+ case("S08-C02", "Feed ép van_hanh (FIXTURE)", ["S08-C02"], "rượu ẩn giá + không giỏ; ly_do", "13 SKU, bán được 1 (mat-ong-sam-300ml giá 2.980.000 price_list #38 web đã duyệt); 2 SKU rượu an_gia=true gio_hang=false; SKU còn lại ly_do cụ thể, gia_vnd null (không bịa giá)", 0, "PASS"),
+ case("S08-C03", "Website thật (trang SP/giỏ/thanh toán)", [], "-", "-", None, "NOT_RUN", "Website ở repo riêng chưa được giao (SEPARATE_REPO)"),
+]
+write("sales-08", c, "BI_CHAN", "LOCAL", "không LLM; golden FIXTURE", GOLD, HARN + ["evidence/itacc_r10/g2/out/s08_feed"],
+      "Feed chỉ là nguồn dữ liệu cho website, KHÔNG thay website; xuất chỉ chạy ở van_hanh (FIXTURE).",
+      can_de_go="Giao repo/owner website (trang sản phẩm, giỏ, thanh toán, ẩn giá/giỏ rượu) để kiểm", nguyen_nhan="SEPARATE_REPO")
+
+# ---------------------------------------------------------------- sales-09
+c = [
+ case("S09-C01", "Rà entry point", ["S09-C01"], "không có adapter web chat", "connectors/ chỉ zalo/messenger/b2b_form/channels/zalo_garden; CHAT_CHANNELS=('zalo','messenger'); grep adapter website chat rỗng", 0, "PASS"),
+ case("S09-C02", "Chatbot website thật", [], "-", "-", None, "NOT_RUN", "Chatbot website ở repo riêng chưa được giao (SEPARATE_REPO)"),
+]
+write("sales-09", c, "BI_CHAN", "LOCAL", "không áp dụng", [], [],
+      "Không có module trong repo; luật kênh chung kiểm ở sales-01 không tính thay chatbot website.",
+      can_de_go="Giao repo/owner chatbot website", nguyen_nhan="SEPARATE_REPO")

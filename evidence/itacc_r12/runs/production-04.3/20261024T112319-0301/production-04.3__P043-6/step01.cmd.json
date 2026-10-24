@@ -1,0 +1,29 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "pipelines.production",
+  "cert-verify"
+ ],
+ "env_doi": [
+  "LOT_CERT_DIR"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:23:58+07:00",
+ "ket_thuc": "2026-10-24T11:24:00+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*\\[ok\\] IT-LOT-001)(?=.*\\[ok\\] IT-LOT-002)(?=.*\\[thieu_phieu\\] IT-LOT-003)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "791ae2e04fe12358b1d1079e4fc89804ff1e5b0b27018f434e67b5de267c4657",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

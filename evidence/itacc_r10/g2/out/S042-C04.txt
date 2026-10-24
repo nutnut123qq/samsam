@@ -1,0 +1,18 @@
+# ma: S042-C04
+# luc: 2026-10-23T10:32:56+07:00
+# lenh: CONTACT_VAULT_KEY=<set> python -m ingest.crm --handoff 8 --dealer DLTHU01 --by GĐ Bán Hàng Thử IT
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+[ok] payload cho NGƯỜI chuyển tới đại lý (hệ thống không gửi):
+{
+  "lead_id": 8,
+  "dealer": "DLTHU01",
+  "province": "Đà Nẵng",
+  "intent": "price",
+  "question": "Giá mật ong sâm 300ml bao nhiêu vậy?"
+}
+
+## stderr
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)

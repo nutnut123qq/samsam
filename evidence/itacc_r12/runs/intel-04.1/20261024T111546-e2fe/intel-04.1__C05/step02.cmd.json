@@ -1,0 +1,33 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "scripts/intel_weekly.py",
+  "--week",
+  "2026-10-19",
+  "--out-dir",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\intel-04.1\\20261024T111546-e2fe\\intel-04.1__C05\\out/repw_off41"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:16:13+07:00",
+ "ket_thuc": "2026-10-24T11:16:18+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*intel-04\\.1",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "69b2f8d6072f1eaaae72666c573d33eb8a8584270cd5a27ae3ebf653896932ba",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

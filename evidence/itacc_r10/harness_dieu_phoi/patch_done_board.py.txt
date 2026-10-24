@@ -1,0 +1,57 @@
+"""Vòng r10: ghi checkpoint nghiệm thu kỹ thuật nội bộ vào DONE.md + v13-board.md (số đọc từ tong_hop.json/gates.json)."""
+import json
+from collections import Counter
+from pathlib import Path
+
+ROOT = Path(r"D:\code\samsam")
+EV = ROOT / "evidence" / "itacc_r10"
+T = json.loads((EV / "tong_hop.json").read_text(encoding="utf-8"))["tom_tat"]
+G = json.loads((EV / "gates.json").read_text(encoding="utf-8"))
+U = Counter(r["verdict"] for r in json.loads((EV / "ui" / "ui_results_run6.json").read_text(encoding="utf-8")))
+full = next(l for s in G["sections"] if s["title"].startswith("7.") for l in s["lines"] if l.startswith("- Full pytest"))
+t = T["tong"]
+SUM = (f"**{t.get('DAT', 0)} ĐẠT / {t.get('CHUA_KIEM', 0)} CHƯA KIỂM / {t.get('BI_CHAN', 0)} BỊ CHẶN** trên 96 "
+       f"(BỊ CHẶN: " + ", ".join(f"{k} {v}" for k, v in sorted(T["nguyen_nhan_bi_chan"].items(), key=lambda x: -x[1])) + ")")
+
+b = ROOT / "docs" / "handover" / "v13-board.md"
+s = b.read_bytes().decode("utf-8")
+anchor = "## Checkpoint mới — Vòng r9 (23/10/2026)"
+assert s.count(anchor) == 1
+board = f"""## Checkpoint mới — Vòng r10 (23/10/2026): NGHIỆM THU KỸ THUẬT NỘI BỘ trên máy dev — CHƯA commit/merge/push/deploy
+
+KHÔNG phải nghiệm thu hợp đồng (vẫn 0/96 `da_nghiem_thu`, ma trận hợp đồng riêng). Fingerprint `{G['fingerprint']}` (không đổi), Postgres Docker `samsam-itacc-r10` 127.0.0.1:55432, DB `samsam_itacc_r10*`, không chạm DB `samsam`, không sửa code sản phẩm.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| 96 mục (tiêu chí khóa trước khi chạy) | {SUM} | `docs/handover/nghiem-thu-ky-thuat-noi-bo.md`, `evidence/itacc_r10/items/`, `tong_hop.json` (0 vi phạm nhất quán) |
+| Lỗi sản phẩm tái hiện (không vá) | 20 lỗi: 1 CAO (P-01 crash bản tin sản xuất), TRUNG BÌNH gồm UI-01/UI-02 (svc_ui thiếu quyền đọc), G5-01 (media_cap), G1-L1 (tắt 1 tính năng chặn tính năng khác), G1-L3, D1 (tắt vẫn gọi LLM), L1, L2 (B2B giá chưa duyệt), L3 | hồ sơ mục 5 |
+| Xuyên suốt | probe S04 17, S04b 17, r8 13, B3 7, S03 14, F1 28, F2 12 PASS; job lock 3/3; SMTP giả STARTTLS 5/5; webhook readyz/DB lỗi/phục hồi 5/5; role không owner/superuser; DR Docker 3/3; hash chain sau khôi phục khớp; rotation tool 3/3 (Docker tạm — rotation thật vẫn MỞ) | `evidence/itacc_r10/xuyen_suot/` |
+| UI thật (Chromium) | {sum(U.values())} bước: {U.get('PASS', 0)} PASS, {U.get('FAIL', 0)} FAIL (UI-01, UI-02), {U.get('NOT_RUN', 0)} NOT_RUN | `evidence/itacc_r10/ui/` |
+| Gate | {full[2:]} ruff 0; eval tất định đạt; DPIA đạt; red-team 0/50 | `evidence/itacc_r10/gate/` |
+
+"""
+b.write_bytes(s.replace(anchor, board + anchor).encode("utf-8"))
+
+d = ROOT / "DONE.md"
+s = d.read_bytes().decode("utf-8")
+h = "## Vòng r9 (23/10/2026) — B3 ma trận đúng người + đính chính A10 adapter — CHƯA commit/merge/push/deploy"
+assert s.count(h) == 1
+done = f"""## Vòng r10 (23/10/2026) — nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — CHƯA commit/merge/push/deploy
+
+Không phải nghiệm thu hợp đồng: `acceptance_status` không đổi (0/96 đã nghiệm thu), máy dev không phải server Bên B,
+không nâng rollout. Fingerprint `{G['fingerprint']}` (không đổi suốt đợt). DB Postgres Docker cô lập
+`samsam_itacc_r10*` — KHÔNG truy cập `samsam`. Không sửa code sản phẩm.
+
+1. Kết quả 96 mục: {SUM}. Hồ sơ `docs/handover/nghiem-thu-ky-thuat-noi-bo.md`; bản ghi từng mục
+   `evidence/itacc_r10/items/<id>.json`; tiêu chí khóa trước khi chạy `evidence/itacc_r10/criteria/`.
+2. 20 lỗi sản phẩm tái hiện, CHƯA vá (hồ sơ mục 5) — cao nhất P-01 `production bulletin` crash; tiếp theo
+   UI-01/UI-02 (`svc_ui` thiếu SELECT plots/plot_logs/chunks → tab Nhật ký vườn/Chat lỗi ở chế độ thực),
+   G5-01 (`garden_media_mkt` hành động không có trong `auth.ACTIONS`), G1-L1 (tắt 1 tính năng chặn đầu ra
+   tính năng khác), D1 (tắt vẫn gọi LLM), L1/L2/L3 (sales), G1-L3 (HĐTV in 0đ khi không có nguồn).
+3. Xuyên suốt + UI thật + DR Docker + rotation tool (Docker tạm) tự chạy lượt này — `evidence/itacc_r10/xuyen_suot/`, `ui/`.
+4. Gate: {full[2:]} ruff/eval/DPIA/red-team đạt — `evidence/itacc_r10/gate/`.
+5. Rotation thật VẪN MỞ; sự cố DB `samsam` VẪN UNVERIFIED; chưa triển khai/chạy thử/nghiệm thu hợp đồng.
+
+"""
+d.write_bytes(s.replace(h, done + h).encode("utf-8"))
+print("ok")

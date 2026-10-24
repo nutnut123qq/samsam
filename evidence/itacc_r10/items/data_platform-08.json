@@ -1,0 +1,254 @@
+{
+ "id": "data_platform-08",
+ "ten": "Sổ triển khai 3 bước + hồ sơ nghiệm thu + báo cáo vận hành tháng",
+ "khoi": "data_platform",
+ "giai_doan": "P1",
+ "pham_vi": "nghia_vu_hd",
+ "can_cu": "PL02 mục 1–3 — quy trình nghiệm thu 3 bước, tiêu chí kỹ thuật, KPI vận hành",
+ "tieu_chi": [
+  "rollout --seed vào sổ chay_thu (feature_rollout_events seed); --status",
+  "--promote chặn khi chưa đủ cổng (ngày/đầu ra) exit 1 không ghi; nhánh đủ điều kiện theo FIXTURE (mốc + 50 đầu ra rải ≥5 ngày làm việc, nhãn FIXTURE) → function DB đếm lại (rollout_recount_human) → co_nguoi_duyet; không nâng bằng SQL",
+  "--severe lùi chay_thu; --disable tắt; --dossier DỰ THẢO; ops_monthly --month → van-hanh-*.md",
+  "T4: không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:58:33+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_dp; dev mode (AUTH_MODE trống, DEPLOY tắt); báo cáo → scratchpad; ca 'đủ điều kiện' dùng FIXTURE (mốc lùi qua hàm rollout + 50 documents GIẢ)",
+ "dau_vao": [],
+ "ca": [
+  {
+   "ma": "DP08-01",
+   "mo_ta": "Seed",
+   "lenh": "python -m pipelines.rollout --seed --by Người Thử IT",
+   "expected": "vào sổ",
+   "actual": "84 vào sổ chay_thu, 12 bỏ qua (chưa co_code)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP08-02",
+   "mo_ta": "Promote bị chặn",
+   "lenh": "python -m pipelines.rollout --promote data_platform-05 --by Người Thử IT",
+   "expected": "exit 1",
+   "actual": "data_platform-05: mới 0/5 ngày, 1/50 đầu ra, 1/5 ngày",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP08-02b",
+   "mo_ta": "Promote bị chặn (0 đầu ra)",
+   "lenh": "python -m pipelines.rollout --promote farming-05.4 --by Người Thử IT",
+   "expected": "exit 1",
+   "actual": "farming-05.4 0/50",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP08-03a",
+   "mo_ta": "Dựng FIXTURE lượt 2",
+   "lenh": "python evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "expected": "DB recount = Python",
+   "actual": "DB rollout_recount_human: days 9, outputs 52, out_days 9; Python facts giống, target co_nguoi_duyet why []",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP08-03b",
+   "mo_ta": "Promote đủ điều kiện",
+   "lenh": "python -m pipelines.rollout --promote data_platform-02.2 --by Người Thử IT",
+   "expected": "exit 0 co_nguoi_duyet + event",
+   "actual": "chạy thử → có người duyệt; event promote evidence {days 9, outputs 52, out_days 9}",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP08-04",
+   "mo_ta": "Promote →van_hanh chặn",
+   "lenh": "python -m pipelines.rollout --promote data_platform-02.2 --by Người Thử IT",
+   "expected": "exit 1",
+   "actual": "mới 0/10 ngày; chưa có đầu ra giai đoạn",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP08-05",
+   "mo_ta": "Severe",
+   "lenh": "python -m pipelines.rollout --severe data_platform-02.2 --reason tu_cam --by Người Thử IT --note ca thử IT g5",
+   "expected": "chay_thu",
+   "actual": "ghi 'Từ cấm' → chạy thử",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP08-06",
+   "mo_ta": "Dossier",
+   "lenh": "python -m pipelines.rollout --dossier --phase P1 --out <scratch>/reports/nghiem-thu-P1-thu-it.md",
+   "expected": "DỰ THẢO",
+   "actual": "tiêu đề '... — DỰ THẢO do hệ thống dựng (... không phải biên bản)'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP08-07",
+   "mo_ta": "Báo cáo tháng",
+   "lenh": "python scripts/ops_monthly.py --month 2026-10 --out-dir <scratch>/reports",
+   "expected": "van-hanh-2026-10.md",
+   "actual": "KPI PL02 mục 3, tiêu chí mục 2, tài sản; nhãn CHẠY THỬ; 'chưa có dữ liệu' khi thiếu nguồn",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP08-08",
+   "mo_ta": "Âm: agent",
+   "lenh": "python -m pipelines.rollout --disable farming-05.4 --by agent:rollout",
+   "expected": "exit 2",
+   "actual": "exit 2 --by phải là NGƯỜI thật",
+   "exit": 2,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "Chốt lịch nghỉ (rollout_config.json holidays) + danh mục 89 mục",
+ "gioi_han": "Nhánh đủ điều kiện CHỈ theo FIXTURE (không phải bằng chứng ngày chạy thử hợp đồng). Lượt 1 dựng fixture bằng approval_queue thất bại vì trigger approval_queue_guard ép created_at=now() (đúng thiết kế chống lùi giờ); lượt 2 dùng nguồn documents. Quan sát: login owner truyền được mốc 'now' lùi vào rollout_transition_human (p10_now — chỉ owner). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-01.txt",
+   "sha256": "f313bb5185b406934db564a6f5d8909a3235bf5611ca7304a303b1237ebd18cb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-02.txt",
+   "sha256": "a5a85f23ecbf44fdba4ad324b1ff52d2786114f6c214c38363c124c556e9a421"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-02b.txt",
+   "sha256": "fe34319d8d2e29119aec3efcbc5df28203d5977aa01146b1f2888307a0c74443"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-03a.txt",
+   "sha256": "1bc0349653988f6cd30f99fa82ede71cfb52d03cf28b03ccdd17cdc7b3da1ff8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-03b.txt",
+   "sha256": "e42f6b592fd69330584dcc8763bbedd3e595db64fe3fd9e290681d804f3a271e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-04.txt",
+   "sha256": "83dd3be3c3e853c56f371a052d549e08db7b76309fd60d2958e721aba98abbcd"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-05.txt",
+   "sha256": "6a1519fa892ba211d5a681fbfb4c7cdcb0fdbd852982d2ac78ce791911de747d"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-06.txt",
+   "sha256": "cd29d917421394658dd16729b120d0fbed283cde0d9d5ea0361190b3da7e0397"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-07.txt",
+   "sha256": "f86e50d0b2d4383024f7a5914bd1968d465e20abe2fbdeaebd97347895faae80"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-08.txt",
+   "sha256": "fd2fbe13a1491dc8dbf16f9bf92603f3d017622c938e9f449936b4323aeda25e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/outputs/nghiem-thu-P1-thu-it.md",
+   "sha256": "13e3fee2117dc78f46ec36f82538c7881cae8962b5bcec8d258fa10dcb7ccd72"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/outputs/van-hanh-2026-10.md",
+   "sha256": "3d12dadd640e302ab95e1322f8d16bceecd8a2e028c5a23de564045895a6f375"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-03a_luot1_fixture_aq_bi_trigger_chan.txt",
+   "sha256": "0e0da590063f33ff722fbe70902ba908cf111f0b315ee827f059838904779932"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP08-03b_luot1_fixture_aq_bi_trigger_chan.txt",
+   "sha256": "1c275710366185e415ecc318dc1ee1457fcee7cafa44a9559968cfa791645378"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/check_media.py",
+   "sha256": "9dc52b8eefb2b5ddb13334435174e3083f32f7006c60a6ce8271c7fd20fe4c23"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_llm_run.py",
+   "sha256": "df4672d90c7d9faa51a83ed42a6e1d159bf8eda0bb5aa95860cf15bef3c6fe3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_shopee.py",
+   "sha256": "9402db0719ea6f325d9d75b29af4ce22574dbae49dc2cfc7c24ad459534329cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gd_run.py",
+   "sha256": "84c646e3dd2019f6bc417e9071b5a422d8d37d7f10c0de077db3f303b1f21eaa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gw_probe.py",
+   "sha256": "8038c6f83facb83baab8eb2bb0fbb8b8cb1ab328082e7b6af0b718734f6cf981"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/hold_lock.py",
+   "sha256": "2a511640b93c4a5d3e2529f711f9b3ca07085bbb08b7be3f88383ffc230d1cab"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_criteria_g5.py",
+   "sha256": "6e64178e75ce85a9b8c265c33862e0395c7cdcfcc943ac19b4915e3b53e21dcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_fixtures.py",
+   "sha256": "d5117a5728c04a988c7d151150fa7e7153a45d59f3752eb470c16ed86aabb241"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_items_g5.py",
+   "sha256": "879a76de3bfb1285557de44386e17428ebf513bf1368f5a554b534fad9edfb82"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_pdf.py",
+   "sha256": "f68506f1c8158b51a4a4048c894df8bfbc88d4a14071cb6c3d2393464add3867"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/mod_run.py",
+   "sha256": "0ba336024389f8ea885b2d63bb2056bdee2c03b814a74eb12343daff901a31d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/probe_run.py",
+   "sha256": "c0f2386d31984f5e279392c44c55209837e13b5f93ded55d5c80709c6b3e5105"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/q.py",
+   "sha256": "6b1c569d67e265d3ad9593331334d286cdbc525eb304ca55128eb686e57d97ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/qr_run.py",
+   "sha256": "8dbe083a6119eee0d80849374b7b053ef5bb44cac67abd85bae74a94562571c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/role_probe.py",
+   "sha256": "c1364ecad746feaeddbb98de7853e542a757cc4ddbbaaa6cae8aada075375a07"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture.py",
+   "sha256": "3b5ae3fad7dac20dc7fab16d1d704833bbb85ba6554c4fd41717f5441bed497b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "sha256": "c530ef5bce990aaa8e0393e582192b93687501195dfcbfa32520a3c28be1c90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/tamper.py",
+   "sha256": "0c27a266124476bb3369ed975395dd2d27ec8e30207e31647a817eda7540a186"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/zalo_webhook.py",
+   "sha256": "de7da44a52a26cb27510f89ffc5659c59c22e53f4fd01d7db142760bf371866c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/lib.sh",
+   "sha256": "c3d88bf45e775e5246126bb82b28042b0d4e6bc5e69a80b70e9d4d263c308a3d"
+  }
+ ],
+ "loi_san_pham": []
+}

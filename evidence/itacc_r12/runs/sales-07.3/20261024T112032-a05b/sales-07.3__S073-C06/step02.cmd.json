@@ -1,0 +1,39 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.kd_forecast",
+  "--start",
+  "2026-11-16",
+  "--sku",
+  "saphraton-20v",
+  "--write"
+ ],
+ "env_doi": [
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:21:06+07:00",
+ "ket_thuc": "2026-10-24T11:21:10+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "(?s)\\A(?=.*\\[rollout\\][^\\n]*sales-07\\.3)(?!.*Dự báo mùa)",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e8b3079fec356f5a99a1b0a5c168017ef0ecb60c5cd2e38f966172a2a6264050",
+ "stderr_sha256": "10705e8c91522a97fa2fe62b00466cb324cd3f347b8b255f47cf96df6999a289"
+}

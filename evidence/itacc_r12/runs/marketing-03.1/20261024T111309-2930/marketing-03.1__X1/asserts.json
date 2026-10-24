@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from ad_test_plans where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

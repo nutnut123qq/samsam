@@ -1,0 +1,49 @@
+# ma: S073-C06
+# luc: 2026-10-23T10:54:33+07:00
+# lenh: python evidence/itacc_r10/g2/harness/run_mod.py --reports-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/fc_tat -m agents.kd_forecast --start 2026-11-16 --sku saphraton-20v --write
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 1
+## stdout
+# Dự báo mùa SKU × kênh — 2026-11-16 → 2027-02-14 (13 tuần)
+
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+
+Khoảng thấp–cơ sở–cao (đơn vị, cộng cả kỳ) — KHÔNG phải doanh số cam kết; giả định số bán chưa phải số thật.
+
+| SKU | shopee | tiktok | web | facebook | zalo | chatbot | offline | Tổng |
+|---|---|---|---|---|---|---|---|---|
+| saphraton-20v | 139–204–293 | 0–0–0 | 0–0–0 | 0–0–0 | 0–0–0 | 0–0–0 | 85–134–190 | 224–338–483 |
+
+## Đối chiếu tồn
+
+- saphraton-20v: tồn 450 (MẪU) — RỦI RO (kịch bản cao) thiếu 33 nếu bán theo mức cao
+
+## Ghi chú engine kịch bản
+
+- saphraton-20v × tiktok: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × web: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × facebook: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × zalo: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × chatbot: kênh chưa có trong allowed_channels (golden)
+
+
+## stderr
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r10\g2\harness\run_mod.py", line 59, in <module>
+    runpy.run_module(mod, run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\code\samsam\agents\kd_forecast.py", line 221, in <module>
+    rc = main()
+         ^^^^^^
+  File "D:\code\samsam\agents\kd_forecast.py", line 208, in main
+    p = write_report(text, REPORTS_DIR,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\agents\report.py", line 570, in write_report
+    md = rollout.gate_report(name)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\rollout.py", line 719, in gate_report
+    raise RolloutBlocked(_why(fid, "tat", f"báo cáo {name}")
+pipelines.rollout.RolloutBlocked: báo cáo kd-forecast-2026-11-16.md: tính năng sales-07.3 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra

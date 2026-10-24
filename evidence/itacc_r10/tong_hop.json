@@ -1,0 +1,2376 @@
+{
+ "tom_tat": {
+  "mau_so": 96,
+  "co_ban_ghi": 96,
+  "tong": {
+   "BI_CHAN": 36,
+   "DAT": 60
+  },
+  "theo_khoi": {
+   "ceo": {
+    "BI_CHAN": 6,
+    "DAT": 4
+   },
+   "sales": {
+    "BI_CHAN": 5,
+    "DAT": 8
+   },
+   "marketing": {
+    "DAT": 10,
+    "BI_CHAN": 4
+   },
+   "intel": {
+    "BI_CHAN": 6,
+    "DAT": 5
+   },
+   "finance": {
+    "DAT": 8,
+    "BI_CHAN": 2
+   },
+   "production": {
+    "BI_CHAN": 5,
+    "DAT": 1
+   },
+   "farming": {
+    "BI_CHAN": 4,
+    "DAT": 6
+   },
+   "legal_hr": {
+    "BI_CHAN": 1,
+    "DAT": 9
+   },
+   "data_platform": {
+    "DAT": 9,
+    "BI_CHAN": 3
+   }
+  },
+  "theo_pham_vi": {
+   "AI P1": {
+    "BI_CHAN": 27,
+    "DAT": 53
+   },
+   "AI P2": {
+    "BI_CHAN": 3,
+    "DAT": 6
+   },
+   "7 hạng mục khác": {
+    "BI_CHAN": 6,
+    "DAT": 1
+   }
+  },
+  "nguyen_nhan_bi_chan": {
+   "CODE_FAIL": 24,
+   "SEPARATE_REPO": 2,
+   "MISSING_ADAPTER": 4,
+   "EXTERNAL_INPUT": 4,
+   "NON_SOFTWARE": 2
+  },
+  "loi_nhat_quan": []
+ },
+ "items": [
+  {
+   "id": "ceo-01",
+   "khoi": "ceo",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo cáo tuần tự động",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 8,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Đưa ceo-<kỳ>.md vào output_sources report của ceo-01 (hoặc gắn nhãn/cổng tắt cho file) — lỗi THẤP; đầu ra thiết yếu (mục ceo/weekly_report có số + nguồn) đã đạt. Ngoài code: số kênh ngoài thật do người xuất CSV; người nhận cảnh báo độc lập (routing)",
+   "gioi_han": "Số liệu là fixture; chatbot.* đọc data/conversations.jsonl của repo (chỉ đọc); không kiểm LLM (--llm tắt, không key)",
+   "loi": [
+    {
+     "ma": "g1-L4",
+     "muc_do": "THẤP",
+     "tieu_de": "Báo cáo file ceo-<kỳ>.md (ceo-01) / hdtv-<kỳ>.md (ceo-05) không thuộc output_sources report → không nhãn 'CHẠY THỬ — KHÔNG GỬI', không qua cổng tắt, không vào report_outputs",
+     "tai_hien": [
+      "ceo_report --period week --ref 2026-10-12 --submit --out-dir → file không nhãn (out/ceo01_C06.txt, reports/ceo-2026-W42.md)",
+      "rollout --disable ceo-01 → ceo_report vẫn GHI ceo-2026-W41.md dù mục hàng duyệt bị chặn (out/ceo01_C09.txt)"
+     ],
+     "expected": "báo cáo .md của tính năng chạy thử mang nhãn trong nội dung (v15.2 P8.5) và không sinh khi tính năng tắt",
+     "actual": "không nhãn; file vẫn sinh khi tắt; report_outputs 0 dòng (chỉ mục hàng duyệt được cổng giai đoạn)",
+     "evidence": [
+      "out/ceo01_C06.txt",
+      "out/ceo01_C09.txt",
+      "reports/ceo-2026-W42.md",
+      "reports/hdtv-2026-09.md"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-02.1",
+   "khoi": "ceo",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Theo dõi tiến độ (sổ mốc)",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 10
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Nhánh áp hạn ở van_hanh chạy bằng FIXTURE ép giai đoạn; sổ mốc data/projects/milestones.json là BẢN DEV SOẠN; người duyệt chưa đối chiếu ủy quyền (dev). Ghi chú: tắt tính năng → traceback (g1-L2), apply-due ở chạy thử in thêm 'LỆCH bản duyệt' gây hiểu nhầm",
+   "loi": []
+  },
+  {
+   "id": "ceo-02.2",
+   "khoi": "ceo",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Sổ quyết định TGĐ",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 9,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Thêm mục chờ quyết/chờ ký vào --list (lỗi THẤP); yêu cầu PL01 'việc nào chờ ký' đã hiện ở trang TGĐ/bản tin khối ceo",
+   "gioi_han": "Append-only kiểm bằng login owner (trigger); quyền app_human/svc_ui chế độ thực do điều phối viên kiểm",
+   "loi": [
+    {
+     "ma": "g1-L5",
+     "muc_do": "THẤP",
+     "tieu_de": "ceo_decisions --list không in 'việc chờ quyết/chờ ký' dù read() đã đọc (chỉ có ở section trang TGĐ/bản tin)",
+     "tai_hien": [
+      "python -m agents.ceo_decisions --list (out/ceo022_C10.txt) so với ceo_report --bulletin (reports/director-ceo-2026-10-23.md)"
+     ],
+     "expected": "CLI sổ quyết định hiện được việc chờ ký (PL01: 'việc nào chờ ký')",
+     "actual": "--list chỉ in sổ + mốc trễ",
+     "evidence": [
+      "out/ceo022_C10.txt",
+      "out/ceo022_C10b.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-03",
+   "khoi": "ceo",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Sổ rủi ro pháp lý",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Hồ sơ da_cap dựng bằng SQL fixture (đường CLI đòi tài liệu doc_intake); luật mức data/ceo_risk.json + phap_che.json là BẢN DEV SOẠN chờ Pháp chế. Ghi chú: tắt → traceback (g1-L2)",
+   "loi": []
+  },
+  {
+   "id": "ceo-04.3",
+   "khoi": "ceo",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "So bài đăng/listing đang chạy với bản đã duyệt",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 3,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Sửa ceo_audit để tắt ceo-04.3 không chặn ceo-gia (bắt RolloutBlocked từng báo cáo). Ngoài code: file bài đã đăng + listing Seller Center thật; approvers khối ceo; bật timer job ceo_audit",
+   "gioi_han": "Bài đăng/listing là file fixture; mapping cột Seller Center chưa xác minh với file thật",
+   "loi": [
+    {
+     "ma": "g1-L1",
+     "muc_do": "TRUNG BÌNH",
+     "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+     "tai_hien": [
+      "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+      "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+      "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+     ],
+     "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+     "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+     "evidence": [
+      "out/ceo043_C04.txt",
+      "out/intel03_C06.txt",
+      "out/intel012_C03.txt"
+     ]
+    },
+    {
+     "ma": "g1-L2",
+     "muc_do": "THẤP",
+     "tieu_de": "RolloutBlocked không được bắt ở một số CLI → traceback Python, exit 1 (job_runs ghi lỗi chung)",
+     "tai_hien": [
+      "da_pmo --board --submit khi ceo-02.1 tắt (out/ceo021_C10.txt)",
+      "ceo_audit --report khi ceo-04.3/04.4 tắt (out/ceo043_C04.txt, out/ceo044_C03.txt)",
+      "ceo_risk --report khi ceo-03 tắt (out/ceo03_C05.txt)",
+      "intel_bulletin --suggest / bản tin khi intel-01.2/01.1 tắt (out/intel012_C03.txt, out/intel011_C06.txt)"
+     ],
+     "expected": "thông điệp [rollout]/[blocked] + exit code có chủ đích như ceo_promo/combo_price/hdtv_report",
+     "actual": "traceback pipelines.rollout.RolloutBlocked, exit 1",
+     "evidence": [
+      "out/ceo021_C10.txt",
+      "out/ceo03_C05.txt",
+      "out/intel011_C06.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-04.4",
+   "khoi": "ceo",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "So giá (và mô tả) listing đang chạy với bản đã duyệt",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 3,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Cùng sửa g1-L1. Ngoài code: listing thật có cột mô tả (hiện 'Mô tả sản phẩm' bị drop trong mapping → mô tả luôn không so được); giá list golden do người duyệt",
+   "gioi_han": "So mô tả chưa kiểm được nhánh khop/lech (file không có cột)",
+   "loi": [
+    {
+     "ma": "g1-L1",
+     "muc_do": "TRUNG BÌNH",
+     "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+     "tai_hien": [
+      "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+      "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+      "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+     ],
+     "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+     "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+     "evidence": [
+      "out/ceo043_C04.txt",
+      "out/intel03_C06.txt",
+      "out/intel012_C03.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-04.5",
+   "khoi": "ceo",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "So voucher/khuyến mãi đang chạy với bản đã duyệt",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Kế hoạch KM/file KM là fixture; ghi chú: quy % → giá dùng giá list golden kể cả CHƯA duyệt (payload sapentol 417.000) — nên xem lại",
+   "loi": []
+  },
+  {
+   "id": "ceo-04.6",
+   "khoi": "ceo",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo khi nhật ký bị sửa + đối soát độc lập BKS",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 8
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Neo đuôi chỉ là neo NỘI BỘ (audit_runs) — neo ngoài/object-lock là external-dep; cảnh báo chuỗi chưa tới người (routing rỗng)",
+   "loi": []
+  },
+  {
+   "id": "ceo-05",
+   "khoi": "ceo",
+   "giai_doan": "P2",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo cáo HĐTV",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "FAIL": 1,
+    "PASS": 4
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Sửa sec_opscost: không có dòng chi/nguồn → [chưa có dữ liệu] (lỗi TRUNG BÌNH vì gói trình HĐTV); nhãn chạy thử cho hdtv-*.md (g1-L4). P2 — chưa đến giai đoạn",
+   "gioi_han": "Tháng 2026-09 gần như không dữ liệu nguồn → chủ yếu kiểm nhánh thiếu số",
+   "loi": [
+    {
+     "ma": "g1-L3",
+     "muc_do": "TRUNG BÌNH",
+     "tieu_de": "Gói HĐTV in 'Thực chi 0đ / 0.0% trần' khi KHÔNG có nguồn chi nào (opex_entries 0 dòng, llm_usage 0 dòng)",
+     "tai_hien": [
+      "python -m agents.hdtv_report --month 2026-09 --out-dir … trên DB không có opex_entries (out/ceo05_C01.txt, reports/hdtv-2026-09.md mục 'Chi so ngân sách vận hành')"
+     ],
+     "expected": "thiếu số → [chưa có dữ liệu] (đúng cam kết in ở đầu chính trang), không hiện 0",
+     "actual": "agents/hdtv_report.py sec_opscost: spent = acts.get(scope, 0) → 0đ cho cả 6 phạm vi",
+     "evidence": [
+      "out/ceo05_C01.txt",
+      "reports/hdtv-2026-09.md"
+     ]
+    },
+    {
+     "ma": "g1-L4",
+     "muc_do": "THẤP",
+     "tieu_de": "Báo cáo file ceo-<kỳ>.md (ceo-01) / hdtv-<kỳ>.md (ceo-05) không thuộc output_sources report → không nhãn 'CHẠY THỬ — KHÔNG GỬI', không qua cổng tắt, không vào report_outputs",
+     "tai_hien": [
+      "ceo_report --period week --ref 2026-10-12 --submit --out-dir → file không nhãn (out/ceo01_C06.txt, reports/ceo-2026-W42.md)",
+      "rollout --disable ceo-01 → ceo_report vẫn GHI ceo-2026-W41.md dù mục hàng duyệt bị chặn (out/ceo01_C09.txt)"
+     ],
+     "expected": "báo cáo .md của tính năng chạy thử mang nhãn trong nội dung (v15.2 P8.5) và không sinh khi tính năng tắt",
+     "actual": "không nhãn; file vẫn sinh khi tắt; report_outputs 0 dòng (chỉ mục hàng duyệt được cổng giai đoạn)",
+     "evidence": [
+      "out/ceo01_C06.txt",
+      "out/ceo01_C09.txt",
+      "reports/ceo-2026-W42.md",
+      "reports/hdtv-2026-09.md"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sales-01",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Chatbot chăm sóc khách (Zalo, Messenger)",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 12,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Vá L3 (bắt RolloutBlocked ở record_handoff hoặc cho cskh_handoff đi đường riêng khi tắt) rồi chạy lại S01-X1; secret OA/Meta + server Bên B để kiểm gửi thật",
+   "gioi_han": "Webhook chạy bằng Handler thật trên 127.0.0.1 (không qua main() vì main bind 0.0.0.0); không gửi thật tới Zalo/Meta (DEPLOY tắt) nên file_output_evidence nguồn conversations không thể sinh (đúng thiết kế); câu trả lời LLM là fake; vận hành 24/7 + secret OA/Meta = blocker danh mục C01.",
+   "loi": [
+    {
+     "ma": "L3",
+     "muc_do": "Trung bình",
+     "tom_tat": "Chatbot sales-01 ở giai đoạn TẮT: khách vẫn nhận câu hứa 'nhân viên sẽ phản hồi' (HOLD_TEXT / template sức khỏe) nhưng KHÔNG có mục cskh_handoff; RolloutBlocked thoát khỏi channels.record_handoff (docstring: 'không raise') → traceback trong luồng trả lời. Trái PL01 'câu hỏi sức khỏe chuyển cho người thật' và docstring _reply_held ('+ mục handoff'). sales_director cũng bị chặn sinh cskh_handoff cùng tính năng → không ai được báo.",
+     "tai_hien": "rollout --disable sales-01 --by 'Người Thử IT'; POST user_send_text câu sức khỏe/câu thường vào Handler zalo thật (harness zalo_e2e.py X1_tat_health / C12_tat)",
+     "expected": "khách nhận template + 1 mục cskh_handoff (lý do suc_khoe/rollout), không ngoại lệ",
+     "actual": "convlog answered=false route=health; approval_queue +0; stderr 'Exception in thread ... RolloutBlocked: hàng duyệt sales/cskh_handoff: tính năng sales-01 đang tắt'",
+     "evidence": [
+      "evidence/itacc_r10/g2/out/S01-X1.txt",
+      "evidence/itacc_r10/g2/out/sales-01_X1_tat_health.json",
+      "evidence/itacc_r10/g2/out/S01-C12.txt"
+     ],
+     "vi_tri_code": "connectors/channels.py record_handoff (chỉ bắt psycopg.Error); pipelines/approval_queue.py enqueue → rollout.check_generate"
+    },
+    {
+     "ma": "UI-02",
+     "muc_do": "TRUNG BÌNH",
+     "nguon": "điều phối viên — UI thật r10 (bổ sung, không đổi kết luận nhóm)",
+     "tom_tat": "Tab 'Chat Sâm Sâm' ở chế độ thực (Streamlit dùng login in role svc_ui) lỗi psycopg InsufficientPrivilege 'permission denied for table chunks' khi trả lời câu thường — traceback hiện cho người dùng (lộ đường dẫn mã). Câu sức khỏe vẫn chuyển người (luật trước truy hồi).",
+     "evidence": [
+      "evidence/itacc_r10/ui/shots/19_chat_cau_thuong_co_tra_loi.png",
+      "evidence/itacc_r10/ui/streamlit_run6_log.txt",
+      "evidence/itacc_r10/ui/ui_results_run6.json"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sales-09",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Chatbot trên website",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 1,
+    "NOT_RUN": 1
+   },
+   "nguyen_nhan": "SEPARATE_REPO",
+   "nguyen_nhan_day_du": "SEPARATE_REPO",
+   "can_de_go": "Giao repo/owner chatbot website",
+   "gioi_han": "Không có module trong repo; luật kênh chung kiểm ở sales-01 không tính thay chatbot website.",
+   "loi": []
+  },
+  {
+   "id": "sales-02",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Gợi ý trả lời chat sàn",
+   "trang_thai": "DAT",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 8
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Câu gợi ý do fake LLM; --mark-sent dương tính chỉ chạy với _FORCE_MODE=van_hanh (FIXTURE) — chế độ thực (approvers + db_login) do điều phối viên kiểm; API chat sàn chưa có (MXH dán tay).",
+   "loi": []
+  },
+  {
+   "id": "sales-03",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Listing đa sàn",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 10
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Golden thật: kênh web CAM với MỌI SKU → mô tả chuẩn (listing web) không thể sinh trên dữ liệu thật — phải dùng golden FIXTURE; tiêu đề cột data/listing_export_map.json UNVERIFIED_LIVE; xuất chỉ chạy được ở van_hanh (FIXTURE); duyệt nháp/giá ở dev mode; L4 (traceback khi tắt) ghi Thấp.",
+   "loi": [
+    {
+     "ma": "L4",
+     "muc_do": "Thấp",
+     "tom_tat": "Một số CLI không bắt RolloutBlocked khi tính năng TẮT → traceback Python (exit 1) thay vì thông báo/exit theo docstring (content: 'exit 2 ... tính năng tắt'). Kết quả an toàn vẫn đúng (không sinh đầu ra/không ghi file).",
+     "tai_hien": "rollout --disable; python -m pipelines.content --listing ...; python -m agents.kd_quote --quote 2 --submit; python -m agents.kd_forecast --write",
+     "expected": "thông báo [rollout] + exit 2 (hoặc exit 1 có thông báo), không traceback",
+     "actual": "Traceback ... pipelines.rollout.RolloutBlocked ... exit 1 (kd_quote còn ghi 3 file báo giá vào --out-dir trước khi bị chặn)",
+     "evidence": [
+      "evidence/itacc_r10/g2/out/S03-C10a.txt",
+      "evidence/itacc_r10/g2/out/S05-C10.txt",
+      "evidence/itacc_r10/g2/out/S073-C06.txt"
+     ],
+     "vi_tri_code": "pipelines/content.py main (--listing), agents/kd_quote.py _cmd_quote, agents/kd_forecast.py main"
+    }
+   ]
+  },
+  {
+   "id": "sales-04.1",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Người phụ trách khách trong ngày",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Lead quá hạn thật cần ≥4 giờ làm việc → dùng 2 dòng convlog FIXTURE 'live' ts hôm qua (ghi chú FIXTURE trong dòng) — chỉ kiểm logic SLA, KHÔNG là bằng chứng ngày chạy thử/đầu ra vận hành; lead đã gán quá hạn chỉ kiểm bằng --dry-run --now; staff_codes rỗng (chỉ kiểm mẫu mã); quyền chế độ thực do điều phối viên kiểm.",
+   "loi": []
+  },
+  {
+   "id": "sales-04.2",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Chuyển khách về đại lý gần nhất",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6,
+    "FAIL": 3
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Vá L1 (lọc pii_included=true ở bộ đếm hoặc chặn/đổi action khi chưa đồng ý) rồi chạy lại S042-C04/C07/X1",
+   "gioi_han": "PII chỉ giải mã khi có đồng ý dai_ly đích danh — ĐẠT; lỗi nằm ở việc ghi/đếm handoff không đồng ý (L1). Sổ vùng–đại lý thật chưa có (fixture DLTHU01/02). Dev mode.",
+   "loi": [
+    {
+     "ma": "L1",
+     "muc_do": "Trung bình",
+     "tom_tat": "Bộ đếm đầu ra sales-04.2 (rollout _TABLES['agent_action_log'], nosample ghi 'NGƯỜI chuyển lead ĐÃ ĐỒNG Ý') chỉ lọc action=crm_handoff, KHÔNG lọc detail.pii_included → handoff khi khách CHƯA đồng ý dai_ly (thậm chí lead không có liên hệ) vẫn được đếm là đầu ra 'chuyển khách khi khách đồng ý' cho cổng PL02.",
+     "tai_hien": "crm --assign 7 --dealer DLTHU02 ...; crm --handoff 7 --dealer DLTHU02 --by ... (lead 7 không có contact/đồng ý); rollout --status: sales-04.2 2 → 3 đầu ra",
+     "expected": "handoff không đồng ý không được tính là đầu ra (hoặc bị từ chối)",
+     "actual": "exit 0, payload không PII, agent_action_log crm_handoff pii_included=false; rollout --status tăng 2→3",
+     "evidence": [
+      "evidence/itacc_r10/g2/out/S042-X-status.txt",
+      "evidence/itacc_r10/g2/out/S042-X1-status.txt",
+      "evidence/itacc_r10/g2/out/S042-X1-db.json",
+      "evidence/itacc_r10/g2/out/S042-X1-handoff7.txt"
+     ],
+     "vi_tri_code": "pipelines/rollout.py _TABLES['agent_action_log'] (filters chỉ action); docs/schema.sql crm_handoff_human ghi log cả khi v_ok=false"
+    }
+   ]
+  },
+  {
+   "id": "sales-05",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo giá B2B quà Tết",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 9,
+    "NOT_RUN": 1,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Vá L2 (giá từ price_list đã duyệt + lọc readiness như S03/F2) rồi chạy lại S05-X1/C07; chạy --followups sau ≥24 giờ làm việc để ghi b2b_followup",
+   "gioi_han": "Ma trận chiết khấu + ngưỡng nhắc GIẢ ĐỊNH; export/verify-send chỉ ở van_hanh (FIXTURE); đường ghi b2b_followup chưa chạy (C09 NOT_RUN); form chỉ localhost (tên miền/DPIA = Bên B).",
+   "loi": [
+    {
+     "ma": "L2",
+     "muc_do": "Trung bình",
+     "tom_tat": "Báo giá/catalog B2B (kd_quote/kd_catalog) lấy giá niêm yết từ data/golden_skus.json, KHÔNG kiểm price_list ĐÃ duyệt (cùng lớp lỗi đã vá ở listing_export S03 và website feed F2); báo giá SKU có giá list đang CHỜ duyệt không có reason cảnh báo. Catalog (tài liệu quảng cáo) + form B2B nhận SKU thực phẩm chưa tự công bố (sku_readiness=CAM mọi kênh).",
+     "tai_hien": "form B2B (127.0.0.1) yêu cầu mat-ong-sam-120ml-1hu ×50; kd_quote --quote 2 --dry-run; price_list id 24 approved_by null",
+     "expected": "giá từ price_list đã duyệt hoặc reason chặn/cảnh báo 'giá chưa duyệt'; SKU CAM không vào catalog/form",
+     "actual": "đơn giá 685.000đ tính từ 745.000đ (golden JSON), reasons chỉ ma_tran_chua_xac_nhan, thieu_gia_von_duyet; catalog-tet liệt kê 3 SKU mật ong (self_declaration chưa xác minh) với giá niêm yết chưa duyệt",
+     "evidence": [
+      "evidence/itacc_r10/g2/out/S05-X1b.txt",
+      "evidence/itacc_r10/g2/out/S05-X1-db.json",
+      "evidence/itacc_r10/g2/out/s05/catalog-tet-2026-10-23.md",
+      "evidence/itacc_r10/g2/out/S05-C03.json"
+     ],
+     "vi_tri_code": "agents/kd_quote.py price_lines (_sum_price trên golden JSON); agents/kd_catalog.py eligible (food → vào không xét readiness)"
+    },
+    {
+     "ma": "L4",
+     "muc_do": "Thấp",
+     "tom_tat": "Một số CLI không bắt RolloutBlocked khi tính năng TẮT → traceback Python (exit 1) thay vì thông báo/exit theo docstring (content: 'exit 2 ... tính năng tắt'). Kết quả an toàn vẫn đúng (không sinh đầu ra/không ghi file).",
+     "tai_hien": "rollout --disable; python -m pipelines.content --listing ...; python -m agents.kd_quote --quote 2 --submit; python -m agents.kd_forecast --write",
+     "expected": "thông báo [rollout] + exit 2 (hoặc exit 1 có thông báo), không traceback",
+     "actual": "Traceback ... pipelines.rollout.RolloutBlocked ... exit 1 (kd_quote còn ghi 3 file báo giá vào --out-dir trước khi bị chặn)",
+     "evidence": [
+      "evidence/itacc_r10/g2/out/S03-C10a.txt",
+      "evidence/itacc_r10/g2/out/S05-C10.txt",
+      "evidence/itacc_r10/g2/out/S073-C06.txt"
+     ],
+     "vi_tri_code": "pipelines/content.py main (--listing), agents/kd_quote.py _cmd_quote, agents/kd_forecast.py main"
+    }
+   ]
+  },
+  {
+   "id": "sales-06.1",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Giám sát giá và phá giá",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "price_change agent:kd_price không tái hiện: list_deviation luôn trùng market_alerts price_mismatch đang mở (thiết kế chỉ báo cáo) và floor golden ≥ ~67–79% list nên listing_promo_over_cap (>40%) không đạt; price_review sinh từ golden_discrepancies của golden FIXTURE; nguồn giá đại lý tự động chưa có (chỉ file quan sát tay); ngưỡng GIẢ ĐỊNH.",
+   "loi": []
+  },
+  {
+   "id": "sales-06.2",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Cảnh báo đơn trễ, hủy, hoàn bất thường",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "File xuất Seller Center chưa có cột ngày đặt → orders.ts = lúc nạp; để kiểm tuần ĐÃ ĐÓNG phải dời ts 7 ngày (FIXTURE harness shift_orders.py, ghi rõ) — không là bằng chứng vận hành; đơn trễ chưa đo (thiết kế); tên trạng thái hoàn/trả + ngưỡng GIẢ ĐỊNH; mapping cột chưa xác minh với file thật.",
+   "loi": []
+  },
+  {
+   "id": "sales-07.1",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kịch bản và giỏ hàng livestream",
+   "trang_thai": "DAT",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Lời dẫn do fake LLM; golden thật không có SKU nào promotable (TPBVSK chưa XNQC, thực phẩm chưa tự công bố) → dùng golden FIXTURE; tài khoản live sàn = external-dep (không lên sóng).",
+   "loi": [
+    {
+     "ma": "L5",
+     "muc_do": "Thấp",
+     "tom_tat": "kd_live khi sales-07.1 TẮT vẫn gọi LLM (1 lời gọi, tốn phí khi chạy thật) rồi mới bị chặn ở save_draft.",
+     "tai_hien": "rollout --disable sales-07.1; kd_live (fake LLM) → IT_FAKE_LOG ghi 1 lời gọi; exit 1 RolloutBlocked",
+     "expected": "kiểm giai đoạn trước LLM (0 lời gọi) như content --daily",
+     "actual": "1 lời gọi chat feature sales-07.1, sau đó [error] RolloutBlocked",
+     "evidence": [
+      "evidence/itacc_r10/g2/out/S071-C07.txt"
+     ],
+     "vi_tri_code": "agents/kd_live.py write_script/generate"
+    }
+   ]
+  },
+  {
+   "id": "sales-07.2",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Sau bán: xin đánh giá",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Rebuy cần SKU promotable zalo → golden FIXTURE; verify-send dương tính chỉ ở van_hanh (FIXTURE); gửi Zalo OA/ZNS do người (external-dep); luật care_rules GIẢ ĐỊNH.",
+   "loi": []
+  },
+  {
+   "id": "sales-07.3",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kịch bản bán mùa 11.11, 12.12, Tết",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Giả định số bán data/scenario_assumptions.json GIẢ ĐỊNH (chờ GĐ KD/TC); tồn từ file fixture; báo cáo ghi qua patch agents.report.REPORTS_DIR (CLI không có --out-dir).",
+   "loi": [
+    {
+     "ma": "L4",
+     "muc_do": "Thấp",
+     "tom_tat": "Một số CLI không bắt RolloutBlocked khi tính năng TẮT → traceback Python (exit 1) thay vì thông báo/exit theo docstring (content: 'exit 2 ... tính năng tắt'). Kết quả an toàn vẫn đúng (không sinh đầu ra/không ghi file).",
+     "tai_hien": "rollout --disable; python -m pipelines.content --listing ...; python -m agents.kd_quote --quote 2 --submit; python -m agents.kd_forecast --write",
+     "expected": "thông báo [rollout] + exit 2 (hoặc exit 1 có thông báo), không traceback",
+     "actual": "Traceback ... pipelines.rollout.RolloutBlocked ... exit 1 (kd_quote còn ghi 3 file báo giá vào --out-dir trước khi bị chặn)",
+     "evidence": [
+      "evidence/itacc_r10/g2/out/S03-C10a.txt",
+      "evidence/itacc_r10/g2/out/S05-C10.txt",
+      "evidence/itacc_r10/g2/out/S073-C06.txt"
+     ],
+     "vi_tri_code": "pipelines/content.py main (--listing), agents/kd_quote.py _cmd_quote, agents/kd_forecast.py main"
+    }
+   ]
+  },
+  {
+   "id": "marketing-01.1",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Soạn 3 bài mỗi ngày",
+   "trang_thai": "DAT",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Chỉ 2/3 nháp/ngày vì 0 SKU đủ readiness bài đăng (blocker danh mục: XNQC/tự công bố) — đúng hành vi; lịch GIẢ ĐỊNH; LLM giả; người duyệt chế độ dev. | Nhánh 3/3 chỉ đạt với golden FIXTURE (SKU giả lập đã tự công bố); với golden thật hiện 0 SKU đủ readiness bài đăng → 2/3 + THIẾU (blocker danh mục).",
+   "loi": []
+  },
+  {
+   "id": "marketing-01.2",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Lịch mùa vụ (brief chiến dịch)",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Lịch chiến dịch GIẢ ĐỊNH; approvers marketing rỗng (dev).",
+   "loi": [
+    {
+     "ma": "D3",
+     "muc_do": "thấp",
+     "mo_ta": "RolloutBlocked (tính năng tắt) không được bắt ở CLI → traceback exit 1 (mkt_director --briefs, seo_web --submit, pc_hr --jd); mkt_ads --propose in '[error] RolloutBlocked: RolloutBlocked' exit 1 — mất lý do, lệch quy ước exit 2 của các CLI khác. Hành vi cốt lõi (không sinh đầu ra) vẫn đúng.",
+     "tai_hien": "rollout --disable <tính năng>; chạy CLI tương ứng",
+     "expected": "[blocked] <lý do> exit 2",
+     "actual": "traceback / thông báo mất lý do, exit 1",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/01.2-C4.txt",
+      "evidence/itacc_r10/g3/out/06.1-C3.txt",
+      "evidence/itacc_r10/g3/out/L-06.1-C4.txt",
+      "evidence/itacc_r10/g3/out/03.1-C7.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-02.1",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Ảnh bối cảnh AI quanh ảnh sản phẩm thật",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "MISSING_ADAPTER",
+   "nguyen_nhan_day_du": "MISSING_ADAPTER",
+   "can_de_go": "Cắm provider sinh nền ảnh AI vào pipelines.image_studio.PROVIDERS (vendor + hợp đồng/DPA + key + trần chi phí agent image) rồi kiểm lại nhánh --scene; ảnh packshot THẬT do công ty cấp.",
+   "gioi_han": "Đầu ra thiết yếu 'ảnh bối cảnh AI' chưa thực hiện được (registry chỉ none); nền gradient/ghép packshot MẪU KHÔNG thay đầu ra ảnh AI. Tính năng mot_phan nên không vào sổ rollout → không kiểm được nhánh tắt.",
+   "loi": []
+  },
+  {
+   "id": "marketing-02.2",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Video 15–45 giây từ tư liệu thật",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 4,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Kiểm rollout.check_generate (tính năng tắt) TRƯỚC write_script/LLM trong video_studio (và mkt_youtube), bắt RolloutBlocked → exit 2.",
+   "gioi_han": "Packshot/B-roll là MẪU (tư liệu thật chưa có); TTS none (video không tiếng); LLM giả.",
+   "loi": [
+    {
+     "ma": "D1",
+     "muc_do": "trung bình",
+     "mo_ta": "video_studio / mkt_youtube: khi tính năng TẮT vẫn gọi LLM gateway (phát sinh chi phí, ghi llm_usage) và dựng file trước khi bị chặn muộn ở store.save_draft → traceback RolloutBlocked, exit 1. Kỳ vọng (như content --daily): chặn TRƯỚC mọi lời gọi LLM, exit 2.",
+     "tai_hien": "python -m pipelines.rollout --disable marketing-02.2 --by X; python evidence/itacc_r10/g3/harness/run.py --fake-llm .../video.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief '...' (tương tự agents.mkt_youtube với marketing-07.2)",
+     "expected": "exit 2 [blocked], 0 lời gọi LLM, 0 dòng",
+     "actual": "exit 1 traceback RolloutBlocked; 1 lời gọi LLM (llm_usage id 10 feature marketing-02.2 lúc tắt); 0 dòng content_drafts",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/02.2-C5.txt",
+      "evidence/itacc_r10/g3/out/02.2-C5.llm_usage.json",
+      "evidence/itacc_r10/g3/out/07.2-C5.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-03.1",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Đề xuất quảng cáo thử nghiệm",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "mkt_ads.main bắt RolloutBlocked riêng → in lý do + exit 2 (quy ước tắt của các CLI khác). Nghiệp vụ: GĐ Marketing chốt data/ads_proposal.json; P&L/giá vốn thật.",
+   "gioi_han": "Mọi hành vi thiết yếu (trần, chặn, idempotent, BLOCKED khi chưa chốt, đề xuất agent) đạt; FAIL duy nhất là thông báo/exit khi tắt (mức thấp). P&L là dữ liệu MẪU repo; người duyệt dev.",
+   "loi": [
+    {
+     "ma": "D3",
+     "muc_do": "thấp",
+     "mo_ta": "RolloutBlocked (tính năng tắt) không được bắt ở CLI → traceback exit 1 (mkt_director --briefs, seo_web --submit, pc_hr --jd); mkt_ads --propose in '[error] RolloutBlocked: RolloutBlocked' exit 1 — mất lý do, lệch quy ước exit 2 của các CLI khác. Hành vi cốt lõi (không sinh đầu ra) vẫn đúng.",
+     "tai_hien": "rollout --disable <tính năng>; chạy CLI tương ứng",
+     "expected": "[blocked] <lý do> exit 2",
+     "actual": "traceback / thông báo mất lý do, exit 1",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/01.2-C4.txt",
+      "evidence/itacc_r10/g3/out/06.1-C3.txt",
+      "evidence/itacc_r10/g3/out/L-06.1-C4.txt",
+      "evidence/itacc_r10/g3/out/03.1-C7.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-03.2",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Theo dõi chi phí mỗi đơn, đề xuất giữ hay tắt",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 4
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "out/03.2-C1..C4.txt TÁI TẠO từ transcript (bị ghi đè do trùng mã ca — xem harness_fixes.tsv); DB 03.2-C1.db.json là bản gốc. Số kết quả nhập file tay (API ads ngoài phạm vi).",
+   "loi": [
+    {
+     "ma": "Q1",
+     "muc_do": "quan sát",
+     "mo_ta": "mkt_ads --results nhận file kết quả có ngày SAU hôm nay (trong khung phiếu tương lai) — không kiểm ngày ≤ hôm nay.",
+     "tai_hien": "03.2-C1 (ngày 2026-10-26/27, hôm nay 2026-10-23)",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/03.2-C1.db.json"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-04.1",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Bộ tài liệu chuẩn cho KOC/đại lý affiliate",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "KOC/đại lý là MẪU; hợp đồng mẫu NHÁP; nhánh phát hành chỉ kiểm khi ép van_hanh (FIXTURE) — chạy thử chặn đúng.",
+   "loi": []
+  },
+  {
+   "id": "marketing-04.2",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kiểm tra bài đăng của đối tác",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "File bài đối tác nhập tay (chưa có nguồn tự động); chính sách mã lạ chưa chọn → mặc định an toàn; danh tính người chạy (human_actor) chế độ thực do điều phối viên kiểm.",
+   "loi": []
+  },
+  {
+   "id": "marketing-05.1",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Phân loại bình luận",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "out/05.1-C1,C2,C3,C5,C5a,C5b.txt TÁI TẠO từ transcript (trùng mã ca); DB 05.1-C1.db.json là bản gốc. File comment xuất tay; từ khóa nhãn ĐỀ XUẤT.",
+   "loi": []
+  },
+  {
+   "id": "marketing-05.2",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Soạn nháp trả lời bình luận, đánh giá",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "out/05.2-C1..C4.txt TÁI TẠO từ transcript (trùng mã ca); 05.2-C1.pii_check.txt tính lại từ 05.2-C1.db.json gốc. Review file xuất tay.",
+   "loi": []
+  },
+  {
+   "id": "marketing-06.1",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Chuẩn hóa trang sản phẩm trên web",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 3
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "--fetch (mạng thật) không chạy — chỉ dữ liệu crawl có sẵn; out/06.1-C1..C3.txt TÁI TẠO (trùng mã ca), snapshot DB lấy lại sau.",
+   "loi": [
+    {
+     "ma": "D3",
+     "muc_do": "thấp",
+     "mo_ta": "RolloutBlocked (tính năng tắt) không được bắt ở CLI → traceback exit 1 (mkt_director --briefs, seo_web --submit, pc_hr --jd); mkt_ads --propose in '[error] RolloutBlocked: RolloutBlocked' exit 1 — mất lý do, lệch quy ước exit 2 của các CLI khác. Hành vi cốt lõi (không sinh đầu ra) vẫn đúng.",
+     "tai_hien": "rollout --disable <tính năng>; chạy CLI tương ứng",
+     "expected": "[blocked] <lý do> exit 2",
+     "actual": "traceback / thông báo mất lý do, exit 1",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/01.2-C4.txt",
+      "evidence/itacc_r10/g3/out/06.1-C3.txt",
+      "evidence/itacc_r10/g3/out/L-06.1-C4.txt",
+      "evidence/itacc_r10/g3/out/03.1-C7.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-06.2",
+   "khoi": "marketing",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo cáo kênh",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Số lượt xem chỉ từ file xuất tay MẪU; tuần đã đóng không có dữ liệu marketing (không lùi timestamp) → số thực kiểm qua báo cáo kỳ hiện tại; out/06.2-C1..C3.txt TÁI TẠO (trùng mã ca).",
+   "loi": []
+  },
+  {
+   "id": "marketing-07.1",
+   "khoi": "marketing",
+   "giai_doan": "P2",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "SEO sàn",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Listing/Trends là file MẪU; giới hạn ký tự GIẢ ĐỊNH.",
+   "loi": []
+  },
+  {
+   "id": "marketing-07.2",
+   "khoi": "marketing",
+   "giai_doan": "P2",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "YouTube dài",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 4,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Như D1: chặn tính năng tắt trước LLM trong mkt_youtube.",
+   "gioi_han": "LLM giả; B-roll MẪU; không đăng YouTube (external-dep).",
+   "loi": [
+    {
+     "ma": "D1",
+     "muc_do": "trung bình",
+     "mo_ta": "video_studio / mkt_youtube: khi tính năng TẮT vẫn gọi LLM gateway (phát sinh chi phí, ghi llm_usage) và dựng file trước khi bị chặn muộn ở store.save_draft → traceback RolloutBlocked, exit 1. Kỳ vọng (như content --daily): chặn TRƯỚC mọi lời gọi LLM, exit 2.",
+     "tai_hien": "python -m pipelines.rollout --disable marketing-02.2 --by X; python evidence/itacc_r10/g3/harness/run.py --fake-llm .../video.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief '...' (tương tự agents.mkt_youtube với marketing-07.2)",
+     "expected": "exit 2 [blocked], 0 lời gọi LLM, 0 dòng",
+     "actual": "exit 1 traceback RolloutBlocked; 1 lời gọi LLM (llm_usage id 10 feature marketing-02.2 lúc tắt); 0 dòng content_drafts",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/02.2-C5.txt",
+      "evidence/itacc_r10/g3/out/02.2-C5.llm_usage.json",
+      "evidence/itacc_r10/g3/out/07.2-C5.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-01.1",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Bản tin thị trường 7h",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Sửa intel_bulletin để intel-01.2 tắt không làm mất bản tin (bắt RolloutBlocked trong suggest). Ngoài code: BGĐ/Quản lý MXH duyệt nguồn data/intel_sources.json (17/17 chờ duyệt); Pháp chế xem điều khoản RSS",
+   "gioi_han": "Không thu nguồn thật; bản tin không có --out-dir (phải patch REPORTS_DIR); LLM tóm tắt không kiểm (tắt)",
+   "loi": [
+    {
+     "ma": "g1-L1",
+     "muc_do": "TRUNG BÌNH",
+     "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+     "tai_hien": [
+      "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+      "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+      "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+     ],
+     "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+     "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+     "evidence": [
+      "out/ceo043_C04.txt",
+      "out/intel03_C06.txt",
+      "out/intel012_C03.txt"
+     ]
+    },
+    {
+     "ma": "g1-L2",
+     "muc_do": "THẤP",
+     "tieu_de": "RolloutBlocked không được bắt ở một số CLI → traceback Python, exit 1 (job_runs ghi lỗi chung)",
+     "tai_hien": [
+      "da_pmo --board --submit khi ceo-02.1 tắt (out/ceo021_C10.txt)",
+      "ceo_audit --report khi ceo-04.3/04.4 tắt (out/ceo043_C04.txt, out/ceo044_C03.txt)",
+      "ceo_risk --report khi ceo-03 tắt (out/ceo03_C05.txt)",
+      "intel_bulletin --suggest / bản tin khi intel-01.2/01.1 tắt (out/intel012_C03.txt, out/intel011_C06.txt)"
+     ],
+     "expected": "thông điệp [rollout]/[blocked] + exit code có chủ đích như ceo_promo/combo_price/hdtv_report",
+     "actual": "traceback pipelines.rollout.RolloutBlocked, exit 1",
+     "evidence": [
+      "out/ceo021_C10.txt",
+      "out/ceo03_C05.txt",
+      "out/intel011_C06.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-01.2",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Gợi ý chủ đề cho Marketing",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 2,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Bắt RolloutBlocked trong suggest() (exit có chủ đích, không mất bản tin)",
+   "gioi_han": "Gợi ý là template tất định; approvers khối intel rỗng (dev)",
+   "loi": [
+    {
+     "ma": "g1-L1",
+     "muc_do": "TRUNG BÌNH",
+     "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+     "tai_hien": [
+      "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+      "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+      "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+     ],
+     "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+     "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+     "evidence": [
+      "out/ceo043_C04.txt",
+      "out/intel03_C06.txt",
+      "out/intel012_C03.txt"
+     ]
+    },
+    {
+     "ma": "g1-L2",
+     "muc_do": "THẤP",
+     "tieu_de": "RolloutBlocked không được bắt ở một số CLI → traceback Python, exit 1 (job_runs ghi lỗi chung)",
+     "tai_hien": [
+      "da_pmo --board --submit khi ceo-02.1 tắt (out/ceo021_C10.txt)",
+      "ceo_audit --report khi ceo-04.3/04.4 tắt (out/ceo043_C04.txt, out/ceo044_C03.txt)",
+      "ceo_risk --report khi ceo-03 tắt (out/ceo03_C05.txt)",
+      "intel_bulletin --suggest / bản tin khi intel-01.2/01.1 tắt (out/intel012_C03.txt, out/intel011_C06.txt)"
+     ],
+     "expected": "thông điệp [rollout]/[blocked] + exit code có chủ đích như ceo_promo/combo_price/hdtv_report",
+     "actual": "traceback pipelines.rollout.RolloutBlocked, exit 1",
+     "evidence": [
+      "out/ceo021_C10.txt",
+      "out/ceo03_C05.txt",
+      "out/intel011_C06.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-02.1",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo động sâm giả, mạo danh Ngọc Linh",
+   "trang_thai": "DAT",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 8
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Gửi thật tới người nhận độc lập chưa kiểm (routing rỗng, SMTP chưa cấu hình — Pháp chế/Bên B); leo thang kiểm bằng đồng hồ tiêm, không đợi 2 giờ thật; luật data/intel_alert_rules.json GIẢ ĐỊNH; chính sách tồn/cấp 2/ngoài giờ chưa cấu hình",
+   "loi": []
+  },
+  {
+   "id": "intel-02.2",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo động quy định mới",
+   "trang_thai": "DAT",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 8
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Như intel-02.1",
+   "loi": []
+  },
+  {
+   "id": "intel-02.3",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo động tin xấu về Sâm Sâm",
+   "trang_thai": "DAT",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 8
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Như intel-02.1",
+   "loi": []
+  },
+  {
+   "id": "intel-03",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Theo dõi đối thủ",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Sửa write_weekly để tắt intel-03 không chặn báo cáo trend. Ngoài code: dữ liệu đối thủ nhập tay thật (chưa có nguồn tự động hợp lệ)",
+   "gioi_han": "Quan sát trước ngày hiệu lực golden → 'chưa có giá golden' (đúng); lượt 1 dữ liệu mồi không có golden hiệu lực",
+   "loi": [
+    {
+     "ma": "g1-L1",
+     "muc_do": "TRUNG BÌNH",
+     "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+     "tai_hien": [
+      "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+      "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+      "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+     ],
+     "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+     "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+     "evidence": [
+      "out/ceo043_C04.txt",
+      "out/intel03_C06.txt",
+      "out/intel012_C03.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-04.1",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Xu hướng Google Trends theo tuần",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Cùng sửa g1-L1. Ngoài code: file Google Trends xuất tay thật",
+   "gioi_han": "Ngày tuần trong fixture là thứ Hai (Google xuất Chủ nhật) — import không chặn",
+   "loi": [
+    {
+     "ma": "g1-L1",
+     "muc_do": "TRUNG BÌNH",
+     "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+     "tai_hien": [
+      "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+      "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+      "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+     ],
+     "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+     "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+     "evidence": [
+      "out/ceo043_C04.txt",
+      "out/intel03_C06.txt",
+      "out/intel012_C03.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-04.2",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Gợi ý từ khóa an toàn pháp lý",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Lọc tất định (chưa có lớp LLM-check ẩn ý); danh sách đối thủ chưa duyệt → nhóm CHỜ QUYẾT; ghi chú: query đã che SĐT lúc nạp ('… gọi ***') vẫn vào danh sách đề xuất",
+   "loi": []
+  },
+  {
+   "id": "intel-05.1",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Thử thông điệp trên khách hàng giả lập",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 4
+   },
+   "nguyen_nhan": "EXTERNAL_INPUT",
+   "nguyen_nhan_day_du": "EXTERNAL_INPUT",
+   "can_de_go": "Pháp chế + TGĐ ký DPIA/TIA rồi NGƯỜI đổi dpia_signed; hạ tầng mở provider_only đủ 3 nhà cung cấp + key OpenRouter cho chạy thật",
+   "gioi_han": "Chỉ kiểm dry-run (số giả) + các cổng chặn; chạy thật (đầu ra thiết yếu) chưa thực hiện được",
+   "loi": []
+  },
+  {
+   "id": "intel-05.2",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Thử giá combo",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 4,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Tách kiểm readiness và kiểm giá đã duyệt trong combo_price (lỗi THẤP — mục đề xuất chính đã đạt). Ngoài code: mức chiết khấu data/combo_price.json GIẢ ĐỊNH; giá vốn đã duyệt; thử trên khách giả lập chờ DPIA",
+   "gioi_han": "Golden fixture đổi self_declaration_ok cho SKU mật ong; không có giá vốn → chỉ kiểm khong_tinh_duoc (chưa kiểm dat/lo/duoi_san)",
+   "loi": [
+    {
+     "ma": "g1-L6",
+     "muc_do": "THẤP",
+     "tieu_de": "combo_price: nhánh thieu_du_lieu không tới được — thành phần thiếu giá list đã duyệt bị báo nhom_han_che",
+     "tai_hien": [
+      "golden fixture mật ong 2 hũ tự công bố OK nhưng list chưa duyệt; combo it-c → python -m agents.combo_price --dry-run (out/intel052_C02.txt)"
+     ],
+     "expected": "thieu_du_lieu ('thiếu giá list ĐÃ DUYỆT của <sku>')",
+     "actual": "nhom_han_che vì v_promotable đã đòi giá list đã duyệt trước bước evaluate() kiểm giá",
+     "evidence": [
+      "out/intel052_C02.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-06",
+   "khoi": "intel",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kịch bản mùa",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Giả định data/scenario_assumptions.json chờ GĐ KD/TC chốt (baseline là FIXTURE); tiêu chí 'tuần Tết cao hơn' viết khái quát — tuần chứa Tết thấp hơn đúng hệ số giả định 0,6",
+   "loi": []
+  },
+  {
+   "id": "finance-01",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Đối soát tiền sàn",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 8
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Mapping cột Seller Center + biểu phí là GIẢ ĐỊNH (data/settlement_map.json, settlement_fees.json) — chưa xác minh với file thật; kiểm trên fixture giả. Quan sát: file CSV của kd_orders --recon tên doi-soat-<since>-<until>.csv trùng tiền tố báo cáo finance-06 (doi-soat-) — không qua write_report nên không đếm, nhưng dễ nhầm tên.",
+   "loi": []
+  },
+  {
+   "id": "finance-02",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Hóa đơn điện tử",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Phát hành HĐĐT trên phần mềm nhà cung cấp do kế toán làm tay (external-dep, ngoài phần mềm); mốc lập hóa đơn + format CSV GIẢ ĐỊNH (invoice_config.json confirmed_by null). Nhánh dùng (verify-draft) chỉ kiểm được bằng FIXTURE _FORCE_MODE=van_hanh.",
+   "loi": []
+  },
+  {
+   "id": "finance-03.1",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Bảng tuổi nợ đại lý",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Thêm nhóm 0-30 (tuổi nợ đủ 4 nhóm) vào mục công nợ của bản tin — sửa sản phẩm, ngoài phạm vi kiểm nghiệm.",
+   "gioi_han": "Sổ công nợ thật do Bên B nạp tay; term_days/chính sách hoa hồng MẪU.",
+   "loi": [
+    {
+     "muc_do": "thấp",
+     "mo_ta": "Bản tin GĐ tài chính (director-finance, mục 'Công nợ đại lý quá hạn' do agents.acc_ar.overdue_section dựng) thiếu nhóm tuổi 0-30 — đầu ra danh mục ghi 'Tuổi nợ 0-30/31-60/61-90/>90 + quá hạn trong bản tin'. Khoản quá hạn nằm ở nhóm 0-30 làm hàng không cộng khớp (Quá hạn 1.000.000đ, các cột 0đ); đại lý chưa quá hạn không có tuổi nợ trong bản tin.",
+     "tai_hien": "acc_ar --load fixtures/ar_ok.csv; harness run.py --reports-dir D -- agents.acc_ar --bulletin --as-of 2026-10-23",
+     "expected": "bảng có nhóm 0-30 (và tuổi nợ 4 nhóm)",
+     "actual": "chỉ Quá hạn/31-60/61-90/>90",
+     "evidence": [
+      "evidence/itacc_r10/g4/out/rep_f031/director-finance-2026-10-23.md",
+      "evidence/itacc_r10/g4/out/F031-4.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "finance-03.2",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Hoa hồng affiliate",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Tỷ lệ hoa hồng MẪU (dealers.commission_default fixture); mã affiliate/đại lý chèn bằng SQL owner làm dữ liệu mồi (luồng --issue cần nội dung marketing đã duyệt — không kiểm ở mục này). Mã voucher trên file sàn GIẢ ĐỊNH cột.",
+   "loi": []
+  },
+  {
+   "id": "finance-03.3",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Nháp thư nhắc nợ",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 4
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Sổ dealers/dealer_ar là fixture; approvers GĐ tài chính rỗng (C04 — chế độ thực do điều phối viên kiểm); kế toán gửi thư tay. Payload ghi 'thay nháp cũ nếu còn chờ duyệt' nhưng code không thay — chỉ bỏ qua cùng trạng thái.",
+   "loi": []
+  },
+  {
+   "id": "finance-04.1",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Biên lợi nhuận từng sản phẩm, từng kênh",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Giá vốn là fixture (người lập ≠ người duyệt ở chế độ dev); P&L chỉ kênh sàn (doanh thu đại lý/B2B chưa có nguồn — external). Dòng lệch chồng kỳ (B) được giữ cả hai trong ô savina-12v + gắn BẤT THƯỜNG theo thiết kế.",
+   "loi": [
+    {
+     "muc_do": "thấp",
+     "mo_ta": "Cổng tắt tính năng chỉ ở biên ghi file (write_report): fp_cash --forecast, sx_tracuu, production bulletin vẫn tính và IN toàn bộ nội dung ra stdout khi tính năng tắt (không nhãn giai đoạn); fp_pnl/sx_tracuu không bắt RolloutBlocked → traceback thô, exit 1.",
+     "tai_hien": "rollout --disable <id>; chạy CLI tương ứng với --out-dir/--out",
+     "expected": "không sinh nội dung, thông báo chặn gọn",
+     "actual": "stdout in nội dung / traceback",
+     "evidence": [
+      "evidence/itacc_r10/g4/out/F052-5.txt",
+      "evidence/itacc_r10/g4/out/P051-5.txt",
+      "evidence/itacc_r10/g4/out/F041-6.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "finance-04.2",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Chặn khuyến mãi bị lỗ",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "SKU mật ong được đặt self_declaration_ok=true trong golden FIXTURE (không phải dữ liệu thật) để có SKU quảng bá được; ngưỡng price_watch/fpa_config GIẢ ĐỊNH; mục KM biên âm là S1 → sales/market_alert_s1 (promo_change chỉ cho phát hiện S2).",
+   "loi": []
+  },
+  {
+   "id": "finance-05.1",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "So chi phí AI, quảng cáo với ngân sách",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Trần ngân sách/ngưỡng X GIẢ ĐỊNH; chi phí AI lấy từ llm_usage fixture. Nhánh 'được chi' (TGĐ có vai trò tgd ký đúng mục) chưa chạy — cần users.json vai trò tgd (danh tính chế độ thực do điều phối viên kiểm); chỉ kiểm nhánh fail-closed.",
+   "loi": []
+  },
+  {
+   "id": "finance-05.2",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Dự báo dòng tiền 13 tuần",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Số dư đầu kỳ thật + giả định fpa_config/scenario GIẢ ĐỊNH; tỷ lệ thực nhận đo trên fixture (gồm dòng hoàn + bản lệch chồng kỳ).",
+   "loi": [
+    {
+     "muc_do": "thấp",
+     "mo_ta": "Cổng tắt tính năng chỉ ở biên ghi file (write_report): fp_cash --forecast, sx_tracuu, production bulletin vẫn tính và IN toàn bộ nội dung ra stdout khi tính năng tắt (không nhãn giai đoạn); fp_pnl/sx_tracuu không bắt RolloutBlocked → traceback thô, exit 1.",
+     "tai_hien": "rollout --disable <id>; chạy CLI tương ứng với --out-dir/--out",
+     "expected": "không sinh nội dung, thông báo chặn gọn",
+     "actual": "stdout in nội dung / traceback",
+     "evidence": [
+      "evidence/itacc_r10/g4/out/F052-5.txt",
+      "evidence/itacc_r10/g4/out/P051-5.txt",
+      "evidence/itacc_r10/g4/out/F041-6.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "production-01",
+   "khoi": "production",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo cáo sản xuất",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Sửa lỗi đè biến `stock` trong pipelines/production.collect (vòng allocation_proposals) — sửa sản phẩm.",
+   "gioi_han": "Mốc production_config + kịch bản GIẢ ĐỊNH; tồn kho fixture.",
+   "loi": [
+    {
+     "muc_do": "cao",
+     "mo_ta": "pipelines.production.collect: vòng đọc allocation_proposals dùng tên biến `stock` cho cột min(stock_total) (production.py ~dòng 820) đè dict tồn kho `stock` (inventory_csv.current_stock); mục cận hạn sau đó `sku in stock` (dòng 861) → TypeError. Hễ DB có ≥1 run phân bổ VÀ có lô passed trong cửa sổ cận hạn thì `production bulletin` crash: không ra bản tin sx-bantin-* (production-01) lẫn mục 'Hàng cận hạn (FEFO)' sx-canhan-* (production-04.3) — đúng lúc cần cảnh báo.",
+     "tai_hien": "inventory_csv --file inv_ok.csv; production allocate --cutoff chot_11_11 --start 2026-10-26; lots --load lots_ok.json; intake IT-LOT-001/002 passed; production bulletin --date 2026-10-23 --out-dir D",
+     "expected": "exit 0, ghi sx-bantin-tuan-2026-10-23.md + sx-canhan-2026-10-23.md có IT-LOT-002 (HSD 01/10/2026) và IT-LOT-001 (01/12/2026)",
+     "actual": "exit 1 traceback TypeError: argument of type 'int' is not iterable; không ghi file. Đối chứng --date 2028-12-01 (không lô cận hạn) chạy được",
+     "evidence": [
+      "evidence/itacc_r10/g4/out/P01-7c.txt",
+      "evidence/itacc_r10/g4/out/P01-7c-lap.txt",
+      "evidence/itacc_r10/g4/out/P01-7d-chandoan.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "production-02",
+   "khoi": "production",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Hồ sơ sản phẩm",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "EXTERNAL_INPUT",
+   "nguyen_nhan_day_du": "EXTERNAL_INPUT",
+   "can_de_go": "Bên B cung cấp danh_muc_ho_so_goc 14 hồ sơ (tên, thành phần, quy cách, số công bố, xác nhận + căn cứ) và gắn mọi SKU golden vào data/product_dossiers.json → product_dossiers --check exit 0.",
+   "gioi_han": "Phần con golden master + phiếu lệch + bộ kiểm hồ sơ chạy đúng trên fixture; đầu ra thiết yếu 'hồ sơ gốc 14 sản phẩm' chưa có dữ liệu. Chính sách cổng tắt loader chưa cấu hình (data/loader_gate.json chinh_sach null — loader in 'CHƯA CẤU HÌNH').",
+   "loi": []
+  },
+  {
+   "id": "production-03",
+   "khoi": "production",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Đối soát nhãn",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "MISSING_ADAPTER",
+   "nguyen_nhan_day_du": "MISSING_ADAPTER",
+   "can_de_go": "Cắm provider OCR trong nước vào ingest.doc_intake.PROVIDERS (vendor + hợp đồng/DPA + key), đặt OCR_PROVIDER.",
+   "gioi_han": "Phần con đối soát từ CHỮ nhãn (.txt) đạt trên fixture; luật nhãn GIẢ ĐỊNH (label_rules.json chờ pháp chế). Đầu ra thiết yếu 'đọc ảnh nhãn thật' chưa có adapter.",
+   "loi": []
+  },
+  {
+   "id": "production-04.3",
+   "khoi": "production",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Hồ sơ lô, cảnh báo cận hạn",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Sửa lỗi đè biến `stock` trong production.collect (cùng lỗi production-01).",
+   "gioi_han": "near_expiry_days GIẢ ĐỊNH 90; phiếu kiểm nghiệm là PDF giả. Quan sát: intake 'passed' cho lô đã quá HSD không cảnh báo; cùng một tệp phiếu được chấp nhận cho 2 lô khác nhau.",
+   "loi": [
+    {
+     "muc_do": "cao",
+     "mo_ta": "pipelines.production.collect: vòng đọc allocation_proposals dùng tên biến `stock` cho cột min(stock_total) (production.py ~dòng 820) đè dict tồn kho `stock` (inventory_csv.current_stock); mục cận hạn sau đó `sku in stock` (dòng 861) → TypeError. Hễ DB có ≥1 run phân bổ VÀ có lô passed trong cửa sổ cận hạn thì `production bulletin` crash: không ra bản tin sx-bantin-* (production-01) lẫn mục 'Hàng cận hạn (FEFO)' sx-canhan-* (production-04.3) — đúng lúc cần cảnh báo.",
+     "tai_hien": "inventory_csv --file inv_ok.csv; production allocate --cutoff chot_11_11 --start 2026-10-26; lots --load lots_ok.json; intake IT-LOT-001/002 passed; production bulletin --date 2026-10-23 --out-dir D",
+     "expected": "exit 0, ghi sx-bantin-tuan-2026-10-23.md + sx-canhan-2026-10-23.md có IT-LOT-002 (HSD 01/10/2026) và IT-LOT-001 (01/12/2026)",
+     "actual": "exit 1 traceback TypeError: argument of type 'int' is not iterable; không ghi file. Đối chứng --date 2028-12-01 (không lô cận hạn) chạy được",
+     "evidence": [
+      "evidence/itacc_r10/g4/out/P01-7c.txt",
+      "evidence/itacc_r10/g4/out/P01-7c-lap.txt",
+      "evidence/itacc_r10/g4/out/P01-7d-chandoan.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "production-05.1",
+   "khoi": "production",
+   "giai_doan": "P2",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Tra cứu tài liệu R&D",
+   "trang_thai": "DAT",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Embedding qua client giả cục bộ (MOCK) — chất lượng truy hồi với model thật chưa kiểm; tài liệu R&D thật do GĐ SX duyệt nạp chưa có (dữ liệu vận hành).",
+   "loi": [
+    {
+     "muc_do": "thấp",
+     "mo_ta": "Cổng tắt tính năng chỉ ở biên ghi file (write_report): fp_cash --forecast, sx_tracuu, production bulletin vẫn tính và IN toàn bộ nội dung ra stdout khi tính năng tắt (không nhãn giai đoạn); fp_pnl/sx_tracuu không bắt RolloutBlocked → traceback thô, exit 1.",
+     "tai_hien": "rollout --disable <id>; chạy CLI tương ứng với --out-dir/--out",
+     "expected": "không sinh nội dung, thông báo chặn gọn",
+     "actual": "stdout in nội dung / traceback",
+     "evidence": [
+      "evidence/itacc_r10/g4/out/F052-5.txt",
+      "evidence/itacc_r10/g4/out/P051-5.txt",
+      "evidence/itacc_r10/g4/out/F041-6.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "production-05.2",
+   "khoi": "production",
+   "giai_doan": "P2",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Tóm tắt tài liệu R&D",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 4,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Đặt rollout.check_generate(production-05.2) trước lời gọi LLM trong sx_tracuu (và bắt RolloutBlocked) — sửa sản phẩm.",
+   "gioi_han": "LLM qua client giả (MOCK) — không gọi OpenRouter; chất lượng tóm tắt thật chưa kiểm; gửi dữ liệu R&D ra AI nước ngoài cần Bên B chấp thuận.",
+   "loi": [
+    {
+     "muc_do": "trung bình",
+     "mo_ta": "agents.sx_tracuu --llm khi tính năng production-05.2 đang TẮT (rollout) vẫn gọi llm_gateway.chat (phát sinh chi phí, gửi ngữ cảnh R&D nội bộ ra dịch vụ AI ở môi trường thật) và in tóm tắt ra stdout; chỉ write_report chặn ghi file và ném traceback RolloutBlocked không bắt.",
+     "tai_hien": "rollout --disable production-05.2; harness run.py --fake-llm ok -- agents.sx_tracuu --ask '…' --llm --out",
+     "expected": "không gọi LLM, không sinh tóm tắt, thông báo bị chặn",
+     "actual": "llm_usage +1 dòng production-05.2 ok; stdout 'Chế độ: llm' + tóm tắt; exit 1 traceback",
+     "evidence": [
+      "evidence/itacc_r10/g4/out/P052-4.txt",
+      "evidence/itacc_r10/g4/out/TAT-prod-q2.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "farming-01",
+   "khoi": "farming",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Nhật ký vườn qua Zalo",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 14,
+    "NOT_RUN": 1
+   },
+   "nguyen_nhan": "MISSING_ADAPTER",
+   "nguyen_nhan_day_du": "MISSING_ADAPTER",
+   "can_de_go": "Vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS; đối chiếu event Zalo OA thật (ảnh/video/ghi âm, host CDN GIẢ ĐỊNH)",
+   "gioi_han": "Chữ/ảnh/video/ghi âm qua webhook THẬT trên 127.0.0.1 với payload giả theo tài liệu OA; CDN Zalo giả; chưa đối chiếu event OA thật. farming-01 code_status mot_phan → KHÔNG vào sổ triển khai (seed chỉ co_code) nên không tắt được qua `rollout --disable` (luôn = chạy thử); nhánh FEATURE_OFF chỉ kiểm bằng FIXTURE _FORCE_MODE='tat'. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": [
+    {
+     "ma": "UI-01",
+     "muc_do": "TRUNG BÌNH",
+     "nguon": "điều phối viên — UI thật r10 (bổ sung, không đổi kết luận nhóm)",
+     "tom_tat": "Tab 'Nhật ký vườn' ở chế độ thực (login svc_ui) báo 'Lỗi đọc DB — thử tải lại trang': svc_ui không có SELECT trên plots/plot_logs (42501) → không ghi được nhật ký vườn nhập tay qua UI.",
+     "evidence": [
+      "evidence/itacc_r10/ui/shots/24_tab_nhat_ky_vuon_doc_duoc_db.png",
+      "evidence/itacc_r10/xuyen_suot/ui01_garden_svc_ui_repro.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "farming-02.1",
+   "khoi": "farming",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Nhắc người phụ trách khoảnh",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Bên B chọn kênh nhắc (data/garden_remind.json kenh, D-KH-09) + điền khoảnh phụ trách trong garden_staff.json",
+   "gioi_han": "Kênh thu_cong và người phụ trách là FIXTURE; với cấu hình repo (kenh=null) mọi khoảnh → cho_kenh + báo thẳng GĐ (F021-06). Dữ liệu mồi IT-K01 đã có nhật ký từ F01 nên ca 'có người' dùng IT-K03 (staff_v2) — ghi lệch so với tiêu chí. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "farming-02.2",
+   "khoi": "farming",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Báo giám đốc khi vẫn bỏ trống",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "—",
+   "gioi_han": "Ngưỡng/lịch data/garden_schedule.json GIẢ ĐỊNH; bản tin chỉ ghi file nội bộ (nhãn CHẠY THỬ — KHÔNG GỬI). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "farming-03.1",
+   "khoi": "farming",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Nối lô thu hoạch với lô sản xuất",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 10,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Sửa BUG-G5-02: link/unlink chặn --by agent:/system: ở Python (auth.cli_gate như sign/issue/revoke) hoặc trong function link_lot_origin",
+   "gioi_han": "Lượt 1 (lô IT-LOT-G5-01 mfg 20/10) hỏng do dữ liệu mồi: nhật ký thu hoạch 23/10 sau ngày SX → function từ chối đúng; thay bằng lô IT-LOT-G5-02 (mfg 23/10). Lỗi chỉ trên đường login owner/dev; chế độ thực có trigger person_login_guard (không kiểm ở đây — điều phối viên kiểm quyền chế độ thực). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": [
+    {
+     "ma": "BUG-G5-02",
+     "muc_do": "MINOR",
+     "mo_ta": "pipelines.qr_trace link/unlink không qua auth.cli_gate và function link_lot_origin không kiểm tiền tố agent:/system: → trên đường login owner (dev) ghi được lot_origins.created_by='agent:qr' + agent_action_log qr_lot_link actor 'agent:qr'. Các CLI quyết định người khác (sign/issue/revoke, intake...) chặn agent:* ở MỌI chế độ; trigger person_login_guard chỉ chặn login không-owner nên chế độ thực có lớp chặn DB.",
+     "tai_hien": "source env DB thử farm; python -m pipelines.qr_trace link --lot IT-LOT-G5-02 --log <id thu hoạch> --by \"agent:qr\"",
+     "expected": "exit 1, không ghi (agent không ánh xạ thay người)",
+     "actual": "exit 0 '[done] ... người thực hiện: agent:qr'; lot_origins id=1 created_by='agent:qr' (đã gỡ bằng unlink bởi người ở F031-04b)",
+     "evidence": [
+      "evidence/itacc_r10/g5/runs/F031-04.txt",
+      "evidence/itacc_r10/g5/runs/F031-04b.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "farming-03.2",
+   "khoi": "farming",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Trang và tem QR cho khách quét",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 14
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Bên B cấp người ký thật (qr_signers.json) + domain công khai + nhà in tạo ảnh QR",
+   "gioi_han": "Trang chỉ xuất được khi ép van_hanh (FIXTURE) — ở chạy thử bị chặn đúng; chưa có domain công khai/ảnh QR in thật; danh tính người ký tự khai (dev). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "farming-04",
+   "khoi": "farming",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kho tư liệu vườn",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7,
+    "NOT_RUN": 1,
+    "FAIL": 4
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Sửa BUG-G5-01 (thêm media_cap/media_thu_hoi vào auth.ACTIONS hoặc đổi tên hành động); clip iPhone/Android thật + TTL garden_media",
+   "gioi_han": "Gỡ GPS chỉ kiểm trên ảnh/video fixture sinh bằng Pillow/ffmpeg; luồng --get/sổ releases chỉ kiểm được bằng chẩn đoán gọi thẳng function DB (F04-DIAG*, không tính PASS cho cấp/thu hồi). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": [
+    {
+     "ma": "BUG-G5-01",
+     "muc_do": "MAJOR",
+     "mo_ta": "scripts/garden_media_mkt.py --release/--revoke LUÔN bị từ chối ở MỌI chế độ: decide() gọi auth.cli_gate(..., action=f'media_{action}') với 'media_cap'/'media_thu_hoi' nhưng pipelines/auth.py ACTIONS không có 2 hành động này → authorize() trả 'hành động ... không hợp lệ'. Luồng cấp/thu hồi tư liệu vườn cho Marketing (nguồn đầu ra garden_media_releases của farming-04) không dùng được qua CLI.",
+     "tai_hien": "source env DB thử; python scripts/garden_media_mkt.py --release <sha garden_media> --by \"GĐ Vùng Trồng Thử IT\"",
+     "expected": "exit 0, 1 dòng garden_media_releases action 'cap' by_name = người",
+     "actual": "exit 1 '[từ chối] hành động 'media_cap' không hợp lệ — (...ACTIONS...)'; 0 dòng. --revoke tương tự 'media_thu_hoi'. Chẩn đoán: gọi thẳng function DB garden_media_release_human (F04-DIAG1/4) ghi được + --get trả tệp sạch → lỗi nằm ở danh sách ACTIONS phía Python.",
+     "evidence": [
+      "evidence/itacc_r10/g5/runs/F04-05a.txt",
+      "evidence/itacc_r10/g5/runs/F04-07.txt",
+      "evidence/itacc_r10/g5/runs/F04-DIAG1.txt",
+      "evidence/itacc_r10/g5/runs/F04-DIAG2.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "farming-05.3",
+   "khoi": "farming",
+   "giai_doan": "P2",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Cảnh báo thời tiết",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 4
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Xác minh điều khoản nhà cung cấp dự báo rồi bật fetch.enabled (job lịch vt_weather dùng --fetch đang exit 2)",
+   "gioi_han": "Đầu ra đạt qua CSV nhập tay; nguồn tự động (--fetch, job vt_weather) BLOCKED exit 2 cho tới khi bật; vùng/ngưỡng GIẢ ĐỊNH. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "farming-05.4",
+   "khoi": "farming",
+   "giai_doan": "P2",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Cảnh báo sâu bệnh",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 8
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Bật timer vt_pests trên server; nhật ký vườn thật",
+   "gioi_han": "Từ khóa cờ = FLAG_KEYS hiện có (GĐ vùng trồng rà). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "farming-05.2",
+   "khoi": "farming",
+   "giai_doan": "P2",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Dự báo sản lượng thu hoạch",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "GĐ vùng trồng chốt giả định năng suất (data/harvest_assumptions.json)",
+   "gioi_han": "Giả định năng suất/giá GIẢ ĐỊNH; khoảnh mẫu gắn nhãn (MẪU). Quan sát OBS-G5-03 (traceback + file báo cáo vẫn ghi khi tắt) — ca chặn vẫn đạt (0 mục mới). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": [
+    {
+     "ma": "OBS-G5-03",
+     "muc_do": "MINOR (quan sát, không làm FAIL ca)",
+     "mo_ta": "agents.vt_thuhoach --submit khi farming-05.2 TẮT: RolloutBlocked (ValueError) không được bắt trong main → traceback, exit 1 (kết quả chặn đúng, 0 mục mới) nhưng báo cáo vt-thu-hoach-<ngày>.md vẫn được ghi ra thư mục báo cáo TRƯỚC bước bị chặn (write_report không gắn tính năng cho tên báo cáo này).",
+     "tai_hien": "rollout --disable farming-05.2 --by <người>; python -m agents.vt_thuhoach --date 2026-10-24 --submit",
+     "expected": "thông báo chặn sạch (exit 1/2), không sinh đầu ra khi tính năng tắt",
+     "actual": "Traceback RolloutBlocked exit 1; file vt-thu-hoach-2026-10-24.md có trong thư mục báo cáo (scratchpad)",
+     "evidence": [
+      "evidence/itacc_r10/g5/runs/F052-04b.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-01",
+   "khoi": "legal_hr",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kiểm duyệt nội dung tự động",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "FAIL": 1,
+    "PASS": 2
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Thêm kiểm PII (SĐT/email cá nhân, trừ pii_allow công ty) vào guardrail đăng bài, hoặc Pháp chế xác nhận không yêu cầu (khi đó sửa tiêu chí).",
+   "gioi_han": "Không chạy red-team toàn bộ (điều phối viên); LLM-check thật tắt mặc định — chỉ fake. Tiêu chí P4 suy từ invariant PII của AGENTS.md (khung không ghi rõ).",
+   "loi": [
+    {
+     "ma": "D2",
+     "muc_do": "thấp–trung bình",
+     "mo_ta": "guardrail.check_publish (và check) không phát hiện SĐT cá nhân trong văn bản đăng — nháp chứa SĐT thô vẫn ok=True và có thể lưu vào content_drafts (trái invariant AGENTS.md: PII khách chỉ nằm trong contacts dạng mã hóa).",
+     "tai_hien": "python evidence/itacc_r10/g3/harness/guardrail_cases.py (ca P4: 'Đặt quà Thử IT gọi 0900000123 nhé.' + nhãn AI, kênh facebook/shopee/zalo/web)",
+     "expected": "ok=False (cờ PII)",
+     "actual": "ok=True, 0 vi phạm (mọi kênh)",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/L-01-C1C2.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-02",
+   "khoi": "legal_hr",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Hồ sơ xác nhận quảng cáo",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 4
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Danh mục thành phần hồ sơ data/xnqc_draft.json chưa Pháp chế duyệt; agent không nộp.",
+   "loi": [
+    {
+     "ma": "D4",
+     "muc_do": "thấp",
+     "mo_ta": "xnqc --draft --submit lặp cùng nội dung → '[err] lỗi DB: duplicate key ... approval_queue_pending_uq' exit 2 thay vì bỏ qua idempotent (không tạo trùng — dữ liệu đúng).",
+     "tai_hien": "python -m agents.xnqc --draft --sku saphraton-20v --loai maket --ten 'maket fanpage Thử IT' --maket maket_xnqc.txt --submit (2 lần)",
+     "expected": "[skip] đã có, exit 0",
+     "actual": "exit 2 lỗi DB UniqueViolation",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/L-02-C4.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-03.2",
+   "khoi": "legal_hr",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Xếp mức được phép quảng bá",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Chính sách loader_gate chưa cấu hình; người sửa golden mô phỏng bằng file FIXTURE; da_cap thật cần scan verified (doc_intake).",
+   "loi": []
+  },
+  {
+   "id": "legal_hr-04",
+   "khoi": "legal_hr",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Quét kênh, gỡ bài",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Fanpage Graph API chưa có adapter (CSV --file); --scan-auto web/listing không chạy (mạng thật).",
+   "loi": []
+  },
+  {
+   "id": "legal_hr-05.1",
+   "khoi": "legal_hr",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Hợp đồng mẫu KOC, đại lý",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Kiểm từ khóa, không thay luật sư; hợp đồng mẫu NHÁP.",
+   "loi": [
+    {
+     "ma": "Q2",
+     "muc_do": "quan sát",
+     "mo_ta": "contract_check --out-dir luôn ghi report_outputs is_sample=false, kể cả khi kiểm file mẫu test (tests/fixtures/...MAU.md) — có thể đếm file mẫu thành đầu ra.",
+     "tai_hien": "L-05.1-C3",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/L-05.1-C3.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-05.2",
+   "khoi": "legal_hr",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Mẫu xin đồng ý của khách",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 6
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "DPIA chưa ký; mẫu văn bản đồng ý chờ Pháp chế; DPIA/TIA là NHÁP.",
+   "loi": []
+  },
+  {
+   "id": "legal_hr-06.1",
+   "khoi": "legal_hr",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Mô tả công việc",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 4
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Template JD BẢN DEV SOẠN.",
+   "loi": [
+    {
+     "ma": "D3",
+     "muc_do": "thấp",
+     "mo_ta": "RolloutBlocked (tính năng tắt) không được bắt ở CLI → traceback exit 1 (mkt_director --briefs, seo_web --submit, pc_hr --jd); mkt_ads --propose in '[error] RolloutBlocked: RolloutBlocked' exit 1 — mất lý do, lệch quy ước exit 2 của các CLI khác. Hành vi cốt lõi (không sinh đầu ra) vẫn đúng.",
+     "tai_hien": "rollout --disable <tính năng>; chạy CLI tương ứng",
+     "expected": "[blocked] <lý do> exit 2",
+     "actual": "traceback / thông báo mất lý do, exit 1",
+     "evidence": [
+      "evidence/itacc_r10/g3/out/01.2-C4.txt",
+      "evidence/itacc_r10/g3/out/06.1-C3.txt",
+      "evidence/itacc_r10/g3/out/L-06.1-C4.txt",
+      "evidence/itacc_r10/g3/out/03.1-C7.txt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-06.2",
+   "khoi": "legal_hr",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Sàng lọc hồ sơ",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 3
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Thời hạn lưu CV chưa chốt; chấm theo từ khóa.",
+   "loi": []
+  },
+  {
+   "id": "legal_hr-06.3",
+   "khoi": "legal_hr",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Chấm công",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 3
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "Luật ca GIẢ ĐỊNH; holidays rỗng (2/9 tính ngày làm — đúng ghi chú sản phẩm).",
+   "loi": []
+  },
+  {
+   "id": "legal_hr-07",
+   "khoi": "legal_hr",
+   "giai_doan": "P2",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Cập nhật văn bản pháp luật mới",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "",
+   "gioi_han": "URL nguồn văn bản tầng A chưa xác minh; từ khóa legal_doc GIẢ ĐỊNH; gửi cảnh báo thật (SMTP/routing) không kiểm — chỉ nhánh fail-closed; ca 07-C1 PASS theo ý định T2, chi tiết số dòng trong tiêu chí lệch thiết kế (ghi rõ để điều phối viên quyết).",
+   "loi": []
+  },
+  {
+   "id": "data_platform-01",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kho dữ liệu chung",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 11
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Server Bên B (data_platform-90); login thật in role svc_*/app_human/ben_a_reader; human_logins do Bên B điền; chính sách loader_gate",
+   "gioi_han": "Một cluster Docker thử, không phải server vật lý Bên B; login dịch vụ/người chế độ thực do điều phối viên kiểm. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "data_platform-02.1",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Đọc chữ tự động từ giấy tờ",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 4
+   },
+   "nguyen_nhan": "MISSING_ADAPTER",
+   "nguyen_nhan_day_du": "MISSING_ADAPTER",
+   "can_de_go": "Vendor OCR trong nước + hợp đồng/DPA + key cắm vào ingest.doc_intake.PROVIDERS; rồi --reprocess-pending",
+   "gioi_han": "Chỉ PDF có lớp chữ (fixture ASCII) trích được trường; ảnh scan ở cho_ocr. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "data_platform-02.2",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Lưu bản gốc kèm mã kiểm tra",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 8
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Chính sách loader_gate; Pháp chế thật được ủy quyền",
+   "gioi_han": "Kho bản gốc trên đĩa máy dev (scratchpad). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "data_platform-03",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kho tri thức cho chatbot",
+   "trang_thai": "DAT",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Người duyệt tài liệu nội bộ được Bên B ủy quyền + login riêng; embedding thật qua OpenRouter (chi phí)",
+   "gioi_han": "Vector embedding là giả (không đánh giá chất lượng truy hồi); corpus công khai = data/*.jsonl repo. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "data_platform-04",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Cổng AI an toàn",
+   "trang_thai": "DAT",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 1
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Quản lý AI (Bên B) chốt trần từng tính năng (feature_caps_usd)",
+   "gioi_han": "Transport giả; không kiểm hành vi provider thật (zdr/allow_fallbacks chỉ kiểm có trong payload). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "data_platform-05",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kết nối dữ liệu sàn (nhập file)",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Mapping cột data/market_csv_map.json đối chiếu file xuất thật; chính sách loader_gate",
+   "gioi_han": "CSV fixture theo mapping GIẢ ĐỊNH; chưa đối chiếu file Seller Center thật. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "data_platform-07.1",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Giám sát lỗi",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Máy giám sát NGOÀI server Bên B chạy webhook_probe theo lịch + kênh báo (runbook 10.6)",
+   "gioi_han": "Giám sát chạy cùng máy dev; máy giám sát độc lập ngoài server không chứng minh được; --notify không kiểm. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "data_platform-07.2",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Backup hằng ngày",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 5
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Offsite/NAS ngoài server + lịch timer trên server Bên B; khóa mã hóa công ty",
+   "gioi_han": "Offsite 'dir:' cùng máy dev; backup chưa mã hóa; DR Docker do điều phối viên chạy riêng. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "data_platform-07.3",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "tinh_nang_ai",
+   "ten": "Kiểm thử trước khi đưa thay đổi lên",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Bên B cử người duyệt deploy (approvers); frozen 22 suite",
+   "gioi_han": "Tree bẩn → chỉ ghi '<sha>-dirty' (cổng không bao giờ khớp); nhánh cho phép chỉ bằng FIXTURE. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "sales-08",
+   "khoi": "sales",
+   "giai_doan": "P1",
+   "pham_vi": "nen_tang_tmdt",
+   "ten": "Website bán hàng",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 2,
+    "NOT_RUN": 1
+   },
+   "nguyen_nhan": "SEPARATE_REPO",
+   "nguyen_nhan_day_du": "SEPARATE_REPO",
+   "can_de_go": "Giao repo/owner website (trang sản phẩm, giỏ, thanh toán, ẩn giá/giỏ rượu) để kiểm",
+   "gioi_han": "Feed chỉ là nguồn dữ liệu cho website, KHÔNG thay website; xuất chỉ chạy ở van_hanh (FIXTURE).",
+   "loi": []
+  },
+  {
+   "id": "data_platform-06",
+   "khoi": "data_platform",
+   "giai_doan": "P2",
+   "pham_vi": "nen_tang_tmdt",
+   "ten": "Kết nối API sàn chỉ đọc",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "MOCK",
+   "ca": {
+    "PASS": 4
+   },
+   "nguyen_nhan": "EXTERNAL_INPUT",
+   "nguyen_nhan_day_du": "EXTERNAL_INPUT",
+   "can_de_go": "Bên B cấp app key/sandbox Shopee Open Platform/TikTok Shop (quyền chỉ đọc); xác minh chữ ký/endpoint/field/phân trang/rate limit",
+   "gioi_han": "Chỉ shopee listing với server giả; tiktok/order chưa chạy. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "farming-06",
+   "khoi": "farming",
+   "giai_doan": "P2",
+   "pham_vi": "truy_xuat_blockchain",
+   "ten": "Neo mã xác thực lên blockchain",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7
+   },
+   "nguyen_nhan": "EXTERNAL_INPUT",
+   "nguyen_nhan_day_du": "EXTERNAL_INPUT",
+   "can_de_go": "Hai bên chọn chuỗi/provider/phí/tài khoản neo (data/anchor_config.json); chạy --submit thật + bên thứ ba ots verify",
+   "gioi_han": "Chỉ đối chiếu NỘI BỘ; chưa có biên nhận neo thật; không gọi calendar. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "finance-06",
+   "khoi": "finance",
+   "giai_doan": "P1",
+   "pham_vi": "nghia_vu_hd",
+   "ten": "Doanh thu thuần trực tuyến + biên bản đối soát quý",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 7,
+    "FAIL": 1
+   },
+   "nguyen_nhan": "CODE_FAIL",
+   "nguyen_nhan_day_du": "CODE_FAIL",
+   "can_de_go": "Ghi report_sha256 theo đúng nội dung file đã ghi (sau nhãn) hoặc lưu cả hai — sửa sản phẩm.",
+   "gioi_han": "Tỷ lệ phí/mức thưởng/ngày ký/ngày vận hành null = chưa chốt (giữ nguyên, không điền thay; nhánh có tỷ lệ chỉ chạy bằng bản sao FIXTURE ở F06-5b). Số chỉ là ĐỀ XUẤT (Điều 7.6).",
+   "loi": [
+    {
+     "muc_do": "thấp–trung bình",
+     "mo_ta": "agents.rev_share.record ghi revenue_quarters.report_sha256 = sha256(text) TRƯỚC khi write_report chèn nhãn giai đoạn ('CHẠY THỬ — KHÔNG GỬI'/'CHỜ NGƯỜI DUYỆT') → sổ đối soát quý (append-only, căn cứ Điều 7.3) không truy được tới file biên bản thực có trên đĩa/report_outputs ở giai đoạn chạy thử/có người duyệt.",
+     "tai_hien": "python -m agents.rev_share --quarter 2026-Q3 --record --out-dir D; so sha256(D/doi-soat-2026-Q3.md) với revenue_quarters.report_sha256",
+     "expected": "bằng nhau",
+     "actual": "db49e15f… (file) ≠ 34ec42db… (sổ) — sổ = sha bản bỏ dòng nhãn",
+     "evidence": [
+      "evidence/itacc_r10/g4/out/F06-1-q.txt",
+      "evidence/itacc_r10/g4/out/F06-6-sha.txt",
+      "evidence/itacc_r10/g4/out/f06_run1/doi-soat-2026-Q3.md"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "data_platform-08",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "nghia_vu_hd",
+   "ten": "Sổ triển khai 3 bước + hồ sơ nghiệm thu + báo cáo vận hành tháng",
+   "trang_thai": "DAT",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 10
+   },
+   "nguyen_nhan": "",
+   "nguyen_nhan_day_du": "",
+   "can_de_go": "Chốt lịch nghỉ (rollout_config.json holidays) + danh mục 89 mục",
+   "gioi_han": "Nhánh đủ điều kiện CHỈ theo FIXTURE (không phải bằng chứng ngày chạy thử hợp đồng). Lượt 1 dựng fixture bằng approval_queue thất bại vì trigger approval_queue_guard ép created_at=now() (đúng thiết kế chống lùi giờ); lượt 2 dùng nguồn documents. Quan sát: login owner truyền được mốc 'now' lùi vào rollout_transition_human (p10_now — chỉ owner). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  },
+  {
+   "id": "ceo-90",
+   "khoi": "ceo",
+   "giai_doan": "P1",
+   "pham_vi": "nghia_vu_hd",
+   "ten": "Nghĩa vụ hợp đồng ngoài phần mềm",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 2,
+    "NOT_RUN": 1
+   },
+   "nguyen_nhan": "NON_SOFTWARE",
+   "nguyen_nhan_day_du": "NON_SOFTWARE",
+   "can_de_go": "Hai bên thực hiện + xác nhận từng nghĩa vụ N01–N22 (nhân sự toàn thời gian, bàn giao đầu vào, đào tạo, trực, góp/hoàn trả bằng sản phẩm, bảo hành, bàn giao/xóa bản sao khi chấm dứt); PL05 chưa được cung cấp",
+   "gioi_han": "Chỉ kiểm cấu trúc sổ + danh mục; mọi nghĩa vụ đang de_xuat",
+   "loi": []
+  },
+  {
+   "id": "data_platform-90",
+   "khoi": "data_platform",
+   "giai_doan": "P1",
+   "pham_vi": "nghia_vu_hd",
+   "ten": "Hạ tầng độc lập trên server Bên B",
+   "trang_thai": "BI_CHAN",
+   "muc_kiem": "LOCAL",
+   "ca": {
+    "PASS": 2,
+    "NOT_RUN": 1
+   },
+   "nguyen_nhan": "NON_SOFTWARE",
+   "nguyen_nhan_day_du": "NON_SOFTWARE",
+   "can_de_go": "Bằng chứng server vật lý, UPS, mạng, NAS/offsite, máy giám sát độc lập, người giữ tài khoản quản trị cao nhất phía Bên B",
+   "gioi_han": "Chỉ chứng minh tài liệu/công cụ có trong repo; hạ tầng vật lý ngoài phạm vi phần mềm. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+   "loi": []
+  }
+ ]
+}

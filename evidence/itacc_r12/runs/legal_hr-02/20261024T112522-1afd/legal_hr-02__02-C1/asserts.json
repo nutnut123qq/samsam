@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'xnqc_dossier' and status = 'pending' and created_by = 'agent:xnqc' and payload like '%saphraton-20v%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

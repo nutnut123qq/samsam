@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from lot_origins",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

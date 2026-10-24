@@ -1,0 +1,269 @@
+"""HARNESS r12 — dựng docs/handover/nghiem-thu-ky-thuat-noi-bo.md checkpoint r12. Số tổng, bảng 96 mục, kết quả probe/UI/
+full/gate ĐỌC từ evidence (tong_hop.json r12, probes/*/ket_qua.json, ui_results.json, gate/*.txt) — không gõ tay. Mục 0
+lịch sử r11 + phần r10 kế thừa (8–10) chép nguyên văn từ bản hiện có/gates.json r10.  python -I render_hoso_r12.py.txt"""
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = Path(__file__).resolve().parents[3]
+EV = ROOT / "evidence" / "itacc_r12"
+DOC = ROOT / "docs" / "handover" / "nghiem-thu-ky-thuat-noi-bo.md"
+T = json.loads((EV / "tong_hop.json").read_text(encoding="utf-8"))
+SM = json.loads((EV / "source_map.json").read_text(encoding="utf-8"))["items"]
+s = T["tom_tat"]
+old = DOC.read_text(encoding="utf-8")
+r11_sec0 = old[old.index("## 0. Checkpoint r11"):old.index("## 1. Baseline")].strip().splitlines()
+G10 = json.loads((ROOT / "evidence/itacc_r10/gates.json").read_text(encoding="utf-8"))
+KH = ["ceo", "sales", "marketing", "intel", "finance", "production", "farming", "legal_hr", "data_platform"]
+LBL = {"DAT": "ĐẠT", "CHUA_KIEM": "CHƯA KIỂM", "BI_CHAN": "BỊ CHẶN"}
+
+
+def probe(label, rid):
+    k = json.loads((EV / "probes" / label / rid / "ket_qua.json").read_text(encoding="utf-8"))
+    rs = k.get("ket_qua") or k.get("checks") or k.get("cases") or []
+    c = {x: sum(r["ket_qua"] == x for r in rs) for x in ("PASS", "FAIL", "LOI_HARNESS")}
+    return c, k.get("probe_sha256", "")[:12], k.get("db")
+
+
+def cell(t):
+    return " ".join(str(t).split()).replace("|", "\\|")
+
+
+def gate(name):
+    p = EV / "gate" / name
+    return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
+
+
+full = gate("full_chot_fchot.txt")
+m = re.search(r"(\d+) passed(?:, (\d+) skipped)?[^\n]* in ([\d.]+s[^\n]*)", full)
+fm = re.search(r"(\d+) failed", full)
+ex = re.search(r"EXIT (\d+)", full)
+fpl = re.search(r"fingerprint working tree \(fp_r12.sh\) = (\w+)", full)
+FULL = (f"{m.group(1)} passed, {fm.group(1) if fm else 0} failed, {m.group(2) or 0} skipped in {m.group(3)}"
+        if m else "CHƯA CÓ"), (ex.group(1) if ex else "?"), (fpl.group(1) if fpl else "?")
+PROBES = [("Đợt 1 — P-01, UI-01, UI-02, G5-01, G5-02", "dot1_truoc", "20261023T161724-41d8", "dot1_cuoi_ngay",
+           "20261024T114505-7bbe"),
+          ("Đợt 2 — D1/P052/L5, G1-L1, RB, GATE-OUT, L3", "dot2_truoc", "20261023T163151-a0f9", "dot2_cuoi_ngay",
+           "20261024T114544-995e"),
+          ("Đợt 3 — L2 (+RB kd_quote), L1, F06-6, F031-6, G1-L3, G1-L4", "dot3_truoc", "20261023T174125-e4b2",
+           "dot3_cuoi_ngay", "20261024T114801-8c38"),
+          ("Đợt 4 — G1-L5, G1-L6, D4, D2", "dot4_truoc", "20261024T080601-0a77", "dot4_cuoi", "20261024T114154-8e05")]
+BUGS = [  # (mã, mức, vá, kiểm trên bản cuối)
+    ("P-01", "CAO", "`pipelines/production.py`: biến vòng lặp không đè dict tồn kho (`run_stock`)", "đợt 1 · production-01/04.3 ĐẠT"),
+    ("UI-01", "TB", "svc_ui SELECT cột plots/plot_logs; ghi nhật ký qua `plot_log_add_human` bằng login người khối farming", "đợt 1 · UI 28/28 · farming-01 ca chạy được PASS"),
+    ("UI-02", "TB", "svc_ui SELECT chunks (KB công khai); lỗi chat → câu thân thiện, không traceback", "đợt 1 · UI 28/28 · sales-01 ĐẠT"),
+    ("G5-01", "TB", "`auth.ACTIONS` thêm `media_cap`/`media_thu_hoi`", "đợt 1 · farming-04 ĐẠT"),
+    ("G1-L1", "TB", "mỗi đầu ra của lệnh nhiều đầu ra kiểm cổng RIÊNG (ceo_audit, intel_weekly, intel_bulletin, production bulletin)", "đợt 2 · ceo-04.3/04.4, intel-01.1/01.2/03/04.1, production-01/04.3 ĐẠT"),
+    ("G1-L3", "TB", "HĐTV: phạm vi chi 0 dòng nguồn → `[chưa có dữ liệu]` (`fp_opscost.summary` co_nguon)", "đợt 3 · ceo-05 ĐẠT"),
+    ("D1/P052/L5", "TB", "cổng tắt sớm ở caller + cổng rollout trong `llm_gateway._gate_feature` (0 lời gọi AI)", "đợt 2 · marketing-02.2/07.2, production-05.2, sales-07.1 ĐẠT"),
+    ("L3", "TB", "chỉ hứa 'nhân viên sẽ phản hồi' khi ĐÃ ghi được cskh_handoff; không → câu hotline; record_handoff bắt RolloutBlocked", "đợt 2 · sales-01 ĐẠT (tiêu chí v2 C12/X1)"),
+    ("L1", "TB", "bộ đếm sales-04.2 chỉ tính crm_handoff có `pii_included=true`; quyết định tiêu chí v3 (chuyển yêu cầu không PII ≠ bàn giao PII)", "đợt 3 · sales-04.2 ĐẠT (tiêu chí v3)"),
+    ("L2", "TB", "kd_quote/kd_catalog: giá = price_list ĐÃ duyệt hiệu lực ngày lập (`approved_golden`); catalog loại readiness CAM (view DB); cổng sales-05 trước khi ghi file", "đợt 3 · sales-05 ĐẠT"),
+    ("F06-6", "THẤP–TB", "`rev_share --record` sha = byte tệp đã ghi (có nhãn)", "đợt 3 · finance-06 ĐẠT"),
+    ("D2", "THẤP–TB", "guardrail đăng bài luật `pii_ca_nhan` (critical/block, CHỜ PHÁP CHẾ DUYỆT — mặc định an toàn), trừ pii_allow + hotline", "đợt 4 · legal_hr-01 ĐẠT"),
+    ("RB", "THẤP", "CLI bị cổng tắt: exit 2 + `[rollout] … <mã>`, không traceback, chặn trước side effect (da_pmo, ceo_audit, ceo_risk, intel_bulletin, mkt_director, seo_web, pc_hr, mkt_ads, content --listing, kd_quote, kd_forecast, vt_thuhoach, fp_pnl, sx_tracuu)", "đợt 2/3 · các mục ảnh hưởng ĐẠT"),
+    ("G1-L4", "THẤP", "`write_report(..., feature=)` — ceo-<kỳ>.md (ceo-01), hdtv-<kỳ>.md (ceo-05) qua cổng/nhãn/report_outputs", "đợt 3 · ceo-01/05 ĐẠT"),
+    ("F031-6", "THẤP", "bản tin công nợ có cột 0-30; cột tuổi = tuổi phần quá hạn, cộng khớp", "đợt 3 · finance-03.1 ĐẠT"),
+    ("G1-L5", "THẤP", "`ceo_decisions --list` in chờ quyết/chờ ký", "đợt 4 · ceo-02.2 ĐẠT"),
+    ("G1-L6", "THẤP", "combo_price xét readiness qua `sku_readiness` (không v_promotable) → nhánh thieu_du_lieu tới được", "đợt 4 · intel-05.2 ĐẠT"),
+    ("D4", "THẤP", "xnqc --draft --submit lặp → [skip] + mục cũ, không lỗi DB", "đợt 4 · legal_hr-02 ĐẠT"),
+    ("G5-02", "THẤP", "qr_trace link/unlink qua `auth.cli_gate` farming; function dùng `human_actor`", "đợt 1 · farming-03.1 ĐẠT"),
+    ("GATE-OUT", "THẤP", "tắt → không in nội dung nghiệp vụ ra stdout (fp_cash, sx_tracuu 05.1, production bulletin)", "đợt 2 · finance-05.2, production-05.1 ĐẠT"),
+]
+L = []
+A = L.append
+A("# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r12 (vá 20 lỗi + kiểm lại 48 mục, 24/10/2026)")
+A("")
+A("> **Đây KHÔNG phải nghiệm thu hợp đồng.** Kiểm hành vi phần mềm trên máy dev, DB Postgres thử cô lập, dữ liệu fixture "
+  "giả. Không xác nhận thay hai bên, không đổi `acceptance_status` (vẫn 0/96 `da_nghiem_thu`), không coi máy này là server Bên B, "
+  "không dùng số ĐẠT nội bộ thay số nghiệm thu hợp đồng. Ma trận nghiệm thu hợp đồng (`ma-tran-nghiem-thu.md`) giữ vai trò riêng.")
+A("")
+A("## 0. Checkpoint r12 — vá 20 lỗi r10, kiểm lại 48 mục (24/10/2026)")
+A("")
+tot = s["tong"]
+A(f"- **Tổng hiện hành (sinh bằng code `evidence/itacc_r12/tong_hop.json`):** {tot.get('DAT', 0)} ĐẠT / "
+  f"{tot.get('CHUA_KIEM', 0)} CHƯA KIỂM / {tot.get('BI_CHAN', 0)} BỊ CHẶN trên {s['mau_so']} — trước r12 (checkpoint r11): "
+  f"{s['checkpoint_r11'].get('DAT', 0)}/0/{s['checkpoint_r11'].get('BI_CHAN', 0)}. Nguồn: "
+  + ", ".join(f"{k} {v}" for k, v in sorted(s["nguon"].items())) + f" bản ghi; kiểm nhất quán {len(s['loi_nhat_quan'])} vi phạm, "
+  f"{s['so_tham_chieu_evidence']} tham chiếu evidence khớp file/hash. BỊ CHẶN còn lại đều NGOÀI code: "
+  + ", ".join(f"{k} {v}" for k, v in sorted(s["nguyen_nhan_bi_chan"].items())) + ".")
+A("- **Mã kiểm:** nhánh `codex/safety-acceptance`, HEAD `16b33fc9b4f0e0ff45dbeab78972100909ec0340`, CHƯA commit. Baseline "
+  "`97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001`. Bản cuối: fingerprint MÃ (loại *.md) "
+  "`57538e8935d0ab71e7b1cd8d803aab397be27cd1ab47516b75a1d437c7435c18` (`harness/fp_code_r12.sh.txt`; giữ nguyên từ lô kiểm 48 "
+  f"mục tới full chốt); fingerprint đầy đủ lúc full chốt `{FULL[2]}` (`harness/fp_r12.sh.txt`, cùng phương pháp baseline + 3 test mới).")
+A("- **Môi trường:** container Docker `samsam-itacc-r12` (`postgres:17-alpine`, chỉ `127.0.0.1:55451`, credential mới ở "
+  "scratchpad — không vào repo/argv/log); mỗi probe/mục 1 DB mới `samsam_itacc_r12_*` (schema/roles ×2 + core + golden, "
+  "`harness/mkdb_r12.sh.txt`); KHÔNG dùng DB `samsam`; AI giả ở biên `llm_gateway._client` (đếm lời gọi), mạng ngoài localhost bị chặn.")
+A("- **Sự cố hạ tầng (ghi `runs/su_co_snapshot_baseline.md`):** máy khởi động lại → Docker Desktop không lên (socket cũ, đổi tên "
+  "thư mục `run`, không reset), snapshot baseline trong Temp bị dọn một phần → dựng lại, fingerprint khớp `97051e55…`.")
+A("")
+A("**Probe trước/sau (cùng input/assertion; tiêu chí đóng viết trước khi vá)**")
+A("")
+A("| Nhóm | Baseline (snapshot trước vá) | Bản cuối | Ghi chú |")
+A("|---|---|---|---|")
+for name, lb, rb, la, ra in PROBES:
+    cb, hb, _ = probe(lb, rb)
+    ca, ha, _ = probe(la, ra)
+    A(f"| {name} | {cb['PASS']} PASS / {cb['FAIL']} FAIL (`probes/{lb}/{rb}`, probe {hb}…) | {ca['PASS']} PASS / "
+      f"{ca['FAIL']} FAIL / {ca['LOI_HARNESS']} lỗi harness (`probes/{la}/{ra}`, probe {ha}…) | "
+      + ("bản cuối dùng probe sửa NGÀY fixture (mk_probe_ngay_v.py.txt) — lượt `dot*_cuoi` 24/10 FAIL đối chứng dương do ngày cố định 23/10, giữ nguyên" if "ngay" in la else "")
+      + (" · đợt 3 v2 bỏ assertion định dạng `[rollout]` cho hdtv (không thuộc RB, giao diện v14.3 `[blocked]`)" if la.startswith("dot3") else "") + " |")
+A("")
+A("**Bảng 20 lỗi — verdict trên bản cuối**")
+A("")
+A("| Mã | Mức | Vá | Kiểm trên bản cuối | Verdict |")
+A("|---|---|---|---|---|")
+for code, lv, fix, chk in BUGS:
+    A(f"| {code} | {lv} | {cell(fix)} | {chk} | **FIXED** |")
+A("")
+A("- 20/20 FIXED trên bản cuối (probe + flow nghiệm thu của mục). D2 FIXED với mặc định an toàn — phạm vi luật `pii_ca_nhan` "
+  "chờ Pháp chế xác nhận (mục 9). L1: bộ đếm + quyết định tiêu chí sales-04.2 v3 (mục 9).")
+A("- **Hai test fail của full sơ bộ** (`gate/full_so_bo_fs1.txt` — 6664 passed, 2 failed, EXIT 1, GIỮ làm lượt fail thăm dò): "
+  "(1) `test_qr_trace::test_link_ok_and_refusals` khóa thông báo cũ 'thiếu tên' — sau G5-02 tên rỗng vẫn bị chặn nhưng qua "
+  "`human_actor` (42501 'người thực hiện không hợp lệ'); test cập nhật + THÊM ca âm tên rỗng/agent:/system: cho cả link và unlink, "
+  "0 dòng mang tên agent/system; (2) `test_v14_p3_rollout_edges::test_hdtv_off_no_pack` khóa giao diện v14.3 `[blocked]` stderr — "
+  "bản r12 đã đổi hdtv_report sang `[rollout]` stdout (ngoài phạm vi RB) → TRẢ VỀ giao diện đã cam kết; test giữ nguyên mọi "
+  "assertion (exit 2, 0 file, 0 audit_runs, 0 approval_queue).")
+A("")
+A("**Kiểm lại 48 mục** (`tap_muc_kiem_lai.json`: 24 CODE_FAIL + 24 ảnh hưởng trực tiếp — module của mục đổi ở r12)")
+A("")
+A("- Tiêu chí thực thi, khóa sha256 TRƯỚC khi chạy (`criteria/r12_*.json` + `.lock.txt`; quy tắc `criteria/HUONG_DAN.md`); mỗi "
+  "ca cũ ↔ đúng 1 ca r12 (`nguon_r10`), ca mới `MOI`; runner `harness/runner_r12.py.txt` từ chối hash ≠ khóa / DB ≠ DB của mục; "
+  "log gốc mở 'x' dưới `runs/<id>/<run_id>/`. Lô: `runs/batch/lo3_thu`, `lo3`, `lo4` (lô `lo1`, `lo2_thu` HỎNG HARNESS — bash WSL, giữ).")
+A("- Phiên bản tiêu chí mới (khóa TRƯỚC khi chạy bản đó, giữ bản cũ + kỳ vọng cũ trong bản ghi): `r12_ceo_v2` (X05 hdtv: thông báo "
+  "chặn stdout|stderr), `r12_sales_a_v2` (C12/X1 theo tiêu chí đóng L3), `r12_sales_a_v3` (sales-04.2 — mục 9), `r12_sales_a_v4` "
+  "(C07: đo câu khách nhận ở biên send_text — lỗi harness), `r12_prod_legal_v2` (06.2-C1 regex PII bắt nhầm nhãn 'Mã ứng viên'), "
+  "`r12_farming_v2/v3` (glob `*` ở thư mục; CRLF). Script sinh: `harness/mk_*_v*.py.txt` (docstring = lý do).")
+A(f"- Kết quả: 47 ĐẠT, farming-01 BỊ CHẶN (MISSING_ADAPTER — STT; mọi ca chạy được PASS, C11 không dựng được do farming-01 "
+  "`mot_phan`). 4 mục chạy lại vì lỗi harness/tiêu chí (sales-01, legal_hr-06.2, farming-03.2, farming-04) — lượt cũ ghi ở "
+  "`luot_bi_thay_the` của bản ghi. Bản ghi `items/<id>.json`: supersedes đúng nguồn hiện hành r11 (path + sha256).")
+A("")
+ui = json.loads((EV / "ui" / "ui_sau_full_v3_20261024T110553" / "ui_results.json").read_text(encoding="utf-8"))
+nui = {x: sum(r["verdict"] == x for r in ui) for x in ("PASS", "FAIL", "NOT_RUN")}
+A(f"**UI thật** (Streamlit 1.66.1 venv ngoài repo, AUTH_MODE=local, login UI = `svc_ui` thật, quyết định/ghi bằng login Postgres "
+  f"riêng không owner, Chromium Playwright, DB thử mới): lượt hoàn chỉnh `ui/ui_sau_full_v3_20261024T110553` "
+  f"{nui['PASS']} PASS / {nui['FAIL']} FAIL / {nui['NOT_RUN']} NOT_RUN (fingerprint đầy đủ lúc chạy 3fda9aa9…, mã runtime không đổi "
+  "tới bản cuối). Ánh xạ 26 bước r10 → r12: `ui/anh_xa_buoc_r10_r12.json` (26/26 PASS + 2 bước mới UI01_login_nguoi_khac_bi_chan, "
+  "UI02_loi_doc_kb_khong_lo_traceback; 3 bước vườn r10 đổi tên theo giao diện mới). Baseline UI tái hiện lỗi: "
+  "`ui/ui_truoc_20261024T081507` (UI-01 'Lỗi đọc DB', UI-02 traceback/InsufficientPrivilege). Lượt hỏng harness giữ: "
+  "`ui_sau_full_*_HONG_HARNESS_*` (DB timeout khi quá tải; expander bấm lúc rerun; logout trùng).")
+A("")
+A("**Kỳ trước (lịch sử — giữ nguyên văn)**")
+A("")
+L.extend(["#" + x if x.startswith("## ") else x for x in r11_sec0])
+A("")
+A("## 1. Baseline và môi trường")
+A("")
+A("- r12: như mục 0. Biến môi trường mỗi lệnh: `DATABASE_URL` tường minh tới DB thử, xóa PG*/…DATABASE_URL khác, "
+  "`OPENROUTER_API_KEY` rỗng, `DEPLOY`/`AUTH_MODE`/`RED_ALERT_NOTIFY` tắt trừ phép thử chế độ thực; `tests/_db_guard.py` không bị tắt.")
+A("- r10/r11 (lịch sử): container `samsam-itacc-r10`/`r11`, fingerprint `97051e55…8001`.")
+A("")
+A("## 2. Phương pháp")
+A("")
+A("- Như r10/r11 (tiêu chí khóa trước, entry point thật, assertion máy kiểm, evidence gốc không ghi đè) + r12: probe trước/sau "
+  "cho từng nhóm lỗi, tiêu chí kiểm lại 48 mục thực thi được, phiên bản tiêu chí mới khi phát hiện lỗi harness/tiêu chí (không "
+  "sửa tệp đã khóa), tổng hợp 96 bằng code (`harness/aggregate_r12.py.txt`).")
+A("- Phân loại: ĐẠT = mọi ca bắt buộc PASS; CHƯA KIỂM = có NOT_RUN/lỗi harness; BỊ CHẶN = lỗi sản phẩm đã xác minh hoặc lý do "
+  "ngoài code (giữ nguyên dù ca chạy được PASS). FIXTURE (golden giả, ép van_hanh, lùi ngày hiệu lực giá bằng tắt trigger trong "
+  "DB thử, setval sequence) chỉ dựng tình huống — không là bằng chứng quyền/append-only/ngày chạy thử hợp đồng.")
+A("")
+A(f"## 3. Kết quả tổng HIỆN HÀNH (r12) — mẫu số {s['mau_so']} (89 tính năng AI + 7 hạng mục)")
+A("")
+A("| Nhóm | Số mục |")
+A("|---|---|")
+for k in ("DAT", "CHUA_KIEM", "BI_CHAN"):
+    A(f"| {LBL[k]} | {tot.get(k, 0)} |")
+A(f"| **Tổng** | **{sum(tot.values())}** |")
+A("")
+A("**Theo khối**")
+A("")
+A("| Khối | ĐẠT | CHƯA KIỂM | BỊ CHẶN | Tổng |")
+A("|---|---|---|---|---|")
+for k in KH:
+    d = s["theo_khoi"].get(k, {})
+    A(f"| {k} | {d.get('DAT', 0)} | {d.get('CHUA_KIEM', 0)} | {d.get('BI_CHAN', 0)} | {sum(d.values())} |")
+A("")
+A("**Theo phạm vi**")
+A("")
+A("| Phạm vi | ĐẠT | CHƯA KIỂM | BỊ CHẶN | Tổng |")
+A("|---|---|---|---|---|")
+for k in ("AI P1", "AI P2", "7 hạng mục khác"):
+    d = s["theo_pham_vi"].get(k, {})
+    A(f"| {k} | {d.get('DAT', 0)} | {d.get('CHUA_KIEM', 0)} | {d.get('BI_CHAN', 0)} | {sum(d.values())} |")
+A("")
+A("## 4. Bảng 96 mục")
+A("")
+A("Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transport). Lượt = nguồn bản ghi hiện hành "
+  "(`evidence/itacc_r12/source_map.json`). Chi tiết: bản ghi theo đường dẫn trong source_map.")
+A("")
+A("| ID | Khối | GĐ | Tên | Lượt | Trạng thái | Mức | Ca P/F/N | Nguyên nhân / ghi chú |")
+A("|---|---|---|---|---|---|---|---|---|")
+for r in T["items"]:
+    c = r["ca"]
+    note = r["nguyen_nhan_day_du"] if r["trang_thai"] == "BI_CHAN" else ""
+    A(f"| {r['id']} | {r['khoi']} | {r['giai_doan']} | {cell(r['ten'])} | {r['luot']} | **{LBL[r['trang_thai']]}** | "
+      f"{r['muc_kiem']} | {c.get('PASS', 0)}/{c.get('FAIL', 0)}/{c.get('NOT_RUN', 0)} | {cell(note)[:200]} |")
+A("")
+A("## 5. Lỗi sản phẩm r10 — trạng thái r12")
+A("")
+A("Xem bảng 20 lỗi ở mục 0 (20/20 FIXED trên bản cuối). Không phát hiện lỗi sản phẩm mới trong phạm vi khi kiểm lại 48 mục; "
+  "các FAIL trong lô đều là lỗi harness/tiêu chí (mục 0). Quan sát ngoài danh sách 20 lỗi của r10 KHÔNG xử lý ở r12 (giữ ghi nhận r10).")
+A("")
+xs = {n: gate(f"../xuyen_suot/probe_{n}_cuoi.txt") for n in ("s04", "s04b", "r8", "b3", "s03", "f1", "f2")}
+A("## 6. Kiểm xuyên suốt r12 (bản cuối)")
+A("")
+A("| Phép kiểm | Kết quả | Evidence |")
+A("|---|---|---|")
+for n, t in xs.items():
+    A(f"| probe {n.upper()} (hồi quy danh tính/quyền/giá/chat sàn/feed) | {len(re.findall(r'(?m)^PASS', t))} PASS / "
+      f"{len(re.findall(r'(?m)^FAIL', t))} FAIL | `xuyen_suot/probe_{n}_cuoi.txt` |")
+up = (EV / "runs" / "upgrade_up1.txt").read_text(encoding="utf-8")
+A(f"| Nâng cấp schema/roles baseline → bản vá ×2 (dữ liệu, đuôi hash chain, quyền thêm đúng tập r12 / không bớt, SECURITY "
+  f"DEFINER + search_path + không PUBLIC EXECUTE, hành vi login thật) | {'UPGRADE OK' if 'UPGRADE OK' in up else 'KHÔNG ĐẠT'} — "
+  "schema/roles không đổi sau lần kiểm (mtime 23/10 16:11 < 24/10 08:09) | `runs/upgrade_up1.txt` |")
+A("")
+A("## 7. Gate chốt r12 (bản cuối)")
+A("")
+A(f"- Full pytest (DB mới `samsam_itacc_r12_fchot`, gồm DR Docker): **{FULL[0]}**, EXIT {FULL[1]} — `gate/full_chot_fchot.txt`.")
+for nm, lbl in (("ruff.txt", "Ruff"), ("eval.txt", "Agent eval tất định --no-record"), ("dpia.txt", "DPIA --check"),
+                ("redteam.txt", "Red-team"), ("secret_scan.txt", "Quét secret evidence/repo thay đổi")):
+    t = gate(nm).strip().splitlines()
+    key = {"eval.txt": "guardrail v2 PASS", "secret_scan.txt": "GIÁ TRỊ THẬT", "redteam.txt": "tỷ lệ lọt"}.get(nm)
+    pick = [x for x in t if key and key in x][:1] + [x for x in t if x.startswith("EXIT")][-1:]
+    A(f"- {lbl}: " + (" · ".join(cell(x)[:200] for x in pick) if t else "CHƯA CHẠY") + f" — `gate/{nm}`.")
+A("- Lượt fail/hỏng giữ nguyên: `gate/full_so_bo_fs1.txt` (2 failed, EXIT 1), `gate/probe_cuoi.txt` (đối chứng dương lệch ngày).")
+A("")
+for sec in G10["sections"][3:]:
+    title = sec["title"]
+    if title.startswith("8."):
+        A("## 8. Phụ thuộc ngoài máy / đầu vào cần để kiểm tiếp (r10, cập nhật r12)")
+        A("")
+        A("> r12: dòng 'Sửa 20 lỗi sản phẩm' ĐÃ XỬ LÝ (mục 0). Các dòng còn lại giữ nguyên.")
+        A("")
+        L.extend([x for x in sec["lines"] if "Sửa 20 lỗi" not in x])
+        A("")
+    elif title.startswith("9."):
+        A("## 9. Điểm cần người xác nhận (r12)")
+        A("")
+        A("- **sales-04.2 (tiêu chí v3):** chuyển YÊU CẦU không kèm dữ liệu cá nhân khi chưa đồng ý `dai_ly` là thiết kế có căn cứ "
+          "(playbook bán hàng, SOP 5c, runbook 9.7, test nghiệm thu `test_handoff_acceptance_1`) — CHỈ bàn giao SĐT/tên/email/địa chỉ "
+          "khi có đồng ý đích danh; chỉ lần bàn giao có đồng ý được tính đầu ra. Nếu Bên B/Pháp chế muốn CHẶN HẲN chuyển yêu cầu khi chưa "
+          "đồng ý thì sửa nhất quán CLI + `crm_handoff_human` (đổi nghiệp vụ, không phải lỗi r12). Căn cứ: "
+          "`evidence/itacc_r12/harness/mk_sales_a_v3.py.txt`.")
+        A("- **D2:** luật `pii_ca_nhan` chặn SĐT/email cá nhân trong nội dung công khai — mặc định an toàn, `trang_thai: chờ Pháp chế duyệt`.")
+        A("- **L3:** khi chatbot TẮT, khách nhận câu hotline (không hứa người phản hồi, không tạo mục — HĐ 6.7 cấm sinh đầu ra của "
+          "tính năng tắt). Nếu muốn vẫn chuyển người khi tắt thì cần quyết định cho phép mục handoff ngoài cổng giai đoạn.")
+        A("- Các điểm r10 còn lại (intel-06, marketing-01.1) giữ ghi nhận r10.")
+        A("")
+    elif title.startswith("10."):
+        A("## 10. Giới hạn và tài nguyên (r12)")
+        A("")
+        A("- Một máy dev; DB thử chế độ dev cho phần lớn ca, danh tính chế độ thực kiểm bằng probe + UI + ca login thật trong tiêu chí.")
+        A("- MOCK: chất lượng AI/embedding thật chưa kiểm; mapping/biểu phí/ngưỡng GIẢ ĐỊNH — ĐẠT chỉ là đạt kỹ thuật trên fixture.")
+        A("- Tiêu chí 48 mục do 8 agent viết từ ca r10/r11 (điều phối viên duyệt + khóa); 4 phiên bản sửa lỗi harness/tiêu chí ghi lý "
+          "do; ca phụ thuộc ngày (ceo-01 C07 trước 26/10, marketing_b start 26/10, probe theo ngày chạy).")
+        A("- Tài nguyên lượt: container `samsam-itacc-r12` + DB `samsam_itacc_r12_*`, login thử `r12*`, scratchpad r12 — dọn khi kết thúc.")
+DOC.write_text("\n".join(L) + "\n", encoding="utf-8")
+print("ok", len(L))

@@ -1,0 +1,17 @@
+{
+ "ca": "ui01_c_svc_ui_khong_select_moi_cot",
+ "argv": [
+  "python",
+  "-c",
+  "import psycopg,os; c=psycopg.connect(os.environ['DATABASE_URL']); print(c.execute('select * from plots').fetchall()[:1])"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "bat_dau": "2026-10-23T16:15:28+07:00",
+ "ket_thuc": "2026-10-23T16:15:29+07:00",
+ "exit": 1,
+ "llm_calls": null,
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "c65a7ce53b9f1d1530b7c0c5d1f014f2853acef8194b0180b261357a59238afc"
+}

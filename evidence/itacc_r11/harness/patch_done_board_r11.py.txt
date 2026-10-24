@@ -1,0 +1,61 @@
+"""[r11] Ghi checkpoint r11 vào DONE.md + docs/handover/v13-board.md (số đọc từ evidence/itacc_r11/tong_hop.json)."""
+import collections
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+R11 = ROOT / "evidence" / "itacc_r11"
+T = json.loads((R11 / "tong_hop.json").read_text(encoding="utf-8"))["tom_tat"]
+NEW = ("marketing-03.2", "marketing-05.1", "marketing-05.2", "marketing-06.1", "marketing-06.2", "legal_hr-07")
+LBL = {"DAT": "ĐẠT", "CHUA_KIEM": "CHƯA KIỂM", "BI_CHAN": "BỊ CHẶN"}
+locks = {p.name: p.read_text(encoding="utf-8").split()[1] for p in (R11 / "criteria").glob("*.lock.txt")}
+six = []
+for fid in NEW:
+    r = json.loads((R11 / "items" / f"{fid}.json").read_text(encoding="utf-8"))
+    c = collections.Counter(x["ket_qua"] for x in r["ca"])
+    six.append((fid, LBL[r["trang_thai"]], r["muc_kiem"], c.get("PASS", 0), c.get("FAIL", 0), c.get("NOT_RUN", 0) + c.get("LOI_HARNESS", 0)))
+t = T["tong"]
+tot = f"{t.get('DAT', 0)} ĐẠT / {t.get('CHUA_KIEM', 0)} CHƯA KIỂM / {t.get('BI_CHAN', 0)} BỊ CHẶN"
+six_txt = "; ".join(f"{a} {b} {c} {p}/{f}/{n}" for a, b, c, p, f, n in six)
+
+b = ROOT / "docs" / "handover" / "v13-board.md"
+s = b.read_bytes().decode("utf-8")
+anchor = "## Checkpoint mới — Vòng r10 (23/10/2026): NGHIỆM THU KỸ THUẬT NỘI BỘ trên máy dev"
+assert s.count(anchor) == 1
+board = f"""## Checkpoint mới — Vòng r11 (23/10/2026): kiểm lại 6 mục nghiệm thu kỹ thuật nội bộ bằng evidence gốc mới — CHƯA commit/merge/push/deploy
+
+Lý do: controller chưa chấp nhận chốt r10 (5 mục marketing dựa log tái tạo từ transcript; legal_hr-07 PASS "theo ý định"). Không sửa mã sản phẩm (fingerprint `97051e55…8001` không đổi), không vá 20 lỗi r10, không dùng DB `samsam`.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| Tiêu chí khóa trước khi chạy | `criteria/r11.json` `{locks['r11.lock.txt'][:12]}…`; `r11_v2_marketing-03.2.json` `{locks['r11_v2_marketing-03.2.lock.txt'][:12]}…` (sửa lỗi fixture lượt v1, expected giữ); tiêu chí r10 giữ nguyên | `evidence/itacc_r11/criteria/` |
+| 6 mục (ID trạng thái mức PASS/FAIL/NOT_RUN) | {six_txt} | `evidence/itacc_r11/items/`, `runs/` (stdout/stderr/exit gốc) |
+| Đính chính | legal_hr-07-C1: bộ lọc chủ đề loại tin lạc TRƯỚC khi lưu → chính xác 1 dòng + 0 tin lạc + `off_topic=1` (không phải 2 dòng); marketing-06.2-C3: tuần đã đóng 2026-10-12 (r10 khóa nhầm tuần hiện tại) | `criteria/r11.json` (`dinh_chinh_r10`, `khac_r10`) |
+| Tổng hợp hiện hành 96 (90 r10 + 6 r11, sinh bằng code) | **{tot}** (checkpoint r10 cùng số); 0 vi phạm nhất quán; {T['so_tham_chieu_evidence']} tham chiếu evidence khớp hash | `evidence/itacc_r11/tong_hop.json`, `source_map.json` |
+| Kế thừa r10 | 90 mục; full pytest 6619/0/0, UI 22/2/2, gate — cùng fingerprint, KHÔNG chạy lại ở r11 | `evidence/itacc_r10/` |
+
+"""
+b.write_bytes(s.replace(anchor, board + anchor).encode("utf-8"))
+
+d = ROOT / "DONE.md"
+s = d.read_bytes().decode("utf-8")
+h = "## Vòng r10 (23/10/2026) — nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — CHƯA commit/merge/push/deploy"
+assert s.count(h) == 1
+done = f"""## Vòng r11 (23/10/2026) — kiểm lại 6 mục nghiệm thu kỹ thuật nội bộ bằng evidence gốc mới — CHƯA commit/merge/push/deploy
+
+Không sửa mã sản phẩm (fingerprint `97051e55…8001` không đổi), không vá 20 lỗi r10, không truy cập DB `samsam`,
+không đổi `acceptance_status` (0/96 nghiệm thu hợp đồng). Postgres Docker riêng `samsam-itacc-r11` (127.0.0.1:55441).
+
+1. Chạy lại marketing-03.2, 05.1, 05.2, 06.1, 06.2 (r10 dựa log tái tạo từ transcript) và legal_hr-07 (r10 PASS
+   "theo ý định") theo tiêu chí r11 KHÓA TRƯỚC khi chạy — {six_txt}. Log gốc:
+   `evidence/itacc_r11/runs/<id>/<run_id>/`; bản ghi `evidence/itacc_r11/items/` (supersedes = đường dẫn + hash bản ghi r10).
+2. Đính chính tiêu chí: legal_hr-07-C1 (bộ lọc chủ đề loại tin lạc trước khi lưu → chính xác 1 dòng, không phải 2);
+   marketing-06.2-C3 (tuần đã đóng 2026-10-12 thay tuần hiện tại). Tiêu chí khóa r10 + 6 bản ghi r10 + log tái tạo giữ nguyên.
+3. Lỗi harness của chính lượt r11: 03.2 lượt v1 fixture `bien_the=4` ≠ creative #1 → tiêu chí v2 (chỉ đổi fixture), chạy lại toàn bộ.
+4. Tổng hiện hành (code sinh, 90 r10 + 6 r11): **{tot}** — `evidence/itacc_r11/tong_hop.json`, `source_map.json`;
+   0 vi phạm nhất quán. Hồ sơ `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Full pytest/UI/gate là evidence r10
+   kế thừa trên cùng fingerprint — r11 không chạy full.
+
+"""
+d.write_bytes(s.replace(h, done + h).encode("utf-8"))
+print("ok")

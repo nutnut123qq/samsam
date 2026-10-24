@@ -1,0 +1,46 @@
+"""HARNESS r12-fix — sinh bản sao mkdb/runner/run_batch r12 cho lượt này (không sửa tệp r12).
+Đổi: tiền tố DB samsam_itacc_r12fix_, cổng 55452, thư mục evidence/itacc_r12_fix_d2_l3, scratchpad r12fix, placeholder
+{FXF}/{HF}, che thêm libpq `password=`.  python -I mk_harness_copies.py.txt"""
+from pathlib import Path
+
+H = Path(__file__).resolve().parent
+R = H.parents[1] / "itacc_r12" / "harness"
+SP12 = r"C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12"
+
+
+def conv(src, dst, reps, head):
+    s = (R / src).read_bytes().decode("utf-8")
+    for a, b in reps:
+        assert s.count(a) == 1, (src, a)
+        s = s.replace(a, b)
+    with open(H / dst, "xb") as fh:
+        fh.write((head + s).encode("utf-8"))
+
+
+SED_OLD = r"""sed -E 's#(postgres(ql)?://[^:]+:)[^@]+@#\1***@#g'"""
+SED_NEW = r"""sed -E 's#(postgres(ql)?://[^:]+:)[^@]+@#\1***@#g; s#password=[^ ]+#password=***#g'"""
+conv("mkdb_r12.sh.txt", "mkdb_r12fix.sh.txt", [
+    ("samsam_itacc_r12_*) ;;", "samsam_itacc_r12fix_*) ;;"),
+    ('str(d["port"]) == "55451"', 'str(d["port"]) == "55452"'),
+    (SED_OLD, SED_NEW),
+], "# r12-fix: bản sao mkdb_r12.sh.txt — tiền tố DB samsam_itacc_r12fix_, cổng 55452, che thêm libpq password=.\n")
+
+RED_OLD = '    t = re.sub(r"(postgres(?:ql)?://[^:/\\s]+:)[^@\\s]+@", r"\\1***@", t)\n'
+RED_NEW = RED_OLD + '    t = re.sub(r"password=(?!\\*\\*\\*)\\S+", "password=***", t)\n'
+conv("runner_r12.py.txt", "runner_r12fix.py.txt", [
+    ('EV = REPO / "evidence" / "itacc_r12"\n',
+     'EV = REPO / "evidence" / "itacc_r12_fix_d2_l3"\nEV12 = REPO / "evidence" / "itacc_r12"\n'),
+    ('str(d.get("port")) == "55451"', 'str(d.get("port")) == "55452"'),
+    (RED_OLD, RED_NEW),
+    ('FX, H = EV / "fixtures", EV / "harness"\n',
+     'FX, H = EV12 / "fixtures", EV12 / "harness"\nFXF, HF = EV / "fixtures", EV / "harness"\n'),
+    ('.replace("{H}", str(H))', '.replace("{FXF}", str(FXF)).replace("{HF}", str(HF)).replace("{H}", str(H))'),
+], '"""r12-fix: bản sao runner_r12.py.txt — thư mục evidence/itacc_r12_fix_d2_l3 (runs/), cổng 55452, placeholder thêm\n'
+   '{FXF}/{HF} (fixture/harness r12-fix); {FX12}/{H} vẫn trỏ fixture/harness r12 (CHỈ ĐỌC); che thêm libpq password=."""\n')
+conv("run_batch_r12.py.txt", "run_batch_r12fix.py.txt", [
+    ('EV = REPO / "evidence" / "itacc_r12"\n', 'EV = REPO / "evidence" / "itacc_r12_fix_d2_l3"\n'),
+    ('SP = Path(r"' + SP12 + '")', 'SP = Path(r"' + SP12 + 'fix")'),
+    ('"mkdb_r12.sh.txt"', '"mkdb_r12fix.sh.txt"'),
+    ('"runner_r12.py.txt"', '"runner_r12fix.py.txt"'),
+], "# r12-fix: bản sao run_batch_r12.py.txt — evidence/itacc_r12_fix_d2_l3, scratchpad r12fix, mkdb/runner r12fix.\n")
+print("ok")

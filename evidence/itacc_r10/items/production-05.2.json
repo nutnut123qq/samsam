@@ -1,0 +1,183 @@
+{
+ "id": "production-05.2",
+ "ten": "Tóm tắt tài liệu R&D",
+ "khoi": "production",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Sản xuất, R&D / Kho tài liệu R&D (P2): '... tóm tắt tài liệu về thành phần, chế biến, bảo quản'",
+ "tieu_chi": [
+  "C1 sx_tracuu --llm (fake LLM ở biên trả tóm tắt sạch) → sx-tomtat-…md mode llm, qua guardrail, nhãn NỘI BỘ",
+  "C2 LLM trả nội dung vi phạm guardrail → rơi về trích đoạn (file sx-tracuu-, không sx-tomtat-) + lý do",
+  "C3 nút tắt tính năng LLM (LLM_KILL_FEATURES) / LLM lỗi → rơi về trích đoạn",
+  "C4 tắt production-05.2 → không ghi sx-tomtat; MOCK — không gọi OpenRouter thật"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_prod; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: llm_gateway._client = client giả cục bộ (embedding băm bag-of-words; chat câu cố định) — cổng gateway/kill/llm_usage chạy thật, 0 gọi OpenRouter; báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/rd_baoquan.md",
+   "sha256": "34e4d40d14e33218f1f38b3ea23f8e2fa8bae4ae6f7e51ce9f68affb65763f61",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "P052-1",
+   "mo_ta": "tóm tắt sạch (fake LLM)",
+   "lenh": "[P052-1] python evidence/itacc_r10/g4/harness/run.py --fake-llm ok --reports-dir evidence/itacc_r10/g4/out/rep_rd52 -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --llm --out || [P05-check] (script kiểm python inline — kết quả trong out/P05-check.txt) || [P052-q] python evidence/itacc_r10/g4/harness/q.py select agent_id, feature_id, ok, error from llm_usage order by id ; select feature_id, name, is_sample from report_outputs order by id",
+   "expected": "sx-tomtat, mode llm, guardrail ok",
+   "actual": "exit 0; sx-tomtat-2026-10-23-c4a63127.md Chế độ llm, nhãn NỘI BỘ, guardrail.check ok=True (kiểm script); llm_usage sx_tracuu production-05.2",
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P052-2",
+   "mo_ta": "ÂM LLM vi phạm guardrail",
+   "lenh": "[P052-2] python evidence/itacc_r10/g4/harness/run.py --fake-llm banned --reports-dir evidence/itacc_r10/g4/out/rep_rd52b -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --llm --out",
+   "expected": "sx-tracuu, extract, lý do guardrail",
+   "actual": "exit 0; file sx-tracuu-… (không sx-tomtat), Chế độ extract, 'LLM bị loại: guardrail: banned_word,unverified_claim'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P052-3",
+   "mo_ta": "ÂM nút tắt LLM (LLM_KILL_FEATURES)",
+   "lenh": "[P052-3] python evidence/itacc_r10/g4/harness/run.py --fake-llm ok --reports-dir evidence/itacc_r10/g4/out/rep_rd52c -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --llm --out",
+   "expected": "extract, lý do gateway",
+   "actual": "exit 0; Chế độ extract, 'LLM bị loại: gateway: GatewayBlocked'; không có dòng llm_usage mới cho lần này",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P052-4",
+   "mo_ta": "ÂM tắt production-05.2 (chạy cuối)",
+   "lenh": "[TAT-production-05.2] python -m pipelines.rollout --disable production-05.2 --by Người Thử IT --note kiem nhanh tat IT r10 || [P052-4] python evidence/itacc_r10/g4/harness/run.py --fake-llm ok --reports-dir evidence/itacc_r10/g4/out/rep_rd_tat -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --llm --out",
+   "expected": "không ghi sx-tomtat mới",
+   "actual": "exit 1 traceback RolloutBlocked; không ghi file (rep_rd_tat rỗng)",
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P052-5",
+   "mo_ta": "bổ sung sau khóa: tắt production-05.2 → không gọi LLM / không sinh tóm tắt",
+   "lenh": "[P052-4] python evidence/itacc_r10/g4/harness/run.py --fake-llm ok --reports-dir evidence/itacc_r10/g4/out/rep_rd_tat -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --llm --out || [TAT-prod-q2] python evidence/itacc_r10/g4/harness/q.py select agent_id, feature_id, ok from llm_usage order by id desc limit 3 ; select count(*) from report_outputs",
+   "expected": "không có lời gọi LLM production-05.2 mới, không in tóm tắt",
+   "actual": "VẪN gọi LLM: llm_usage thêm dòng sx_tracuu/production-05.2 ok=true (chi phí ghi nhận) và stdout in nguyên bản tóm tắt 'Chế độ: llm' — chỉ bước ghi file bị chặn",
+   "exit": [
+    1,
+    0
+   ],
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null,
+   "ghi_chu": "thêm sau khi quan sát P052-4: cổng giai đoạn chỉ đặt ở write_report, không ở biên sinh (rollout.check_generate) trước llm_gateway.chat"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Đặt rollout.check_generate(production-05.2) trước lời gọi LLM trong sx_tracuu (và bắt RolloutBlocked) — sửa sản phẩm.",
+ "gioi_han": "LLM qua client giả (MOCK) — không gọi OpenRouter; chất lượng tóm tắt thật chưa kiểm; gửi dữ liệu R&D ra AI nước ngoài cần Bên B chấp thuận.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/P052-1.txt",
+   "sha256": "d93010ff6ac4f223b5ce53e03068f374a39ddea41f53bf16919cc7c949ee76c5"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P052-2.txt",
+   "sha256": "4c0b24706f5d21e0ab11ccc3f7ee18029df42680882ea5235b5685a2cd8fa567"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P052-3.txt",
+   "sha256": "354b45b4bacb2309f07fbc18d15cc65b0e739354ebe581ddde2c8f2317989b14"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P052-4.txt",
+   "sha256": "1e8725b7081688cba52bee22d6758b3fab75df1d3f07e7440ae4a29c559e1796"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P052-q.txt",
+   "sha256": "68ab4488612e61c3599267ebabf81f0b2a2abf6bb18415bbb81cac16933f5804"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P05-check.txt",
+   "sha256": "a69f71c9ac1c56644737c19f8e89b762909bc8e0994fe2b8547b45b04f7ab12e"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-production-05.2.txt",
+   "sha256": "6e24865f56f91785a73b627940d724a3cf8d0df5aa70fdbb36e2980176cd4a36"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-prod-q2.txt",
+   "sha256": "aa50fc065a5dcbff01cdcee8096ef8c75e728e52c4e605e44e6be21e2b28f858"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_rd52/sx-tomtat-2026-10-23-c4a63127.md",
+   "sha256": "8e6dd47478727cb16ae131dd254e52173bbef49516ba0fb1166824cb181d1e22"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_rd52b/sx-tracuu-2026-10-23-c4a63127.md",
+   "sha256": "38910a1730646d0b5d1f8393b3cc9acf7b2805d96e39cffebfe9b9bae5abc37c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-prod.txt",
+   "sha256": "602c88845811a35b82861c29168029e190441247d92c4c6f4f60caf7340c5824"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "muc_do": "trung bình",
+   "mo_ta": "agents.sx_tracuu --llm khi tính năng production-05.2 đang TẮT (rollout) vẫn gọi llm_gateway.chat (phát sinh chi phí, gửi ngữ cảnh R&D nội bộ ra dịch vụ AI ở môi trường thật) và in tóm tắt ra stdout; chỉ write_report chặn ghi file và ném traceback RolloutBlocked không bắt.",
+   "tai_hien": "rollout --disable production-05.2; harness run.py --fake-llm ok -- agents.sx_tracuu --ask '…' --llm --out",
+   "expected": "không gọi LLM, không sinh tóm tắt, thông báo bị chặn",
+   "actual": "llm_usage +1 dòng production-05.2 ok; stdout 'Chế độ: llm' + tóm tắt; exit 1 traceback",
+   "evidence": [
+    "evidence/itacc_r10/g4/out/P052-4.txt",
+    "evidence/itacc_r10/g4/out/TAT-prod-q2.txt"
+   ]
+  }
+ ]
+}

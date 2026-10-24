@@ -1,0 +1,18 @@
+#!/bin/bash
+# HARNESS r12-fix — fingerprint CÙNG phương pháp r12 (alternate index, diff vs 16b33fc, trừ DONE.md + docs/handover/v13-board.md),
+# cho cây bất kỳ (checkout hoặc snapshot baseline) qua --work-tree. Không đụng index thật.
+#   bash fp_r12fix.sh.txt <TREE> full|code <NEW_FILES_LIST>
+# full = mọi tệp; code = loại thêm **/*.md. NEW_FILES_LIST = tệp chưa track tính vào (r12: new_files_r12.txt; lượt này thêm test mới).
+TREE="$1"; MODE="$2"; NEW="$3"
+SP="/c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12fix_fp"
+mkdir -p "$SP"
+export GIT_INDEX_FILE="$SP/fp.$$.index"
+G="git --git-dir=/d/code/samsam/.git --work-tree=$TREE"
+rm -f "$GIT_INDEX_FILE"
+cd "$TREE" || exit 2
+$G read-tree HEAD
+$G add -N $(cat "$NEW") 2>/dev/null
+EX=(':(exclude)DONE.md' ':(exclude)docs/handover/v13-board.md')
+[ "$MODE" = code ] && EX+=(':(exclude,glob)**/*.md')
+$G diff 16b33fc -- . "${EX[@]}" 2>/dev/null | sha256sum | cut -d' ' -f1
+rm -f "$GIT_INDEX_FILE"

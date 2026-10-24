@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r11\harness/run.py.txt", line 94, in <module>
+    runpy.run_module(mod, run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\code\samsam\agents\seo_web.py", line 547, in <module>
+    rc = main()
+         ^^^^^^
+  File "D:\code\samsam\agents\seo_web.py", line 529, in main
+    out = submit(conn, res["day"], mode, res["issues"])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\agents\seo_web.py", line 451, in submit
+    qid = director.submit(conn, "marketing", OBJECT_TYPE, oid, title,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\director.py", line 172, in submit
+    return aq.enqueue(conn, object_type=object_type, object_id=object_id,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\approval_queue.py", line 88, in enqueue
+    _rollout().check_generate(conn, _feature_of((block, object_type, by)),
+  File "D:\code\samsam\pipelines\rollout.py", line 671, in check_generate
+    raise RolloutBlocked(_why(fid, "tat", what) + " — không sinh đầu ra")
+pipelines.rollout.RolloutBlocked: hàng duyệt marketing/seo_web_fix: tính năng marketing-06.1 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra

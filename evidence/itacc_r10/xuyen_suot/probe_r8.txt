@@ -1,0 +1,14 @@
+PASS  D1a hàng duyệt: login A nhãn agent, login B CÙNG NGƯỜI quyết → chặn  | {"decide": ["denied", "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"]}
+PASS  D1b override QA: login B CÙNG NGƯỜI override mục do login A tạo → chặn  | {"override": ["denied", "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"]}
+PASS  D1c draft: login B CÙNG NGƯỜI duyệt draft login A tạo → chặn  | {"approve": ["denied", "P0001 người duyệt trùng người tạo draft #1, cần người khác duyệt"]}
+PASS  D1d giá vốn: login A tạo (agent:controller), login B CÙNG NGƯỜI duyệt → chặn  | {"insert": ["denied", "42501 người thực hiện không hợp lệ (agent:controller) — agent/hệ thống không ghi thay người"], "approve": null}
+PASS  D1d giá vốn: login A tạo (Marketing Giả S04), login B CÙNG NGƯỜI duyệt → chặn  | {"insert": ["ok", [[2]]], "approve": ["denied", "P0001 người duyệt trùng người lập giá vốn #2, cần người khác duyệt"]}
+PASS  D1+ người KHÁC đúng khối quyết mục login A tạo → được  | {"decide": ["ok", [[2]]]}
+PASS  D1+ người KHÁC khối finance duyệt giá vốn người lập → được  | {"insert": ["ok", [[3]]], "approve": ["ok", [[3]]]}
+PASS  D1+ svc_job đẩy mục agent → người đúng khối quyết → được  | {"decide": ["ok", [[4]]]}
+PASS  D2+ login hợp lệ, đúng người/khối, đã đăng nhập thật → READY  | {"status": "READY_FOR_TRIAL", "thieu": [], "login_works": true}
+PASS  D2 VALID UNTIL quá khứ: login thật bị từ chối → không READY + lý do  | {"status": "CHUA_SAN_SANG", "thieu": ["khối ceo: người duyệt chưa có login hợp lệ đúng khối trong human_logins: Marketing Hai Giả S04"], "login_works": false}
+PASS  D2 CONNECTION LIMIT 0: login thật bị từ chối → không READY + lý do  | {"status": "CHUA_SAN_SANG", "thieu": ["khối ceo: người duyệt chưa có login hợp lệ đúng khối trong human_logins: Marketing Hai Giả S04"], "login_works": false}
+PASS  D2 NOLOGIN: login thật bị từ chối → không READY + lý do  | {"status": "CHUA_SAN_SANG", "thieu": ["khối ceo: người duyệt chưa có login hợp lệ đúng khối trong human_logins: Marketing Hai Giả S04"], "login_works": false}
+PASS  D2 offline (không DB) → không READY  | {"status": "CHUA_SAN_SANG", "thieu": ["CHƯA KIỂM login người duyệt (không đọc DB — chạy `--db` trên server Bên B)"]}
+TỔNG 13 ca, không PASS 0 (ERROR 0)

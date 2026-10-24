@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' and block = 'ceo' and status = 'pending' and created_by = 'Người Đề Xuất Thử IT' and position('code: MOC-A' in payload) > 0 and position('old_due: 2026-10-31' in payload) > 0 and position('new_due: 2026-11-14' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select due_date::text from project_milestones where code = 'MOC-A'",
+  "expect": "2026-10-31",
+  "actual": "2026-10-31",
+  "dat": true
+ }
+]

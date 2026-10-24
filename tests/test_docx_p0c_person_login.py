@@ -13,7 +13,7 @@ Sau sửa: trigger `person_login_guard` — login NGƯỜI (app_human, không
 svc_ui/owner) ghi tên người → bắt buộc `human_actor` (đúng người của login
 trong `human_logins`, đúng khối với quyết định hàng duyệt/phân bổ/kiểm nhập/
 giá vốn); sai → 42501, function rollback (không ghi dở). Login UI `svc_ui`
-(đã xác thực phiên ở Python) giữ hành vi cũ; dòng `agent:` của luồng agent
+từ đợt an toàn S04 cũng bị kiểm (không còn được tin tên); dòng `agent:` của luồng agent
 và dòng `authz_denied` không bị chặn. Đúng người hoàn tất việc qua CLI thật.
 
 Probe: schema tạm ĐÃ COMMIT, login Postgres THẬT tạm (không owner/superuser),
@@ -218,12 +218,17 @@ def test_p0c_cli_right_person_completes_wrong_person_blocked(live):
     assert _status(live, qid) == ("approved", P_PROD)
 
 
-def test_p0c_ui_login_keeps_session_trust_agents_still_blocked(live):
+def test_p0c_ui_shared_login_cannot_write_person_names(live):
+    # Đợt an toàn S04 (lật test cũ `..._keeps_session_trust...`): trước đây
+    # login UI dùng chung (svc_ui) được DB tin tên người tự truyền → giả danh
+    # bất kỳ ai. Nay svc_ui không ánh xạ người → 42501, mục giữ pending; UI
+    # chế độ thực quyết định bằng login riêng của người (auth.person_connect).
     qid = _item(live, block="sales", otype="price_review")
-    _as(live, "ui", "select decide_item(%s, %s, 'approved')",
-        (qid, "Người Dùng UI Giả"))
-    assert _status(live, qid) == ("approved", "Người Dùng UI Giả")
-    qid = _item(live, block="sales", otype="price_review")
+    _denied(live, "ui", "select decide_item(%s, %s, 'approved')",
+            (qid, "Người Dùng UI Giả"))
+    _denied(live, "ui", "select decide_item(%s, %s, 'approved')",
+            (qid, P_SALES))
+    assert _status(live, qid) == ("pending", None)
     _denied(live, "ui", "select decide_item(%s, 'agent:x', 'approved')",
             (qid,))
     assert _status(live, qid) == ("pending", None)

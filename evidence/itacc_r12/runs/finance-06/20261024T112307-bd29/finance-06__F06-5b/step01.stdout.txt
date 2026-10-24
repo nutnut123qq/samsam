@@ -1,0 +1,45 @@
+# Biên bản đối soát doanh thu thuần trực tuyến — quý 2026-Q3
+
+> **BẢN ĐỀ XUẤT do hệ thống lập** — chỉ có giá trị khi đại diện 2 bên ký (HĐ hợp tác Điều 7.5, 8.3). Xung đột lợi ích (Điều 7.6): Bên A vận hành hệ thống và hưởng phí tính trên số này → Bên B kiểm và ký; người của Bên A không tự duyệt. Chênh lệch → bên quản lý số liệu giải trình bằng văn bản trong 05 ngày làm việc.
+
+| Ô | Nội dung |
+|---|---|
+| Kỳ | 2026-Q3: 2026-07-01 → 2026-09-30 (giờ VN, theo ngày quyết toán) |
+| Ngày lập | 2026-10-23 10:30 (giờ VN) |
+| Kênh trực tuyến | shopee, tiktok · website: chưa có nguồn (website bán hàng làm riêng sau) |
+| Phí sàn gồm | `fixed_fee_vnd`, `payment_fee_vnd`, `service_fee_vnd`, `shipping_fee_vnd`, `voucher_seller_vnd`, `affiliate_vnd` (GIẢ ĐỊNH — 2 bên chốt) |
+| Ngày ký hợp đồng (mốc năm hợp tác) | 2026-06-15 |
+| Ngày bắt đầu vận hành thương mại | 2026-07-01 |
+
+## Số liệu
+
+| Kênh | Gộp | Phí sàn | Hủy | Hoàn | **Thuần** | Thực nhận trên file | Nguồn |
+|---|---|---|---|---|---|---|---|
+| shopee | 2.900.000đ | 324.000đ | 200.000đ | 400.000đ | **1.976.000đ** | 1.962.000đ | `v_settlement_khoan` (`settlement_rows`, bản xuất lại nguyên văn tính 1 lần) settled_on 2026-07-01 → 2026-09-30, 6 khoản: qt_shopee_s1.csv (5 dòng), qt_shopee_s2.csv (1 dòng); Hủy: `orders` (source market:shopee) 1 đơn hủy |
+| tiktok | 500.000đ | 60.000đ | 0đ | 0đ | **440.000đ** | 440.000đ | `v_settlement_khoan` (`settlement_rows`, bản xuất lại nguyên văn tính 1 lần) settled_on 2026-07-01 → 2026-09-30, 1 khoản: qt_tiktok.csv (1 dòng); Hủy: `orders` (source market:tiktok) 0 đơn hủy |
+| **Tổng** | 3.400.000đ | 384.000đ | 200.000đ | 400.000đ | **2.416.000đ** | 2.402.000đ | Σ các kênh (thiếu 1 kênh → chưa có dữ liệu) |
+
+Công thức: Thuần = Gộp − Phí sàn − Hủy − Hoàn. Hủy = Σ giá trị đơn của dòng quyết toán có đơn trạng thái hủy (hoàn của các dòng đó đã nằm trong Hủy, không trừ 2 lần). Thực nhận trên file (Σ `payout_vnd`) chỉ để đối chiếu.
+
+## Phí vận hành (Điều 9.3, PL02 mục 5)
+
+| Ô | Nội dung |
+|---|---|
+| Tỷ lệ phí vận hành | 5% |
+| Phí vận hành (quy đổi sản phẩm) | — (có kênh bất thường — 2 bên giải trình (Điều 7.5)) |
+
+## Ghi chú / thiếu nguồn
+
+- shopee: BẤT THƯỜNG — khoản quyết toán xuất lại ở ≥2 file (chồng kỳ): trùng nguyên văn 1 (đã tính 1 lần), lệch số 1 (giữ cả hai, KHÔNG tự chọn file) — nguồn: qt_shopee_s1.csv, qt_shopee_s2.csv — người đối soát xác nhận/loại bản thừa (Điều 7.5)
+
+## Chênh lệch và giải trình (Điều 7.5)
+
+(2 bên ghi tay)
+
+## Ký xác nhận
+
+| Đại diện Bên A | Đại diện Bên B |
+|---|---|
+| (ký, ghi rõ họ tên) | (ký, ghi rõ họ tên) |
+| | |
+

@@ -589,7 +589,8 @@ def test_save_draft_default_kwargs_insert_params():
     assert "content_type, sku, is_ai, prompt_version, prompt_sha256" in sql
     assert params[:3] == ("b", "facebook", "t")
     assert params[4:6] == ("manual:studio", "Lan")
-    assert params[6:] == ("post", None, True, None, None)
+    # + khối sở hữu (đợt an toàn S04 — DB kiểm khối khi duyệt draft)
+    assert params[6:] == ("post", None, True, None, None, "marketing")
     log = conn.calls[1][1][4].obj
     assert log["content_type"] == "post" and log["sku"] is None
     assert "prompt_version" in log
@@ -607,7 +608,7 @@ def test_save_draft_listing_kwargs_and_view_read():
                      prompt_version="listing_shopee@1", prompt_sha256="ab")
     ins = next(c for c in conn.calls if "insert into content_drafts" in c[0])
     assert ins[1][6:] == ("listing", "savina-12v", True,
-                          "listing_shopee@1", "ab")
+                          "listing_shopee@1", "ab", "sales")   # + khối (S04)
     assert ins[1][3].obj["ok"] is True, ins[1][3].obj["violations"]
     assert any("from sku_readiness" in c[0] for c in conn.calls)
 

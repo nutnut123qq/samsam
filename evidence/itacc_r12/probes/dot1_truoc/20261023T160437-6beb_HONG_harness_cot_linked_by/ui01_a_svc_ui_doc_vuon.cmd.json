@@ -1,0 +1,17 @@
+{
+ "ca": "ui01_a_svc_ui_doc_vuon",
+ "argv": [
+  "python",
+  "-c",
+  "import psycopg,os; from agents import garden as g; c=psycopg.connect(os.environ['DATABASE_URL']);print(len(g.active_plots(c)), len(g.recent_logs(c)), len(g.anomaly_check(c)))"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "bat_dau": "2026-10-23T16:04:46+07:00",
+ "ket_thuc": "2026-10-23T16:04:47+07:00",
+ "exit": 1,
+ "llm_calls": null,
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "fdf63ee54f61a9ac7d4b31c3a365a3b2b024932de67bdfad10873b15fa360bcc"
+}

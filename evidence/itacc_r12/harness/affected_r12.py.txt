@@ -1,0 +1,36 @@
+"""HARNESS r12 — tập mục kiểm lại = 24 CODE_FAIL (tổng hợp r11) + mục BỊ ẢNH HƯỞNG TRỰC TIẾP: module của mục (khung
+r10) nằm trong tệp mã r12 đã sửa so snapshot baseline. Tệp lõi dùng chung (rollout/report/guardrail/gateway/auth/schema)
+liệt kê riêng — không suy ra cả 96 mục.  python -I affected_r12.py.txt <baseline_root> <out.json>"""
+import filecmp
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+B, OUT = Path(sys.argv[1]), Path(sys.argv[2])
+W = Path(__file__).resolve().parents[3]
+CORE = {"pipelines/rollout.py", "agents/report.py", "pipelines/guardrail.py", "pipelines/llm_gateway.py",
+        "pipelines/auth.py", "docs/schema.sql", "docs/roles.sql", "data/guardrail_rules.json"}
+changed = set()
+for pat in ("agents/*.py", "pipelines/*.py", "connectors/*.py", "scripts/*.py", "app/*.py", "ingest/*.py", "api/*.py"):
+    for p in W.glob(pat):
+        r = p.relative_to(W).as_posix()
+        if not (B / r).exists() or not filecmp.cmp(B / r, p, shallow=False):
+            changed.add(r)
+for r in ("docs/schema.sql", "docs/roles.sql", "data/guardrail_rules.json"):
+    if not filecmp.cmp(B / r, W / r, shallow=False):
+        changed.add(r)
+khung = json.loads((W / "evidence/itacc_r10/criteria/khung.json").read_text(encoding="utf-8"))["items"]
+th = {i["id"]: i for i in json.loads((W / "evidence/itacc_r11/tong_hop.json").read_text(encoding="utf-8"))["items"]}
+cf = sorted(i for i, v in th.items() if v["nguyen_nhan"] == "CODE_FAIL")
+aff = []
+for it in khung:
+    hit = sorted(set(it.get("modules") or []) & (changed - CORE))
+    if hit and it["id"] not in cf:
+        aff.append({"id": it["id"], "trang_thai_hien_hanh": th[it["id"]]["trang_thai"], "module_doi": hit})
+res = {"tep_doi": sorted(changed), "tep_loi_dung_chung": sorted(changed & CORE), "code_fail_24": cf,
+       "anh_huong_truc_tiep": aff}
+OUT.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+print(len(changed), "tệp đổi ·", len(cf), "CODE_FAIL ·", len(aff), "ảnh hưởng trực tiếp")
+for a in aff:
+    print(" ", a["id"], a["trang_thai_hien_hanh"], a["module_doi"])

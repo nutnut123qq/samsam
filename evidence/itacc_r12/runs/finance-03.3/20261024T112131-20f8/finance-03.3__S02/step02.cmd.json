@@ -1,0 +1,27 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import os,sys,psycopg\nc=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5)\ndb=c.execute('select current_database()').fetchone()[0]\nassert db.startswith('samsam_itacc_r12_'),db\nfor s in sys.argv[1:]:\n    c.execute(s)\nc.commit()\nprint('[fixture-sql] ok',db,len(sys.argv)-1)",
+  "insert into dealers (code, name, region, status, commission_default, source) values ('IT-DL01','Đại lý Thử IT 01','mien-trung','active',10,'fixture-thu-it'),('IT-DL03','Đại lý Thử IT 03','mien-trung','active',8,'fixture-thu-it')"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:21:34+07:00",
+ "ket_thuc": "2026-10-24T11:21:36+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\[fixture-sql\\] ok samsam_itacc_r12_f033 1",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "33c53e11cf105a1c01561a54069e8c9631505073a5a110e25329e88fac235180",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

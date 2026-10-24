@@ -1,0 +1,222 @@
+"""Probe S04 — danh tính quyết định gắn LOGIN đã xác thực, không tin tên tự khai.
+
+Chạy: python -I probe_s04.py <ROOT> <OUT.json> <dsn_file>
+DB test riêng: schema tạm ĐÃ COMMIT + login Postgres THẬT tạm (không owner/
+superuser), dọn sạch cuối probe (drop schema + drop role). Người/khối GIẢ.
+Đường gọi: SQL/function trực tiếp bằng từng login (kẻ giả danh dùng psql) +
+helper UI `auth.person_connect` (nếu có).
+"""
+import json
+import os
+import secrets
+import sys
+import uuid
+from pathlib import Path
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG"):
+        os.environ[k] = ""
+BASE = Path(sys.argv[3]).read_text().split("'")[1]
+os.environ.update(DATABASE_URL=BASE, OPENROUTER_API_KEY="", DEPLOY="0")
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+import psycopg  # noqa: E402
+from psycopg import conninfo  # noqa: E402
+
+from pipelines import auth  # noqa: E402
+
+SCHEMA_SQL = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+ROLES_SQL = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
+P_SALES, P_MKT = "Bán Hàng Giả S04", "Marketing Giả S04"
+tag = uuid.uuid4().hex[:8]
+schema = f"t_s04_{tag}"
+kinds = {"sales": "app_human", "mkt": "app_human", "unmapped": "app_human",
+         "ui": "svc_ui", "agent": "agent_writer", "job": "svc_job"}
+logins = {k: (f"t_s04_{k}_{tag}", secrets.token_urlsafe(18)) for k in kinds}
+
+
+def dsn(k, with_schema=True):
+    d = conninfo.conninfo_to_dict(BASE)
+    d.update(user=logins[k][0], password=logins[k][1])
+    if with_schema:
+        d["options"] = f"-c search_path={schema}"
+    return conninfo.make_conninfo(**d)
+
+
+admin = psycopg.connect(BASE, autocommit=True, connect_timeout=5)
+R = []
+
+
+def q(sql, args=()):
+    with admin.transaction():
+        admin.execute(f"set local search_path to {schema}")
+        cur = admin.execute(sql, args)
+        return cur.fetchall() if cur.description else []
+
+
+def as_(k, sql, args=()):
+    """→ ('ok', rows) | ('denied', sqlstate) — login k, giao dịch riêng."""
+    try:
+        with psycopg.connect(dsn(k), connect_timeout=5) as c:
+            cur = c.execute(sql, args)
+            rows = cur.fetchall() if cur.description else []
+            c.commit()
+            return "ok", rows
+    except psycopg.Error as e:
+        return "denied", getattr(e, "sqlstate", None) or type(e).__name__
+
+
+def counts():
+    return q("select (select count(*) from approvals), (select count(*) from"
+             " agent_action_log where action <> 'authz_denied')")[0]
+
+
+def item(block, created_by="agent:probe"):
+    return q("insert into approval_queue (object_type, object_id, block, title,"
+             " payload, content_sha256, risk, guardrail, created_by, due_at)"
+             " values ('price_review', %s, %s, 'mục s04', 'p', %s, 'low',"
+             " '{\"ok\": true}', %s, now() + interval '1 day') returning id",
+             (uuid.uuid4().hex[:8], block, "a" * 64, created_by))[0][0]
+
+
+def draft(created_by="agent:mkt02", content_type="post"):
+    return q("insert into content_drafts (brief, channel, text, guardrail, status,"
+             " created_by, content_type, source) values ('b', 'facebook', 'Nội dung"
+             " thử S04', '{\"ok\": true}'::jsonb, 'pending', %s, %s, 'studio')"
+             " returning id", (created_by, content_type))[0][0]
+
+
+def check(name, got, expect_denied, extra=None):
+    ok = (got[0] == "denied") == expect_denied
+    R.append({"case": name, "got": got, "expect": "denied" if expect_denied else "ok",
+              "verdict": "PASS" if ok else "FAIL", **(extra or {})})
+
+
+try:
+    admin.execute("set lock_timeout = '60s'")
+    admin.execute(f"create schema {schema}")
+    with admin.transaction():
+        admin.execute(f"set local search_path to {schema}, pg_temp")
+        admin.execute(SCHEMA_SQL)
+        admin.execute(ROLES_SQL)
+    for k, (n, pw) in logins.items():
+        role = kinds[k]
+        if not admin.execute("select 1 from pg_roles where rolname=%s", (role,)).fetchone():
+            role = "app_human"
+        admin.execute(f"create role {n} login password '{pw}' nosuperuser"
+                      f" nocreatedb nocreaterole in role {role}")
+    q("insert into human_logins (db_login, person, blocks, granted_by) values"
+      " (%s, %s, '{sales}', 'probe'), (%s, %s, '{marketing}', 'probe')",
+      (logins["sales"][0], P_SALES, logins["mkt"][0], P_MKT))
+
+    # 1) Login UI dùng chung (svc_ui) ghi quyết định mang tên người tự khai
+    qid = item("sales")
+    before = counts()
+    got = as_("ui", "select decide_item(%s, %s, 'approved')", (qid, "Người UI Tự Khai"))
+    check("1 svc_ui decide_item tên tự khai → chặn", got, True,
+          {"status": q("select status from approval_queue where id=%s", (qid,))[0][0],
+           "ghi_do": counts() != before})
+    d1 = draft()
+    got = as_("ui", "select approve_draft(%s, %s, null)", (d1, P_MKT))
+    check("2 svc_ui approve_draft mang tên người THẬT khác → chặn", got, True)
+    d2 = draft()
+    q("select approve_draft(%s, %s, null)", (d2, P_MKT))   # owner: duyệt hợp lệ
+    got = as_("ui", "select schedule_draft(%s, current_date + 1, %s)", (d2, P_MKT))
+    check("3 svc_ui schedule_draft (draft đã duyệt hợp lệ) tên tự khai → chặn", got, True)
+    got = as_("mkt", "select schedule_draft(%s, current_date + 1, %s)", (d2, P_MKT))
+    check("3b người marketing xếp lịch draft đã duyệt khối mình → được", got, False)
+    # 4) đúng người, đúng khối → được
+    qid = item("sales")
+    got = as_("sales", "select decide_item(%s, %s, 'approved')", (qid, P_SALES))
+    check("4 người sales tự quyết mục khối sales → được", got, False)
+    d3 = draft()
+    got = as_("mkt", "select approve_draft(%s, %s, null)", (d3, P_MKT))
+    check("5 người marketing duyệt draft khối marketing → được", got, False)
+    # 6) sai khối / giả tên / agent / tự duyệt
+    qid = item("marketing")
+    got = as_("sales", "select decide_item(%s, %s, 'approved')", (qid, P_SALES))
+    check("6 người sales quyết mục khối marketing → chặn", got, True)
+    d4 = draft()
+    before = counts()
+    got = as_("sales", "select approve_draft(%s, %s, null)", (d4, P_SALES))
+    check("7 người sales duyệt draft khối marketing (gọi thẳng function) → chặn", got, True,
+          {"ghi_do": counts() != before,
+           "draft_status": q("select status from content_drafts where id=%s", (d4,))[0][0]})
+    qid = item("sales")
+    got = as_("sales", "select decide_item(%s, %s, 'approved')", (qid, P_MKT))
+    check("8 login sales ghi tên người khác → chặn", got, True)
+    got = as_("sales", "select decide_item(%s, 'agent:x', 'approved')", (qid,))
+    check("9 login người ghi tên agent → chặn", got, True)
+    qid2 = item("sales", created_by=P_SALES)
+    got = as_("sales", "select decide_item(%s, %s, 'approved')", (qid2, P_SALES))
+    check("10 người tự duyệt mục mình tạo → chặn", got, True)
+    got = as_("unmapped", "select decide_item(%s, %s, 'approved')", (qid, P_SALES))
+    check("11 login người chưa ánh xạ human_logins → chặn", got, True)
+    got = as_("agent", "select decide_item(%s, %s, 'approved')", (qid, P_SALES))
+    check("12 login agent_writer → chặn", got, True)
+    got = as_("job", "select decide_item(%s, %s, 'approved')", (qid, P_SALES))
+    check("13 login dịch vụ svc_job → chặn", got, True)
+    got = as_("ui", "insert into agent_action_log (actor, action, object_type,"
+              " object_id, detail) values (%s, 'queue_approve', 'approval_queue',"
+              " %s, jsonb_build_object('queue_id', %s))", (P_SALES, str(qid), qid))
+    check("14 svc_ui INSERT thẳng log quyết định tên người → chặn", got, True)
+    # 15) helper UI: phiên người = login Postgres của chính người dùng
+    fn = getattr(auth, "person_connect", None)
+    if fn is None:
+        R.append({"case": "15 auth.person_connect (UI mở phiên bằng login người)",
+                  "got": "không có hàm", "verdict": "FAIL"})
+    else:
+        base_sp = conninfo.make_conninfo(**{**conninfo.conninfo_to_dict(BASE),
+                                            "options": f"-c search_path={schema}"})
+        res = {}
+        try:
+            c, person, blocks = fn(base_sp, logins["mkt"][0], logins["mkt"][1])
+            res["ok"] = (person, blocks)
+            c.close()
+        except Exception as e:  # noqa: BLE001
+            res["ok"] = f"EXC {type(e).__name__}"
+        for k in ("ui", "unmapped"):
+            try:
+                c, *_ = fn(base_sp, logins[k][0], logins[k][1])
+                c.close()
+                res[k] = "MỞ ĐƯỢC"
+            except Exception as e:  # noqa: BLE001
+                res[k] = f"từ chối {type(e).__name__}"
+        try:
+            c, *_ = fn(base_sp, logins["mkt"][0], "sai-mat-khau-" + tag)
+            res["sai_mk"] = "MỞ ĐƯỢC"
+        except Exception as e:  # noqa: BLE001
+            res["sai_mk"] = f"từ chối {type(e).__name__}"
+        good = (res["ok"] == (P_MKT, ["marketing"]) and all(
+            str(res[k]).startswith("từ chối") for k in ("ui", "unmapped", "sai_mk")))
+        R.append({"case": "15 auth.person_connect: login người mở được; svc_ui/chưa ánh"
+                          " xạ/sai mật khẩu bị từ chối", "got": res,
+                  "verdict": "PASS" if good else "FAIL"})
+    # 16) quyền login dịch vụ không mở rộng: svc_ui không thành chủ bảng / superuser
+    sup = q("select rolsuper or rolcreaterole or rolcreatedb from pg_roles where rolname=%s",
+            (logins["ui"][0],))[0][0]
+    R.append({"case": "16 login UI không superuser/createrole/createdb", "got": sup,
+              "verdict": "PASS" if sup is False else "FAIL"})
+finally:
+    admin.execute(f"drop schema if exists {schema} cascade")
+    for n, _ in logins.values():
+        admin.execute(f"drop role if exists {n}")
+    left = admin.execute("select count(*) from pg_roles where rolname like %s",
+                         (f"t_s04_%_{tag}",)).fetchone()[0]
+    admin.close()
+
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+for r in R:
+    print(f"{r['verdict']}  {r['case']}  | got={r['got']}"
+          + "".join(f" {k}={r[k]}" for k in ("status", "ghi_do", "draft_status") if k in r))
+print(f"dọn: role tạm còn lại = {left}")
+n = sum(r["verdict"] == "FAIL" for r in R)
+print(f"TỔNG {len(R)} ca, FAIL {n}")
+sys.exit(1 if n else 0)

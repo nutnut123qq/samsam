@@ -1,0 +1,15 @@
+"""HARNESS MOCK ở biên: gửi lại cảnh báo đỏ chưa gửi được tới routing FIXTURE (1 người nhận
+phap_che, địa chỉ example.com) bằng sender GIẢ (không mở mạng) — ghi lời gọi vào file."""
+import json, sys
+from datetime import datetime, timezone
+sys.path.insert(0, r"D:\code\samsam")
+from ingest.lead_store import connect
+from pipelines import red_alert
+calls = []
+def fake_sender(to, subject, body):
+    calls.append({"to": to, "subject": subject[:120]})
+routing = {"recipients": [{"name": "Pháp chế Thử IT", "role": "phap_che", "channel": "email:phapche.thu-it@example.com"}],
+           "excluded_roles": ["tgd", "ha_tang"]}
+conn = connect()
+st = red_alert.deliver_pending(conn, datetime.now(timezone.utc), routing=routing, sender=fake_sender)
+print(json.dumps({"st": st, "fake_calls": calls}, ensure_ascii=False, default=str))

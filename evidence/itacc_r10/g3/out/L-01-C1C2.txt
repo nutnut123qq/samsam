@@ -1,0 +1,20 @@
+[PASS] R1: check() từ cấm: 'Sâm Sâm Thử IT chữa bệnh tiểu đường' | expected=ok=False | actual=ok=False codes=['tu_cam']
+[PASS] R2: check() từ cấm: 'Uống mật ong sâm Thử IT là khỏi bệnh' | expected=ok=False | actual=ok=False codes=['tu_cam']
+[PASS] R3: check() từ cấm: 'Thuốc bổ từ sâm Thử IT' | expected=ok=False | actual=ok=False codes=['tu_cam']
+[PASS] R3b: check() từ cấm: 'Sản phẩm Thử IT hỗ trợ điều trị gout' | expected=ok=False | actual=ok=False codes=['claim_ngoai_cong_bo', 'tu_cam']
+[PASS] R4: check() văn bản sạch | expected=ok=True | actual=ok=True codes=[]
+[PASS] P1: claim NGẦM: đối tượng bệnh + lời chứng | expected=ok=False, có ngam_y_suc_khoe | actual=ok=False codes=['claim_khong_ro_sku', 'ngam_y_suc_khoe', 'thieu_khuyen_cao']
+[PASS] P2: đăng bài sạch + nhãn AI | expected=ok=True | actual=ok=True codes=[]
+[PASS] P3: nội dung AI thiếu nhãn AI | expected=ok=False | actual=ok=False codes=['thieu_nhan_ai']
+[FAIL] P4: SĐT cá nhân trong bài đăng | expected=ok=False (cờ PII) | actual=ok=True codes=[]
+[PASS] P5: quảng cáo rượu | expected=ok=False | actual=ok=False codes=['ruou_cam_quang_cao']
+[PASS] K1: kb_filter.is_alcohol rượu vs mật ong | expected=True / False | actual=True / False
+[PASS] L0: model chưa cấu hình (mặc định tắt) | expected=llm_check=off ok=True code=None calls=0 | actual=llm_check=off ok=True codes=[] calls=0
+[PASS] L1: luật đã chặn → không gọi LLM | expected=llm_check=skipped ok=False code=None calls=0 | actual=llm_check=skipped ok=False codes=['tu_cam'] calls=0
+[PASS] L2: LLM giả: không cờ | expected=llm_check=pass ok=True code=None calls=1 | actual=llm_check=pass ok=True codes=[] calls=1
+[PASS] L3: LLM giả: cờ ẩn ý | expected=llm_check=flag ok=False code=llm_ngam_y_suc_khoe calls=1 | actual=llm_check=flag ok=False codes=['llm_ngam_y_suc_khoe'] calls=1
+[PASS] L4: LLM giả: phản hồi không phải JSON | expected=llm_check=unavailable ok=False code=llm_check_unavailable calls=1 | actual=llm_check=unavailable ok=False codes=['llm_check_unavailable'] calls=1
+[PASS] L5: LLM giả: provider lỗi | expected=llm_check=unavailable ok=False code=llm_check_unavailable calls=1 | actual=llm_check=unavailable ok=False codes=['llm_check_unavailable'] calls=1
+[PASS] L6: prompt injection trong văn bản sạch luật — LLM giả trả flag false → vẫn chỉ là pass (không gỡ chặn nào) | expected=llm_check=pass ok=True code=None calls=1 | actual=llm_check=pass ok=True codes=[] calls=1
+[tong] 18 ca, FAIL 1
+[exit=1]

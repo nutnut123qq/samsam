@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select count(*) from san_suggestions where id = (select max(id) from san_suggestions) and channel = 'tiktok' and handoff = 'no_data'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

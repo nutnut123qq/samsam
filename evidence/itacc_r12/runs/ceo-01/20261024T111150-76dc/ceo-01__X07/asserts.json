@@ -1,0 +1,15 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\ceo-01\\20261024T111150-76dc\\ceo-01__X07\\out/*",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

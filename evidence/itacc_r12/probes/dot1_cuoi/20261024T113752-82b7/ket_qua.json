@@ -1,0 +1,254 @@
+{
+ "label": "dot1_cuoi",
+ "run_id": "20261024T113752-82b7",
+ "root": "D:\\code\\samsam",
+ "db": "samsam_itacc_r12_pfdot1a",
+ "fingerprint": null,
+ "probe_sha256": "dd1fc129164779de9688e80fd5198704eff13aaaec839e3919d1d3b7e1499646",
+ "ket_thuc": "2026-10-24T11:38:36+07:00",
+ "ket_qua": [
+  {
+   "loi": "P-01",
+   "ca": "a_khong_phan_bo_van_sinh (positive control)",
+   "ket_qua": "PASS",
+   "expected": "exit 0, bản tin có lô cận hạn",
+   "actual": {
+    "exit": 0,
+    "co_IT-LOT-001": true
+   }
+  },
+  {
+   "loi": "P-01",
+   "ca": "b_co_phan_bo_va_lo_can_han",
+   "ket_qua": "PASS",
+   "expected": "exit 0; cận hạn có IT-LOT-001/002 (có tồn) + IT-R12-X01 (SKU chưa có tồn), không có IT-LOT-003 (HSD 2028); mục thiếu hàng có mốc chot_11_11",
+   "actual": {
+    "exit": 0,
+    "allocation_rows": 91,
+    "typeerror": false,
+    "can_han": "## Hàng cận hạn (FEFO)\nNguồn: `production_lots` (passed, HSD ≤ 90 ngày tới, gồm lô đã quá hạn) × `inventory_snapshots` (tồn theo SKU — chưa theo lô; tồn 0 → bỏ).\n- IT-LOT-002 · sapentol-30v · HSD 2026-10-01 (ĐÃ QUÁ HẠN 22 ngày) · lô 50 · tồn SKU 60\n- IT-R12-X01 · saphraton-20v · HSD 2026-11-30 (còn 38 ngày) · lô 40 · chưa có số tồn\n- IT-LOT-001 · savina-12v · HSD 2026-12-01 (còn 39 ngày) · lô 100 "
+   }
+  },
+  {
+   "loi": "P-01",
+   "ca": "c_ra_ca_hai_file_bantin_canhan",
+   "ket_qua": "PASS",
+   "expected": "có sx-bantin-* và sx-canhan-*",
+   "actual": [
+    "sx-bantin-tuan-2026-10-23.md",
+    "sx-canhan-2026-10-23.md"
+   ]
+  },
+  {
+   "loi": "UI-01",
+   "ca": "a_svc_ui_doc_khoanh_nhat_ky",
+   "ket_qua": "PASS",
+   "expected": "svc_ui đọc được plots/plot_logs (cột tab cần)",
+   "actual": {
+    "exit": 0,
+    "stdout": "3 6 3",
+    "loi": ""
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "b_svc_ui_KHONG_ghi_thang_plot_logs",
+   "ket_qua": "PASS",
+   "expected": "svc_ui không INSERT plot_logs trực tiếp (ít quyền)",
+   "actual": {
+    "exit": 1,
+    "loi": "ges\\psycopg\\connection.py\", line 300, in execute\r\n    raise ex.with_traceback(None)\r\npsycopg.errors.InsufficientPrivilege: permission denied for table plot_logs"
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "c_svc_ui_khong_select_moi_cot_plots",
+   "ket_qua": "PASS",
+   "expected": "không cấp SELECT mọi cột",
+   "actual": {
+    "exit": 1,
+    "loi": ", in execute\r\n    raise ex.with_traceback(None)\r\npsycopg.errors.InsufficientPrivilege: permission denied for table plots"
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "d_nguoi_khoi_farming_ghi_qua_duong_hop_le",
+   "ket_qua": "PASS",
+   "expected": "login người khối farming ghi được, author = người của login, có hash chain",
+   "actual": {
+    "exit": 0,
+    "row": [
+     [
+      "Nông Dân Thử R12",
+      true,
+      "manual"
+     ]
+    ],
+    "loi": ""
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "e_nguoi_khac_khoi_bi_chan",
+   "ket_qua": "PASS",
+   "expected": "khối sales bị chặn, 0 dòng",
+   "actual": {
+    "exit": 1,
+    "loi": "D:\\code\\samsam\\agents\\garden.py\", line 219, in add_log_human\r\n    raise HumanDenied(why) from None\r\npipelines.auth.HumanDenied: người \"Bán Hàng Thử R12\" không được ủy quyền khối farming (human_logins)"
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "f_ghi_thay_ten_nguoi_khac_bi_chan",
+   "ket_qua": "PASS",
+   "expected": "không ghi thay tên người khác",
+   "actual": {
+    "exit": 1,
+    "loi": "   raise HumanDenied(why) from None\r\npipelines.auth.HumanDenied: --by \"Người Khác Thử R12\" không phải người của login r12_far_de06e6 — không ghi thay người khác"
+   }
+  },
+  {
+   "loi": "UI-02",
+   "ca": "a_svc_ui_doc_kb_cong_khai",
+   "ket_qua": "PASS",
+   "expected": "svc_ui SELECT chunks (KB công khai)",
+   "actual": {
+    "exit": 0,
+    "loi": ""
+   }
+  },
+  {
+   "loi": "UI-02",
+   "ca": "b_svc_ui_KHONG_doc_kb_noi_bo",
+   "ket_qua": "PASS",
+   "expected": "không mở chunks_internal",
+   "actual": {
+    "exit": 1,
+    "loi": "ycopg\\connection.py\", line 300, in execute\r\n    raise ex.with_traceback(None)\r\npsycopg.errors.InsufficientPrivilege: permission denied for table chunks_internal"
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "a_agent_khong_cap",
+   "ket_qua": "PASS",
+   "expected": "agent bị chặn, 0 dòng",
+   "actual": {
+    "exit": 1
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "b_nguoi_cap_duoc_marketing_thay",
+   "ket_qua": "PASS",
+   "expected": "exit 0, 1 dòng cap, view marketing 1",
+   "actual": {
+    "exit": 0,
+    "rel": [
+     [
+      "cap",
+      "GĐ Vùng Trồng Thử R12"
+     ]
+    ],
+    "view": 1,
+    "loi": "[done] 9ea5f03fbd03 đã cập nhật\r\n[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)"
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "c_marketing_lay_tu_lieu_da_cap",
+   "ket_qua": "PASS",
+   "expected": "exit 0, 1 file",
+   "actual": {
+    "exit": 0,
+    "files": [
+     "9ea5f03fbd03276c78bb4a329c208b7219006c5b4990da1903a8cb6f82836f38.jpg"
+    ]
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "d_view_marketing_khong_lo_khoanh_gps",
+   "ket_qua": "PASS",
+   "expected": "view không có cột khoảnh/vị trí",
+   "actual": [
+    "sha256",
+    "ext",
+    "bytes",
+    "width",
+    "height",
+    "taken_on",
+    "released_at"
+   ]
+  },
+  {
+   "loi": "G5-01",
+   "ca": "e_thu_hoi_duoc_va_marketing_mat_quyen",
+   "ket_qua": "PASS",
+   "expected": "thu hồi exit 0; view 0; --get sau thu hồi bị từ chối",
+   "actual": {
+    "exit_thu_hoi": 0,
+    "view": 0,
+    "exit_get": 1
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "g_login_nguoi_khoi_sales_bi_DB_chan",
+   "ket_qua": "PASS",
+   "expected": "42501",
+   "actual": {
+    "exit": 1,
+    "loi": "actor(text,text) line 27 at RAISE\r\nPL/pgSQL function garden_media_release_human(text,text,text,text) line 3 during statement block local variable initialization"
+   }
+  },
+  {
+   "loi": "G5-02",
+   "ca": "a_agent_khong_anh_xa",
+   "ket_qua": "PASS",
+   "expected": "agent bị chặn, 0 dòng agent:",
+   "actual": {
+    "exit": 1,
+    "dong_agent": 0
+   }
+  },
+  {
+   "loi": "G5-02",
+   "ca": "b_nguoi_anh_xa_duoc (positive control)",
+   "ket_qua": "FAIL",
+   "expected": "exit 0, 1 ánh xạ",
+   "actual": {
+    "exit": 1,
+    "loi": " nhật ký #10: ngày thu hoạch sau ngày sản xuất lô — không ghi.\r\n[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)"
+   }
+  },
+  {
+   "loi": "G5-02",
+   "ca": "c_he_thong_khong_go",
+   "ket_qua": "FAIL",
+   "expected": "bị chặn, vẫn 1 ánh xạ",
+   "actual": {
+    "exit": 1
+   }
+  },
+  {
+   "loi": "G5-02",
+   "ca": "d_login_nguoi_sai_khoi_bi_DB_chan",
+   "ket_qua": "FAIL",
+   "expected": "42501 (khối sales không thao tác ánh xạ khoảnh)",
+   "actual": {
+    "exit": 1,
+    "loi": "ction human_actor(text,text) line 27 at RAISE\r\nPL/pgSQL function unlink_lot_origin(text,bigint,text) line 3 during statement block local variable initialization"
+   }
+  },
+  {
+   "loi": "G5-02",
+   "ca": "e_login_nguoi_khoi_farming_go_duoc (positive control)",
+   "ket_qua": "FAIL",
+   "expected": "exit 0, 0 ánh xạ; log actor = người của login",
+   "actual": {
+    "exit": 1,
+    "loi": "one)\r\npsycopg.errors.RaiseException: lô IT-R12-QR1 không có ánh xạ nhật ký #10\r\nCONTEXT:  PL/pgSQL function unlink_lot_origin(text,bigint,text) line 16 at RAISE"
+   }
+  }
+ ]
+}

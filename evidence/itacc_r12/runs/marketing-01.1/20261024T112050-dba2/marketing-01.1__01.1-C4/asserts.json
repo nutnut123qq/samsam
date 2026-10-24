@@ -1,0 +1,22 @@
+[
+ {
+  "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-25 #%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\marketing-01.1\\20261024T112050-dba2\\marketing-01.1__01.1-C4\\out/llm.json",
+  "re": "\\A\\[\\]\\Z",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select stage from feature_rollout where feature_id = 'marketing-01.1'",
+  "expect": "chay_thu",
+  "actual": "chay_thu",
+  "dat": true
+ }
+]

@@ -1,0 +1,8 @@
+# db samsam_itacc_r10_fin
+> select id, block, object_type, object_id, status, created_by, is_sample, payload from approval_queue where object_type='invoice_batch'
+[1, "finance", "invoice_batch", "2026-10-23-f74707095916", "pending", "agent:acc_invoice", false, "# Lô hóa đơn NHÁP 23/10/2026 — `2026-10-23-f74707095916`\n\n- Mốc lập hóa đơn: `giao_thanh_cong` — GIẢ ĐỊNH, chưa tư vấn thuế chốt (hạn 25/10/2026)\n- Lần lập trong ngày: 1\n- Số dòng: 4 (thường 3 · cần MST 1 · điều chỉnh 0) — tổng 2.500.000đ\n- Loại khỏi lô: đơn hủy 1 · chưa đạt mốc 1 · đã lập ở lô khác 0\n\n## Dòng (mã tham chiếu rút gọn 8 ký tự)\n\n- `6a9bc9cb` shopee 700.000đ\n- `ed1bc36f` shopee 1.000.000đ\n- `14d2abfe` shopee 300.000đ — cần MST\n- `4b3f19c2` tiktok 500.000đ\n\ncsv_sha256: f74707095916feda0f0a93cecc524230bd47953ec6db737da1c1a38e29761f83\n\nBẢN NHÁP — agent không ký số, không phát hành, không gửi. Kế toán chạy `python -m agents.acc_invoice --verify-draft <id> --file <file nháp>` trước khi nhập tay vào phần mềm HĐĐT.\n"]
+> select batch_key, channel, kind, amount_vnd from invoice_lines order by id
+["2026-10-23-f74707095916", "shopee", "thuong", 700000]
+["2026-10-23-f74707095916", "shopee", "thuong", 1000000]
+["2026-10-23-f74707095916", "shopee", "can_mst", 300000]
+["2026-10-23-f74707095916", "tiktok", "thuong", 500000]

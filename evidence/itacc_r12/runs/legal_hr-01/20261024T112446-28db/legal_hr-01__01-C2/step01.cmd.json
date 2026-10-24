@@ -1,0 +1,33 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/legal_hr-01/guardrail_cases_r12.py.txt",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\legal_hr-01\\20261024T112446-28db\\legal_hr-01__01-C2\\out/cases.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:24:54+07:00",
+ "ket_thuc": "2026-10-24T11:25:00+07:00",
+ "exit": 0,
+ "expect_exit": [
+  0,
+  1
+ ],
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*\\[PASS\\] L0:)(?=.*\\[PASS\\] L1:)(?=.*\\[PASS\\] L2:)(?=.*\\[PASS\\] L3:)(?=.*\\[PASS\\] L4:)(?=.*\\[PASS\\] L5:)(?=.*\\[PASS\\] L6:)",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*(\\[FAIL\\] L|Traceback))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "191c56afe5b3bc16ab36dffc9d3cb268b597d74d6a6a02ca870db7096f3e4f83",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

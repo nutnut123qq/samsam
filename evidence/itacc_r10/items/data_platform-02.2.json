@@ -1,0 +1,222 @@
+{
+ "id": "data_platform-02.2",
+ "ten": "Lưu bản gốc kèm mã kiểm tra",
+ "khoi": "data_platform",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Hạ tầng dữ liệu và AI / Số hóa giấy tờ: 'lưu bản gốc kèm mã kiểm tra'",
+ "tieu_chi": [
+  "Bản gốc lưu DOC_ORIGINALS_DIR/<sha256> bất biến + documents.sha256 khớp; idempotent dup",
+  "Pháp chế --verify/--reject --by → status đổi; cho_ocr không verify được; agent bị chặn; loader_gate tắt → exit 2",
+  "T4: không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:58:33+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_dp; dev mode (AUTH_MODE trống, DEPLOY tắt); DOC_ORIGINALS_DIR → scratchpad",
+ "dau_vao": [
+  {
+   "ten": "gtn_thu_it.pdf",
+   "sha256": "af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "scan_thu_it.png",
+   "sha256": "472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "DP022-01",
+   "mo_ta": "Bản gốc + sha",
+   "lenh": "sha256sum <scratch>/originals/*",
+   "expected": "tên tệp = sha256(nội dung) = documents.sha256",
+   "actual": "2 tệp MATCH",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP022-02",
+   "mo_ta": "Idempotent",
+   "lenh": "python -m ingest.doc_intake",
+   "expected": "dup",
+   "actual": "new=0 dup=2",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP022-03",
+   "mo_ta": "Verify (người)",
+   "lenh": "python -m ingest.doc_intake --verify af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1 --by Pháp Chế Thử IT",
+   "expected": "verified",
+   "actual": "af03f443 → verified bởi Pháp Chế Thử IT; 3 field verified True",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP022-04",
+   "mo_ta": "Âm: verify cho_ocr",
+   "lenh": "python -m ingest.doc_intake --verify 472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c --by Pháp Chế Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 không ở pending_review",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP022-05",
+   "mo_ta": "Âm: agent",
+   "lenh": "python -m ingest.doc_intake --reject af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1 --by agent:doc",
+   "expected": "exit 1",
+   "actual": "exit 1 agent không được reject",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP022-06a",
+   "mo_ta": "disable 02.2",
+   "lenh": "python -m pipelines.rollout --disable data_platform-02.2 --by Người Thử IT",
+   "expected": "tắt",
+   "actual": "chạy thử → tắt",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP022-06b",
+   "mo_ta": "Âm: tắt → loader chặn",
+   "lenh": "python -m ingest.doc_intake",
+   "expected": "exit 2",
+   "actual": "exit 2 [rollout] tính năng TẮT → KHÔNG nạp",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP022-06c",
+   "mo_ta": "promote",
+   "lenh": "python -m pipelines.rollout --promote data_platform-02.2 --by Người Thử IT",
+   "expected": "chạy thử",
+   "actual": "tắt → chạy thử",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "Chính sách loader_gate; Pháp chế thật được ủy quyền",
+ "gioi_han": "Kho bản gốc trên đĩa máy dev (scratchpad). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP022-01.txt",
+   "sha256": "970208e71f868095e100111ff79464b20dd6da7d16033b571053666a9cb070d7"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP022-02.txt",
+   "sha256": "28635c26f976a13dc8861322ef8575665e17dc1c4c2d9c4feafa34ba799f1b3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP022-03.txt",
+   "sha256": "d544663b4bacdca102ffbc455808e2d8728c36294254333e1b692be2e5915dc4"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP022-04.txt",
+   "sha256": "b734a12f56d2efeb35c0ab0fd40046c87f967b8aea5941b1ed2745c2fed98f5e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP022-05.txt",
+   "sha256": "0d1ff63f93a3b1dbd871d910bbc09af552710ebe9ff69ec944aacbc6aeeb4382"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP022-06a.txt",
+   "sha256": "080e5553f4bd0341368bd74da477c8efa3327051e4f2678b8372f9b270e742d3"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP022-06b.txt",
+   "sha256": "db7d210df4dedb3511872b5d06abab344bd90d9d68ff3e0c81fcecab31993668"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP022-06c.txt",
+   "sha256": "9966ab74d78b515a7fda922969bb791fcfdddf9e144ea7176876e341358fae53"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/check_media.py",
+   "sha256": "9dc52b8eefb2b5ddb13334435174e3083f32f7006c60a6ce8271c7fd20fe4c23"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_llm_run.py",
+   "sha256": "df4672d90c7d9faa51a83ed42a6e1d159bf8eda0bb5aa95860cf15bef3c6fe3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_shopee.py",
+   "sha256": "9402db0719ea6f325d9d75b29af4ce22574dbae49dc2cfc7c24ad459534329cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gd_run.py",
+   "sha256": "84c646e3dd2019f6bc417e9071b5a422d8d37d7f10c0de077db3f303b1f21eaa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gw_probe.py",
+   "sha256": "8038c6f83facb83baab8eb2bb0fbb8b8cb1ab328082e7b6af0b718734f6cf981"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/hold_lock.py",
+   "sha256": "2a511640b93c4a5d3e2529f711f9b3ca07085bbb08b7be3f88383ffc230d1cab"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_criteria_g5.py",
+   "sha256": "6e64178e75ce85a9b8c265c33862e0395c7cdcfcc943ac19b4915e3b53e21dcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_fixtures.py",
+   "sha256": "d5117a5728c04a988c7d151150fa7e7153a45d59f3752eb470c16ed86aabb241"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_items_g5.py",
+   "sha256": "879a76de3bfb1285557de44386e17428ebf513bf1368f5a554b534fad9edfb82"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_pdf.py",
+   "sha256": "f68506f1c8158b51a4a4048c894df8bfbc88d4a14071cb6c3d2393464add3867"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/mod_run.py",
+   "sha256": "0ba336024389f8ea885b2d63bb2056bdee2c03b814a74eb12343daff901a31d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/probe_run.py",
+   "sha256": "c0f2386d31984f5e279392c44c55209837e13b5f93ded55d5c80709c6b3e5105"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/q.py",
+   "sha256": "6b1c569d67e265d3ad9593331334d286cdbc525eb304ca55128eb686e57d97ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/qr_run.py",
+   "sha256": "8dbe083a6119eee0d80849374b7b053ef5bb44cac67abd85bae74a94562571c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/role_probe.py",
+   "sha256": "c1364ecad746feaeddbb98de7853e542a757cc4ddbbaaa6cae8aada075375a07"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture.py",
+   "sha256": "3b5ae3fad7dac20dc7fab16d1d704833bbb85ba6554c4fd41717f5441bed497b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "sha256": "c530ef5bce990aaa8e0393e582192b93687501195dfcbfa32520a3c28be1c90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/tamper.py",
+   "sha256": "0c27a266124476bb3369ed975395dd2d27ec8e30207e31647a817eda7540a186"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/zalo_webhook.py",
+   "sha256": "de7da44a52a26cb27510f89ffc5659c59c22e53f4fd01d7db142760bf371866c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/lib.sh",
+   "sha256": "c3d88bf45e775e5246126bb82b28042b0d4e6bc5e69a80b70e9d4d263c308a3d"
+  }
+ ],
+ "loi_san_pham": []
+}

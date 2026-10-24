@@ -686,6 +686,32 @@ def _alcohol_indirect(pre: _Txt) -> tuple[str, int, int] | None:
     return None
 
 
+def _digits(s: str) -> str:
+    return re.sub(r"\D", "", s)
+
+
+def _contact_key(s: str) -> str:
+    """Khóa so `pii_allow`: email → casefold; số → chỉ chữ số, đầu 84 → 0
+    (r12-fix D2: "+84 235 3699 899" là số công ty "0235 3699 899")."""
+    if "@" in s:
+        return s.casefold()
+    d = _digits(s)
+    return "0" + d[2:] if d.startswith("84") else d
+
+
+@lru_cache(maxsize=1)
+def _public_contacts() -> frozenset:
+    """Liên hệ CÔNG KHAI của công ty — cùng nguồn `pii_allow` của gateway
+    (số → chỉ chữ số, email → casefold). Không đọc được → rỗng (fail-closed:
+    số công ty cũng bị chặn, không lọt số cá nhân)."""
+    try:
+        allow = json.loads((DATA_DIR / "llm_gateway.json").read_bytes()
+                           .decode("utf-8")).get("pii_allow") or []
+    except (OSError, ValueError, AttributeError):
+        return frozenset()
+    return frozenset(_contact_key(a) for a in allow if isinstance(a, str))
+
+
 def _sev_mode(rules, code) -> tuple[str, str]:
     """(severity, mode) theo rules[code]; thiếu/hỏng -> critical + block."""
     r = rules.get(code) if isinstance(rules, dict) else None
@@ -955,6 +981,29 @@ def _run(text, ctx: dict | None) -> dict:
                          "\"Ngọc Linh\" chỉ dùng khi SKU có quyết định công"
                          " nhận chỉ dẫn địa lý",
                          text[h["start"]:h["end"]], h["start"], h["end"])
+        # 8. r12 D2: SĐT/email cá nhân trong nội dung công khai → chặn;
+        # liên hệ công khai của công ty (pii_allow) được giữ.
+        # r12-fix D2: quét thêm bản phẳng của `pii._flatten_paren` (cùng luật
+        # chống nối/ngân sách với `_mask_pii`) — "(0912) 345 678" lọt
+        # `_PII_RE` thô; cạn ngân sách (đuôi ngoặc không kiểm hết) → chặn.
+        from pipelines.pii import _PII_RE, _flatten_paren
+        allow = _public_contacts()
+        pii_msg = ("SĐT/email cá nhân trong nội dung công khai — chỉ dùng"
+                   " liên hệ công khai của công ty")
+        seen = set()
+        for m in _PII_RE.finditer(text):
+            seen.add(_contact_key(m.group(0)))
+            if _contact_key(m.group(0)) not in allow:
+                flag("pii_ca_nhan", pii_msg, m.group(0), m.start(), m.end())
+        flat, cut = _flatten_paren(text)
+        for m in _PII_RE.finditer(flat):
+            key = _contact_key(m.group(0))
+            if key not in allow and key not in seen:
+                seen.add(key)
+                flag("pii_ca_nhan", pii_msg, m.group(0).strip())
+        if cut:
+            flag("pii_ca_nhan", pii_msg + " (chuỗi ngoặc quá dài, không"
+                 " kiểm hết được)")
         # 7. Kênh ngoài allowed_channels (hiện trạng listing) -> cảnh báo.
         for k in ctx_skus:
             s = golden[k]

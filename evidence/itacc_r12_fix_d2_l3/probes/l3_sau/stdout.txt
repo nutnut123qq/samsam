@@ -1,0 +1,50 @@
+[deadline] zalo: quá 30 giây (cho_lock) -> chuyển người (uh=dcef4fea0496d408)
+[warn] channels: DB down — không tạo mục handoff (deadline)
+[deadline] zalo: quá 30 giây (cho_lock) -> chuyển người (uh=a88d40f8d9c0a6c7)
+[warn] channels: tạo mục handoff lỗi OperationalError
+[deadline] zalo: quá 30 giây (cho_lock) -> chuyển người (uh=72e6b870ecf27966)
+[warn] channels: không tạo mục handoff (deadline): probe: chatbot tắt
+[deadline] zalo: quá 30 giây (cho_lock) -> chuyển người (uh=14547d0f64ed5311)
+[deadline] messenger: quá 30 giây (cho_lock) -> chuyển người (uh=f142b43388b5ad21)
+[warn] channels: DB down — không tạo mục handoff (deadline)
+[deadline] messenger: quá 30 giây (cho_lock) -> chuyển người (uh=4f219943566fea5b)
+[warn] channels: tạo mục handoff lỗi OperationalError
+[deadline] messenger: quá 30 giây (cho_lock) -> chuyển người (uh=f359fff2aaba731b)
+[warn] channels: không tạo mục handoff (deadline): probe: chatbot tắt
+[deadline] messenger: quá 30 giây (cho_lock) -> chuyển người (uh=52b32f3ea64cc7bb)
+[deadline] messenger: quá 30 giây (tra_loi) -> chuyển người (uh=36c2a67a1eb62c3c)
+[handoff] zalo: NO_DATA -> handoff (uh=32ec4f2ff8e3c491)
+[warn] channels: DB down — không tạo mục handoff (no_data)
+[handoff] zalo: NO_DATA -> handoff (uh=2d66fb2e404c6eaf)
+[warn] channels: DB down — không tạo mục handoff (rollout)
+[route] zalo: health (uh=cf649fd5eae5ae54)
+[warn] channels: DB down — không tạo mục handoff (health)
+[route] zalo: health (uh=903d11f632995105)
+[route] zalo: alcohol (uh=23dafe25ec99bda4)
+[warn] channels: DB down — không tạo mục handoff (alcohol)
+[route] zalo: alcohol (uh=76f4770ace6adbeb)
+[warn] channels: DB down — không tạo mục handoff (rollout)
+[rollout] zalo: chatbot chay_thu — không gửi câu bot (uh=d1690202bdb36b5e)
+[rollout] zalo: chatbot chay_thu — không gửi câu bot (uh=a9a8eb637982aa67)
+[warn] channels: DB down — không tạo mục handoff (rollout)
+PASS LOI qua_han_zalo_down
+PASS LOI qua_han_zalo_error
+PASS LOI qua_han_zalo_rollout
+PASS LOI qua_han_zalo_ok
+PASS LOI qua_han_messenger_down
+PASS LOI qua_han_messenger_error
+PASS LOI qua_han_messenger_rollout
+PASS LOI qua_han_messenger_ok
+PASS LOI qua_han_messenger_handle_text
+PASS DOI_CHUNG no_data_down
+PASS DOI_CHUNG no_data_ok
+PASS DOI_CHUNG gateway_down
+PASS DOI_CHUNG gateway_ok
+PASS DOI_CHUNG suc_khoe_down
+PASS DOI_CHUNG suc_khoe_ok
+PASS DOI_CHUNG ruou_down
+PASS DOI_CHUNG ruou_ok
+PASS DOI_CHUNG held_chay_thu_down
+PASS DOI_CHUNG held_chay_thu_ok
+PASS DOI_CHUNG gateway_messenger_down
+TONG {'PASS': 20, 'FAIL': 0}

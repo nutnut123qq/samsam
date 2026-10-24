@@ -447,6 +447,10 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     if args.render and args.dry_run:
         ap.error("--render không đi với --dry-run")
+    # r12 D1: tính năng TẮT → chặn TRƯỚC lời gọi AI (kể cả --dry-run).
+    from pipelines import rollout
+    if why := rollout.blocked(None, "gói video YouTube", fid="marketing-07.2"):
+        return rollout.say_blocked(why)
     conn = None
     if not args.dry_run:
         conn = connect()

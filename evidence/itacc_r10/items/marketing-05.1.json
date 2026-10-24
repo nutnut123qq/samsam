@@ -1,0 +1,124 @@
+{
+ "id": "marketing-05.1",
+ "ten": "Phân loại bình luận",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Bình luận, đánh giá: 'Phân loại bình luận (hỏi giá, khiếu nại, nghi hàng giả…)'",
+ "tieu_chi": [
+  "T1 `python -m ingest.intel_import --social F --channel fanpage` exit 0 (INTEL_HASH_SALT giá trị thử)",
+  "T2 social_mentions: nhãn luật (khen/che/hoi_gia/khieu_nai/hoi_suc_khoe/...) đúng với nội dung fixture; không lưu excerpt khi DPIA chưa ký; không cột định danh/SĐT thô trong DB",
+  "T3 thiếu muối → exit 1 0 dòng; cột lạ → exit 1 0 dòng; nạp lại → skip; tính năng tắt + loader_gate chưa cấu hình → exit 2",
+  "T4 không trả lời comment, không mạng"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); INTEL_HASH_SALT = giá trị thử (không in)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/social_ok.csv",
+   "sha256": "54eec2e40e1ec30773d529b37136ec4005306003ac109ebf70485899fd4601f4",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/social_badcol.csv",
+   "sha256": "f58260adb66aceaf0f456af8cf38ea1ec7e7a491dfbc6e6005ac0b7b246d75d3",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/social_new.csv",
+   "sha256": "338829207d3bbba076c7972481319762b0c38b99b845ed3647de0f896e1df3ef",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "05.1-C1",
+   "mo_ta": "nạp social fixture",
+   "lenh": "python -m ingest.intel_import --social evidence/itacc_r10/g3/harness/fixtures/social_ok.csv --channel fanpage",
+   "expected": "nhãn đúng, không excerpt/PII",
+   "actual": "6 dòng: khen / hoi_suc_khoe (sensitive) / hoi_gia / hoi_ruou / khieu_nai / nghi_hang_gia — khớp nội dung; excerpt null (DPIA chưa ký); không SĐT/tên/uid trong DB",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.1-C2",
+   "mo_ta": "thiếu muối",
+   "lenh": "python -m ingest.intel_import --social evidence/itacc_r10/g3/harness/fixtures/social_new.csv --channel fanpage",
+   "expected": "exit 1, 0 dòng",
+   "actual": "exit 1 thiếu INTEL_HASH_SALT",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.1-C3",
+   "mo_ta": "cột lạ",
+   "lenh": "python -m ingest.intel_import --social evidence/itacc_r10/g3/harness/fixtures/social_badcol.csv --channel fanpage",
+   "expected": "exit 1",
+   "actual": "exit 1 cột lạ 'dia_chi', không connect",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.1-C4",
+   "mo_ta": "nạp lại",
+   "lenh": "python -m ingest.intel_import --social evidence/itacc_r10/g3/harness/fixtures/social_ok.csv --channel fanpage",
+   "expected": "skip",
+   "actual": "[skip] import #1; tổng 6",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.1-C5",
+   "mo_ta": "tắt",
+   "lenh": "python -m ingest.intel_import --social evidence/itacc_r10/g3/harness/fixtures/social_new.csv --channel fanpage",
+   "expected": "exit 2",
+   "actual": "exit 2 [blocked] marketing-05.1 tắt; tổng 6",
+   "exit": 2,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "out/05.1-C1,C2,C3,C5,C5a,C5b.txt TÁI TẠO từ transcript (trùng mã ca); DB 05.1-C1.db.json là bản gốc. File comment xuất tay; từ khóa nhãn ĐỀ XUẤT.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/05.1-C1.txt",
+   "sha256": "c04f170cc489e547cf74a747e8adaabb9604b9d2a7c6a54aaa7311359f2d41b8"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.1-C1.db.json",
+   "sha256": "f47ff46af52e15aa2d94604a57101e761bec7fd8a7ad657b69d6756d3048bb14"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.1-C2.txt",
+   "sha256": "0c098beca65733bbab3b38844b44d3deeeab1c11f9a1829787ee255c1ad8a85e"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.1-C3.txt",
+   "sha256": "cd97fdbddf8fc8977de8a33bdeb0b64997237e9f2d31efd1ef1834883a9c92cd"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.1-C4.txt",
+   "sha256": "a49e4d356b179d9a10d7f11111f7274de3bcba396e59dba6e44ce68010ecb787"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.1-C5a.txt",
+   "sha256": "db9178630384f488e6a549546107d31944f38887472da4855d0c5939f744a110"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.1-C5.txt",
+   "sha256": "3178217da7e5a5095cd2bfdfc5e490172ae2838c7e49cac3a741c59f0ee8c542"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.1-C5b.txt",
+   "sha256": "39e2256a3c21467134e91334b3f94712a48fd93fba675f5c990840df0ec54747"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/reconstruct_mkt.py",
+   "sha256": "08030f099938a7ba32b76467e474bb577a94c128e20681c85e1a5d68c93c785f"
+  }
+ ],
+ "loi_san_pham": []
+}

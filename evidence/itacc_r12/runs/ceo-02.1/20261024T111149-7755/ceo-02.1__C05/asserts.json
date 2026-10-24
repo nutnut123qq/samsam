@@ -1,0 +1,28 @@
+[
+ {
+  "sql": "select count(*) from project_milestones where code = 'DA-01' and status = 'xong' and evidence = 'BB-THU-IT-01'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\ceo-02.1\\20261024T111149-7755\\ceo-02.1__C05\\out/da-pmo-board-2026-11-10.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/ceo-02.1/20261024T111149-7755/ceo-02.1__C05/out/da-pmo-board-2026-11-10.md",
+    "sha256": "e80be00b646a8081470b84e9594ffd911c40471839757886414dd121542284d5"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-02.1\\20261024T111149-7755\\ceo-02.1__C05\\out/da-pmo-board-2026-11-10.md",
+  "re": "\\*\\*TRỄ\\*\\* DA-01|\\| DA-01 \\|[^\\n]*\\*\\*TRỄ\\*\\*",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ }
+]

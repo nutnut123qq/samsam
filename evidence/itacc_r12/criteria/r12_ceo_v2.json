@@ -1,0 +1,2682 @@
+{
+ "_doc": "v2 (điều phối viên 24/10/2026, TRƯỚC mọi lượt chạy nhóm ceo): chỉ đổi ca MOI ceo-05__X05 — xem docstring evidence/itacc_r12/harness/mk_ceo_v2.py.txt. Kỳ vọng v1 giữ ở trường 'ky_vong_v1'. | Tiêu chí r12 nhóm ceo (24/10/2026) — 7 mục: ceo-01, ceo-02.1, ceo-02.2, ceo-03, ceo-04.3, ceo-04.4, ceo-05. Bản ghi hiện hành = r10 (evidence/itacc_r11/source_map.json → evidence/itacc_r10/items/<id>.json; ca khóa evidence/itacc_r10/criteria/g1.json). Mỗi ca cũ ↔ đúng 1 ca r12 (`nguon_r10` = mã ca cũ); ca thêm `MOI`: S0x = seed/tái lập trạng thái DB (r10 chạy 7 mục trên MỘT DB samsam_itacc_r10_ceo theo thứ tự ceo-01 → 02.1 → 02.2 → 03 → 04.3 → 04.4 → 05, r12 mỗi mục DB riêng nên id hàng duyệt/giá lấy bằng {sql:...} thay số cứng #1/#3/#5/#2); X0x = kiểm thêm hợp đồng đã vá ở r12 (G1-L1, G1-L3, G1-L4, G1-L5, RB) hoặc tiêu chí T2/T5 mà r10 chỉ ghi trong actual — tách khỏi ca gốc để ca gốc giữ đúng kỳ vọng cũ. Ca X 'chỉ kiểm' không có bước (assert trên {SCR}/DB sau ca trước). Ca RB (X09/X10/X05/X04/X03) chạy LẠI đúng lệnh khi tính năng vẫn tắt (out-dir {OUT}) đòi exit 2 + stdout '[rollout] … <mã>' + stderr không 'Traceback' + không file, rồi bật lại (rollout --promote: tắt → chạy thử, như r10). Dịch exit: expected cũ ghi 'exit ≠0' → [1, 2]; 'exit ≠0 hoặc bỏ qua' → [0, 1, 2]; KHÔNG ghi exit (ca tắt tính năng ceo-02.1 C10, ceo-03 C05, ceo-04.3 C04, ceo-04.4 C03/C04) → [0, 1, 2] (kết quả đo bằng file/DB; exit chính xác 2 đo ở ca X RB). Ca FAIL r10 vì lỗi đã vá: ceo-01 C06 (nhãn file — G1-L4), ceo-02.2 C10 (--list chờ quyết/chờ ký — G1-L5), ceo-04.3 C04 + ceo-04.4 C04 (ceo-gia vẫn sinh khi chỉ 04.3 tắt — G1-L1), ceo-05 C01 (0đ khi không có nguồn chi — G1-L3; nhãn — G1-L4) → kỳ vọng hành vi ĐÚNG. Fixture chép nguyên byte vào {FX12}/items/<id>/ từ evidence/itacc_r10/g1/harness/ (sha khớp dau_vao/evidence r10; SHA256SUMS.txt mỗi thư mục): it_g1_cockpit*.csv, force_vanhanh.py.txt, ceo03_fixture.sql, patch_run.py.txt, cfg/ceo_risk_hong.json, mk_drafts.py.txt, it_g1_posts.csv, it_g1_listing_shopee.csv. Khác r10 (ghi rõ): (1) ceo-04.3 C01: r10 lượt 1 tạo nháp #1–3 thiếu nhãn AI rồi reject, lượt 2 tạo #4–6; r12 đặt sequence content_drafts = 3 (python -c setval, DB rỗng) rồi chạy mk_drafts r10 1 lần → #4–6 khớp draft_id 4/5 trong it_g1_posts.csv nguyên văn. (2) SQL owner (ceo03_fixture.sql, kiểm append-only decision_log, băm bảng trước/sau cho ca 'chỉ đọc') chạy bằng python -c + psycopg trên DATABASE_URL DB thử thay cho harness sql.py r10; ca 'chỉ đọc' r10 so số đếm, r12 so count+md5 nội dung (chặt hơn). (3) ceo-05 C03 thêm --now 2026-10-23T11:00:00+07:00 (giờ chạy r10) để 'kỳ 2026-10 chưa đóng' tái lập. PHỤ THUỘC NGÀY (không pin được): ceo-01 C07 ref 2026-10-21 chỉ 'chưa đóng' khi chạy trước 26/10/2026 00:00 giờ VN (ceo_report từ chối --now ngoài --bulletin) — ca X07 (ref 2027-01-04) kiểm cùng nhánh không phụ thuộc ngày; ceo-03 C02 chạy giờ thật như r10 → VÀNG cho giấy hết hạn 05/11/2026 chỉ đúng khi chạy trước 05/11/2026; ceo-02.2 C07 (--date 2027-01-01 tương lai) đúng tới hết 2026. Không có ca UI. Không sửa mã sản phẩm/test; không DB samsam; không secret trong argv.",
+ "fingerprint_code": "3fda9aa991de6d2eeb799572bd7e8f7debd43be221c224ad39484f69c8549e0a",
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_c01/c021/c022/c03/c043/c044/c05 dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống, login owner thử như r10); OPENROUTER_API_KEY rỗng, DEPLOY/RED_ALERT_NOTIFY tắt; rollout --seed (tính năng = chạy thử); fake ở biên: CHỈ ceo-02.1 C09 ép rollout._FORCE_MODE='van_hanh' bằng force_vanhanh.py.txt (= r10); không gọi AI (--llm tắt).",
+ "items": [
+  {
+   "id": "ceo-01",
+   "db": "samsam_itacc_r12_c01",
+   "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.cockpit --import/--collect` + `python -m agents.ceo_report --period week --ref 2026-10-12 --submit --out-dir <scratch>` chạy trên DB thử, exit 0",
+    "T2 đúng 1 mục approval_queue block=ceo object_type=weekly_report created_by=agent:ceo_report status=pending; payload chứa số GMV/đơn từ CSV fixture đúng giá trị (định dạng VN) + cột Nguồn `manual_export · <ref file> · chụp <ngày>`; chỉ số không có số hiện `[chưa có dữ liệu]` (không 0); có 3 section Tiến độ/Rủi ro/Audit; dòng ĐỎ khi chưa có người nhận cảnh báo độc lập",
+    "T3 ca âm: CSV lỗi ô → exit 1 & 0 dòng; nạp lại khác số → exit 1 không ghi đè; kỳ chưa đóng → exit 2 không file/mục; nộp lại cùng kỳ không tạo mục trùng; tính năng tắt → không sinh mục",
+    "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+    "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+   ],
+   "ca": [
+    {
+     "ma": "ceo-01__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Nạp CSV số kênh ngoài (fixture) 2 tuần đã đóng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--import",
+        "{FX12}/items/ceo-01/it_g1_cockpit.csv",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "inserted=5 unchanged=0"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+       "expect": 5
+      },
+      {
+       "sql": "select count(*) from channel_snapshots where source = 'manual_export' and source_ref like 'it_g1_cockpit.csv#sha256:90476ba534e4%'",
+       "expect": 5
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Nạp lại đúng file (idempotent)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--import",
+        "{FX12}/items/ceo-01/it_g1_cockpit.csv",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "inserted=0 unchanged=5"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+       "expect": 5
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Nạp file sửa 1 giá trị đã nạp → exit 1, 0 dòng mới, giá trị cũ giữ",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--import",
+        "{FX12}/items/ceo-01/it_g1_cockpit_sua.csv",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+       "expect": 5
+      },
+      {
+       "sql": "select value::bigint from channel_snapshots where channel = 'shopee' and metric_id = 'sales.gmv_vnd' and period_kind = 'week' and period_start = '2026-10-12' and source = 'manual_export'",
+       "expect": 12500000
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "CSV ô lỗi (chữ trong value) → exit 1, báo dòng/cột không in giá trị, 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--import",
+        "{FX12}/items/ceo-01/it_g1_cockpit_loi.csv",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "dòng 2, cột value",
+       "stdout_re": "^(?![\\s\\S]*abc)",
+       "stderr_re": "^(?![\\s\\S]*abc)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+       "expect": 5
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Chụp số nội bộ tuần đã đóng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--collect",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) > 0 from channel_snapshots where channel = 'noi_bo' and source = 'api' and period_start = '2026-10-12'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from channel_snapshots where channel = 'noi_bo' and source = 'api' and not (source_ref like 'db:%' or source_ref like 'file:%')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__C06",
+     "nguon_r10": "C06",
+     "mo_ta": "Lập + nộp báo cáo tuần: file có nhãn CHẠY THỬ (G1-L4 đã vá) + 1 mục ceo/weekly_report pending, payload như T2",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_report",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-12",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep/ceo-2026-W42.md",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/rep/ceo-2026-W42.md",
+       "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-01 ",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('| shopee | 12.500.000 đ | 10.000.000 đ |' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('| shopee | 42 đơn | 35 đơn |' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('| tiktok_shop | 3.000.000 đ |' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('manual_export · it_g1_cockpit.csv#sha256:90476ba534e4 · chụp ' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('Đơn hủy (sales.orders_cancelled) | — | [chưa có dữ liệu]' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('## Tiến độ & Sổ quyết định' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('## Rủi ro pháp lý mở' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('## Audit outside-in' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('**ĐỎ — chưa có người nhận cảnh báo độc lập**' in payload) > 0",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__X06",
+     "nguon_r10": "MOI",
+     "mo_ta": "G1-L4 (T5): báo cáo tuần vào sổ report_outputs đúng tính năng ceo-01 (chỉ kiểm, không bước)",
+     "kiem": [
+      {
+       "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-01' and name = 'ceo-2026-W42.md'",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__C07",
+     "nguon_r10": "C07",
+     "mo_ta": "Kỳ chưa đóng (ref 2026-10-21 — tuần 19–25/10, chỉ còn 'chưa đóng' khi chạy trước 26/10/2026 00:00 giờ VN; ceo_report không nhận --now cho --period)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_report",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-21",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep7"
+       ],
+       "expect_exit": 2,
+       "out_re": "kỳ chưa đóng"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep7/*",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__X07",
+     "nguon_r10": "MOI",
+     "mo_ta": "Kỳ chưa đóng không phụ thuộc ngày chạy (ref 2027-01-04)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_report",
+        "--period",
+        "week",
+        "--ref",
+        "2027-01-04",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "out_re": "kỳ chưa đóng"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/*",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__C08",
+     "nguon_r10": "C08",
+     "mo_ta": "Nộp lại cùng kỳ → không có mục weekly_report pending thứ 2 (exit ≠0 hoặc bỏ qua)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_report",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-12",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep"
+       ],
+       "expect_exit": [
+        0,
+        1,
+        2
+       ]
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__C09",
+     "nguon_r10": "C09",
+     "mo_ta": "Tính năng ceo-01 tắt → không mục weekly_report mới (exit ≠0)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "ceo-01",
+        "--by",
+        "Người Thử IT",
+        "--note",
+        "kiểm tắt IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_report",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-05",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep7"
+       ],
+       "expect_exit": [
+        1,
+        2
+       ]
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W41'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-01__X09",
+     "nguon_r10": "MOI",
+     "mo_ta": "RB + G1-L4: ceo-01 tắt → exit 2 '[rollout] … ceo-01', không traceback, KHÔNG ghi file ceo-<kỳ>.md (cả lần C09); bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_report",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-05",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*ceo-01\\b",
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "ceo-01",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/*",
+       "count": 0
+      },
+      {
+       "file_glob": "{SCR}/rep7/ceo-2026-W41.md",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report'",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-02.1",
+   "db": "samsam_itacc_r12_c021",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.da_pmo --seed/--board --submit/--set-status/--propose-due/--apply-due` exit đúng",
+    "T2 mục ceo/weekly_board created_by=agent:da_pmo pending: bảng có mốc quá hạn chưa xong tô **TRỄ** + mục 'Mốc trễ' + 'Mốc chưa có ngày'; mục ceo/milestone_change created_by=NGƯỜI đề xuất, payload code/old_due/new_due; hạn chỉ đổi sau khi người khác duyệt",
+    "T3 ca âm: xong không evidence bị từ chối; tự duyệt đề xuất của mình bị chặn; apply-due ở chạy thử bị chặn; nộp bảng trùng tuần không nhân bản; tắt tính năng không sinh mục",
+    "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành"
+   ],
+   "ca": [
+    {
+     "ma": "ceo-02.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Nạp sổ mốc",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--seed"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from project_milestones where due_date is not null",
+       "expect": 15
+      },
+      {
+       "sql": "select count(*) from project_milestones where sign_required",
+       "expect": 5
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Bảng tuần + nộp: **TRỄ** đúng các mốc hạn < 10/11/2026 chưa xong + 'Mốc trễ' + 'Mốc chưa có ngày'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--board",
+        "--date",
+        "2026-11-10",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board' and object_id = 'board:2026-W46' and created_by = 'agent:da_pmo' and status = 'pending' and position('## Mốc trễ' in payload) > 0 and position('## Mốc chưa có ngày' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select string_agg(code, ',' order by due_date, code) from project_milestones where due_date < '2026-11-10' and status <> 'xong'",
+       "expect": "DA-01,MOC-A,MOC-B,DUYET-1111"
+      },
+      {
+       "sql": "select count(*) from project_milestones m where m.due_date < '2026-11-10' and m.status <> 'xong' and not exists (select 1 from approval_queue q where q.object_type = 'weekly_board' and q.status = 'pending' and position('- **TRỄ** ' || m.code || ' —' in q.payload) > 0)",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from project_milestones m where (m.due_date >= '2026-11-10' or m.status = 'xong') and exists (select 1 from approval_queue q where q.object_type = 'weekly_board' and q.status = 'pending' and position('- **TRỄ** ' || m.code || ' —' in q.payload) > 0)",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Nộp lại cùng tuần → exit 1, không mục thứ 2",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--board",
+        "--date",
+        "2026-11-10",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Đánh dấu xong thiếu bằng chứng → exit 1, trạng thái không đổi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--set-status",
+        "DA-01",
+        "--status",
+        "xong",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select status from project_milestones where code = 'DA-01'",
+       "expect": "chua_bat_dau"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Đánh dấu xong có bằng chứng; bảng dựng lại (r10 C05b) không còn TRỄ DA-01",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--set-status",
+        "DA-01",
+        "--status",
+        "xong",
+        "--evidence",
+        "BB-THU-IT-01",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--board",
+        "--date",
+        "2026-11-10",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from project_milestones where code = 'DA-01' and status = 'xong' and evidence = 'BB-THU-IT-01'",
+       "expect": 1
+      },
+      {
+       "file_glob": "{OUT}/da-pmo-board-2026-11-10.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/da-pmo-board-2026-11-10.md",
+       "re": "\\*\\*TRỄ\\*\\* DA-01|\\| DA-01 \\|[^\\n]*\\*\\*TRỄ\\*\\*",
+       "expect": false
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C06",
+     "nguon_r10": "C06",
+     "mo_ta": "Đề xuất đổi hạn → mục milestone_change do NGƯỜI tạo, hạn chưa đổi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--propose-due",
+        "MOC-A",
+        "--due",
+        "2026-11-14",
+        "--by",
+        "Người Đề Xuất Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' and block = 'ceo' and status = 'pending' and created_by = 'Người Đề Xuất Thử IT' and position('code: MOC-A' in payload) > 0 and position('old_due: 2026-10-31' in payload) > 0 and position('new_due: 2026-11-14' in payload) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select due_date::text from project_milestones where code = 'MOC-A'",
+       "expect": "2026-10-31"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C07",
+     "nguon_r10": "C07",
+     "mo_ta": "Tự duyệt đề xuất của mình → bị từ chối, vẫn pending",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' order by id desc limit 1}",
+        "--by",
+        "Người Đề Xuất Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' and status = 'pending'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C08",
+     "nguon_r10": "C08",
+     "mo_ta": "Người khác duyệt (r10 C08a) rồi áp hạn ở chạy thử → apply-due exit 1 (rollout chặn dùng), hạn không đổi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' order by id desc limit 1}",
+        "--by",
+        "Người Duyệt Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--apply-due",
+        "{sql:select id from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' order by id desc limit 1}",
+        "--by",
+        "Người Duyệt Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "\\[rollout\\] TỪ CHỐI DÙNG mục #\\d+:[^\\n]*ceo-02\\.1 đang chạy thử"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' and status = 'approved' and decided_by = 'Người Duyệt Thử IT'",
+       "expect": 1
+      },
+      {
+       "sql": "select due_date::text from project_milestones where code = 'MOC-A'",
+       "expect": "2026-10-31"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C09",
+     "nguon_r10": "C09",
+     "mo_ta": "Áp hạn khi ép van_hanh (FIXTURE force_vanhanh = r10) + chạy lại no-op",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX12}/items/ceo-02.1/force_vanhanh.py.txt",
+        "agents.da_pmo",
+        "--apply-due",
+        "{sql:select id from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' order by id desc limit 1}",
+        "--by",
+        "Người Duyệt Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "MOC-A: hạn 31/10/2026 → 14/11/2026"
+      },
+      {
+       "argv": [
+        "python",
+        "{FX12}/items/ceo-02.1/force_vanhanh.py.txt",
+        "agents.da_pmo",
+        "--apply-due",
+        "{sql:select id from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A' order by id desc limit 1}",
+        "--by",
+        "Người Duyệt Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "no-op"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select due_date::text from project_milestones where code = 'MOC-A'",
+       "expect": "2026-11-14"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__C10",
+     "nguon_r10": "C10",
+     "mo_ta": "Tính năng ceo-02.1 tắt → không mục weekly_board mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "ceo-02.1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--board",
+        "--date",
+        "2026-11-17",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep7"
+       ],
+       "expect_exit": [
+        0,
+        1,
+        2
+       ]
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board' and object_id = 'board:2026-W47'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.1__X10",
+     "nguon_r10": "MOI",
+     "mo_ta": "RB: ceo-02.1 tắt → exit 2 '[rollout] … ceo-02.1', không traceback, không file bảng (cả lần C10); bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--board",
+        "--date",
+        "2026-11-17",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*ceo-02\\.1\\b",
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "ceo-02.1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/*",
+       "count": 0
+      },
+      {
+       "file_glob": "{SCR}/rep7/*",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board'",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-02.2",
+   "db": "samsam_itacc_r12_c022",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.ceo_decisions --record/--follow/--propose/--list` exit đúng",
+    "T2 decision_log: dòng quyet_dinh có recorded_by = người, decided_by, basis; cap_nhat là dòng MỚI (không UPDATE); --propose liệt kê mục ceo đã quyết chưa vào sổ và không ghi gì; --list có mục chờ quyết/chờ ký",
+    "T3 ca âm: --by agent: bị chặn trước connect; căn cứ chưa quyết bị từ chối; căn cứ trùng bị từ chối; ngày tương lai bị từ chối; UPDATE/DELETE sổ bị DB chặn; xong thiếu bằng chứng bị chặn; tắt ceo-02.2 KHÔNG chặn người ghi",
+    "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành"
+   ],
+   "ca": [
+    {
+     "ma": "ceo-02.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "Tái lập trạng thái hàng duyệt khối ceo mà r10 ceo-02.2 dùng (DB chung): weekly_report W42 pending (r10 ceo-01 C01+C06), weekly_board W46 pending (r10 ceo-02.1 C01–C02), milestone_change MOC-A đã duyệt bởi người khác (r10 ceo-02.1 C06+C08a)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--import",
+        "{FX12}/items/ceo-02.2/it_g1_cockpit.csv",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_report",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-12",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--seed"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--board",
+        "--date",
+        "2026-11-10",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_pmo",
+        "--propose-due",
+        "MOC-A",
+        "--due",
+        "2026-11-14",
+        "--by",
+        "Người Đề Xuất Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where object_type = 'milestone_change' and object_id = 'milestone:MOC-A'}",
+        "--by",
+        "Người Duyệt Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'milestone_change' and status = 'approved'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from decision_log",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Ghi quyết định căn cứ văn bản",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--record",
+        "--topic",
+        "Chốt lịch thử IT",
+        "--decision",
+        "Đồng ý lịch thử",
+        "--decided-by",
+        "TGĐ Thử IT",
+        "--note",
+        "Biên bản họp thử IT số 01",
+        "--by",
+        "Thư ký Thử IT",
+        "--due",
+        "2026-10-30"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT' and recorded_by = 'Thư ký Thử IT' and decided_by = 'TGĐ Thử IT' and basis_kind = 'van_ban' and due_date = '2026-10-30'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from decision_log",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Người ghi là agent → exit 2 (argparse, trước connect), 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--record",
+        "--topic",
+        "X",
+        "--decision",
+        "Y",
+        "--decided-by",
+        "TGĐ Thử IT",
+        "--note",
+        "Biên bản họp thử IT số 02",
+        "--by",
+        "agent:x"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "--by phải là tên NGƯỜI"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from decision_log",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Căn cứ mục hàng duyệt chưa quyết (weekly_board pending — r10 #3) → exit 1, 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--record",
+        "--basis",
+        "{sql:select 'approval_queue:' || id from approval_queue where object_type = 'weekly_board' and status = 'pending'}",
+        "--topic",
+        "Bảng tuần",
+        "--decision",
+        "Duyệt",
+        "--by",
+        "Thư ký Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from decision_log",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Duyệt mục weekly_report (r10 C04a) rồi --propose → liệt kê mục đã quyết, không ghi sổ",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where object_type = 'weekly_report' and object_id = '2026-W42' order by id desc limit 1}",
+        "--by",
+        "TGĐ Duyệt Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--propose"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "approval_queue #\\d+ `weekly_report` approved"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from decision_log",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Ghi theo căn cứ đã duyệt (decided_by lấy từ mục) + ghi trùng (r10 C05b) → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--record",
+        "--basis",
+        "{sql:select 'approval_queue:' || id from approval_queue where object_type = 'weekly_report' and object_id = '2026-W42'}",
+        "--topic",
+        "Báo cáo tuần W42",
+        "--decision",
+        "Duyệt báo cáo tuần",
+        "--by",
+        "Thư ký Thử IT",
+        "--due",
+        "2026-10-31"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--record",
+        "--basis",
+        "{sql:select 'approval_queue:' || id from approval_queue where object_type = 'weekly_report' and object_id = '2026-W42'}",
+        "--topic",
+        "Báo cáo tuần W42",
+        "--decision",
+        "Duyệt lần 2",
+        "--by",
+        "Thư ký Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from decision_log d where d.basis_kind = 'approval_queue' and d.basis_id = (select id from approval_queue where object_type = 'weekly_report' and object_id = '2026-W42') and d.decided_by = 'TGĐ Duyệt Thử IT' and d.recorded_by = 'Thư ký Thử IT'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from decision_log",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C06",
+     "nguon_r10": "C06",
+     "mo_ta": "Theo dõi thực hiện: xong thiếu note exit 2 (C06a); có note → dòng cap_nhat mới (C06b); cập nhật nữa exit 1 đã đóng (C06c); dòng gốc không bị UPDATE",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--follow",
+        "{sql:select id from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT'}",
+        "--status",
+        "xong",
+        "--by",
+        "Thư ký Thử IT"
+       ],
+       "expect_exit": 2
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--follow",
+        "{sql:select id from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT'}",
+        "--status",
+        "xong",
+        "--note",
+        "BB nghiệm thu thử IT",
+        "--by",
+        "Thư ký Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--follow",
+        "{sql:select id from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT'}",
+        "--status",
+        "dang_lam",
+        "--by",
+        "Thư ký Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from decision_log c where c.entry_kind = 'cap_nhat' and c.follow_status = 'xong' and c.parent_id = (select id from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT')",
+       "expect": 1
+      },
+      {
+       "sql": "select follow_status from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT'",
+       "expect": "mo"
+      },
+      {
+       "sql": "select count(*) from decision_log",
+       "expect": 3
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C07",
+     "nguon_r10": "C07",
+     "mo_ta": "Ngày quyết tương lai → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--record",
+        "--topic",
+        "Ngày tương lai",
+        "--decision",
+        "Thử",
+        "--decided-by",
+        "TGĐ Thử IT",
+        "--note",
+        "Biên bản tương lai thử IT",
+        "--by",
+        "Thư ký Thử IT",
+        "--date",
+        "2027-01-01"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from decision_log",
+       "expect": 3
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C08",
+     "nguon_r10": "C08",
+     "mo_ta": "Append-only ở DB: UPDATE/DELETE decision_log bằng login owner DB thử → trigger chặn, dữ liệu nguyên (r10 harness sql.py; r12 python -c tương đương)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5,autocommit=True)\nprint('session_user', c.execute('select session_user').fetchone()[0])\nfor k, s in (('UPDATE', \"update decision_log set topic='sửa thử' where id=(select min(id) from decision_log)\"), ('DELETE', 'delete from decision_log where id=(select min(id) from decision_log)')):\n    try:\n        r = c.execute(s); print('KHONG_CHAN', k, r.rowcount)\n    except psycopg.Error as e:\n        print('CHAN', k + ':', type(e).__name__, str(e).splitlines()[0])\n"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "CHAN UPDATE:[^\\n]*append-only[\\s\\S]*CHAN DELETE:[^\\n]*append-only"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select topic from decision_log where id = (select min(id) from decision_log)",
+       "expect": "Chốt lịch thử IT"
+      },
+      {
+       "sql": "select count(*) from decision_log",
+       "expect": 3
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C09",
+     "nguon_r10": "C09",
+     "mo_ta": "Tắt ceo-02.2 không chặn người ghi (exit 0); bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "ceo-02.2",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--record",
+        "--topic",
+        "Quyết định khi tắt",
+        "--decision",
+        "Ghi sổ người",
+        "--decided-by",
+        "TGĐ Thử IT",
+        "--note",
+        "Văn bản thử IT khi tắt",
+        "--by",
+        "Thư ký Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "ceo-02.2",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from decision_log where topic = 'Quyết định khi tắt' and recorded_by = 'Thư ký Thử IT' and entry_kind = 'quyet_dinh'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-02.2__C10",
+     "nguon_r10": "C10",
+     "mo_ta": "--list in mục chờ quyết (hàng duyệt ceo pending — weekly_board) và 'Chờ ký' mốc can_ky (G1-L5 đã vá)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_decisions",
+        "--list"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "Chờ quyết định \\(hàng duyệt khối ceo[^\\n]*\\n(?:- #\\d+[^\\n]*\\n)*?- #\\d+ weekly_board ",
+       "out_re": "Chờ ký \\(mốc cần văn bản ký[^\\n]*\\n- (?!\\(không có\\))[A-Z]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from project_milestones where sign_required and status <> 'xong'",
+       "expect": 5
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-03",
+   "db": "samsam_itacc_r12_c03",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.ceo_risk --report --now <ISO> --out-dir <scratch>` exit 0",
+    "T2 file ceo-risk-<ngày>.md: rủi ro xếp mức ĐỎ/VÀNG/XANH đúng luật với fixture (XNQC hết hạn → ĐỎ, sắp hết hạn → VÀNG, đã nộp chờ cấp → XANH, DPIA chưa ký → ĐỎ, tuyến cảnh báo → ĐỎ, chỉ dẫn địa lý/nhóm hạn chế → VÀNG), ĐỎ xếp trước; có nguồn/owner vai trò; sổ report_outputs ghi feature ceo-03",
+    "T3 ca âm: chỉ đọc (không đổi bảng nghiệp vụ); cấu hình hỏng → exit 2 không file; tính năng tắt → không file",
+    "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+    "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+   ],
+   "ca": [
+    {
+     "ma": "ceo-03__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-03__C01",
+     "nguon_r10": "C01",
+     "tien_quyet": true,
+     "mo_ta": "Dựng fixture tracker Pháp chế: xnqc --add (r10 C01a) + --set da_nop (C01b) + SQL fixture ceo03_fixture.sql (lượt 2 r10, owner DB thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.xnqc",
+        "--add",
+        "--sku",
+        "savigout-30v",
+        "--loai",
+        "maket",
+        "--ten",
+        "Maket fanpage Thử IT",
+        "--by",
+        "Pháp chế Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.xnqc",
+        "--set",
+        "{sql:select id from xnqc_dossiers where sku_key = 'savigout-30v'}",
+        "--status",
+        "da_nop",
+        "--ngay-nop",
+        "2026-10-20",
+        "--by",
+        "Pháp chế Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5,autocommit=True); c.execute(open(sys.argv[1],encoding='utf-8').read()); c.close(); print('SQL_OK')",
+        "{FX12}/items/ceo-03/ceo03_fixture.sql"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "SQL_OK"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from xnqc_dossiers where sku_key = 'savigout-30v' and status = 'da_nop'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from xnqc_dossiers where sku_key = 'savina-12v' and status = 'da_cap' and ngay_het_han = '2026-10-01'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from xnqc_dossiers where sku_key = 'saphraton-20v' and status = 'da_cap' and ngay_het_han = '2026-11-05'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-03__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Báo cáo sổ rủi ro (r10 lượt tính: KHÔNG --now — --now trước giờ dựng fixture loại fixture theo as-of): mã/mức đúng luật, ĐỎ→VÀNG→XANH, nhãn CHẠY THỬ",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_risk",
+        "--report",
+        "--out-dir",
+        "{SCR}/rep03"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep03/ceo-risk-*.md",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/rep03/ceo-risk-*.md",
+       "re": "\\| ĐỎ \\| XNQC-HET-HAN:\\d+ \\| Giấy XNQC hồ sơ #\\d+ \\(savina-12v\\) đã hết hạn 01/10/2026",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep03/ceo-risk-*.md",
+       "re": "\\| VÀNG \\| XNQC-HET-HAN:\\d+ \\| Giấy XNQC hồ sơ #\\d+ \\(saphraton-20v\\) sắp hết hạn 05/11/2026",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep03/ceo-risk-*.md",
+       "re": "\\| XANH \\| XNQC-CHO-CAP:savigout-30v \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep03/ceo-risk-*.md",
+       "re": "\\| ĐỎ \\| DPIA \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep03/ceo-risk-*.md",
+       "re": "\\| ĐỎ \\| TUYEN-CANH-BAO \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep03/ceo-risk-*.md",
+       "re": "\\| VÀNG \\|[\\s\\S]*\\| ĐỎ \\|",
+       "expect": false
+      },
+      {
+       "file_re": "{SCR}/rep03/ceo-risk-*.md",
+       "re": "\\| XANH \\|[\\s\\S]*\\| (?:ĐỎ|VÀNG) \\|",
+       "expect": false
+      },
+      {
+       "file_re": "{SCR}/rep03/ceo-risk-*.md",
+       "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-03 ",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-03__X02",
+     "nguon_r10": "MOI",
+     "mo_ta": "T2: sổ report_outputs ghi feature ceo-03 (chỉ kiểm)",
+     "kiem": [
+      {
+       "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-03' and name like 'ceo-risk-%'",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-03__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Chỉ đọc: băm nội dung xnqc_dossiers/red_alerts/approval_queue/channel_posts trước = sau khi chạy ceo_risk --report",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); v=sorted((t, c.execute('select count(*)::text || chr(58) || md5(coalesce(string_agg(x::text, chr(10) order by x::text), chr(32))) from '+t+' x').fetchone()[0]) for t in sys.argv[2:]); c.close(); open(sys.argv[1],'w',encoding='utf-8').write(repr(v)); print('TRUOC', v)",
+        "{OUT}/truoc.txt",
+        "xnqc_dossiers",
+        "red_alerts",
+        "approval_queue",
+        "channel_posts"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "TRUOC"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_risk",
+        "--report",
+        "--out-dir",
+        "{OUT}/rep"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); v=sorted((t, c.execute('select count(*)::text || chr(58) || md5(coalesce(string_agg(x::text, chr(10) order by x::text), chr(32))) from '+t+' x').fetchone()[0]) for t in sys.argv[2:]); c.close(); b=open(sys.argv[1],encoding='utf-8').read(); print('SAU', v); print('KHONG_DOI' if repr(v)==b else 'THAY_DOI'); sys.exit(0 if repr(v)==b else 1)",
+        "{OUT}/truoc.txt",
+        "xnqc_dossiers",
+        "red_alerts",
+        "approval_queue",
+        "channel_posts"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\bKHONG_DOI\\b"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-03__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Cấu hình hỏng (patch_run CONFIG → ceo_risk_hong.json, r10) → exit 2, không file",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX12}/items/ceo-03/patch_run.py.txt",
+        "agents.ceo_risk",
+        "CONFIG={FX12}/items/ceo-03/ceo_risk_hong.json",
+        "--",
+        "--report",
+        "--out-dir",
+        "{SCR}/rep03b"
+       ],
+       "expect_exit": 2,
+       "out_re": "\\[error\\] cấu hình"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep03b/*",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-03__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Tính năng ceo-03 tắt → không sinh ceo-risk-2026-10-24.md",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "ceo-03",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_risk",
+        "--report",
+        "--now",
+        "2026-10-24T09:00:00+07:00",
+        "--out-dir",
+        "{SCR}/rep03b"
+       ],
+       "expect_exit": [
+        0,
+        1,
+        2
+       ]
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep03b/ceo-risk-2026-10-24.md",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-03__X05",
+     "nguon_r10": "MOI",
+     "mo_ta": "RB: ceo-03 tắt → exit 2 '[rollout] … ceo-03', không traceback, không file; bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_risk",
+        "--report",
+        "--now",
+        "2026-10-24T09:00:00+07:00",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*ceo-03\\b",
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "ceo-03",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/*",
+       "count": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-04.3",
+   "db": "samsam_itacc_r12_c043",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.ceo_audit --report --now <ISO> --out-dir <scratch>` exit 0",
+    "T2 ceo-audit-<ngày>.md phân loại đúng: bài khớp bản duyệt → khop; bài sửa sau duyệt → lech_ban_duyet; bài không bản duyệt → thieu_ban_duyet; listing tiêu đề khớp bản duyệt listing → khop; listing không có bản duyệt → thieu; listing không map SKU → khong_xac_dinh_sku; tỷ lệ tuân thủ theo kênh; không chép text bài",
+    "T3 ca âm: chỉ đọc (không ghi bảng); tính năng ceo-04.3 tắt → không sinh ceo-audit nhưng không được chặn đầu ra tính năng khác (ceo-gia của ceo-04.4)",
+    "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+    "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+   ],
+   "ca": [
+    {
+     "ma": "ceo-04.3__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.3__C01",
+     "nguon_r10": "C01",
+     "tien_quyet": true,
+     "mo_ta": "Fixture: nháp đã duyệt (mk_drafts r10 lượt 2 → #4/#5/#6; r12 đặt sequence content_drafts=3 thay cho lượt 1 hỏng của r10 để id khớp draft_id trong it_g1_posts.csv nguyên văn) + bài đăng (ra_kenh) + listing (market_csv)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5,autocommit=True); assert c.execute('select count(*) from content_drafts').fetchone()[0]==0, 'content_drafts không rỗng'; print('SETVAL', c.execute(\"select setval(pg_get_serial_sequence('content_drafts','id'), 3)\").fetchone()[0])"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "SETVAL 3"
+      },
+      {
+       "argv": [
+        "python",
+        "{FX12}/items/ceo-04.3/mk_drafts.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\"post_ok\": 4, \"post_sua\": 5, \"listing_mo\": 6"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "4",
+        "--by",
+        "Người Duyệt Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "5",
+        "--by",
+        "Người Duyệt Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "6",
+        "--by",
+        "Người Duyệt Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ra_kenh",
+        "--file",
+        "{FX12}/items/ceo-04.3/it_g1_posts.csv",
+        "--by",
+        "Quản lý MXH Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/ceo-04.3/it_g1_listing_shopee.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "listing"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where id in (4, 5, 6) and status = 'approved'",
+       "expect": 3
+      },
+      {
+       "sql": "select count(*) from channel_posts",
+       "expect": 3
+      },
+      {
+       "sql": "select count(*) from market_rows",
+       "expect": 5
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.3__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Audit: số đếm khop/lech/thieu/khong_xac_dinh_sku đúng fixture, tỷ lệ theo kênh",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_audit",
+        "--report",
+        "--now",
+        "2026-10-23T10:00:00+07:00",
+        "--out-dir",
+        "{SCR}/rep43"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+       "re": "\\| facebook \\| 3 \\| 1 \\| 33,3% \\| 1 \\| 1 \\| 0 \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+       "re": "\\| shopee \\| 5 \\| 1 \\| 20% \\| 0 \\| 3 \\| 1 \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+       "re": "\\| tiktok \\| 0 \\| 0 \\| — \\| 0 \\| 0 \\| 0 \\| chưa có dữ liệu quan sát",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.3__X02",
+     "nguon_r10": "MOI",
+     "mo_ta": "T2/T5 (r10 actual C02): không chép text bài/tiêu đề listing; nhãn CHẠY THỬ ceo-04.3; report_outputs ceo-04.3 (chỉ kiểm)",
+     "kiem": [
+      {
+       "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+       "re": "món quà Tết ấm áp|Hộp quà Tết Thử IT|Bài đăng không qua duyệt|Savina tuýp 12 viên|Saphraton 20 viên|Sản phẩm lạ Thử IT|Mật ong sâm 300ml hộp quà",
+       "expect": false
+      },
+      {
+       "file_re": "{SCR}/rep43/ceo-audit-2026-10-23.md",
+       "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-04\\.3 ",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-04.3' and name = 'ceo-audit-2026-10-23.md'",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.3__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Chỉ đọc: băm nội dung approval_queue/red_alerts/channel_posts/market_alerts/content_drafts/approvals trước = sau ceo_audit --report",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); v=sorted((t, c.execute('select count(*)::text || chr(58) || md5(coalesce(string_agg(x::text, chr(10) order by x::text), chr(32))) from '+t+' x').fetchone()[0]) for t in sys.argv[2:]); c.close(); open(sys.argv[1],'w',encoding='utf-8').write(repr(v)); print('TRUOC', v)",
+        "{OUT}/truoc.txt",
+        "approval_queue",
+        "red_alerts",
+        "channel_posts",
+        "market_alerts",
+        "content_drafts",
+        "approvals"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "TRUOC"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_audit",
+        "--report",
+        "--now",
+        "2026-10-23T10:00:00+07:00",
+        "--out-dir",
+        "{OUT}/rep"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); v=sorted((t, c.execute('select count(*)::text || chr(58) || md5(coalesce(string_agg(x::text, chr(10) order by x::text), chr(32))) from '+t+' x').fetchone()[0]) for t in sys.argv[2:]); c.close(); b=open(sys.argv[1],encoding='utf-8').read(); print('SAU', v); print('KHONG_DOI' if repr(v)==b else 'THAY_DOI'); sys.exit(0 if repr(v)==b else 1)",
+        "{OUT}/truoc.txt",
+        "approval_queue",
+        "red_alerts",
+        "channel_posts",
+        "market_alerts",
+        "content_drafts",
+        "approvals"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\bKHONG_DOI\\b"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.3__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Tắt ceo-04.3 → không ceo-audit-2026-10-24.md; ceo-gia-2026-10-24.md VẪN sinh (ceo-04.4 độc lập — G1-L1 đã vá)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "ceo-04.3",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_audit",
+        "--report",
+        "--now",
+        "2026-10-24T10:00:00+07:00",
+        "--out-dir",
+        "{SCR}/rep43"
+       ],
+       "expect_exit": [
+        0,
+        1,
+        2
+       ]
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep43/ceo-audit-2026-10-24.md",
+       "count": 0
+      },
+      {
+       "file_glob": "{SCR}/rep43/ceo-gia-2026-10-24.md",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.3__X04",
+     "nguon_r10": "MOI",
+     "mo_ta": "RB/G1-L1: ceo-04.3 tắt → exit 2 '[rollout] … ceo-04.3', không traceback, ceo-gia vẫn sinh; bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_audit",
+        "--report",
+        "--now",
+        "2026-10-24T10:00:00+07:00",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*ceo-04\\.3\\b",
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "ceo-04.3",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/ceo-audit-*",
+       "count": 0
+      },
+      {
+       "file_glob": "{OUT}/ceo-gia-2026-10-24.md",
+       "count": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-04.4",
+   "db": "samsam_itacc_r12_c044",
+   "tieu_chi_cu_the": [
+    "T1 cùng lần chạy `agents.ceo_audit --report` exit 0",
+    "T2 ceo-gia-<ngày>.md: giá listing = giá list ĐÃ DUYỆT hiệu lực → khop; khác → lech kèm 'file X / duyệt Y (price_list #id)'; giá chưa duyệt → khong_so_duoc (không kết luận khớp); mô tả → khong_so_duoc vì file chưa có cột",
+    "T3 ca âm: giá chưa duyệt không được coi khớp; tính năng ceo-04.4 tắt → không sinh ceo-gia nhưng ceo-audit (ceo-04.3) vẫn sinh",
+    "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+    "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+   ],
+   "ca": [
+    {
+     "ma": "ceo-04.4__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.4__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "listing shopee fixture (r10 ceo043_fx_listing trên DB chung)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/ceo-04.4/it_g1_listing_shopee.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "listing"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_rows",
+       "expect": 5
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.4__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Duyệt giá list (người): savina-12v 159000 (r10 id=2) + saphraton-20v 299000 (r10 id=5, ceo044_C01_5)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'savina-12v' and channel = 'shopee' and kind = 'list' and program_id is null and valid_to is null}",
+        "--by",
+        "Người Duyệt Giá Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'list' and program_id is null and valid_to is null}",
+        "--by",
+        "Người Duyệt Giá Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from price_list where channel = 'shopee' and kind = 'list' and approved_by = 'Người Duyệt Giá Thử IT' and ((sku_key = 'savina-12v' and price_vnd = 159000) or (sku_key = 'saphraton-20v' and price_vnd = 299000))",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from price_list where approved_by is not null",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.4__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "So giá: khop / lech (file 289000 / duyệt 299000) / khong_so_duoc (giá chưa duyệt); mô tả khong_so_duoc",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_audit",
+        "--report",
+        "--now",
+        "2026-10-23T10:00:00+07:00",
+        "--out-dir",
+        "{SCR}/rep43"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep43/ceo-gia-2026-10-23.md",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/rep43/ceo-gia-2026-10-23.md",
+       "re": "shopee \\(quan sát [0-9-]+\\): giá khop 1 · lech_ban_duyet 1 · khong_so_duoc 2 · thieu_ban_duyet 0 \\| mô tả khop 0 · lech_ban_duyet 0 · khong_so_duoc 4",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep43/ceo-gia-2026-10-23.md",
+       "re": "giá lech_ban_duyet \\(file 289000 / duyệt 299000 \\(price_list #\\d+\\)\\)",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep43/ceo-gia-2026-10-23.md",
+       "re": "Mô tả không so được: file xuất chưa có cột mô tả",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.4__X02",
+     "nguon_r10": "MOI",
+     "mo_ta": "T5 (r10 actual C02): nhãn CHẠY THỬ ceo-04.4 + report_outputs ceo-04.4 (chỉ kiểm)",
+     "kiem": [
+      {
+       "file_re": "{SCR}/rep43/ceo-gia-2026-10-23.md",
+       "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-04\\.4 ",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-04.4' and name = 'ceo-gia-2026-10-23.md'",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.4__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Tắt ceo-04.4 → không ceo-gia-2026-10-25.md; ceo-audit-2026-10-25.md vẫn sinh",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "ceo-04.4",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_audit",
+        "--report",
+        "--now",
+        "2026-10-25T10:00:00+07:00",
+        "--out-dir",
+        "{SCR}/rep43"
+       ],
+       "expect_exit": [
+        0,
+        1,
+        2
+       ]
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep43/ceo-gia-2026-10-25.md",
+       "count": 0
+      },
+      {
+       "file_glob": "{SCR}/rep43/ceo-audit-2026-10-25.md",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.4__X03",
+     "nguon_r10": "MOI",
+     "mo_ta": "RB: ceo-04.4 tắt → exit 2 '[rollout] … ceo-04.4', không traceback, ceo-audit vẫn sinh; bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_audit",
+        "--report",
+        "--now",
+        "2026-10-25T10:00:00+07:00",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*ceo-04\\.4\\b",
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "ceo-04.4",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/ceo-gia-*",
+       "count": 0
+      },
+      {
+       "file_glob": "{OUT}/ceo-audit-2026-10-25.md",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-04.4__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "(r10 bổ sung sau khóa, FAIL g1-L1) CHỈ ceo-04.3 tắt → ceo-gia-2026-10-24.md của ceo-04.4 (chạy thử) VẪN sinh, không ceo-audit; bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "ceo-04.3",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.ceo_audit",
+        "--report",
+        "--now",
+        "2026-10-24T10:00:00+07:00",
+        "--out-dir",
+        "{SCR}/rep44"
+       ],
+       "expect_exit": [
+        0,
+        1,
+        2
+       ]
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "ceo-04.3",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep44/ceo-gia-2026-10-24.md",
+       "count": 1
+      },
+      {
+       "file_glob": "{SCR}/rep44/ceo-audit-2026-10-24.md",
+       "count": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ceo-05",
+   "db": "samsam_itacc_r12_c05",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.hdtv_report --month 2026-09 --submit --record --out-dir <scratch>` exit 0",
+    "T2 hdtv-2026-09.md có 7 mục (cockpit, tiến độ & sổ quyết định, rủi ro, chi so ngân sách, P&L, ép trình QA, kiểm soát BKS); số không nguồn bị chặn bởi grounding (exit 0 = mọi số có nguồn); mục thiếu nguồn ghi 'chưa có dữ liệu'/'không đọc được' không bịa; 1 mục ceo/hdtv_pack pending + audit_runs hdtv_pack",
+    "T3 ca âm: chạy lại không nộp trùng; kỳ chưa đóng exit 2; tắt → exit 2 không file/mục",
+    "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+    "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+   ],
+   "ca": [
+    {
+     "ma": "ceo-05__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-05__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Gói tháng: 7 heading, mục hdtv_pack pending, audit_runs hdtv_pack; thiếu nguồn chi → [chưa có dữ liệu] không in 0đ (G1-L3 đã vá); nhãn CHẠY THỬ (G1-L4 đã vá)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.hdtv_report",
+        "--month",
+        "2026-09",
+        "--submit",
+        "--record",
+        "--out-dir",
+        "{SCR}/rep05"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep05/hdtv-2026-09.md",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+       "re": "## Chỉ số cockpit[\\s\\S]*## Tiến độ & Sổ quyết định[\\s\\S]*## Rủi ro pháp lý mở[\\s\\S]*## Chi so ngân sách vận hành[\\s\\S]*## P&L tóm tắt[\\s\\S]*## Ép trình QA \\(override_qa\\)[\\s\\S]*## Kiểm soát BKS",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack' and object_id like '%2026-09%' and status = 'pending' and created_by = 'agent:hdtv_report'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from audit_runs where kind = 'hdtv_pack' and period_label = '2026-09'",
+       "expect": 1
+      },
+      {
+       "sql": "select (select count(*) from opex_entries) + (select count(*) from llm_usage)",
+       "expect": 0
+      },
+      {
+       "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+       "re": "## Chi so ngân sách vận hành\\n(?:(?!\\n## )[\\s\\S])*?(?:\\|\\s*0đ\\s*\\||0\\.0%)",
+       "expect": false
+      },
+      {
+       "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+       "re": "## Chi so ngân sách vận hành\\n(?:(?!\\n## )[\\s\\S])*?\\| 2026-09 \\| `tong` \\| \\[chưa có dữ liệu\\] \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+       "re": "## P&L tóm tắt(?:(?!\\n## )[\\s\\S])*?\\[chưa có dữ liệu\\]",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+       "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-05 ",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-05__X01",
+     "nguon_r10": "MOI",
+     "mo_ta": "G1-L4: gói vào report_outputs ceo-05 (chỉ kiểm)",
+     "kiem": [
+      {
+       "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-05' and name = 'hdtv-2026-09.md'",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-05__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Chạy lại → exit 0 '[skipped]', không mục thứ 2",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.hdtv_report",
+        "--month",
+        "2026-09",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep05"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[skipped\\]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-05__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Kỳ chưa đóng (thêm --now 2026-10-23T11:00 = giờ chạy r10 để tái lập) → exit 2",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.hdtv_report",
+        "--month",
+        "2026-10",
+        "--now",
+        "2026-10-23T11:00:00+07:00",
+        "--out-dir",
+        "{SCR}/rep05"
+       ],
+       "expect_exit": 2
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep05/hdtv-2026-10.md",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-05__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Gói quý: file hdtv-2026-Q3.md; số quý thiếu tháng → [chưa đủ dữ liệu]",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.hdtv_report",
+        "--quarter",
+        "2026-Q3",
+        "--out-dir",
+        "{SCR}/rep05"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep05/hdtv-2026-Q3.md",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/rep05/hdtv-2026-Q3.md",
+       "re": "\\[chưa đủ dữ liệu\\]",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "ceo-05__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Tắt → exit 2, không file/mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "ceo-05",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.hdtv_report",
+        "--month",
+        "2026-08",
+        "--submit",
+        "--out-dir",
+        "{SCR}/rep05"
+       ],
+       "expect_exit": 2
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/rep05/hdtv-2026-08.md",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-05__X05",
+     "nguon_r10": "MOI",
+     "mo_ta": "ceo-05 tắt → exit 2 + thông báo chặn có ceo-05 (stdout|stderr), không traceback, không file/mục; bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.hdtv_report",
+        "--month",
+        "2026-08",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "^(?![\\s\\S]*Traceback)",
+       "out_re": "\\[(rollout|blocked)\\][^\\n]*ceo-05\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "ceo-05",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/*",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack'",
+       "expect": 1
+      }
+     ],
+     "ky_vong_v1": {
+      "stdout_re": "\\[rollout\\][^\\n]*ceo-05\\b"
+     }
+    }
+   ]
+  }
+ ]
+}

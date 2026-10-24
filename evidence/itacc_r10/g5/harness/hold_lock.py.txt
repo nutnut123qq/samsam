@@ -1,0 +1,12 @@
+"""Giữ khóa job (dùng chính job_runs._file_lock) rồi chạy THẬT `--run <job>` ở tiến trình con → mong exit 75."""
+import os, subprocess, sys
+from pathlib import Path
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+from pipelines import job_runs
+name = sys.argv[1]
+with job_runs._file_lock(Path(os.environ["JOB_LOCK_DIR"]) / f"{name}.lock") as got:
+    print("[HARNESS] giữ khóa:", got)
+    p = subprocess.run([sys.executable, "-m", "pipelines.job_runs", "--run", name], capture_output=True, text=True, encoding="utf-8")
+    print(p.stdout + p.stderr); print("CHILD_EXIT", p.returncode)
+raise SystemExit(p.returncode)

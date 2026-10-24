@@ -1,0 +1,28 @@
+# ca F041-5
+# gio 2026-10-23T10:27:13+07:00
+# lenh python evidence/itacc_r10/g4/harness/run.py --reports-dir evidence/itacc_r10/g4/out/rep_f041 -- agents.fp_pnl --pnl --month 2026-09 --channel tiktok
+# exit 0
+--- stdout ---
+[harness] REPORTS_DIR -> rep_f041/ (vá biên)
+# P&L theo SKU × kênh — tháng 09/2026
+
+**BẢN NHÁP — chỉ thành chính thức khi GĐ tài chính ký.**
+
+Nguồn: thực nhận quyết toán sàn (`settlement_rows`, theo ngày quyết toán giờ VN) phân bổ theo dòng đơn sàn; giá vốn = dòng ĐÃ duyệt (`cogs_versions`) hiệu lực tại ngày quyết toán. Lọc kênh: tiktok.
+
+| SKU | Kênh | Doanh thu | Khấu trừ sàn | Hoàn | Thực nhận | Giá vốn | Lãi gộp | Biên gộp |
+|---|---|---|---|---|---|---|---|---|
+| `sapentol-30v` | tiktok | 500.000đ | 60.000đ | 0đ | 440.000đ | 400.000đ | 40.000đ | 8.0% |
+
+- Tổng thực nhận: 440.000đ (1 dòng quyết toán trong tháng)
+- Tổng lãi gộp (chỉ ô có giá vốn duyệt): 40.000đ
+- 0 SKU bị loại vì chưa có giá vốn duyệt: (không có)
+- Dòng chưa thấy đơn sàn (vào ô (chưa rõ SKU)): 0; dòng hoàn: 0
+- Dòng thiếu ngày quyết toán (không vào tháng nào): 0
+- GIẢ ĐỊNH thận trọng: dòng hoàn vẫn tính giá vốn theo số lượng đơn (hàng hoàn nhập kho lại chưa có nguồn).
+- Chưa có doanh thu đại lý/B2B (MISA — external-dep): P&L chỉ kênh sàn.
+
+[pnl] → pnl-2026-09-tiktok.md (BẢN NHÁP, không tự gửi)
+
+--- stderr ---
+

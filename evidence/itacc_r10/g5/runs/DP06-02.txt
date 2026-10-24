@@ -1,0 +1,13 @@
+# ca: DP06-02
+# env: DB thử khối dp (DSN che)
+# cmd: python /d/code/samsam/evidence/itacc_r10/g5/harness/fake_shopee.py
+# exit: 0
+# thoi_gian: 2026-10-23T10:49:14+0700
+[load] snapshot #3 shopee/listing api:shopee:listing:20261023T1049: 2 dòng, map golden 2
+[alerts] closed=1
+[warn] 2 cảnh báo shopee/listing không thấy item trong dữ liệu API — GIỮ MỞ (vắng ≠ đã sửa)
+[done]
+
+SERVER_LOG:
+GET /api/v2/product/get_item_list sign=True token=True partner_id=True
+GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True

@@ -1,0 +1,235 @@
+{
+ "id": "sales-07.3",
+ "ten": "Kịch bản bán mùa 11.11, 12.12, Tết",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Livestream, sau bán, dự báo: 'kịch bản bán cho 11.11, 12.12, Tết'",
+ "tieu_chi": [
+  "`pipelines.scenario --sku --channel --weeks 13 --json` trả thấp/cơ sở/cao (tất định)",
+  "`ingest.inventory_csv --file` tồn fixture; `agents.kd_forecast --write` (REPORTS_DIR → evidence) ghi kd-forecast-<start>.md có ô thấp–cơ sở–cao + đối chiếu tồn (THIẾU/THỪA), nhãn CHẠY THỬ, sổ report_outputs",
+  "SKU không có tồn → 'chưa có số tồn' (không suy 0); SKU lạ → exit 1; tồn từ file mẫu → nhãn MẪU, sample=true",
+  "Tắt → write_report chặn"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: không LLM",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s073_inventory.csv",
+   "sha256": "179a3916fa1d1c849a87885f1669cf76a3ccff665fa5b57342c5d20d047672f8",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s073_inventory_sample.csv",
+   "sha256": "bdff8cb661a199fdcf52bb7ffdfa046659ad25c71c1a0975b26d7e1752d04ec8",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "S073-C01",
+   "mo_ta": "Kịch bản 1 SKU",
+   "lenh": "python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 --start 2026-11-02 --json ;; python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 --start 2026-11-02 --json",
+   "expected": "JSON low≤base≤high; tất định",
+   "actual": "13 tuần, mọi dòng low≤base≤high, sự kiện 11.11/12.12/tet_2027; 2 lần chạy output trùng",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S073-C02",
+   "mo_ta": "Nạp tồn",
+   "lenh": "python -m ingest.inventory_csv --file evidence/itacc_r10/g2/fixtures/s073_inventory.csv ;; python -m ingest.inventory_csv --file evidence/itacc_r10/g2/fixtures/s073_inventory.csv",
+   "expected": "exit 0",
+   "actual": "lượt 1 exit 1 do FIXTURE sai định dạng (kho không slug, ngày ISO giờ) — lỗi harness, giữ log; lượt sửa: exit 0 '2 dòng tồn'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S073-C03",
+   "mo_ta": "Dự báo + ghi báo cáo",
+   "lenh": "python evidence/itacc_r10/g2/harness/run_mod.py --reports-dir evidence/itacc_r10/g2/out/s073 -m agents.kd_forecast --start 2026-11-02 --write ;; python evidence/itacc_r10/g2/harness/run_mod.py --reports-dir evidence/itacc_r10/g2/out/s073 -m agents.kd_forecast --start 2026-11-02 --write",
+   "expected": "file nhãn CHẠY THỬ; report_outputs sample=false",
+   "actual": "kd-forecast-2026-11-02.md (REPORTS_DIR → evidence) dòng đầu 'CHẠY THỬ — KHÔNG GỬI', ô thấp–cơ sở–cao theo kênh; saphraton-20v tồn 50 THIẾU, mat-ong-sam-300ml tồn 5000 THỪA, SKU khác 'chưa có số tồn — không kết luận thiếu'; report_outputs feature sales-07.3 is_sample=false",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S073-C04",
+   "mo_ta": "SKU lạ",
+   "lenh": "python evidence/itacc_r10/g2/harness/run_mod.py --reports-dir evidence/itacc_r10/g2/out/s073 -m agents.kd_forecast --sku khong-co-sku --write",
+   "expected": "exit 1",
+   "actual": "exit 1 'SKU khong-co-sku không có trong golden'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S073-C05",
+   "mo_ta": "Tồn mẫu",
+   "lenh": "python -m ingest.inventory_csv --file evidence/itacc_r10/g2/fixtures/s073_inventory_sample.csv --source sample ;; python evidence/itacc_r10/g2/harness/run_mod.py --reports-dir evidence/itacc_r10/g2/out/s073 -m agents.kd_forecast --start 2026-11-09 --sku saphraton-20v --write",
+   "expected": "nhãn MẪU; sample=true",
+   "actual": "inventory [MẪU]; kd-forecast-2026-11-09.md 'tồn 450 (MẪU)' (cộng cả tồn thật 50 + mẫu 400, có nhãn); report_outputs is_sample=true",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S073-C06",
+   "mo_ta": "Tắt",
+   "lenh": "python -m pipelines.rollout --disable sales-07.3 --by Người Thử IT --note kiểm nhánh tắt r10 g2 ;; python evidence/itacc_r10/g2/harness/run_mod.py --reports-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/fc_tat -m agents.kd_forecast --start 2026-11-16 --sku saphraton-20v --write",
+   "expected": "không ghi báo cáo",
+   "actual": "RolloutBlocked ở write_report, thư mục --reports-dir không được tạo (traceback exit 1 — L4)",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Giả định số bán data/scenario_assumptions.json GIẢ ĐỊNH (chờ GĐ KD/TC); tồn từ file fixture; báo cáo ghi qua patch agents.report.REPORTS_DIR (CLI không có --out-dir).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post.py",
+   "sha256": "09d71906afc3419051c2a7e3bfca166a96497b75be67087efc4640c102e6d9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post2.py",
+   "sha256": "1ab72f65b0881f3e20f7da54403a360f526728a95638f6dce6c6cf6ab872314e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/case.py",
+   "sha256": "0d5e5ea91967bf225c4ff3c733a5817c1ff87bb36095d808aa546fa8186b1340"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fake_llm.py",
+   "sha256": "adbc2f9799ed0ac98bf5ca1f83c7c11c2900579da8dc9bc2aa4ca3e91481cc81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fu_probe.py",
+   "sha256": "cd000fe41aa6172cf25198596a21d765938df14d3d1c2c9721812bc926b84953"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_golden_fixture.py",
+   "sha256": "82dcec52b25e0cb39b9111a0d2031d75c3d2b1c72ef60fcc71ebd747fdf0abb1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_items.py",
+   "sha256": "dfe2f77d4674e3134ba3fe9b26b320d6e1f8c54bebff43405b10cc98357b72c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/q.py",
+   "sha256": "1f522e8a212386aa99f6b6b44c4831b6aface0ecf34266af1c39eff527f274c1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/run_mod.py",
+   "sha256": "a5e9c3d3fdf5ad9706b50d5c01e7f1a66d8ab94ca05f8d449d57e6648519391b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/seed_chunk.py",
+   "sha256": "e2c8e72b3c8bd29336aa00af4138a19700aa0721aa993ef1286d2b235ad47b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/shift_orders.py",
+   "sha256": "b630f0394d2543a79471f4174f56d87461bb4c687718ff5d3da83a0d16791afe"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/zalo_e2e.py",
+   "sha256": "f6f1700f4569219eff9446fce3724d65f259fbddaba0930cc0ccc876ee416ae4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s073/kd-forecast-2026-11-02.md",
+   "sha256": "c24bd45c85c733bc2788eb9a96e5f4223e9311e7d6257929787675504864254c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s073/kd-forecast-2026-11-02.TRUOC-KHI-CO-TON.md",
+   "sha256": "0216ac074eba8bbe4461a8b510f6b6135eb3539908c5c28282eb025640b05c1d"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s073/kd-forecast-2026-11-09.md",
+   "sha256": "779a09d9ba7644ee78a93d8e9c02c921fe6129ce09332af2b83d2d35278c3f4d"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C01a.txt",
+   "sha256": "4b08f09689e64b421906ef45a79e9aede0b037a7c8248e3a7b85f3fc2198f52d"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C01b.txt",
+   "sha256": "7ccd694b68871b62e9db77c2d94ad7ca90f009a9b02999338829fa43413d40c5"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C02-HARNESS-LOI-fixture-sai-dinh-dang.txt",
+   "sha256": "f937d2ef88bfa84c8c0acadfa71a8e13a52d7bb2daf47bc1ba832cab16627184"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C02.txt",
+   "sha256": "482784a8d71b4161f27d38769c39c821918d4a29628e814852fe75223318d741"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C03-db.json",
+   "sha256": "a4efc4ef0486701e6bd6a25f2e2f43f5648b66f22cb8c9864fa1109a4c302dec"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C03.txt",
+   "sha256": "8f0d938351906feff7064194d26408aa315e4eec062f826c3dab16d215fab8a3"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C03x-truoc-khi-co-ton.txt",
+   "sha256": "4d09baa5769e281a2a5ef7609b9bb3cd311677d6a85d3fee3dff88f97be7f7d7"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C04.txt",
+   "sha256": "754fb63b57fa7067baa8aa120ab756ded30f46d6275d0a75840ce4ca43b28b62"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C05a.txt",
+   "sha256": "cc9349916fb7f9de9a38514ac54e1bd6ae85f6741b33e77b7f4360905deceef6"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C05b.txt",
+   "sha256": "5c01413eb321530b77ed4b0593c4242cc65503a79abd7142a9cd6bf173784949"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-C06.txt",
+   "sha256": "2d9f1a4c4785f228a792d99d83a73be774ee77ff83ef699ec9350cdcae45e865"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S073-db.json",
+   "sha256": "1b08a20faea661bcd178f75b92d7d626a93194056253ce9faae0f594808bf16f"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt",
+   "sha256": "6318bbc062812637309bbc78e092657139921c2ff309792bd10b70bd6a306179"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt",
+   "sha256": "0627f43797cc5b00090dcdaddc96bf287ec3a0575fe234785a105ab05814f01c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/TAT-disable-sales-07.3.txt",
+   "sha256": "a46d03faa65f0a865f5e55bc34afc8813164e2727dab08552933dda9de9ee908"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "L4",
+   "muc_do": "Thấp",
+   "tom_tat": "Một số CLI không bắt RolloutBlocked khi tính năng TẮT → traceback Python (exit 1) thay vì thông báo/exit theo docstring (content: 'exit 2 ... tính năng tắt'). Kết quả an toàn vẫn đúng (không sinh đầu ra/không ghi file).",
+   "tai_hien": "rollout --disable; python -m pipelines.content --listing ...; python -m agents.kd_quote --quote 2 --submit; python -m agents.kd_forecast --write",
+   "expected": "thông báo [rollout] + exit 2 (hoặc exit 1 có thông báo), không traceback",
+   "actual": "Traceback ... pipelines.rollout.RolloutBlocked ... exit 1 (kd_quote còn ghi 3 file báo giá vào --out-dir trước khi bị chặn)",
+   "evidence": [
+    "evidence/itacc_r10/g2/out/S03-C10a.txt",
+    "evidence/itacc_r10/g2/out/S05-C10.txt",
+    "evidence/itacc_r10/g2/out/S073-C06.txt"
+   ],
+   "vi_tri_code": "pipelines/content.py main (--listing), agents/kd_quote.py _cmd_quote, agents/kd_forecast.py main"
+  }
+ ],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

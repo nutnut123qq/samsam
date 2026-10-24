@@ -1,0 +1,81 @@
+{
+ "id": "legal_hr-06.2",
+ "ten": "Sàng lọc hồ sơ",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Nhân sự: 'sàng lọc hồ sơ'",
+ "tieu_chi": [
+  "T1 `python -m agents.pc_hr --screen --jd <vi_tri> --dir <ngoài repo>` exit 0",
+  "T2 approval_queue legal_hr/hr_screening pending: mã ứng viên = 12 hex đầu sha256 nội dung, xếp tất định (bắt buộc↓, ưu tiên↓, mã), KHÔNG tên/SĐT/email/tên file trong payload; file không đọc được đứng cuối 'cần người đọc tay'",
+  "T3 thư mục trong repo → exit 2; cấu hình có tiêu chí phân biệt đối xử → exit 1; không tự loại ai",
+  "T4 không liên hệ ứng viên"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_legal; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); CV GIẢ trong scratchpad (ngoài repo)",
+ "dau_vao": [
+  {
+   "ten": "data/hr/jd_templates.json",
+   "sha256": "fd2af10cad411202466d46f2ba48f03da5d6187ad5e069d5ed2df0216ab13904",
+   "provenance": "file repo (đọc, không sửa)"
+  },
+  {
+   "ten": "harness/fixtures/jd_bad.json",
+   "sha256": "a544b64751a33b207e5b9b8f1e440749027d15be3223e21ccfe94ac0c37796e0",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "06.2-C1",
+   "mo_ta": "3 CV + 1 file không UTF-8",
+   "lenh": "python -m agents.pc_hr --screen --jd nv_cskh --dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/cv",
+   "expected": "xếp hạng T2",
+   "actual": "mục #8 hr_screening: 2033d7a8e330 (1/1, 3) > 91244abb6f8b (1/1, 2) > 583640a67bd7 (0/1, 1) > a32313eb2ca1 'cần người đọc tay' — mã = sha256[:12] khớp tính độc lập, không PII/tên file",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.2-C2",
+   "mo_ta": "thư mục trong repo",
+   "lenh": "python -m agents.pc_hr --screen --jd nv_cskh --dir evidence/itacc_r10/g3",
+   "expected": "exit 2",
+   "actual": "exit 2 'thư mục CV nằm TRONG repo'",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.2-C3",
+   "mo_ta": "JD có tiêu chí giới tính (FIXTURE)",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --set agents.pc_hr.JD_FILE=evidence/itacc_r10/g3/harness/fixtures/jd_bad.json -m agents.pc_hr --screen --jd nv_cskh --dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/cv",
+   "expected": "exit 1",
+   "actual": "exit 1 'tiêu chí phân biệt đối xử', không connect",
+   "exit": 1,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "Thời hạn lưu CV chưa chốt; chấm theo từ khóa.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/L-06.2-C1.txt",
+   "sha256": "cbfc3a686a46c18c21868cfe7a7e3952ce1af26d549b7b05b080556935288d6b"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-06.2-C1.db.json",
+   "sha256": "46666257a23cf1541955134de211e03c20452936296157674c7ff40ab0adf89f"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-06.2-C2.txt",
+   "sha256": "dbb240ef67704ea35a3d4d04f4a535a015122580b99ccc5ce154f3583c242499"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-06.2-C3.txt",
+   "sha256": "81ec30b6a3958c0067001527aeda1a8919c9c8c9cbffd1e26aa3d30d0486644b"
+  }
+ ],
+ "loi_san_pham": []
+}

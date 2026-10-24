@@ -1,0 +1,255 @@
+{
+ "id": "finance-06",
+ "ten": "Doanh thu thuần trực tuyến + biên bản đối soát quý",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "nghia_vu_hd",
+ "can_cu": "HĐ Điều 7.3, 7.5, 7.6; PL02 mục 4–5 — đối soát doanh thu thuần theo quý",
+ "tieu_chi": [
+  "C1 rev_share --quarter 2026-Q3 --record ghi doi-soat-2026-Q3.md + 1 dòng revenue_quarters: gộp − phí sàn − hủy − hoàn = thuần khớp tính tay; hoàn của đơn hủy không trừ 2 lần; ô ký hai bên trống",
+  "C2 tham số chưa chốt (rev_share.json null) → phí 'chưa chốt', không điền thay; quý không dữ liệu → 'chưa có dữ liệu', không 0",
+  "C3 khoản xuất lại ở ≥2 file: không cộng trùng khoản nguyên văn; lệch → BẤT THƯỜNG, không tính phí",
+  "C4 quý chưa đóng → exit 2; --year khi chưa chốt ngày ký → exit 1; append-only (record lần 2 = dòng mới); tắt → không ghi",
+  "C5 report_sha256 trong sổ truy được tới file báo cáo đã ghi"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_s1.csv",
+   "sha256": "d4cf91e619527ce5babf8ee88120ad4bf1e8f8b9ef05dd12f96cb3b3e990f02a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_s2.csv",
+   "sha256": "5cab733253921fde06f7e2589e0c802c462d7647717d7f63513c6fd5779b1080",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_tiktok.csv",
+   "sha256": "ba5d82419f52ca9cc4c8de1a345c0f1916171226d8e2a4bd9600f1c5dc154162",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/orders_shopee.csv",
+   "sha256": "e10f04fcddbd06e64bc24c462ae8b21b220d3dc7aa914ffd0a4dd3ba583b89a5",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/orders_tiktok.csv",
+   "sha256": "8cef83f872600065b668a6f1874716bae0d5b58ed325f9c34948431e050bdec9",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/rev_share_fixture.json",
+   "sha256": "558b36b6a62954c7b5e47060813e5c9eafbde420736f4f66901eaaa71d0ac006",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F06-1",
+   "mo_ta": "đối soát Q3 trước file xuất lại",
+   "lenh": "[F06-1] python -m agents.rev_share --quarter 2026-Q3 --record --out-dir evidence/itacc_r10/g4/out/f06_run1 || [F06-1-q] python evidence/itacc_r10/g4/harness/q.py select id, quarter, period_start, period_end, gross_vnd, platform_fee_vnd, cancel_vnd, refund_vnd, net_vnd, payout_vnd, fee_rate, ops_fee_vnd, report_sha256, re ; select feature_id, name, sha256, is_sample from report_outputs order by id",
+   "expected": "shopee 2.600.000/288.000/200.000/400.000/1.712.000; tiktok 440.000; tổng 2.152.000; phí chưa chốt; 1 dòng sổ",
+   "actual": "exit 0; khớp đúng từng số (hoàn của đơn hủy C không trừ lần 2); 'Tỷ lệ phí vận hành: chưa chốt', ngày ký/vận hành 'chưa chốt'; ô ký 2 bên trống; revenue_quarters #1 recorded_by agent:rev_share",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F06-2",
+   "mo_ta": "ÂM quý không dữ liệu",
+   "lenh": "[F06-2] python -m agents.rev_share --quarter 2026-Q2 --dry-run",
+   "expected": "'chưa có dữ liệu' 2 kênh + tổng",
+   "actual": "exit 0; mọi ô 'chưa có dữ liệu', ghi chú từng kênh",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F06-3",
+   "mo_ta": "ÂM quý chưa đóng",
+   "lenh": "[F06-3] python -m agents.rev_share --quarter 2026-Q4 --out-dir evidence/itacc_r10/g4/out/f06_run1",
+   "expected": "exit 2",
+   "actual": "exit 2 'quý 2026-Q4 chưa đóng'",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F06-4",
+   "mo_ta": "ÂM --year chưa chốt ngày ký",
+   "lenh": "[F06-4] python -m agents.rev_share --year 1 --out-dir evidence/itacc_r10/g4/out/f06_run1",
+   "expected": "exit 1",
+   "actual": "exit 1 'chưa chốt ngay_ky_hop_dong'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F06-5",
+   "mo_ta": "sau file xuất lại",
+   "lenh": "[F06-5] python -m agents.rev_share --quarter 2026-Q3 --record --out-dir evidence/itacc_r10/g4/out/f06_run2 || [F06-5-q] python evidence/itacc_r10/g4/harness/q.py select id, quarter, gross_vnd, net_vnd, ops_fee_vnd, report_sha256 from revenue_quarters order by id",
+   "expected": "A không cộng lần 2; B lệch → BẤT THƯỜNG; không phí; dòng sổ thứ 2",
+   "actual": "exit 0; shopee gộp 2.900.000 (+300.000 chỉ do bản B khác số; A không cộng lại); ghi chú BẤT THƯỜNG chồng kỳ trùng 1 lệch 1 + tên 2 file; revenue_quarters #2, #1 giữ nguyên",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F06-5b",
+   "mo_ta": "bổ sung sau khóa: cấu hình FIXTURE có tỷ lệ 5% + ngày → phí vẫn không tính khi bất thường",
+   "lenh": "[F06-5b] python evidence/itacc_r10/g4/harness/run.py --call-main 1 --set agents.rev_share:CONFIG_FILE=evidence/itacc_r10/g4/fixtures/rev_share_fixture.json -- agents.rev_share --quarter 2026-Q3 --dry-run",
+   "expected": "phí '—' lý do bất thường",
+   "actual": "exit 0; 'Tỷ lệ phí vận hành 5%' nhưng 'Phí vận hành — (có kênh bất thường — 2 bên giải trình)'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "ghi_chu": "thêm vì F06-5 không tách được lý do (tỷ lệ null che nhánh bất thường); config bản sao scratchpad qua --set CONFIG_FILE"
+  },
+  {
+   "ma": "F06-6",
+   "mo_ta": "report_sha256 ↔ file",
+   "lenh": "[F06-1-q] python evidence/itacc_r10/g4/harness/q.py select id, quarter, period_start, period_end, gross_vnd, platform_fee_vnd, cancel_vnd, refund_vnd, net_vnd, payout_vnd, fee_rate, ops_fee_vnd, report_sha256, re ; select feature_id, name, sha256, is_sample from report_outputs order by id || [F06-6-sha] (script kiểm python inline — kết quả trong out/F06-6-sha.txt)",
+   "expected": "khớp",
+   "actual": "KHÔNG khớp: revenue_quarters.report_sha256 = 34ec42db… (nội dung chưa có nhãn) ≠ sha file doi-soat-2026-Q3.md đã ghi db49e15f… (= report_outputs.sha256) — file có nhãn 'CHẠY THỬ' chèn đầu",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F06-7",
+   "mo_ta": "ÂM tắt finance-06 (chạy cuối)",
+   "lenh": "[TAT-finance-06] python -m pipelines.rollout --disable finance-06 --by Người Thử IT --note kiem nhanh tat IT r10 || [F06-7] python -m agents.rev_share --quarter 2026-Q3 --record --out-dir evidence/itacc_r10/g4/out/rep_tat || [TAT-fin-q4] python evidence/itacc_r10/g4/harness/q.py select object_type, count(*) from approval_queue group by 1 order by 1 ; select count(*) from revenue_quarters ; select feature_id, count(*) from report_outputs group by 1 order by 1",
+   "expected": "exit 2, không thêm sổ",
+   "actual": "exit 2 '[blocked] … finance-06 đang tắt'; revenue_quarters vẫn 2",
+   "exit": [
+    0,
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Ghi report_sha256 theo đúng nội dung file đã ghi (sau nhãn) hoặc lưu cả hai — sửa sản phẩm.",
+ "gioi_han": "Tỷ lệ phí/mức thưởng/ngày ký/ngày vận hành null = chưa chốt (giữ nguyên, không điền thay; nhánh có tỷ lệ chỉ chạy bằng bản sao FIXTURE ở F06-5b). Số chỉ là ĐỀ XUẤT (Điều 7.6).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-1.txt",
+   "sha256": "587c13c6a8107ed38a2a1ca86b05082b5f00837dc0578412c220f20224b03302"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-1-q.txt",
+   "sha256": "10829914d3663d212949b30680bf9c85702dd2fb2d01c9e6933fbfa5471ed6ef"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-2.txt",
+   "sha256": "4cd0b1e29f08793a49d4ec29570de7077ee798d3be7e4407384ce8c6a253213d"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-3.txt",
+   "sha256": "1394e08fdd043a02d42efb6d76387fe14a64c2146b1d4bb9854d24e553e89232"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-4.txt",
+   "sha256": "3b0db2c5963b712186a7a1eb6745e25674817edd0205cf52f8c1591aa7e97f3e"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-5.txt",
+   "sha256": "0ca93a0c319a6c26512f89718766883eb8b1283f45f8d0c8a6b17910ae110e07"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-5-q.txt",
+   "sha256": "aea1ad9f44d949ddea233c5dfb8112f513c86f0a5b9365331308429a00845069"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-5b.txt",
+   "sha256": "148ec479e6874f6fb76786b9f46658ceadc1818032169b04eddcf51e100327ca"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-6-sha.txt",
+   "sha256": "5fb4ab5fd290643e10231f6a861719c74027d0ec3dd060e115a48c382346b2a9"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F06-7.txt",
+   "sha256": "e8847cb7e0385b7544b34c7f67d120864208932eeee2c4c1611b3ca14af96286"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-finance-06.txt",
+   "sha256": "ce7c9cc4792ef83fe6b7aa2f465ec6fc6f5e632b250cec9a9d1399661c646c9e"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/f06_run1/doi-soat-2026-Q3.md",
+   "sha256": "db49e15f0aad1bf24ad82b5185482aefd57aa0df80a212c7bb32a5637602c04a"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/f06_run2/doi-soat-2026-Q3.md",
+   "sha256": "7a6dcc85aaf46edc58931962a538275090297ffc035f850142f3a789872ae66a"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "muc_do": "thấp–trung bình",
+   "mo_ta": "agents.rev_share.record ghi revenue_quarters.report_sha256 = sha256(text) TRƯỚC khi write_report chèn nhãn giai đoạn ('CHẠY THỬ — KHÔNG GỬI'/'CHỜ NGƯỜI DUYỆT') → sổ đối soát quý (append-only, căn cứ Điều 7.3) không truy được tới file biên bản thực có trên đĩa/report_outputs ở giai đoạn chạy thử/có người duyệt.",
+   "tai_hien": "python -m agents.rev_share --quarter 2026-Q3 --record --out-dir D; so sha256(D/doi-soat-2026-Q3.md) với revenue_quarters.report_sha256",
+   "expected": "bằng nhau",
+   "actual": "db49e15f… (file) ≠ 34ec42db… (sổ) — sổ = sha bản bỏ dòng nhãn",
+   "evidence": [
+    "evidence/itacc_r10/g4/out/F06-1-q.txt",
+    "evidence/itacc_r10/g4/out/F06-6-sha.txt",
+    "evidence/itacc_r10/g4/out/f06_run1/doi-soat-2026-Q3.md"
+   ]
+  }
+ ]
+}

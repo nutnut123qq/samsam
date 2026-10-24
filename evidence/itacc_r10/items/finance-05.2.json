@@ -1,0 +1,194 @@
+{
+ "id": "finance-05.2",
+ "ten": "Dự báo dòng tiền 13 tuần",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Chi phí và dòng tiền: 'dự báo dòng tiền 13 tuần'",
+ "tieu_chi": [
+  "C1 fp_cash --forecast --out-dir ghi dong-tien-<ngày>.md: 13 tuần × thấp/cơ sở/cao, low ≤ base ≤ high, chi cố định theo cấu hình, cảnh báo tuần âm",
+  "C2 số dư đầu kỳ null → ghi 'chưa có số dư đầu kỳ thật', không bịa; tỷ lệ thực nhận đo từ quyết toán (8 tuần) hoặc mặc định + 'chưa xác minh'",
+  "C3 tham số sai → exit 2; DB down → vẫn chạy với mặc định + warn, báo cáo cờ mẫu (không đếm)",
+  "C4 tắt → không ghi file (exit 2)"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_s1.csv",
+   "sha256": "d4cf91e619527ce5babf8ee88120ad4bf1e8f8b9ef05dd12f96cb3b3e990f02a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_tiktok.csv",
+   "sha256": "ba5d82419f52ca9cc4c8de1a345c0f1916171226d8e2a4bd9600f1c5dc154162",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F052-1",
+   "mo_ta": "dự báo không số dư đầu kỳ",
+   "lenh": "[F052-1] python -m agents.fp_cash --forecast --start 2026-10-26 --out-dir evidence/itacc_r10/g4/out/rep_f052",
+   "expected": "13 tuần; 'chưa có số dư đầu kỳ thật'; report_outputs",
+   "actual": "exit 0; dong-tien-2026-10-26.md 13 tuần × thấp/cơ sở/cao, chi cố định + nhập hàng Tết 300tr tuần 14/12; 'chưa có số dư đầu kỳ thật'; tỷ lệ thực nhận shopee đo 0,6866 (7 khoản), offline mặc định 'chưa xác minh'; report_outputs finance-05.2",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F052-2",
+   "mo_ta": "có số dư đầu kỳ, json",
+   "lenh": "[F052-2] python -m agents.fp_cash --forecast --start 2026-10-26 --opening 500000000 --json || [F052-2-check] (script kiểm python inline — kết quả trong out/F052-2-check.txt)",
+   "expected": "opening 500000000; low≤base≤high",
+   "actual": "exit 0; 13 tuần, opening 500000000, low≤base≤high mọi tuần (kiểm bằng script)",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F052-2b",
+   "mo_ta": "bổ sung sau khóa: nhánh cảnh báo tuần âm (fixture không có tuần âm)",
+   "lenh": "[F052-2b] python -m agents.fp_cash --forecast --start 2026-10-26 --opening=-400000000",
+   "expected": "liệt kê tuần âm",
+   "actual": "exit 0; --opening=-400000000 → 'Cảnh báo — tuần âm ở kịch bản thấp: 26/10 … 18/01', tuần âm gắn ⚠",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F052-3",
+   "mo_ta": "ÂM tham số sai",
+   "lenh": "[F052-3] python -m agents.fp_cash --forecast --opening abc",
+   "expected": "exit 2",
+   "actual": "exit 2 '--opening phải là số nguyên VND'",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F052-4",
+   "mo_ta": "ÂM DB down",
+   "lenh": "[F052-4] python -m agents.fp_cash --forecast --start 2026-10-26 --out-dir evidence/itacc_r10/g4/out/rep_f052_dbdown",
+   "expected": "exit 0 + warn; không đếm",
+   "actual": "exit 0; [warn] không kết nối Postgres — mặc định 'chưa xác minh'; [warn] không ghi sổ đầu ra; report_outputs finance-05.2 vẫn 1",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F052-5",
+   "mo_ta": "ÂM tắt finance-05.2 (chạy cuối)",
+   "lenh": "[TAT-finance-05.2] python -m pipelines.rollout --disable finance-05.2 --by Người Thử IT --note kiem nhanh tat IT r10 || [F052-5] python -m agents.fp_cash --forecast --start 2026-10-26 --out-dir evidence/itacc_r10/g4/out/rep_tat",
+   "expected": "exit 2, không ghi file",
+   "actual": "exit 2 '[rollout] … finance-05.2 đang tắt'; không ghi file (stdout vẫn in dự báo — xem lỗi thấp chung)",
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Số dư đầu kỳ thật + giả định fpa_config/scenario GIẢ ĐỊNH; tỷ lệ thực nhận đo trên fixture (gồm dòng hoàn + bản lệch chồng kỳ).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F052-1.txt",
+   "sha256": "1f6b83d0cdf362d4605114e833226a51eacb859a6d872f3f7371e1c94c72c347"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F052-2.txt",
+   "sha256": "137c3252be7b465c3e65ac0a6c950666b3b7ab21728ae24ecbf6672c9e6d54f8"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F052-2-check.txt",
+   "sha256": "42304830c642775beb564099521e291e9dc6024c264bb1e4521e66579afdfc0f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F052-2b.txt",
+   "sha256": "e135dc08e7fa24a23ebec617aa94e0eaa7694c31da785b0cbb53fd706d067a0b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F052-3.txt",
+   "sha256": "27ed016180868152d73c2f99ff25b8f67ea9df60a842c1b5bbb09100e49f70ca"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F052-4.txt",
+   "sha256": "569379ce9066297106b45dd21ed57806c1559d45f3bbbb43df056cd60876c6fd"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F052-5.txt",
+   "sha256": "ce43692be5d7dcc9a456bcb88f2490abd32381392bce3baa64398ddd14624ac2"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-finance-05.2.txt",
+   "sha256": "9fd6f90b889362fc45ee51ca72a8bcdc28a1080651e2fb3538900c0578622ad3"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_f052/dong-tien-2026-10-26.md",
+   "sha256": "b16c88a98517cc1bd03f3415eb8aa6ab73518a3a8d28798f2b0c334d3d57490d"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_f052_dbdown/dong-tien-2026-10-26.md",
+   "sha256": "39ca96edb302018706a73bf87a00ba3f290915cf44b77f181ec3cea2fe9a8adc"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "muc_do": "thấp",
+   "mo_ta": "Cổng tắt tính năng chỉ ở biên ghi file (write_report): fp_cash --forecast, sx_tracuu, production bulletin vẫn tính và IN toàn bộ nội dung ra stdout khi tính năng tắt (không nhãn giai đoạn); fp_pnl/sx_tracuu không bắt RolloutBlocked → traceback thô, exit 1.",
+   "tai_hien": "rollout --disable <id>; chạy CLI tương ứng với --out-dir/--out",
+   "expected": "không sinh nội dung, thông báo chặn gọn",
+   "actual": "stdout in nội dung / traceback",
+   "evidence": [
+    "evidence/itacc_r10/g4/out/F052-5.txt",
+    "evidence/itacc_r10/g4/out/P051-5.txt",
+    "evidence/itacc_r10/g4/out/F041-6.txt"
+   ]
+  }
+ ]
+}

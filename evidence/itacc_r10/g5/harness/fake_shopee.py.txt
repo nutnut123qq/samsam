@@ -1,0 +1,41 @@
+"""HARNESS data_platform-06 — server GIẢ Shopee Open Platform trên 127.0.0.1 (cổng
+ngẫu nhiên) theo tài liệu công khai, rồi chạy THẬT `python -m ingest.market_api`
+(tiến trình con) với SHOPEE_API_BASE trỏ server giả + key GIẢ. Không mạng ngoài.
+In nhật ký request server (path + có/không sign/token, KHÔNG in giá trị)."""
+import json, os, subprocess, sys, threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit, parse_qs
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+LOG = []
+ITEMS = {"27357883504": ("Savina 12v API thử IT", "savina-12v", 159000),
+         "24325987926": ("Savigout 30v API thử IT", "savigout-30v", 439000)}
+class H(BaseHTTPRequestHandler):
+    def do_GET(self):
+        u = urlsplit(self.path); q = parse_qs(u.query)
+        LOG.append(f"GET {u.path} sign={'sign' in q} token={'access_token' in q} partner_id={'partner_id' in q}")
+        if u.path == "/api/v2/product/get_item_list":
+            body = {"error": "", "response": {"item": [{"item_id": int(i)} for i in ITEMS], "has_next_page": False}}
+        elif u.path == "/api/v2/product/get_item_base_info":
+            ids = q["item_id_list"][0].split(",")
+            body = {"error": "", "response": {"item_list": [
+                {"item_id": int(i), "item_name": ITEMS[i][0], "item_sku": ITEMS[i][1], "item_status": "NORMAL",
+                 "has_model": False, "price_info": [{"original_price": ITEMS[i][2]}],
+                 "stock_info_v2": {"summary_info": {"total_available_stock": 7}}} for i in ids]}}
+        else:
+            self.send_response(404); self.end_headers(); return
+        b = json.dumps(body).encode()
+        self.send_response(200); self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
+    def log_message(self, *a): pass
+srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+env = dict(os.environ, SHOPEE_API_BASE=f"http://127.0.0.1:{srv.server_address[1]}",
+           SHOPEE_PARTNER_ID="100000", SHOPEE_PARTNER_KEY="fake-partner-key-thu-it",
+           SHOPEE_SHOP_ID="200000", SHOPEE_ACCESS_TOKEN="fake-token-thu-it", PYTHONIOENCODING="utf-8")
+if "--base" in sys.argv:
+    env["SHOPEE_API_BASE"] = sys.argv[sys.argv.index("--base") + 1]
+p = subprocess.run([sys.executable, "-m", "ingest.market_api", "--channel", "shopee", "--kind", "listing"],
+                   env=env, capture_output=True, text=True, encoding="utf-8", timeout=120)
+print(p.stdout + p.stderr)
+print("SERVER_LOG:"); print("\n".join(LOG) or "(0 request)")
+srv.shutdown(); raise SystemExit(p.returncode)

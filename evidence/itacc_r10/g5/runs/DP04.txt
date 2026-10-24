@@ -1,0 +1,24 @@
+# ca: DP04
+# env: DB thử khối dp (DSN che)
+# cmd: python /d/code/samsam/evidence/itacc_r10/g5/harness/gw_probe.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g5/gwcfg
+# exit: 0
+# thoi_gian: 2026-10-23T10:47:37+0700
+DP04-01a: PASS — ALLOWED — lời gọi transport: 1
+payload gửi transport: Tôi là ***, SĐT ***, email ***, nhà ***. Hotline công ty 0235 3699 899 có làm việc không?
+provider block: {"provider": {"data_collection": "deny", "zdr": true, "allow_fallbacks": false, "only": ["openai", "azure"]}}
+DP04-01b: PASS — rò rỉ=[] giữ_hotline=True
+DP04-01c: PASS — ALLOWED — lời gọi transport: 1
+DP04-01d: PASS — embed input: ["Liên hệ *** hoặc ***"]
+llm_usage: [('smoke', 'data_platform-03', True, False), ('smoke', 'sales-01', True, True)]
+DP04-02: PASS
+cfg llm_gateway_1.json
+DP04-03: PASS — BLOCKED: tính năng 'sales-02' vượt trần tháng 0.0100/0.00 USD — lời gọi transport: 0
+DP04-03b: PASS — ALLOWED — lời gọi transport: 1
+cfg llm_gateway_2.json
+DP04-04: PASS — BLOCKED: tính năng 'sales-01' đang bị nút tắt khẩn — lời gọi transport: 0
+DP04-05: PASS — BLOCKED: tính năng 'sales-01' đang bị nút tắt khẩn — lời gọi transport: 0
+DP04-06: PASS — ERROR: feature (mã tính năng danh mục) không hợp lệ — lời gọi transport: 0
+cfg llm_gateway_4.json
+DP04-07: PASS — BLOCKED: agent 'smoke' có trần 0 USD — đang tắt — lời gọi transport: 0
+DP04-07b: PASS — BLOCKED: tính năng 'sales-01' có trần 0 USD — đang tắt — lời gọi transport: 0
+TONG: PASS {'DP04-01a': True, 'DP04-01b': True, 'DP04-01c': True, 'DP04-01d': True, 'DP04-02': True, 'DP04-03': True, 'DP04-03b': True, 'DP04-04': True, 'DP04-05': True, 'DP04-06': True, 'DP04-07': True, 'DP04-07b': True}

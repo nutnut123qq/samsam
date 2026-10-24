@@ -1,0 +1,78 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\scratch/rep03/ceo-risk-*.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/ceo-03/20261024T111111-1f1f/scratch/rep03/ceo-risk-2026-10-24.md",
+    "sha256": "addfe3f8790c9d1271ababbe6e88e375b19762fbd820e8a13972b0dd61c4e370"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\scratch/rep03/ceo-risk-*.md",
+  "re": "\\| ĐỎ \\| XNQC-HET-HAN:\\d+ \\| Giấy XNQC hồ sơ #\\d+ \\(savina-12v\\) đã hết hạn 01/10/2026",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\scratch/rep03/ceo-risk-*.md",
+  "re": "\\| VÀNG \\| XNQC-HET-HAN:\\d+ \\| Giấy XNQC hồ sơ #\\d+ \\(saphraton-20v\\) sắp hết hạn 05/11/2026",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\scratch/rep03/ceo-risk-*.md",
+  "re": "\\| XANH \\| XNQC-CHO-CAP:savigout-30v \\|",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\scratch/rep03/ceo-risk-*.md",
+  "re": "\\| ĐỎ \\| DPIA \\|",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\scratch/rep03/ceo-risk-*.md",
+  "re": "\\| ĐỎ \\| TUYEN-CANH-BAO \\|",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\scratch/rep03/ceo-risk-*.md",
+  "re": "\\| VÀNG \\|[\\s\\S]*\\| ĐỎ \\|",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\scratch/rep03/ceo-risk-*.md",
+  "re": "\\| XANH \\|[\\s\\S]*\\| (?:ĐỎ|VÀNG) \\|",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\scratch/rep03/ceo-risk-*.md",
+  "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-03 ",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ }
+]

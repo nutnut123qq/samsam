@@ -1,0 +1,73 @@
+"""HARNESS r12 — sinh evidence/itacc_r12/items_cfg.json cho build_items_r12: id → tiêu chí + run hiện hành (đọc từ log lô
+runs/batch/lo3_thu, lo3, lo4 — lượt SAU CÙNG của mỗi id là hiện hành), mức kiểm (kế thừa bản ghi nguồn), lý do chạy lại
+(mã lỗi r11 của mục / module đổi), lượt bị thay thế + lý do, ánh xạ ca UI (khai TRƯỚC khi dựng), giới hạn.
+python -I mk_items_cfg_r12.py.txt"""
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r12"
+tap = json.loads((EV / "tap_muc_kiem_lai.json").read_text(encoding="utf-8"))
+aff = {a["id"]: a["module_doi"] for a in tap["anh_huong_truc_tiep"]}
+smap = json.loads((REPO / "evidence/itacc_r11/source_map.json").read_text(encoding="utf-8"))["items"]
+th11 = {i["id"]: i for i in json.loads((REPO / "evidence/itacc_r11/tong_hop.json").read_text(encoding="utf-8"))["items"]}
+runs = {}
+for lot in ("lo3_thu", "lo3", "lo4"):
+    for f in sorted((EV / "runs" / "batch" / lot).glob("*.txt")):
+        t = f.read_text(encoding="utf-8")
+        crit = re.search(r"tiêu chí (\S+)", t).group(1)
+        m = re.search(r"^RUN (\S+) ", t, re.M)
+        if m:
+            runs.setdefault(f.stem, []).append((lot, crit, m.group(1)))
+UI_RUN = "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553"
+UI_MAP = {"sales-01": {"sales-01__UI02": ["chat_cau_thuong_co_tra_loi", "chat_cau_suc_khoe_chuyen_nguoi_che_pii",
+                                          "UI02_loi_doc_kb_khong_lo_traceback"]},
+          "farming-01": {"farming-01__M07": ["UI01_tab_vuon_doc_duoc_db_bang_svc_ui", "UI01_chua_mo_quyen_khong_ghi",
+                                             "UI01_ghi_bang_login_nguoi_farming", "UI01_login_nguoi_khac_bi_chan"]}}
+WHY_RERUN = {
+    "sales-01": "lượt lo3 dùng tiêu chí v3: assertion C07 đo câu khách nhận bằng trường answer của convlog — nhánh quá 30 giây"
+                " ghi answer rỗng (có từ trước r12) → LỖI HARNESS; v4 đo ở biên send_text (mk_sales_a_v4.py.txt)",
+    "legal_hr-06.2": "lượt lo3 dùng tiêu chí v1: regex PII không phân biệt hoa thường khớp nhãn cột 'Mã ứng viên' — LỖI TIÊU"
+                     " CHÍ, không có PII thật trong payload (mk_prod_legal_v2.py.txt)",
+    "farming-03.2": "lượt lo3 dùng tiêu chí v1: runner chỉ glob `*` ở thành phần cuối → mẫu `qr_site_*/*/index.html` luôn 0"
+                    " tệp (C12/C14 FAIL giả, C11 có thể PASS giả) — LỖI HARNESS (mk_farming_v2/v3.py.txt)",
+    "farming-04": "lượt lo3 dùng tiêu chí v1: C08 regex `$` không khớp CRLF stdout Windows; C09 runner lỗi relative_to với"
+                  " tệp ngoài repo — LỖI HARNESS (mk_farming_v3.py.txt + runner _rel)"}
+GH = "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài."
+GH_ID = {
+    "intel-03": " Tiền đề S01 tạm tắt trigger append-only trong DB thử để lùi ngày hiệu lực giá về 23/10 — chỉ dựng tình huống,"
+                " không phải bằng chứng append-only.",
+    "marketing-03.1": " Tiền đề đặt sequence content_drafts trong DB thử để giữ id creative của fixture r10; phụ thuộc ngày (start"
+                      " 26/10/2026).",
+    "marketing-03.2": " Phụ thuộc ngày fixture (start 26/10/2026).",
+    "ceo-04.3": " Tiền đề đặt sequence content_drafts trong DB thử để khớp draft_id của fixture r10.",
+    "ceo-01": " C07 phụ thuộc ngày (tuần 2026-10-21 chưa đóng).",
+    "sales-01": " Phần UI ghép từ lượt UI thật " + UI_RUN + " theo ánh xạ khai trước; C07 (v4) bọc send_text nên provenance lượt đó"
+                " không 'live' (C07 không kiểm provenance).",
+    "sales-04.2": " Tiêu chí v3 đính chính C04/C07 (chuyển yêu cầu không PII ≠ bàn giao PII; chỉ bàn giao có đồng ý được tính) —"
+                  " căn cứ ở mk_sales_a_v3.py.txt.",
+    "farming-01": " Phần UI ghép từ lượt UI thật " + UI_RUN + "; C11 không dựng được (farming-01 mot_phan, không vào sổ triển khai).",
+}
+items = {}
+want = tap["code_fail_24"] + list(aff)
+for fid in want:
+    hist = runs[fid]
+    lot, crit, rid = hist[-1]
+    loi = [(x.get("ma") or x.get("id") or x.get("ma_loi") or "?") if isinstance(x, dict) else str(x) for x in (th11[fid].get("loi") or [])]
+    why = (f"r10/r11 CODE_FAIL ({', '.join(loi) or 'xem bản ghi nguồn'}) — kiểm lại toàn bộ ca đã khóa sau bản vá r12"
+           if fid in tap["code_fail_24"] else f"module của mục đổi ở r12 ({', '.join(aff[fid])}) — kiểm lại ảnh hưởng trực tiếp")
+    old = json.loads((REPO / smap[fid]["path"]).read_text(encoding="utf-8"))
+    items[fid] = {"criteria": "criteria/" + crit, "run_id": rid, "muc_kiem": old.get("muc_kiem") or "LOCAL", "ly_do": why,
+                  "gioi_han": GH + GH_ID.get(fid, ""),
+                  "luot_bi_thay_the": [{"lot": l, "criteria": c, "run_id": r, "thu_muc": f"evidence/itacc_r12/runs/{fid}/{r}",
+                                        "ly_do": WHY_RERUN.get(fid, "")} for l, c, r in hist[:-1]],
+                  "loi_san_pham": []}
+    if fid in UI_MAP:
+        items[fid]["ui_runs"], items[fid]["ui_map"] = [UI_RUN], UI_MAP[fid]
+assert len(items) == 48
+(EV / "items_cfg.json").write_text(json.dumps({"_doc": __doc__, "items": items}, ensure_ascii=False, indent=1),
+                                   encoding="utf-8")
+print(len(items), "mục ·", sum(bool(v["luot_bi_thay_the"]) for v in items.values()), "có lượt bị thay thế")

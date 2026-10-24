@@ -1,0 +1,206 @@
+{
+ "id": "intel-03",
+ "ten": "Theo dõi đối thủ",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Theo dõi đối thủ: 'Giá, khuyến mãi, sản phẩm mới của K5, TRIMICO, KGC theo tuần'",
+ "tieu_chi": [
+  "T1 `python -m ingest.intel_import --competitor F` + `python scripts/intel_weekly.py --week 2026-10-19 --out-dir <scratch>` exit 0",
+  "T2 intel-doithu-2026-10-19.md: độ phủ K5/TRIMICO/KGC (số quan sát, số có KM), bảng lệch giá so golden kèm obs#/nguồn và price_list#/đã duyệt hay CHƯA, mục sản phẩm lần đầu ghi nhận",
+  "T3 ca âm: nạp lại → skip; file lỗi → exit 1 0 dòng; đối thủ thiếu quan sát → 'THIẾU dữ liệu'; tắt intel-03 không chặn báo cáo trend (intel-04.1)",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+  "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_intel; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [
+  {
+   "ten": "it_g1_competitor.csv",
+   "sha256": "6ce3c94680d0b0d59c718e27a0db7c1d2e46c98bfaf004769aa12edf44c76824",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_competitor_2.csv",
+   "sha256": "da7ed12f79bd593f9c3baa7ee28c26257af4f921a1daa0744ac4ff30e763ae05",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_competitor_tuan42.csv",
+   "sha256": "faea5f649b4c568b43cdd71feee18eb86b8fcc4cabeacd56e6c38aada29acead",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_competitor_loi.csv",
+   "sha256": "a09d8dcba73cf88b4e6b6be6f27dacc1c7d38f055151bad90965f247e61dd2dd",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Nạp file đối thủ",
+   "lenh": "python -m ingest.intel_import --competitor evidence/itacc_r10/g1/harness/it_g1_competitor.csv",
+   "expected": "exit 0, competitor_observations +N",
+   "actual": "import #1 competitor 4 dòng (K5/TRIMICO/KGC 19–21/10); lượt bổ sung it_g1_competitor_2.csv (intel03_C01b) 2 dòng ngày 23/10 để có golden hiệu lực",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Nạp lại",
+   "lenh": "python -m ingest.intel_import --competitor evidence/itacc_r10/g1/harness/it_g1_competitor.csv",
+   "expected": "exit 0 [skip], không tăng",
+   "actual": "[skip] file đã nạp import #1 — không ghi; competitor_observations vẫn 4",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "File lỗi",
+   "lenh": "python -m ingest.intel_import --competitor evidence/itacc_r10/g1/harness/it_g1_competitor_loi.csv",
+   "expected": "exit 1, 0 dòng",
+   "actual": "dòng 2 cột gia_vnd không hợp lệ — không connect, 0 dòng",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Báo cáo tuần",
+   "lenh": "python scripts/intel_weekly.py --week 2026-10-19 --out-dir <scratch>/repw",
+   "expected": "exit 0; doithu có 3 đối thủ đủ, lệch % so golden, nguồn",
+   "actual": "intel-doithu-2026-10-19.md (nhãn CHẠY THỬ intel-03): độ phủ K5 2/2 KM, TRIMICO 2/0, KGC 2/1; bảng lệch: K5 savina 150.000 vs 159.000 (price_list#2 shopee, CHƯA duyệt) -5.7%, TRIMICO 330.000 vs 299.000 (price_list#5, đã duyệt) +10.4%, mỗi số kèm obs#/nguồn; quan sát trước ngày golden hiệu lực → 'chưa có giá golden' (không bịa); mục 'Sản phẩm đối thủ lần đầu' gồm SP KGC mới không SKU. (Lượt 1 chỉ có quan sát 19–21/10 trước valid_from golden 23/10 → toàn 'chưa có giá golden' — dữ liệu mồi, giữ log intel03_C04_luot1_golden_chua_hieu_luc)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Tuần thiếu đối thủ",
+   "lenh": "python scripts/intel_weekly.py --week 2026-10-12 --out-dir <scratch>/repw12",
+   "expected": "TRIMICO/KGC 'THIẾU dữ liệu tuần này'",
+   "actual": "tuần 2026-10-12 chỉ K5 → TRIMICO, KGC '**THIẾU dữ liệu tuần này**'",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C06",
+   "mo_ta": "Tắt intel-03",
+   "lenh": "python scripts/intel_weekly.py --week 2026-10-19 --out-dir <scratch>/repw_off3",
+   "expected": "không doithu; intel-trend VẪN sinh; bật lại",
+   "actual": "tắt intel-03 → không doithu (đúng) NHƯNG intel-trend-2026-10-19.md của intel-04.1 (đang chạy thử) cũng KHÔNG sinh: write_weekly ghi doithu trước, RolloutBlocked dừng cả lệnh (exit 2)",
+   "exit": "2",
+   "ket_qua": "FAIL",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Sửa write_weekly để tắt intel-03 không chặn báo cáo trend. Ngoài code: dữ liệu đối thủ nhập tay thật (chưa có nguồn tự động hợp lệ)",
+ "gioi_han": "Quan sát trước ngày hiệu lực golden → 'chưa có giá golden' (đúng); lượt 1 dữ liệu mồi không có golden hiệu lực",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_competitor.csv",
+   "sha256": "6ce3c94680d0b0d59c718e27a0db7c1d2e46c98bfaf004769aa12edf44c76824"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_competitor_2.csv",
+   "sha256": "da7ed12f79bd593f9c3baa7ee28c26257af4f921a1daa0744ac4ff30e763ae05"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_competitor_loi.csv",
+   "sha256": "a09d8dcba73cf88b4e6b6be6f27dacc1c7d38f055151bad90965f247e61dd2dd"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_competitor_tuan42.csv",
+   "sha256": "faea5f649b4c568b43cdd71feee18eb86b8fcc4cabeacd56e6c38aada29acead"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C01.txt",
+   "sha256": "de178a7afc466f8cb5735575fa06a81ddf1427069648e5d781b70637d54f483f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C01b.txt",
+   "sha256": "4f1c6e69e911117c6510c888240b46c324fb1871e5698fd2f8e0ecc9b7d71aef"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C02.txt",
+   "sha256": "1a8ec22414be154084b1be0852a682de9a518b8722b3d8fda0ba8daaaabed6b0"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C03.txt",
+   "sha256": "d01f7f5a7ec7100e6bca769a7ef13081f981895fba42a6478c51e20993ff25c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C04.txt",
+   "sha256": "6df2a950ac79318b24852a329065f5f9d97cfd4391da449483af98e89e7a7fe3"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C04_luot1_golden_chua_hieu_luc.txt",
+   "sha256": "705c90b20215d1a2285d85e84410e5e6dd31bcf070b643095a04df2540621938"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C05.txt",
+   "sha256": "584437e96cd5261969e4c01df6e794278266d573ab361e8d3604c7e7fd80f3c4"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C05a.txt",
+   "sha256": "0d95a31cac772070bc8206d3455a6140e43dd11e9ebb7a61dd48835c0ed32817"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C06.txt",
+   "sha256": "a2e175349f81716bd2a55cea26e10498877b1f744fd0cb6a4c2f7ce2ffaa2a0b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C06a.txt",
+   "sha256": "c87deec94f9977f6edf67863eabd3216c79cd88f6d5f0b02349e0070ef911503"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C06b.txt",
+   "sha256": "965d0c3facc4bbff845421f5e98817b78e7f0938d54f4d47442b572fa192310b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/intel-doithu-2026-10-12.md",
+   "sha256": "655aacbb75449aa88034530e3cfb49a8ea1a93f07bf8f852a72b824bfbc09013"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/intel-doithu-2026-10-19.md",
+   "sha256": "7c4f6302890a3e2a1aa2480f83911302c25c37ba0478b91170ebed6e4f58609e"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "g1-L1",
+   "muc_do": "TRUNG BÌNH",
+   "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+   "tai_hien": [
+    "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+    "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+    "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+   ],
+   "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+   "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+   "evidence": [
+    "out/ceo043_C04.txt",
+    "out/intel03_C06.txt",
+    "out/intel012_C03.txt"
+   ]
+  }
+ ],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

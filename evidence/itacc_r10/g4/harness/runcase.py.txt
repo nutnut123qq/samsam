@@ -1,0 +1,61 @@
+"""HARNESS g4 (kiểm nghiệm r10) — chạy 1 ca bằng entry point thực, lưu output.
+
+  python runcase.py <ma> [--env K=V ...] -- <lệnh...>
+
+Ghi evidence/itacc_r10/g4/out/<ma>.txt: mã ca, giờ VN, lệnh, exit code, stdout+
+stderr (che DSN/mật khẩu). Exit của script = exit của lệnh. KHÔNG nạp .env —
+môi trường do người chạy `source` file env DB thử trước.
+"""
+import os
+import re
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[4]
+OUT = Path(__file__).resolve().parents[1] / "out"
+_DSN_RE = re.compile(r"(postgres(?:ql)?://[^:/@\s]+:)[^@\s]+@")
+
+
+def mask(s: str) -> str:
+    for k in ("DATABASE_URL",):
+        v = os.environ.get(k)
+        if v:
+            s = s.replace(v, "<DSN>")
+    return _DSN_RE.sub(r"\1***@", s)
+
+
+def main() -> int:
+    args = sys.argv[1:]
+    ma = args.pop(0)
+    env = dict(os.environ)
+    env["PYTHONIOENCODING"] = "utf-8"
+    while args and args[0] == "--env":
+        args.pop(0)
+        k, _, v = args.pop(0).partition("=")
+        env[k] = v
+    assert args and args[0] == "--", "thiếu --"
+    cmd = args[1:]
+    if cmd and cmd[0] == "python":
+        cmd[0] = sys.executable
+    ts = datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+    p = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True)
+    out = p.stdout.decode("utf-8", "replace")
+    err = p.stderr.decode("utf-8", "replace")
+    shown = " ".join(["python" if c == sys.executable else c for c in cmd])
+    extra = [f"{k}={'<DSN>' if 'DATABASE_URL' in k else env[k]}"
+             for k in env if k not in os.environ or env[k] != os.environ[k]
+             if k != "PYTHONIOENCODING"]
+    text = (f"# ca {ma}\n# gio {ts}\n# lenh {mask(shown)}\n"
+            + (f"# env_them {' '.join(extra)}\n" if extra else "")
+            + f"# exit {p.returncode}\n--- stdout ---\n{mask(out)}"
+            f"\n--- stderr ---\n{mask(err)}\n")
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / f"{ma}.txt").write_bytes(text.encode("utf-8"))
+    sys.stdout.buffer.write(text.encode("utf-8"))
+    return p.returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

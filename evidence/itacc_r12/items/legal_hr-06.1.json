@@ -1,0 +1,933 @@
+{
+ "id": "legal_hr-06.1",
+ "ten": "Mô tả công việc",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Nhân sự: 'Mô tả công việc'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/legal_hr-06.1.json",
+  "sha256": "e2b80ee0241cea8e496b1968392158eb57191ae1062fbd04b656528b6ac7cce7"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/pc_hr.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_prod_legal.json",
+ "tieu_chi_sha256": "7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747",
+ "tieu_chi_khoa": "r12_prod_legal.json 7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747 2026-10-24T08:59:36+07:00",
+ "tieu_chi": [
+  "T1 `python -m agents.pc_hr --jd <vi_tri>` exit 0",
+  "T2 approval_queue legal_hr/hr_jd pending, payload theo template qua guardrail, kèm agent_action_log",
+  "T3 chạy lại → đã có mục chờ, không trùng; vị trí lạ → exit≠0 0 dòng; tắt → không sinh (r12 RB: exit 2 '[rollout] … legal_hr-06.1', không traceback)",
+  "T4 không đăng tuyển"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_{p01,p043,p051,p052,l01,l02,l032,l061,l062,l063} dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); rollout --seed (tính năng = chạy thử); AI giả ở biên (_client) — r10 run.py.txt hoặc wrap.py.txt, 0 gọi OpenRouter; kho phiếu/CV ngoài repo dưới scratchpad r12/ext_prod_legal DB samsam_itacc_r12_l061.",
+ "run_id": "20261024T112540-eab3",
+ "ca": [
+  {
+   "ma": "legal_hr-06.1__S00",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai trên DB thử (tính năng = chạy thử) — như *-seed r10",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:25:40+07:00",
+      "ket_thuc": "2026-10-24T11:25:42+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__S00/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__S00/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__S00"
+  },
+  {
+   "ma": "legal_hr-06.1__06.1-C1",
+   "nguon_r10": "06.1-C1",
+   "mo_ta": "JD nv_cskh → hr_jd pending (T2)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'hr_jd' and status = 'pending' and created_by = 'agent:pc_hr' and guardrail->>'ok' = 'true'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) >= 1 from agent_action_log where action = 'queue_enqueue'",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.pc_hr --jd nv_cskh",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:25:42+07:00",
+      "ket_thuc": "2026-10-24T11:25:51+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'hr_jd' and status = 'pending' and created_by = 'agent:pc_hr' and guardrail->>'ok' = 'true'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) >= 1 from agent_action_log where action = 'queue_enqueue'",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C1"
+  },
+  {
+   "ma": "legal_hr-06.1__06.1-C2",
+   "nguon_r10": "06.1-C2",
+   "mo_ta": "chạy lại → không trùng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'hr_jd' and status = 'pending' and created_by = 'agent:pc_hr'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.pc_hr --jd nv_cskh",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:25:52+07:00",
+      "ket_thuc": "2026-10-24T11:25:59+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C2/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'hr_jd' and status = 'pending' and created_by = 'agent:pc_hr'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C2"
+  },
+  {
+   "ma": "legal_hr-06.1__06.1-C3",
+   "nguon_r10": "06.1-C3",
+   "mo_ta": "vị trí lạ → exit≠0, 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38,
+       39,
+       40,
+       41,
+       42,
+       43,
+       44,
+       45,
+       46,
+       47,
+       48,
+       49,
+       50,
+       51,
+       52,
+       53,
+       54,
+       55,
+       56,
+       57,
+       58,
+       59,
+       60,
+       61,
+       62,
+       63,
+       64,
+       65,
+       66,
+       67,
+       68,
+       69,
+       70,
+       71,
+       72,
+       73,
+       74,
+       75,
+       76,
+       77,
+       78,
+       79,
+       80,
+       81,
+       82,
+       83,
+       84,
+       85,
+       86,
+       87,
+       88,
+       89,
+       90,
+       91,
+       92,
+       93,
+       94,
+       95,
+       96,
+       97,
+       98,
+       99,
+       100,
+       101,
+       102,
+       103,
+       104,
+       105,
+       106,
+       107,
+       108,
+       109,
+       110,
+       111,
+       112,
+       113,
+       114,
+       115,
+       116,
+       117,
+       118,
+       119,
+       120,
+       121,
+       122,
+       123,
+       124,
+       125,
+       126,
+       127,
+       128,
+       129,
+       130,
+       131,
+       132,
+       133,
+       134,
+       135,
+       136,
+       137,
+       138,
+       139,
+       140,
+       141,
+       142,
+       143,
+       144,
+       145,
+       146,
+       147,
+       148,
+       149,
+       150,
+       151,
+       152,
+       153,
+       154,
+       155,
+       156,
+       157,
+       158,
+       159,
+       160,
+       161,
+       162,
+       163,
+       164,
+       165,
+       166,
+       167,
+       168,
+       169,
+       170,
+       171,
+       172,
+       173,
+       174,
+       175,
+       176,
+       177,
+       178,
+       179,
+       180,
+       181,
+       182,
+       183,
+       184,
+       185,
+       186,
+       187,
+       188,
+       189,
+       190,
+       191,
+       192,
+       193,
+       194,
+       195,
+       196,
+       197,
+       198,
+       199,
+       200,
+       201,
+       202,
+       203,
+       204,
+       205,
+       206,
+       207,
+       208,
+       209,
+       210,
+       211,
+       212,
+       213,
+       214,
+       215,
+       216,
+       217,
+       218,
+       219,
+       220,
+       221,
+       222,
+       223,
+       224,
+       225,
+       226,
+       227,
+       228,
+       229,
+       230,
+       231,
+       232,
+       233,
+       234,
+       235,
+       236,
+       237,
+       238,
+       239,
+       240,
+       241,
+       242,
+       243,
+       244,
+       245,
+       246,
+       247,
+       248,
+       249,
+       250,
+       251,
+       252,
+       253,
+       254,
+       255
+      ]
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_jd'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.pc_hr --jd khong-co",
+      "exit": 1,
+      "expect_exit": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38,
+       39,
+       40,
+       41,
+       42,
+       43,
+       44,
+       45,
+       46,
+       47,
+       48,
+       49,
+       50,
+       51,
+       52,
+       53,
+       54,
+       55,
+       56,
+       57,
+       58,
+       59,
+       60,
+       61,
+       62,
+       63,
+       64,
+       65,
+       66,
+       67,
+       68,
+       69,
+       70,
+       71,
+       72,
+       73,
+       74,
+       75,
+       76,
+       77,
+       78,
+       79,
+       80,
+       81,
+       82,
+       83,
+       84,
+       85,
+       86,
+       87,
+       88,
+       89,
+       90,
+       91,
+       92,
+       93,
+       94,
+       95,
+       96,
+       97,
+       98,
+       99,
+       100,
+       101,
+       102,
+       103,
+       104,
+       105,
+       106,
+       107,
+       108,
+       109,
+       110,
+       111,
+       112,
+       113,
+       114,
+       115,
+       116,
+       117,
+       118,
+       119,
+       120,
+       121,
+       122,
+       123,
+       124,
+       125,
+       126,
+       127,
+       128,
+       129,
+       130,
+       131,
+       132,
+       133,
+       134,
+       135,
+       136,
+       137,
+       138,
+       139,
+       140,
+       141,
+       142,
+       143,
+       144,
+       145,
+       146,
+       147,
+       148,
+       149,
+       150,
+       151,
+       152,
+       153,
+       154,
+       155,
+       156,
+       157,
+       158,
+       159,
+       160,
+       161,
+       162,
+       163,
+       164,
+       165,
+       166,
+       167,
+       168,
+       169,
+       170,
+       171,
+       172,
+       173,
+       174,
+       175,
+       176,
+       177,
+       178,
+       179,
+       180,
+       181,
+       182,
+       183,
+       184,
+       185,
+       186,
+       187,
+       188,
+       189,
+       190,
+       191,
+       192,
+       193,
+       194,
+       195,
+       196,
+       197,
+       198,
+       199,
+       200,
+       201,
+       202,
+       203,
+       204,
+       205,
+       206,
+       207,
+       208,
+       209,
+       210,
+       211,
+       212,
+       213,
+       214,
+       215,
+       216,
+       217,
+       218,
+       219,
+       220,
+       221,
+       222,
+       223,
+       224,
+       225,
+       226,
+       227,
+       228,
+       229,
+       230,
+       231,
+       232,
+       233,
+       234,
+       235,
+       236,
+       237,
+       238,
+       239,
+       240,
+       241,
+       242,
+       243,
+       244,
+       245,
+       246,
+       247,
+       248,
+       249,
+       250,
+       251,
+       252,
+       253,
+       254,
+       255
+      ],
+      "regex": [],
+      "bat_dau": "2026-10-24T11:25:59+07:00",
+      "ket_thuc": "2026-10-24T11:26:02+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_jd'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C3"
+  },
+  {
+   "ma": "legal_hr-06.1__06.1-C4",
+   "nguon_r10": "06.1-C4",
+   "mo_ta": "tắt legal_hr-06.1 → 0 dòng (r12 RB: exit 2 '[rollout] … legal_hr-06.1')",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*legal_hr-06\\.1",
+      "out_re": "\\A(?![\\s\\S]*(Traceback))"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_jd'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable legal_hr-06.1 --by Người Thử R12 --note kiem tat r12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:26:02+07:00",
+      "ket_thuc": "2026-10-24T11:26:04+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.pc_hr --jd nv_van_hanh_san",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*legal_hr-06\\.1",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*(Traceback))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:04+07:00",
+      "ket_thuc": "2026-10-24T11:26:06+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_jd'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/ket_qua.json",
+   "sha256": "8884083a4766ff26024aa650650101087a7e5d78a6411a446f76136f2e3b58de"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C1/asserts.json",
+   "sha256": "f5ad92f6835ae96cde4b85a2d634f4be6097601632d676307240f43074891d35"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C1/case.json",
+   "sha256": "b06cc4d82ef22dbb4ad3e6d4c56ad73c43719bdd3b8f183301825499c1d00ad5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C1/step01.cmd.json",
+   "sha256": "99e053c6d8f8f3ccf1a58fc0e42d930ec53def4a7eeb462a70a7ee7aabfd0203"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C1/step01.stdout.txt",
+   "sha256": "e0c4b5c6e159745d9b383179c80d46a0a4734bc060fd963087fe2cfeed814cd8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C2/asserts.json",
+   "sha256": "5f072a9cb8adb523324ec3d95856888b08548944cbd3459c9d8943c748c65091"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C2/case.json",
+   "sha256": "8599d5bbc611aa8fac88de72463676f457f790f4c736692b177ecffc4897dae2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C2/step01.cmd.json",
+   "sha256": "3300911e898a55bc331c03379fd4c6a0bf4f48b5c7b92fffa698edc6c708997e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C2/step01.stdout.txt",
+   "sha256": "10222ddbc5f7a330172d0462747d4f393913c6fd417e78f457d1548712ed1b04"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C3/asserts.json",
+   "sha256": "20ddcc7d14aae394636080700a7405f3942a33afd72b4f3110b33e5c29c09a41"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C3/case.json",
+   "sha256": "f5175bcc7617c1c259f1430faa0ef50259ece1743baf7636a3a146cc4b77a365"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C3/step01.cmd.json",
+   "sha256": "76f9d9b7ee3ad142c8fe9ad9c88d12a0768b1dbcd9d133e46e4bdbb106b793b8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C3/step01.stdout.txt",
+   "sha256": "87a45dbe6d0e445d6149bdc90faf583dcb6e9c9e0f9f5bc29225d9f2dff43862"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/asserts.json",
+   "sha256": "20ddcc7d14aae394636080700a7405f3942a33afd72b4f3110b33e5c29c09a41"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/case.json",
+   "sha256": "ec0747ef1c787ffe89a26ab697ad7951b4a2040df159dd1075b307819065c9fb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step01.cmd.json",
+   "sha256": "fc75b496cd190a73a51b5bd7733005d1cdf61c2a4b4e43a934239212a3db26b7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step01.stdout.txt",
+   "sha256": "cf9c597ee79688cb5426e190f4b1aeaf4573364097084561b948700018f96e57"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step02.cmd.json",
+   "sha256": "752194f819dbe98dc947d85a85a0177ab53cbe81e5750b9703c694a54eafd4ff"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__06.1-C4/step02.stdout.txt",
+   "sha256": "1c35bad5758def7f5134f460e64a42a164195b9c7338e4c64c14cfbfea1777f2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__S00/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__S00/case.json",
+   "sha256": "d21c3e7899bd4906794d27af08051943359f45239e0160f146b3152a1aa66d6c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__S00/step01.cmd.json",
+   "sha256": "39838756bb399477ae60a3713077f3303d749552a2ca6847a3845fd7d604b179"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__S00/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.1/20261024T112540-eab3/legal_hr-06.1__S00/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  }
+ ],
+ "loi_san_pham": []
+}

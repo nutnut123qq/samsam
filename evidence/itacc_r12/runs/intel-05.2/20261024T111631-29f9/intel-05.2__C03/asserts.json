@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'combo_price_option'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'combo_price_option' and block = 'intel' and status = 'pending' and created_by = 'agent:combo_price' and object_id like 'cb:it-a-mat-ong-doi:shopee:%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'combo_price_option' and strpos(payload, 'Tổng giá list ĐÃ DUYỆT các thành phần: 3.725.000 đ; tổng giá sàn: 2.500.000 đ; thiếu giá vốn đã duyệt') > 0 and strpos(payload, '- Chiết khấu 5% → 3.538.000 đ: khong_tinh_duoc') > 0 and strpos(payload, '- Chiết khấu 10% → 3.352.000 đ: khong_tinh_duoc') > 0 and strpos(payload, '- Chiết khấu 15% → 3.166.000 đ: khong_tinh_duoc') > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'combo_price_option' and (object_id like 'cb:it-b%' or object_id like 'cb:it-c%')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

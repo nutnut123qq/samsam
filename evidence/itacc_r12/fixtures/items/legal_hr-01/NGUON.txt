@@ -1,0 +1,9 @@
+guardrail_cases_r12.py.txt <- C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/prod_legal_src/guardrail_cases_r12.py.txt (0622222d0c028719b4bba8f479528d613b6a394a162270607c74e0e780a036e7)
+d2_cases.py.txt <- C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/prod_legal_src/d2_cases.py.txt (5e28bd4983b719a9aea048b1e962602ac0bc9c4d4c08306048d88d4b3ebc3d21)
+clean.json <- evidence/itacc_r10/g3/harness/fake/clean.json (779971caad896244f239ba91dd68b63381dfe6ee9557d011c4b752254fb40a15)
+
+guardrail_cases_r12.py.txt = bản chép evidence/itacc_r10/g3/harness/guardrail_cases.py.txt (sha e6a5a486aa3938d0c0d775e8e5af6aee9eec11ad165d9f477c3ebccdfb253734) ĐỔI ĐÚNG 2 DÒNG để chạy được ở vị trí/DB r12:
+  REPO = parents[4] -> parents[5] (tệp nằm sâu hơn 1 cấp); assert tiền tố DB 'samsam_itacc_r10' -> 'samsam_itacc_r12'.
+  Bộ ca (văn bản, expected, điều kiện PASS) GIỮ NGUYÊN.
+d2_cases.py.txt = HARNESS MỚI r12: ca D2 (giống probe_dot4 D2) in PASS/FAIL, exit 1 nếu có FAIL.
+clean.json chép nguyên byte từ evidence/itacc_r10/g3/harness/fake (mảng responses dùng cho PROBE_LLM_RESPONSES).

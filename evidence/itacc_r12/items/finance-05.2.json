@@ -1,0 +1,899 @@
+{
+ "id": "finance-05.2",
+ "ten": "Dự báo dòng tiền 13 tuần",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Chi phí và dòng tiền: 'dự báo dòng tiền 13 tuần'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/finance-05.2.json",
+  "sha256": "8fc32e867f6db57a6a108f84f00b86149ba929834664ea5ecda7734ae1ce12ba"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/fp_cash.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_finance.json",
+ "tieu_chi_sha256": "04217b9dc6c35adddde0efc99a2b8055c3ca1575f8cb5a68883079c91520076b",
+ "tieu_chi_khoa": "r12_finance.json 04217b9dc6c35adddde0efc99a2b8055c3ca1575f8cb5a68883079c91520076b 2026-10-24T01:54:48+00:00",
+ "tieu_chi": [
+  "T1 (C1) `fp_cash --forecast --start 2026-10-26 --out-dir {OUT}` ghi dong-tien-2026-10-26.md nhãn CHẠY THỬ: đúng 13 tuần × thấp/cơ sở/cao, mỗi tuần thu và số dư thấp ≤ cơ sở ≤ cao; --opening=-400000000 → liệt kê tuần âm (⚠)",
+  "T2 (C2) không --opening → 'chưa có số dư đầu kỳ thật'; tỷ lệ thực nhận shopee 'đo từ settlement', offline mặc định 'chưa xác minh'; --opening 500000000 --json → opening 500000000, 13 tuần low ≤ base ≤ high",
+  "T3 (C3) --opening abc → exit 2; DB down → exit 0 + [warn] mặc định chưa xác minh + không ghi sổ đầu ra (report_outputs finance-05.2 vẫn 1)",
+  "T4 (C4, lỗi GATE-OUT đã vá r12) tắt finance-05.2 → exit 2 '[rollout] … finance-05.2', KHÔNG in dự báo ra stdout, 0 file"
+ ],
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451; mỗi mục 1 DB samsam_itacc_r12_<f031|f033|f041|f051|f052|f06> dựng bằng harness/mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; 0 LLM (6 mục thuần tất định); ngày cố định qua --as-of/--start/--month/--now. DB samsam_itacc_r12_f052.",
+ "run_id": "20261024T112210-8b54",
+ "ca": [
+  {
+   "ma": "finance-05.2__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "tiền đề (r10 SETUP-seed-fin): seed sổ rollout → tính năng chạy thử",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\]"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:10+07:00",
+      "ket_thuc": "2026-10-24T11:22:12+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S01"
+  },
+  {
+   "ma": "finance-05.2__S02",
+   "nguon_r10": "MOI",
+   "mo_ta": "tiền đề = trạng thái DB r10 lúc chạy ca (r10 F01-1a/1b/1c, F01-2, F01-3, F01-7 file xuất lại S2 — cùng lệnh, fixture chép nguyên văn)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "shopee/order orders_shopee\\.csv: 5 dòng"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "tiktok/order orders_tiktok\\.csv: 1 dòng"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "thêm 6"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "6 dòng; đối chiếu: khop=2, lech=1, thieu_chung_tu=1, hoan=2"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "1 dòng; đối chiếu: khop=1"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "chồng kỳ\\): trùng 1, lệch 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from settlement_rows",
+      "expect": 9
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.market_csv --file evidence\\itacc_r12\\fixtures/items/finance-05.2/orders_shopee.csv --channel shopee --kind order",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "shopee/order orders_shopee\\.csv: 5 dòng",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:12+07:00",
+      "ket_thuc": "2026-10-24T11:22:14+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.market_csv --file evidence\\itacc_r12\\fixtures/items/finance-05.2/orders_tiktok.csv --channel tiktok --kind order",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "tiktok/order orders_tiktok\\.csv: 1 dòng",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:14+07:00",
+      "ket_thuc": "2026-10-24T11:22:16+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.kd_orders --sync",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "thêm 6",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:16+07:00",
+      "ket_thuc": "2026-10-24T11:22:17+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step03.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.settlement_csv --file evidence\\itacc_r12\\fixtures/items/finance-05.2/qt_shopee_s1.csv --channel shopee",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "6 dòng; đối chiếu: khop=2, lech=1, thieu_chung_tu=1, hoan=2",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:17+07:00",
+      "ket_thuc": "2026-10-24T11:22:19+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step04.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step04.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.settlement_csv --file evidence\\itacc_r12\\fixtures/items/finance-05.2/qt_tiktok.csv --channel tiktok",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "1 dòng; đối chiếu: khop=1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:19+07:00",
+      "ket_thuc": "2026-10-24T11:22:21+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step05.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step05.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.settlement_csv --file evidence\\itacc_r12\\fixtures/items/finance-05.2/qt_shopee_s2.csv --channel shopee",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "chồng kỳ\\): trùng 1, lệch 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:21+07:00",
+      "ket_thuc": "2026-10-24T11:22:22+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step06.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step06.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from settlement_rows",
+      "expect": 9,
+      "actual": 9,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02"
+  },
+  {
+   "ma": "finance-05.2__F052-1",
+   "nguon_r10": "F052-1",
+   "mo_ta": "dự báo không số dư đầu kỳ",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\][^\\n]*dong-tien-2026-10-26\\.md"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{OUT}/dong-tien-2026-10-26.md",
+      "count": 1
+     },
+     {
+      "file_re": "{OUT}/dong-tien-2026-10-26.md",
+      "re": "(?s)\\A(?=.*\\A> \\*\\*CHẠY THỬ)(?=.*chưa có số dư đầu kỳ thật)(?=.*shopee: tỷ lệ thực nhận [0-9.]+ — đo từ settlement)(?=.*offline: tỷ lệ thực nhận 1\\.0000 — mặc định cấu hình — chưa xác minh)",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2' and not is_sample",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.fp_cash --forecast --start 2026-10-26 --out-dir evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-1\\out",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\][^\\n]*dong-tien-2026-10-26\\.md",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:22+07:00",
+      "ket_thuc": "2026-10-24T11:22:26+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step01.stderr.txt"
+     },
+     {
+      "argv": "python -c import re,sys\nt=open(sys.argv[1],encoding='utf-8').read()\nrows=[l for l in t.splitlines() if re.match(r'\\| \\d\\d/\\d\\d',l)]\nn=lambda s:int(s.strip().replace('.','').replace('đ',''))\nbad=[]\nfor l in rows:\n    c=[x.strip() for x in l.strip('|').split('|')]\n    lo,ba,hi,o,sl,sb,sh=[n(x) for x in c[1:8]]\n    if not (lo<=ba<=hi and sl<=sb<=sh): bad.append(l)\nprint('so_tuan',len(rows),'lech',bad)\nsys.exit(0 if len(rows)==13 and not bad else 1) evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-1\\out/dong-tien-2026-10-26.md",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:22:26+07:00",
+      "ket_thuc": "2026-10-24T11:22:27+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-1\\out/dong-tien-2026-10-26.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/out/dong-tien-2026-10-26.md",
+        "sha256": "b16c88a98517cc1bd03f3415eb8aa6ab73518a3a8d28798f2b0c334d3d57490d"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-1\\out/dong-tien-2026-10-26.md",
+      "re": "(?s)\\A(?=.*\\A> \\*\\*CHẠY THỬ)(?=.*chưa có số dư đầu kỳ thật)(?=.*shopee: tỷ lệ thực nhận [0-9.]+ — đo từ settlement)(?=.*offline: tỷ lệ thực nhận 1\\.0000 — mặc định cấu hình — chưa xác minh)",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2' and not is_sample",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1"
+  },
+  {
+   "ma": "finance-05.2__F052-2",
+   "nguon_r10": "F052-2",
+   "mo_ta": "có số dư đầu kỳ, json (kiểm bằng script như r10 F052-2-check)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.fp_cash --forecast --start 2026-10-26 --opening 500000000 --json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:22:27+07:00",
+      "ket_thuc": "2026-10-24T11:22:29+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step01.stderr.txt"
+     },
+     {
+      "argv": "python -c import json,sys\nd=json.load(open(sys.argv[1],encoding='utf-8'))\nw=d['weeks']\nok=len(w)==13 and d['opening']==500000000 and all(x['in']['low']<=x['in']['base']<=x['in']['high'] and x['close']['low']<=x['close']['base']<=x['close']['high'] for x in w)\nprint('so_tuan',len(w),'opening',d['opening'],'ok',ok)\nsys.exit(0 if ok else 1) evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-2\\out/../step01.stdout.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:22:29+07:00",
+      "ket_thuc": "2026-10-24T11:22:29+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step02.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2"
+  },
+  {
+   "ma": "finance-05.2__F052-2b",
+   "nguon_r10": "F052-2b",
+   "mo_ta": "nhánh cảnh báo tuần âm",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)\\A(?=.*Cảnh báo — tuần âm ở kịch bản thấp \\(số dư < 0đ\\): 26/10)(?=.*\\| 26/10 ⚠)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.fp_cash --forecast --start 2026-10-26 --opening=-400000000",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)\\A(?=.*Cảnh báo — tuần âm ở kịch bản thấp \\(số dư < 0đ\\): 26/10)(?=.*\\| 26/10 ⚠)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:29+07:00",
+      "ket_thuc": "2026-10-24T11:22:33+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2b/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2b/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2b"
+  },
+  {
+   "ma": "finance-05.2__F052-3",
+   "nguon_r10": "F052-3",
+   "mo_ta": "ÂM tham số sai",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stderr_re": "--opening phải là số nguyên VND"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.fp_cash --forecast --opening abc",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "--opening phải là số nguyên VND",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:33+07:00",
+      "ket_thuc": "2026-10-24T11:22:35+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-3"
+  },
+  {
+   "ma": "finance-05.2__F052-4",
+   "nguon_r10": "F052-4",
+   "mo_ta": "ÂM DB down (DATABASE_URL → cổng đóng trên localhost)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stderr_re": "(?s)\\A(?=.*\\[warn\\] không kết nối được Postgres[^\\n]*chưa xác minh)(?=.*không ghi sổ đầu ra)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{OUT}/dong-tien-2026-10-26.md",
+      "count": 1
+     },
+     {
+      "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.fp_cash --forecast --start 2026-10-26 --out-dir evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-4\\out",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stderr_re": "(?s)\\A(?=.*\\[warn\\] không kết nối được Postgres[^\\n]*chưa xác minh)(?=.*không ghi sổ đầu ra)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:35+07:00",
+      "ket_thuc": "2026-10-24T11:22:50+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-4\\out/dong-tien-2026-10-26.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4/out/dong-tien-2026-10-26.md",
+        "sha256": "39ca96edb302018706a73bf87a00ba3f290915cf44b77f181ec3cea2fe9a8adc"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4"
+  },
+  {
+   "ma": "finance-05.2__F052-5",
+   "nguon_r10": "F052-5",
+   "mo_ta": "ÂM tắt finance-05.2 (chạy cuối) — GATE-OUT đã vá",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\A(?![\\s\\S]*(Thu thấp|Số dư cơ sở|\\| 26/10))",
+      "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+      "out_re": "\\[rollout\\][^\\n]*finance-05\\.2"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{OUT}/*.md",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable finance-05.2 --by Người Thử R12 --note kiem nhanh tat IT r12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:22:50+07:00",
+      "ket_thuc": "2026-10-24T11:22:52+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_cash --forecast --start 2026-10-26 --out-dir evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-5\\out",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\A(?![\\s\\S]*(Thu thấp|Số dư cơ sở|\\| 26/10))",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       },
+       {
+        "out_re": "\\[rollout\\][^\\n]*finance-05\\.2",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:22:52+07:00",
+      "ket_thuc": "2026-10-24T11:22:54+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-5\\out/*.md",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/asserts.json",
+   "sha256": "e9916bb67d30a2e8f522371292a295e3eb42e316c6aef271216491e6532efc9c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/case.json",
+   "sha256": "2a8a8ac02aed5375282529c35a224b6d8b8261fcad404df379b9779cfe5a20be"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/out/dong-tien-2026-10-26.md",
+   "sha256": "b16c88a98517cc1bd03f3415eb8aa6ab73518a3a8d28798f2b0c334d3d57490d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step01.cmd.json",
+   "sha256": "c4e0493aa356f8e202adf95715b04a287fd9f1fb5bbba4c3dc416ae8f7781038"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step01.stdout.txt",
+   "sha256": "541adbd8b4be85bf39fa997a1d6bea6c2fb23e8d2f54e569d78ab40e57a54c7e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step02.cmd.json",
+   "sha256": "0b84a7bb8aced10fb60678adb18c2fb28e1e785b545aa3f4581fa6871fcdfee4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/step02.stdout.txt",
+   "sha256": "975c54b83ec21e2fe8057089c67f59d32a93b812aa07830c413450a9400df4b9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/case.json",
+   "sha256": "1c38bcd8847c3c7a7d0c169c3b19133a08861d6b90e183597862eb8d073929b3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step01.cmd.json",
+   "sha256": "78f81407c2e0c6869c1ebb2ab090f2425393ba28d5872bb4e58e5c8210b71fb6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step01.stdout.txt",
+   "sha256": "38c16b5b8e442839d7ab2fb017fc240603df7bf46f6055de5f29f9c8c28e1c69"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step02.cmd.json",
+   "sha256": "1086243f0228e538cba3d2a27145b9eb86790ea3d0ccba052395bfcfce291e05"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2/step02.stdout.txt",
+   "sha256": "b4a5323424c781db333c72eac7591ba2c8c44606dc4cea30f05bcba573fb5481"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2b/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2b/case.json",
+   "sha256": "3793974762d0ce2659623c5e2e5c7590b4017053d2ae2d8a64caf1b3b44ab5d9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2b/step01.cmd.json",
+   "sha256": "2080825990d9a7500ef5cf56a1ed1380cd863b82d8c61ca2ae283a74d9ac1f31"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2b/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-2b/step01.stdout.txt",
+   "sha256": "1b58aa55fdc0c8117ea9609e7dd0ee6699aa41a43799045619b72fdba0461bb4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-3/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-3/case.json",
+   "sha256": "323372389b9bfb96e4a9a01304348f6c0ae21ee0b2ffb56129342e1d13db1299"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-3/step01.cmd.json",
+   "sha256": "f9e4fd3883c977c9aee5c625caa57f9ce2ceddfea8c2ce83d62986cdb3650b99"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-3/step01.stderr.txt",
+   "sha256": "ded2375d8fb269636955d5f641d578d7dcd447b8131e0a0e9b14e4bce7527bb8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-3/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4/asserts.json",
+   "sha256": "299679865c3e24ec707a6336c57f4a2104ff85c985260be916c51f54a21cfa70"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4/case.json",
+   "sha256": "fffa39ead8de06c47a321823eed562939118085744bc8c86c81f69e8b8606b78"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4/out/dong-tien-2026-10-26.md",
+   "sha256": "39ca96edb302018706a73bf87a00ba3f290915cf44b77f181ec3cea2fe9a8adc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4/step01.cmd.json",
+   "sha256": "a9e7719bc3d6c525afd18c2ab3463a1f2e8dc0366a2d3066502797bd9c1258c7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4/step01.stderr.txt",
+   "sha256": "4fe4474c10197c701bf19c7555c95892affa9e5428dd6770301041ff03e3ebb7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-4/step01.stdout.txt",
+   "sha256": "ab5789f8739c9c3e7ab24e13d5dd497ba850fc4975966237cd432b8eac8c11c2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/asserts.json",
+   "sha256": "57f65e0b3eaa86bb3e199598140477178971fe89c84478633fa0c538958574e1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/case.json",
+   "sha256": "144408c125139b1406930c005e93393f831f4e07ec002e3c242d34753dda35db"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step01.cmd.json",
+   "sha256": "b767b3e6b15e6fdc4fa874860b4cc66d5c09d646e1b477b0650a88521e72b815"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step01.stdout.txt",
+   "sha256": "133575b2903cc515d6642ba9d9c519f109ffa07bd3094ef26f987c04f0687344"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step02.cmd.json",
+   "sha256": "10b6d99810ce8500736825b83c23fc2e7d841df03834990f019e4d8baec3adb9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-5/step02.stdout.txt",
+   "sha256": "b17dbf5cf46b60ecbb65b0dbfb67ef78a19d4e1d00eea069cc4eefd57b741bbf"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S01/case.json",
+   "sha256": "7c2792a2d92a7b751853e3c5e2018878321cffcccc6d809444bbdd5b3174e7cd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S01/step01.cmd.json",
+   "sha256": "fb037143524d346417b98a36e6d4d05839be3e279d4f71e14c6e72702cf8164d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/asserts.json",
+   "sha256": "cd91d010738d819888d69be77a395508f6aaf29463a23ce833b170fae24e5ba5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/case.json",
+   "sha256": "e8bb7853661b2b3f11cfa9d1bce480e47c6db86050c6707a57111d3ed2d480a3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step01.cmd.json",
+   "sha256": "d06a8615a2a7c7a7914e00b274ae2787d99ad0c4efc94ccff6b7f2f0e2292b8b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step01.stdout.txt",
+   "sha256": "91501a7ffa4061d78a953724707d4167c5ebb521194a032f19bb96b69b7fb623"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step02.cmd.json",
+   "sha256": "688c0f2749364ad35db18c8569cf0047f498f95f09cb51a0b26ae81a342d33f7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step02.stdout.txt",
+   "sha256": "c4766ac4356275a68a66a2a0431f3b7d65490eb1fd1ea1a06b5318ed5591807b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step03.cmd.json",
+   "sha256": "29e6b8053bcf008bde739abac20a1b1547be39434a48e001a8ff02547e36ea0d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step03.stdout.txt",
+   "sha256": "1de206f4173b4271579c96c9b16f7ba6c47a2f157f31aa28c90c4d944e70cca7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step04.cmd.json",
+   "sha256": "732f138045d53ce969cdd225e967099a973916a9aec7f1ad490983e208f86342"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step04.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step04.stdout.txt",
+   "sha256": "fa45b6ca6f359f892bb7fc736efef11a86fa39f732b99e0d5a086d9e59409617"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step05.cmd.json",
+   "sha256": "480e638c15fecc9c0f539ae044ec9a6acec445f8aca7ab2f3ac1ddd039aca254"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step05.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step05.stdout.txt",
+   "sha256": "fc319029cd5d3ff011ef6f2d4449152d309bf295deb8969c7001705164760c25"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step06.cmd.json",
+   "sha256": "d567f744f1045e8bb26c4b99179b69e1353eee87fbf80ecfe2cbf067c170e4bf"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step06.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__S02/step06.stdout.txt",
+   "sha256": "2f27d7d05a6a49cc043bc1d2a279aa3526927c5dd6bf173470ce40cba5aa02bc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/ket_qua.json",
+   "sha256": "2b669a8033da09d52b5f831a8b340e9408e50f10441a40525335a1bf1e47918c"
+  }
+ ],
+ "loi_san_pham": []
+}

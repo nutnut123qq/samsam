@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from decision_log d where d.basis_kind = 'approval_queue' and d.basis_id = (select id from approval_queue where object_type = 'weekly_report' and object_id = '2026-W42') and d.decided_by = 'TGĐ Duyệt Thử IT' and d.recorded_by = 'Thư ký Thử IT'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from decision_log",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ }
+]

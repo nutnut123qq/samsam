@@ -295,8 +295,14 @@ def sec_opscost(conn, pack: Pack, now) -> list[str]:
         acts = s["actuals"]
         src = f"fn:agents.fp_opscost.summary {_mlabel(m)}"
         for scope in sorted(set(budget) | {k for k, v in acts.items() if v}):
-            spent = acts.get(scope, 0)
             b = budget.get(scope)
+            if scope not in s["co_nguon"]:
+                # r12 G1-L3: 0 dòng nguồn chi → không hiện "0đ / 0.0%".
+                L.append(f"| {_mlabel(m)} | `{scope}` | {NO_DATA} | "
+                         + (f"{pack.fact(fp_pnl.vnd(b), src_cfg)} | {NO_DATA} |"
+                            if b else "chưa có trần | — |"))
+                continue
+            spent = acts.get(scope, 0)
             L.append(f"| {_mlabel(m)} | `{scope}` | "
                      f"{pack.fact(fp_pnl.vnd(spent), src)} | "
                      + (f"{pack.fact(fp_pnl.vnd(b), src_cfg)} | "
@@ -539,8 +545,10 @@ def main(argv=None, now=None) -> int:
         except UngroundedNumber as e:
             print(f"[error] {e}", file=sys.stderr)
             return 1
+        # r12 G1-L4: tiền tố hdtv- không thuộc output_sources → ghi tường
+        # minh tính năng (cổng tắt + nhãn giai đoạn + sổ report_outputs).
         path = write_report(text, a.out_dir, f"hdtv-{period}.md",
-                            sample=pack["sample"])
+                            sample=pack["sample"], feature=FEATURE)
         print(f"[done] {path} — kỳ {period}, {len(pack['facts'])} fact có "
               f"nguồn, {pack['unreadable']} mục không đọc được")
         if not ok:

@@ -248,6 +248,16 @@ def main(argv=None, now: datetime | None = None) -> int:
         print("[warn] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
               " host chết)", file=sys.stderr)
         return 2
+    # r12 D1/GATE-OUT: tra cứu (production-05.1) và tóm tắt AI
+    # (production-05.2) kiểm cổng TRƯỚC lời gọi AI/in/ghi — tắt thì không
+    # embed/chat, không in trích đoạn/tóm tắt ra stdout, không ghi file.
+    from pipelines import rollout
+    for fid, what in (("production-05.1", "tra cứu tài liệu R&D"),
+                      *((("production-05.2", "tóm tắt AI tài liệu R&D"),)
+                        if a.llm else ())):
+        if why := rollout.blocked(conn, what, fid=fid):
+            conn.close()
+            return rollout.say_blocked(why)
     now = now or datetime.now(VN_TZ)
     try:
         res = ask(a.ask, k=a.k, llm=a.llm, conn=conn)

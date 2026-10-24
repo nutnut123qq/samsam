@@ -1,0 +1,10 @@
+"""HARNESS g2 — probe bổ sung sau khóa S05-X1: 1 yêu cầu B2B SKU mat-ong-sam-120ml-1hu (giá list price_list CHƯA duyệt)."""
+import sys
+from urllib.parse import urlencode
+import httpx
+sys.stdout.reconfigure(encoding="utf-8")
+f = {"org_name": "Công ty Thử IT G2 Probe", "org_type": "doanh_nghiep", "region": "Đà Nẵng",
+     "contact_name": "Người Liên Hệ Thử IT", "phone": "0900000302", "email": "", "need_by": "",
+     "consent": "b2b", "policy_version": "b2b-v0-nhap", "website": "", "sku1": "mat-ong-sam-120ml-1hu", "qty1": "50"}
+r = httpx.post(sys.argv[1], content=urlencode(f).encode(), headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=10)
+print(r.status_code, "Đã nhận yêu cầu" in r.text)

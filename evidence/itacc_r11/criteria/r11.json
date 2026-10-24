@@ -1,0 +1,1571 @@
+{
+ "_doc": "Tiêu chí lượt r11 (23/10/2026) — kiểm lại 6 mục của nghiệm thu kỹ thuật nội bộ r10. Viết và KHÓA hash TRƯỚC mọi lần chạy (criteria/r11.lock.txt). Ca giữ nguyên ý định + expected của tiêu chí khóa r10 (evidence/itacc_r10/criteria/g3.json, sha256 4de39b8b0fa1f8b62f3b0a9902428b6ac98321ebc7f007403561e84b4378581e — KHÔNG sửa file đó), đổi tên đầy đủ <id>__Cn, thêm assertion máy kiểm. Chỗ khác r10 ghi ở trường `khac_r10` (đính chính / bổ sung) kèm lý do. Runner: evidence/itacc_r11/harness/runner.py.txt. Placeholder: {FX}=evidence/itacc_r11/fixtures, {H}=evidence/itacc_r11/harness, {SCR}=thư mục scratch của mục (trong runs/<id>/), {OUT}=thư mục out của lần chạy ca, {sql:...}=giá trị ô đầu của truy vấn trên DB thử. Bước `tien_quyet: true` hỏng → các ca sau của mục = NOT_RUN. Assertion: sql+expect (so khớp đúng giá trị JSON), stdout_re/stderr_re (regex trên đầu ra gốc của bước), file_glob+count.",
+ "fingerprint_code": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r11 (postgres:17-alpine) chỉ bind 127.0.0.1:55441; mỗi mục 1 DB samsam_itacc_r11_<mã> dựng mới (apply_schema --roles ×2 + core_store + golden_store); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; DEPLOY/RED_ALERT_NOTIFY tắt; INTEL_HASH_SALT + CONTACT_VAULT_KEY giá trị thử sinh ngẫu nhiên (không lưu repo); mạng ngoài localhost bị chặn trong harness run.py.txt; RSS giả http.server 127.0.0.1:18793.",
+ "items": [
+  {
+   "id": "marketing-03.2",
+   "db": "samsam_itacc_r11_m032",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_ads --results F.csv --plan-id N --by <người>` exit 0 trên phiếu đã duyệt đủ 2 mục",
+    "T2 đúng 1 mục approval_queue marketing/ad_result pending; đề xuất = dat_muc_tieu khớp phép tính độc lập từ ads_result_ok.csv (hiển thị 9000, click 190, chi 100.000đ ≤ ngân sách 150.000đ, 1 đơn → CTR 2,11% ≥ 2% đạt; CPC 526đ < 5.000; CPA 100.000đ < 150.000 → không chạm điều kiện dừng); đề xuất ∈ {dung, dat_muc_tieu, tiep, chua_du_lieu} (không có nhánh tăng ngân sách)",
+    "T3 phiếu chưa duyệt đủ 2 mục → ADS_PLAN_NOT_APPROVED exit 1, 0 ad_result; CSV sai cột → exit 1, 0 dòng mới; nạp lại cùng file → skip, 0 dòng mới",
+    "T4 không chi tiền / không gọi API quảng cáo (không có lệnh/lời gọi mạng; socket ngoài bị chặn không áp dụng vì CLI không mở mạng)"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-03.2__S01",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (tính năng = chạy thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S02",
+     "tien_quyet": true,
+     "mo_ta": "golden FIXTURE (mat-ong-sam-300ml giả lập đã tự công bố) — như r10 mkt-fx-golden",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX}/golden_fixture_food.json"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S03",
+     "tien_quyet": true,
+     "mo_ta": "packshot MẪU + ảnh creative shopee qua image_studio (provider none, không AI) — draft #1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/mk_packshot.py.txt",
+        "{SCR}/packshots",
+        "mat-ong-sam-300ml"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "pipelines.image_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "shopee",
+        "--headline",
+        "Quà quê Quảng Nam Thử IT"
+       ],
+       "env": {
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/image_assets"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where id = 1 and content_type = 'image' and sku = 'mat-ong-sam-300ml' and status = 'pending'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S04",
+     "tien_quyet": true,
+     "mo_ta": "duyệt ảnh creative #1 (dev, người duyệt thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "1",
+        "--by",
+        "Duyệt MKT Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select status from content_drafts where id = 1",
+       "expect": "approved"
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S05",
+     "tien_quyet": true,
+     "mo_ta": "dữ liệu P&L MẪU để có trần FP&A (đơn + quyết toán + giá vốn duyệt) — như r10 03.1-C0",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX}/order_shopee_MAU.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX}/order_shopee_multi_MAU.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX}/settlement_shopee_MAU.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX}/settlement_shopee_multi_MAU.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "savina-12v",
+        "--cost",
+        "50000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "1",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "saphraton-20v",
+        "--cost",
+        "90000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "2",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "savigout-30v",
+        "--cost",
+        "130000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "3",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-120ml-1hu",
+        "--cost",
+        "70000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "4",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--cost",
+        "180000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "5",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "sapentol-30v",
+        "--cost",
+        "110000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "6",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S06",
+     "tien_quyet": true,
+     "mo_ta": "lập phiếu thử nghiệm #1 (plan_ok_r11.json, creative #1) — 2 mục chờ duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--plan",
+        "{FX}/plan_ok_r11.json",
+        "--by",
+        "Người Thử IT",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans where id = 1",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ad_campaign' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'finance' and object_type = 'budget_change' and status = 'pending'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__C2",
+     "khac_r10": "r10 dùng phiếu #2 do --propose (03.1) sinh; r11 dùng chính phiếu #1 TRƯỚC khi duyệt (cùng trạng thái 'chưa duyệt đủ 2 mục', không phụ thuộc luồng 03.1 propose) — chạy trước C1",
+     "mo_ta": "phiếu chưa duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX}/ads_result_ok.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "ADS_PLAN_NOT_APPROVED"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__C1",
+     "mo_ta": "duyệt đủ 2 mục phiếu #1 (dev) rồi nạp kết quả",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where block = 'marketing' and object_type = 'ad_campaign'}",
+        "--by",
+        "Duyệt MKT Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where block = 'finance' and object_type = 'budget_change'}",
+        "--by",
+        "Duyệt TC Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX}/ads_result_ok.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ad_result' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result' and payload like '%Đề xuất: **dat_muc_tieu**%' and payload like '%hiển thị 9000, click 190%' and payload like '%đơn 1%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result' and title like '%dat_muc_tieu%'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__C3",
+     "mo_ta": "CSV sai cột",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX}/ads_result_badcol.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__C4",
+     "mo_ta": "nạp lại file của C1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX}/ads_result_ok.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?i)skip"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-05.1",
+   "db": "samsam_itacc_r11_m051",
+   "tieu_chi_cu_the": [
+    "T1 `python -m ingest.intel_import --social F --channel fanpage` exit 0 (INTEL_HASH_SALT giá trị thử)",
+    "T2 social_mentions đúng 6 dòng, nhãn theo nội dung fixture (theo thứ tự thời gian): khen / hoi_suc_khoe (sensitive=true) / hoi_gia / hoi_ruou / khieu_nai / nghi_hang_gia; excerpt null (DPIA chưa ký); không SĐT/tên/id người dùng thô trong bảng",
+    "T3 thiếu muối → exit 1, 0 dòng; cột lạ → exit 1, 0 dòng; nạp lại → [skip], 0 dòng; tính năng tắt → exit 2 (loader_gate), 0 dòng",
+    "T4 không trả lời comment, không mạng"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-05.1__S01",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.1__C1",
+     "mo_ta": "nạp file social fixture (6 dòng, có SĐT giả)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--social",
+        "{FX}/social_ok.csv",
+        "--channel",
+        "fanpage"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from social_mentions",
+       "expect": 6
+      },
+      {
+       "sql": "with r as (select row_number() over (order by posted_at, id) n, labels, sensitive from social_mentions) select bool_and(case n when 1 then 'khen' = any(labels) when 2 then 'hoi_suc_khoe' = any(labels) and sensitive when 3 then 'hoi_gia' = any(labels) when 4 then 'hoi_ruou' = any(labels) when 5 then 'khieu_nai' = any(labels) when 6 then 'nghi_hang_gia' = any(labels) end) from r",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from social_mentions where excerpt is not null",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from social_mentions s where row_to_json(s)::text ~ '0900000|Khách Thử IT|uid-it'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from intel_imports where kind = 'social'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.1__C2",
+     "mo_ta": "thiếu muối",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--social",
+        "{FX}/social_new.csv",
+        "--channel",
+        "fanpage"
+       ],
+       "env": {
+        "INTEL_HASH_SALT": null
+       },
+       "expect_exit": 1,
+       "out_re": "INTEL_HASH_SALT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from social_mentions",
+       "expect": 6
+      },
+      {
+       "sql": "select count(*) from intel_imports",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.1__C3",
+     "mo_ta": "cột lạ",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--social",
+        "{FX}/social_badcol.csv",
+        "--channel",
+        "fanpage"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from social_mentions",
+       "expect": 6
+      },
+      {
+       "sql": "select count(*) from intel_imports",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.1__C4",
+     "mo_ta": "nạp lại file C1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--social",
+        "{FX}/social_ok.csv",
+        "--channel",
+        "fanpage"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[skip\\]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from social_mentions",
+       "expect": 6
+      },
+      {
+       "sql": "select count(*) from intel_imports",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.1__C5",
+     "mo_ta": "tắt tính năng (loader_gate chưa cấu hình)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "marketing-05.1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--social",
+        "{FX}/social_new.csv",
+        "--channel",
+        "fanpage"
+       ],
+       "expect_exit": 2
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from social_mentions",
+       "expect": 6
+      },
+      {
+       "sql": "select count(*) from intel_imports",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-05.2",
+   "db": "samsam_itacc_r11_m052",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_ugc --reviews F --channel shopee --by` và `--mentions --since` exit 0",
+    "T2 mục marketing/ugc_reply pending theo lớp: 5 review → 5 mục lớp {khen, che, claim_suc_khoe, sp_cam_qc (= ruou), hoi_gia}; 6 mention (từ social_mentions) → 6 mục kênh facebook; payload KHÔNG chép lời khách/tên/SĐT (kể cả câu sức khỏe không lặp claim); ugc_reuse chỉ khi can_contact marketing",
+    "T3 chạy lại → skip, 0 mục mới; --reuse không có đồng ý → UGC_NO_CONSENT, 0 ugc_reuse; có đồng ý → 1 ugc_reuse; lớp nhạy cảm → UGC_SENSITIVE; thiếu muối → exit 1 trước khi kết nối DB",
+    "T4 agent không tự trả lời/nhắn khách"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-05.2__S01",
+     "tien_quyet": true,
+     "mo_ta": "seed + nạp social_ok (nguồn cho --mentions)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--social",
+        "{FX}/social_ok.csv",
+        "--channel",
+        "fanpage"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from social_mentions",
+       "expect": 6
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.2__C1",
+     "mo_ta": "review file fixture (5 review)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ugc",
+        "--reviews",
+        "{FX}/reviews_shopee.csv",
+        "--channel",
+        "shopee",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ugc_reply' and status = 'pending' and title like '%[kenh=shopee]%'",
+       "expect": 5
+      },
+      {
+       "sql": "select string_agg(l, ',' order by l) from (select substring(title from '\\[lop=([a-z_]+)\\]') l from approval_queue where object_type = 'ugc_reply' and title like '%[kenh=shopee]%') x",
+       "expect": "che,claim_suc_khoe,hoi_gia,khen,sp_cam_qc"
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ugc_reply' and payload ~ 'thơm ngon|thất vọng|mất ngủ|biếu sếp|chữa|0900000401|Người Mua Thử IT'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.2__C2",
+     "mo_ta": "từ social_mentions",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ugc",
+        "--mentions",
+        "--since",
+        "2026-10-01",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ugc_reply' and status = 'pending' and title like '%[kenh=facebook]%'",
+       "expect": 6
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ugc_reply' and payload ~ '0900000|Khách Thử IT|uid-it|tiểu đường'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.2__C3",
+     "mo_ta": "chạy lại C1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ugc",
+        "--reviews",
+        "{FX}/reviews_shopee.csv",
+        "--channel",
+        "shopee",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ugc_reply'",
+       "expect": 11
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.2__C4",
+     "mo_ta": "--reuse khi khách CHƯA đồng ý marketing",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--add-contact",
+        "-",
+        "--by",
+        "Người Thử IT"
+       ],
+       "stdin": "{FX}/contact_ugc.json",
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ugc",
+        "--reuse",
+        "{sql:select object_id from approval_queue where object_type = 'ugc_reply' and title like '%[lop=khen] [kenh=shopee]%'}",
+        "--contact-id",
+        "{sql:select max(id) from contacts}",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "UGC_NO_CONSENT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ugc_reuse'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.2__C4b",
+     "khac_r10": "bổ sung (r10 đã chạy ngoài tiêu chí khóa, nay đưa vào tiêu chí): nhánh dương của 'ugc_reuse chỉ khi can_contact marketing'",
+     "mo_ta": "ghi đồng ý marketing rồi --reuse",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--consent",
+        "{sql:select max(id) from contacts}",
+        "--purpose",
+        "marketing",
+        "--grant",
+        "--source",
+        "web",
+        "--evidence",
+        "form-thu-it-01",
+        "--policy-version",
+        "v1-thu-it",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ugc",
+        "--reuse",
+        "{sql:select object_id from approval_queue where object_type = 'ugc_reply' and title like '%[lop=khen] [kenh=shopee]%'}",
+        "--contact-id",
+        "{sql:select max(id) from contacts}",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ugc_reuse' and status = 'pending'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.2__C4c",
+     "khac_r10": "bổ sung (như C4b): lớp nhạy cảm không tái sử dụng kể cả có đồng ý",
+     "mo_ta": "--reuse mục lớp claim_suc_khoe",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ugc",
+        "--reuse",
+        "{sql:select object_id from approval_queue where object_type = 'ugc_reply' and title like '%[lop=claim_suc_khoe] [kenh=shopee]%'}",
+        "--contact-id",
+        "{sql:select max(id) from contacts}",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "UGC_SENSITIVE"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ugc_reuse'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-05.2__C5",
+     "khac_r10": "r11 đặt DATABASE_URL trỏ host chết (10.255.255.1) cho bước này để CHỨNG MINH thoát trước khi kết nối (lỗi phải là thiếu muối, không phải lỗi DB)",
+     "mo_ta": "thiếu muối",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ugc",
+        "--reviews",
+        "{FX}/reviews_shopee.csv",
+        "--channel",
+        "shopee",
+        "--by",
+        "Người Thử IT"
+       ],
+       "env": {
+        "INTEL_HASH_SALT": null,
+        "DATABASE_URL": "postgresql://it@10.255.255.1:5432/samsam_itacc_r11_dead?connect_timeout=3"
+       },
+       "expect_exit": 1,
+       "out_re": "INTEL_HASH_SALT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ugc_reply'",
+       "expect": 11
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-06.1",
+   "db": "samsam_itacc_r11_m061",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.seo_web --from-crawl --submit --out-dir <thử>` exit 0, requests=0 (chỉ dữ liệu crawl có sẵn data/*.jsonl — LOCAL, KHÔNG kiểm --fetch mạng/website thật)",
+    "T2 báo cáo seo-web-<ngày>.md trong out-dir + đúng 1 mục marketing/seo_web_fix created_by 'agent:MKT-10' pending; mọi URL trong payload thuộc own_hosts (samsam.net.vn, samsamngoclinh.com)",
+    "T3 chạy lại → skipped, 0 mục mới; tắt → không sinh mục",
+    "T4 không ghi website; socket ra ngoài localhost bị chặn trong harness"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-06.1__S01",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-06.1__C1",
+     "mo_ta": "rà từ dữ liệu crawl có sẵn",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "agents.seo_web",
+        "--from-crawl",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "requests=0"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/seo-web-*.md",
+       "count": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'seo_web_fix' and created_by = 'agent:MKT-10' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from (select lower((regexp_matches(payload, 'https?://([^/\\s)>\\]`''\"]+)', 'g'))[1]) h from approval_queue where object_type = 'seo_web_fix') x where h not in ('samsam.net.vn', 'samsamngoclinh.com') and h not like '%.samsam.net.vn' and h not like '%.samsamngoclinh.com'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-06.1__C2",
+     "mo_ta": "chạy lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "agents.seo_web",
+        "--from-crawl",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "skipped"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'seo_web_fix'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-06.1__C3",
+     "mo_ta": "tắt tính năng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "marketing-06.1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "agents.seo_web",
+        "--from-crawl",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": [
+        1,
+        2
+       ]
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'seo_web_fix'",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-06.2",
+   "db": "samsam_itacc_r11_m062",
+   "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.cockpit --import F --by <người> --sample` và `--collect --period week --ref <kỳ ĐÃ ĐÓNG giờ VN>` exit 0",
+    "T2 channel_snapshots: 12 dòng manual_export từ kenh_MAU.csv (source_ref 'sample:…', captured_by người xuất); dòng số đo nội bộ channel noi_bo/source api cho kỳ đã đóng; giá trị content.drafts_created / content.drafts_approved / content.drafts_rejected / leads.new / jobs.failed khớp ĐẾM SQL ĐỘC LẬP (viết riêng, không dùng SQL sản phẩm) trên cùng khung giờ VN; không ghi median/p90 khi 0 quyết định",
+    "T3 file lỗi → exit 1, 0 dòng; kỳ chưa đóng → exit 2, không ghi; insert-only (chạy lại kỳ đã đóng không thêm dòng)",
+    "T4 không gọi API kênh",
+    "Giới hạn (khóa trước khi chạy): DB dựng mới hôm nay, KHÔNG lùi timestamp → mọi số nội bộ của kỳ đã đóng = 0; phép kiểm chứng minh chặn kỳ chưa đóng, đếm đúng nguồn/khung giờ, không bịa median, insert-only — KHÔNG chứng minh phép đếm trên dữ liệu khác 0 của kỳ đã đóng"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-06.2__S01",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-06.2__C1",
+     "mo_ta": "import file kênh MẪU",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--import",
+        "{FX}/kenh_MAU.csv",
+        "--by",
+        "Người Thử IT",
+        "--sample"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+       "expect": 12
+      },
+      {
+       "sql": "select count(*) from channel_snapshots where source = 'manual_export' and source_ref like 'sample:%' and captured_by = 'Người Thử IT'",
+       "expect": 12
+      }
+     ]
+    },
+    {
+     "ma": "marketing-06.2__C2",
+     "mo_ta": "file lỗi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--import",
+        "{FX}/kenh_loi.csv",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from channel_snapshots",
+       "expect": 12
+      }
+     ]
+    },
+    {
+     "ma": "marketing-06.2__C3",
+     "khac_r10": "ĐÍNH CHÍNH tiêu chí r10: r10 khóa --ref 2026-10-19 tưởng là tuần đã đóng, nhưng 2026-10-19 là thứ Hai của tuần HIỆN TẠI (23/10/2026 là thứ Sáu) → sản phẩm từ chối đúng (exit 2). Kỳ đã đóng gần nhất theo giờ VN = tuần 2026-10-12 → 2026-10-18. Lỗi kỳ vọng của harness, không phải lỗi sản phẩm; không lùi timestamp.",
+     "mo_ta": "collect tuần đã đóng 2026-10-12 (giờ VN)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--collect",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "inserted=[1-9]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) > 0 from channel_snapshots where channel = 'noi_bo' and source = 'api' and period_kind = 'week' and period_start = '2026-10-12'",
+       "expect": true
+      },
+      {
+       "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_created' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from content_drafts where created_at >= timestamptz '2026-10-12 00:00:00+07' and created_at < timestamptz '2026-10-19 00:00:00+07')",
+       "expect": true
+      },
+      {
+       "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_approved' and period_kind = 'week' and period_start = '2026-10-12') = (select count(distinct object_id) from approvals where object_type = 'content_draft' and decision = 'approved' and approved_at >= timestamptz '2026-10-12 00:00:00+07' and approved_at < timestamptz '2026-10-19 00:00:00+07')",
+       "expect": true
+      },
+      {
+       "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_rejected' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from content_drafts where status = 'rejected' and reviewed_at >= timestamptz '2026-10-12 00:00:00+07' and reviewed_at < timestamptz '2026-10-19 00:00:00+07')",
+       "expect": true
+      },
+      {
+       "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'leads.new' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from leads where ts >= timestamptz '2026-10-12 00:00:00+07' and ts < timestamptz '2026-10-19 00:00:00+07')",
+       "expect": true
+      },
+      {
+       "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'jobs.failed' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from job_runs where ok is not true and started_at >= timestamptz '2026-10-12 00:00:00+07' and started_at < timestamptz '2026-10-19 00:00:00+07')",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from channel_snapshots where period_start = '2026-10-12' and metric_id in ('content.review_hours_median', 'content.review_hours_p90')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-06.2__C3b",
+     "khac_r10": "bổ sung: kiểm insert-only (T3) bằng lần chạy lại kỳ đã đóng",
+     "mo_ta": "chạy lại collect cùng kỳ",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--collect",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "inserted=0 unchanged=[1-9]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) = (select count(distinct metric_id) from channel_snapshots where channel = 'noi_bo' and period_start = '2026-10-12') from channel_snapshots where channel = 'noi_bo' and period_start = '2026-10-12'",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "marketing-06.2__C4",
+     "mo_ta": "kỳ chưa đóng (tuần chứa 23/10/2026)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.cockpit",
+        "--collect",
+        "--period",
+        "week",
+        "--ref",
+        "2026-10-23"
+       ],
+       "expect_exit": 2
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from channel_snapshots where channel = 'noi_bo' and period_start >= '2026-10-19'",
+       "expect": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "legal_hr-07",
+   "db": "samsam_itacc_r11_l07",
+   "dinh_chinh_r10": "ĐÍNH CHÍNH tiêu chí r10 (lỗi KỲ VỌNG của harness — KHÔNG phải evidence cũ đã đạt ca khóa): ca 07-C1 r10 khóa 'intel_items 2 dòng' cho fixture rss_it.xml gồm 1 tin nghị định quảng cáo TPBVSK + 1 tin không liên quan. Đọc code: crawler/intel.py build_items() gọi classify(title, snippet, topics); tin 0 chủ đề → `off += 1; continue` (KHÔNG lưu), run() in `[src] <id>: N tin, M đúng chủ đề, mới K` và `[done] … off_topic=…`. Thiết kế đúng là lọc trước khi lưu ⇒ kỳ vọng đúng cho fixture = CHÍNH XÁC 1 dòng intel_items (tin nghị định, đúng nội dung/nguồn/chủ đề), 0 dòng cho tin không liên quan, off_topic=1. Bản ghi r10 chấm PASS 'theo ý định' là sai quy trình; r10 giữ nguyên làm lịch sử (criteria/g3.json không sửa).",
+   "tieu_chi_cu_the": [
+    "T1 `crawler.intel --run --source chinhphu-van-ban --sources <fixture>` (RSS giả 127.0.0.1:18793) → `pipelines.intel_alert --run` → `pipelines.legal_updates --submit` exit đúng",
+    "T2 intel_items CHÍNH XÁC 1 dòng: url …/van-ban/nd-thu-it-01, source chinhphu-van-ban, tiêu đề tin nghị định, chủ đề có tpbvsk; 0 dòng tin không liên quan; stdout bộ lọc '2 tin, 1 đúng chủ đề, mới 1' + 'off_topic=1'. red_alerts source_agent='intel_red_alert' detail.rules có 'legal_doc'; approval_queue legal_hr/legal_doc_review pending, object_id intel:<id>, payload template (nguồn, link, sha256 tiêu đề, 'KHÔNG diễn giải')",
+    "T3 thiếu người nhận cảnh báo → exit 1 fail-closed (dòng vẫn ghi, route_error); legal_updates chạy lại → 0 mục mới; tắt legal_hr-07 → không sinh cảnh báo legal_doc mới, không mục mới, luật khác (regulation) vẫn chạy",
+    "T4 không mạng ngoài (chỉ 127.0.0.1, socket guard), không gửi, không LLM (llm.enabled=false trong fixture nguồn; llm_usage 0 dòng)"
+   ],
+   "ca": [
+    {
+     "ma": "legal_hr-07__S01",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout + bật RSS giả",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "bg_start": "rss",
+       "argv": [
+        "python",
+        "-m",
+        "http.server",
+        "18793",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "{FX}/rss"
+       ]
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-07__C1",
+     "khac_r10": "ĐÍNH CHÍNH: expected 2 dòng → chính xác 1 dòng + 0 dòng tin lạc + bằng chứng bộ lọc (xem dinh_chinh_r10)",
+     "mo_ta": "thu RSS giả",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "crawler.intel",
+        "--run",
+        "--source",
+        "chinhphu-van-ban",
+        "--sources",
+        "{FX}/sources_it.json",
+        "--max-requests",
+        "5"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "chinhphu-van-ban: 2 tin, 1 đúng chủ đề, mới 1(.|\\n)*off_topic=1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from intel_items",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from intel_items where url like '%/van-ban/nd-thu-it-01' and source = 'chinhphu-van-ban' and title like 'Nghị định mới quy định quảng cáo thực phẩm bảo vệ sức khỏe%' and 'tpbvsk' = any(topics)",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from intel_items where url like '%tb-thu-it-02%' or title like 'Thông báo lịch họp%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-07__C2",
+     "mo_ta": "quét cảnh báo (chưa có người nhận độc lập)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "pipelines.intel_alert",
+        "--run"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from red_alerts where source_agent = 'intel_red_alert' and detail->'rules' ? 'legal_doc' and route_error is not null",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from red_alert_deliveries",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-07__C3",
+     "mo_ta": "đẩy hàng Pháp chế",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "pipelines.legal_updates",
+        "--submit"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'legal_doc_review' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue q join intel_items i on q.object_id = 'intel:' || i.id::text where q.object_type = 'legal_doc_review' and q.payload like '%Link: ' || i.url || '%' and q.payload like '%sha256 tiêu đề: ' || encode(sha256(convert_to(i.title, 'UTF8')), 'hex') || '%' and q.payload like '%KHÔNG diễn giải%' and q.payload like '%Nguồn: chinhphu-van-ban%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from llm_usage",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-07__C4",
+     "mo_ta": "chạy lại legal_updates",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "pipelines.legal_updates",
+        "--submit"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'legal_doc_review'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-07__C5",
+     "mo_ta": "tắt legal_hr-07; thu tin mới; quét; đẩy hàng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "legal_hr-07",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "crawler.intel",
+        "--run",
+        "--source",
+        "chinhphu-van-ban",
+        "--sources",
+        "{FX}/sources_it2.json",
+        "--max-requests",
+        "5"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "mới 1"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "pipelines.intel_alert",
+        "--run"
+       ],
+       "expect_exit": 1
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "pipelines.legal_updates",
+        "--submit"
+       ],
+       "expect_exit": [
+        1,
+        2
+       ]
+      },
+      {
+       "bg_stop": "rss"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from intel_items",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from red_alerts where source_agent = 'intel_red_alert' and detail->'rules' ? 'legal_doc'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from red_alerts r join intel_items i on r.detail->>'intel_item_id' = i.id::text where i.url like '%tt-thu-it-03' and r.detail->'rules' ? 'regulation' and not (r.detail->'rules' ? 'legal_doc')",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'legal_doc_review'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from llm_usage",
+       "expect": 0
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

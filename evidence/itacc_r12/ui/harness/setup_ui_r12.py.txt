@@ -1,0 +1,51 @@
+"""HARNESS r12 UI — dựng người/login thử cho DB UI (DB đã tạo bằng mkdb_r12 từ ĐÚNG cây đang kiểm). Login Postgres THẬT
+tạm, không owner/superuser: svc (in role svc_ui = login UI dùng chung), vuon (app_human, khối farming), sales
+(app_human, khối sales). Mật khẩu sinh ngẫu nhiên → <rt>/secrets.json (scratchpad, KHÔNG vào evidence).
+  python -I setup_ui_r12.py.txt <root> <owner_env_file_db_ui> <runtime_dir> <tag>"""
+import json
+import secrets
+import shutil
+import sys
+from pathlib import Path
+
+import psycopg
+from psycopg import conninfo
+
+ROOT, OWNER, RT, TAG = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), sys.argv[4]
+sys.path.insert(0, str(ROOT))
+from pipelines.auth import hash_password  # noqa: E402
+
+DSN = OWNER.read_text().split("'")[1]
+assert conninfo.conninfo_to_dict(DSN)["dbname"].startswith("samsam_itacc_r12_ui")
+PEOPLE = {   # mã → (người, khối human_logins, vai trò UI, login DB)
+    "vuon": ("Vườn UI R12", "farming", "ha_tang", "vuon"),
+    "lech": ("TGĐ Lệch Vườn UI R12", None, "tgd", "sales"),   # login của NGƯỜI KHÁC (khối sales)
+    "tgd1": ("TGĐ UI R12", None, "tgd", None),                 # chỉ xem/chat, không login DB
+}
+RT.mkdir(parents=True, exist_ok=True)
+sec = {"ui_pw": {}, "db_pw": {}, "login": {}}
+with psycopg.connect(DSN, autocommit=True, connect_timeout=5) as c:
+    for k in ("svc", "vuon", "sales"):
+        n = f"r12ui_{TAG}_{k}"
+        pw = secrets.token_urlsafe(16)
+        c.execute(f"drop role if exists {n}")
+        c.execute(f"create role {n} login password '{pw}' nosuperuser in role {'svc_ui' if k == 'svc' else 'app_human'}")
+        sec["db_pw"][k], sec["login"][k] = pw, n
+    c.execute("insert into human_logins (db_login, person, blocks, granted_by) values (%s, %s, '{farming}', 'ui-r12'),"
+              " (%s, 'Bán Hàng UI R12', '{sales}', 'ui-r12')", (sec["login"]["vuon"], PEOPLE["vuon"][0],
+                                                                 sec["login"]["sales"]))
+d = conninfo.conninfo_to_dict(DSN)
+d.update(user=sec["login"]["svc"], password=sec["db_pw"]["svc"])
+sec["svc_dsn"], sec["owner_dsn"] = conninfo.make_conninfo(**d), DSN
+cfg = RT / "cfg"
+shutil.rmtree(cfg, ignore_errors=True)
+shutil.copytree(ROOT / "data" / "directors", cfg / "directors")
+users = {}
+for k, (person, _blk, role, dbl) in PEOPLE.items():
+    pw = secrets.token_urlsafe(14)
+    sec["ui_pw"][k] = pw
+    users[person.casefold()] = {"role": role, "password_hash": hash_password(pw),
+                                "db_login": sec["login"].get(dbl) if dbl else None}
+(cfg / "users.json").write_text(json.dumps(users, ensure_ascii=False), encoding="utf-8")
+(RT / "secrets.json").write_text(json.dumps(sec, ensure_ascii=False), encoding="utf-8")
+print("setup ok:", {k: v[0] for k, v in PEOPLE.items()})

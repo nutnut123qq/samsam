@@ -1,0 +1,86 @@
+"""PROBE r12-fix D2 v1 — guardrail đăng bài công khai bỏ lọt SĐT cá nhân dạng NGOẶC. Không DB (psycopg.connect bị chặn),
+không mạng. Cùng mã/input/assertion cho baseline (snapshot working tree r12) và bản sửa.
+  python -I probe_d2.py.txt <ROOT> <out.json>
+Tiêu chí (khóa TRƯỚC khi sửa):
+- LỖI (baseline phải FAIL): "(0912) 345 678", "+84 (912) 345 678", "(0912) - (345) - (678)" trong bài đăng công khai trên
+  facebook/shopee/zalo/web → ok=False + mã pii_ca_nhan; chuỗi '(' bệnh lý trước SĐT ngoặc → vẫn chặn, < 3 giây.
+- ĐỐI CHỨNG (baseline + bản sửa đều PASS): SĐT/email cá nhân không ngoặc bị chặn; liên hệ công ty (pii_allow 0235 3699 899,
+  vnsamsam@gmail.com — kể cả dạng có phân cách/ngoặc vùng) + hotline 1800577732 / 1800 577 732 giữ ok; giá, khoảng giá, giá
+  trong ngoặc, ngày, mã SP, văn bản sạch không bị bắt nhầm; check() chat và content_type internal_note giữ phạm vi hiện hành
+  (không mã pii_ca_nhan). Mọi SĐT/email là GIẢ (0912345678, ban.thu@example.com)."""
+import json
+import os
+import sys
+import time
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG") or k in ("OPENROUTER_API_KEY", "DEPLOY"):
+        os.environ.pop(k, None)
+import psycopg  # noqa: E402
+
+psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm truy cập DB"))
+from pipelines import guardrail as g  # noqa: E402
+
+AI = "Nội dung có sử dụng AI."
+CH = ("facebook", "shopee", "zalo", "web")
+rows = []
+
+
+def pub(text, ch):
+    r = g.check_publish(text, channel=ch, content_type="post", is_ai=True)
+    return r["ok"], sorted({v.get("code") for v in r["violations"]})
+
+
+def case(nhom, ma, ok_cond, expected, actual):
+    rows.append({"nhom": nhom, "ca": ma, "ket_qua": "PASS" if ok_cond else "FAIL", "expected": expected,
+                 "actual": actual})
+
+
+for tag, phone in (("ngoac_vung", "(0912) 345 678"), ("ngoac_84", "+84 (912) 345 678"),
+                   ("ngoac_ba_nhom", "(0912) - (345) - (678)")):
+    res = {ch: pub(f"Gọi {phone} để đặt quà. {AI}", ch) for ch in CH}
+    case("LOI", f"chan_{tag}", all(not ok and "pii_ca_nhan" in codes for ok, codes in res.values()),
+         "ok=False + pii_ca_nhan trên mọi kênh", res)
+t0 = time.perf_counter()
+res = pub("(" * 5000 + f" (0912) 345 678 {AI}", "facebook")
+dt = round(time.perf_counter() - t0, 3)
+case("LOI", "chan_ngoac_benh_ly_nhanh", not res[0] and "pii_ca_nhan" in res[1] and dt < 3.0,
+     "chuỗi '(' bệnh lý trước SĐT ngoặc → chặn pii_ca_nhan, < 3 giây", {"ket_qua": res, "giay": dt})
+for tag, t in (("sdt_tran", "Gọi 0912345678 để đặt quà."), ("sdt_cach", "Gọi 0912 345 678 để đặt quà."),
+               ("email_ca_nhan", "Gửi đơn về ban.thu@example.com nhé.")):
+    res = {ch: pub(f"{t} {AI}", ch) for ch in CH}
+    case("DOI_CHUNG", f"chan_{tag}", all(not ok and "pii_ca_nhan" in codes for ok, codes in res.values()),
+         "ok=False + pii_ca_nhan trên mọi kênh", res)
+for tag, t in (("hotline", "Gọi hotline 1800577732 để được tư vấn."),
+               ("hotline_cach", "Gọi hotline 1800 577 732 để được tư vấn."),
+               ("cong_ty", "Showroom 0235 3699 899, email vnsamsam@gmail.com."),
+               ("cong_ty_cham", "Showroom 0235.3699.899."),
+               ("cong_ty_ngoac_vung", "Showroom (0235) 3699 899."),
+               ("gia", "Giá 1.500.000 đ, giao hàng toàn quốc."),
+               ("khoang_gia", "Giá từ 50.000.000 - 100.000.000 đ cho đơn doanh nghiệp."),
+               ("gia_ngoac", "Combo quà (1.500.000 đ)(2.000.000 đ) cho khách sỉ."),
+               ("ngay", "Giao từ 23/10/2026 đến 2026-10-30."),
+               ("ma_sp", "Hộp 10 củ, mã SP-2026-0301, quy cách (300ml)."),
+               ("sach", "Sâm Sâm gửi lời chúc mùa thu an lành.")):
+    res = {ch: pub(f"{t} {AI}", ch) for ch in CH}
+    case("DOI_CHUNG", f"giu_{tag}", all(ok and "pii_ca_nhan" not in codes for ok, codes in res.values()),
+         "ok=True, không pii_ca_nhan trên mọi kênh", res)
+chat = g.check("Gọi (0912) 345 678 nhé")
+case("DOI_CHUNG", "chat_check_khong_doi_pham_vi", chat["ok"] is True
+     and "pii_ca_nhan" not in {v.get("code") for v in chat["violations"]},
+     "check() chat không gắn pii_ca_nhan (SĐT do lớp PII kênh che riêng)", {"ok": chat["ok"]})
+note = g.check_publish("Gọi (0912) 345 678 cho khách.", channel="facebook", content_type="internal_note", is_ai=True)
+case("DOI_CHUNG", "internal_note_khong_doi_pham_vi", "pii_ca_nhan" not in {v.get("code") for v in note["violations"]},
+     "internal_note không gắn pii_ca_nhan (không công khai)", {"ok": note["ok"],
+                                                             "codes": sorted({v.get("code") for v in note["violations"]})})
+out = {"probe": "d2_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1))
+for r in rows:
+    print(r["ket_qua"], r["nhom"], r["ca"])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

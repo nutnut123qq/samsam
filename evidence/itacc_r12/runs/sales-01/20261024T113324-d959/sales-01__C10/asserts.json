@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) >= 1 from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director' and (payload ilike '%mật ong%' or payload ilike '%tiểu đường%' or payload ilike '%rượu%' or payload ilike '%mất ngủ%')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

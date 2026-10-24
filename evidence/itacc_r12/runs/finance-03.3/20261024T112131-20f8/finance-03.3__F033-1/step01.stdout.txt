@@ -1,0 +1,45 @@
+--- [dry-run] ar_reminder ar:IT-DL01:04c009901625 ---
+NHÁP THƯ NHẮC NỢ — chờ GĐ tài chính duyệt; kế toán điền placeholder và gửi tay. Agent KHÔNG gửi.
+
+Kính gửi: {{TEN_DAI_LY}} (mã đại lý IT-DL01)
+Người nhận: {{NGUOI_LIEN_HE}}
+
+Theo sổ công nợ của Công ty TNHH Sâm Sâm tính tới ngày 23/10/2026, quý đại lý còn các khoản đã quá hạn thanh toán sau:
+
+| Chứng từ | Ngày chứng từ | Hạn thanh toán | Số còn nợ | Quá hạn |
+|---|---|---|---|---|
+| HD-IT-001 | 01/07/2026 | 31/07/2026 | 7.000.000đ | 84 ngày |
+| HD-IT-002 | 10/09/2026 | 10/10/2026 | 5.000.000đ | 13 ngày |
+
+Tổng quá hạn: 12.000.000đ (tổng còn nợ: 14.000.000đ).
+
+Kính đề nghị quý đại lý thanh toán hoặc phản hồi đối chiếu trước ngày {{HAN_THANH_TOAN}}. Nếu đã thanh toán, xin bỏ qua thư này và gửi chứng từ để đối chiếu.
+
+Trân trọng,
+{{NGUOI_KY}} — Phòng kế toán Công ty TNHH Sâm Sâm
+
+---
+Căn cứ (nội bộ, không gửi kèm): sổ công nợ `dealer_ar` nạp tay — file ar_ok.csv (sha256 8031bc6d); ghi có trừ FIFO theo ngày chứng từ; hạn = due_date hoặc ngày chứng từ + 30 ngày (data/dealer_commission.json); trạng thái đại lý trong sổ: active. Nháp này thay nháp nhắc nợ cũ của cùng đại lý nếu còn chờ duyệt.
+--- [dry-run] ar_reminder ar:IT-DL03:2e56bb54af9b ---
+NHÁP THƯ NHẮC NỢ — chờ GĐ tài chính duyệt; kế toán điền placeholder và gửi tay. Agent KHÔNG gửi.
+
+Kính gửi: {{TEN_DAI_LY}} (mã đại lý IT-DL03)
+Người nhận: {{NGUOI_LIEN_HE}}
+
+Theo sổ công nợ của Công ty TNHH Sâm Sâm tính tới ngày 23/10/2026, quý đại lý còn các khoản đã quá hạn thanh toán sau:
+
+| Chứng từ | Ngày chứng từ | Hạn thanh toán | Số còn nợ | Quá hạn |
+|---|---|---|---|---|
+| HD-IT-005 | 05/10/2026 | 15/10/2026 | 1.000.000đ | 8 ngày |
+
+Tổng quá hạn: 1.000.000đ (tổng còn nợ: 1.000.000đ).
+
+Kính đề nghị quý đại lý thanh toán hoặc phản hồi đối chiếu trước ngày {{HAN_THANH_TOAN}}. Nếu đã thanh toán, xin bỏ qua thư này và gửi chứng từ để đối chiếu.
+
+Trân trọng,
+{{NGUOI_KY}} — Phòng kế toán Công ty TNHH Sâm Sâm
+
+---
+Căn cứ (nội bộ, không gửi kèm): sổ công nợ `dealer_ar` nạp tay — file ar_ok.csv (sha256 8031bc6d); ghi có trừ FIFO theo ngày chứng từ; hạn = due_date hoặc ngày chứng từ + 30 ngày (data/dealer_commission.json); trạng thái đại lý trong sổ: active. Nháp này thay nháp nhắc nợ cũ của cùng đại lý nếu còn chờ duyệt.
+[skip] IT-DL02: không có trong sổ đại lý `dealers` — không có căn cứ quan hệ để liên hệ, không soạn thư
+[reminders] tính tới 2026-10-23: 2 nháp (dry-run, không ghi), 1 bỏ qua — agent KHÔNG gửi thư

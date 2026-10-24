@@ -1,0 +1,73 @@
+"""Tổng hợp nghiệm thu kỹ thuật nội bộ r10: đọc evidence/itacc_r10/items/<id>.json, kiểm nhất
+quán (đủ 96 id, đúng 1 trạng thái, DAT không có ca FAIL/NOT_RUN, BI_CHAN có nguyên nhân + việc
+gỡ, CHUA_KIEM có ca NOT_RUN kèm lý do, hash evidence khớp file), in bảng + phân bố.
+Chạy: python -I aggregate.py  → in JSON tóm tắt; exit 1 nếu vi phạm nhất quán."""
+import collections
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = Path(r"D:\code\samsam")
+EV = ROOT / "evidence" / "itacc_r10"
+khung = {i["id"]: i for i in json.loads((EV / "criteria" / "khung.json").read_text(encoding="utf-8"))["items"]}
+OK = {"DAT", "CHUA_KIEM", "BI_CHAN"}
+rows, errs = [], []
+for fid, k in khung.items():
+    p = EV / "items" / f"{fid}.json"
+    if not p.exists():
+        errs.append(f"{fid}: THIẾU bản ghi")
+        continue
+    try:
+        r = json.loads(p.read_text(encoding="utf-8"))
+    except ValueError as e:
+        errs.append(f"{fid}: JSON hỏng {e}")
+        continue
+    st = r.get("trang_thai")
+    ca = r.get("ca") or []
+    kq = collections.Counter(c.get("ket_qua") for c in ca)
+    if r.get("id") != fid:
+        errs.append(f"{fid}: id trong file = {r.get('id')}")
+    if st not in OK:
+        errs.append(f"{fid}: trạng thái lạ {st}")
+    if not ca:
+        errs.append(f"{fid}: không có ca")
+    if st == "DAT" and (kq.get("FAIL") or kq.get("NOT_RUN") or not kq.get("PASS")):
+        errs.append(f"{fid}: DAT nhưng ca {dict(kq)}")
+    if st == "BI_CHAN" and not ((r.get("nguyen_nhan") or "").strip() and (r.get("can_de_go") or "").strip()):
+        errs.append(f"{fid}: BI_CHAN thiếu nguyên nhân/việc gỡ")
+    if st == "CHUA_KIEM" and not any(c.get("ket_qua") == "NOT_RUN" and (c.get("ly_do_not_run") or "").strip() for c in ca):
+        errs.append(f"{fid}: CHUA_KIEM không có ca NOT_RUN kèm lý do")
+    if kq.get("FAIL") and st != "BI_CHAN":
+        errs.append(f"{fid}: có ca FAIL nhưng trạng thái {st}")
+    for e in r.get("evidence") or []:
+        ep = ROOT / e.get("path", "") if not Path(e.get("path", "")).is_absolute() else Path(e["path"])
+        if not ep.exists() and ep.suffix == ".py" and ep.with_name(ep.name + ".txt").exists():
+            ep = ep.with_name(ep.name + ".txt")      # harness đổi đuôi, nội dung không đổi
+        if e.get("sha256") and ep.is_file() and hashlib.sha256(ep.read_bytes()).hexdigest() != e["sha256"]:
+            errs.append(f"{fid}: hash evidence lệch {e['path']}")
+        if not ep.exists():
+            errs.append(f"{fid}: evidence không tồn tại {e.get('path')}")
+    nn = (r.get("nguyen_nhan") or "").split(":")[0].split(" ")[0].strip() if st == "BI_CHAN" else ""
+    rows.append({"id": fid, "khoi": k["khoi"], "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"],
+                 "ten": k["ten"], "trang_thai": st, "muc_kiem": r.get("muc_kiem"),
+                 "ca": dict(kq), "nguyen_nhan": nn, "nguyen_nhan_day_du": r.get("nguyen_nhan") or "",
+                 "can_de_go": r.get("can_de_go") or "", "gioi_han": r.get("gioi_han") or "",
+                 "loi": r.get("loi_san_pham") or []})
+extra = sorted(p.stem for p in (EV / "items").glob("*.json") if p.stem not in khung)
+if extra:
+    errs.append(f"bản ghi ngoài danh mục: {extra}")
+tot = collections.Counter(r["trang_thai"] for r in rows)
+by_khoi = collections.defaultdict(collections.Counter)
+by_scope = collections.defaultdict(collections.Counter)
+for r in rows:
+    by_khoi[r["khoi"]][r["trang_thai"]] += 1
+    sc = f"AI {r['giai_doan']}" if r["pham_vi"] == "tinh_nang_ai" else "7 hạng mục khác"
+    by_scope[sc][r["trang_thai"]] += 1
+cause = collections.Counter(r["nguyen_nhan"] for r in rows if r["trang_thai"] == "BI_CHAN")
+out = {"mau_so": len(khung), "co_ban_ghi": len(rows), "tong": dict(tot), "theo_khoi": {k: dict(v) for k, v in by_khoi.items()},
+       "theo_pham_vi": {k: dict(v) for k, v in by_scope.items()}, "nguyen_nhan_bi_chan": dict(cause), "loi_nhat_quan": errs}
+(EV / "tong_hop.json").write_text(json.dumps({"tom_tat": out, "items": rows}, ensure_ascii=False, indent=1), encoding="utf-8")
+print(json.dumps(out, ensure_ascii=False, indent=1))
+sys.exit(1 if errs or len(rows) != 96 or sum(tot.values()) != 96 else 0)

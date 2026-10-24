@@ -1,0 +1,196 @@
+"""HARNESS r12 UI — Chromium (Playwright) thao tác app Streamlit THẬT đang chạy (AUTH_MODE=local, login UI = svc_ui thật,
+quyết định/ghi bằng login Postgres RIÊNG của người). Mỗi bước: ảnh chụp + đối chiếu DB (owner, chỉ đọc; riêng bước
+UI02_loi tạm REVOKE rồi GRANT lại quyền chunks của svc_ui để giả lập lỗi đọc). Cùng bước/assertion cho baseline và bản vá.
+Không in mật khẩu.   python -I drive_ui_r12.py.txt <runtime_dir> <out_dir> <port> <root>
+
+Tiêu chí (viết TRƯỚC khi chạy):
+- UI-01: tab Nhật ký vườn đọc được DB bằng svc_ui; chưa mở quyền → không ghi; mở quyền bằng login người khối farming →
+  ghi đúng 1 dòng, tác giả = người của login, có hash chain, chuỗi verify OK; mở quyền bằng login của NGƯỜI KHÁC → bị
+  từ chối, 0 dòng.
+- UI-02: tab Chat câu thường có trả lời, không lỗi quyền/traceback; câu sức khỏe chuyển người, SĐT bị che trong convlog;
+  lỗi đọc KB (giả lập) → câu thân thiện, KHÔNG hiện traceback/đường dẫn mã."""
+import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import psycopg
+from playwright.sync_api import sync_playwright
+
+sys.stdout.reconfigure(encoding="utf-8")
+RT, OUTD, PORT, ROOT = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3], Path(sys.argv[4])
+SHOTS = OUTD / "shots"
+SHOTS.mkdir(parents=True, exist_ok=False)
+SEC = json.loads((RT / "secrets.json").read_text(encoding="utf-8"))
+OWNER = SEC["owner_dsn"]
+
+URL = f"http://127.0.0.1:{PORT}"
+CONV = RT / "out" / "conversations.jsonl"
+USER = {"vuon": "vườn ui r12", "lech": "tgđ lệch vườn ui r12", "tgd1": "tgđ ui r12"}
+R = []
+BAD_UI = ("Traceback", 'File "', "InsufficientPrivilege", "permission denied")
+
+
+def db(sql, args=(), commit=False):
+    with psycopg.connect(OWNER, connect_timeout=5, autocommit=commit) as c:
+        cur = c.execute(sql, args)
+        return cur.fetchall() if cur.description else []
+
+
+def step(name, ok, page, **kw):
+    shot = SHOTS / f"{len(R) + 1:02d}_{name}.png"
+    page.screenshot(path=str(shot), full_page=True)
+    R.append({"step": name, "verdict": "PASS" if ok else "FAIL", "shot": shot.name, **kw})
+    print(f"{'PASS' if ok else 'FAIL'}  {name}  {json.dumps(kw, ensure_ascii=False, default=str)[:240]}", flush=True)
+
+
+def not_run(name, why):
+    R.append({"step": name, "verdict": "NOT_RUN", "ly_do": why})
+    print(f"NOT_RUN  {name}  {why}", flush=True)
+
+
+def idle(page, t=1.2):
+    page.wait_for_timeout(int(t * 1000))
+    for _ in range(60):
+        if not page.locator('[data-testid="stStatusWidget"]').is_visible():
+            break
+        page.wait_for_timeout(500)
+    page.wait_for_timeout(400)
+
+
+def login(page, who):
+    page.goto(URL)
+    page.get_by_label("Tên đăng nhập").wait_for(timeout=90000)
+    page.get_by_label("Tên đăng nhập").fill(USER[who])
+    page.get_by_label("Mật khẩu", exact=True).fill(SEC["ui_pw"][who])
+    page.get_by_role("button", name="Đăng nhập").click()
+    idle(page, 2)
+
+
+def logout(page):
+    page.get_by_role("button", name="Đăng xuất").click()
+    idle(page)
+
+
+def tab(page, name):
+    page.get_by_role("tab", name=name).click()
+    idle(page, 0.8)
+
+
+def text(page):
+    return page.locator("body").inner_text()
+
+
+def unlock(page, pw):
+    tab(page, "Duyệt & Lịch")
+    page.get_by_label("Mật khẩu Postgres").fill(pw)
+    page.get_by_role("button", name="Mở quyền quyết định").click()
+    idle(page, 2)
+
+
+def n_logs():
+    return db("select count(*) from plot_logs")[0][0]
+
+
+def verify_chain():
+    env = {k: v for k, v in os.environ.items() if not k.endswith("DATABASE_URL") and not k.startswith("PG")}
+    env.update(DATABASE_URL=OWNER, PYTHONIOENCODING="utf-8", OPENROUTER_API_KEY="")
+    p = subprocess.run([sys.executable, "-m", "agents.garden_director", "--verify"], cwd=ROOT, env=env,
+                       capture_output=True, encoding="utf-8", errors="replace", timeout=120)
+    return p.returncode, (p.stdout + p.stderr).strip().splitlines()[-1:]
+
+
+def chat(page, q, n_before):
+    box = page.get_by_placeholder("Hỏi về Sâm Sâm...")
+    box.fill(q)
+    box.press("Enter")
+    idle(page, 4)
+    for _ in range(60):
+        if page.locator('[data-testid="stChatMessage"]').count() >= n_before + 2:
+            break
+        page.wait_for_timeout(500)
+    return page.locator('[data-testid="stChatMessage"]').count()
+
+
+with sync_playwright() as p:
+    br = p.chromium.launch()
+    page = br.new_page(viewport={"width": 1400, "height": 1000})
+    page.set_default_timeout(60000)
+    try:
+        # ---------------- UI-01
+        login(page, "vuon")
+        tab(page, "Nhật ký vườn")
+        t = text(page)
+        readable = "Lỗi đọc DB" not in t and page.get_by_role("button", name="Ghi nhật ký").count() == 1
+        step("UI01_tab_vuon_doc_duoc_db_bang_svc_ui", readable, page,
+             actual="form hiện" if readable else ("Lỗi đọc DB" if "Lỗi đọc DB" in t else "không có form"))
+        if not readable:
+            for m in ("UI01_chua_mo_quyen_khong_ghi", "UI01_ghi_bang_login_nguoi_farming",
+                      "UI01_login_nguoi_khac_bi_chan"):
+                not_run(m, "tab Nhật ký vườn không đọc được DB")
+        else:
+            n0 = n_logs()
+            page.get_by_role("button", name="Ghi nhật ký").click()
+            idle(page, 2)
+            step("UI01_chua_mo_quyen_khong_ghi", n_logs() == n0, page, them=n_logs() - n0)
+            unlock(page, SEC["db_pw"]["vuon"])
+            tab(page, "Nhật ký vườn")
+            page.get_by_label("Chi tiết").fill("tưới nước khoảnh thử UI r12")
+            page.get_by_role("button", name="Ghi nhật ký").click()
+            idle(page, 2)
+            last = db("select author, row_hash is not null, source, detail from plot_logs order by id desc limit 1")[0]
+            rc, vtail = verify_chain()
+            step("UI01_ghi_bang_login_nguoi_farming", n_logs() == n0 + 1 and last[0] == "Vườn UI R12" and last[1]
+                 and last[3] == "tưới nước khoảnh thử UI r12" and rc == 0, page,
+                 dong={"author": last[0], "co_hash": last[1], "source": last[2]}, verify=[rc, vtail])
+            logout(page)
+            login(page, "lech")
+            unlock(page, SEC["db_pw"]["sales"])
+            t_un = text(page)
+            tab(page, "Nhật ký vườn")
+            n1 = n_logs()
+            page.get_by_label("Chi tiết").fill("ghi thử bằng login người khác r12")
+            page.get_by_role("button", name="Ghi nhật ký").click()
+            idle(page, 2)
+            step("UI01_login_nguoi_khac_bi_chan", n_logs() == n1, page, them=n_logs() - n1,
+                 mo_quyen_bi_tu_choi=("thuộc người khác" in t_un))
+        logout(page)
+        # ---------------- UI-02
+        login(page, "tgd1")
+        tab(page, "Chat Sâm Sâm")
+        n_conv0 = len(CONV.read_text(encoding="utf-8").splitlines()) if CONV.exists() else 0
+        n = chat(page, "Sâm Ngọc Linh trồng ở đâu?", 0)
+        t1 = text(page)
+        step("UI02_chat_cau_thuong_co_tra_loi", n >= 2 and not any(b in t1 for b in BAD_UI), page,
+             so_tin=n, loi_tren_trang=[b for b in BAD_UI if b in t1])
+        n2 = chat(page, "Uống sâm có chữa khỏi bệnh ung thư không, số tôi 0900000123", n)
+        conv = CONV.read_text(encoding="utf-8").splitlines() if CONV.exists() else []
+        lastc = json.loads(conv[-1]) if conv else {}
+        body = text(page)
+        step("UI02_chat_suc_khoe_chuyen_nguoi_che_pii", n2 >= n + 2 and len(conv) >= n_conv0 + 2
+             and "0900000123" not in " ".join(conv) and lastc.get("answered") is False
+             and ("hotline" in body or "nhân viên" in body) and not any(b in body for b in BAD_UI), page,
+             convlog_moi=len(conv) - n_conv0)
+        had = db("select has_table_privilege('svc_ui', 'chunks', 'select')")[0][0]
+        db("revoke select on chunks from svc_ui", commit=True)
+        try:
+            n3 = chat(page, "Hộp quà Tết có những loại nào?", n2)
+            t3 = text(page)
+            step("UI02_loi_doc_kb_khong_lo_traceback", n3 >= n2 + 2 and not any(b in t3 for b in ("Traceback", 'File "')),
+                 page, so_tin=n3, co_traceback=[b for b in ("Traceback", 'File "') if b in t3])
+        finally:
+            if had:   # chỉ trả lại quyền vốn có (baseline không có thì giữ nguyên)
+                db("grant select on chunks to svc_ui", commit=True)
+        logout(page)
+    except Exception:
+        page.screenshot(path=str(SHOTS / "zz_loi_harness.png"), full_page=True)
+        (OUTD / "ui_results.json").write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+        raise
+    br.close()
+
+(OUTD / "ui_results.json").write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+nf = sum(r["verdict"] != "PASS" for r in R)
+print(f"TỔNG {len(R)} bước, không PASS {nf} · {time.strftime('%Y-%m-%dT%H:%M:%S')}")
+sys.exit(1 if nf else 0)

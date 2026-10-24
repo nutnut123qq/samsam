@@ -1,0 +1,5 @@
+import json, sys
+# res.py ID MA KQ EXIT TAG "actual"
+i, ma, kq, ex, tag, actual = sys.argv[1:7]
+with open(sys.argv[0].replace("res.py", "results.jsonl"), "a", encoding="utf-8") as f:
+    f.write(json.dumps({"id": i, "ma": ma, "ket_qua": kq, "exit": ex, "tag": tag, "actual": actual}, ensure_ascii=False) + "\n")

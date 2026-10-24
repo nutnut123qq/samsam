@@ -1,0 +1,31 @@
+"""HARNESS r12 — tạo criteria/r12_prod_legal_v2.json từ r12_prod_legal.json (đã khóa, KHÔNG sửa) + khóa mới.
+Đổi DUY NHẤT 1 assertion của ca legal_hr-06.2__06.2-C1 (lỗi TIÊU CHÍ, không phải sản phẩm): v1 dùng `p ~* '(Ứng Viên|…)'`
+(KHÔNG phân biệt hoa thường) nên khớp nhãn cột mẫu "Mã ứng viên" của bảng xếp hạng — kiểm tay payload lượt
+20261024T112556-b430: 2 chỗ khớp đều là nhãn "Mã ứng viên", KHÔNG có tên/SĐT/email/tên file thật. v2: tên người kiểm
+ĐÚNG chuỗi trong fixture "Ứng Viên Thử IT" (phân biệt hoa thường, `~`); SĐT/email/tên file giữ nguyên (ung-vien viết
+thường — không trùng nhãn có dấu). Kỳ vọng v1 giữ ở 'ky_vong_v1'.  python -I mk_prod_legal_v2.py.txt <fingerprint_code>"""
+import datetime
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+C = Path(__file__).resolve().parents[1] / "criteria"
+d = json.loads((C / "r12_prod_legal.json").read_text(encoding="utf-8"))
+d["_doc"] = ("v2 (điều phối viên 24/10/2026): chỉ đổi 1 assertion PII của legal_hr-06.2__06.2-C1 — regex không phân biệt hoa "
+             "thường bắt nhầm nhãn 'Mã ứng viên'; xem docstring evidence/itacc_r12/harness/mk_prod_legal_v2.py.txt. | "
+             + d["_doc"])
+d["fingerprint_code"] = sys.argv[1]
+it = next(i for i in d["items"] if i["id"] == "legal_hr-06.2")
+c = next(x for x in it["ca"] if x["ma"] == "legal_hr-06.2__06.2-C1")
+k = next(x for x in c["kiem"] if "Ứng Viên" in x.get("sql", ""))
+c["ky_vong_v1"] = dict(k)
+k["sql"] = k["sql"].replace("p ~* '(Ứng Viên|0900000|example\\.com|ung-vien|a-it@)'",
+                            "p ~ '(Ứng Viên Thử IT|0900000|example\\.com|ung-vien|a-it@)'")
+assert k["sql"] != c["ky_vong_v1"]["sql"], "không thay được assertion"
+s = json.dumps(d, ensure_ascii=False, indent=1)
+(C / "r12_prod_legal_v2.json").write_text(s, encoding="utf-8", newline="\n")
+h = hashlib.sha256(s.encode("utf-8")).hexdigest()
+(C / "r12_prod_legal_v2.lock.txt").write_text(
+    f"r12_prod_legal_v2.json {h} {datetime.datetime.now().astimezone().isoformat(timespec='seconds')}\n", encoding="utf-8")
+print(h)

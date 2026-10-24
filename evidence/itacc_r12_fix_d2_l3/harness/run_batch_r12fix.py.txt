@@ -1,0 +1,57 @@
+# r12-fix: bản sao run_batch_r12.py.txt — evidence/itacc_r12_fix_d2_l3, scratchpad r12fix, mkdb/runner r12fix.
+"""HARNESS r12 — chạy tiêu chí đã khóa cho danh sách mục: mỗi mục dựng DB MỚI (mkdb_r12: schema/roles ×2 + core +
+golden bằng working tree) rồi gọi runner_r12 (runner tự từ chối nếu hash ≠ khóa / DB ≠ DB của mục). Song song N luồng.
+Log gộp mỗi mục: evidence/itacc_r12/runs/batch/<lot>/<id>.txt (mở 'x'); log gốc từng ca do runner ghi dưới runs/<id>/<run_id>/.
+python -I run_batch_r12.py.txt <lot> <so_luong> <criteria_file>:<id> [...]"""
+import concurrent.futures
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r12_fix_d2_l3"
+SP = Path(r"C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12fix")
+lot, n = sys.argv[1], int(sys.argv[2])
+jobs = [a.split(":", 1) for a in sys.argv[3:]]
+OUT = EV / "runs" / "batch" / lot
+OUT.mkdir(parents=True, exist_ok=True)
+BASE = {k: v for k, v in os.environ.items() if not (k.startswith("PG") or k.endswith("DATABASE_URL") or k in (
+    "AUTH_MODE", "APPROVAL_ENFORCE", "DEPLOY", "LLM_KILL_FEATURES", "RED_ALERT_NOTIFY", "ITACC_ADMIN"))}
+BASE["PYTHONIOENCODING"] = "utf-8"
+# "bash" trên PATH của tiến trình Python Windows có thể là bash WSL (lô lo1 hỏng) — gọi Git Bash tường minh
+GITBASH = r"C:\Program Files\Git\usr\bin\bash.exe"
+
+
+def one(crit, fid):
+    import json
+    c = EV / "criteria" / crit
+    item = next(i for i in json.loads(c.read_text(encoding="utf-8"))["items"] if i["id"] == fid)
+    db, env_f = item["db"], SP / "secret" / f"env_{item['db']}.sh"
+    log = open(OUT / f"{fid}.txt", "x", encoding="utf-8")
+    t0 = time.strftime("%Y-%m-%dT%H:%M:%S")
+    p1 = subprocess.run([GITBASH, str(EV / "harness" / "mkdb_r12fix.sh.txt"), "/d/code/samsam", db,
+                         str(SP / "secret" / "admin.sh"), str(env_f), str(EV / "runs" / f"dung_db_{db}.txt")],
+                        cwd=REPO, env=BASE, capture_output=True, encoding="utf-8", errors="replace", timeout=900)
+    log.write(f"# {fid} · tiêu chí {crit} · DB {db} · bắt đầu {t0}\n## mkdb exit {p1.returncode}\n{p1.stdout[-800:]}"
+              f"{p1.stderr[-800:]}\n")
+    if p1.returncode != 0:
+        log.write("KHONG_CHAY: dựng DB lỗi\n")
+        log.close()
+        return fid, "MKDB_LOI"
+    p2 = subprocess.run([sys.executable, "-I", str(EV / "harness" / "runner_r12fix.py.txt"), str(c),
+                         str(c.with_name(c.name.replace(".json", ".lock.txt"))), fid, str(env_f)],
+                        cwd=REPO, env=BASE, capture_output=True, encoding="utf-8", errors="replace", timeout=7200)
+    log.write(f"## runner exit {p2.returncode} · kết thúc {time.strftime('%Y-%m-%dT%H:%M:%S')}\n{p2.stdout}\n"
+              f"--- stderr ---\n{p2.stderr[-3000:]}\n")
+    log.close()
+    last = [x for x in p2.stdout.splitlines() if x.startswith("RUN ")]
+    return fid, last[-1] if last else f"RUNNER_EXIT_{p2.returncode}"
+
+
+with concurrent.futures.ThreadPoolExecutor(n) as ex:
+    for fut in concurrent.futures.as_completed([ex.submit(one, c, f) for c, f in jobs]):
+        fid, res = fut.result()
+        print(fid, res, flush=True)

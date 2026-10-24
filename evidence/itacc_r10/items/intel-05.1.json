@@ -1,0 +1,112 @@
+{
+ "id": "intel-05.1",
+ "ten": "Thử thông điệp trên khách hàng giả lập",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Giả lập khách hàng: 'Thử thông điệp ... trên khách hàng giả lập'",
+ "tieu_chi": [
+  "T1 `python scripts/persona_sim.py --dry-run` exit 0",
+  "T2 sim_runs có dòng dry_run=true của run_id, 0 lời gọi LLM thật; báo cáo khoảng p10/p50/p90 + cờ đối chứng",
+  "T3 ca âm: không --dry-run → exit 2 (DPIA chưa ký) 0 dòng; --config giả dpia true vẫn exit 2; tắt → không ghi",
+  "T4 không gọi LLM/dịch vụ ngoài; chạy thật chờ DPIA + provider (BI_CHAN EXTERNAL_INPUT)"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_intel; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: gateway LLM GIẢ của chính sản phẩm (--dry-run)",
+ "dau_vao": [
+  {
+   "ten": "cfg/sim_config_dpia_true.json",
+   "sha256": "972d206d3ceda1c731a8929437a0282c3ee4d85b8a82dd6dd295badb3d7bc12b",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Dry-run",
+   "lenh": "python scripts/persona_sim.py --dry-run",
+   "expected": "exit 0; sim_runs +N dòng dry_run=true",
+   "actual": "dry-run: gateway GIẢ, 45 lời gọi giả, 180 dòng sim_runs dry_run=true 1 run_id; báo cáo p10–p90/p50/phân tán; đối chứng yếu thấp nhất 45/45 (≥80%); llm_usage 0 dòng",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Chạy thật khi DPIA chưa ký",
+   "lenh": "python scripts/persona_sim.py",
+   "expected": "exit 2, 0 dòng",
+   "actual": "[refuse] DPIA chưa ký — exit 2, sim_runs vẫn 180",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "--config giả dpia_signed=true",
+   "lenh": "python scripts/persona_sim.py --config evidence/itacc_r10/g1/harness/cfg/sim_config_dpia_true.json",
+   "expected": "exit 2, 0 dòng",
+   "actual": "--config bản sao dpia_signed=true vẫn [refuse] (cờ đọc từ file chuẩn) — exit 2, 0 dòng",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Tắt",
+   "lenh": "python scripts/persona_sim.py --dry-run",
+   "expected": "exit ≠0, 0 dòng; bật lại",
+   "actual": "tắt intel-05.1 → [blocked] exit 2, sim_runs vẫn 180; bật lại",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "EXTERNAL_INPUT",
+ "can_de_go": "Pháp chế + TGĐ ký DPIA/TIA rồi NGƯỜI đổi dpia_signed; hạ tầng mở provider_only đủ 3 nhà cung cấp + key OpenRouter cho chạy thật",
+ "gioi_han": "Chỉ kiểm dry-run (số giả) + các cổng chặn; chạy thật (đầu ra thiết yếu) chưa thực hiện được",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/cfg/sim_config_dpia_true.json",
+   "sha256": "972d206d3ceda1c731a8929437a0282c3ee4d85b8a82dd6dd295badb3d7bc12b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel051_C01.txt",
+   "sha256": "5b881fdeb6fe5c15282e03425f774ebad5a292f027af2f5d6722975821de89a2"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel051_C02.txt",
+   "sha256": "5832a12ce0903011278e4f0cc138f1462688a5b4f7e7b222fe070227e38defb9"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel051_C03.txt",
+   "sha256": "22f9ab6dd7defd50fd83c1b1d867ffb9438fda80fd21933541c0f670f49b9b1f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel051_C04.txt",
+   "sha256": "a8e91e7c049284c0ab403e9078c2838008736101c513d01b01b42feed541051b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel051_C04a.txt",
+   "sha256": "339e63fad1d3431554570d75858ca6ab84482f230908d2341c07c88e7b8f826d"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel051_C04b.txt",
+   "sha256": "f6c4e276a722e75b122549223da3998af5b6fed61aa88fb07318f23008486a5e"
+  }
+ ],
+ "loi_san_pham": [],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

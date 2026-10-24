@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select (select report_sha256 from revenue_quarters order by id desc limit 1) = (select sha256 from report_outputs where feature_id = 'finance-06' and name = 'doi-soat-2026-Q3.md' order by id desc limit 1)",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

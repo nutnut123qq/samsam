@@ -34,7 +34,7 @@ from pathlib import Path
 
 from agents import kd_listing as kl
 from agents.fp_pnl import cogs_at, fetch_versions
-from agents.kd_price import load_net_ratio, promotable_set
+from agents.kd_price import load_net_ratio
 from ingest.lead_store import connect
 from pipelines import director, guardrail
 from pipelines.period import VN_TZ
@@ -65,6 +65,16 @@ def load_cfg(path=CFG_FILE) -> dict:
     return {"pcts": sorted(set(pcts)), "step": step, "channels": chs,
             "status": str(d.get("status") or ""),
             "chot_boi": d.get("chot_boi")}
+
+
+def allowed_set(conn) -> set:
+    """r12 G1-L6: (sku, kênh) được phép nói/bán theo READINESS (view
+    `sku_readiness` TP_THUONG/QC_DAY_DU) — KHÔNG dùng `v_promotable` vì view
+    đó còn đòi giá list đã duyệt, làm SKU chỉ thiếu giá bị gắn nhầm
+    `nhom_han_che` (nhánh `thieu_du_lieu` không bao giờ tới)."""
+    return {(k, ch) for k, ch in conn.execute(
+        "select sku_key, channel from sku_readiness"
+        " where readiness in ('TP_THUONG', 'QC_DAY_DU')")}
 
 
 def evaluate(items, prices, promotable, cogs, net, cfg, ch, today) -> dict:
@@ -121,7 +131,7 @@ def _payload(key, name, ch, r, cfg) -> str:
 def propose(conn, today: date, cfg: dict, net) -> list[dict]:
     """CHỈ SELECT → [{combo, channel, status, item?}]."""
     prices = kl.golden_prices(conn, today)
-    promotable = promotable_set(conn)
+    promotable = allowed_set(conn)
     cogs = fetch_versions(conn)
     out = []
     for key, name, chans, src in conn.execute(

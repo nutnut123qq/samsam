@@ -1,0 +1,25 @@
+# P&L theo SKU × kênh — tháng 09/2026
+
+**BẢN NHÁP — chỉ thành chính thức khi GĐ tài chính ký.**
+
+Nguồn: thực nhận quyết toán sàn (`settlement_rows`, theo ngày quyết toán giờ VN) phân bổ theo dòng đơn sàn; giá vốn = dòng ĐÃ duyệt (`cogs_versions`) hiệu lực tại ngày quyết toán.
+
+| SKU | Kênh | Doanh thu | Khấu trừ sàn | Hoàn | Thực nhận | Giá vốn | Lãi gộp | Biên gộp |
+|---|---|---|---|---|---|---|---|---|
+| `mat-ong-sam-120ml-1hu` | shopee | 700.000đ | 84.000đ | 0đ | 616.000đ | 200.000đ | 416.000đ | 59.4% |
+| `sapentol-30v` | shopee | 1.000.000đ | 120.000đ | 0đ | 880.000đ | 400.000đ | 480.000đ | 48.0% |
+| `sapentol-30v` | tiktok | 500.000đ | 60.000đ | 0đ | 440.000đ | 400.000đ | 40.000đ | 8.0% |
+| `saphraton-20v` | shopee | 400.000đ | 48.000đ | 400.000đ | -48.000đ | chưa có giá vốn duyệt | — | — |
+| `savigout-30v` | shopee | 200.000đ | 0đ | 200.000đ | 0đ | chưa có giá vốn duyệt | — | — |
+| `savina-12v` | shopee | 600.000đ | 72.000đ | 0đ | 514.000đ | 200.000đ | 314.000đ | 52.3% |
+
+- Tổng thực nhận: 2.402.000đ (7 dòng quyết toán trong tháng — khớp tổng thực nhận ACC-Recon)
+- Tổng lãi gộp (chỉ ô có giá vốn duyệt): 1.250.000đ
+- 2 SKU bị loại vì chưa có giá vốn duyệt: `saphraton-20v`, `savigout-30v`
+- Dòng chưa thấy đơn sàn (vào ô (chưa rõ SKU)): 0; dòng hoàn: 2
+- Dòng thiếu ngày quyết toán (không vào tháng nào): 0
+- GIẢ ĐỊNH thận trọng: dòng hoàn vẫn tính giá vốn theo số lượng đơn (hàng hoàn nhập kho lại chưa có nguồn).
+- Chưa có doanh thu đại lý/B2B (MISA — external-dep): P&L chỉ kênh sàn.
+- **BẤT THƯỜNG** shopee: khoản quyết toán xuất lại ở ≥2 file (chồng kỳ) — trùng nguyên văn 1 (tính 1 lần), lệch số 1 (giữ cả hai, chờ người đối soát): qt_shopee_s1.csv, qt_shopee_s2.csv
+
+[pnl] → pnl-2026-09.md (BẢN NHÁP, không tự gửi)

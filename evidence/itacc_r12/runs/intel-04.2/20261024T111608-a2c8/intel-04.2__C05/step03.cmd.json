@@ -1,0 +1,32 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "scripts/intel_weekly.py",
+  "--suggest-keywords",
+  "--import",
+  "2"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:16:42+07:00",
+ "ket_thuc": "2026-10-24T11:16:47+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*intel-04\\.2",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "c0c3379699014c959b3f8c2574a1e4d322dbe78e437122f98b77f161ee6de7c1",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

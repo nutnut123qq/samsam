@@ -1,0 +1,24 @@
+"""HARNESS farming-02.x — chạy agents.garden_director.main THẬT với:
+  --staff F       : zalo_garden.STAFF_FILE = fixture (người phụ trách khoảnh)
+  --remind-cfg F  : load_remind_cfg mặc định = fixture (kênh thu_cong) — FIXTURE
+  --force-mode M  : pipelines.rollout._FORCE_MODE (FIXTURE, chỉ khi ghi rõ)
+Còn lại chuyển nguyên cho main()."""
+import sys
+from pathlib import Path
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+argv = sys.argv[1:]
+def pop(flag):
+    if flag in argv:
+        i = argv.index(flag); v = argv[i + 1]; del argv[i:i + 2]; return v
+staff, cfg, fm = pop("--staff"), pop("--remind-cfg"), pop("--force-mode")
+from connectors import zalo_garden
+from agents import garden_director as gd
+if staff:
+    zalo_garden.STAFF_FILE = Path(staff); print(f"[HARNESS] STAFF_FILE=fixture {Path(staff).name}")
+if cfg:
+    gd.load_remind_cfg.__defaults__ = (Path(cfg),); print(f"[HARNESS] remind cfg=fixture {Path(cfg).name}")
+if fm:
+    from pipelines import rollout; rollout._FORCE_MODE = fm; print(f"[FIXTURE] rollout._FORCE_MODE={fm}")
+raise SystemExit(gd.main(argv))

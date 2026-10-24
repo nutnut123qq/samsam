@@ -1,0 +1,53 @@
+"""r12 — bản sao launcher r10, ROOT lấy từ UI_ROOT. Chạy app/streamlit_app.py THẬT. Chỉ thay 2 thứ: thư mục directors tạm (người
+duyệt giả), client AI GIẢ (không gọi AI thật, không mạng), và (r10) đường dẫn
+convlog/báo cáo → thư mục thử UI_TEST_OUT."""
+import os
+import runpy
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+ROOT = os.environ["UI_ROOT"]   # r12: cây mã đang kiểm (baseline snapshot | working tree)
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+from psycopg import conninfo  # noqa: E402
+
+# fail-closed: chỉ chạy trên ĐÚNG DB thử của lượt (không bao giờ .env/samsam)
+_db = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "").get("dbname")
+if not os.environ.get("UI_TEST_DB") or _db != os.environ["UI_TEST_DB"]:
+    raise SystemExit("ABORT: DATABASE_URL không trỏ DB thử của lượt")
+from pipelines import auth  # noqa: E402
+from pipelines import llm_gateway as gw  # noqa: E402
+
+auth.DIRECTORS_DIR = Path(os.environ["UI_TEST_DIRECTORS"])
+# r10: mọi file ghi của app → thư mục thử (không ghi data/ của repo)
+import functools  # noqa: E402
+from agents import report as _rep  # noqa: E402
+from connectors import zalo as _z  # noqa: E402
+_OUT = Path(os.environ['UI_TEST_OUT'])
+_z.CONV_LOG = _OUT / 'conversations.jsonl'
+if not getattr(_rep, '_it_patched', False):
+    _rep.generate = functools.partial(_rep.generate, out_dir=_OUT / 'reports')
+    _rep.list_reports = functools.partial(_rep.list_reports, out_dir=_OUT / 'reports')
+    _rep._it_patched = True
+
+
+class _Fake:
+    def __init__(self):
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._chat))
+        self.embeddings = SimpleNamespace(create=self._emb)
+
+    def _chat(self, **kw):
+        return SimpleNamespace(
+            usage=SimpleNamespace(prompt_tokens=10, completion_tokens=10),
+            choices=[SimpleNamespace(message=SimpleNamespace(
+                content="Sâm Sâm gửi lời chào mùa thu tới khách hàng thân thiết."))])
+
+    def _emb(self, **kw):
+        n = len(kw["input"]) if isinstance(kw["input"], list) else 1
+        return SimpleNamespace(usage=SimpleNamespace(prompt_tokens=1, completion_tokens=0),
+                               data=[SimpleNamespace(embedding=[1.0, 0.0])] * n)
+
+
+gw._client = lambda: _Fake()
+runpy.run_path(str(Path(ROOT) / "app" / "streamlit_app.py"), run_name="__main__")

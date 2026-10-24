@@ -1,0 +1,47 @@
+2026-10-23 10:54:39.396 Uvicorn server started on 127.0.0.1:8610
+
+  You can now view your Streamlit app in your browser.
+
+  URL: http://127.0.0.1:8610
+
+2026-10-23 10:56:24.241 Uncaught app execution
+Traceback (most recent call last):
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r7\venv_ui\Lib\site-packages\streamlit\runtime\scriptrunner\exec_code.py", line 136, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r7\venv_ui\Lib\site-packages\streamlit\runtime\scriptrunner\script_runner.py", line 924, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r10\ui\launcher.py", line 53, in <module>
+    runpy.run_path(str(Path(ROOT) / "app" / "streamlit_app.py"), run_name="__main__")
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\code\samsam\app\streamlit_app.py", line 219, in <module>
+    r = answer(
+        ^^^^^^^
+  File "D:\code\samsam\api\rag.py", line 442, in answer
+    hits = (retrieve(search_q, feature=feature) if deadline is None
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\api\rag.py", line 332, in retrieve
+    return retrieve_by_vector(qv, k, collection=collection, backend=backend,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\api\rag.py", line 311, in retrieve_by_vector
+    rows, scores = _rank_float8(conn, sql, params, qv)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\api\rag.py", line 228, in _rank_float8
+    rows = conn.execute(sql, params).fetchall()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r7\venv_ui\Lib\site-packages\psycopg\connection.py", line 304, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table chunks
+2026-10-23 10:56:28.670 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-10-23 10:56:37.802 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.

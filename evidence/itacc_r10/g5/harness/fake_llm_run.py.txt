@@ -1,0 +1,56 @@
+"""HARNESS — fake transport ở BIÊN của cổng LLM: thay `pipelines.llm_gateway._client`
+(điểm duy nhất tạo OpenAI client) bằng FakeClient tất định, KHÔNG mạng/OpenRouter.
+Mọi kiểm cổng (kill/cap/PII/llm_usage) vẫn là code thật. Payload gửi tới transport
+được ghi vào --log (JSONL) để assert che PII.
+  python fake_llm_run.py <module> [--log F] [--patch ATTR=PATH] -- <args>"""
+import hashlib, importlib, inspect, json, sys
+from pathlib import Path
+from types import SimpleNamespace as NS
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+mod_name, rest = sys.argv[1], sys.argv[2:]
+sep = rest.index("--") if "--" in rest else len(rest)
+opts, argv = rest[:sep], rest[sep + 1:]
+log = None
+patches = []
+i = 0
+while i < len(opts):
+    if opts[i] == "--log": log = Path(opts[i + 1]); i += 2
+    elif opts[i] == "--patch": patches.append(opts[i + 1].split("=", 1)); i += 2
+    else: raise SystemExit(f"opt lạ {opts[i]}")
+from pipelines import llm_gateway as gw
+CALLS = []
+def _rec(kind, kw):
+    CALLS.append(kind)
+    if log:
+        with log.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({"kind": kind, "model": kw.get("model"),
+                                "payload": kw.get("messages") or kw.get("input")}, ensure_ascii=False) + "\n")
+def _vec(t):
+    h = hashlib.sha256(t.encode()).digest()
+    return [b / 255 for b in h[:16]]
+class _Emb:
+    def create(self, **kw):
+        _rec("embed", kw)
+        inp = kw["input"] if isinstance(kw["input"], list) else [kw["input"]]
+        return NS(data=[NS(embedding=_vec(t)) for t in inp],
+                  usage=NS(prompt_tokens=sum(len(t) // 4 + 1 for t in inp), completion_tokens=0))
+class _Chat:
+    def create(self, **kw):
+        _rec("chat", kw)
+        return NS(choices=[NS(message=NS(content="Trả lời giả lập thử IT."))],
+                  usage=NS(prompt_tokens=10, completion_tokens=5))
+gw._client = lambda: NS(embeddings=_Emb(), chat=NS(completions=_Chat()))
+import os
+if not os.environ.get("OPENROUTER_API_KEY"):
+    os.environ["OPENROUTER_API_KEY"] = "FAKE-KHONG-DUNG"  # chỉ qua load_env của loader; _client đã bị thay → không mạng
+print("[HARNESS] llm_gateway._client = FakeClient (không mạng); OPENROUTER_API_KEY giả chỉ trong tiến trình harness")
+mod = importlib.import_module(mod_name)
+for k, v in patches:
+    setattr(mod, k, Path(v)); print(f"[HARNESS] {mod_name}.{k} -> {Path(v).name}")
+try:
+    rc = mod.main(argv) if inspect.signature(mod.main).parameters else mod.main()
+finally:
+    print(f"[HARNESS] số lời gọi transport giả: {len(CALLS)} {sorted(set(CALLS))}")
+raise SystemExit(rc)

@@ -1,0 +1,30 @@
+# ca F041-6
+# gio 2026-10-23T10:46:38+07:00
+# lenh python evidence/itacc_r10/g4/harness/run.py --reports-dir evidence/itacc_r10/g4/out/rep_tat -- agents.fp_pnl --pnl --month 2026-08
+# exit 1
+--- stdout ---
+[harness] REPORTS_DIR -> rep_tat/ (vá biên)
+
+--- stderr ---
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r10\g4\harness\run.py", line 142, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "D:\code\samsam\evidence\itacc_r10\g4\harness\run.py", line 135, in main
+    runpy.run_module(module, run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\code\samsam\agents\fp_pnl.py", line 503, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "D:\code\samsam\agents\fp_pnl.py", line 486, in main
+    path = write_report(text, REPORTS_DIR,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\agents\report.py", line 570, in write_report
+    md = rollout.gate_report(name)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\rollout.py", line 719, in gate_report
+    raise RolloutBlocked(_why(fid, "tat", f"báo cáo {name}")
+pipelines.rollout.RolloutBlocked: báo cáo pnl-2026-08.md: tính năng finance-04.1 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+

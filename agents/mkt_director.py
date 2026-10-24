@@ -387,6 +387,11 @@ def main(argv=None) -> int:
         return 0
 
     if args.briefs:
+        # r12 RB: brief chiến dịch = đầu ra marketing-01.2 — tắt thì chặn
+        # TRƯỚC khi in/đẩy (không traceback).
+        from pipelines import rollout
+        if why := rollout.blocked(None, "brief chiến dịch", fid="marketing-01.2"):
+            return rollout.say_blocked(why)
         if args.dry_run:
             limit = now + timedelta(days=args.horizon_days)
             sel = [c for c in plan["campaigns"]
@@ -437,6 +442,12 @@ def main(argv=None) -> int:
                                    for i in items or ()))
     print(f"[ok] bản tin: {path}")
     return 0
+
+
+# r12 RB: RolloutBlocked lọt tới đỉnh → '[rollout] lý do', exit 2 (không traceback).
+from pipelines.rollout import cli_entry as _cli_entry
+
+main = _cli_entry(main)
 
 
 if __name__ == "__main__":

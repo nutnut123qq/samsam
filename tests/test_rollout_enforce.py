@@ -412,9 +412,10 @@ def chat(monkeypatch, tmp_path):
     monkeypatch.setattr(channels, "record_suggestion",
                         lambda inb, t, m="", conn=None, raw=None:
                         got["sugg"].append(t) or 7)
+    # r12 L3: câu hứa chỉ khi ghi được handoff → stub trả id (đã ghi).
     monkeypatch.setattr(channels, "record_handoff",
                         lambda inb, r, m="", conn=None:
-                        got["handoff"].append(r))
+                        got["handoff"].append(r) or 11)
     return got
 
 

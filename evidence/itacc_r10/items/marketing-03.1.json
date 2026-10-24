@@ -1,0 +1,244 @@
+{
+ "id": "marketing-03.1",
+ "ten": "Đề xuất quảng cáo thử nghiệm",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Quảng cáo thử nghiệm: 'Đề xuất quảng cáo nhỏ cho sản phẩm được phép'",
+ "tieu_chi": [
+  "T1 `python -m agents.mkt_ads --plan F --by <người> --month 2026-10` và `--propose` chạy trên DB có P&L fixture",
+  "T2 1 dòng ad_test_plans + 2 mục approval_queue cùng object_id adtest-<id>: marketing/ad_campaign + finance/budget_change (created_by budget = 'agent:mkt05_budget'), pending, ngân sách ≤ trần FP&A; --propose (FIXTURE ads_proposal) sinh phiếu created_by 'agent:mkt05'",
+  "T3 ngân sách > trần / SKU rượu → mã từ chối, 0 dòng; phiếu trùng → skip; ads_proposal thật CHƯA CHỐT → exit 2 BLOCKED 0 dòng; tắt → --propose exit 2",
+  "T4 không chi tiền, không gọi API quảng cáo; chỉ nháp chờ người duyệt"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); FIXTURE: P&L mồi qua CLI thật (market_csv order + settlement_csv bản sao tests/fixtures/finance/*_MAU.csv, fp_pnl --cogs-add/--cogs-approve 2 người khác nhau), golden bản sao (mat-ong food), nháp image #4 duyệt dev; ads_proposal FIXTURE qua --set agents.mkt_ads.PROPOSAL_FILE",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/order_shopee_MAU.csv",
+   "sha256": "92c796ae8028fd00082686ea194a0929916b71ce96884401eae2953575155f0f",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/order_shopee_multi_MAU.csv",
+   "sha256": "c893b45123ad91bfacfa09cac06c7168bc7848936b9888633dc93ea9753e894d",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/settlement_shopee_MAU.csv",
+   "sha256": "15503c1860e6e250af05b41c8d8b7197d84c34c0ca96e293516ce52efe447848",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/settlement_shopee_multi_MAU.csv",
+   "sha256": "540726fb6911fa77c31148260343ed12c66b1122cdf00ffde86a79e8f79fa9b8",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/plan_ok.json",
+   "sha256": "915fd7543c72817434ca9f909f2a124c2bd6a0864c27d85562601fce8f106ab6",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/plan_over.json",
+   "sha256": "91c2a3dce41f96246774e57653573fc8174257f9824a34e1d9ba3b7b9495de87",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/plan_ruou.json",
+   "sha256": "9cc6108d4954146faaff57ebb70bbcb398794deaf9a48fc05f8e1f09d9917b12",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/ads_proposal_fixture.json",
+   "sha256": "74ab05f2136380ce0d0299da9cef137852985688636805767547ddc6998e78c7",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "03.1-C0",
+   "mo_ta": "mồi P&L + creative",
+   "lenh": "xem out/03.1-C0*.txt + harness/cap_probe.py",
+   "expected": "cap mat-ong×shopee DE_XUAT",
+   "actual": "cap_for = DE_XUAT 199.960đ (tiktok CHO_DU_LIEU)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.1-C1",
+   "mo_ta": "phiếu người lập",
+   "lenh": "python -m agents.mkt_ads --plan evidence/itacc_r10/g3/harness/fixtures/plan_ok.json --by Người Thử IT --month 2026-10",
+   "expected": "1 ad_test_plans + 2 mục T2",
+   "actual": "phiếu #1 150.000đ ≤ trần 199.960đ, readiness TP_THUONG; mục #2 marketing/ad_campaign (created_by người lập) + #3 finance/budget_change created_by agent:mkt05_budget, pending, risk high, object_id adtest-1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.1-C2",
+   "mo_ta": "vượt trần",
+   "lenh": "python -m agents.mkt_ads --plan evidence/itacc_r10/g3/harness/fixtures/plan_over.json --by Người Thử IT --month 2026-10",
+   "expected": "ADS_*, 0 dòng",
+   "actual": "exit 1 ADS_OVER_CAP (250.000 + 150.000 đã phân bổ > 199.960), 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.1-C3",
+   "mo_ta": "SKU rượu",
+   "lenh": "python -m agents.mkt_ads --plan evidence/itacc_r10/g3/harness/fixtures/plan_ruou.json --by Người Thử IT --month 2026-10",
+   "expected": "ADS_OFFLINE_ONLY",
+   "actual": "exit 1 ADS_OFFLINE_ONLY, 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.1-C4",
+   "mo_ta": "nộp lại",
+   "lenh": "python -m agents.mkt_ads --plan evidence/itacc_r10/g3/harness/fixtures/plan_ok.json --by Người Thử IT --month 2026-10",
+   "expected": "skip",
+   "actual": "exit 0 'đã có — chỉ bổ sung mục thiếu', 0 mục mới",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.1-C5",
+   "mo_ta": "--propose với ads_proposal thật",
+   "lenh": "python -m agents.mkt_ads --propose --month 2026-10",
+   "expected": "exit 2 BLOCKED",
+   "actual": "exit 2 [BLOCKED] tham số CHƯA CHỐT, 0 dòng",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.1-C6",
+   "mo_ta": "--propose với ads_proposal FIXTURE",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --set agents.mkt_ads.PROPOSAL_FILE=evidence/itacc_r10/g3/harness/fixtures/ads_proposal_fixture.json -m agents.mkt_ads --propose --month 2026-10",
+   "expected": "phiếu agent:mkt05 + 2 mục",
+   "actual": "exit 0 DE_XUAT: phiếu #2 39.992đ (=199.960×0,2) created_by agent:mkt05, allocated 150.000, mục #4 ad_campaign agent:mkt05 + #5 budget_change agent:mkt05_budget (lượt đầu hỏng do harness — giữ out/03.1-C6.LUOT_HONG_harness.txt)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.1-C7",
+   "mo_ta": "tính năng tắt (--propose)",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --set agents.mkt_ads.PROPOSAL_FILE=evidence/itacc_r10/g3/harness/fixtures/ads_proposal_fixture.json -m agents.mkt_ads --propose --month 2026-10",
+   "expected": "exit 2, 0 dòng",
+   "actual": "0 dòng (đúng) nhưng exit 1 '[error] RolloutBlocked: RolloutBlocked' — mất lý do, lệch exit 2 (D3)",
+   "exit": 1,
+   "ket_qua": "FAIL"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "mkt_ads.main bắt RolloutBlocked riêng → in lý do + exit 2 (quy ước tắt của các CLI khác). Nghiệp vụ: GĐ Marketing chốt data/ads_proposal.json; P&L/giá vốn thật.",
+ "gioi_han": "Mọi hành vi thiết yếu (trần, chặn, idempotent, BLOCKED khi chưa chốt, đề xuất agent) đạt; FAIL duy nhất là thông báo/exit khi tắt (mức thấp). P&L là dữ liệu MẪU repo; người duyệt dev.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C0a.txt",
+   "sha256": "2950b4dff68f5d816a2f68a70119649719d9813fb75668feef1ae25a9060eee5"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C0b.txt",
+   "sha256": "f05adfd7240e0aac8545bce36f23f1014a343e09cb22a4847d8fb888d0f90d15"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C0c.txt",
+   "sha256": "4fc09be11983ace462feb0d41da1775ca0df1880b179ccfa388c942b809a4091"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C0d.txt",
+   "sha256": "d34973583e713e2f6d613e3b6ed95313ee9f762220e6a090a4d7c65ced45931f"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C0e5.txt",
+   "sha256": "1b6e0fd4127069761d95bec93d984e42da7575d6b5e3273be0fceaf627f74aec"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C0f5.txt",
+   "sha256": "3d0941fd8f9ac5792f7cacdad0051931c0bba427579b9e7087538fabbfcdbcd8"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C0g.txt",
+   "sha256": "ffa1e1e30a93f2188cc7e9e5d3cb95d34079ee5e6d57634d0a9ead5cdba93a34"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C1.txt",
+   "sha256": "01eb5f8662fdc53e0004b7765fd3216cc527f21f7fe0208c2c0c48dda5d1fa03"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C2.txt",
+   "sha256": "8871d9917fc0e747cc8bfaf8e2e7baf6265228b4148ca9f25d252129a8da3fd3"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C3.txt",
+   "sha256": "16d61fa818e879735dfbde649d8061b73954fd2522fb60beb05d855434fe3fcc"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C4.txt",
+   "sha256": "8e3e4796ddc96162aa112ba5e9b39f959b92bbe3dbf927ca75b2e161b491dde2"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C5.txt",
+   "sha256": "79f8aa7137bbf5f9b8c1e2d95292edd5e511bf58e398b0ef20ea91ffe3734ff3"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C6.LUOT_HONG_harness.txt",
+   "sha256": "0f62c27fce53af29f085deaf74239a4d16e74ab5dba0435d5f7eb79118b35043"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C6.txt",
+   "sha256": "cdbd80d0ad8884c673e09d5e2fbbf9d2c0f14c50e44c9ef603b5c95f34ceb663"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C7a.txt",
+   "sha256": "348e16d9e2fadbed6839da930583e3a8dc12ae088883ac644c49db66897df261"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C7.txt",
+   "sha256": "34db467e27adac017ee4afb7cba4d80424d47b408bd1baf081fd988ba1e32607"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C7c.txt",
+   "sha256": "db4467b897b034e8a0058ac5cc8385094fbf195817beb176da62c34672332b28"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C7b.txt",
+   "sha256": "aac3e2a8e63a082749c110207b622cc9f3ac1e6074d4697b007cf6ee9e12041d"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C0.cap.txt",
+   "sha256": "691873536c7ce234d3a64a9f043127d792f45f6f952c119e80c3b401e2336c30"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C1.db.json",
+   "sha256": "598d44afea51b12f5855eaa23c69d8ecd3eba73f752e4948605d7e933072cb4b"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.1-C6.db.json",
+   "sha256": "afccb5276b578eb55ba5b8b63231d108847143c22ba3e20fcd95209655e6c1f6"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/cap_probe.py",
+   "sha256": "0c33bb03b245f2a7d398aaffa2da730d9614b58a0be434ff2e985f3b2517d294"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "D3",
+   "muc_do": "thấp",
+   "mo_ta": "RolloutBlocked (tính năng tắt) không được bắt ở CLI → traceback exit 1 (mkt_director --briefs, seo_web --submit, pc_hr --jd); mkt_ads --propose in '[error] RolloutBlocked: RolloutBlocked' exit 1 — mất lý do, lệch quy ước exit 2 của các CLI khác. Hành vi cốt lõi (không sinh đầu ra) vẫn đúng.",
+   "tai_hien": "rollout --disable <tính năng>; chạy CLI tương ứng",
+   "expected": "[blocked] <lý do> exit 2",
+   "actual": "traceback / thông báo mất lý do, exit 1",
+   "evidence": [
+    "evidence/itacc_r10/g3/out/01.2-C4.txt",
+    "evidence/itacc_r10/g3/out/06.1-C3.txt",
+    "evidence/itacc_r10/g3/out/L-06.1-C4.txt",
+    "evidence/itacc_r10/g3/out/03.1-C7.txt"
+   ]
+  }
+ ]
+}

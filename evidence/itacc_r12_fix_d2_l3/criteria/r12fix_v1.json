@@ -1,0 +1,2958 @@
+{
+ "_doc": "HARNESS r12-fix — sinh criteria/r12fix_v1.json (5 mục kiểm lại sau vá D2/L3) TỪ tiêu chí r12 đã khóa, rồi khóa.\nMỗi mục: chép NGUYÊN ca r12 (cùng lệnh/fixture/kỳ vọng), đổi DB sang samsam_itacc_r12fix_<mã>; thêm ca MỚI (`nguon_r10`\n\"MOI_R12FIX\"). Chỉ một chỗ đổi kỳ vọng cũ, có lý do: sales-01__C07 assertion `sent_last_is_handoff_text=true` (r12 v4)\nchính là hành vi L3 controller bác (hứa nhân viên khi chưa ghi handoff) → v1 r12-fix đòi câu gửi KHÔNG hứa + có hotline\n+ handoff ghi đúng 1 lần + transport giả không mang provenance live (siết, không nới); assertion cũ giữ ở\n`ky_vong_r12_v4`. Placeholder: {FX12}/{H} = fixture/harness r12 (CHỈ ĐỌC), {FXF}/{HF} = fixture/harness r12-fix.",
+ "nguon_sha256": {
+  "r12_prod_legal.json": "7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747",
+  "r12_sales_a_v4.json": "5c2679af0dd47c19562539c5f9201b33e71b77b9abe02f810df5e13637680406",
+  "r12_sales_b.json": "e2a05423306d3768771d3aa8b78132b1a7138775f6c5230eae04c1e5bfbc6f17"
+ },
+ "fingerprint_code": "8f9188ade140c8aea64162400a772ae3f41c2780f788edb40fc9b254ae82aed3",
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r12fix (127.0.0.1:55452), DB mới mỗi mục, dựng bằng working tree bản vá (schema/roles ×2 + core + golden); không DB samsam, không provider, không gửi ra ngoài",
+ "items": [
+  {
+   "id": "legal_hr-01",
+   "db": "samsam_itacc_r12fix_l01",
+   "tieu_chi_cu_the": [
+    "T1 entry point thật `pipelines.guardrail.check/check_publish`, `guardrail_llm.check_publish_llm`, `kb_filter.is_alcohol` qua script harness (module API)",
+    "T2 từ cấm/claim y tế bị chặn (mã vi phạm), văn bản sạch ok; claim ngầm 'đối tượng bệnh + lời chứng' → ngam_y_suc_khoe ở check_publish; rượu bị nhận diện; SĐT trong văn bản đăng bị cờ PII (r12 D2: pii_ca_nhan mọi kênh; hotline/liên hệ công khai pii_allow/giá/ngày không gắn cờ; check() chat không đổi — luật 'chờ Pháp chế duyệt', mặc định an toàn); nháp thật (01.1) mang guardrail_result",
+    "T3 LLM-check (fake ở biên): luật đã chặn → skipped 0 call; LLM lỗi → llm_check_unavailable (fail-closed); LLM cờ → thêm violation, không bao giờ gỡ chặn luật; tắt mặc định (model rỗng) → off",
+    "T4 không gọi OpenRouter thật",
+    "T5 (r12-fix D2, MOI) SĐT cá nhân dạng NGOẶC ((0912) 345 678 / +84 (912) 345 678 / (0912) - (345) - (678) / (+84) 912 345 678) bị chặn pii_ca_nhan ở mọi kênh công khai; số công ty pii_allow dạng ngoặc/+84, hotline ngoặc, giá trong ngoặc, quy cách không gắn cờ; chuỗi '(' bệnh lý vẫn chặn < 3 giây; chat/internal_note giữ phạm vi; luật vẫn 'chờ Pháp chế duyệt'"
+   ],
+   "ca": [
+    {
+     "ma": "legal_hr-01__S00",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ triển khai trên DB thử (tính năng = chạy thử) — như *-seed r10",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-01__01-C1",
+     "nguon_r10": "01-C1",
+     "mo_ta": "bộ ca luật R1–R4, P1–P5, K1: mọi ca khớp (P4 SĐT cá nhân trong bài đăng → ok=False — r10 FAIL, D2 đã vá)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX12}/items/legal_hr-01/guardrail_cases_r12.py.txt",
+        "{OUT}/cases.json"
+       ],
+       "expect_exit": [
+        0,
+        1
+       ],
+       "stdout_re": "(?s)(?=.*\\[PASS\\] R1:)(?=.*\\[PASS\\] R2:)(?=.*\\[PASS\\] R3:)(?=.*\\[PASS\\] R3b:)(?=.*\\[PASS\\] R4:)(?=.*\\[PASS\\] P1:)(?=.*\\[PASS\\] P2:)(?=.*\\[PASS\\] P3:)(?=.*\\[PASS\\] P4:)(?=.*\\[PASS\\] P5:)(?=.*\\[PASS\\] K1:)",
+       "out_re": "\\A(?![\\s\\S]*(\\[FAIL\\] (R|P|K)|Traceback))"
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-01__01-C2",
+     "nguon_r10": "01-C2",
+     "mo_ta": "LLM-check qua fake ở biên (L0–L6): off/skipped/pass/flag/unavailable đúng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX12}/items/legal_hr-01/guardrail_cases_r12.py.txt",
+        "{OUT}/cases.json"
+       ],
+       "expect_exit": [
+        0,
+        1
+       ],
+       "stdout_re": "(?s)(?=.*\\[PASS\\] L0:)(?=.*\\[PASS\\] L1:)(?=.*\\[PASS\\] L2:)(?=.*\\[PASS\\] L3:)(?=.*\\[PASS\\] L4:)(?=.*\\[PASS\\] L5:)(?=.*\\[PASS\\] L6:)",
+       "out_re": "\\A(?![\\s\\S]*(\\[FAIL\\] L|Traceback))"
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-01__01-C3",
+     "nguon_r10": "01-C3",
+     "mo_ta": "nháp thật mang guardrail: dựng nháp 01.1 bằng content --daily (AI giả ở biên, responses = fake/clean.json r10, exit r10 = 1 vì trụ thiếu SKU) trên DB của mục — r10 đọc DB mkt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--daily",
+        "--date",
+        "2026-10-23"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"Sâm Sâm gửi lời chào từ Quảng Nam — câu chuyện thương hiệu Thử IT: những người làm vườn chăm từng gốc cây, giữ nghề truyền thống của quê hương.\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": [
+        0,
+        1
+       ],
+       "out_re": "\\A(?![\\s\\S]*(Traceback))"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) > 0 and bool_and(guardrail is not null and guardrail ? 'ok') from content_drafts",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-01__X01",
+     "nguon_r10": "MOI",
+     "mo_ta": "r12 D2: check_publish chặn SĐT/email cá nhân (pii_ca_nhan) trên facebook/shopee/zalo/web; hotline 1800577732, liên hệ công khai pii_allow, giá, ngày, quy cách KHÔNG gắn cờ; check() chat không đổi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX12}/items/legal_hr-01/d2_cases.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[tong\\] \\d+ ca, FAIL 0",
+       "out_re": "\\A(?![\\s\\S]*(\\[FAIL\\]|Traceback))"
+      }
+     ]
+    },
+    {
+     "ma": "legal_hr-01__X02",
+     "nguon_r10": "MOI_R12FIX",
+     "mo_ta": "r12-fix D2: SĐT dạng ngoặc trên entry point thật check_publish/check",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FXF}/items/legal_hr-01/d2_paren_cases.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[tong\\] \\d+ ca, FAIL 0",
+       "out_re": "\\A(?![\\s\\S]*(\\[FAIL\\]|Traceback))"
+      }
+     ]
+    }
+   ],
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r12/criteria/r12_prod_legal.json",
+    "sha256": "7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747"
+   },
+   "ly_do_kiem_lai": "D2 — sửa luật pii_ca_nhan ở pipelines/guardrail.py (entry point của mục) + pipelines/pii.py"
+  },
+  {
+   "id": "sales-01",
+   "db": "samsam_itacc_r12fix_s01",
+   "tieu_chi_cu_the": [
+    "T1 Handler webhook THẬT (connectors.zalo.Handler / connectors.messenger.Handler) chạy trên 127.0.0.1 cổng động trong harness zalo_e2e_r12 (bản chuyển r10 zalo_e2e), DEPLOY tắt (send_text thật = dry-run, sent=false); fake AI ở biên cuối llm_gateway._client (run_sa.py.txt --fake-llm), socket ngoài localhost bị chặn — mức MOCK như r10",
+    "T2 Chạy thử: câu bot KHÔNG tới khách; khách nhận HOLD_TEXT; approval_queue sales/cskh_reply created_by agent:kd_a1 payload = câu bot (fake) không PII; sales/cskh_handoff lý do chua_van_hanh (rollout)",
+    "T3 Luật trước LLM: rượu → template alcohol + handoff san_pham_han_che; sức khỏe → template health + handoff suc_khoe; 0 lời gọi AI",
+    "T4 Che PII: convlog (scratch) không SĐT/email/user_id thô; payload hàng duyệt không PII; stdout không user_id thô",
+    "T5 Chữ ký sai → 403, không xử lý; dedup cùng msg_id → xử lý 1 lần",
+    "T6 Hạn chót (FIXTURE CHAT_BUDGET_S=4, SEND_RESERVE_S=1, fake chat ngủ 6s): câu GỬI ở biên send_text KHÔNG hứa nhân viên + có hotline 1800577732 (r12-fix L3; r10/r12 v4 đòi HANDOFF_TEXT = hành vi controller bác) + convlog error deadline:* + cskh_handoff lý do qua_han_tra_loi đúng 1 mục; transport giả không mang provenance live",
+    "T7 Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có 'Nguồn:' + URL fixture; sent=false → file_output_evidence 0",
+    "T8 sales_director --run gom convlog answered:false → cskh_handoff created_by agent:sales_director, payload không câu khách; chạy lại 0 mới",
+    "T9 data/conversations.jsonl(.1), data/zalo_seen.db, data/zalo_tokens.json thật KHÔNG đổi (sha lần chạy đầu ↔ cuối)",
+    "T10 Tắt (rollout --disable) → 0 lời gọi AI, không cskh_reply",
+    "T11 (r12 L3, MOI) chatbot chỉ hứa 'nhân viên sẽ phản hồi' khi ĐÃ ghi được cskh_handoff; không ghi được (DB lỗi / tắt) → câu có hotline 1800577732, không hứa; tắt không traceback",
+    "T12 (r12-fix L3, MOI) như T6 trên đường Messenger (webhook Messenger thật → zalo.handle_text channel=messenger)"
+   ],
+   "ca": [
+    {
+     "ma": "sales-01__S00",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (mọi tính năng có code = chạy thử) — như r10 SETUP-rollout-seed",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'sales-01'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "FIXTURE 1 chunk KB example.com (bản chuyển r10 seed_chunk, vector 8 chiều = fake run_sa.VEC)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/seed_chunk_r12.py.txt"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from chunks",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from chunks where doc_id = 'it-g2-fixture'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C01",
+     "nguon_r10": "S01-C01",
+     "mo_ta": "Zalo câu hỏi thường, chạy thử",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C01_thuong"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hold=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_sent=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_rollout=\"chay_thu\"$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_reply=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^q=cskh_reply\\|agent:kd_a1\\|sales$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^reply_payload_has_fake=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^queue_payload_pii=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^handoff_lydo=chua_van_hanh$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C02",
+     "nguon_r10": "S01-C02",
+     "mo_ta": "Chữ ký sai",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C02_badsig"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=403$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_new=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_queue=0$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C03",
+     "nguon_r10": "S01-C03",
+     "mo_ta": "Câu sức khỏe",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C03_health"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_route=\"health\"$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_tpl_health=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^handoff_lydo=suc_khoe$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C04",
+     "nguon_r10": "S01-C04",
+     "mo_ta": "Câu rượu",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C04_alcohol"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_route=\"alcohol\"$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_tpl_alcohol=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^handoff_lydo=san_pham_han_che$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      }
+     ],
+     "ghi_chu": "'handoff alcohol' lấy từ expected tiêu chí khóa r10 (criteria/g2.json); bản ghi item chỉ ghi 'template alcohol; 0 lời gọi'"
+    },
+    {
+     "ma": "sales-01__C05",
+     "nguon_r10": "S01-C05",
+     "mo_ta": "PII trong câu khách (SĐT 0900000123 + email + tên, uid it-g2-uid-pii-777)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C05_pii"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*it-g2-uid-pii-777)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^convlog_has_phone=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^convlog_has_email=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^convlog_has_raw_uid=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^queue_payload_pii=false$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C06",
+     "nguon_r10": "S01-C06",
+     "mo_ta": "Dedup retry cùng msg_id",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C06_dedup"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=\\[200,\\ 200\\]$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^lan2_conv_tang=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^lan2_calls_tang=0$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C07",
+     "nguon_r10": "S01-C07",
+     "mo_ta": "Hạn chót trả lời (FIXTURE CHAT_BUDGET_S=4, SEND_RESERVE_S=1, fake chat ngủ 6s)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{HF}/sales_a/zalo_e2e_r12fix_v3.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C07_deadline"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_error=\"deadline:",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^handoff_lydo=qua_han_tra_loi$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^sent_n=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^sent_last_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^sent_last_has_hotline=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_provenance=(?!\"live\")",
+       "expect": true
+      }
+     ],
+     "ky_vong_v3": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_is_handoff_text=true$",
+       "expect": true
+      }
+     ],
+     "ky_vong_r12_v4": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^sent_last_is_handoff_text=true$",
+       "expect": true
+      }
+     ],
+     "doi_r12fix": "harness v2 → v3 (bản sao v2 + bọc messenger.send_text + ca C07M; ca C07 không đổi); kỳ vọng sent_last_is_handoff_text=true thay bằng 5 assertion siết (lý do ở _doc)"
+    },
+    {
+     "ma": "sales-01__C07M",
+     "nguon_r10": "MOI_R12FIX",
+     "mo_ta": "r12-fix L3: hạn chót trên đường Messenger (cùng fixture C07)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{HF}/sales_a/zalo_e2e_r12fix_v3.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C07M_deadline_messenger"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_error=\"deadline:",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^handoff_lydo=qua_han_tra_loi$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^sent_n=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^sent_last_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^sent_last_has_hotline=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_provenance=(?!\"live\")",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_channel=\"messenger\"$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C08",
+     "nguon_r10": "S01-C08",
+     "mo_ta": "Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có nguồn",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C08_vanhanh"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_nguon_url=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_sent=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^foe=0$",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from file_output_evidence",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C09",
+     "nguon_r10": "S01-C09",
+     "mo_ta": "Messenger HMAC đúng / sai",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C09_messenger"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http_bad=403$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_channel=\"messenger\"$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_reply=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^q=cskh_reply\\|agent:kd_a1\\|sales$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C11",
+     "nguon_r10": "S01-C11",
+     "mo_ta": "/healthz /readyz",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C11_endpoints"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=\\[200,\\ 200\\]$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^healthz=\\{\"status\":\\ \"up\"\\}$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^readyz=.*\"db\": \"ok\"",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__L3a",
+     "nguon_r10": "MOI",
+     "mo_ta": "r12 L3 — chạy thử, câu sức khỏe, KHÔNG ghi được cskh_handoff (FIXTURE channels._connect = None trong ca): không hứa nhân viên, có hotline, không traceback",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "L3_dbloi_suckhoe"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C10",
+     "nguon_r10": "S01-C10",
+     "mo_ta": "sales_director gom handoff từ convlog harness (scratch)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--data-dir",
+        "{SCR}/conv",
+        "-m",
+        "agents.sales_director",
+        "--run",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "KHÔNG ghi DB"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--data-dir",
+        "{SCR}/conv",
+        "-m",
+        "agents.sales_director",
+        "--run"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--data-dir",
+        "{SCR}/conv",
+        "-m",
+        "agents.sales_director",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đẩy 0 mục mới"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) >= 1 from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director' and (payload ilike '%mật ong%' or payload ilike '%tiểu đường%' or payload ilike '%rượu%' or payload ilike '%mất ngủ%')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C12",
+     "nguon_r10": "S01-C12",
+     "mo_ta": "Tắt tính năng: rollout --disable sales-01 rồi câu thường",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "sales-01",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiểm nhánh tắt r12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C12_tat"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_reply=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=0$",
+       "expect": true
+      }
+     ],
+     "ghi_chu": "v2: kỳ vọng theo tiêu chí đóng L3 (xem _doc).",
+     "ky_vong_r10_cu": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hold=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__X1",
+     "nguon_r10": "S01-X1",
+     "mo_ta": "Câu sức khỏe khi chatbot TẮT: không hứa nhân viên, có hotline, 0 cskh_handoff (HĐ 6.7), không ngoại lệ",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "X1_tat_health"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=0$",
+       "expect": true
+      }
+     ],
+     "ghi_chu": "v2: kỳ vọng theo tiêu chí đóng L3 (xem _doc).",
+     "ky_vong_r10_cu": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_tpl_health=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__L3b",
+     "nguon_r10": "MOI",
+     "mo_ta": "r12 L3 — chatbot TẮT, câu thường: 0 lời gọi AI, 0 mục hàng duyệt, không hứa nhân viên, có hotline, không traceback",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "L3_tat_thuong"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_queue=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__L3c",
+     "nguon_r10": "MOI",
+     "mo_ta": "r12 L3 — chatbot TẮT, câu sức khỏe: 0 lời gọi AI, 0 mục, không hứa, có hotline, không traceback",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "L3_tat_suckhoe"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_queue=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__T9",
+     "nguon_r10": "MOI",
+     "mo_ta": "T9 — data/ thật (convlog, seen db, token store) không đổi so với sha lần chạy harness đầu",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "T9"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^data_khong_doi=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__UI02",
+     "nguon_r10": "MOI",
+     "mo_ta": "UI-02: tab 'Chat Sâm Sâm' Streamlit chế độ thực (login in role svc_ui) trả lời câu thường không lỗi quyền chunks, không lộ traceback; câu sức khỏe vẫn chuyển người",
+     "not_run": "UI — xem evidence/itacc_r12/ui/ui_sau_*"
+    }
+   ],
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r12/criteria/r12_sales_a_v4.json",
+    "sha256": "5c2679af0dd47c19562539c5f9201b33e71b77b9abe02f810df5e13637680406"
+   },
+   "ly_do_kiem_lai": "L3 — sửa nhánh quá 30 giây ở connectors/zalo.py (Zalo + Messenger dùng chung _reply_turn)"
+  },
+  {
+   "id": "marketing-01.1",
+   "db": "samsam_itacc_r12fix_m011",
+   "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.content --daily --date D` (fake chat ở biên llm_gateway._client qua wrap.py.txt, phản hồi = nguyên văn r10 fake/clean.json|banned.json) exit 0 khi đủ 3 nháp / 1 khi THIẾU (in lý do), không traceback",
+    "T2 mỗi nháp: created_by agent:mkt02, content_type post, status pending, brief mở đầu `[daily D #slot]`, guardrail ok, is_ai, prompt_version + prompt_sha256, text có 'Nội dung có sử dụng AI'; trụ gắn SKU mà 0 SKU đủ readiness → [bị từ chối] readiness, KHÔNG thay SKU khác (0 nháp có sku)",
+    "T3 chạy lại cùng ngày → skipped, 0 lời gọi AI (log biên rỗng), số nháp + llm_usage không đổi; LLM trả từ cấm → failed, 0 dòng, exit 1; tính năng tắt → exit 2, 0 lời gọi AI, 0 dòng",
+    "T4 không có đường gửi/đăng; wrap chặn socket ngoài localhost; xếp lịch đăng nháp khi chạy thử → exit 2, scheduled_date null. Nhánh 3/3 exit 0 (r10 C6 bổ sung sau khóa, DB riêng mk11): chạy ĐẦU TIÊN trên DB mới + golden FIXTURE",
+    "T5 (r12-fix D2, MOI) LLM giả trả bài có SĐT dạng ngoặc (0912) 345 678 → failed mã pii_ca_nhan, 0 dòng, exit 1 (cùng khuôn ca C3 từ cấm)"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-01.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (r10 mkt-seed); xác nhận data/marketing_calendar.json đúng sha r10 dau_vao (8e115f83…)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import hashlib,sys; h=hashlib.sha256(open('data/marketing_calendar.json','rb').read()).hexdigest(); print(h); sys.exit(0 if h==sys.argv[1] else 1)",
+        "8e115f831761dd93b447c223e4f3f6c3b65776f978907fcea4825d0e2b95501d"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'marketing-01.1'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "marketing-01.1__01.1-C6",
+     "nguon_r10": "01.1-C6",
+     "mo_ta": "nhánh 3/3 → exit 0 với golden FIXTURE (r10: DB riêng samsam_itacc_r10_mk11 = DB mới + seed + golden FIXTURE; r12 chạy ĐẦU TIÊN trên DB của mục để có đúng trạng thái DB mới đó; PROBE_SET ingest.golden_store.GOLDEN_FILE = FIXTURE như r10 --set)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/marketing-01.1/golden_fixture_food.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--daily",
+        "--date",
+        "2026-10-23"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"Sâm Sâm gửi lời chào từ Quảng Nam — câu chuyện thương hiệu Thử IT: những người làm vườn chăm từng gốc cây, giữ nghề truyền thống của quê hương.\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json",
+        "PROBE_SET": "ingest.golden_store:GOLDEN_FILE={FX12}/items/marketing-01.1/golden_fixture_food.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] 3/3 nháp sống cho ngày 2026-10-23",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected' and created_by = 'agent:mkt02' and content_type = 'post' and status = 'pending' and (guardrail->>'ok')::boolean and is_ai and prompt_version is not null and prompt_sha256 is not null and text like '%Nội dung có sử dụng AI%'",
+       "expect": 3
+      },
+      {
+       "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected'",
+       "expect": 3
+      },
+      {
+       "sql": "select count(distinct left(brief, 21)) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected'",
+       "expect": 3
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\"kind\": \"chat\"",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "marketing-01.1__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "FIXTURE dựng lại trạng thái DB r10 samsam_itacc_r10_mkt cho C1–C5 (golden THẬT, slot ngày 2026-10-23 trống): người duyệt thử TỪ CHỐI các nháp sống ngày 23/10 của C6 qua `pipelines.store --reject` (slot của nháp rejected được giải phóng — index chỉ trên nháp sống), nạp lại data/golden_skus.json THẬT",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,subprocess,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); ids=[r[0] for r in c.execute(\"select id from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected' order by id\")]; c.close(); print('reject',ids,flush=True); rc=[subprocess.run([sys.executable,'-m','pipelines.store','--reject',str(i),'--by',sys.argv[1],'--note',sys.argv[2]]).returncode for i in ids]; print('rc',rc); sys.exit(1 if any(rc) or not ids else 0)",
+        "Duyệt MKT Thử IT",
+        "FIXTURE r12: giải phóng slot 23/10 sau ca C6 (r10 chạy C6 trên DB riêng)"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from sku_readiness where sku_key = 'mat-ong-sam-300ml' and channel in ('facebook','zalo') and readiness = 'CAM'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "marketing-01.1__01.1-C1",
+     "nguon_r10": "01.1-C1",
+     "mo_ta": "soạn nháp ngày 2026-10-23 (golden thật)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--daily",
+        "--date",
+        "2026-10-23"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"Sâm Sâm gửi lời chào từ Quảng Nam — câu chuyện thương hiệu Thử IT: những người làm vườn chăm từng gốc cây, giữ nghề truyền thống của quê hương.\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": [
+        0,
+        1
+       ],
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+       "stdout_re": "(?s)(?=.*#\\d [^\\n]*: created #\\d+)(?=.*\\[bị từ chối\\][^\\n]*readiness)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) >= 1 from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected' and not (created_by = 'agent:mkt02' and content_type = 'post' and status = 'pending' and (guardrail->>'ok')::boolean and is_ai and prompt_version is not null and prompt_sha256 is not null and text like '%Nội dung có sử dụng AI%')",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected' and sku is not null",
+       "expect": 0
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\"kind\": \"chat\"",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "marketing-01.1__01.1-C2",
+     "nguon_r10": "01.1-C2",
+     "mo_ta": "chạy lại cùng ngày → skipped, 0 LLM, 0 dòng mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import sys; open(sys.argv[1],'w',encoding='utf-8').write(sys.argv[2]); print('snap',sys.argv[2])",
+        "{OUT}/truoc.txt",
+        "{sql:select (select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected')::text || '|' || (select count(*) from llm_usage)::text}"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--daily",
+        "--date",
+        "2026-10-23"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"Sâm Sâm gửi lời chào từ Quảng Nam — câu chuyện thương hiệu Thử IT: những người làm vườn chăm từng gốc cây, giữ nghề truyền thống của quê hương.\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": [
+        0,
+        1
+       ],
+       "stdout_re": "#1 skipped",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import sys; a=open(sys.argv[1],encoding='utf-8').read(); b=sys.argv[2]; print('truoc',a,'sau',b); sys.exit(0 if a==b else 1)",
+        "{OUT}/truoc.txt",
+        "{sql:select (select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected')::text || '|' || (select count(*) from llm_usage)::text}"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "marketing-01.1__01.1-C3",
+     "nguon_r10": "01.1-C3",
+     "mo_ta": "LLM giả trả từ cấm (2026-10-24) → failed, 0 dòng, exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--daily",
+        "--date",
+        "2026-10-24"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"Sản phẩm Thử IT giúp chữa bệnh và điều trị dứt điểm, khỏi bệnh sau 7 ngày.\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 1,
+       "stdout_re": "failed: [^\\n]*tu_cam",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-24 #%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-01.1__X01",
+     "nguon_r10": "MOI_R12FIX",
+     "mo_ta": "r12-fix D2: LLM giả trả bài có SĐT ngoặc (2026-10-26) → failed pii_ca_nhan, 0 dòng, exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--daily",
+        "--date",
+        "2026-10-26"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"Hộp quà Sâm Sâm mùa thu cho gia đình Thử IT — đặt hàng gọi (0912) 345 678 để được tư vấn.\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 1,
+       "stdout_re": "failed: [^\\n]*pii_ca_nhan",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-26 #%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-01.1__01.1-C4",
+     "nguon_r10": "01.1-C4",
+     "mo_ta": "tính năng tắt → exit 2, 0 LLM, 0 dòng (r10 01.1-C4a tắt / C4b bật lại --promote)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "marketing-01.1",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--daily",
+        "--date",
+        "2026-10-25"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"Sâm Sâm gửi lời chào từ Quảng Nam — câu chuyện thương hiệu Thử IT: những người làm vườn chăm từng gốc cây, giữ nghề truyền thống của quê hương.\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 2,
+       "out_re": "marketing-01\\.1[^\\n]*tắt",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "marketing-01.1",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-25 #%'",
+       "expect": 0
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      },
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'marketing-01.1'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "marketing-01.1__01.1-C5",
+     "nguon_r10": "01.1-C5",
+     "mo_ta": "xếp lịch đăng khi chạy thử → bị chặn (r10 duyệt draft #1 = slot #1 ngày 23/10 rồi --schedule; r12 id lấy theo slot vì C6 đã chiếm id 1–3)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "{sql:select id from content_drafts where brief like '[daily 2026-10-23 #1]%' and status <> 'rejected'}",
+        "--by",
+        "Duyệt MKT Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--schedule",
+        "{sql:select id from content_drafts where brief like '[daily 2026-10-23 #1]%' and status <> 'rejected'}",
+        "2026-10-30",
+        "--by",
+        "Duyệt MKT Thử IT"
+       ],
+       "expect_exit": 2,
+       "out_re": "chạy thử"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected' and brief like '[daily 2026-10-23 #1]%' and status = 'approved' and scheduled_date is null",
+       "expect": 1
+      }
+     ]
+    }
+   ],
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r12/criteria/r12_sales_b.json",
+    "sha256": "e2a05423306d3768771d3aa8b78132b1a7138775f6c5230eae04c1e5bfbc6f17"
+   },
+   "ly_do_kiem_lai": "D2 — nháp bài/ngày đi qua check_publish_llm → check_publish (luật 8 đổi)"
+  },
+  {
+   "id": "sales-03",
+   "db": "samsam_itacc_r12fix_s03",
+   "tieu_chi_cu_the": [
+    "T1 golden FIXTURE (r10 golden_fixture.json: mat-ong-sam-300ml giả lập đã tự công bố, mở web/tiktok/zalo/facebook) nạp qua `ingest.golden_store --file` + 10 dòng giá duyệt qua `--approve-price --by` như r10; guardrail đọc bản sao data ở {SCR}/gdata (golden FIXTURE) như r10 `--guardrail-data`",
+    "T2 `pipelines.content --listing --no-llm` → 2 content_drafts listing pending created_by agent:mkt02, 'Giá: 2.980.000 đ' = golden kênh; chạy lại = skipped 2/created 0; rượu → refused ruou, saphraton-40v (CAM) → refused readiness, 0 ghi",
+    "T3 `ingest.market_csv` listing fixture + `agents.kd_listing --run` → approval_queue listing_sync (price_drift + title_drift) + market_alert_s1 created_by agent:kd_listing; payload/title không chép tiêu đề sàn; chạy lại 0 mới; --dry-run 0 dòng",
+    "T4 `agents.listing_export` chạy thử → [từ chối] sales-03 chạy thử, không tạo thư mục; ép van_hanh (FIXTURE `_FORCE_MODE`) → CSV+manifest (draft_id 1, gia_id = price_list shopee list ĐÃ duyệt, CSV không dòng 'Giá:'); --verify khớp exit 0; CSV bị sửa → [LỆCH] exit 1; SKU chưa có mô tả duyệt → exit 1 không tệp",
+    "T5 (r12 RB) tắt sales-03 → content --listing exit 2 + stdout '[rollout] … sales-03', không traceback, 0 nháp; kd_listing --run không thêm mục"
+   ],
+   "ca": [
+    {
+     "ma": "sales-03__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề (r10 SETUP-rollout-seed + SETUP-golden-fixture + SETUP-approve-price-4/5/29/30/35–40 trên DB chung khối sales; r12 DB riêng): seed sổ rollout, golden FIXTURE, duyệt 10 dòng giá; dựng {SCR}/gdata = bản sao data/{banned_words,claims_whitelist,guardrail_rules,llm_gateway} + golden FIXTURE (r10 make_golden_fixture; r12 thêm llm_gateway.json vì guardrail r12 đọc pii_allow cùng thư mục)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/sales-03/golden_fixture.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ saphraton-20v shopee floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ saphraton-20v shopee list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml shopee floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml shopee list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml tiktok floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml tiktok list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml web floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml web list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'zalo' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml zalo floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'zalo' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml zalo list"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,shutil,sys; s,d,g=sys.argv[1:4]; os.makedirs(d); [shutil.copyfile(os.path.join(s,n),os.path.join(d,n)) for n in ('banned_words.txt','claims_whitelist.json','guardrail_rules.json','llm_gateway.json')]; shutil.copyfile(g,os.path.join(d,'golden_skus.json')); print('gdata ok',sorted(os.listdir(d)))",
+        "{REPO}/data",
+        "{SCR}/gdata",
+        "{FX12}/items/sales-03/golden_fixture.json"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel in ('shopee','tiktok','web','zalo') and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 8
+      },
+      {
+       "sql": "select count(*) from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 2
+      },
+      {
+       "sql": "select readiness from sku_readiness where sku_key = 'mat-ong-sam-300ml' and channel = 'web'",
+       "expect": "TP_THUONG"
+      },
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'sales-03'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C01",
+     "nguon_r10": "S03-C01",
+     "mo_ta": "Sinh nháp listing web+shopee (no-llm, guardrail data FIXTURE)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--listing",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "web",
+        "--channel",
+        "shopee",
+        "--no-llm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*mat-ong-sam-300ml × web: created #\\d+)(?=.*mat-ong-sam-300ml × shopee: created #\\d+)(?=.*created 2, skipped 0, refused 0, failed 0)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'listing' and created_by = 'agent:mkt02' and status = 'pending' and sku = 'mat-ong-sam-300ml' and channel in ('web','shopee') and text like '%Giá: 2.980.000 đ%' and (guardrail->>'ok')::boolean",
+       "expect": 2
+      },
+      {
+       "sql": "select id from content_drafts where content_type = 'listing' and channel = 'web' and sku = 'mat-ong-sam-300ml'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from content_drafts",
+       "expect": 2
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C02",
+     "nguon_r10": "S03-C02",
+     "mo_ta": "Chạy lại idempotent",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--listing",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "web",
+        "--channel",
+        "shopee",
+        "--no-llm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*web: skipped #\\d+)(?=.*shopee: skipped #\\d+)(?=.*created 0, skipped 2)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'listing'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C03",
+     "nguon_r10": "S03-C03",
+     "mo_ta": "SKU rượu / CAM",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--listing",
+        "--sku",
+        "ruou-sam-chai-thuy-tinh-500ml",
+        "--sku",
+        "saphraton-40v",
+        "--channel",
+        "shopee",
+        "--no-llm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*ruou-sam-chai-thuy-tinh-500ml × shopee: refused ruou)(?=.*saphraton-40v × shopee: refused readiness)(?=.*created 0, skipped 0, refused 2)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "phần dựng của S03-C05 r10 (S03-SETUP-approve-draft1/2 10:25:21–26 + S03-SETUP-market-listing 10:25:30) — r10 chạy TRƯỚC S03-C04 (10:25:40); tách ra ca tiền đề giữ đúng thứ tự thời gian, cùng lệnh",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "1",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] draft #1 → approved"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "2",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] draft #2 → approved"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/sales-03/s03_listing_shopee.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "listing"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "snapshot #\\d+ shopee/listing s03_listing_shopee\\.csv: 3 dòng"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where id in (1,2) and status = 'approved'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C04",
+     "nguon_r10": "S03-C04",
+     "mo_ta": "kd_listing dry-run",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "KHÔNG ghi DB"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where created_by = 'agent:kd_listing'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C05",
+     "nguon_r10": "S03-C05",
+     "mo_ta": "kd_listing run ×2, nạp listing v2, run ×2 (approve 1/2 + market_csv v1 đã chạy ở sales-03__S02)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[run\\] đẩy [1-9]\\d* mục mới"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[run\\] đẩy 0 mục mới"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/sales-03/s03_listing_shopee_v2.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "listing"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "s03_listing_shopee_v2\\.csv: 4 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[run\\] đẩy \\d+ mục mới"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[run\\] đẩy 0 mục mới"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) >= 1 from approval_queue where created_by = 'agent:kd_listing' and object_type = 'listing_sync' and object_id like 'a4:price_drift:%'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) >= 1 from approval_queue where created_by = 'agent:kd_listing' and object_type = 'listing_sync' and object_id like 'a4:title_drift:%'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) >= 1 from approval_queue where created_by = 'agent:kd_listing' and object_type = 'market_alert_s1'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from approval_queue where created_by = 'agent:kd_listing' and (payload::text like '%fixture Thử IT%' or title like '%fixture Thử IT%')",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) = count(distinct object_id) from approval_queue where created_by = 'agent:kd_listing'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from approval_queue where created_by = 'agent:kd_listing' and status <> 'pending'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C06",
+     "nguon_r10": "S03-C06",
+     "mo_ta": "listing_export chạy thử → từ chối, không tệp",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.listing_export",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "shopee",
+        "--out",
+        "{SCR}/export_trial"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 1,
+       "stderr_re": "\\[từ chối\\][^\\n]*sales-03[^\\n]*chạy thử[^\\n]*không ghi tệp"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/export_trial",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C07",
+     "nguon_r10": "S03-C07",
+     "mo_ta": "listing_export ép van_hanh (FIXTURE rollout._FORCE_MODE như r10 --force-mode) → CSV+manifest gia_id duyệt; verify",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "shopee",
+        "--out",
+        "{SCR}/s03_export"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] listing-shopee-mat-ong-sam-300ml-d1\\.manifest\\.json"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import json,sys; m=json.load(open(sys.argv[1],encoding='utf-8')); print({k:m.get(k) for k in ('sku','channel','draft_id','gia_id','gia_vnd','transform')}); ok=(m.get('draft_id')==1 and str(m.get('gia_id'))==sys.argv[2] and str(m.get('gia_vnd'))==sys.argv[3] and m.get('sku')=='mat-ong-sam-300ml' and m.get('channel')=='shopee'); print('MANIFEST_KHOP' if ok else 'MANIFEST_LECH'); sys.exit(0 if ok else 1)",
+        "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.manifest.json",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null}",
+        "{sql:select price_vnd from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "MANIFEST_KHOP"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--verify",
+        "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.manifest.json"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] khớp bản đã duyệt"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.csv",
+       "count": 1
+      },
+      {
+       "file_glob": "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.manifest.json",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.csv",
+       "re": "Giá:",
+       "expect": false
+      },
+      {
+       "sql": "select price_vnd from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null",
+       "expect": 2980000
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C08",
+     "nguon_r10": "S03-C08",
+     "mo_ta": "verify tệp bị sửa (FIXTURE: chép thư mục xuất C07 sang {SCR}/export_tamper, nối 1 byte vào CSV — r10 export_tamper)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import shutil,sys; s,d=sys.argv[1:3]; shutil.copytree(s,d); p=d+'/listing-shopee-mat-ong-sam-300ml-d1.csv'; open(p,'ab').write(b'x'); print('FIXTURE sửa', p)",
+        "{SCR}/s03_export",
+        "{SCR}/export_tamper"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--verify",
+        "{SCR}/export_tamper/listing-shopee-mat-ong-sam-300ml-d1.manifest.json"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "\\[LỆCH\\] tệp CSV đã bị sửa"
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C09",
+     "nguon_r10": "S03-C09",
+     "mo_ta": "Export SKU chưa có mô tả duyệt (ép van_hanh)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--sku",
+        "saphraton-20v",
+        "--channel",
+        "shopee",
+        "--out",
+        "{SCR}/export_x"
+       ],
+       "expect_exit": 1,
+       "stderr_re": "\\[từ chối\\] saphraton-20v"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/export_x",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-03__S03-C10",
+     "nguon_r10": "S03-C10",
+     "mo_ta": "Tắt sales-03 → content --listing không sinh (r12 RB: exit 2 + [rollout], không traceback — kỳ vọng r10 'không sinh nháp' giữ nguyên, siết thêm theo bảng lỗi mục 5 L4/RB); kd_listing --run không thêm mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "sales-03",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiểm nhánh tắt r12 sales_b"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import sys; open(sys.argv[1],'w',encoding='utf-8').write(sys.argv[2]); print('snap',sys.argv[2])",
+        "{OUT}/kdl_truoc.txt",
+        "{sql:select count(*) from approval_queue where created_by = 'agent:kd_listing'}"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--listing",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "tiktok",
+        "--no-llm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*sales-03",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": [
+        0,
+        2
+       ],
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import sys; a=open(sys.argv[1],encoding='utf-8').read(); b=sys.argv[2]; print('truoc',a,'sau',b); sys.exit(0 if a==b else 1)",
+        "{OUT}/kdl_truoc.txt",
+        "{sql:select count(*) from approval_queue where created_by = 'agent:kd_listing'}"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'listing' and channel = 'tiktok'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from content_drafts",
+       "expect": 2
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ]
+    }
+   ],
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r12/criteria/r12_sales_b.json",
+    "sha256": "e2a05423306d3768771d3aa8b78132b1a7138775f6c5230eae04c1e5bfbc6f17"
+   },
+   "ly_do_kiem_lai": "D2 — nháp listing đi qua check_publish (luật 8 đổi)"
+  },
+  {
+   "id": "sales-07.1",
+   "db": "samsam_itacc_r12fix_s071",
+   "tieu_chi_cu_the": [
+    "T1 `agents.kd_live` (fake chat ở BIÊN CUỐI llm_gateway._client qua wrap.py.txt, phản hồi = nguyên văn r10 fake_live.json) → content_drafts livestream_script pending created_by agent:kd_a9, guardrail ok; giỏ 'Giá: 2.980.000 đ' = price_list tiktok list ĐÃ duyệt; câu LLM '…2.500.000đ' bị bỏ; câu hỏi sức khỏe → câu thay + template, không chép 'tiểu đường'",
+    "T2 giỏ rượu → [refuse] ruou; SKU không promotable (saphraton-20v shopee) → [refuse] khong_promotable — cả hai 0 lời gọi AI (log biên rỗng), 0 nháp",
+    "T3 --dry-run không lưu; phiên thứ 3 cùng tuần → [refuse] vuot_tran_phien 0 lời gọi AI; LLM không khả dụng (key rỗng, client thật) → exit 1 'thiếu OPENROUTER_API_KEY', 0 nháp",
+    "T4 (r12 L5) tắt sales-07.1 → exit 2 + '[rollout] … sales-07.1', không traceback, 0 lời gọi AI, 0 nháp"
+   ],
+   "ca": [
+    {
+     "ma": "sales-07.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề như sales-03__S01 (r10 dùng chung DB khối sales: seed + golden FIXTURE + 10 dòng giá duyệt + --guardrail-data gdata); r12 DB riêng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/sales-07.1/golden_fixture.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ saphraton-20v shopee floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ saphraton-20v shopee list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml shopee floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml shopee list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml tiktok floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml tiktok list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml web floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml web list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'zalo' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml zalo floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'zalo' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml zalo list"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,shutil,sys; s,d,g=sys.argv[1:4]; os.makedirs(d); [shutil.copyfile(os.path.join(s,n),os.path.join(d,n)) for n in ('banned_words.txt','claims_whitelist.json','guardrail_rules.json','llm_gateway.json')]; shutil.copyfile(g,os.path.join(d,'golden_skus.json')); print('gdata ok',sorted(os.listdir(d)))",
+        "{REPO}/data",
+        "{SCR}/gdata",
+        "{FX12}/items/sales-07.1/golden_fixture.json"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel in ('shopee','tiktok','web','zalo') and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 8
+      },
+      {
+       "sql": "select count(*) from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from v_promotable where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok'",
+       "expect": 1
+      },
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'sales-07.1'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "sales-07.1__S071-C01",
+     "nguon_r10": "S071-C01",
+     "mo_ta": "Kịch bản livestream (fake LLM ở biên)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.kd_live",
+        "--channel",
+        "tiktok",
+        "--cart",
+        "mat-ong-sam-300ml",
+        "--day",
+        "2026-10-27",
+        "--brief",
+        "Phiên live thử IT giới thiệu mật ong sâm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"mo_dau\\\": [\\\"Chào cả nhà đến với phiên live của Sâm Sâm (fixture thử IT).\\\"],\\n \\\"san_pham\\\": [{\\\"sku\\\": \\\"mat-ong-sam-300ml\\\", \\\"loi_dan\\\": [\\\"Mật ong sâm đựng trong hũ thủy tinh, vị ngọt dịu.\\\", \\\"Hôm nay giá chỉ 2.500.000đ thôi cả nhà!\\\"]}],\\n \\\"hoi_dap\\\": [{\\\"hoi\\\": \\\"Mật ong sâm có chữa được tiểu đường không shop?\\\", \\\"dap\\\": \\\"Có ạ, uống là khỏi.\\\"},\\n             {\\\"hoi\\\": \\\"Shop có giao hàng toàn quốc không?\\\", \\\"dap\\\": \\\"Dạ có, shop giao toàn quốc ạ.\\\"}],\\n \\\"ket\\\": [\\\"Cảm ơn cả nhà đã theo dõi phiên live.\\\"]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)\\A(?=.*1\\. Mật ong sâm 300ml — Giá: 2\\.980\\.000 đ)(?!.*2\\.500\\.000)(?=.*Hỏi: \\(Câu hỏi về sức khỏe của khách)(?=.*không tư vấn về tình trạng sức khỏe)(?!.*tiểu đường)(?=.*nháp #\\d+ pending)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'livestream_script' and status = 'pending' and created_by = 'agent:kd_a9' and (guardrail->>'ok')::boolean and text like '%Giá: 2.980.000 đ%' and text not like '%2.500.000%' and text not like '%tiểu đường%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'livestream_script'",
+       "expect": 1
+      },
+      {
+       "sql": "select price_vnd from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok' and kind = 'list' and valid_to is null and approved_by is not null",
+       "expect": 2980000
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\"kind\": \"chat\"",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-07.1__S071-C02",
+     "nguon_r10": "S071-C02",
+     "mo_ta": "Giỏ rượu → refuse, 0 lời gọi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.kd_live",
+        "--channel",
+        "tiktok",
+        "--cart",
+        "ruou-sam-chai-thuy-tinh-500ml",
+        "--day",
+        "2026-10-27",
+        "--brief",
+        "Phiên live thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"mo_dau\\\": [\\\"Chào cả nhà đến với phiên live của Sâm Sâm (fixture thử IT).\\\"],\\n \\\"san_pham\\\": [{\\\"sku\\\": \\\"mat-ong-sam-300ml\\\", \\\"loi_dan\\\": [\\\"Mật ong sâm đựng trong hũ thủy tinh, vị ngọt dịu.\\\", \\\"Hôm nay giá chỉ 2.500.000đ thôi cả nhà!\\\"]}],\\n \\\"hoi_dap\\\": [{\\\"hoi\\\": \\\"Mật ong sâm có chữa được tiểu đường không shop?\\\", \\\"dap\\\": \\\"Có ạ, uống là khỏi.\\\"},\\n             {\\\"hoi\\\": \\\"Shop có giao hàng toàn quốc không?\\\", \\\"dap\\\": \\\"Dạ có, shop giao toàn quốc ạ.\\\"}],\\n \\\"ket\\\": [\\\"Cảm ơn cả nhà đã theo dõi phiên live.\\\"]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\[refuse\\] ruou[^\\n]*\\(LLM 0 lời gọi\\)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'livestream_script'",
+       "expect": 1
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-07.1__S071-C03",
+     "nguon_r10": "S071-C03",
+     "mo_ta": "SKU không promotable",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.kd_live",
+        "--channel",
+        "shopee",
+        "--cart",
+        "saphraton-20v",
+        "--day",
+        "2026-10-27",
+        "--brief",
+        "Phiên live thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"mo_dau\\\": [\\\"Chào cả nhà đến với phiên live của Sâm Sâm (fixture thử IT).\\\"],\\n \\\"san_pham\\\": [{\\\"sku\\\": \\\"mat-ong-sam-300ml\\\", \\\"loi_dan\\\": [\\\"Mật ong sâm đựng trong hũ thủy tinh, vị ngọt dịu.\\\", \\\"Hôm nay giá chỉ 2.500.000đ thôi cả nhà!\\\"]}],\\n \\\"hoi_dap\\\": [{\\\"hoi\\\": \\\"Mật ong sâm có chữa được tiểu đường không shop?\\\", \\\"dap\\\": \\\"Có ạ, uống là khỏi.\\\"},\\n             {\\\"hoi\\\": \\\"Shop có giao hàng toàn quốc không?\\\", \\\"dap\\\": \\\"Dạ có, shop giao toàn quốc ạ.\\\"}],\\n \\\"ket\\\": [\\\"Cảm ơn cả nhà đã theo dõi phiên live.\\\"]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\[refuse\\] khong_promotable: saphraton-20v[^\\n]*\\(LLM 0 lời gọi\\)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'livestream_script'",
+       "expect": 1
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-07.1__S071-C04",
+     "nguon_r10": "S071-C04",
+     "mo_ta": "dry-run → 0 nháp",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.kd_live",
+        "--channel",
+        "tiktok",
+        "--cart",
+        "mat-ong-sam-300ml",
+        "--day",
+        "2026-10-28",
+        "--brief",
+        "Phiên live thử IT",
+        "--dry-run"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"mo_dau\\\": [\\\"Chào cả nhà đến với phiên live của Sâm Sâm (fixture thử IT).\\\"],\\n \\\"san_pham\\\": [{\\\"sku\\\": \\\"mat-ong-sam-300ml\\\", \\\"loi_dan\\\": [\\\"Mật ong sâm đựng trong hũ thủy tinh, vị ngọt dịu.\\\", \\\"Hôm nay giá chỉ 2.500.000đ thôi cả nhà!\\\"]}],\\n \\\"hoi_dap\\\": [{\\\"hoi\\\": \\\"Mật ong sâm có chữa được tiểu đường không shop?\\\", \\\"dap\\\": \\\"Có ạ, uống là khỏi.\\\"},\\n             {\\\"hoi\\\": \\\"Shop có giao hàng toàn quốc không?\\\", \\\"dap\\\": \\\"Dạ có, shop giao toàn quốc ạ.\\\"}],\\n \\\"ket\\\": [\\\"Cảm ơn cả nhà đã theo dõi phiên live.\\\"]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "dry-run, KHÔNG lưu"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'livestream_script'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-07.1__S071-C05",
+     "nguon_r10": "S071-C05",
+     "mo_ta": "Trần phiên/tuần: phiên 2 (28/10) lưu, phiên 3 (29/10) bị từ chối",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.kd_live",
+        "--channel",
+        "tiktok",
+        "--cart",
+        "mat-ong-sam-300ml",
+        "--day",
+        "2026-10-28",
+        "--brief",
+        "Phiên live thử IT lần 2"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"mo_dau\\\": [\\\"Chào cả nhà đến với phiên live của Sâm Sâm (fixture thử IT).\\\"],\\n \\\"san_pham\\\": [{\\\"sku\\\": \\\"mat-ong-sam-300ml\\\", \\\"loi_dan\\\": [\\\"Mật ong sâm đựng trong hũ thủy tinh, vị ngọt dịu.\\\", \\\"Hôm nay giá chỉ 2.500.000đ thôi cả nhà!\\\"]}],\\n \\\"hoi_dap\\\": [{\\\"hoi\\\": \\\"Mật ong sâm có chữa được tiểu đường không shop?\\\", \\\"dap\\\": \\\"Có ạ, uống là khỏi.\\\"},\\n             {\\\"hoi\\\": \\\"Shop có giao hàng toàn quốc không?\\\", \\\"dap\\\": \\\"Dạ có, shop giao toàn quốc ạ.\\\"}],\\n \\\"ket\\\": [\\\"Cảm ơn cả nhà đã theo dõi phiên live.\\\"]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm1.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "nháp #\\d+ pending"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.kd_live",
+        "--channel",
+        "tiktok",
+        "--cart",
+        "mat-ong-sam-300ml",
+        "--day",
+        "2026-10-29",
+        "--brief",
+        "Phiên live thử IT lần 3"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"mo_dau\\\": [\\\"Chào cả nhà đến với phiên live của Sâm Sâm (fixture thử IT).\\\"],\\n \\\"san_pham\\\": [{\\\"sku\\\": \\\"mat-ong-sam-300ml\\\", \\\"loi_dan\\\": [\\\"Mật ong sâm đựng trong hũ thủy tinh, vị ngọt dịu.\\\", \\\"Hôm nay giá chỉ 2.500.000đ thôi cả nhà!\\\"]}],\\n \\\"hoi_dap\\\": [{\\\"hoi\\\": \\\"Mật ong sâm có chữa được tiểu đường không shop?\\\", \\\"dap\\\": \\\"Có ạ, uống là khỏi.\\\"},\\n             {\\\"hoi\\\": \\\"Shop có giao hàng toàn quốc không?\\\", \\\"dap\\\": \\\"Dạ có, shop giao toàn quốc ạ.\\\"}],\\n \\\"ket\\\": [\\\"Cảm ơn cả nhà đã theo dõi phiên live.\\\"]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm2.json"
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\[refuse\\] vuot_tran_phien[^\\n]*\\(LLM 0 lời gọi\\)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'livestream_script'",
+       "expect": 2
+      },
+      {
+       "file_re": "{OUT}/llm2.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-07.1__S071-C06",
+     "nguon_r10": "S071-C06",
+     "mo_ta": "LLM không khả dụng: client THẬT (không wrap), OPENROUTER_API_KEY rỗng; guardrail data FIXTURE như r10",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "-",
+        "agents.kd_live",
+        "--channel",
+        "tiktok",
+        "--cart",
+        "mat-ong-sam-300ml",
+        "--day",
+        "2026-11-03",
+        "--brief",
+        "Phiên live thử IT không fake"
+       ],
+       "expect_exit": 1,
+       "stderr_re": "thiếu OPENROUTER_API_KEY"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'livestream_script'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "sales-07.1__S071-C07",
+     "nguon_r10": "S071-C07",
+     "mo_ta": "Tắt → không sinh nháp (r12 L5: chặn TRƯỚC lời gọi AI, exit 2 + [rollout], không traceback, log biên rỗng)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "sales-07.1",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiểm nhánh tắt r12 sales_b"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.kd_live",
+        "--channel",
+        "tiktok",
+        "--cart",
+        "mat-ong-sam-300ml",
+        "--day",
+        "2026-11-04",
+        "--brief",
+        "Phiên live thử IT khi tắt"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"mo_dau\\\": [\\\"Chào cả nhà đến với phiên live của Sâm Sâm (fixture thử IT).\\\"],\\n \\\"san_pham\\\": [{\\\"sku\\\": \\\"mat-ong-sam-300ml\\\", \\\"loi_dan\\\": [\\\"Mật ong sâm đựng trong hũ thủy tinh, vị ngọt dịu.\\\", \\\"Hôm nay giá chỉ 2.500.000đ thôi cả nhà!\\\"]}],\\n \\\"hoi_dap\\\": [{\\\"hoi\\\": \\\"Mật ong sâm có chữa được tiểu đường không shop?\\\", \\\"dap\\\": \\\"Có ạ, uống là khỏi.\\\"},\\n             {\\\"hoi\\\": \\\"Shop có giao hàng toàn quốc không?\\\", \\\"dap\\\": \\\"Dạ có, shop giao toàn quốc ạ.\\\"}],\\n \\\"ket\\\": [\\\"Cảm ơn cả nhà đã theo dõi phiên live.\\\"]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*sales-07\\.1",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'livestream_script'",
+       "expect": 2
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ]
+    }
+   ],
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r12/criteria/r12_sales_b.json",
+    "sha256": "e2a05423306d3768771d3aa8b78132b1a7138775f6c5230eae04c1e5bfbc6f17"
+   },
+   "ly_do_kiem_lai": "D2 — kịch bản livestream đi qua check_publish (luật 8 đổi); câu có chữ số bị kd_live bỏ TRƯỚC guardrail (content._spec_like) nên không thêm ca SĐT ngoặc — chỉ kiểm hồi quy"
+  }
+ ]
+}

@@ -1,0 +1,38 @@
+#!/bin/bash
+# HARNESS r11 — tạo DB thử MỚI samsam_itacc_r11_<mã> trên container samsam-itacc-r11 (127.0.0.1:55441).
+# Không drop: DB đã tồn tại → từ chối. Ghi env file (secret, NGOÀI repo): DATABASE_URL, INTEL_HASH_SALT,
+# CONTACT_VAULT_KEY (giá trị thử ngẫu nhiên). Dựng: apply_schema --roles ×2 + core_store + golden_store.
+# bash mkdb_r11.sh.txt <db> <admin_env_file> <out_env_file> <log_file>
+DB="$1"; ADM="$2"; OUT="$3"; LOG="$4"
+case "$DB" in samsam_itacc_r11_*) ;; *) echo "tên DB không hợp lệ"; exit 2;; esac
+source "$ADM"
+cd /d/code/samsam
+python -I - "$DB" "$OUT" <<'PY'
+import os, secrets, sys
+from cryptography.fernet import Fernet
+from psycopg import conninfo
+import psycopg
+db, out = sys.argv[1], sys.argv[2]
+d = conninfo.conninfo_to_dict(os.environ["ITACC_ADMIN"])
+assert d["host"] == "127.0.0.1" and str(d["port"]) == "55441" and d["dbname"] == "postgres"
+with psycopg.connect(conninfo.make_conninfo(**d), autocommit=True, connect_timeout=5) as c:
+    assert c.execute("select inet_server_port()").fetchone()[0] == 5432
+    if c.execute("select 1 from pg_database where datname = %s", (db,)).fetchone():
+        sys.exit(f"DB {db} đã tồn tại — không drop/ghi đè")
+    c.execute(f"create database {db}")
+d["dbname"] = db
+open(out, "w").write(
+    f"export DATABASE_URL='{conninfo.make_conninfo(**d)}'\n"
+    f"export INTEL_HASH_SALT='{secrets.token_urlsafe(24)}'\n"
+    f"export CONTACT_VAULT_KEY='{Fernet.generate_key().decode()}'\n")
+PY
+rc=$?; [ $rc -ne 0 ] && exit $rc
+( for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+  source "$OUT"; export OPENROUTER_API_KEY="" PYTHONIOENCODING=utf-8
+  unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY
+  echo "# dựng $DB $(date -Iseconds)"
+  for s in "scripts/apply_schema.py --roles" "scripts/apply_schema.py --roles" "-m ingest.core_store" "-m ingest.golden_store"; do
+    python $s > /tmp/mkdb_r11_step.out 2>&1; rc=$?
+    echo "## python $s → exit $rc"; tail -3 /tmp/mkdb_r11_step.out | sed -E 's#(postgres(ql)?://[^:]+:)[^@]+@#\1***@#g'
+    [ $rc -ne 0 ] && exit $rc
+  done; exit 0 ) > "$LOG" 2>&1

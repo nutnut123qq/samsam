@@ -1,0 +1,46 @@
+"""HARNESS r12 (prod_legal, MỚI) — ca D2 legal_hr-01 trên entry point thật `pipelines.guardrail.check_publish/check`.
+Cùng văn bản với probe_dot4 D2 (evidence/itacc_r12/harness/probe_dot4.py.txt). Văn bản GIẢ (Thử IT/R12, SĐT 09000xxxxx,
+example.com). Kỳ vọng (r12 D2, luật 'chờ Pháp chế duyệt', mặc định an toàn):
+  - SĐT/email cá nhân trong nội dung công khai → ok=False, có mã pii_ca_nhan, trên facebook/shopee/zalo/web;
+  - hotline 1800577732, liên hệ công khai pii_allow (0235 3699 899, vnsamsam@gmail.com), giá, ngày, quy cách → KHÔNG có
+    pii_ca_nhan và ok=True;
+  - chế độ chat `check()` không đổi: 'gọi 0900000123' → ok=True.
+In [PASS]/[FAIL] từng ca; exit 1 nếu có FAIL. Cần cwd = gốc repo."""
+import os
+import sys
+
+sys.path.insert(0, os.getcwd())
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+from pipelines import guardrail as g  # noqa: E402
+
+L = "Nội dung có sử dụng AI."
+BLOCK = {"sdt_ca_nhan": "Đặt quà Thử IT gọi 0900000123 nhé. " + L,
+         "sdt_ca_nhan_84": "Liên hệ +84 912 345 678 để đặt hàng Thử R12. " + L,
+         "email_ca_nhan": "Gửi đơn về ban.thu.r12@example.com nhé. " + L}
+CLEAN = {"hotline": "Gọi hotline 1800577732 để được tư vấn. " + L,
+         "showroom": "Showroom 0235 3699 899 — email vnsamsam@gmail.com. " + L,
+         "gia_ngay_quy_cach": "Giá 1.500.000 đ, giao từ 23/10/2026, hộp 10 củ, hũ 300ml. " + L,
+         "gia_lon": "Tổng giá trị 10.050.000.000 đ cho đơn doanh nghiệp. " + L}
+fails = n = 0
+
+
+def case(name, ok, actual):
+    global fails, n
+    n += 1
+    fails += 0 if ok else 1
+    print(f"[{'PASS' if ok else 'FAIL'}] {name} | actual={actual}")
+
+
+for group, texts, want_block in (("chan", BLOCK, True), ("khong_gan_co", CLEAN, False)):
+    for k, t in texts.items():
+        for ch in ("facebook", "shopee", "zalo", "web"):
+            r = g.check_publish(t, channel=ch)
+            codes = sorted({str(v.get("code") or v.get("type")) for v in r["violations"]})
+            ok = ((r["ok"] is False and "pii_ca_nhan" in codes) if want_block
+                  else (r["ok"] is True and "pii_ca_nhan" not in codes))
+            case(f"{group}:{k}:{ch}", ok, f"ok={r['ok']} codes={codes}")
+r = g.check("gọi 0900000123")
+case("chat_check_khong_doi", r["ok"] is True, f"ok={r['ok']}")
+print(f"[tong] {n} ca, FAIL {fails}")
+sys.exit(1 if fails else 0)

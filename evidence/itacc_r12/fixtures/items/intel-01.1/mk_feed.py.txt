@@ -1,0 +1,27 @@
+"""FIXTURE: sinh RSS giả cho crawler.intel (phục vụ bởi http.server 127.0.0.1). Dùng: mk_feed.py <out.xml> <bộ>"""
+import sys
+from email.utils import format_datetime
+from datetime import datetime, timezone
+SETS = {
+ "1": [
+  ("Phát hiện lô sâm giả bán qua mạng xã hội Thử IT", "Cơ quan chức năng thu giữ lô sâm giả, người bán để lại số 0900000123 để giao dịch."),
+  ("Bộ Y tế ban hành thông tư mới về thực phẩm bảo vệ sức khỏe Thử IT", "Thông tư quy định ghi nhãn thực phẩm bảo vệ sức khỏe áp dụng từ năm sau."),
+  ("Trimico bị xử phạt vì quảng cáo sai sự thật Thử IT", "Doanh nghiệp Trimico bị xử phạt hành chính do quảng cáo sai sự thật."),
+  ("Sâm Sâm bị tố bán hàng nhái sản phẩm nhân sâm Thử IT", "Một số tài khoản phản ánh hàng nhái mang tên Sâm Sâm, sản phẩm nhân sâm."),
+  ("Giá vàng hôm nay tăng nhẹ Thử IT", "Giá vàng miếng tăng nhẹ trong phiên sáng."),
+  ("Xu hướng trà sữa của Gen Z cuối năm Thử IT", "Giới trẻ chuộng trà sữa ít đường."),
+  ("Thị trường nhân sâm cuối năm sôi động Thử IT", "Nhu cầu nhân sâm làm quà biếu tăng mạnh."),
+  ("Thực phẩm chức năng mùa Tết cần lưu ý gì Thử IT", "Chọn thực phẩm chức năng có nguồn gốc rõ ràng."),
+ ],
+ "b": [("Tin nguồn chưa duyệt về nhân sâm Thử IT", "Nguồn B chưa duyệt — không được thu khi chạy không --source.")],
+}
+def item(i, t, d):
+    return (f"<item><title>{t}</title><link>https://tin-thu-it.example.com/bai-{i}</link>"
+            f"<description>{d}</description><pubDate>{format_datetime(datetime.now(timezone.utc))}</pubDate></item>")
+def main(out, key, extra=None):
+    rows = SETS[key] if extra is None else extra
+    body = "".join(item(f"{key}-{i}", t, d) for i, (t, d) in enumerate(rows, 1))
+    xml = f'<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Tin thử IT</title><link>https://tin-thu-it.example.com/</link><description>fixture</description>{body}</channel></rss>'
+    open(out, "w", encoding="utf-8").write(xml)
+if __name__ == "__main__":
+    main(sys.argv[1], sys.argv[2])

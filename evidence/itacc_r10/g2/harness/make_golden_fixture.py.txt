@@ -1,0 +1,21 @@
+"""HARNESS g2 — golden FIXTURE: bản sao data/golden_skus.json, CHỈ đổi SKU
+food `mat-ong-sam-300ml`: self_declaration_ok=true (giả lập Bên B đã tự công
+bố — CHƯA có thật), mở kênh shopee/tiktok/web/zalo/facebook + giá list/floor
+các kênh mới (số GIẢ, provenance fixture thử IT). Không sửa data/ thật."""
+import json, shutil, sys
+from pathlib import Path
+src = Path(r"D:\code\samsam\data")
+out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
+for n in ("banned_words.txt", "claims_whitelist.json", "guardrail_rules.json"):
+    shutil.copyfile(src / n, out / n)
+g = json.loads((src / "golden_skus.json").read_text(encoding="utf-8"))
+for s in g["skus"]:
+    if s["sku_key"] == "mat-ong-sam-300ml":
+        s["self_declaration_ok"] = True
+        s["allowed_channels"] = ["shopee", "tiktok", "web", "zalo", "facebook"]
+        p = s["prices"]["shopee"]
+        for ch in ("tiktok", "web", "zalo", "facebook"):
+            s["prices"][ch] = {"floor": p["floor"], "list": p["list"]}
+        s["note"] = "FIXTURE thử IT g2 — giả lập đã tự công bố, KHÔNG phải dữ liệu thật"
+(out / "golden_skus.json").write_text(json.dumps(g, ensure_ascii=False, indent=1), encoding="utf-8")
+print("ok", out)

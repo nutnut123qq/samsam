@@ -1,0 +1,2570 @@
+{
+ "_doc": "v3 (điều phối viên 24/10/2026): như v2 + farming-04__C08 `$`→`\\r?$` (CRLF stdout Windows); xem docstring evidence/itacc_r12/harness/mk_farming_v3.py.txt. | v2 (điều phối viên 24/10/2026): chỉ đổi loại kiểm của 5 assertion có `*` ở thư mục (farming-03.2 C11/C12/C14) sang file_glob_dq/file_re_dq — lỗi glob của runner; xem docstring evidence/itacc_r12/harness/mk_farming_v2.py.txt. | Tiêu chí kiểm lại r12 nhóm farming (24/10/2026) — viết + KHÓA trước mọi lần chạy (r12_farming.lock.txt). Căn cứ: bản ghi hiện hành evidence/itacc_r10/items/<id>.json (theo evidence/itacc_r11/source_map.json), lệnh/harness gốc evidence/itacc_r10/g5/ (zalo_webhook/check_media/tamper/qr_run .py.txt chạy NGUYÊN từ {FX10}, chỉ đọc), probe r12 evidence/itacc_r12/harness/probe_dot1.py.txt (G5-01/G5-02/UI-01). Fixture r10 (sinh bởi make_fixtures.py.txt vào scratchpad, sha khớp dau_vao r10) CHÉP nguyên văn vào {FX12}/items/<id>/ + SHA256SUMS.txt. Mỗi ca cũ ↔ đúng 1 ca r12 (nguon_r10); MOI = seed/tiền đề cho DB riêng mục hoặc kiểm lỗi đã vá r12 (G5-01, G5-02, UI-01, OBS-G5-03). Khác r10 có chủ đích: (1) id nhật ký/sha tư liệu/mã QR lấy bằng {sql:...} vì DB riêng mục (r10 dùng chung DB farm → hằng #12/#14/ab5af589…); (2) kho media/zstate/thư mục --get NGOÀI repo: 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/<id>-md5({SCR})/…' (sản phẩm từ chối kho trong repo, {SCR} nằm trong repo) — duy nhất theo lượt chạy; (3) nhật ký thu hoạch có --ts cố định 2026-10-23T03:24:00Z (mốc thực tế r10) để không phụ thuộc ngày chạy; (4) thứ tự chạy theo thứ tự THỰC TẾ r10 khi ca sau cần trạng thái ca trước (F01-03 trước F01-02b, F04-02 trước F04-01b, F032-03a/b trước F032-02b, F031-03/04 trước F031-02). Login người/svc_ui tạo + DROP trong cùng bước (mật khẩu không ra argv/log/tệp). Thời điểm webhook Zalo = đồng hồ lúc chạy (harness r10 không nhận mốc) — không ảnh hưởng kỳ vọng.",
+ "fingerprint_code": "116fc4a9b4a9010664ee2dcee2d4d09ad96feabebe3e7e1704bd2a5f3a9f9838",
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451; mỗi mục 1 DB samsam_itacc_r12_farm<mã> dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống), DEPLOY tắt (bước Zalo đặt DEPLOY rỗng), OPENROUTER_API_KEY rỗng; CDN Zalo = FakeClient của harness r10 (không mạng); ffmpeg imageio-ffmpeg; vt_thuhoach qua wrap.py.txt (chặn mạng ngoài, PROBE_CALL_MAIN=1).",
+ "items": [
+  {
+   "id": "farming-01",
+   "db": "samsam_itacc_r12_farm01",
+   "tieu_chi_cu_the": [
+    "T1 Webhook Zalo THẬT (`connectors.zalo.Handler` 127.0.0.1, harness r10 zalo_webhook.py.txt, DEPLOY tắt, state/kho media NGOÀI repo) nhận tin nhân viên allowlist FIXTURE: chữ '<khoảnh> <hoạt động> <chi tiết>' → đúng 1 dòng plot_logs source zalo:garden author zalo:IT-NV01 activity chuẩn hóa + row_hash; ảnh GPS / video vị trí → garden_media zalo:garden, tệp kho sạch EXIF/GPS/vị trí (check_media RESULT PASS); ghi âm → garden_voice_drafts cho_chep_loi",
+    "T2 STT registry none: `--pending` in [blocked] STT, `--transcribe 1` exit 2 [blocked] (không gửi audio) — phần giọng nói vẫn BI_CHAN MISSING_ADAPTER",
+    "T3 Ca âm: chữ ký sai → HTTP 403, 0 ghi; khoảnh KV-ZZ99 → 0 ghi + hướng dẫn; trùng msg_id → 1 dòng; ép tắt (FIXTURE _FORCE_MODE='tat', vì farming-01 mot_phan không vào sổ) → 0 ghi chữ/ảnh; UPDATE/DELETE plot_logs bằng owner bị trigger chặn; `garden_director --verify` OK",
+    "T4 UI-01 (r12 vá) phần DB: login thật in role svc_ui đọc được cột tab Nhật ký vườn (active_plots/recent_logs/anomaly_check) nhưng KHÔNG INSERT plot_logs và KHÔNG SELECT * plots; login người khối farming ghi qua `add_log_human` → `plot_log_add_human` (author = người của login, source manual, hash chain); login khối sales / ghi tên người khác → bị chặn 0 dòng; login tạm DROP hết. Phần trình duyệt = NOT_RUN ở đây (điều phối viên ghép). Không gửi/đăng ra ngoài, không mạng thật"
+   ],
+   "ca": [
+    {
+     "ma": "farming-01__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ triển khai (tính năng co_code = chạy thử) — như r10 F01-09a",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ"
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "khoảnh FIXTURE IT-K01..K04 (owner, đúng giá trị evidence/itacc_r10/g5/seed_farm_plots.txt) — DB r12 riêng mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+       "expect": 4
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C01",
+     "nguon_r10": "F01-01",
+     "mo_ta": "Chữ nhân viên qua webhook → plot_logs",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/zalo_webhook.py.txt",
+        "--state",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/zstate'}",
+        "--staff",
+        "{FX12}/items/farming-01/garden_staff.json",
+        "--fixtures",
+        "{FX12}/items/farming-01",
+        "--event",
+        "text",
+        "--text",
+        "KV-A01 tưới 30 phút thử IT",
+        "--msgid",
+        "it-g5-f0101"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "DEPLOY": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "POST#1 HTTP 200[\\s\\S]*Đã ghi nhật ký #\\d+: KV-A01 — tưới\\.[\\s\\S]*N_HANDLED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where source = 'zalo:garden' and author = 'zalo:IT-NV01' and plot_id = 'KV-A01' and activity = 'tưới' and row_hash is not null",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C02",
+     "nguon_r10": "F01-02",
+     "mo_ta": "Ảnh có GPS qua webhook",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/zalo_webhook.py.txt",
+        "--state",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/zstate'}",
+        "--staff",
+        "{FX12}/items/farming-01/garden_staff.json",
+        "--fixtures",
+        "{FX12}/items/farming-01",
+        "--event",
+        "image",
+        "--file",
+        "anh_gps.jpg",
+        "--text",
+        "IT-K01"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "DEPLOY": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "Đã lưu 1/1 ảnh cho khoảnh IT-K01"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media where source = 'zalo:garden' and ext = 'jpg' and plot_id = 'IT-K01'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C04",
+     "nguon_r10": "F01-03",
+     "mo_ta": "Video có metadata vị trí qua webhook (chạy TRƯỚC F01-02b vì F01-02b kiểm cả mp4)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/zalo_webhook.py.txt",
+        "--state",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/zstate'}",
+        "--staff",
+        "{FX12}/items/farming-01/garden_staff.json",
+        "--fixtures",
+        "{FX12}/items/farming-01",
+        "--event",
+        "video",
+        "--file",
+        "video_vitri.mp4",
+        "--text",
+        "IT-K01"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "DEPLOY": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "Đã lưu 1/1 video cho khoảnh IT-K01"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media where source = 'zalo:garden' and ext = 'mp4' and plot_id = 'IT-K01'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C03",
+     "nguon_r10": "F01-02b",
+     "mo_ta": "Assert tệp kho ảnh/video sạch (sha khớp, không EXIF/GPS/vị trí) — sha lấy từ garden_media thay hằng r10",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/check_media.py.txt",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "{sql:select sha256 from garden_media where source = 'zalo:garden' and ext = 'jpg' order by id limit 1}",
+        "{sql:select sha256 from garden_media where source = 'zalo:garden' and ext = 'mp4' order by id limit 1}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\.jpg sha_ok=True exif_tags=0 gps=False[\\s\\S]*\\.mp4 sha_ok=True video_has_gps=False has_xyz=False has_location_str=False[\\s\\S]*RESULT PASS"
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C05",
+     "nguon_r10": "F01-04a",
+     "mo_ta": "Ghi âm qua webhook → nháp",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/zalo_webhook.py.txt",
+        "--state",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/zstate'}",
+        "--staff",
+        "{FX12}/items/farming-01/garden_staff.json",
+        "--fixtures",
+        "{FX12}/items/farming-01",
+        "--event",
+        "audio",
+        "--file",
+        "ghi_am.wav",
+        "--text",
+        "IT-K01"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "DEPLOY": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "Đã nhận 1 ghi âm \\(khoảnh IT-K01\\)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_voice_drafts where status = 'cho_chep_loi' and staff_code = 'IT-NV01' and plot_id = 'IT-K01'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C06",
+     "nguon_r10": "F01-04b",
+     "mo_ta": "--pending liệt kê + [blocked] STT",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "connectors.zalo_garden",
+        "--pending"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[pending\\] 1 ghi âm chờ chép lời[\\s\\S]*\\[blocked\\] STT chưa cấu hình"
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C07",
+     "nguon_r10": "F01-05",
+     "mo_ta": "STT none chặn an toàn",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "connectors.zalo_garden",
+        "--transcribe",
+        "1"
+       ],
+       "expect_exit": 2,
+       "out_re": "\\[blocked\\] chưa cấu hình STT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_voice_drafts where status = 'cho_chep_loi'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C08",
+     "nguon_r10": "F01-06",
+     "mo_ta": "Âm: chữ ký sai (OA secret GIẢ đặt trong harness) → 403, 0 ghi (bỏ tiền tố `timeout 60` của r10 — runner có timeout 900s)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/zalo_webhook.py.txt",
+        "--state",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/zstate'}",
+        "--staff",
+        "{FX12}/items/farming-01/garden_staff.json",
+        "--fixtures",
+        "{FX12}/items/farming-01",
+        "--event",
+        "text",
+        "--text",
+        "KV-A01 tưới chữ ký sai",
+        "--bad-sig"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "DEPLOY": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "POST#1 HTTP 403[\\s\\S]*N_HANDLED 0"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from plot_logs where detail like '%chữ ký sai%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C09",
+     "nguon_r10": "F01-07",
+     "mo_ta": "Âm: khoảnh không tồn tại → 0 dòng + hướng dẫn",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/zalo_webhook.py.txt",
+        "--state",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/zstate'}",
+        "--staff",
+        "{FX12}/items/farming-01/garden_staff.json",
+        "--fixtures",
+        "{FX12}/items/farming-01",
+        "--event",
+        "text",
+        "--text",
+        "KV-ZZ99 tưới 10 phút"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "DEPLOY": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "Không tìm thấy khoảnh 'KV-ZZ99' — CHƯA ghi\\. Cú pháp nhật ký vườn"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from plot_logs where plot_id = 'KV-ZZ99'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C10",
+     "nguon_r10": "F01-08",
+     "mo_ta": "Âm: trùng msg_id → đúng 1 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/zalo_webhook.py.txt",
+        "--state",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/zstate'}",
+        "--staff",
+        "{FX12}/items/farming-01/garden_staff.json",
+        "--fixtures",
+        "{FX12}/items/farming-01",
+        "--event",
+        "text",
+        "--text",
+        "IT-K01 bón phân thử IT dedup",
+        "--msgid",
+        "it-g5-dedup-1",
+        "--repeat",
+        "2"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "DEPLOY": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "POST#1 HTTP 200[\\s\\S]*POST#2 HTTP 200[\\s\\S]*N_HANDLED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where source = 'zalo:garden' and detail like '%dedup%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C11",
+     "nguon_r10": "F01-09",
+     "mo_ta": "Âm: tắt qua sổ triển khai (rollout --disable farming-01) → FEATURE_OFF 0 ghi",
+     "not_run": "Tiền đề không dựng được (như r10): farming-01 vẫn code_status mot_phan trong data/contract_features.json → `rollout --seed` không đưa vào sổ, `--disable farming-01` từ chối; nhánh tắt kiểm bằng FIXTURE _FORCE_MODE='tat' ở F01-09x/F01-09y"
+    },
+    {
+     "ma": "farming-01__C12",
+     "nguon_r10": "F01-09x",
+     "mo_ta": "FIXTURE _FORCE_MODE='tat' — chữ → FEATURE_OFF, 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/zalo_webhook.py.txt",
+        "--state",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/zstate'}",
+        "--staff",
+        "{FX12}/items/farming-01/garden_staff.json",
+        "--fixtures",
+        "{FX12}/items/farming-01",
+        "--event",
+        "text",
+        "--text",
+        "IT-K01 tưới khi ép tắt",
+        "--force-mode",
+        "tat"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "DEPLOY": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[FIXTURE\\] rollout\\._FORCE_MODE=tat[\\s\\S]*Tính năng này đang TẮT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where detail like '%ép tắt%'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C13",
+     "nguon_r10": "F01-09y",
+     "mo_ta": "FIXTURE _FORCE_MODE='tat' — ảnh → FEATURE_OFF, 0 garden_media mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/zalo_webhook.py.txt",
+        "--state",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/zstate'}",
+        "--staff",
+        "{FX12}/items/farming-01/garden_staff.json",
+        "--fixtures",
+        "{FX12}/items/farming-01",
+        "--event",
+        "image",
+        "--file",
+        "anh_gps2.jpg",
+        "--text",
+        "IT-K01",
+        "--force-mode",
+        "tat"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-' || md5('{SCR}') || '/media'}",
+        "DEPLOY": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "Tính năng này đang TẮT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media where source = 'zalo:garden'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C14",
+     "nguon_r10": "F01-10a",
+     "mo_ta": "Không sửa lén: owner UPDATE/DELETE dòng zalo đã chain → trigger chặn (harness r10 tamper.py.txt)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/tamper.py.txt",
+        "{sql:select min(id) from plot_logs where source = 'zalo:garden'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*NOT_BLOCKED)[\\s\\S]*BLOCKED update[\\s\\S]*BLOCKED delete"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select detail from plot_logs where id = (select min(id) from plot_logs where source = 'zalo:garden')",
+       "expect": "30 phút thử IT"
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__C15",
+     "nguon_r10": "F01-10b",
+     "mo_ta": "garden_director --verify",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.garden_director",
+        "--verify"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[verify\\] OK"
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__M01",
+     "nguon_r10": "MOI",
+     "mo_ta": "UI-01a: login in role svc_ui đọc cột tab Nhật ký vườn (active_plots/recent_logs/anomaly_check) — không 42501",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    svc=mk('svc_ui')\n    from agents import garden as g\n    with psycopg.connect(svc,connect_timeout=5) as c:\n        print('SVC_READ', len(g.active_plots(c)), len(g.recent_logs(c)), len(g.anomaly_check(c)))\nfinally:\n    drop()\n"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "SVC_READ \\d+ \\d+ \\d+[\\s\\S]*DROPPED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__M02",
+     "nguon_r10": "MOI",
+     "mo_ta": "UI-01b: svc_ui KHÔNG INSERT thẳng plot_logs (42501)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    svc=mk('svc_ui')\n    print('SVC_INSERT', *tryq(svc, \"insert into plot_logs (plot_id, ts, activity, author, source) values ('IT-K01', '2026-10-22 09:00+07', 'tưới', 'svc thử R12', 'manual')\"))\nfinally:\n    drop()\n"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "SVC_INSERT ERR 42501[\\s\\S]*DROPPED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where author = 'svc thử R12'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__M03",
+     "nguon_r10": "MOI",
+     "mo_ta": "UI-01c: svc_ui không SELECT mọi cột plots (chỉ cột tab cần)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    svc=mk('svc_ui')\n    print('SVC_SELECT_ALL', *tryq(svc, 'select * from plots limit 1'))\nfinally:\n    drop()\n"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "SVC_SELECT_ALL ERR 42501[\\s\\S]*DROPPED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__M04",
+     "nguon_r10": "MOI",
+     "mo_ta": "UI-01d: login người khối farming ghi qua add_log_human → plot_log_add_human (author = người của login, source manual, có hash)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    far=mk('app_human','Nông Dân Thử R12',['farming'])\n    from datetime import datetime, timezone\n    from agents import garden as g\n    with psycopg.connect(far,connect_timeout=5) as c:\n        lid,w=g.add_log_human(c,'IT-K01',datetime(2026,10,22,2,0,tzinfo=timezone.utc),'tưới nước','tưới thử R12 UI-01','Nông Dân Thử R12')\n    print('FAR_WRITE', lid, w)\nfinally:\n    drop()\n"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "FAR_WRITE \\d+ [\\s\\S]*DROPPED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where detail = 'tưới thử R12 UI-01' and author = 'Nông Dân Thử R12' and source = 'manual' and row_hash is not null",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__M05",
+     "nguon_r10": "MOI",
+     "mo_ta": "UI-01e: login người khối sales ghi nhật ký vườn → bị chặn, 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    sal=mk('app_human','Bán Hàng Thử R12',['sales'])\n    print('SAL_WRITE', *tryq(sal, 'select plot_log_add_human(%s,%s,%s,%s,%s)', ('IT-K01','2026-10-22 10:00+07','tưới','sales thử R12','Bán Hàng Thử R12')))\nfinally:\n    drop()\n"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "SAL_WRITE ERR 42501[\\s\\S]*DROPPED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where author = 'Bán Hàng Thử R12'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__M06",
+     "nguon_r10": "MOI",
+     "mo_ta": "UI-01f: login farming ghi thay tên người khác → bị chặn, 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    far=mk('app_human','Nông Dân Thử R12',['farming'])\n    print('FAR_OTHER', *tryq(far, 'select plot_log_add_human(%s,%s,%s,%s,%s)', ('IT-K01','2026-10-22 11:00+07','tưới','ghi thay thử R12','Người Khác Thử R12')))\nfinally:\n    drop()\n"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "FAR_OTHER ERR 42501[\\s\\S]*DROPPED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where author = 'Người Khác Thử R12'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-01__M07",
+     "nguon_r10": "MOI",
+     "mo_ta": "UI-01 phần trình duyệt: tab Nhật ký vườn chế độ thực đọc được DB + ghi nhật ký bằng login người khối farming",
+     "not_run": "UI — xem evidence/itacc_r12/ui/ui_sau_*"
+    }
+   ]
+  },
+  {
+   "id": "farming-03.1",
+   "db": "samsam_itacc_r12_farm031",
+   "tieu_chi_cu_the": [
+    "T1 `qr_trace link --lot --log --media --by <người>` ghi lot_origins ánh xạ lô SX đã kiểm nhập passed ↔ nhật ký 'thu hoạch' đã chain (ngày thu hoạch ≤ NSX), qua function DB; `unlink --by <người>` gỡ được",
+    "T2 Ca âm: nhật ký không phải thu hoạch / không tồn tại → exit 1 0 dòng; sha video → exit 1",
+    "T3 G5-02 (r12 vá): `--by agent:qr` link → exit 1, 0 dòng lot_origins/agent_action_log có actor agent:; `--by system:qr` unlink → exit 1 ánh xạ còn nguyên; owner gọi thẳng function với tên agent: → 42501; login người khối sales gọi unlink_lot_origin → 42501; login người khối farming gỡ được (actor = người của login); login tạm DROP hết",
+    "T4 Không gửi/đăng ra ngoài, không tự quyết thay người; mốc thời gian nhật ký cố định (--ts)"
+   ],
+   "ca": [
+    {
+     "ma": "farming-03.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ triển khai (tính năng co_code = chạy thử) — như r10 F01-09a",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "khoảnh FIXTURE IT-K01..K04 (owner, đúng giá trị evidence/itacc_r10/g5/seed_farm_plots.txt) — DB r12 riêng mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+       "expect": 4
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__S03",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "nhật ký KHÔNG phải thu hoạch trên IT-K01 (thay nhật ký #12 'tưới' do ca Zalo r10 tạo ở DB dùng chung) — ts cố định",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.garden",
+        "--plot",
+        "IT-K01",
+        "--activity",
+        "tưới",
+        "--detail",
+        "tưới thử IT (thay nhật ký #12 r10)",
+        "--author",
+        "Người Thử IT",
+        "--ts",
+        "2026-10-22T02:00:00Z"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] nhật ký #\\d+: IT-K01"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__S04",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "ảnh anh_gps.jpg + video video_vitri.mp4 vào kho tư liệu IT-K01 (thay tư liệu ab5af589…/669b2e5f… do ca Zalo r10 nạp; kho NGOÀI repo)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media.py",
+        "--file",
+        "{FX12}/items/farming-03.1/anh_gps.jpg",
+        "--plot",
+        "IT-K01",
+        "--date",
+        "2026-10-22",
+        "--by",
+        "Người Thử IT",
+        "--store",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-03.1-' || md5('{SCR}') || '/media'}"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media.py",
+        "--file",
+        "{FX12}/items/farming-03.1/video_vitri.mp4",
+        "--plot",
+        "IT-K01",
+        "--date",
+        "2026-10-22",
+        "--by",
+        "Người Thử IT",
+        "--store",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-03.1-' || md5('{SCR}') || '/media'}"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media where plot_id = 'IT-K01'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C01",
+     "nguon_r10": "F031-01a",
+     "tien_quyet": true,
+     "mo_ta": "Nạp lô FIXTURE IT-LOT-G5-01 (NSX 20/10)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.production",
+        "lots",
+        "--load",
+        "{FX12}/items/farming-03.1/lots.json",
+        "--source",
+        "manual"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "1 lô mới \\(pending"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select intake_status from production_lots where lot_code = 'IT-LOT-G5-01'",
+       "expect": "pending"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C02",
+     "nguon_r10": "F031-01b",
+     "tien_quyet": true,
+     "mo_ta": "Kiểm nhập passed (người, dev)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.production",
+        "intake",
+        "--lot",
+        "IT-LOT-G5-01",
+        "--result",
+        "passed",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select intake_status from production_lots where lot_code = 'IT-LOT-G5-01'",
+       "expect": "passed"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C03",
+     "nguon_r10": "F031-01c",
+     "tien_quyet": true,
+     "mo_ta": "Nhật ký thu hoạch (chain) — ts cố định 2026-10-23T03:24:00Z = mốc thực tế r10 (thêm --ts để không phụ thuộc ngày chạy)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.garden",
+        "--plot",
+        "IT-K01",
+        "--activity",
+        "thu hoạch",
+        "--detail",
+        "Thu hoạch thử IT 5kg",
+        "--author",
+        "Người Thử IT",
+        "--ts",
+        "2026-10-23T03:24:00Z"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] nhật ký #\\d+: IT-K01 — 2026-10-23 03:24 UTC"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg' and row_hash is not null",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C04",
+     "nguon_r10": "F031-01d",
+     "tien_quyet": true,
+     "mo_ta": "Lô 2 IT-LOT-G5-02 (NSX 23/10 — dữ liệu mồi đã sửa ở r10)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.production",
+        "lots",
+        "--load",
+        "{FX12}/items/farming-03.1/lots2.json",
+        "--source",
+        "manual"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "1 lô mới \\(pending"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C05",
+     "nguon_r10": "F031-01e",
+     "tien_quyet": true,
+     "mo_ta": "Kiểm nhập lô 2 passed",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.production",
+        "intake",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--result",
+        "passed",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select intake_status from production_lots where lot_code = 'IT-LOT-G5-02'",
+       "expect": "passed"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C07",
+     "nguon_r10": "F031-03",
+     "mo_ta": "Âm: nhật ký không phải thu hoạch → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "link",
+        "--lot",
+        "IT-LOT-G5-01",
+        "--log",
+        "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'tưới' and detail = 'tưới thử IT (thay nhật ký #12 r10)'}",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "không phải \\\"thu hoạch\\\""
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C08",
+     "nguon_r10": "F031-04",
+     "mo_ta": "Âm: --by agent:qr → exit 1 (G5-02 vá). Chạy khi CHƯA có ánh xạ nào (thứ tự thực tế r10: F031-04 trước F031-02) để exit 1 chỉ có thể do cổng người, không do 'đã ánh xạ'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "link",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--log",
+        "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg'}",
+        "--by",
+        "agent:qr"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from lot_origins where linked_by like 'agent:%'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from agent_action_log where action = 'qr_lot_link' and actor like 'agent:%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C06",
+     "nguon_r10": "F031-02",
+     "mo_ta": "Ánh xạ lô 2 ↔ nhật ký thu hoạch + 1 ảnh (sha ảnh lấy từ garden_media thay hằng ab5af589… r10)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "link",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--log",
+        "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg'}",
+        "--media",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] lô IT-LOT-G5-02: ánh xạ nhật ký #\\d+ \\(1 ảnh\\) — người thực hiện: GĐ SX Thử IT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins where lot_code = 'IT-LOT-G5-02' and linked_by = 'GĐ SX Thử IT' and cardinality(media_sha256) = 1",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C09",
+     "nguon_r10": "F031-04b",
+     "mo_ta": "Người gỡ ánh xạ (r10: gỡ ánh xạ agent; r12 agent bị chặn nên gỡ ánh xạ của người ở F031-02) → exit 0",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "unlink",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--log",
+        "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg'}",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "gỡ ánh xạ nhật ký #\\d+ — người thực hiện: GĐ SX Thử IT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C10",
+     "nguon_r10": "F031-05",
+     "mo_ta": "Âm: log không tồn tại → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "link",
+        "--lot",
+        "IT-LOT-G5-01",
+        "--log",
+        "999999",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "không có nhật ký #999999"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__C11",
+     "nguon_r10": "F031-06x",
+     "mo_ta": "Âm: sha video → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "link",
+        "--lot",
+        "IT-LOT-G5-01",
+        "--log",
+        "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg'}",
+        "--media",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'mp4' order by id limit 1}",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "là video"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__M01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "G5-02: dựng lại 1 ánh xạ của người (CLI dev) cho các ca gỡ sau",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "link",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--log",
+        "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg'}",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__M02",
+     "nguon_r10": "MOI",
+     "mo_ta": "G5-02: unlink --by system:qr → exit 1 (cổng người), ánh xạ còn nguyên",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "unlink",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--log",
+        "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg'}",
+        "--by",
+        "system:qr"
+       ],
+       "expect_exit": 1,
+       "out_re": "không phải người"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__M03",
+     "nguon_r10": "MOI",
+     "mo_ta": "G5-02: login OWNER gọi thẳng unlink_lot_origin/link_lot_origin với tên agent: → 42501 (human_actor chặn kể cả owner)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg\nfor lab,sql,args in (('unlink_agent','select unlink_lot_origin(%s,%s,%s)',('IT-LOT-G5-02',int(os.environ['HV']),'agent:qr')),('link_system','select link_lot_origin(%s,%s,%s,%s)',('IT-LOT-G5-02',int(os.environ['HV']),None,'system:qr'))):\n    try:\n        with psycopg.connect(os.environ['DATABASE_URL']) as c: c.execute(sql,args); c.commit(); print('NOT_BLOCKED',lab)\n    except psycopg.Error as e: print('BLOCKED',lab,e.sqlstate)\n"
+       ],
+       "env": {
+        "HV": "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg'}"
+       },
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*NOT_BLOCKED)[\\s\\S]*BLOCKED unlink_agent 42501[\\s\\S]*BLOCKED link_system 42501"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from lot_origins where linked_by like 'agent:%' or linked_by like 'system:%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__M04",
+     "nguon_r10": "MOI",
+     "mo_ta": "G5-02: login người khối sales (thật, in role app_human) gọi unlink_lot_origin → 42501, ánh xạ còn",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    sal=mk('app_human','Bán Hàng Thử R12',['sales'])\n    print('SAL_UNLINK', *tryq(sal, 'select unlink_lot_origin(%s,%s,%s)', ('IT-LOT-G5-02', int(os.environ['HV']), 'Bán Hàng Thử R12')))\nfinally:\n    drop()\n"
+       ],
+       "env": {
+        "HV": "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg'}"
+       },
+       "expect_exit": 0,
+       "stdout_re": "SAL_UNLINK ERR 42501[\\s\\S]*DROPPED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.1__M05",
+     "nguon_r10": "MOI",
+     "mo_ta": "G5-02 positive control: login người khối farming gỡ qua unlink_lot_origin → OK, 0 ánh xạ, log actor = người của login",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    far=mk('app_human','Nông Dân Thử R12',['farming'])\n    print('FAR_UNLINK', *tryq(far, 'select unlink_lot_origin(%s,%s,%s)', ('IT-LOT-G5-02', int(os.environ['HV']), 'Nông Dân Thử R12')))\nfinally:\n    drop()\n"
+       ],
+       "env": {
+        "HV": "{sql:select max(id) from plot_logs where plot_id = 'IT-K01' and activity = 'thu hoạch' and detail = 'Thu hoạch thử IT 5kg'}"
+       },
+       "expect_exit": 0,
+       "stdout_re": "FAR_UNLINK OK[\\s\\S]*DROPPED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from agent_action_log where actor = 'Nông Dân Thử R12' and object_id = 'IT-LOT-G5-02'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+       "expect": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "farming-03.2",
+   "db": "samsam_itacc_r12_farm032",
+   "tieu_chi_cu_the": [
+    "T1 3 vai ký (allowlist FIXTURE qr_signers.json 3 người khác nhau, harness r10 qr_run.py.txt đổi SIGNERS_FILE) trên cùng bản chụp + lời văn; issue chỉ khi đủ 3 → qr_codes (mã ngẫu nhiên ≥22 ký tự, issued_by người); revoke ghi revoked_at",
+    "T2 `site --out` ở chạy thử → [blocked] KHÔNG xuất trang mã hiệu lực (exit 1, 0 index.html); ép van_hanh (FIXTURE _FORCE_MODE) → 1 index.html không tọa độ/mã khoảnh/tên người/chữ 'Thử IT'; mã thu hồi → trang 'đã thu hồi'",
+    "T3 Ca âm: issue 0 hoặc 2 chữ ký → exit 1; người sai vai → exit 1; allowlist repo rỗng → exit 1; 1 người 2 vai → exit 1",
+    "T4 Không gửi/đăng ra ngoài; tiền đề (lô + nhật ký thu hoạch + ánh xạ có 1 ảnh) dựng lại trong DB riêng của mục bằng đúng lệnh của farming-03.1"
+   ],
+   "ca": [
+    {
+     "ma": "farming-03.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ triển khai (tính năng co_code = chạy thử) — như r10 F01-09a",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "khoảnh FIXTURE IT-K01..K04 (owner, đúng giá trị evidence/itacc_r10/g5/seed_farm_plots.txt) — DB r12 riêng mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+       "expect": 4
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__S03",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề farming-03.1 trong DB riêng: ảnh IT-K01 (kho ngoài repo), nhật ký thu hoạch ts cố định, lô IT-LOT-G5-02 + kiểm nhập, ánh xạ có 1 ảnh",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media.py",
+        "--file",
+        "{FX12}/items/farming-03.2/anh_gps.jpg",
+        "--plot",
+        "IT-K01",
+        "--date",
+        "2026-10-22",
+        "--by",
+        "Người Thử IT",
+        "--store",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-03.2-' || md5('{SCR}') || '/media'}"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.garden",
+        "--plot",
+        "IT-K01",
+        "--activity",
+        "thu hoạch",
+        "--detail",
+        "Thu hoạch thử IT 5kg",
+        "--author",
+        "Người Thử IT",
+        "--ts",
+        "2026-10-23T03:24:00Z"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.production",
+        "lots",
+        "--load",
+        "{FX12}/items/farming-03.2/lots2.json",
+        "--source",
+        "manual"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.production",
+        "intake",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--result",
+        "passed",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "link",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--log",
+        "{sql:select max(id) from plot_logs where activity = 'thu hoạch'}",
+        "--media",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins where lot_code = 'IT-LOT-G5-02' and cardinality(media_sha256) = 1",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C01",
+     "nguon_r10": "F032-01",
+     "mo_ta": "Preview: guardrail kênh qr OK, chưa vai nào ký",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "preview",
+        "--lot",
+        "IT-LOT-G5-02"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "guardrail kênh qr: OK[\\s\\S]*Đã ký \\(bản hiện tại\\): chưa vai nào"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C02",
+     "nguon_r10": "F032-02",
+     "mo_ta": "Âm: issue khi 0 chữ ký → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "issue",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "chưa đủ 3 chữ ký[\\s\\S]*\\(0 vai"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from qr_codes",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C04",
+     "nguon_r10": "F032-03a",
+     "mo_ta": "Ký GĐ SX",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "sign",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--role",
+        "gd_san_xuat",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "vai GĐ Sản xuất đã ký"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C05",
+     "nguon_r10": "F032-03b",
+     "mo_ta": "Ký GĐ vùng trồng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "sign",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--role",
+        "gd_vung_trong",
+        "--by",
+        "GĐ Vùng Trồng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "vai GĐ vùng trồng đã ký"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C03",
+     "nguon_r10": "F032-02b",
+     "mo_ta": "Âm: issue khi 2 chữ ký (chạy sau 2 vai ký như thực tế r10) → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "issue",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "chưa đủ 3 chữ ký[\\s\\S]*\\(2 vai, 2 người\\)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from qr_codes",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C06",
+     "nguon_r10": "F032-03c",
+     "mo_ta": "Ký Pháp chế/QA → 3 chữ ký cùng snapshot/text sha, 3 người khác nhau",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "sign",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--role",
+        "phap_che_qa",
+        "--by",
+        "Pháp Chế Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "vai Pháp chế/QA đã ký"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from qr_signatures where lot_code = 'IT-LOT-G5-02'",
+       "expect": 3
+      },
+      {
+       "sql": "select count(distinct (snapshot_sha256, text_sha256)) from qr_signatures where lot_code = 'IT-LOT-G5-02'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(distinct signer_norm) from qr_signatures where lot_code = 'IT-LOT-G5-02'",
+       "expect": 3
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C07",
+     "nguon_r10": "F032-04",
+     "mo_ta": "Âm: người sai vai → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "sign",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--role",
+        "phap_che_qa",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "--by không thuộc danh sách người ký vai Pháp chế/QA"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from qr_signatures",
+       "expect": 3
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C08",
+     "nguon_r10": "F032-04b",
+     "mo_ta": "Âm: allowlist repo rỗng (data/qr_signers.json thật) → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "sign",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--role",
+        "phap_che_qa",
+        "--by",
+        "Pháp Chế Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "chưa cấu hình người ký vai Pháp chế/QA"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from qr_signatures",
+       "expect": 3
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C09",
+     "nguon_r10": "F032-04c",
+     "mo_ta": "Âm: 1 người 2 vai (qr_signers_dup.json) → exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers_dup.json",
+        "sign",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--role",
+        "phap_che_qa",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "1 người không được nằm ở 2 vai"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from qr_signatures",
+       "expect": 3
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C10",
+     "nguon_r10": "F032-05",
+     "mo_ta": "Phát hành → qr_codes (mã ngẫu nhiên, issued_by người) + [chạy thử]",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "issue",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã phát hành mã — người phát hành: GĐ SX Thử IT[\\s\\S]*\\[chạy thử\\]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from qr_codes where lot_code = 'IT-LOT-G5-02' and revoked_at is null and issued_by = 'GĐ SX Thử IT' and length(code) >= 22",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C11",
+     "nguon_r10": "F032-06",
+     "mo_ta": "Site chạy thử bị chặn → exit 1, 0 trang",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "site",
+        "--out",
+        "{SCR}/qr_site_trial"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-03.2-' || md5('{SCR}') || '/media'}"
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\[blocked\\] 1 mã còn hiệu lực KHÔNG xuất trang[\\s\\S]*\\[done\\] 0 trang"
+      }
+     ],
+     "kiem": [
+      {
+       "count": 0,
+       "file_glob_dq": "{SCR}/qr_site_trial/*/index.html"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C12",
+     "nguon_r10": "F032-07",
+     "mo_ta": "Site ép van_hanh (FIXTURE) → index.html sạch (không mã khoảnh/tọa độ/tên người)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "--force-mode",
+        "van_hanh",
+        "site",
+        "--out",
+        "{SCR}/qr_site_vh"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-03.2-' || md5('{SCR}') || '/media'}"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] 1 trang"
+      }
+     ],
+     "kiem": [
+      {
+       "count": 1,
+       "file_glob_dq": "{SCR}/qr_site_vh/*/index.html"
+      },
+      {
+       "file_glob": "{SCR}/qr_site_vh/media/*.jpg",
+       "count": 1
+      },
+      {
+       "re": "KV-|IT-K0|Thử IT|15\\.1|107\\.|GĐ SX|Pháp Chế|Người Thử",
+       "expect": false,
+       "file_re_dq": "{SCR}/qr_site_vh/*/index.html"
+      },
+      {
+       "re": "Truy xuất nguồn gốc sản phẩm[\\s\\S]*IT-LOT-G5-02",
+       "expect": true,
+       "file_re_dq": "{SCR}/qr_site_vh/*/index.html"
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C13",
+     "nguon_r10": "F032-08a",
+     "mo_ta": "Thu hồi (mã lấy từ DB thay hằng r10) → revoked_at",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "revoke",
+        "--code",
+        "{sql:select code from qr_codes where lot_code = 'IT-LOT-G5-02' and revoked_at is null}",
+        "--by",
+        "GĐ SX Thử IT",
+        "--reason",
+        "Thu hồi thử IT g5"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã thu hồi mã [A-Za-z0-9_-]{22,} — người thu hồi: GĐ SX Thử IT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from qr_codes where revoked_at is not null and revoked_by = 'GĐ SX Thử IT'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-03.2__C14",
+     "nguon_r10": "F032-08b",
+     "mo_ta": "Trang 'đã thu hồi'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "site",
+        "--out",
+        "{SCR}/qr_site_vh"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-03.2-' || md5('{SCR}') || '/media'}"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] 1 trang"
+      }
+     ],
+     "kiem": [
+      {
+       "re": "đã thu hồi",
+       "expect": true,
+       "file_re_dq": "{SCR}/qr_site_vh/*/index.html"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "farming-04",
+   "db": "samsam_itacc_r12_farm04",
+   "tieu_chi_cu_the": [
+    "T1 `scripts/garden_media.py` nhận ảnh có GPS / video có vị trí → kho NGOÀI repo + garden_media; tệp kho không EXIF/GPS/vị trí (check_media RESULT PASS)",
+    "T2 G5-01 (r12 vá — media_cap/media_thu_hoi thuộc auth.ACTIONS): `garden_media_mkt --release --by <người>` exit 0, 1 dòng garden_media_releases cap by_person = người; `--list` thấy sha; `--get` trả tệp sha khớp + sạch EXIF; `--revoke` exit 0 rồi `--get` bị từ chối; view marketing không có cột khoảnh/vị trí",
+    "T3 Ca âm: kho trong repo → exit 2 không tạo thư mục; tệp không phải ảnh → exit ≠0, 0 dòng; `--by agent:mkt` → exit 1 vì agent (không phải lỗi 'hành động không hợp lệ'), 0 dòng; login người khối sales gọi function cấp → 42501",
+    "T4 Không gửi/đăng ra ngoài, không tự quyết thay người; dev mode (chế độ thực theo approvers khối — không kiểm ở đây)"
+   ],
+   "ca": [
+    {
+     "ma": "farming-04__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ triển khai (tính năng co_code = chạy thử) — như r10 F01-09a",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ"
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "khoảnh FIXTURE IT-K01..K04 (owner, đúng giá trị evidence/itacc_r10/g5/seed_farm_plots.txt) — DB r12 riêng mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+       "expect": 4
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C01",
+     "nguon_r10": "F04-01",
+     "mo_ta": "Nạp ảnh GPS → row + tệp kho",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media.py",
+        "--file",
+        "{FX12}/items/farming-04/anh_gps2.jpg",
+        "--plot",
+        "IT-K01",
+        "--date",
+        "2026-10-22",
+        "--by",
+        "Người Thử IT",
+        "--store",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/media'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] [0-9a-f]{12} — gỡ \\d+ thẻ EXIF, có GPS: có"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media where plot_id = 'IT-K01' and ext = 'jpg' and had_gps and exif_removed > 0 and source = 'cli:garden_media'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C03",
+     "nguon_r10": "F04-02",
+     "mo_ta": "Nạp video vị trí (chạy TRƯỚC F04-01b vì F04-01b kiểm cả mp4)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media.py",
+        "--file",
+        "{FX12}/items/farming-04/video_vitri2.mp4",
+        "--plot",
+        "IT-K01",
+        "--date",
+        "2026-10-22",
+        "--by",
+        "Người Thử IT",
+        "--store",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/media'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "video mp4 đã gỡ metadata"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media where plot_id = 'IT-K01' and ext = 'mp4'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C02",
+     "nguon_r10": "F04-01b",
+     "mo_ta": "Assert kho sạch (sha lấy từ garden_media thay hằng r10)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/check_media.py.txt",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/media'}",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'mp4' order by id limit 1}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\.jpg sha_ok=True exif_tags=0 gps=False[\\s\\S]*\\.mp4 sha_ok=True video_has_gps=False has_xyz=False has_location_str=False[\\s\\S]*RESULT PASS"
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C04",
+     "nguon_r10": "F04-03",
+     "mo_ta": "Âm: kho trong repo ({SCR} của run — trong repo) → exit 2, không tạo thư mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media.py",
+        "--file",
+        "{FX12}/items/farming-04/anh_gps2.jpg",
+        "--plot",
+        "IT-K01",
+        "--date",
+        "2026-10-22",
+        "--by",
+        "Người Thử IT",
+        "--store",
+        "{SCR}/tmp_store_should_not_exist"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "nằm TRONG repo"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/tmp_store_should_not_exist",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from garden_media",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C05",
+     "nguon_r10": "F04-04",
+     "mo_ta": "Âm: tệp không phải ảnh → exit ≠0, 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media.py",
+        "--file",
+        "{FX12}/items/farming-04/khong_phai_anh.jpg",
+        "--plot",
+        "IT-K01",
+        "--date",
+        "2026-10-22",
+        "--by",
+        "Người Thử IT",
+        "--store",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/media'}"
+       ],
+       "expect_exit": [
+        1,
+        2
+       ]
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C06",
+     "nguon_r10": "F04-06",
+     "mo_ta": "Âm: agent cấp → exit 1 VÌ agent (không còn lỗi 'không hợp lệ' của BUG-G5-01), 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media_mkt.py",
+        "--release",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--by",
+        "agent:mkt"
+       ],
+       "expect_exit": 1,
+       "out_re": "^(?![\\s\\S]*không hợp lệ)[\\s\\S]*agent"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media_releases",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C07",
+     "nguon_r10": "F04-05a",
+     "mo_ta": "Cấp cho Marketing (người) → exit 0, 1 dòng releases cap",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media_mkt.py",
+        "--release",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--by",
+        "GĐ Vùng Trồng Thử IT",
+        "--note",
+        "cấp thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] [0-9a-f]{12} đã cập nhật"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media_releases where action = 'cap' and by_person = 'GĐ Vùng Trồng Thử IT'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from garden_media_releases",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from v_garden_media_marketing",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C08",
+     "nguon_r10": "F04-05b",
+     "mo_ta": "--list có sha",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media_mkt.py",
+        "--list"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?m)^[0-9a-f]{64} jpg \\d+B chụp 2026-10-22 cấp \\d{4}-\\d{2}-\\d{2}\\r?$[\\s\\S]*\\[done\\] 1 tư liệu đang được cấp"
+      }
+     ],
+     "ky_vong_v2": {
+      "stdout_re": "(?m)^[0-9a-f]{64} jpg \\d+B chụp 2026-10-22 cấp \\d{4}-\\d{2}-\\d{2}$[\\s\\S]*\\[done\\] 1 tư liệu đang được cấp"
+     }
+    },
+    {
+     "ma": "farming-04__C09",
+     "nguon_r10": "F04-05c",
+     "mo_ta": "--get → tệp (kho qua env GARDEN_MEDIA_DIR như r10; thư mục ra ngoài repo)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media_mkt.py",
+        "--get",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--out",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out'}"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/media'}"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] [0-9a-f]{12} → [0-9a-f]{64}\\.jpg"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out/*.jpg'}",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C11",
+     "nguon_r10": "F04-DIAG2",
+     "mo_ta": "r10 chẩn đoán (--get sau khi cấp bằng function DB) → r12 cấp bằng CLI: --get lại + kiểm tệp ra sha khớp, exif (0, False)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media_mkt.py",
+        "--get",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--out",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out'}"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/media'}"
+       },
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import sys,glob,hashlib\nfrom scripts import garden_media as gm\nfs=glob.glob(sys.argv[1]+'/*.jpg'); print('n_files',len(fs))\np=fs[0]; d=open(p,'rb').read(); name=p.replace('\\\\','/').rsplit('/',1)[1].split('.')[0]\nImage,_=gm._pil()\nwith Image.open(p) as im: st=gm._exif_stats(im)\nprint('sha_ok',hashlib.sha256(d).hexdigest()==name,'exif_stats',st)\n",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "n_files 1[\\s\\S]*sha_ok True exif_stats \\(0, False\\)"
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C10",
+     "nguon_r10": "F04-07",
+     "mo_ta": "Thu hồi rồi get → --revoke exit 0; --get bị từ chối",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media_mkt.py",
+        "--revoke",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--by",
+        "GĐ Vùng Trồng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] [0-9a-f]{12} đã cập nhật"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media_mkt.py",
+        "--get",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--out",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out_after'}"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/media'}"
+       },
+       "expect_exit": 1,
+       "stderr_re": "chưa được cấp cho Marketing"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media_releases where action = 'thu_hoi' and by_person = 'GĐ Vùng Trồng Thử IT'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from v_garden_media_marketing",
+       "expect": 0
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out_after/*'}",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__C12",
+     "nguon_r10": "F04-DIAG5",
+     "mo_ta": "Sau thu hồi, --get → từ chối",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media_mkt.py",
+        "--get",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--out",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out2'}"
+       ],
+       "env": {
+        "GARDEN_MEDIA_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/media'}"
+       },
+       "expect_exit": 1,
+       "stderr_re": "chưa được cấp cho Marketing"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out2/*'}",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__M01",
+     "nguon_r10": "MOI",
+     "mo_ta": "view marketing không có cột khoảnh/tác giả/vị trí",
+     "buoc": [],
+     "kiem": [
+      {
+       "sql": "select count(*) from information_schema.columns where table_name = 'v_garden_media_marketing' and column_name in ('plot_id','author','gps','lat','lon','location','had_gps')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-04__M02",
+     "nguon_r10": "MOI",
+     "mo_ta": "G5-01: login người khối sales (thật, in role app_human) gọi garden_media_release_human → 42501, 0 dòng mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    sal=mk('app_human','Bán Hàng Thử R12',['sales'])\n    print('SAL_RELEASE', *tryq(sal, 'select garden_media_release_human(%s,%s,%s,%s)', (os.environ['SHA'],'cap','Bán Hàng Thử R12',None)))\nfinally:\n    drop()\n"
+       ],
+       "env": {
+        "SHA": "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}"
+       },
+       "expect_exit": 0,
+       "stdout_re": "SAL_RELEASE ERR 42501[\\s\\S]*DROPPED 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from garden_media_releases",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from garden_media_releases where by_person = 'Bán Hàng Thử R12'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+       "expect": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "farming-05.2",
+   "db": "samsam_itacc_r12_farm052",
+   "tieu_chi_cu_the": [
+    "T1 `agents.vt_thuhoach --date 2026-10-23 --submit` (wrap: REPORTS_DIR → {SCR}/reports, chặn mạng ngoài) → đúng 1 mục approval_queue farming/harvest_forecast pending created_by agent:VT; payload có khoảng thấp–cơ sở–cao theo khoảnh, sha 2 tệp giả định, dòng 'thiếu dữ liệu'",
+    "T2 Chạy lại cùng ngày → [submit] skipped, không nhân mục pending",
+    "T3 Khoảnh IT-K02 thiếu tree_count/planted_year → 'thiếu dữ liệu (tree_count, planted_year) — không ước lượng' (không coi = 0)",
+    "T4 Tắt qua sổ triển khai → không sinh mục mới (MOI: chặn sạch exit 2, không traceback, không ghi tệp báo cáo — quan sát OBS-G5-03 r10); bật lại → chạy thử; không gửi/đăng ra ngoài"
+   ],
+   "ca": [
+    {
+     "ma": "farming-05.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ triển khai (tính năng co_code = chạy thử) — như r10 F01-09a",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ"
+      }
+     ]
+    },
+    {
+     "ma": "farming-05.2__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "khoảnh FIXTURE IT-K01..K04 (owner, đúng giá trị evidence/itacc_r10/g5/seed_farm_plots.txt) — DB r12 riêng mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+       "expect": 4
+      }
+     ]
+    },
+    {
+     "ma": "farming-05.2__C01",
+     "nguon_r10": "F052-01",
+     "mo_ta": "Dự báo + submit",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.vt_thuhoach",
+        "--date",
+        "2026-10-23",
+        "--submit"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.vt_thuhoach:REPORTS_DIR={SCR}/reports",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 0,
+       "stdout_re": "IT-K03: \\d{4}-Q[1-4] — \\d+–\\d+–\\d+ kg[\\s\\S]*\\[submit\\] pending #\\d+ \\(farming/harvest_forecast\\)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast' and status = 'pending' and created_by = 'agent:VT'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast' and payload ~ 'IT-K0[34]: [0-9]{4}-Q[1-4] — [0-9]+–[0-9]+–[0-9]+ kg' and payload like '%harvest_assumptions_sha256: %' and payload like '%scenario_assumptions_sha256: %' and payload like '%thiếu dữ liệu%'",
+       "expect": 1
+      },
+      {
+       "file_glob": "{SCR}/reports/vt-thu-hoach-2026-10-23.md",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-05.2__C02",
+     "nguon_r10": "F052-02",
+     "mo_ta": "Idempotent — chạy lại không thêm",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.vt_thuhoach",
+        "--date",
+        "2026-10-23",
+        "--submit"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.vt_thuhoach:REPORTS_DIR={SCR}/reports",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[submit\\] skipped #\\d+"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-05.2__C03",
+     "nguon_r10": "F052-03",
+     "mo_ta": "Thiếu dữ liệu — IT-K02 'thiếu' (cùng lệnh r10)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.vt_thuhoach",
+        "--date",
+        "2026-10-23",
+        "--submit"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.vt_thuhoach:REPORTS_DIR={SCR}/reports",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 0,
+       "stdout_re": "IT-K02: thiếu dữ liệu \\(tree_count, planted_year\\) — không ước lượng"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-05.2__C04",
+     "nguon_r10": "F052-04a",
+     "tien_quyet": true,
+     "mo_ta": "disable farming-05.2",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "farming-05.2",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "farming-05\\.2: chạy thử → tắt"
+      }
+     ]
+    },
+    {
+     "ma": "farming-05.2__C05",
+     "nguon_r10": "F052-04b",
+     "mo_ta": "Âm: tắt → không mục mới (r10 không ràng buộc exit; exit ≠0)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.vt_thuhoach",
+        "--date",
+        "2026-10-24",
+        "--submit"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.vt_thuhoach:REPORTS_DIR={SCR}/reports",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": [
+        1,
+        2
+       ]
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-05.2__M01",
+     "nguon_r10": "MOI",
+     "mo_ta": "OBS-G5-03 (r12 RB): tắt → chặn sạch exit 2 [rollout], không traceback, KHÔNG ghi tệp báo cáo",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.vt_thuhoach",
+        "--date",
+        "2026-10-24",
+        "--submit"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.vt_thuhoach:REPORTS_DIR={OUT}/reports",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\] .*farming-05\\.2",
+       "out_re": "^(?![\\s\\S]*Traceback)[\\s\\S]*"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+       "expect": 1
+      },
+      {
+       "file_glob": "{OUT}/reports/vt-thu-hoach-*.md",
+       "count": 0
+      },
+      {
+       "file_glob": "{SCR}/reports/vt-thu-hoach-2026-10-24.md",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-05.2__C06",
+     "nguon_r10": "F052-04c",
+     "mo_ta": "promote → chạy thử",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "farming-05.2",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "farming-05\\.2: tắt → chạy thử"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,60 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\intel-01.1\\20261024T111452-5196\\intel-01.1__C05\\out/repi/intel-bulletin-day-*.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/intel-01.1/20261024T111452-5196/intel-01.1__C05/out/repi/intel-bulletin-day-2026-10-24.md",
+    "sha256": "d7ec67dfb9a43dce83af47c27e8c770dfb67954bea38473f8b97e03fb526879b"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-01.1\\20261024T111452-5196\\intel-01.1__C05\\out/repi/intel-bulletin-day-*.md",
+  "re": "CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng intel-01\\.1",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-01.1\\20261024T111452-5196\\intel-01.1__C05\\out/repi/intel-bulletin-day-*.md",
+  "re": "\\A(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-1>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-2>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-3>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-4>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-6>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-7>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-8>)",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-01.1\\20261024T111452-5196\\intel-01.1__C05\\out/repi/intel-bulletin-day-*.md",
+  "re": "bai-1-5\\b",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-01.1\\20261024T111452-5196\\intel-01.1__C05\\out/repi/intel-bulletin-day-*.md",
+  "re": "(?m)^> - (?!\\(\\+)(?![^\\n]*· <https?://[^>\\n]+>$)",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-01.1\\20261024T111452-5196\\intel-01.1__C05\\out/repi/intel-bulletin-day-*.md",
+  "re": "\\A(?=[\\s\\S]*## Cảnh báo đỏ đang mở)(?=[\\s\\S]*## Tin theo chủ đề)(?=[\\s\\S]*### 1\\. Sâm & thị trường sâm — \\d+ tin)(?=[\\s\\S]*### 6\\. Văn bản pháp luật — \\d+ tin)",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from report_outputs where feature_id = 'intel-01.1' and name like 'intel-bulletin-day-%' and not is_sample",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

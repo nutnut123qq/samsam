@@ -1,0 +1,11 @@
+# ca F01-2
+# gio 2026-10-23T10:22:00+07:00
+# lenh python -m ingest.settlement_csv --file evidence/itacc_r10/g4/fixtures/qt_shopee_s1.csv --channel shopee
+# exit 0
+--- stdout ---
+[load] quyết toán shopee qt_shopee_s1.csv: 6 dòng; đối chiếu: khop=2, lech=1, thieu_chung_tu=1, hoan=2
+[warn] 1 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.
+[done]
+
+--- stderr ---
+

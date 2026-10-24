@@ -43,7 +43,7 @@ from agents import kd_quote as kq
 from agents.report import REPORTS_DIR, write_report
 from ingest.golden_store import GOLDEN_FILE, read_golden
 from ingest.lead_store import connect
-from pipelines import director, kb_filter
+from pipelines import director, guardrail, kb_filter
 from pipelines.store import _db_msg
 
 # Console Windows cp1258 — print tiếng Việt có dấu crash; ép UTF-8.
@@ -60,11 +60,16 @@ REF_NOTE = ("Giá tham khảo — báo giá chính thức theo yêu cầu, hệ 
             " tự gửi.")
 
 
-def eligible(golden, combos) -> tuple[list[dict], list[dict]]:
-    """→ (mục vào catalog, [{key, code}] bị loại — KHÔNG tên)."""
+def eligible(golden, combos, readiness: dict | None = None,
+             channels=()) -> tuple[list[dict], list[dict]]:
+    """→ (mục vào catalog, [{key, code}] bị loại — KHÔNG tên). r12 L2: SKU
+    mức CAM ở bất kỳ kênh nào trong `channels` (view DB `sku_readiness`;
+    None = soi gương golden, fail-closed) → loại `readiness_cam`."""
     g, c = kq.gidx(golden), kq.cidx(combos)
     items, excluded, bad = [], [], {}
     for k, s in g.items():
+        lv = [readiness.get((k, ch), "CAM") if readiness is not None
+              else guardrail._readiness_of(s, ch) for ch in channels]
         if s.get("category") == "alcohol" or kb_filter.is_alcohol(
                 s.get("name") or "") or kb_filter.is_alcohol(
                 k.replace("-", " ")):
@@ -73,6 +78,8 @@ def eligible(golden, combos) -> tuple[list[dict], list[dict]]:
             bad[k] = "tpbvsk_chua_xnqc"
         elif s.get("category") not in ("food", "tpbvsk"):
             bad[k] = "loai_khong_ho_tro"
+        elif "CAM" in lv:
+            bad[k] = "readiness_cam"
         else:
             items.append({"key": k, "kind": "sku", "name": s.get("name") or k,
                           "spec": s.get("pack_spec") or "—",
@@ -131,9 +138,15 @@ def excluded_names(golden, combos, excluded) -> list[str]:
     return out
 
 
-def build(golden, combos, matrix, *, day: date, packshot_dir=None) -> dict:
-    """→ {payload, excluded, problems, n_items}. THUẦN trừ đọc packshot."""
-    items, excluded = eligible(golden, combos)
+def build(golden, combos, matrix, *, day: date, packshot_dir=None,
+          readiness: dict | None = None) -> dict:
+    """→ {payload, excluded, problems, n_items}. THUẦN trừ đọc packshot.
+    r12 L2: `golden` đã qua `kq.approved_golden` (giá DB đã duyệt) ở caller;
+    readiness xét ở kênh giá gốc của ma trận + web (kênh cổng guardrail)."""
+    base = matrix.get("base") if isinstance(matrix, dict) else None
+    chans = tuple(dict.fromkeys(filter(None, (
+        base.get("channel") if isinstance(base, dict) else None, "web"))))
+    items, excluded = eligible(golden, combos, readiness, chans)
     errs = kq.validate_matrix(matrix, golden, combos)
     if errs:
         return {"payload": "", "excluded": excluded, "problems":
@@ -249,22 +262,32 @@ def main(argv=None) -> int:
             except ProductionError as e:
                 print(f"[error] BOM: {e}", file=sys.stderr)
                 return 1
-    conn = None
-    if not (a.build and combos is not None):
-        conn = connect()
-        if conn is None:
-            print("[error] không kết nối được Postgres (DATABASE_URL thiếu "
-                  "hoặc host chết)", file=sys.stderr)
-            return 2
+    # r12 L2: --build luôn cần DB (giá price_list đã duyệt + readiness view)
+    # kể cả khi combo đọc từ --bom.
+    conn = connect()
+    if conn is None:
+        print("[error] không kết nối được Postgres (DATABASE_URL thiếu "
+              "hoặc host chết)", file=sys.stderr)
+        return 2
     try:
         if a.build or a.submit:
+            from pipelines import rollout
+            if why := rollout.blocked(conn, "catalog B2B",
+                                      fid=kq.FEATURE_FOLLOWUP):
+                return rollout.say_blocked(why)   # r12 RB: trước khi ghi file
             if combos is None:
                 from pipelines.production import db_combos
                 combos = db_combos(conn)
                 conn.commit()
             day = a.date or kq._today_vn()
+            from agents import kd_listing
+            from pipelines import store
+            golden = kq.approved_golden(golden,
+                                        kd_listing.golden_prices(conn, day))
+            readiness = store.readiness_from_db(conn)
+            conn.commit()
             built = build(golden, combos, matrix, day=day,
-                          packshot_dir=a.packshot_dir)
+                          packshot_dir=a.packshot_dir, readiness=readiness)
             print(f"[catalog] {built['n_items']} mục · loại "
                   f"{len(built['excluded'])}: "
                   + (", ".join(f"{e['key']}({e['code']})"

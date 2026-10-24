@@ -1,0 +1,33 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "agents.fp_cash",
+  "--forecast",
+  "--start",
+  "2026-10-26",
+  "--out-dir",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-4\\out"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:22:35+07:00",
+ "ket_thuc": "2026-10-24T11:22:50+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stderr_re": "(?s)\\A(?=.*\\[warn\\] không kết nối được Postgres[^\\n]*chưa xác minh)(?=.*không ghi sổ đầu ra)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "ab5789f8739c9c3e7ab24e13d5dd497ba850fc4975966237cd432b8eac8c11c2",
+ "stderr_sha256": "4fe4474c10197c701bf19c7555c95892affa9e5428dd6770301041ff03e3ebb7"
+}

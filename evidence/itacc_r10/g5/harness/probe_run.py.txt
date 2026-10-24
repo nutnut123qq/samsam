@@ -1,0 +1,21 @@
+"""HARNESS DP071-05 — webhook Zalo THẬT (connectors.zalo.Handler, state → scratchpad) trên
+127.0.0.1 cổng ngẫu nhiên; chạy THẬT scripts/webhook_probe.py --dry-run vào /readyz (sống) và
+vào cổng không có server (chết)."""
+import socket, subprocess, sys, threading
+from http.server import ThreadingHTTPServer
+from pathlib import Path
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+ROOT = Path(__file__).resolve().parents[4]; sys.path.insert(0, str(ROOT))
+from connectors import zalo
+st = Path(sys.argv[1]); st.mkdir(parents=True, exist_ok=True)
+zalo.SEEN_DB, zalo.CONV_LOG, zalo.TOKEN_STORE = st / "zalo_seen.db", st / "conversations.jsonl", st / "zalo_tokens.json"
+srv = ThreadingHTTPServer(("127.0.0.1", 0), zalo.Handler); threading.Thread(target=srv.serve_forever, daemon=True).start()
+s = socket.socket(); s.bind(("127.0.0.1", 0)); dead = s.getsockname()[1]; s.close()
+rcs = []
+for label, url in (("SONG", f"http://127.0.0.1:{srv.server_address[1]}/readyz"), ("CHET", f"http://127.0.0.1:{dead}/readyz")):
+    p = subprocess.run([sys.executable, "scripts/webhook_probe.py", "--url", url, "--dry-run"], cwd=ROOT,
+                       capture_output=True, text=True, encoding="utf-8", timeout=60)
+    print(f"[{label}] exit={p.returncode}\n{(p.stdout + p.stderr).strip()}"); rcs.append(p.returncode)
+srv.shutdown()
+ok = rcs[0] == 0 and rcs[1] != 0
+print("KET_QUA", "PASS" if ok else "FAIL"); raise SystemExit(0 if ok else 1)

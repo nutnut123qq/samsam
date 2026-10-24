@@ -1,0 +1,28 @@
+[
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\finance-06\\20261024T112307-bd29\\finance-06__F06-5\\out/doi-soat-2026-Q3.md",
+  "re": "(?s)\\A(?=.*\\| shopee \\| 2\\.900\\.000đ \\|)(?=.*shopee: BẤT THƯỜNG[^\\n]*trùng nguyên văn 1[^\\n]*lệch số 1[^\\n]*qt_shopee_s1\\.csv, qt_shopee_s2\\.csv)(?=.*\\| Phí vận hành \\(quy đổi sản phẩm\\) \\| — )",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from revenue_quarters",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select net_vnd from revenue_quarters order by id limit 1",
+  "expect": 2152000,
+  "actual": 2152000,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from revenue_quarters where ops_fee_vnd is not null",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

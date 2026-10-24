@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W41'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

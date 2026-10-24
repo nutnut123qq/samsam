@@ -1,0 +1,11 @@
+"""HARNESS g3: đọc trần FP&A (agents.mkt_ads.cap_for) — CHỈ ĐỌC."""
+import sys, json
+from datetime import date
+sys.path.insert(0, ".")
+from agents import mkt_ads as ma
+from ingest.lead_store import connect
+cfg, dcfg, why = ma.load_cfgs(); assert why is None, why
+c = connect()
+for sku, ch in [("mat-ong-sam-300ml", "shopee"), ("mat-ong-sam-300ml", "tiktok")]:
+    print(sku, ch, json.dumps(ma.cap_for(c, sku, ch, date(2026, 10, 1), cfg), default=str))
+c.rollback(); c.close()

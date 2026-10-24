@@ -1,0 +1,14 @@
+"""HARNESS g2 — S05-C09c: gọi agents.kd_quote.followup_items (CHỈ ĐỌC, không
+ghi) với `now` giả = 28/10/2026 09:00 VN để xem nhắc chốt đơn sẽ sinh khi đến
+hạn 24 giờ làm việc. Không thay entry point thật (C09a/b) — chỉ bổ trợ."""
+import json, os, sys
+from datetime import datetime
+sys.path.insert(0, r"D:\code\samsam"); sys.stdout.reconfigure(encoding="utf-8")
+import psycopg
+from agents import kd_quote, sales_watch
+from pipelines import director
+c = psycopg.connect(os.environ["DATABASE_URL"])
+now = datetime.fromisoformat("2026-10-28T09:00:00+07:00")
+items = kd_quote.followup_items(c, now, sales_watch.section("quote_followup"), director.load_config("sales")["business_hours"])
+print(json.dumps(items, ensure_ascii=False, indent=1))
+c.rollback()

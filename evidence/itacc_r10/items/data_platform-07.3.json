@@ -1,0 +1,205 @@
+{
+ "id": "data_platform-07.3",
+ "ten": "Kiểm thử trước khi đưa thay đổi lên",
+ "khoi": "data_platform",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Hạ tầng dữ liệu và AI / Vận hành hệ thống: 'kiểm thử trước khi đưa thay đổi lên'",
+ "tieu_chi": [
+  "agent_eval --agent guardrail ghi eval_runs (tree bẩn → chỉ khi --allow-dirty, sha '-dirty')",
+  "deploy_gate từ chối khi thiếu eval PASS đúng SHA / approvers rỗng / đóng băng; cho phép khi đủ (config + eval FIXTURE) — chỉ in kế hoạch",
+  "Ca âm: tree bẩn không --allow-dirty → exit 1",
+  "T4: không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:58:33+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_dp; dev mode (AUTH_MODE trống, DEPLOY tắt); ca cho phép của cổng dùng FIXTURE: bản sao config (approvers giả) + 2 dòng eval_runs GIẢ cho SHA f1f1…",
+ "dau_vao": [
+  {
+   "ten": "eval_config_fixture.json",
+   "sha256": "(xem evidence/itacc_r10/g5/fixtures_sha256.txt)",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "DP073-02",
+   "mo_ta": "Âm: tree bẩn",
+   "lenh": "timeout 300 python scripts/agent_eval.py --agent guardrail",
+   "expected": "exit 1",
+   "actual": "exit 1 working tree bẩn — không ghi",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP073-01",
+   "mo_ta": "Eval ghi --allow-dirty",
+   "lenh": "timeout 600 python scripts/agent_eval.py --agent guardrail --allow-dirty",
+   "expected": "eval_runs -dirty",
+   "actual": "guardrail v2 130/132 ≥0.95 PASS; eval_runs #1 16b33fc…-dirty",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP073-03",
+   "mo_ta": "Cổng từ chối",
+   "lenh": "python scripts/deploy_gate.py --sha 16b33fc9b4f0e0ff45dbeab78972100909ec0340 --approved-by Người Thử IT",
+   "expected": "exit 1",
+   "actual": "deny: guardrail/chatbot chưa có eval cho SHA; approvers rỗng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP073-04",
+   "mo_ta": "Cổng cho phép (FIXTURE)",
+   "lenh": "python evidence/itacc_r10/g5/harness/mod_run.py scripts.deploy_gate --patch CONFIG=<scratch>/fixtures/eval_config_fixture.json -- --sha f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1 --approved-by Người Thử IT --today 2026-10-23",
+   "expected": "exit 0 in kế hoạch",
+   "actual": "exit 0, in kế hoạch release/rollback — không chạy lệnh",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP073-05a",
+   "mo_ta": "Âm: đóng băng feature",
+   "lenh": "python evidence/itacc_r10/g5/harness/mod_run.py scripts.deploy_gate --patch CONFIG=<scratch>/fixtures/eval_config_fixture.json -- --sha f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1 --approved-by Người Thử IT --today 2026-12-25",
+   "expected": "exit 1",
+   "actual": "exit 1 đóng băng 21/12/2026–10/02/2027",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP073-05b",
+   "mo_ta": "Hotfix trong đóng băng",
+   "lenh": "python evidence/itacc_r10/g5/harness/mod_run.py scripts.deploy_gate --patch CONFIG=<scratch>/fixtures/eval_config_fixture.json -- --sha f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1 --approved-by Người Thử IT --today 2026-12-25 --hotfix",
+   "expected": "exit 0",
+   "actual": "exit 0 (cho qua kèm warn)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP073-06",
+   "mo_ta": "Validate",
+   "lenh": "python scripts/agent_eval.py --validate",
+   "expected": "exit 0",
+   "actual": "22/22 suite hợp lệ",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "Bên B cử người duyệt deploy (approvers); frozen 22 suite",
+ "gioi_han": "Tree bẩn → chỉ ghi '<sha>-dirty' (cổng không bao giờ khớp); nhánh cho phép chỉ bằng FIXTURE. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP073-02.txt",
+   "sha256": "59dacea85ebd00870003384d8c169e78bdd72aa1d519033a64a194b5fd8eb6ec"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP073-01.txt",
+   "sha256": "d20326ee667c154fee3e8d3c015ae20ab1346ff3c9e68f6818e86bd7700dfc0f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP073-03.txt",
+   "sha256": "b4513df1ad57ffeeb4cc2c364f38aa1e8646a06aba443a6f86427cbff7895bcc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP073-04.txt",
+   "sha256": "09dfe01e2a43364a5ea2275d71735ce3bd3eeb5b25de7ff2176de929c7acd9e0"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP073-05a.txt",
+   "sha256": "df299077b42e4e4c2558b8c904f40ab5f876d1ccacb2308e277723274b46d6ef"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP073-05b.txt",
+   "sha256": "614e8a07a4254e96f863628d293c309b538f2c972f9e35205f039fcfac3aadcc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP073-06.txt",
+   "sha256": "53f59ad647e69fdd8133cb6ca791a5d9c58119af38a1cab3d9f2c940c9be1421"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/check_media.py",
+   "sha256": "9dc52b8eefb2b5ddb13334435174e3083f32f7006c60a6ce8271c7fd20fe4c23"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_llm_run.py",
+   "sha256": "df4672d90c7d9faa51a83ed42a6e1d159bf8eda0bb5aa95860cf15bef3c6fe3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_shopee.py",
+   "sha256": "9402db0719ea6f325d9d75b29af4ce22574dbae49dc2cfc7c24ad459534329cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gd_run.py",
+   "sha256": "84c646e3dd2019f6bc417e9071b5a422d8d37d7f10c0de077db3f303b1f21eaa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gw_probe.py",
+   "sha256": "8038c6f83facb83baab8eb2bb0fbb8b8cb1ab328082e7b6af0b718734f6cf981"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/hold_lock.py",
+   "sha256": "2a511640b93c4a5d3e2529f711f9b3ca07085bbb08b7be3f88383ffc230d1cab"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_criteria_g5.py",
+   "sha256": "6e64178e75ce85a9b8c265c33862e0395c7cdcfcc943ac19b4915e3b53e21dcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_fixtures.py",
+   "sha256": "d5117a5728c04a988c7d151150fa7e7153a45d59f3752eb470c16ed86aabb241"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_items_g5.py",
+   "sha256": "879a76de3bfb1285557de44386e17428ebf513bf1368f5a554b534fad9edfb82"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_pdf.py",
+   "sha256": "f68506f1c8158b51a4a4048c894df8bfbc88d4a14071cb6c3d2393464add3867"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/mod_run.py",
+   "sha256": "0ba336024389f8ea885b2d63bb2056bdee2c03b814a74eb12343daff901a31d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/probe_run.py",
+   "sha256": "c0f2386d31984f5e279392c44c55209837e13b5f93ded55d5c80709c6b3e5105"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/q.py",
+   "sha256": "6b1c569d67e265d3ad9593331334d286cdbc525eb304ca55128eb686e57d97ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/qr_run.py",
+   "sha256": "8dbe083a6119eee0d80849374b7b053ef5bb44cac67abd85bae74a94562571c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/role_probe.py",
+   "sha256": "c1364ecad746feaeddbb98de7853e542a757cc4ddbbaaa6cae8aada075375a07"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture.py",
+   "sha256": "3b5ae3fad7dac20dc7fab16d1d704833bbb85ba6554c4fd41717f5441bed497b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "sha256": "c530ef5bce990aaa8e0393e582192b93687501195dfcbfa32520a3c28be1c90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/tamper.py",
+   "sha256": "0c27a266124476bb3369ed975395dd2d27ec8e30207e31647a817eda7540a186"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/zalo_webhook.py",
+   "sha256": "de7da44a52a26cb27510f89ffc5659c59c22e53f4fd01d7db142760bf371866c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/lib.sh",
+   "sha256": "c3d88bf45e775e5246126bb82b28042b0d4e6bc5e69a80b70e9d4d263c308a3d"
+  }
+ ],
+ "loi_san_pham": []
+}

@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from garden_media_releases",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from garden_media_releases where by_person = 'Bán Hàng Thử R12'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

@@ -1,0 +1,24 @@
+[
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-audit-2026-10-23.md",
+  "re": "món quà Tết ấm áp|Hộp quà Tết Thử IT|Bài đăng không qua duyệt|Savina tuýp 12 viên|Saphraton 20 viên|Sản phẩm lạ Thử IT|Mật ong sâm 300ml hộp quà",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-04.3\\20261024T111226-2c2c\\scratch/rep43/ceo-audit-2026-10-23.md",
+  "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-04\\.3 ",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-04.3' and name = 'ceo-audit-2026-10-23.md'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

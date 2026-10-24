@@ -1,0 +1,33 @@
+[
+ {
+  "sql": "select * from b2b_quote_events order by id",
+  "rows": [
+   {
+    "id": 1,
+    "queue_id": 50,
+    "quote_no": "BG-20261023-1-7e8576c2",
+    "kind": "da_gui",
+    "recorded_by": "GĐ Bán Hàng Thử IT",
+    "db_role": "postgres",
+    "created_at": "2026-10-23 03:40:42.248106+00:00"
+   }
+  ]
+ },
+ {
+  "sql": "select id, status, decided_by, decided_at from approval_queue where id in (50,51)",
+  "rows": [
+   {
+    "id": 51,
+    "status": "pending",
+    "decided_by": null,
+    "decided_at": null
+   },
+   {
+    "id": 50,
+    "status": "approved",
+    "decided_by": "GĐ Bán Hàng Thử IT",
+    "decided_at": "2026-10-23 03:40:28.681404+00:00"
+   }
+  ]
+ }
+]

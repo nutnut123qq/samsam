@@ -1,0 +1,11 @@
+#!/bin/bash
+# HARNESS r12 — fingerprint working tree, CÙNG phương pháp baseline (alternate index, diff vs 16b33fc, trừ DONE.md +
+# docs/handover/v13-board.md); tệp mới = 9 tệp baseline + tệp mã/test mới của r12 (evidence/ không tính).
+SP="/c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad"
+cd /d/code/samsam
+export GIT_INDEX_FILE="$SP/r12/fp_r12.index"
+rm -f "$GIT_INDEX_FILE"
+git read-tree HEAD
+git add -N $(cat /d/code/samsam/evidence/itacc_r12/harness/new_files_r12.txt) 2>/dev/null
+git diff 16b33fc -- . ':(exclude)DONE.md' ':(exclude)docs/handover/v13-board.md' 2>/dev/null | sha256sum | cut -d' ' -f1
+rm -f "$GIT_INDEX_FILE"

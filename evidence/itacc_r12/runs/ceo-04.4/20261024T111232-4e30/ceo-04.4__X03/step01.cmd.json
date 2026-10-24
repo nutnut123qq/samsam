@@ -1,0 +1,35 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "agents.ceo_audit",
+  "--report",
+  "--now",
+  "2026-10-25T10:00:00+07:00",
+  "--out-dir",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\ceo-04.4\\20261024T111232-4e30\\ceo-04.4__X03\\out"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:12:42+07:00",
+ "ket_thuc": "2026-10-24T11:12:43+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*ceo-04\\.4\\b",
+   "khop": true
+  },
+  {
+   "stderr_re": "^(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "d9ea098250e960f5e7c1d75108c579712f72a7c5cf9065610e3291339a9b8dc2",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,116 @@
+{
+ "id": "marketing-03.2",
+ "ten": "Theo dõi chi phí mỗi đơn, đề xuất giữ hay tắt",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Quảng cáo thử nghiệm: 'theo dõi chi phí mỗi đơn; đề xuất giữ hay tắt'",
+ "tieu_chi": [
+  "T1 `python -m agents.mkt_ads --results F.csv --plan-id N --by <người>` exit 0",
+  "T2 1 mục approval_queue marketing/ad_result pending; quyết định dung|dat_muc_tieu|tiep|chua_du_lieu khớp phép tính độc lập CPA/CTR/CPC/đơn từ CSV; không có nhánh tăng ngân sách",
+  "T3 phiếu chưa duyệt đủ 2 mục → ADS_PLAN_NOT_APPROVED 0 dòng; CSV sai cột → exit 1 0 dòng; nạp lại → skip",
+  "T4 không chi tiền/không gọi API"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); tiếp phiếu #1 của marketing-03.1; 2 mục duyệt bằng approval_queue --approve (dev, 2 người)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/ads_result_ok.csv",
+   "sha256": "d2db42f65a5f0204ecc2642fc2991cc71175a434bdc12b5e6967a0efbdf93694",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/ads_result_badcol.csv",
+   "sha256": "15f8855e0091b7b1ac276bbf9053c34c1d2908761c7868d2d761c0062416b9af",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "03.2-C1",
+   "mo_ta": "duyệt 2 mục + nạp kết quả",
+   "lenh": "python -m agents.mkt_ads --results evidence/itacc_r10/g3/harness/fixtures/ads_result_ok.csv --plan-id 1 --by Người Thử IT",
+   "expected": "ad_result pending, quyết định khớp tính độc lập",
+   "actual": "mục #6 marketing/ad_result pending; dat_muc_tieu; CTR 2,11% (190/9000), CPC 526đ, CPA 100.000đ — khớp tính tay; không có nhánh tăng ngân sách",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.2-C2",
+   "mo_ta": "phiếu #2 chưa duyệt",
+   "lenh": "python -m agents.mkt_ads --results evidence/itacc_r10/g3/harness/fixtures/ads_result_ok.csv --plan-id 2 --by Người Thử IT",
+   "expected": "ADS_PLAN_NOT_APPROVED",
+   "actual": "exit 1 ADS_PLAN_NOT_APPROVED, 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.2-C3",
+   "mo_ta": "CSV sai cột",
+   "lenh": "python -m agents.mkt_ads --results evidence/itacc_r10/g3/harness/fixtures/ads_result_badcol.csv --plan-id 1 --by Người Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 cột lạ 'chi_phi' — chặn cả file, 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.2-C4",
+   "mo_ta": "nạp lại",
+   "lenh": "python -m agents.mkt_ads --results evidence/itacc_r10/g3/harness/fixtures/ads_result_ok.csv --plan-id 1 --by Người Thử IT",
+   "expected": "skip",
+   "actual": "[skip] đã nạp, tổng ad_result vẫn 1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "out/03.2-C1..C4.txt TÁI TẠO từ transcript (bị ghi đè do trùng mã ca — xem harness_fixes.tsv); DB 03.2-C1.db.json là bản gốc. Số kết quả nhập file tay (API ads ngoài phạm vi).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/03.2-C1a.txt",
+   "sha256": "a012b2608a6724c9c5d77222f13305600f491e56749169e8e729d4b1bb489ef6"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.2-C1b.txt",
+   "sha256": "75605f145a3e604db0f5896343a9b361588e5d8e1e204533aaaab5f007f8e188"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.2-C1.txt",
+   "sha256": "a27bf2110d8b934338cd4bb26bfcbc97c34ad54ec7ebe761b90af666b6e40aed"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.2-C1.db.json",
+   "sha256": "7519869d38826ca1eb632ead515ef71d783d8970c468040900beebc59af233e6"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.2-C2.txt",
+   "sha256": "501fc151ca39589fb65e29980838be2b58fef2903b56eb7a5c9fa12a6fd72c5c"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.2-C3.txt",
+   "sha256": "e002dc7b6aa598d0d566a2e24de638b9a4e39502a8cd1a9f376fd0f53a74cb77"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/03.2-C4.txt",
+   "sha256": "3359f6369a204daeced702eb70bd9a716002a5be6ec75eb5478774c507ef1395"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/reconstruct_mkt.py",
+   "sha256": "08030f099938a7ba32b76467e474bb577a94c128e20681c85e1a5d68c93c785f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "Q1",
+   "muc_do": "quan sát",
+   "mo_ta": "mkt_ads --results nhận file kết quả có ngày SAU hôm nay (trong khung phiếu tương lai) — không kiểm ngày ≤ hôm nay.",
+   "tai_hien": "03.2-C1 (ngày 2026-10-26/27, hôm nay 2026-10-23)",
+   "evidence": [
+    "evidence/itacc_r10/g3/out/03.2-C1.db.json"
+   ]
+  }
+ ]
+}

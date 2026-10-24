@@ -1,0 +1,31 @@
+"""HARNESS r12 — tạo criteria/r12_sales_a_v4.json từ r12_sales_a_v3.json (đã khóa, KHÔNG sửa) + khóa mới.
+Đổi DUY NHẤT ca sales-01__C07 (lỗi HARNESS, không phải sản phẩm): v1–v3 đo "khách nhận HANDOFF_TEXT" bằng trường
+`answer` của convlog, nhưng nhánh quá 30 giây của zalo ghi `answer: ""` (hành vi có từ trước r12 — r10 cũng không kiểm
+câu này, chỉ chấm theo convlog error + stdout + handoff). v4 đo ở BIÊN GỬI: harness zalo_e2e_r12_v2.py.txt ghi câu đưa vào
+send_text (vẫn gọi bản gốc = dry-run); kỳ vọng giữ nguyên ý r10 "HANDOFF_TEXT". Lưu ý: bọc send_text làm provenance của
+lượt này không phải "live" — C07 không kiểm provenance. Kỳ vọng v3 giữ ở 'ky_vong_v3'.
+python -I mk_sales_a_v4.py.txt <fingerprint_code>"""
+import datetime
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+C = Path(__file__).resolve().parents[1] / "criteria"
+d = json.loads((C / "r12_sales_a_v3.json").read_text(encoding="utf-8"))
+d["_doc"] = ("v4 (điều phối viên 24/10/2026): chỉ đổi ca sales-01__C07 — lỗi harness đo câu khách nhận sai nguồn; lượt v3 "
+             "hỏng giữ nguyên; xem docstring evidence/itacc_r12/harness/mk_sales_a_v4.py.txt. | " + d["_doc"])
+d["fingerprint_code"] = sys.argv[1]
+it = next(i for i in d["items"] if i["id"] == "sales-01")
+c = next(x for x in it["ca"] if x["ma"] == "sales-01__C07")
+for b in c["buoc"]:
+    b["argv"] = [a.replace("zalo_e2e_r12.py.txt", "zalo_e2e_r12_v2.py.txt") for a in b["argv"]]
+c["ky_vong_v3"] = [k for k in c["kiem"] if "ans_is_handoff_text" in k.get("re", "")]
+c["kiem"] = [k for k in c["kiem"] if "ans_is_handoff_text" not in k.get("re", "")] + [
+    {"file_re": "{OUT}/facts.txt", "re": "(?m)^sent_last_is_handoff_text=true$", "expect": True}]
+s = json.dumps(d, ensure_ascii=False, indent=1)
+(C / "r12_sales_a_v4.json").write_text(s, encoding="utf-8", newline="\n")
+h = hashlib.sha256(s.encode("utf-8")).hexdigest()
+(C / "r12_sales_a_v4.lock.txt").write_text(
+    f"r12_sales_a_v4.json {h} {datetime.datetime.now().astimezone().isoformat(timespec='seconds')}\n", encoding="utf-8")
+print(h)

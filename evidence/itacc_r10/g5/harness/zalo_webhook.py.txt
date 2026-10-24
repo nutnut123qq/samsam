@@ -1,0 +1,130 @@
+"""HARNESS farming-01 — chạy webhook Zalo THẬT (`connectors.zalo.Handler`)
+trên 127.0.0.1 trong tiến trình, POST event giả của nhân viên vườn rồi chờ
+`zalo_garden.handle` xử lý xong.
+
+Fake ở biên (ghi rõ trong evidence):
+  - state webhook (zalo_seen.db, conversations.jsonl, zalo_tokens.json) →
+    scratchpad; allowlist nhân viên = fixture (STAFF_FILE).
+  - CDN Zalo: `_fetch` GỐC vẫn chạy (kiểm https + host CDN + trần byte) nhưng
+    client HTTP là FakeClient trả bytes tệp fixture theo tên trong URL — không
+    mạng.
+  - DEPLOY tắt → `zalo.send_text` dry-run (không gửi Zalo).
+Dùng: python zalo_webhook.py --state DIR --staff F --fixtures DIR --event
+  text|image|video|audio [--text T] [--file NAME] [--msgid M] [--uid U]
+  [--repeat N] [--bad-sig]
+"""
+import argparse
+import hashlib
+import http.client
+import json
+import os
+import sys
+import threading
+import time
+from http.server import ThreadingHTTPServer
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--state", required=True)
+ap.add_argument("--staff", required=True)
+ap.add_argument("--fixtures", required=True)
+ap.add_argument("--event", required=True)
+ap.add_argument("--text", default="")
+ap.add_argument("--file")
+ap.add_argument("--msgid", default=None)
+ap.add_argument("--uid", default="it_g5_zalo_uid_001")
+ap.add_argument("--repeat", type=int, default=1)
+ap.add_argument("--bad-sig", action="store_true")
+ap.add_argument("--force-mode", default=None,
+                help="FIXTURE: ép pipelines.rollout._FORCE_MODE (vd 'tat')")
+a = ap.parse_args()
+if a.force_mode:
+    from pipelines import rollout as _ro
+    _ro._FORCE_MODE = a.force_mode
+    print(f"[FIXTURE] rollout._FORCE_MODE={a.force_mode}")
+
+if a.bad_sig:
+    os.environ["ZALO_OA_SECRET"] = "fixture-oa-secret-thu-it"   # GIẢ
+    os.environ["ZALO_APP_ID"] = "fixture-app"
+from connectors import zalo, zalo_garden  # noqa: E402
+
+st = Path(a.state)
+st.mkdir(parents=True, exist_ok=True)
+zalo.SEEN_DB = st / "zalo_seen.db"
+zalo.CONV_LOG = st / "conversations.jsonl"
+zalo.TOKEN_STORE = st / "zalo_tokens.json"
+zalo_garden.STAFF_FILE = Path(a.staff)
+FX = Path(a.fixtures)
+
+
+class _Resp:
+    def __init__(self, data):
+        self.status_code, self.headers, self._d = 200, {
+            "content-length": str(len(data))}, data
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *e):
+        return False
+
+    def iter_bytes(self):
+        yield self._d
+
+
+class FakeClient:          # client CDN giả — chỉ đọc tệp fixture
+    def stream(self, method, url):
+        return _Resp((FX / url.rsplit("/", 1)[-1]).read_bytes())
+
+    def close(self):
+        pass
+
+
+_orig_fetch = zalo_garden._fetch
+zalo_garden._fetch = lambda url, max_bytes=zalo_garden.MAX_MEDIA, client=None: \
+    _orig_fetch(url, max_bytes, client=FakeClient())
+done = []
+_ev = threading.Event()
+_orig_handle = zalo_garden.handle
+
+
+def _wrap(*args, **kw):
+    r = _orig_handle(*args, **kw)
+    done.append(r)
+    _ev.set()
+    return r
+
+
+zalo_garden.handle = _wrap
+srv = ThreadingHTTPServer(("127.0.0.1", 0), zalo.Handler)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+port = srv.server_address[1]
+
+msg = {"msg_id": a.msgid or f"it-g5-{time.time_ns()}", "text": a.text}
+if a.event != "text":
+    msg["attachments"] = [{"type": a.event,
+                           "payload": {"url": f"https://zdn.vn/it-g5/{a.file}"}}]
+ev = {"app_id": "fixture-app", "event_name": f"user_send_{a.event}",
+      "timestamp": str(int(time.time() * 1000)), "sender": {"id": a.uid},
+      "recipient": {"id": "oa-thu-it"}, "message": msg}
+raw = json.dumps(ev).encode()
+sig = "mac=" + ("0" * 64 if a.bad_sig else
+                hashlib.sha256(b"x").hexdigest())
+for i in range(a.repeat):
+    _ev.clear()
+    c = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    c.request("POST", "/zalo-webhook", raw, {"Content-Type": "application/json",
+                                             "X-ZEvent-Signature": sig})
+    r = c.getresponse()
+    print(f"POST#{i + 1} HTTP {r.status} {r.read().decode()}")
+    got = _ev.wait(20)
+    print(f"  handled={got}")
+time.sleep(0.5)
+for r in done:
+    print("REPLY:", json.dumps(r, ensure_ascii=False))
+print("N_HANDLED", len(done))
+srv.shutdown()

@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select topic from decision_log where id = (select min(id) from decision_log)",
+  "expect": "Chốt lịch thử IT",
+  "actual": "Chốt lịch thử IT",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from decision_log",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ }
+]

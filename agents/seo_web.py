@@ -55,7 +55,7 @@ from bs4 import BeautifulSoup
 from agents.report import REPORTS_DIR, write_report
 from crawler.intel import BlockedDomain, BudgetExhausted, Fetcher
 from ingest.lead_store import connect
-from pipelines import director, guardrail
+from pipelines import director, guardrail, rollout
 from pipelines.job_runs import job_run
 from pipelines.period import VN_TZ
 
@@ -508,6 +508,10 @@ def main(argv=None, now=None) -> int:
         print(f"[error] seo_rules.json: {e}", file=sys.stderr)
         return 1
     mode = "fetch" if args.fetch else "from-crawl"
+    # r12 RB: tắt → chặn TRƯỚC khi crawl/ghi báo cáo/submit.
+    why = rollout.blocked(None, "rà SEO web", fid="marketing-06.1")
+    if why:
+        return rollout.say_blocked(why)
     res = run(mode=mode, rules=rules, max_requests=args.max_requests,
               now=now)
     # P8.4: rà site công khai của công ty (crawl/fetch thật).
@@ -540,6 +544,9 @@ def main(argv=None, now=None) -> int:
     print(f"[submit] {out['status']} {out['object_id']}"
           + (f" → mục #{out['id']}" if "id" in out else ""), flush=True)
     return 0
+
+
+main = rollout.cli_entry(main)
 
 
 if __name__ == "__main__":

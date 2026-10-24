@@ -1,0 +1,40 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\sales-03\\20261024T111907-9c3c\\scratch/s03_export/listing-shopee-mat-ong-sam-300ml-d1.csv",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/sales-03/20261024T111907-9c3c/scratch/s03_export/listing-shopee-mat-ong-sam-300ml-d1.csv",
+    "sha256": "0e70386c74918074230c835fb3502dcabacf00f23a34bf6b8ceed93844a186cc"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\sales-03\\20261024T111907-9c3c\\scratch/s03_export/listing-shopee-mat-ong-sam-300ml-d1.manifest.json",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/sales-03/20261024T111907-9c3c/scratch/s03_export/listing-shopee-mat-ong-sam-300ml-d1.manifest.json",
+    "sha256": "e9044c2ade3e293de191f8986727ecb947cfc8f3912a1e3c5812f980f4614e28"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\sales-03\\20261024T111907-9c3c\\scratch/s03_export/listing-shopee-mat-ong-sam-300ml-d1.csv",
+  "re": "Giá:",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select price_vnd from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null",
+  "expect": 2980000,
+  "actual": 2980000,
+  "dat": true
+ }
+]

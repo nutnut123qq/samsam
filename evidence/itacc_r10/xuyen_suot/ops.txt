@@ -1,0 +1,29 @@
+[RED-ALERT][warn] cảnh báo đỏ #2 đã ghi, chưa gửi được tới người nhận nào (1 người nhận) — CHƯA thông báo; `--deliver` sẽ gửi lại
+[RED-ALERT][warn] cảnh báo đỏ #3 đã ghi, chưa gửi được tới người nhận nào (1 người nhận) — CHƯA thông báo; `--deliver` sẽ gửi lại
+[RED-ALERT][warn] cảnh báo đỏ #4 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+Unhandled exception in client_connected_cb
+transport: <_ProactorSocketTransport closed>
+Traceback (most recent call last):
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r10\xc_ops.py", line 113, in handle
+    await writer.start_tls(sctx)
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\asyncio\streams.py", line 402, in start_tls
+    new_transport = await self._loop.start_tls(  # type: ignore
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 1303, in start_tls
+    await waiter
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\asyncio\sslproto.py", line 578, in _on_handshake_complete
+    raise handshake_exc
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\asyncio\sslproto.py", line 560, in _do_handshake
+    self._sslobj.do_handshake()
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\ssl.py", line 916, in do_handshake
+    self._sslobj.do_handshake()
+ssl.SSLError: [SSL: TLSV1_ALERT_UNKNOWN_CA] tlsv1 alert unknown ca (_ssl.c:1000)
+PASS A1_job_chay_ghi_job_runs {"rc": 0, "row": [[true, null]]}
+PASS A2_chay_chong_bi_khoa_exit75 {"rc": 75, "row": [[false, "chạy chồng — lần trước còn đang chạy, bỏ lượt"]]}
+PASS A3_nha_khoa_chay_lai_duoc {"rc": 0}
+PASS B1_gui_smtp_starttls_dung_nguoi_doc_lap {"raise": [true, "cảnh báo đỏ #1 → đã gửi 1/1 người nhận"], "rcpt": [["it-phapche@example.com"]], "tls": true, "deliveries": [["Pháp chế Thử IT", "phap_che", "email", true, null]]}
+PASS B2_smtp_sap_khong_bao_da_gui {"raise": [false, "cảnh báo đỏ #2 đã ghi, chưa gửi được tới người nhận nào (1 người nhận) — CHƯA thông báo; `--deliver` sẽ gửi lại"], "deliveries": [[false, "gửi lỗi: ConnectionRefusedError"]]}
+PASS B3_deliver_gui_lai_khi_smtp_song_lai {"rc": 0, "moi": 1, "deliveries": [[false], [true]], "stdout": "[done] pending=1 sent=1 failed=0 capped=0\n"}
+PASS B4_chung_chi_khong_tin_bi_tu_choi {"raise": [false, "cảnh báo đỏ #3 đã ghi, chưa gửi được tới người nhận nào (1 người nhận) — CHƯA thông báo; `--deliver` sẽ gửi lại"]}
+PASS B5_thieu_nguoi_nhan_fail_closed {"raise": [false, "cảnh báo đỏ #4 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận"], "route_error": [["thiếu người nhận độc lập (external-dep)"]]}
+TỔNG 8 ca, FAIL 0

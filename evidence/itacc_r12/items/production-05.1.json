@@ -1,0 +1,691 @@
+{
+ "id": "production-05.1",
+ "ten": "Tra cứu tài liệu R&D",
+ "khoi": "production",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Sản xuất, R&D / Kho tài liệu R&D (P2): 'Tra cứu ... tài liệu về thành phần, chế biến, bảo quản'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/production-05.1.json",
+  "sha256": "8e02a069c80fa48c1e44142c49744253521ed8b65f338872f971aaae6013f945"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/sx_tracuu.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_prod_legal.json",
+ "tieu_chi_sha256": "7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747",
+ "tieu_chi_khoa": "r12_prod_legal.json 7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747 2026-10-24T08:59:36+07:00",
+ "tieu_chi": [
+  "T1 kb_internal nạp tài liệu R&D fixture vào chunks_internal internal:sx (embed qua fake ở biên — harness r10 run.py.txt, embedding băm bag-of-words)",
+  "T2 sx_tracuu --ask --out ghi sx-tracuu-<ngày>-<sha8>.md: nhãn NỘI BỘ, trích NGUYÊN VĂN có [n] + nguồn DOI/URL",
+  "T3 câu rượu / câu không liên quan → NO_DATA, không bịa; tắt → không ghi file (r12 RB/GATE-OUT: exit 2 '[rollout] … production-05.1', không in trích đoạn, 0 embed)",
+  "T4 không ghi bảng nào ngoài report_outputs; không gửi"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_{p01,p043,p051,p052,l01,l02,l032,l061,l062,l063} dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); rollout --seed (tính năng = chạy thử); AI giả ở biên (_client) — r10 run.py.txt hoặc wrap.py.txt, 0 gọi OpenRouter; kho phiếu/CV ngoài repo dưới scratchpad r12/ext_prod_legal DB samsam_itacc_r12_p051.",
+ "run_id": "20261024T112406-3893",
+ "ca": [
+  {
+   "ma": "production-05.1__S00",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai trên DB thử (tính năng = chạy thử) — như *-seed r10",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:24:06+07:00",
+      "ket_thuc": "2026-10-24T11:24:08+07:00",
+      "stdout": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__S00/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__S00/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__S00"
+  },
+  {
+   "ma": "production-05.1__P051-1",
+   "nguon_r10": "P051-1",
+   "mo_ta": "nạp tài liệu nội bộ (fake embed) → chunks_internal ≥1 internal:sx",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) >= 1 from chunks_internal where collection = 'internal:sx' and doc_id = 'rd-baoquan-thu-it' and approved_by = 'GĐ Sản xuất Thử IT'",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g4/harness/run.py.txt --fake-llm ok -- ingest.kb_internal --file evidence\\itacc_r12\\fixtures/items/production-05.1/rd_baoquan.md --collection internal:sx --approved-by GĐ Sản xuất Thử IT --doc-id rd-baoquan-thu-it",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:24:09+07:00",
+      "ket_thuc": "2026-10-24T11:24:17+07:00",
+      "stdout": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) >= 1 from chunks_internal where collection = 'internal:sx' and doc_id = 'rd-baoquan-thu-it' and approved_by = 'GĐ Sản xuất Thử IT'",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-1"
+  },
+  {
+   "ma": "production-05.1__P051-2",
+   "nguon_r10": "P051-2",
+   "mo_ta": "tra cứu có kết quả → sx-tracuu-*.md nhãn NỘI BỘ, trích nguyên văn, nguồn DOI (+ bước kiểm P05-check)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "Chế độ: extract"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{OUT}/sx-tracuu-*.md",
+      "count": 1
+     },
+     {
+      "file_glob": "{OUT}/sx-tomtat-*",
+      "count": 0
+     },
+     {
+      "file_re": "{OUT}/sx-tracuu-*.md",
+      "re": "NỘI BỘ – không dùng cho truyền thông",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/sx-tracuu-*.md",
+      "re": "DOI: 10\\.1234/thu-it\\.2026\\.001",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/sx-tracuu-*.md",
+      "re": "(?m)^\\[1\\] \\\"",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from report_outputs where feature_id = 'production-05.1'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g4/harness/run.py.txt --fake-llm ok --reports-dir evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --out",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "Chế độ: extract",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:24:17+07:00",
+      "ket_thuc": "2026-10-24T11:24:28+07:00",
+      "stdout": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\fixtures/items/production-05.1/p05_check.py.txt tracuu evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tracuu-*.md evidence\\itacc_r12\\fixtures/items/production-05.1/rd_baoquan.md",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:24:28+07:00",
+      "ket_thuc": "2026-10-24T11:24:28+07:00",
+      "stdout": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tracuu-*.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/out/sx-tracuu-2026-10-24-c4a63127.md",
+        "sha256": "462af83d78221d9464820c1a900626d6f7cbac4bb61ca7b68b089e0f14158301"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tomtat-*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tracuu-*.md",
+      "re": "NỘI BỘ – không dùng cho truyền thông",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tracuu-*.md",
+      "re": "DOI: 10\\.1234/thu-it\\.2026\\.001",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tracuu-*.md",
+      "re": "(?m)^\\[1\\] \\\"",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from report_outputs where feature_id = 'production-05.1'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2"
+  },
+  {
+   "ma": "production-05.1__P051-3",
+   "nguon_r10": "P051-3",
+   "mo_ta": "ÂM câu về rượu → NO_DATA, 0 embed (llm_usage sx_tracuu không thêm)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "Chế độ: no_data"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from llm_usage where agent_id = 'sx_tracuu'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g4/harness/run.py.txt --fake-llm ok --reports-dir evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-3\\out -- agents.sx_tracuu --ask rượu sâm ngâm bao lâu",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "Chế độ: no_data",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:24:28+07:00",
+      "ket_thuc": "2026-10-24T11:24:39+07:00",
+      "stdout": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from llm_usage where agent_id = 'sx_tracuu'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-3"
+  },
+  {
+   "ma": "production-05.1__P051-4",
+   "nguon_r10": "P051-4",
+   "mo_ta": "ÂM câu không liên quan → NO_DATA",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "Chế độ: no_data"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g4/harness/run.py.txt --fake-llm ok --reports-dir evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-4\\out -- agents.sx_tracuu --ask giá vé máy bay tết",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "Chế độ: no_data",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:24:39+07:00",
+      "ket_thuc": "2026-10-24T11:24:47+07:00",
+      "stdout": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-4/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-4"
+  },
+  {
+   "ma": "production-05.1__P051-5",
+   "nguon_r10": "P051-5",
+   "mo_ta": "ÂM tắt production-05.1 (chạy cuối) → không ghi file (r12 RB: exit 2 '[rollout] … production-05.1', không traceback)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*production-05\\.1",
+      "out_re": "\\A(?![\\s\\S]*(Traceback))"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{OUT}/sx-*",
+      "count": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable production-05.1 --by Người Thử R12 --note kiem tat r12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:24:47+07:00",
+      "ket_thuc": "2026-10-24T11:24:49+07:00",
+      "stdout": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r10/g4/harness/run.py.txt --fake-llm ok --reports-dir evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-5\\out -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --out",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*production-05\\.1",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*(Traceback))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:24:49+07:00",
+      "ket_thuc": "2026-10-24T11:24:54+07:00",
+      "stdout": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-5\\out/sx-*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5"
+  },
+  {
+   "ma": "production-05.1__X01",
+   "nguon_r10": "MOI",
+   "mo_ta": "r12 GATE-OUT: 05.1 TẮT → không in trích đoạn/câu trả lời ra stdout, 0 lời gọi AI (đếm ở biên _client qua wrap.py.txt) và 0 dòng llm_usage sx_tracuu sau lúc tắt, 0 file",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*production-05\\.1",
+      "out_re": "\\A(?![\\s\\S]*(Traceback|Chế độ:|\\[1\\] \\\"|Sâm khô sau khi sấy))"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/llm.json",
+      "re": "\\\"kind\\\"",
+      "expect": false
+     },
+     {
+      "file_glob": "{OUT}/sx-*",
+      "count": 0
+     },
+     {
+      "sql": "select case when (select stage from feature_rollout where feature_id = 'production-05.1') = 'tat' then (select count(*) from llm_usage where agent_id = 'sx_tracuu' and ts >= (select stage_since from feature_rollout where feature_id = 'production-05.1')) else -1 end",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --out",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*production-05\\.1",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*(Traceback|Chế độ:|\\[1\\] \\\"|Sâm khô sau khi sấy))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:24:54+07:00",
+      "ket_thuc": "2026-10-24T11:25:00+07:00",
+      "stdout": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__X01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__X01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__X01\\out/llm.json",
+      "re": "\\\"kind\\\"",
+      "expect": false,
+      "actual": false,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__X01\\out/sx-*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select case when (select stage from feature_rollout where feature_id = 'production-05.1') = 'tat' then (select count(*) from llm_usage where agent_id = 'sx_tracuu' and ts >= (select stage_since from feature_rollout where feature_id = 'production-05.1')) else -1 end",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__X01"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/ket_qua.json",
+   "sha256": "33044c8468a2039442157fa81c0e482e3b574bcdb188f7af95f4462342dff4ad"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-1/asserts.json",
+   "sha256": "6e2b43835f0048b10b622604d888593b665a115022d645a43da1e3f59c9b1954"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-1/case.json",
+   "sha256": "c0d42afe0c3af40ccca9722adaf18437de3fba836837715d198c1ba9b67535ca"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-1/step01.cmd.json",
+   "sha256": "c91b6aea4c939fff78cc810098efaeb8255ef8f636e21610d5308d3b6053d28f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-1/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-1/step01.stdout.txt",
+   "sha256": "01dd22bf1a21cf3fa27b2359fe5be922a86cde38f753a9b671a0a817282cf823"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/asserts.json",
+   "sha256": "f8d85ed8edd2d4d192a33ff0da9c28b94db2f3efc3aca848734f467182cece86"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/case.json",
+   "sha256": "0ae99bd04f0a26000f79d66e2efb5fe00e2b744d4ccbcff433af3f7b874029ed"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/out/sx-tracuu-2026-10-24-c4a63127.md",
+   "sha256": "462af83d78221d9464820c1a900626d6f7cbac4bb61ca7b68b089e0f14158301"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step01.cmd.json",
+   "sha256": "a0d9404b97b0b0fd5b224e34ccd45ffa4efbee79816aa1506bf1cc67a97a189f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step01.stdout.txt",
+   "sha256": "fdba2aefbfa9be97e8def3a6764584e365a59274bad216c14516c9591ec044a5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step02.cmd.json",
+   "sha256": "9ae3e8576deb2ebb59e16d07e6af025f8a73314f34a4a92397169c88715bbb87"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/step02.stdout.txt",
+   "sha256": "20cfc968e1921638bb3c6931fb85baa42306922c5c186002eb0e7a24fd035c09"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-3/asserts.json",
+   "sha256": "30a0c54b853bb83fb7633c087eca3dda9651dccb5f6a835ead9b46893dea614e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-3/case.json",
+   "sha256": "452be08bb750e50d3b2445d47c56b35ba8fabc8cc03e052a13a399f7dd15acd3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-3/step01.cmd.json",
+   "sha256": "dda322b29876b0d14bfaf5eb4d9e0d0b3d87d8f8757e9184d0f42e2dbd04d57a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-3/step01.stdout.txt",
+   "sha256": "6d59983652d197e51313eeb0682f0b8e0d7a51375b01aa4d5e445f1589e6871b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-4/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-4/case.json",
+   "sha256": "09fb3edf34ec690e3c2bcfd55bf5201f25c5d14a326103abf9e316df5ba0afe5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-4/step01.cmd.json",
+   "sha256": "22ff7d8ecb4401678e1b90fd6d1a849b9c0f5c90228f42e342870260807982fb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-4/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-4/step01.stdout.txt",
+   "sha256": "b4b0aa2f632babe655e322b866415a7081c77ced8462b86d7e235a510d79cf65"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/asserts.json",
+   "sha256": "f981ea257d3a8fc32190493ab84a2e795c3ebdf11fb9535cf5caa644cd6b121d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/case.json",
+   "sha256": "aa5e4c282e7378e173e6514b9d3e75cc95594f2b7db585bad41df175b15a484f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step01.cmd.json",
+   "sha256": "3843c06d724ade93405031bc5e4f71c534a0a079a4800a5ce07d14cce9667011"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step01.stdout.txt",
+   "sha256": "96168ad6b0c2f8588d363804ed1a3243ca513fd9b9beeaf3ad2f6840011bf6c6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step02.cmd.json",
+   "sha256": "006547afd6f9cafc35e8f1785a7ff89d99cfcc763f0bd99d1cf1810b85e218e6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-5/step02.stdout.txt",
+   "sha256": "7f60593e72593448b5b5e420f2be2069c084949c0ce2054b7cabdd44575c1af4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__S00/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__S00/case.json",
+   "sha256": "7c85b62370e138e9f7a5c869426c4bb1b6874a235919a377e0f95720953cdd50"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__S00/step01.cmd.json",
+   "sha256": "2f2a7bcea2fddc463443e181f9702cc83cc3482f3999fdb7dc097f04ca8ade00"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__S00/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__S00/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__X01/asserts.json",
+   "sha256": "40866a3ac8572619a244f59eedd8f5dd56d2513e7cb5a06ae12f8181bc0cc30d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__X01/case.json",
+   "sha256": "125e78765f331039edb87ac7412f0ee4874055c5c2b7265fd375d1c74cc57bf8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__X01/out/llm.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__X01/step01.cmd.json",
+   "sha256": "f80f0289ada79accf1b4f2c334dea2a246e3717e4eabb676b0ccbb35dee6b846"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__X01/step01.stderr.txt",
+   "sha256": "2c09efa8c6f2454d00f5bf25781503c58379b1a0337b6b95e92b5a7da7e483cf"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__X01/step01.stdout.txt",
+   "sha256": "1a0ca9cbe705c509bfe011e923d6308ca3f8e54d6464350d99a58af0c98eeca9"
+  }
+ ],
+ "loi_san_pham": []
+}

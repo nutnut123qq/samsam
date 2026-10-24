@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select count(distinct run_id) = 1 and count(*) = count(distinct (sku_key, channel)) from allocation_proposals",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

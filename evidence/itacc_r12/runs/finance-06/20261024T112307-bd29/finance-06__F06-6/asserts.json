@@ -1,0 +1,16 @@
+[
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\finance-06\\20261024T112307-bd29\\finance-06__F06-6\\out/../../finance-06__F06-1/out/doi-soat-2026-Q3.md",
+  "re": "\\A> \\*\\*CHẠY THỬ",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select (select report_sha256 from revenue_quarters order by id limit 1) = (select sha256 from report_outputs where feature_id = 'finance-06' and name = 'doi-soat-2026-Q3.md' order by id limit 1)",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

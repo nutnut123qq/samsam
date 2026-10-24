@@ -1,0 +1,411 @@
+{
+ "id": "legal_hr-02",
+ "ten": "Hồ sơ xác nhận quảng cáo",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Hồ sơ xác nhận quảng cáo: 'Soạn hồ sơ xác nhận nội dung quảng cáo TPBVSK, theo dõi kết quả'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/legal_hr-02.json",
+  "sha256": "334d7931c1c9267312ac2c6b4eb142e191d88caa488e0e0ebf74630781fbe3e8"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/xnqc.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_prod_legal.json",
+ "tieu_chi_sha256": "7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747",
+ "tieu_chi_khoa": "r12_prod_legal.json 7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747 2026-10-24T08:59:36+07:00",
+ "tieu_chi": [
+  "T1 `python -m agents.xnqc --draft --sku K --loai L --ten T [--maket F] --submit` exit 0",
+  "T2 1 mục approval_queue legal_hr/xnqc_dossier pending, payload nháp hồ sơ theo SKU TPBVSK (claim đã duyệt, danh mục giấy tờ), không tự nộp",
+  "T3 SKU không phải TPBVSK/SKU lạ → từ chối 0 dòng; không --submit → 0 dòng; nộp lại → không nhân bản (r12 D4: exit 0 '[skip]', không lỗi DB)",
+  "T4 agent không nộp cơ quan nhà nước"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_{p01,p043,p051,p052,l01,l02,l032,l061,l062,l063} dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); rollout --seed (tính năng = chạy thử); AI giả ở biên (_client) — r10 run.py.txt hoặc wrap.py.txt, 0 gọi OpenRouter; kho phiếu/CV ngoài repo dưới scratchpad r12/ext_prod_legal DB samsam_itacc_r12_l02.",
+ "run_id": "20261024T112522-1afd",
+ "ca": [
+  {
+   "ma": "legal_hr-02__S00",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai trên DB thử (tính năng = chạy thử) — như *-seed r10",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:25:22+07:00",
+      "ket_thuc": "2026-10-24T11:25:25+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__S00/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__S00/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__S00"
+  },
+  {
+   "ma": "legal_hr-02__02-C1",
+   "nguon_r10": "02-C1",
+   "mo_ta": "nháp hồ sơ saphraton-20v → 1 mục xnqc_dossier pending (T2)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'xnqc_dossier' and status = 'pending' and created_by = 'agent:xnqc' and payload like '%saphraton-20v%'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.xnqc --draft --sku saphraton-20v --loai maket --ten maket fanpage Thử IT --maket evidence\\itacc_r12\\fixtures/items/legal_hr-02/maket_xnqc.txt --submit",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:25:25+07:00",
+      "ket_thuc": "2026-10-24T11:25:32+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'xnqc_dossier' and status = 'pending' and created_by = 'agent:xnqc' and payload like '%saphraton-20v%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C1"
+  },
+  {
+   "ma": "legal_hr-02__02-C2",
+   "nguon_r10": "02-C2",
+   "mo_ta": "SKU thực phẩm / rượu → exit 1, 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1
+     },
+     {
+      "expect_exit": 1
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'xnqc_dossier'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.xnqc --draft --sku mat-ong-sam-300ml --loai maket --ten maket Thử IT --submit",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:25:32+07:00",
+      "ket_thuc": "2026-10-24T11:25:33+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.xnqc --draft --sku ruou-sam-chai-thuy-tinh-500ml --loai maket --ten maket Thử IT --submit",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:25:33+07:00",
+      "ket_thuc": "2026-10-24T11:25:35+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'xnqc_dossier'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2"
+  },
+  {
+   "ma": "legal_hr-02__02-C3",
+   "nguon_r10": "02-C3",
+   "mo_ta": "không --submit → 0 dòng (tổng vẫn 1)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'xnqc_dossier'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.xnqc --draft --sku saphraton-20v --loai kich_ban_video --ten kịch bản Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:25:35+07:00",
+      "ket_thuc": "2026-10-24T11:25:36+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'xnqc_dossier'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C3"
+  },
+  {
+   "ma": "legal_hr-02__02-C4",
+   "nguon_r10": "02-C4",
+   "mo_ta": "nộp lại cùng nội dung → không trùng (r12 D4: exit 0 '[skip]', không 'duplicate')",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[skip\\]",
+      "out_re": "\\A(?![\\s\\S]*((?i:duplicate)|Traceback))"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'xnqc_dossier'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.xnqc --draft --sku saphraton-20v --loai maket --ten maket fanpage Thử IT --maket evidence\\itacc_r12\\fixtures/items/legal_hr-02/maket_xnqc.txt --submit",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[skip\\]",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*((?i:duplicate)|Traceback))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:25:36+07:00",
+      "ket_thuc": "2026-10-24T11:25:41+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C4/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'xnqc_dossier'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C4"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/ket_qua.json",
+   "sha256": "34fcc4c0bc118ca6aa9b9823b1aadc939e27c31a9b3dc5de30927fe6441eaa7a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C1/asserts.json",
+   "sha256": "f1d2e0dc8be2c85f792696f6e37d96cf200a18d57ee9abb42ab9fe28d3cde099"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C1/case.json",
+   "sha256": "67ab8a54f75d1cdbf7e0887df447f9625db5396c940af82a346c76cb90bbbca0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C1/step01.cmd.json",
+   "sha256": "1d8eea84439e62c4b1005bd48f830945705611f2c2d145a2515ae6eebf76039e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C1/step01.stdout.txt",
+   "sha256": "bd36c6bdf6526fc88131c433f4a243218adc2cfd44421aa58b3c2e7e513a5358"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/asserts.json",
+   "sha256": "debeff188a0c75349cc24ff274f2823a1998d391b2f1fe6f4ea882e20853078c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/case.json",
+   "sha256": "7f74aab551770237769e5007fe5c3a9a24a540082f0e133353b74d89a852eb78"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step01.cmd.json",
+   "sha256": "fa8696a8682529aa592c9f5d58d3c990422d0a5ec21fc7e46d1f8cf93b014f9c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step01.stdout.txt",
+   "sha256": "beb770dc3e0ba1fc4f434636c42038e2ad3a94931868fa8a700cbc0e913682bc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step02.cmd.json",
+   "sha256": "b3f970b9c54223c340f52b5cc94cc1f3f587d291dc73bbfd8ea5ffa32ec632aa"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C2/step02.stdout.txt",
+   "sha256": "c3e8afee428ca73fc1474b05931d32c411e9980bf37323c341a09a358c38853f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C3/asserts.json",
+   "sha256": "debeff188a0c75349cc24ff274f2823a1998d391b2f1fe6f4ea882e20853078c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C3/case.json",
+   "sha256": "d3a7dadd372ae0df3fe10a9eb8a1ddacd8c4499824c5cfd7d89cd404c6229a3d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C3/step01.cmd.json",
+   "sha256": "fb09ddd516d85c4bed8f5e75e106e63c4d0a7a702b31f2056265e7fd20adf115"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C3/step01.stdout.txt",
+   "sha256": "2b8641721e72017bde44dd5b5b7db3e58193bcf9f0348ad1ac93fbf6d700cb31"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C4/asserts.json",
+   "sha256": "debeff188a0c75349cc24ff274f2823a1998d391b2f1fe6f4ea882e20853078c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C4/case.json",
+   "sha256": "d554edae55b913f42e5fbad6ccdef9f79a8dfb5063f817c4a74917dfa148c55b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C4/step01.cmd.json",
+   "sha256": "ecc7d8b61632300c3a42b4cffda1857ef27a1e7d6c772e94eedde8f1da2646e0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C4/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__02-C4/step01.stdout.txt",
+   "sha256": "9c212562a08b9a92924be0082188c21425c5d6e459512771025a531fbfefd7b5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__S00/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__S00/case.json",
+   "sha256": "29ec3f3f14d4139a611aa5c35759c10db30f3e8f1924310b0e494de0618b6ad9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__S00/step01.cmd.json",
+   "sha256": "84e2bb89d88c413dd1f6c00f8b0b23c9575221d1ece119d9eeab099cc5777ac6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__S00/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-02/20261024T112522-1afd/legal_hr-02__S00/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  }
+ ],
+ "loi_san_pham": []
+}

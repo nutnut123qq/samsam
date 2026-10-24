@@ -1,0 +1,137 @@
+[
+ {
+  "case": "D1a hàng duyệt: login A nhãn agent, login B CÙNG NGƯỜI quyết → chặn",
+  "verdict": "PASS",
+  "decide": [
+   "denied",
+   "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"
+  ]
+ },
+ {
+  "case": "D1b override QA: login B CÙNG NGƯỜI override mục do login A tạo → chặn",
+  "verdict": "PASS",
+  "override": [
+   "denied",
+   "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"
+  ]
+ },
+ {
+  "case": "D1c draft: login B CÙNG NGƯỜI duyệt draft login A tạo → chặn",
+  "verdict": "PASS",
+  "approve": [
+   "denied",
+   "P0001 người duyệt trùng người tạo draft #1, cần người khác duyệt"
+  ]
+ },
+ {
+  "case": "D1d giá vốn: login A tạo (agent:controller), login B CÙNG NGƯỜI duyệt → chặn",
+  "verdict": "PASS",
+  "insert": [
+   "denied",
+   "42501 người thực hiện không hợp lệ (agent:controller) — agent/hệ thống không ghi thay người"
+  ],
+  "approve": null
+ },
+ {
+  "case": "D1d giá vốn: login A tạo (Marketing Giả S04), login B CÙNG NGƯỜI duyệt → chặn",
+  "verdict": "PASS",
+  "insert": [
+   "ok",
+   [
+    [
+     2
+    ]
+   ]
+  ],
+  "approve": [
+   "denied",
+   "P0001 người duyệt trùng người lập giá vốn #2, cần người khác duyệt"
+  ]
+ },
+ {
+  "case": "D1+ người KHÁC đúng khối quyết mục login A tạo → được",
+  "verdict": "PASS",
+  "decide": [
+   "ok",
+   [
+    [
+     2
+    ]
+   ]
+  ]
+ },
+ {
+  "case": "D1+ người KHÁC khối finance duyệt giá vốn người lập → được",
+  "verdict": "PASS",
+  "insert": [
+   "ok",
+   [
+    [
+     3
+    ]
+   ]
+  ],
+  "approve": [
+   "ok",
+   [
+    [
+     3
+    ]
+   ]
+  ]
+ },
+ {
+  "case": "D1+ svc_job đẩy mục agent → người đúng khối quyết → được",
+  "verdict": "PASS",
+  "decide": [
+   "ok",
+   [
+    [
+     4
+    ]
+   ]
+  ]
+ },
+ {
+  "case": "D2+ login hợp lệ, đúng người/khối, đã đăng nhập thật → READY",
+  "verdict": "PASS",
+  "status": "READY_FOR_TRIAL",
+  "thieu": [],
+  "login_works": true
+ },
+ {
+  "case": "D2 VALID UNTIL quá khứ: login thật bị từ chối → không READY + lý do",
+  "verdict": "PASS",
+  "status": "CHUA_SAN_SANG",
+  "thieu": [
+   "khối ceo: người duyệt chưa có login hợp lệ đúng khối trong human_logins: Marketing Hai Giả S04"
+  ],
+  "login_works": false
+ },
+ {
+  "case": "D2 CONNECTION LIMIT 0: login thật bị từ chối → không READY + lý do",
+  "verdict": "PASS",
+  "status": "CHUA_SAN_SANG",
+  "thieu": [
+   "khối ceo: người duyệt chưa có login hợp lệ đúng khối trong human_logins: Marketing Hai Giả S04"
+  ],
+  "login_works": false
+ },
+ {
+  "case": "D2 NOLOGIN: login thật bị từ chối → không READY + lý do",
+  "verdict": "PASS",
+  "status": "CHUA_SAN_SANG",
+  "thieu": [
+   "khối ceo: người duyệt chưa có login hợp lệ đúng khối trong human_logins: Marketing Hai Giả S04"
+  ],
+  "login_works": false
+ },
+ {
+  "case": "D2 offline (không DB) → không READY",
+  "verdict": "PASS",
+  "status": "CHUA_SAN_SANG",
+  "thieu": [
+   "CHƯA KIỂM login người duyệt (không đọc DB — chạy `--db` trên server Bên B)"
+  ]
+ }
+]

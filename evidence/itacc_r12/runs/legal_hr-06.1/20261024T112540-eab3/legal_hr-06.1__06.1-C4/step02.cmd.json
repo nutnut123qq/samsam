@@ -1,0 +1,32 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-m",
+  "agents.pc_hr",
+  "--jd",
+  "nv_van_hanh_san"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:26:04+07:00",
+ "ket_thuc": "2026-10-24T11:26:06+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*legal_hr-06\\.1",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*(Traceback))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "1c35bad5758def7f5134f460e64a42a164195b9c7338e4c64c14cfbfea1777f2",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

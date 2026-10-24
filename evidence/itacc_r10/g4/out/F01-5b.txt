@@ -1,0 +1,12 @@
+# ca F01-5b
+# gio 2026-10-23T10:22:21+07:00
+# lenh python -m ingest.settlement_csv --file evidence/itacc_r10/g4/fixtures/qt_shopee_bad2.csv --channel shopee
+# exit 1
+--- stdout ---
+[err] dòng 2: field 'order_amount' không phải số nguyên VND hợp lệ
+[err] dòng 3: field 'settled_on' không phải ngày YYYY-MM-DD / DD/MM/YYYY
+[err] dòng 4: mã đơn trùng dòng 3 (GIẢ ĐỊNH 1 dòng/đơn)
+[err] 3 lỗi — không connect, không nạp gì.
+
+--- stderr ---
+

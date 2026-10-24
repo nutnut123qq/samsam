@@ -1,0 +1,20 @@
+import os,sys,json
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+sys.stdout.reconfigure(encoding='utf-8');sys.path.insert(0,r'D:\code\samsam')
+for k in list(os.environ):
+ if k.endswith('DATABASE_URL') or k.startswith('PG') or k in ('OPENROUTER_API_KEY','DEPLOY'):os.environ.pop(k,None)
+import psycopg
+psycopg.connect=lambda *a,**k: (_ for _ in ()).throw(RuntimeError('controller: DB access forbidden'))
+from connectors import zalo,channels
+from api import rag
+rows=[]
+def timeout(*a,**k):raise rag.DeadlineExceeded('tra_loi')
+for name,answer in [('no_data',lambda *a,**k:{'answer':rag.NO_DATA,'sources':[]}),('deadline',timeout)]:
+ sent=[];queue=[]
+ def record(*a,**k):queue.append(1);return None
+ with patch.object(channels,'pre_route',return_value=None),patch.object(channels,'consent_gate',return_value=SimpleNamespace(block=False,prefix='',prompted=False)),patch.object(channels,'chatbot_mode',return_value='van_hanh'),patch.object(channels,'record_handoff',side_effect=record),patch.object(channels,'record_consent',return_value=None),patch.object(rag,'answer',side_effect=answer),patch.object(zalo,'_log_conversation',return_value=None):
+  out=zalo._reply_turn('fixture-user-r12','Xin thông tin hộp quà.','fixture-msg',send=lambda u,t:sent.append(t) or True)
+ rows.append({'case':name,'sent':out['sent'],'promises_human':any(x in out['text'] for x in ('nhân viên sẽ','sẽ phản hồi','sẽ liên hệ')),'queue_attempts_returning_none':len(queue),'text':out['text']})
+p=Path(r'C:\Users\hahuy\AppData\Local\Temp\samsam-r12-controller\probe_handoff_result.json');p.write_text(json.dumps(rows,ensure_ascii=False,indent=2),encoding='utf-8');print(json.dumps(rows,ensure_ascii=False,indent=2))

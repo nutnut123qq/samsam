@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'milestone_change' and status = 'approved'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from decision_log",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

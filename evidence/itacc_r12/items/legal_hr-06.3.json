@@ -1,0 +1,411 @@
+{
+ "id": "legal_hr-06.3",
+ "ten": "Chấm công",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Nhân sự: 'chấm công'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/legal_hr-06.3.json",
+  "sha256": "538b5045e0462cb7fbe8e5b3e85d9f67ff11bdf6c0d1d54a5b19e27c01fc7e00"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/pc_hr.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_prod_legal.json",
+ "tieu_chi_sha256": "7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747",
+ "tieu_chi_khoa": "r12_prod_legal.json 7445e950136fb6ef48d7f7d2a1e4a45e6e733985c19b7bf2dbad7257d7808747 2026-10-24T08:59:36+07:00",
+ "tieu_chi": [
+  "T1 `python -m agents.pc_hr --attendance F --month 2026-09` exit 0",
+  "T2 approval_queue legal_hr/hr_attendance pending: ngày công, đi trễ/về sớm (lần+phút), thiếu chấm, vắng theo luật ca khớp tính độc lập; chỉ mã NV",
+  "T3 file lỗi (header sai/ngày tương lai/mã NV dạng SĐT/trùng) → exit 1 0 dòng; chạy lại → không trùng (r12 RB: tắt legal_hr-06.3 → exit 2 '[rollout] … legal_hr-06.3')",
+  "T4 không tính lương/không kỷ luật"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_{p01,p043,p051,p052,l01,l02,l032,l061,l062,l063} dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); rollout --seed (tính năng = chạy thử); AI giả ở biên (_client) — r10 run.py.txt hoặc wrap.py.txt, 0 gọi OpenRouter; kho phiếu/CV ngoài repo dưới scratchpad r12/ext_prod_legal DB samsam_itacc_r12_l063.",
+ "run_id": "20261024T112623-7a6f",
+ "ca": [
+  {
+   "ma": "legal_hr-06.3__S00",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai trên DB thử (tính năng = chạy thử) — như *-seed r10",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:26:23+07:00",
+      "ket_thuc": "2026-10-24T11:26:27+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__S00/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__S00/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__S00"
+  },
+  {
+   "ma": "legal_hr-06.3__06.3-C1",
+   "nguon_r10": "06.3-C1",
+   "mo_ta": "chấm công T9 → hr_attendance khớp tính tay r10 (out/L-06.3-C1.expected.txt): NV-IT01 4|1/10|1/10|1|18|1; NV-IT02 1|0/0|0/0|0|21|0",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_attendance' and status = 'pending' and created_by = 'agent:pc_hr' and payload like '%| `NV-IT01` | 4 | 1/10 | 1/10 | 1 | 18 | 1 |%' and payload like '%| `NV-IT02` | 1 | 0/0 | 0/0 | 0 | 21 | 0 |%'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.pc_hr --attendance evidence\\itacc_r12\\fixtures/items/legal_hr-06.3/att.csv --month 2026-09",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:26:27+07:00",
+      "ket_thuc": "2026-10-24T11:26:38+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_attendance' and status = 'pending' and created_by = 'agent:pc_hr' and payload like '%| `NV-IT01` | 4 | 1/10 | 1/10 | 1 | 18 | 1 |%' and payload like '%| `NV-IT02` | 1 | 0/0 | 0/0 | 0 | 21 | 0 |%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C1"
+  },
+  {
+   "ma": "legal_hr-06.3__06.3-C2",
+   "nguon_r10": "06.3-C2",
+   "mo_ta": "mã NV dạng SĐT → exit 1, 0 dòng mới",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_attendance'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.pc_hr --attendance evidence\\itacc_r12\\fixtures/items/legal_hr-06.3/att_bad.csv --month 2026-09",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:26:38+07:00",
+      "ket_thuc": "2026-10-24T11:26:40+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C2/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_attendance'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C2"
+  },
+  {
+   "ma": "legal_hr-06.3__06.3-C3",
+   "nguon_r10": "06.3-C3",
+   "mo_ta": "chạy lại → không trùng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_attendance'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.pc_hr --attendance evidence\\itacc_r12\\fixtures/items/legal_hr-06.3/att.csv --month 2026-09",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:26:40+07:00",
+      "ket_thuc": "2026-10-24T11:26:46+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_attendance'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C3"
+  },
+  {
+   "ma": "legal_hr-06.3__X01",
+   "nguon_r10": "MOI",
+   "mo_ta": "r12 RB: tắt legal_hr-06.3 → --attendance exit 2 '[rollout] … legal_hr-06.3', 0 dòng mới",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*legal_hr-06\\.3",
+      "out_re": "\\A(?![\\s\\S]*(Traceback))"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_attendance'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable legal_hr-06.3 --by Người Thử R12 --note kiem tat r12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:26:46+07:00",
+      "ket_thuc": "2026-10-24T11:26:46+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.pc_hr --attendance evidence\\itacc_r12\\fixtures/items/legal_hr-06.3/att.csv --month 2026-09",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*legal_hr-06\\.3",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*(Traceback))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:47+07:00",
+      "ket_thuc": "2026-10-24T11:26:48+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_attendance'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/ket_qua.json",
+   "sha256": "14bdc61b48bd547413935e586ee9c4a8689e8d4c9777806fc52fececc4cadf30"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C1/asserts.json",
+   "sha256": "3c1d52b055b881e562430bbfc3f865cb5bca761f0912abf312a1b88e4bb586dd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C1/case.json",
+   "sha256": "0b603124c7c6d8d6bfc97874b826b273b0baee27f1ba784d64b4005850355b1f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C1/step01.cmd.json",
+   "sha256": "a39cc20c669941ed0b41898cdf0bce91d2b81d177ccadcf97f3db20a6227f719"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C1/step01.stdout.txt",
+   "sha256": "963febf60a4d1ddb1554c40a43bcba021f5fc6b3a9bec8e5399b6f1e8e039758"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C2/asserts.json",
+   "sha256": "df0a058c30c46dd58fcec9f6fd9be4e8f68a81ccb60771db1adf79104f4a19a7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C2/case.json",
+   "sha256": "313a3d18adb0378ee5059d86b9b75ceac9638774beb5776da65ccdb7173d6ad1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C2/step01.cmd.json",
+   "sha256": "7e12fccd34d7d6e56ab51c7cd362aa88261078363ec5d9b0f099f8d15885ee12"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C2/step01.stdout.txt",
+   "sha256": "4ccd8e91ea73df10a5e6cbf57c41bbeee7026b8c71e7b1db44bef3a3e1151a51"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C3/asserts.json",
+   "sha256": "df0a058c30c46dd58fcec9f6fd9be4e8f68a81ccb60771db1adf79104f4a19a7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C3/case.json",
+   "sha256": "ccdb4a17b8f4d66fb6c76a7378ff783dcb872eac703f59d585115ee466aa64f1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C3/step01.cmd.json",
+   "sha256": "3ce7719b7d47ad0d1a71eaa2787153afd861fcebacc061729e88830ab0aca722"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__06.3-C3/step01.stdout.txt",
+   "sha256": "60f1d56afc49ea2732ea2519edac5ec6bb8db88ab087c09bf5781b612aaf73f4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__S00/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__S00/case.json",
+   "sha256": "a0de4ea205b718687f2c9acb9f024feb34f3d99223e4528e70920720c8d281a8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__S00/step01.cmd.json",
+   "sha256": "a29e2b2ba8a3a50ae38eee09903bd035e09f85edfa4fc568ea2da1080a0f0c58"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__S00/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__S00/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/asserts.json",
+   "sha256": "df0a058c30c46dd58fcec9f6fd9be4e8f68a81ccb60771db1adf79104f4a19a7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/case.json",
+   "sha256": "69e6698ed2a711778aa08461c1bb41ef01f8224cdc7abb7b9f0ae1d9f3987b03"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step01.cmd.json",
+   "sha256": "1ccc43dc8490e4a7edfc9544b3b9be9e20ebf06fd45de32664eeaf93178c660c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step01.stdout.txt",
+   "sha256": "eedf0869bd66cbf893239f0af10a6deb2e8f65397c429473da25a9d21588993b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step02.cmd.json",
+   "sha256": "ec57f3e0f933b372f28b6f364b9241a7e8c688008a293ce5c9b7d2a6bb5890cf"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.3/20261024T112623-7a6f/legal_hr-06.3__X01/step02.stdout.txt",
+   "sha256": "6b96a0c8c10ab588eeb23014f3376d097f93b776a1389c7ab91eca6e649be47b"
+  }
+ ],
+ "loi_san_pham": []
+}

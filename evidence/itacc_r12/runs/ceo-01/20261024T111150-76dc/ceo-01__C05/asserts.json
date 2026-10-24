@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) > 0 from channel_snapshots where channel = 'noi_bo' and source = 'api' and period_start = '2026-10-12'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from channel_snapshots where channel = 'noi_bo' and source = 'api' and not (source_ref like 'db:%' or source_ref like 'file:%')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

@@ -1,0 +1,39 @@
+# ca: DP071-02
+# env: DB thử khối dp (DSN che)
+# cmd: python -m pipelines.job_runs --list
+# exit: 0
+# thoi_gian: 2026-10-23T10:49:52+0700
+intel: *-*-* 06:45:00 (hạn 26h) -m crawler.intel --run ; scripts/intel_bulletin.py --period day --suggest
+red_alert_sweep: *-*-* *:05:00 (hạn 2h) -m crawler.intel --run ; -m pipelines.intel_alert --run ; -m pipelines.red_alert --deliver
+channel_scan: *-*-* 07:00:00 (hạn 26h) -m crawler.collect ; -m agents.ra_kenh --scan-auto
+hdtv_month: *-*-03 08:30:00 (hạn 768h) -m agents.hdtv_report --month prev --submit
+vt_weather: *-*-* 06:30:00 (hạn 26h) -m agents.vt_thoitiet --digest --fetch --submit
+vt_harvest: Mon *-*-* 08:20:00 (hạn 192h) -m agents.vt_thuhoach --submit
+vt_pests: *-*-* 06:35:00 (hạn 26h) -m agents.vt_thoitiet --pests --submit
+webhook_health: *-*-* *:00/5:00 (hạn 1h) scripts/webhook_probe.py
+red_alert_escalate: *-*-* *:00/15:00 (hạn 1h) -m pipelines.red_alert --escalate
+anchor_build: *-*-* 02:30:00 (hạn 26h) -m pipelines.anchor --build
+legal_updates: *-*-* 07:15:00 (hạn 26h) -m pipelines.legal_updates --submit
+sales_sla: *-*-* *:10/30:00 (hạn 1h) -m agents.sales_director --run
+b2b_followups: *-*-* 08:30:00 (hạn 26h) -m agents.kd_quote --followups
+order_watch: *-*-* 08:40:00 (hạn 26h) -m agents.kd_orders --watch
+dealer_price_watch: *-*-* 08:50:00 (hạn 26h) -m agents.kd_price --dealer-watch
+ceo_promo: *-*-* 09:00:00 (hạn 26h) -m agents.ceo_promo
+intel_keywords: Mon *-*-* 07:45:00 (hạn 192h) scripts/intel_weekly.py --suggest-keywords
+ceo_weekly: Mon *-*-* 08:00:00 (hạn 192h) -m pipelines.cockpit --collect --period week ; -m agents.ceo_report --period week --submit
+invoice_batch: *-*-* 21:00:00 (hạn 26h) -m agents.acc_invoice --batch
+content_daily: *-*-* 06:00:00 (hạn 26h) -m pipelines.content --daily
+backup: *-*-* 01:30:00 (hạn 26h) scripts/db_backup.py
+restore_drill: Sun *-*-* 03:00:00 (hạn 192h) scripts/db_restore_drill.py
+dr_drill: *-*-01 04:00:00 (hạn 768h) scripts/dr_drill.py
+kpi_snapshot: *-*-* 23:50:00 (hạn 26h) scripts/ops_monthly.py --snapshot
+health_bulletin: *-*-* 07:30:00 (hạn 26h) scripts/health_bulletin.py
+ops_monthly: *-*-01 08:00:00 (hạn 768h) scripts/ops_monthly.py --month prev
+garden_remind: *-*-* 07:05:00 (hạn 26h) -m agents.garden_director --remind --submit
+intel_weekly: Mon *-*-* 07:40:00 (hạn 192h) scripts/intel_weekly.py --out-dir data/reports
+listing_watch: *-*-* 08:20:00 (hạn 26h) -m agents.kd_listing --run
+price_watch: *-*-* 08:25:00 (hạn 26h) -m agents.kd_price --run
+ceo_audit: *-*-* 09:10:00 (hạn 26h) -m agents.ceo_audit --report
+chain_watch: *-*-* 06:20:00 (hạn 26h) -m agents.bks_audit --chain-alert
+production_week: Mon *-*-* 08:10:00 (hạn 192h) -m pipelines.production bulletin --period week --out-dir data/reports
+production_month: *-*-01 08:15:00 (hạn 768h) -m pipelines.production bulletin --period month --out-dir data/reports

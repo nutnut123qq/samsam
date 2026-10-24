@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from san_suggestions s where row_to_json(s)::text like '%0900000222%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from san_suggestions where id = (select max(id) from san_suggestions) and msg_ref ~ '^[0-9a-f]{32}$' and answer !~* '(https?://|www\\.|[a-z0-9-]+\\.(com|vn|net)\\b)' and answer !~ '(\\+84|0)[0-9][0-9 .-]{7,}'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

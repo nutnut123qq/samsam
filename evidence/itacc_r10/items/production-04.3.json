@@ -1,0 +1,283 @@
+{
+ "id": "production-04.3",
+ "ten": "Hồ sơ lô, cảnh báo cận hạn",
+ "khoi": "production",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Sản xuất, R&D / Hồ sơ lô: 'Mã lô, hạn dùng, phiếu kiểm nghiệm; cảnh báo hàng cận hạn'",
+ "tieu_chi": [
+  "C1 production lots --load → production_lots pending (mã lô, NSX/HSD, SL); HSD ≤ NSX → exit 1",
+  "C2 NGƯỜI intake passed/failed qua function; intake lại → từ chối",
+  "C3 cert --file PDF (LOT_CERT_DIR ngoài repo) → lot_test_certificates phiên bản 1, phiếu 2 → v2 (bản cũ giữ); file không PDF/JPG/PNG → từ chối; cùng tệp 2 lần → từ chối; LOT_CERT_DIR trong repo → từ chối; cert-verify phát hiện thiếu phiếu/lệch hash",
+  "C4 bulletin --out-dir ghi sx-canhan-<ngày>.md mục 'Hàng cận hạn (FEFO)' liệt kê lô passed HSD ≤ 90 ngày (cả đã quá hạn), không liệt kê lô failed/xa hạn; tắt production-04.3 → không ghi"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_prod; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/lots_ok.json",
+   "sha256": "84c233b779a86a617789df66b32d9d790f3a0845d283475772494685367a96fa",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/lots_bad.json",
+   "sha256": "d6651dfc78c0785e44869c69167d98cd8aaef473b0c00deb402aaa94050ae575",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/cert_a.pdf",
+   "sha256": "9c553f44d95f367809dcda3af7e18114d61e60bb8cf7e5231bc39d027e20b226",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/cert_b.pdf",
+   "sha256": "ed85d301b0d58f25ddf60160f68ab546c1857af4a08d439f4160290b6ed2a0c3",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/not_pdf.txt",
+   "sha256": "7a384ac9409c5aaec603ad09c1d1db7a99d09dbe6a69dac09e0bb4963ee1db7b",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "P043-1",
+   "mo_ta": "ÂM lô HSD trước NSX",
+   "lenh": "[P043-1] python -m pipelines.production lots --load evidence/itacc_r10/g4/fixtures/lots_bad.json",
+   "expected": "exit 1, 0 dòng",
+   "actual": "exit 1 'hạn dùng phải SAU ngày sản xuất … không connect'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P043-2",
+   "mo_ta": "nạp 4 lô",
+   "lenh": "[P043-2] python -m pipelines.production lots --load evidence/itacc_r10/g4/fixtures/lots_ok.json",
+   "expected": "4 pending",
+   "actual": "exit 0 '4 lô mới (pending)'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P043-3",
+   "mo_ta": "intake",
+   "lenh": "[P043-3.IT-LOT-001] python -m pipelines.production intake --lot IT-LOT-001 --result passed --by QA Thử IT || [P043-3.IT-LOT-004] python -m pipelines.production intake --lot IT-LOT-004 --result failed --by QA Thử IT || [P043-3.again] python -m pipelines.production intake --lot IT-LOT-001 --result failed --by QA Thử IT || [P043-3-q] python evidence/itacc_r10/g4/harness/q.py select lot_code, sku_key, mfg_date, exp_date, qty, intake_status, checked_by, source from production_lots order by 1",
+   "expected": "3 passed 1 failed; intake lại từ chối",
+   "actual": "exit 0 ×4 (approvals #2–#5); intake lại IT-LOT-001 exit 1 'đã kiểm (passed)'",
+   "exit": [
+    0,
+    0,
+    1,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P043-4",
+   "mo_ta": "phiếu kiểm nghiệm v1, v2",
+   "lenh": "[P043-4a] python -m pipelines.production cert --lot IT-LOT-001 --file evidence/itacc_r10/g4/fixtures/cert_a.pdf --cert-no PKN-IT-001 --lab Phòng KN Thử IT --issued 2025-06-10 --by QA Thử IT || [P043-4b] python -m pipelines.production cert --lot IT-LOT-001 --file evidence/itacc_r10/g4/fixtures/cert_b.pdf --cert-no PKN-IT-001-R1 --by QA Thử IT || [P043-4c] python -m pipelines.production cert --lot IT-LOT-002 --file evidence/itacc_r10/g4/fixtures/cert_a.pdf --cert-no PKN-IT-002 --by QA Thử IT || [P043-4-q] python evidence/itacc_r10/g4/harness/q.py select lot_code, version, cert_no, lab, issued_on, file_sha256, file_ext, recorded_by, is_sample from lot_test_certificates order by lot_code, version",
+   "expected": "v1 rồi v2",
+   "actual": "exit 0: IT-LOT-001 v1 PKN-IT-001 rồi v2 PKN-IT-001-R1 (v1 giữ); IT-LOT-002 v1; tệp lưu theo sha256 ở LOT_CERT_DIR ngoài repo",
+   "exit": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P043-5",
+   "mo_ta": "ÂM phiếu sai loại / trùng tệp / kho trong repo",
+   "lenh": "[P043-5a] python -m pipelines.production cert --lot IT-LOT-003 --file evidence/itacc_r10/g4/fixtures/not_pdf.txt --cert-no PKN-IT-003 --by QA Thử IT || [P043-5b] python -m pipelines.production cert --lot IT-LOT-001 --file evidence/itacc_r10/g4/fixtures/cert_a.pdf --cert-no PKN-IT-001 --by QA Thử IT || [P043-5c] python -m pipelines.production cert --lot IT-LOT-003 --file evidence/itacc_r10/g4/fixtures/cert_b.pdf --cert-no PKN-IT-003 --by QA Thử IT",
+   "expected": "exit !=0 cả 3",
+   "actual": "not_pdf exit 1 (magic bytes); trùng tệp cùng lô exit 1; LOT_CERT_DIR trong repo exit 1",
+   "exit": [
+    1,
+    1,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P043-6",
+   "mo_ta": "cert-verify",
+   "lenh": "[P043-6a] python -m pipelines.production cert-verify || [P043-6b] python -m pipelines.production cert-verify",
+   "expected": "ok / thieu_phieu; exit 1",
+   "actual": "exit 1: IT-LOT-001 ok, 002 ok, 003 thieu_phieu; sau khi sửa tệp trong kho → IT-LOT-001 lech_hash",
+   "exit": [
+    1,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P043-7",
+   "mo_ta": "bản tin cận hạn",
+   "lenh": "[P01-7c] python -m pipelines.production bulletin --date 2026-10-23 --out-dir evidence/itacc_r10/g4/out/rep_prod || [P01-7c-lap] python -m pipelines.production bulletin --date 2026-10-23 --out-dir evidence/itacc_r10/g4/out/rep_prod || [P01-7d-chandoan] python -m pipelines.production bulletin --date 2028-12-01 --out-dir evidence/itacc_r10/g4/out/rep_prod_diag",
+   "expected": "sx-canhan-2026-10-23.md có lô HSD 01/12/2026 và lô hết hạn 01/10/2026",
+   "actual": "exit 1 CRASH TypeError trong production.collect (cùng lỗi P01-7) — KHÔNG ghi sx-canhan-2026-10-23.md; mục FEFO chỉ ra được khi KHÔNG có lô cận hạn (đối chứng --date 2028-12-01: 'không có')",
+   "exit": [
+    1,
+    1,
+    0
+   ],
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P043-8",
+   "mo_ta": "ÂM tắt production-04.3 (chạy cuối)",
+   "lenh": "[TAT-production-04.3] python -m pipelines.rollout --disable production-04.3 --by Người Thử IT --note kiem nhanh tat IT r10 || [P043-8] python -m pipelines.production bulletin --date 2028-12-01 --out-dir evidence/itacc_r10/g4/out/rep_prod_tat",
+   "expected": "exit !=0; không ghi sx-canhan mới",
+   "actual": "exit 1 '[err] báo cáo sx-canhan-2028-12-01.md: production-04.3 đang tắt'; chỉ sx-bantin (production-01 còn chạy thử) được ghi",
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Sửa lỗi đè biến `stock` trong production.collect (cùng lỗi production-01).",
+ "gioi_han": "near_expiry_days GIẢ ĐỊNH 90; phiếu kiểm nghiệm là PDF giả. Quan sát: intake 'passed' cho lô đã quá HSD không cảnh báo; cùng một tệp phiếu được chấp nhận cho 2 lô khác nhau.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-1.txt",
+   "sha256": "bbaa393be26a8f1f72089f57c04112ccefde8c91c697110490662e2fbb46d30d"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-2.txt",
+   "sha256": "aa7f788c02e31754b40cbfbcb64c1654db3331920747fca4fe3e74d5e69fddd7"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-3-q.txt",
+   "sha256": "765ffcd873b4ef54d80b7ad051352dd4b4d68e7d853690e249479c26deadcf55"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-3.again.txt",
+   "sha256": "d61155a6932e3d6f5d772dba5802e111fec19b851be5a17ad85d80d2b15d3706"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-4a.txt",
+   "sha256": "141aebf12d37d5817d2e7593d5b49ad76bc39248013765930aee8d1366733fb0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-4b.txt",
+   "sha256": "ecff60baa3587438d004e65e98ae26a2adc9d798a9cfc5a8960850166d1838e2"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-4c.txt",
+   "sha256": "7375179ad32e721cd24fe1f9ace21b13f7ca38d7910ae42cb190fde41da3b358"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-4-q.txt",
+   "sha256": "b903e87bc22abe961d2b24e2f94c2ca956a24904e7feaa6e8ba62a8c442e7707"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-5a.txt",
+   "sha256": "19fa5a60dbd5b45499ef89854fadbe30f69e68812a5dca17bcabfa6af70e24bd"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-5b.txt",
+   "sha256": "e4169a0f646af8095fdfeffabec2ffffd0e16fc15c245336ea050235fa51300a"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-5c.txt",
+   "sha256": "f259e67eb21b29a82da6973758da4bcf6ea0c1015360bd28338c7eba40285a01"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-6a.txt",
+   "sha256": "77309c197ea8e65dccf3b188c514e8cac7ba533ead503d6198e7f2d19afb5b25"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-6b.txt",
+   "sha256": "23f19a1175f2b9ad7bd4fec97ec89372ae6ae9e75513a8569ffa369f24f7e78b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-7c.txt",
+   "sha256": "2a7df89725e68fca9160eb39797488190665872f3c988cf3da183366cb6f523c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-7c-lap.txt",
+   "sha256": "986cea34a6576de01d70f654e71bf3a407cca7b9bd6a025052c2e3d432e91cc7"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P01-7d-chandoan.txt",
+   "sha256": "c86478b97e53753d26edb5c50793a9c867c5a48de5ce681662bd57ce549ed8e1"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P043-8.txt",
+   "sha256": "e35dff39786e62a95f1f3f6850507d21ab35a633fab7c65e6047b013b9a7996c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-production-04.3.txt",
+   "sha256": "ef955091bb37009699508b8f43f87102d8917d682a7f5cd75d39febab6b2be80"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_prod_diag/sx-canhan-2028-12-01.md",
+   "sha256": "c106544ca5a75ca6f7c6d42818557f8fd0c696ea3c448ef14b1f9306c3d3811b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-prod.txt",
+   "sha256": "602c88845811a35b82861c29168029e190441247d92c4c6f4f60caf7340c5824"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "muc_do": "cao",
+   "mo_ta": "pipelines.production.collect: vòng đọc allocation_proposals dùng tên biến `stock` cho cột min(stock_total) (production.py ~dòng 820) đè dict tồn kho `stock` (inventory_csv.current_stock); mục cận hạn sau đó `sku in stock` (dòng 861) → TypeError. Hễ DB có ≥1 run phân bổ VÀ có lô passed trong cửa sổ cận hạn thì `production bulletin` crash: không ra bản tin sx-bantin-* (production-01) lẫn mục 'Hàng cận hạn (FEFO)' sx-canhan-* (production-04.3) — đúng lúc cần cảnh báo.",
+   "tai_hien": "inventory_csv --file inv_ok.csv; production allocate --cutoff chot_11_11 --start 2026-10-26; lots --load lots_ok.json; intake IT-LOT-001/002 passed; production bulletin --date 2026-10-23 --out-dir D",
+   "expected": "exit 0, ghi sx-bantin-tuan-2026-10-23.md + sx-canhan-2026-10-23.md có IT-LOT-002 (HSD 01/10/2026) và IT-LOT-001 (01/12/2026)",
+   "actual": "exit 1 traceback TypeError: argument of type 'int' is not iterable; không ghi file. Đối chứng --date 2028-12-01 (không lô cận hạn) chạy được",
+   "evidence": [
+    "evidence/itacc_r10/g4/out/P01-7c.txt",
+    "evidence/itacc_r10/g4/out/P01-7c-lap.txt",
+    "evidence/itacc_r10/g4/out/P01-7d-chandoan.txt"
+   ]
+  }
+ ]
+}

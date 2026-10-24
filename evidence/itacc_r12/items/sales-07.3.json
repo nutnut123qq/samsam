@@ -1,0 +1,856 @@
+{
+ "id": "sales-07.3",
+ "ten": "Kịch bản bán mùa 11.11, 12.12, Tết",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Livestream, sau bán, dự báo: 'kịch bản bán cho 11.11, 12.12, Tết'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/sales-07.3.json",
+  "sha256": "361b8cef0ad4518188742b4d276ad187ddfb29037fdb26976ce66fc055e32acd"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/kd_forecast.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_sales_b.json",
+ "tieu_chi_sha256": "e2a05423306d3768771d3aa8b78132b1a7138775f6c5230eae04c1e5bfbc6f17",
+ "tieu_chi_khoa": "r12_sales_b.json e2a05423306d3768771d3aa8b78132b1a7138775f6c5230eae04c1e5bfbc6f17 2026-10-24T09:00:49+07:00",
+ "tieu_chi": [
+  "T1 `pipelines.scenario --sku --channel --weeks 13 --start --json` → 13 tuần, mọi dòng low≤base≤high, 2 lần chạy trùng byte",
+  "T2 `ingest.inventory_csv --file` tồn fixture (2 dòng, chạy lại [skip]); `agents.kd_forecast --write` (REPORTS_DIR → {SCR}/s073 qua agents.report.REPORTS_DIR như r10 --reports-dir) ghi kd-forecast-<start>.md: nhãn 'CHẠY THỬ — KHÔNG GỬI', ô thấp–cơ sở–cao, saphraton-20v tồn 50 THIẾU, mat-ong-sam-300ml tồn 5000 THỪA; report_outputs sales-07.3 is_sample=false",
+  "T3 SKU không có tồn → 'chưa có số tồn — không kết luận thiếu' (không suy 0); SKU lạ → exit 1 không tệp; tồn từ file mẫu (--source sample) → báo cáo ghi '(MẪU)', report_outputs is_sample=true",
+  "T4 (r12 RB) tắt sales-07.3 → exit 2 + '[rollout] … sales-07.3', không traceback, không in bảng dự báo, không tạo thư mục báo cáo, 0 dòng report_outputs"
+ ],
+ "moi_truong": "Docker samsam-itacc-r12 127.0.0.1:55451; mỗi mục 1 DB samsam_itacc_r12_<mã> dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden thật); dev mode (AUTH_MODE/APPROVAL_ENFORCE/DEPLOY trống); OPENROUTER_API_KEY rỗng; INTEL_HASH_SALT/CONTACT_VAULT_KEY thử do mkdb sinh; runner_r12.py.txt. DB samsam_itacc_r12_s073.",
+ "run_id": "20261024T112032-a05b",
+ "ca": [
+  {
+   "ma": "sales-07.3__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout (r10 SETUP-rollout-seed DB chung khối sales; r12 DB riêng). Không nạp golden FIXTURE: kịch bản/dự báo đọc data/golden_skus.json (r10 S073-C03 cho thấy tiktok 0–0–0 của mat-ong = golden thật)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\]"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'sales-07.3'",
+      "expect": "chay_thu"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:20:32+07:00",
+      "ket_thuc": "2026-10-24T11:20:34+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'sales-07.3'",
+      "expect": "chay_thu",
+      "actual": "chay_thu",
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S01"
+  },
+  {
+   "ma": "sales-07.3__S073-C01",
+   "nguon_r10": "S073-C01",
+   "mo_ta": "Kịch bản 1 SKU ×2 → JSON low≤base≤high, tất định",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\"week_start\": \"2026-11-02\""
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "TAT_DINH_13_TUAN_LOW_LE_BASE_LE_HIGH"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 --start 2026-11-02 --json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\"week_start\": \"2026-11-02\"",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:20:34+07:00",
+      "ket_thuc": "2026-10-24T11:20:36+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 --start 2026-11-02 --json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:20:36+07:00",
+      "ket_thuc": "2026-10-24T11:20:37+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step02.stderr.txt"
+     },
+     {
+      "argv": "python -c import json,sys; a=open(sys.argv[1],encoding='utf-8').read(); b=open(sys.argv[2],encoding='utf-8').read(); assert a==b, 'hai lần chạy khác nhau'; d=next(json.loads(l) for l in reversed(a.splitlines()) if l.startswith('[{')); assert len(d)==13, len(d); assert all(r['low']<=r['base']<=r['high'] for r in d), d; print('TAT_DINH_13_TUAN_LOW_LE_BASE_LE_HIGH') evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\sales-07.3__S073-C01\\out/../step01.stdout.txt evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\sales-07.3__S073-C01\\out/../step02.stdout.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "TAT_DINH_13_TUAN_LOW_LE_BASE_LE_HIGH",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:20:37+07:00",
+      "ket_thuc": "2026-10-24T11:20:37+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step03.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01"
+  },
+  {
+   "ma": "sales-07.3__S073-C02",
+   "nguon_r10": "S073-C02",
+   "mo_ta": "Nạp tồn (r10: lệnh ×2 = lượt fixture lỗi định dạng + lượt sửa; fixture hiện hành là bản đã sửa → lượt 2 là nạp lại)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "s073_inventory\\.csv: 2 dòng tồn"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from inventory_snapshots",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.inventory_csv --file evidence\\itacc_r12\\fixtures/items/sales-07.3/s073_inventory.csv",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "s073_inventory\\.csv: 2 dòng tồn",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:20:37+07:00",
+      "ket_thuc": "2026-10-24T11:20:38+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.inventory_csv --file evidence\\itacc_r12\\fixtures/items/sales-07.3/s073_inventory.csv",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:20:38+07:00",
+      "ket_thuc": "2026-10-24T11:20:40+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from inventory_snapshots",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02"
+  },
+  {
+   "ma": "sales-07.3__S073-C03",
+   "nguon_r10": "S073-C03",
+   "mo_ta": "Dự báo + ghi báo cáo ×2 (start 2026-11-02)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "kd-forecast-2026-11-02\\.md"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/s073/kd-forecast-2026-11-02.md",
+      "count": 1
+     },
+     {
+      "file_re": "{SCR}/s073/kd-forecast-2026-11-02.md",
+      "re": "\\A[^\\n]*CHẠY THỬ — KHÔNG GỬI",
+      "expect": true
+     },
+     {
+      "file_re": "{SCR}/s073/kd-forecast-2026-11-02.md",
+      "re": "\\| saphraton-20v \\| \\d+–\\d+–\\d+ \\|",
+      "expect": true
+     },
+     {
+      "file_re": "{SCR}/s073/kd-forecast-2026-11-02.md",
+      "re": "saphraton-20v: tồn 50\\b[^\\n]*THIẾU",
+      "expect": true
+     },
+     {
+      "file_re": "{SCR}/s073/kd-forecast-2026-11-02.md",
+      "re": "mat-ong-sam-300ml: tồn 5000\\b[^\\n]*THỪA",
+      "expect": true
+     },
+     {
+      "file_re": "{SCR}/s073/kd-forecast-2026-11-02.md",
+      "re": "savina-12v: chưa có số tồn — không kết luận thiếu",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) >= 1 and bool_and(not is_sample) from report_outputs where feature_id = 'sales-07.3' and name = 'kd-forecast-2026-11-02.md'",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.kd_forecast --start 2026-11-02 --write",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:20:40+07:00",
+      "ket_thuc": "2026-10-24T11:20:47+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.kd_forecast --start 2026-11-02 --write",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "kd-forecast-2026-11-02\\.md",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:20:47+07:00",
+      "ket_thuc": "2026-10-24T11:20:52+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-02.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/scratch/s073/kd-forecast-2026-11-02.md",
+        "sha256": "c24bd45c85c733bc2788eb9a96e5f4223e9311e7d6257929787675504864254c"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-02.md",
+      "re": "\\A[^\\n]*CHẠY THỬ — KHÔNG GỬI",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-02.md",
+      "re": "\\| saphraton-20v \\| \\d+–\\d+–\\d+ \\|",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-02.md",
+      "re": "saphraton-20v: tồn 50\\b[^\\n]*THIẾU",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-02.md",
+      "re": "mat-ong-sam-300ml: tồn 5000\\b[^\\n]*THỪA",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-02.md",
+      "re": "savina-12v: chưa có số tồn — không kết luận thiếu",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) >= 1 and bool_and(not is_sample) from report_outputs where feature_id = 'sales-07.3' and name = 'kd-forecast-2026-11-02.md'",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03"
+  },
+  {
+   "ma": "sales-07.3__S073-C04",
+   "nguon_r10": "S073-C04",
+   "mo_ta": "SKU lạ → exit 1, không tệp mới",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stderr_re": "khong-co-sku' không có trong golden"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/s073/kd-forecast-*.md",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.kd_forecast --sku khong-co-sku --write",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stderr_re": "khong-co-sku' không có trong golden",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:20:52+07:00",
+      "ket_thuc": "2026-10-24T11:20:57+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C04/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-*.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/scratch/s073/kd-forecast-2026-11-02.md",
+        "sha256": "c24bd45c85c733bc2788eb9a96e5f4223e9311e7d6257929787675504864254c"
+       }
+      ],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C04"
+  },
+  {
+   "ma": "sales-07.3__S073-C05",
+   "nguon_r10": "S073-C05",
+   "mo_ta": "Tồn mẫu → nhãn MẪU, report_outputs is_sample=true",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[MẪU\\]"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/s073/kd-forecast-2026-11-09.md",
+      "count": 1
+     },
+     {
+      "file_re": "{SCR}/s073/kd-forecast-2026-11-09.md",
+      "re": "saphraton-20v: tồn 450[^\\n]*MẪU",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) >= 1 and bool_and(is_sample) from report_outputs where feature_id = 'sales-07.3' and name = 'kd-forecast-2026-11-09.md'",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.inventory_csv --file evidence\\itacc_r12\\fixtures/items/sales-07.3/s073_inventory_sample.csv --source sample",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[MẪU\\]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:20:57+07:00",
+      "ket_thuc": "2026-10-24T11:20:59+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.kd_forecast --start 2026-11-09 --sku saphraton-20v --write",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:20:59+07:00",
+      "ket_thuc": "2026-10-24T11:21:04+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-09.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/scratch/s073/kd-forecast-2026-11-09.md",
+        "sha256": "779a09d9ba7644ee78a93d8e9c02c921fe6129ce09332af2b83d2d35278c3f4d"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-09.md",
+      "re": "saphraton-20v: tồn 450[^\\n]*MẪU",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) >= 1 and bool_and(is_sample) from report_outputs where feature_id = 'sales-07.3' and name = 'kd-forecast-2026-11-09.md'",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05"
+  },
+  {
+   "ma": "sales-07.3__S073-C06",
+   "nguon_r10": "S073-C06",
+   "mo_ta": "Tắt → không ghi báo cáo (r10 kỳ vọng giữ; r12 RB siết: exit 2 + [rollout], không traceback, không in dự báo)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "(?s)\\A(?=.*\\[rollout\\][^\\n]*sales-07\\.3)(?!.*Dự báo mùa)",
+      "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/fc_tat",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from report_outputs where name like 'kd-forecast-2026-11-16%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable sales-07.3 --by Người Thử R12 --note kiểm nhánh tắt r12 sales_b",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:21:04+07:00",
+      "ket_thuc": "2026-10-24T11:21:06+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.kd_forecast --start 2026-11-16 --sku saphraton-20v --write",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "(?s)\\A(?=.*\\[rollout\\][^\\n]*sales-07\\.3)(?!.*Dự báo mùa)",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:21:06+07:00",
+      "ket_thuc": "2026-10-24T11:21:10+07:00",
+      "stdout": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/fc_tat",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from report_outputs where name like 'kd-forecast-2026-11-16%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/ket_qua.json",
+   "sha256": "38dd51b94ddb5636bda91543244468cfa7b3a321bd0f0beaf93e64cfcd997a04"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S01/asserts.json",
+   "sha256": "5685c2fc12c065b95b40069d53babdd70c7e9983bd8e752ca0cf992bd7fd82ad"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S01/case.json",
+   "sha256": "bafb3e442405eac411abd106ea3f5b41c29bef6f5ea5e3c1cba0a911544cdc72"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S01/step01.cmd.json",
+   "sha256": "759c2f2b3f4a348b62fc816b777e512dc8fc3dadd06c86b787e3ad1f27d957c7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/case.json",
+   "sha256": "5504de94bdc083d929f97301c93f99cb8008b28d503072d69d5cc72b9a5c83fa"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step01.cmd.json",
+   "sha256": "e1bc9f6e091423003c1505c16d6aaace0c3a4a03c5614bdac266b14b87e3d3f4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step01.stderr.txt",
+   "sha256": "1de7b542e4e0d1c70504d9735b48548c5531c8e1bb821f58e676ce341d4eb78c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step01.stdout.txt",
+   "sha256": "0dc9bb48899ffd400c3187b6ed792aeb89556211d25bb423911dbcaab3fce5ee"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step02.cmd.json",
+   "sha256": "cd9eee9241ed166c2cb7546c52f2fe98c641cc5233929e2362c8cbca84ecd259"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step02.stderr.txt",
+   "sha256": "1de7b542e4e0d1c70504d9735b48548c5531c8e1bb821f58e676ce341d4eb78c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step02.stdout.txt",
+   "sha256": "0dc9bb48899ffd400c3187b6ed792aeb89556211d25bb423911dbcaab3fce5ee"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step03.cmd.json",
+   "sha256": "8a187f3af0917371d05aee5f001ae7761cf05c9e04284880167e5001daf561f7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C01/step03.stdout.txt",
+   "sha256": "55a940963568a38f80aa8b0a8845158eb12d4562a4e753d524d5cd867d503277"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/asserts.json",
+   "sha256": "e792a91e37e668e587ecc2432454447f9cde509c863e24c9819c1462f4a6da69"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/case.json",
+   "sha256": "8e39f2b5765eb818a4f59698e9bdaee43a82654a8243202621203e81c0fcd88c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step01.cmd.json",
+   "sha256": "32a8cc456185c77bf5eefb28daea83de3fcf7d40ff410ea8d7799af1628c7c85"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step01.stdout.txt",
+   "sha256": "24955a4836281aa8ce0ab6767e2ab0850c840ebb3051488ddb3beb90cbd7b067"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step02.cmd.json",
+   "sha256": "1cbef4ca3a92af4042cde432b3a839576010dd1e587554f312bc07f87c02b5a3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C02/step02.stdout.txt",
+   "sha256": "116fede91215eeed4143a6468cf865489abdac68ee24f607eeb4406551780214"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/asserts.json",
+   "sha256": "ee9ed1086e0ec7408a0cbb8953f505ba54ec27053b5fedf73c0efd84dfaec5b8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/case.json",
+   "sha256": "3b70fd438bfcebeaf9c7ecc3bbaa7723cc44eef72c9b19788ea5bdad38164b6b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step01.cmd.json",
+   "sha256": "ac8b880bf2d48eee865f3e6273f62e3c4eb9eacb59199a8a70b4a14793db2247"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step01.stderr.txt",
+   "sha256": "34880f84e624cc4e072e083550694f9e342bd8759f2d2892f505f0555afd7278"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step01.stdout.txt",
+   "sha256": "afd5ac50da118fc07e6ad5fe24eee0c0242e600f97cd1d5bd55c79a0a40a7aca"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step02.cmd.json",
+   "sha256": "f64969cb1ecec9829178b4ce17000d1598a2ec173fd0628852e6ed1fc0c41806"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step02.stderr.txt",
+   "sha256": "34880f84e624cc4e072e083550694f9e342bd8759f2d2892f505f0555afd7278"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C03/step02.stdout.txt",
+   "sha256": "afd5ac50da118fc07e6ad5fe24eee0c0242e600f97cd1d5bd55c79a0a40a7aca"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C04/asserts.json",
+   "sha256": "ee765453c2c52900763c0c10cf0eb34a1437a6e58474341c5911222bb99d77d8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C04/case.json",
+   "sha256": "b439cf92331987b1b23c86b93976a4643c9794643a8cb511be169ad1ae17c48c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C04/step01.cmd.json",
+   "sha256": "a3c6983a60edcd974bb5f1e9fc7a175839fa6a12abd7babe19c0c4ea44097395"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C04/step01.stderr.txt",
+   "sha256": "f1b22a46b6532918b0708c6d03695fbff61ef2056059c9ff6cd49f3a20f33071"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C04/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/asserts.json",
+   "sha256": "23501d7aceb629a64d68dad2c729262b919d157300e0d0b289b541761ade2a22"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/case.json",
+   "sha256": "88306408e2bdadb1d84f2fcebbc6f180114f0bdad8be272787cf74d500c067dd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step01.cmd.json",
+   "sha256": "25e07e7d8cacd16f62a22abb3b8551ea0156270d32cfc1d3ffdbe80a220b26ee"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step01.stdout.txt",
+   "sha256": "1e176f173db948417ead75a4410dffa12e7b99a9f796efe0792438a18ae0e7eb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step02.cmd.json",
+   "sha256": "ee336410ca9872d4258fa0f1ff5fea2c85fda18c53dd986608e1700b9793740c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step02.stderr.txt",
+   "sha256": "34880f84e624cc4e072e083550694f9e342bd8759f2d2892f505f0555afd7278"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C05/step02.stdout.txt",
+   "sha256": "a3305f3a7e39f01d8d850617c4c7449b66b6875e3d5811f271cd488bc8b73e0a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/asserts.json",
+   "sha256": "2792b9a867776b360547849551988a81d6422bd4c5d838dc4aa0d89aac0d43a6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/case.json",
+   "sha256": "58ff578b84baef4b8f122c1142ee073e5b9ece9becb9e402f607279012d9dbcd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step01.cmd.json",
+   "sha256": "2bd226c9c1632ebb8f102eb69f1a21157d22f490b305688245aa51ebcaefcf8e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step01.stdout.txt",
+   "sha256": "9936e86823cd2e6896a419cb01d0ab2f27009d2ee76f304126226bcfeb233a36"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step02.cmd.json",
+   "sha256": "e86c05d388ce03e54c15ed03298e237e353736f09e486c0c3e82f35dce4bc0f5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step02.stderr.txt",
+   "sha256": "10705e8c91522a97fa2fe62b00466cb324cd3f347b8b255f47cf96df6999a289"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/sales-07.3__S073-C06/step02.stdout.txt",
+   "sha256": "e8b3079fec356f5a99a1b0a5c168017ef0ecb60c5cd2e38f966172a2a6264050"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/scratch/s073/kd-forecast-2026-11-02.md",
+   "sha256": "c24bd45c85c733bc2788eb9a96e5f4223e9311e7d6257929787675504864254c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/scratch/s073/kd-forecast-2026-11-09.md",
+   "sha256": "779a09d9ba7644ee78a93d8e9c02c921fe6129ce09332af2b83d2d35278c3f4d"
+  }
+ ],
+ "loi_san_pham": []
+}

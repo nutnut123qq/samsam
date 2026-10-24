@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from content_drafts where id in (4, 5, 6) and status = 'approved'",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from channel_posts",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from market_rows",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ }
+]

@@ -1,0 +1,59 @@
+{
+ "case": "C06_dedup",
+ "http": [
+  200,
+  200
+ ],
+ "lan2_conv_tang": 0,
+ "lan2_calls_tang": 0,
+ "convlog_new": [
+  {
+   "ts": "2026-10-24T04:34:15Z",
+   "msg_id": "it-g2-m6",
+   "user_hash": "979caf3b2d26b9f1",
+   "question": "Mật ong sâm 300ml dùng thế nào?",
+   "answer": "Chào Quý khách, Sâm Sâm dùng trợ lý tự động để trả lời tin nhắn. Chính sách xử lý dữ liệu cá nhân: https://samsamngoclinh.com/chinh-sach-bao-mat. Nếu Quý khách đồng ý để Sâm Sâm xử lý tin nhắn nhằm tư vấn sản phẩm, vui lòng nhắn \"Đồng ý\"; nhắn \"Không đồng ý\" nếu Quý khách muốn trợ lý tự động dừng xử lý tin nhắn.\n\nSâm Sâm đã nhận câu hỏi của Quý khách — nhân viên sẽ phản hồi sớm nhất. Quý khách cần gấp vui lòng gọi hotline 1800577732 để được hỗ trợ.",
+   "sources": [],
+   "guardrail_ok": true,
+   "latency_ms": 561,
+   "reply_ms": 561,
+   "answered": false,
+   "sent": false,
+   "rollout": "chay_thu",
+   "suggestion_id": 8,
+   "channel": "zalo",
+   "provenance": "live"
+  }
+ ],
+ "fake_calls_new": [
+  {
+   "kind": "embed"
+  },
+  {
+   "kind": "chat",
+   "slow": false
+  }
+ ],
+ "queue_new": [
+  {
+   "id": 7,
+   "block": "sales",
+   "object_type": "cskh_handoff",
+   "object_id": "zalo:b66c10ab89cf95b8e713f105bb7205c2",
+   "created_by": "agent:kd_a1",
+   "status": "pending",
+   "title": "Handoff chua_van_hanh — zalo",
+   "payload": "kênh=zalo; lý do=chua_van_hanh; user_hash=b66c10ab89cf95b8e713f105bb7205c2; msg_ref=eddca6c3fb1a3b10; ts=2026-10-24T04:34:15Z; sla=72h"
+  },
+  {
+   "id": 8,
+   "block": "sales",
+   "object_type": "cskh_reply",
+   "object_id": "zalo:b66c10ab89cf95b8e713f105bb7205c2:eddca6c3fb1a3b10",
+   "created_by": "agent:kd_a1",
+   "status": "pending",
+   "title": "Gợi ý trả lời zalo — msg_ref eddca6c3fb1a3b10",
+   "payload": "Mật ong sâm 300ml là thực phẩm đóng hũ 300ml của Sâm Sâm [1].\nNguồn: https://example.com/it-g2/mat-ong-sam-300ml"
+  }
+ ]
+}

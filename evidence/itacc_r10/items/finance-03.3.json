@@ -1,0 +1,150 @@
+{
+ "id": "finance-03.3",
+ "ten": "Nháp thư nhắc nợ",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Công nợ, hoa hồng: 'nháp thư nhắc nợ'",
+ "tieu_chi": [
+  "C1 acc_ar --reminders đẩy 1 mục finance/ar_reminder created_by agent:acc_ar cho MỖI đại lý có khoản quá hạn VÀ có trong sổ dealers; payload có chứng từ, hạn, số ngày quá hạn, số tiền, file nguồn + sha256; placeholder thay tên/người nhận; không PII",
+  "C2 đại lý ngoài sổ dealers → bỏ qua, không soạn",
+  "C3 chạy lại cùng trạng thái nợ → skip; --dry-run không ghi",
+  "C4 agent không gửi; tắt → exit 2 không ghi"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/ar_ok.csv",
+   "sha256": "8031bc6d146face1ee952d2384cbab3dcc1177977c5e51b88f36dd937ffdca12",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F033-1",
+   "mo_ta": "dry-run",
+   "lenh": "[F033-1] python -m agents.acc_ar --reminders --as-of 2026-10-23 --dry-run",
+   "expected": "in 2 nháp, 0 ghi",
+   "actual": "exit 0; 2 nháp IT-DL01, IT-DL03; IT-DL02 skip ngoài sổ; ar_reminder 0",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F033-2",
+   "mo_ta": "đẩy hàng duyệt",
+   "lenh": "[F033-2] python -m agents.acc_ar --reminders --as-of 2026-10-23 || [F033-q] python evidence/itacc_r10/g4/harness/q.py select id, block, object_type, object_id, status, created_by, title, payload from approval_queue where object_type='ar_reminder' order by id",
+   "expected": "2 mục ar_reminder pending agent:acc_ar; IT-DL02 skip",
+   "actual": "exit 0; #2 IT-DL01 12.000.000 (HD-IT-001 7tr quá 84 ngày, HD-IT-002 5tr quá 13 ngày), #3 IT-DL03 1.000.000; created_by agent:acc_ar; placeholder {{TEN_DAI_LY}}/{{NGUOI_KY}}; căn cứ file ar_ok.csv sha256 8031bc6d",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F033-3",
+   "mo_ta": "ÂM idempotent",
+   "lenh": "[F033-3] python -m agents.acc_ar --reminders --as-of 2026-10-23",
+   "expected": "0 mới, skip",
+   "actual": "exit 0; 0 nháp mới, 3 bỏ qua",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F033-4",
+   "mo_ta": "ÂM tắt finance-03.3 (chạy cuối)",
+   "lenh": "[TAT-finance-03.3] python -m pipelines.rollout --disable finance-03.3 --by Người Thử IT --note kiem nhanh tat IT r10 || [F033-4] python -m agents.acc_ar --reminders --as-of 2026-11-20 || [TAT-fin-q3] python evidence/itacc_r10/g4/harness/q.py select object_type, count(*) from approval_queue group by 1 order by 1 ; select count(*) from invoice_lines",
+   "expected": "exit 2 blocked",
+   "actual": "lượt 2 (--as-of 2026-11-20 → trạng thái nợ mới): exit 2 '[blocked] … finance-03.3 đang tắt'; ar_reminder vẫn 2",
+   "exit": [
+    0,
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "ghi_chu": "lỗi harness đã sửa: lượt 1 ca tắt tính năng chạy khi không còn dữ liệu mới để sinh (lô rỗng / cùng trạng thái nợ) nên không chạm cổng — giữ log *-luot1-harness-hong.txt, lượt 2 nạp thêm dữ liệu fixture rồi chạy lại"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Sổ dealers/dealer_ar là fixture; approvers GĐ tài chính rỗng (C04 — chế độ thực do điều phối viên kiểm); kế toán gửi thư tay. Payload ghi 'thay nháp cũ nếu còn chờ duyệt' nhưng code không thay — chỉ bỏ qua cùng trạng thái.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F033-1.txt",
+   "sha256": "60f7983768dd8897611d81276d91ec8a99a5da635ef54804b3e52395f0128cc0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F033-2.txt",
+   "sha256": "ac983482dd4392d16dff732d209626b722ec69bb66dcb0e57b023c1f73aad728"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F033-3.txt",
+   "sha256": "734d4177453bc8e337f6ae61114852bbfdf58a8460e98022aabc23178fffaa3d"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F033-q.txt",
+   "sha256": "1672fbc1ecd4feab385ff91a3e1680544c05fdc34f868003eb27ab748b5dece7"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F033-4-luot1-harness-hong.txt",
+   "sha256": "32bd7352e424da31cd1835d09ba5c4cec70c2ed4d7a7a157e7aec4b1f28ae2b8"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F033-4.txt",
+   "sha256": "af225950a872e3acafe5db1937bc7134199ea17dd0f1d0b8d29929b0bb1cc61a"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-finance-03.3.txt",
+   "sha256": "bbd86e7897b48622d303c8438442678946f8e44c0b539b8e6873b0b7a6e7007b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-fin-q3.txt",
+   "sha256": "585b6f3a1989a153d69d1c39eeb052e1749537494c9f0c3fec832fb0c9ae0abd"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": []
+}

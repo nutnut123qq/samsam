@@ -372,7 +372,12 @@ ACTIONS = ("approve", "reject", "override_qa", "schedule",
            "consent", "assign", "handoff", "load_dealers", "purge_sample",
            "adopt_plot",
            # v15.4 (p10): `ra_kenh --mark-removed` đóng đợt vi phạm kênh.
-           "close_violation")
+           "close_violation",
+           # r12 G5-01: cấp/thu hồi tư liệu vườn cho Marketing
+           # (`scripts/garden_media_mkt.py` — function `cap|thu_hoi`).
+           "media_cap", "media_thu_hoi",
+           # r12 G5-02: ánh xạ / gỡ ánh xạ lô ↔ nhật ký thu hoạch (QR).
+           "link_origin", "unlink_origin")
 NON_HUMAN = ("agent:", "system:", "auto_policy:")
 DIRECTORS_DIR = ROOT / "data" / "directors"
 _APPROVAL_FORCE: bool | None = None   # test ép chế độ (tests/conftest.py)
@@ -633,6 +638,67 @@ def privileged_login(conn) -> str | None:
         return ("login Postgres là CHỦ SỞ HỮU (owner) bảng — chế độ thực "
                 "phải dùng login riêng không sở hữu bảng (docs/roles.sql)")
     return None
+
+
+class PersonSessionError(RuntimeError):
+    """Không mở được phiên NGƯỜI — thông điệp không chứa mật khẩu/DSN."""
+
+
+_LOGIN_RE = r"[a-z_][a-z0-9_$]{0,62}"
+
+
+def person_connect(dsn: str, db_login: str, password: str, *,
+                   connect_timeout: int = 5):
+    """Đợt an toàn S04 (HĐ 6.7, 7.2): mở kết nối bằng LOGIN Postgres RIÊNG
+    của người dùng — Postgres xác thực mật khẩu của chính người đó, danh tính
+    quyết định = `session_user` ↔ `human_logins` (trigger
+    `person_login_guard` + `human_actor`), không còn là tên UI tự truyền.
+    → (conn, person, blocks). Từ chối (PersonSessionError): login sai định
+    dạng/thiếu mật khẩu, xác thực hỏng, login superuser/owner, login chưa ánh
+    xạ người (gồm login UI dùng chung `svc_ui`). `dsn` = DSN nền (host/db/
+    options) — user/password bị thay; hàm KHÔNG giữ/in mật khẩu."""
+    import re
+
+    import psycopg
+    from psycopg import conninfo
+
+    login = db_login.strip().lower() if isinstance(db_login, str) else ""
+    if not re.fullmatch(_LOGIN_RE, login):
+        raise PersonSessionError("login Postgres không hợp lệ")
+    if not isinstance(password, str) or not password:
+        raise PersonSessionError("thiếu mật khẩu Postgres")
+    d = conninfo.conninfo_to_dict(dsn)
+    d.update(user=login, password=password)
+    try:
+        conn = psycopg.connect(conninfo.make_conninfo(**d),
+                               connect_timeout=connect_timeout)
+    except psycopg.Error as e:
+        raise PersonSessionError("đăng nhập Postgres thất bại "
+                                 f"({type(e).__name__})") from None
+    try:
+        if session_login(conn) != login:
+            raise PersonSessionError("phiên Postgres không khớp login")
+        if why := privileged_login(conn):
+            raise PersonSessionError(why)
+        row = conn.execute("select person, blocks from human_whoami()"
+                           ).fetchone()
+        if row is None:
+            conn.commit()
+            raise PersonSessionError(
+                f"login {login} chưa được ánh xạ người (human_logins — Bên B"
+                " điền theo văn bản ủy quyền, không tự điền)")
+        # vòng r8: bằng chứng ĐĂNG NHẬP THẬT cho ma trận (thời điểm DB, không
+        # lưu mật khẩu)
+        conn.execute("select human_login_check()")
+        conn.commit()
+    except PersonSessionError:
+        conn.close()
+        raise
+    except psycopg.Error as e:
+        conn.close()
+        raise PersonSessionError("không kiểm được danh tính login "
+                                 f"({type(e).__name__})") from None
+    return conn, row[0], list(row[1] or [])
 
 
 def cli_gate(conn, by, block, action, object_type, object_id, *,

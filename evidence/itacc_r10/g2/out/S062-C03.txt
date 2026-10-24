@@ -1,0 +1,12 @@
+# ma: S062-C03
+# luc: 2026-10-23T10:47:30+07:00
+# lenh: python -m agents.kd_orders --watch --dry-run --as-of 2026-10-30
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+  [shopee] tuần 2026-10-19: đơn hủy 5/12 (41.7%)
+[dry-run] ngày 2026-10-30: bất thường 1 (mới 1) · đẩy 0 mục — KHÔNG ghi DB
+[info] Đơn trễ: CHƯA ĐO — file xuất Seller Center chưa có cột ngày đặt/hạn giao (không suy từ ngày nạp file).
+
+## stderr

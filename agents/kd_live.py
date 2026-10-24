@@ -386,6 +386,12 @@ def main(argv=None) -> int:
         print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
               " host chết)", file=sys.stderr)
         return 2
+    # r12 L5: tính năng TẮT → chặn TRƯỚC lời gọi AI (trước đây gọi AI rồi
+    # mới chặn ở save_draft).
+    from pipelines import rollout
+    if why := rollout.blocked(conn, "kịch bản livestream", fid="sales-07.1"):
+        conn.close()
+        return rollout.say_blocked(why)
     try:
         res = write_script(conn, args.channel, cart, day, args.brief,
                            dry_run=args.dry_run, rules=rules)

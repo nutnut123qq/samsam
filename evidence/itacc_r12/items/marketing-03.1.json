@@ -1,0 +1,1489 @@
+{
+ "id": "marketing-03.1",
+ "ten": "Đề xuất quảng cáo thử nghiệm",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Quảng cáo thử nghiệm: 'Đề xuất quảng cáo nhỏ cho sản phẩm được phép'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/marketing-03.1.json",
+  "sha256": "67beeff3220d754e7d2770127ac085570e94b6e7eeda7855f29be771f467d341"
+ },
+ "ly_do_chay_lai": "r10/r11 CODE_FAIL (D3) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_marketing_b.json",
+ "tieu_chi_sha256": "f0eac3b2cfa9d56afff36f3462ed744c54c44ba19588cd3f48446ff6c1dc7773",
+ "tieu_chi_khoa": "r12_marketing_b.json f0eac3b2cfa9d56afff36f3462ed744c54c44ba19588cd3f48446ff6c1dc7773 2026-10-24T08:54:35+07:00",
+ "tieu_chi": [
+  "T1 `python -m agents.mkt_ads --plan F --by <người> --month 2026-10` và `--propose` chạy trên DB có P&L fixture",
+  "T2 1 dòng ad_test_plans + 2 mục approval_queue cùng object_id adtest-<id>: marketing/ad_campaign + finance/budget_change (created_by budget = 'agent:mkt05_budget'), pending, ngân sách ≤ trần FP&A; --propose (FIXTURE ads_proposal) sinh phiếu created_by 'agent:mkt05'",
+  "T3 ngân sách > trần / SKU rượu → mã từ chối, 0 dòng; phiếu trùng → skip; ads_proposal thật CHƯA CHỐT → exit 2 BLOCKED 0 dòng; tắt (r12 RB) → --propose và --plan exit 2 '[rollout] … marketing-03.1', không traceback, 0 dòng",
+  "T4 không chi tiền, không gọi API quảng cáo; chỉ nháp chờ người duyệt"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_m022/m031/m032/m061/m072 dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); rollout --seed trên DB thử (tính năng = chạy thử); AI giả ở biên (wrap.py.txt), socket ngoài localhost bị chặn; ffmpeg = imageio-ffmpeg (requirements). DB samsam_itacc_r12_m031.",
+ "run_id": "20261024T111309-2930",
+ "ca": [
+  {
+   "ma": "marketing-03.1__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout (r10 mkt-seed dùng chung DB)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:09+07:00",
+      "ket_thuc": "2026-10-24T11:13:11+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__S01"
+  },
+  {
+   "ma": "marketing-03.1__C0",
+   "nguon_r10": "03.1-C0",
+   "mo_ta": "mồi: golden FIXTURE + nháp image shopee #4 đã duyệt (như r10: plan_ok/plan_over/plan_ruou ghi creative_draft_ids [4] — HARNESS đặt sequence content_drafts về 3 trên DB thử để nháp ảnh là #4, GIỮ NGUYÊN fixture r10) + P&L fixture (market_csv order + settlement_csv + fp_pnl cogs add/approve 2 người) → cap_for mat-ong×shopee DE_XUAT (cap_probe.py.txt r10, chỉ đọc)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A3\\s*\\Z"
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "created #4\\b"
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "mat-ong-sam-300ml shopee \\{\"code\": \"DE_XUAT\""
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select status from content_drafts where id = 4 and content_type = 'image' and sku = 'mat-ong-sam-300ml' and channel = 'shopee'",
+      "expect": "approved"
+     },
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.golden_store --file evidence\\itacc_r12\\fixtures/items/marketing-03.1/golden_fixture_food.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:11+07:00",
+      "ket_thuc": "2026-10-24T11:13:12+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step01.stderr.txt"
+     },
+     {
+      "argv": "python -c import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); print(c.execute(\"select setval(pg_get_serial_sequence('content_drafts','id'), 3)\").fetchone()[0]); c.commit(); c.close()",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A3\\s*\\Z",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:12+07:00",
+      "ket_thuc": "2026-10-24T11:13:14+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/mk_packshot.py.txt evidence\\itacc_r12\\runs\\marketing-03.1\\20261024T111309-2930\\scratch/packshots mat-ong-sam-300ml",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:14+07:00",
+      "ket_thuc": "2026-10-24T11:13:25+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step03.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.image_studio --sku mat-ong-sam-300ml --channel shopee --headline Quà quê Quảng Nam Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "created #4\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:25+07:00",
+      "ket_thuc": "2026-10-24T11:13:31+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step04.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step04.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.store --approve 4 --by Duyệt MKT Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:31+07:00",
+      "ket_thuc": "2026-10-24T11:13:36+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step05.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step05.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.market_csv --file evidence\\itacc_r12\\fixtures/items/marketing-03.1/order_shopee_MAU.csv --channel shopee --kind order",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:36+07:00",
+      "ket_thuc": "2026-10-24T11:13:37+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step06.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step06.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.market_csv --file evidence\\itacc_r12\\fixtures/items/marketing-03.1/order_shopee_multi_MAU.csv --channel shopee --kind order",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:37+07:00",
+      "ket_thuc": "2026-10-24T11:13:39+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step07.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step07.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.settlement_csv --file evidence\\itacc_r12\\fixtures/items/marketing-03.1/settlement_shopee_MAU.csv --channel shopee",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:39+07:00",
+      "ket_thuc": "2026-10-24T11:13:40+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step08.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step08.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.settlement_csv --file evidence\\itacc_r12\\fixtures/items/marketing-03.1/settlement_shopee_multi_MAU.csv --channel shopee",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:40+07:00",
+      "ket_thuc": "2026-10-24T11:13:41+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step09.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step09.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-add --sku savina-12v --cost 50000 --from 2026-10-01 --by Lập Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:41+07:00",
+      "ket_thuc": "2026-10-24T11:13:42+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step10.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step10.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-approve 1 --by Duyệt Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:42+07:00",
+      "ket_thuc": "2026-10-24T11:13:44+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step11.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step11.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-add --sku saphraton-20v --cost 90000 --from 2026-10-01 --by Lập Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:44+07:00",
+      "ket_thuc": "2026-10-24T11:13:46+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step12.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step12.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-approve 2 --by Duyệt Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:46+07:00",
+      "ket_thuc": "2026-10-24T11:13:47+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step13.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step13.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-add --sku savigout-30v --cost 130000 --from 2026-10-01 --by Lập Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:47+07:00",
+      "ket_thuc": "2026-10-24T11:13:48+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step14.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step14.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-approve 3 --by Duyệt Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:48+07:00",
+      "ket_thuc": "2026-10-24T11:13:50+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step15.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step15.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-add --sku mat-ong-sam-120ml-1hu --cost 70000 --from 2026-10-01 --by Lập Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:50+07:00",
+      "ket_thuc": "2026-10-24T11:13:51+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step16.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step16.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-approve 4 --by Duyệt Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:51+07:00",
+      "ket_thuc": "2026-10-24T11:13:52+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step17.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step17.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-add --sku mat-ong-sam-300ml --cost 180000 --from 2026-10-01 --by Lập Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:52+07:00",
+      "ket_thuc": "2026-10-24T11:13:54+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step18.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step18.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-approve 5 --by Duyệt Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:54+07:00",
+      "ket_thuc": "2026-10-24T11:13:56+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step19.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step19.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-add --sku sapentol-30v --cost 110000 --from 2026-10-01 --by Lập Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:56+07:00",
+      "ket_thuc": "2026-10-24T11:13:57+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step20.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step20.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.fp_pnl --cogs-approve 6 --by Duyệt Giá Vốn Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:57+07:00",
+      "ket_thuc": "2026-10-24T11:13:58+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step21.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step21.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r10/g3/harness/cap_probe.py.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "mat-ong-sam-300ml shopee \\{\"code\": \"DE_XUAT\"",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:58+07:00",
+      "ket_thuc": "2026-10-24T11:14:00+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step22.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step22.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select status from content_drafts where id = 4 and content_type = 'image' and sku = 'mat-ong-sam-300ml' and channel = 'shopee'",
+      "expect": "approved",
+      "actual": "approved",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0"
+  },
+  {
+   "ma": "marketing-03.1__C1",
+   "nguon_r10": "03.1-C1",
+   "mo_ta": "phiếu người lập hợp lệ (plan_ok.json r10 nguyên văn)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[plan\\] phiếu #\\d+ \\(mới\\)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans where created_by = 'Người Thử IT' and budget_vnd = 150000 and budget_vnd <= cap_vnd",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where a.status = 'pending' and a.block = 'marketing' and a.object_type = 'ad_campaign'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where a.status = 'pending' and a.block = 'finance' and a.object_type = 'budget_change' and a.created_by = 'agent:mkt05_budget'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.mkt_ads --plan evidence\\itacc_r12\\fixtures/items/marketing-03.1/plan_ok.json --by Người Thử IT --month 2026-10",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[plan\\] phiếu #\\d+ \\(mới\\)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:14:00+07:00",
+      "ket_thuc": "2026-10-24T11:14:05+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans where created_by = 'Người Thử IT' and budget_vnd = 150000 and budget_vnd <= cap_vnd",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where a.status = 'pending' and a.block = 'marketing' and a.object_type = 'ad_campaign'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where a.status = 'pending' and a.block = 'finance' and a.object_type = 'budget_change' and a.created_by = 'agent:mkt05_budget'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C1"
+  },
+  {
+   "ma": "marketing-03.1__C2",
+   "nguon_r10": "03.1-C2",
+   "mo_ta": "ngân sách vượt trần (plan_over.json)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stdout_re": "\\[từ chối\\] ADS_OVER_CAP"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.mkt_ads --plan evidence\\itacc_r12\\fixtures/items/marketing-03.1/plan_over.json --by Người Thử IT --month 2026-10",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "\\[từ chối\\] ADS_OVER_CAP",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:14:05+07:00",
+      "ket_thuc": "2026-10-24T11:14:10+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C2/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C2"
+  },
+  {
+   "ma": "marketing-03.1__C3",
+   "nguon_r10": "03.1-C3",
+   "mo_ta": "SKU rượu (plan_ruou.json)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stdout_re": "\\[từ chối\\] ADS_OFFLINE_ONLY"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.mkt_ads --plan evidence\\itacc_r12\\fixtures/items/marketing-03.1/plan_ruou.json --by Người Thử IT --month 2026-10",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "\\[từ chối\\] ADS_OFFLINE_ONLY",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:14:11+07:00",
+      "ket_thuc": "2026-10-24T11:14:12+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C3"
+  },
+  {
+   "ma": "marketing-03.1__C4",
+   "nguon_r10": "03.1-C4",
+   "mo_ta": "nộp lại phiếu C1",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "đã có — chỉ bổ sung mục thiếu\\) · mục hàng duyệt mới: \\(không\\)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.mkt_ads --plan evidence\\itacc_r12\\fixtures/items/marketing-03.1/plan_ok.json --by Người Thử IT --month 2026-10",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "đã có — chỉ bổ sung mục thiếu\\) · mục hàng duyệt mới: \\(không\\)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:14:12+07:00",
+      "ket_thuc": "2026-10-24T11:14:17+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C4/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C4"
+  },
+  {
+   "ma": "marketing-03.1__C5",
+   "nguon_r10": "03.1-C5",
+   "mo_ta": "--propose với data/ads_proposal.json thật (chưa chốt)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[BLOCKED\\]"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.mkt_ads --propose --month 2026-10",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[BLOCKED\\]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:14:17+07:00",
+      "ket_thuc": "2026-10-24T11:14:18+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C5/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C5/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C5"
+  },
+  {
+   "ma": "marketing-03.1__C6",
+   "nguon_r10": "03.1-C6",
+   "mo_ta": "--propose với ads_proposal FIXTURE (PROBE_SET PROPOSAL_FILE + gọi main — như bản vá harness r10). Kỳ vọng r10: exit 0; phiếu created_by agent:mkt05 + 2 mục, HOẶC DA_CO/THIEU_* có lý do",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[(?:DE_XUAT|DA_CO|THIEU_[A-Z_]*)\\] mat-ong-sam-300ml × shopee: \\S"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select case when exists (select 1 from ad_test_plans where created_by = 'agent:mkt05') then (select count(*) from ad_test_plans where created_by = 'agent:mkt05') = 1 and (select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where p.created_by = 'agent:mkt05' and a.status = 'pending' and ((a.block = 'marketing' and a.object_type = 'ad_campaign' and a.created_by = 'agent:mkt05') or (a.block = 'finance' and a.object_type = 'budget_change' and a.created_by = 'agent:mkt05_budget'))) = 2 else true end",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from ad_test_plans where budget_vnd > cap_vnd",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.mkt_ads --propose --month 2026-10",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[(?:DE_XUAT|DA_CO|THIEU_[A-Z_]*)\\] mat-ong-sam-300ml × shopee: \\S",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:14:18+07:00",
+      "ket_thuc": "2026-10-24T11:14:23+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C6/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C6/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select case when exists (select 1 from ad_test_plans where created_by = 'agent:mkt05') then (select count(*) from ad_test_plans where created_by = 'agent:mkt05') = 1 and (select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where p.created_by = 'agent:mkt05' and a.status = 'pending' and ((a.block = 'marketing' and a.object_type = 'ad_campaign' and a.created_by = 'agent:mkt05') or (a.block = 'finance' and a.object_type = 'budget_change' and a.created_by = 'agent:mkt05_budget'))) = 2 else true end",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from ad_test_plans where budget_vnd > cap_vnd",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C6"
+  },
+  {
+   "ma": "marketing-03.1__C7",
+   "nguon_r10": "03.1-C7",
+   "mo_ta": "tính năng tắt (--propose fixture) — r10 FAIL (D3/RB: '[error] RolloutBlocked' exit 1); r12 kỳ vọng exit 2 '[rollout] … marketing-03.1', không traceback, 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*marketing-03\\.1",
+      "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from approval_queue where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable marketing-03.1 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:14:23+07:00",
+      "ket_thuc": "2026-10-24T11:14:24+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.mkt_ads --propose --month 2026-10",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*marketing-03\\.1",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:14:24+07:00",
+      "ket_thuc": "2026-10-24T11:14:29+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7"
+  },
+  {
+   "ma": "marketing-03.1__X1",
+   "nguon_r10": "MOI",
+   "mo_ta": "tắt — --plan (tương ứng lượt phụ 03.1-C7c của r10, không phải ca khóa: --plan plan_ok.json --month 2026-11 khi tắt). r12 RB: exit 2 '[rollout] … marketing-03.1' trước mọi kiểm/ghi",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*marketing-03\\.1",
+      "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from approval_queue where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.mkt_ads --plan evidence\\itacc_r12\\fixtures/items/marketing-03.1/plan_ok.json --by Người Thử IT --month 2026-11",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*marketing-03\\.1",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:14:29+07:00",
+      "ket_thuc": "2026-10-24T11:14:30+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__X1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__X1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from ad_test_plans where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__X1"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Tiền đề đặt sequence content_drafts trong DB thử để giữ id creative của fixture r10; phụ thuộc ngày (start 26/10/2026). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/ket_qua.json",
+   "sha256": "75a3eecb24ca87a647c24652e1d98e512a649092a3e6d988aae4673081352190"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/asserts.json",
+   "sha256": "576f115f32a99909d26c0f63c07c51be9cd2f02157221fb090169f8096160c60"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/case.json",
+   "sha256": "4b76b7432e2d8458972945e8e0969d1be336f7536f1c2e968ec9d18aeabe0016"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step01.cmd.json",
+   "sha256": "d8d6d61ca6b4b88f912a1c82c70d1e5d5871fb771d3fb443529c3eba892b035a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step01.stdout.txt",
+   "sha256": "3bd938efc3a980a40723330e0ce633e12b4401b0086d81cad0137edf65b2833a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step02.cmd.json",
+   "sha256": "49a93f1b81240fd965db4f2b5f182129a457bbfa07636cacb43b1861272ef9b1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step02.stdout.txt",
+   "sha256": "063d9be28c4be6b6256c17a48cf60f5d59381751fe3e44a6e6e8287b710c9edc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step03.cmd.json",
+   "sha256": "c367160e87005ac5a151f1af4238e7367a7adf65cfed4f720b43130596568bef"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step03.stdout.txt",
+   "sha256": "55393f7935d7a829abdb2cfca1d5fcd903843a5b1de7449467be90dc37f38b4b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step04.cmd.json",
+   "sha256": "f7320d65f6458b652fcf1fb7792cdd21ceb27f5029efa7664be85f913f49ab7a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step04.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step04.stdout.txt",
+   "sha256": "a6224f464e6776b89482c2607f102ef982d04849b3575432c8d42d6b357fac36"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step05.cmd.json",
+   "sha256": "d08a4ce12ff421523796ac57b0f2061614053cb082758f53185aec38c1496d3a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step05.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step05.stdout.txt",
+   "sha256": "caa9389a08801cb2a8294160f6a3aeb465c0603b14ec6d4513ae69235851e946"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step06.cmd.json",
+   "sha256": "b69f02d15c00fc4f4cba7eea3651ec1f6bb762efc752ef243b16fd6ba83f5260"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step06.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step06.stdout.txt",
+   "sha256": "f50b398a8d55ecfead8c6205b34b630ff4d0948679254148ebd628b2e3b74ff9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step07.cmd.json",
+   "sha256": "4ff82ea4e56e182e90455448161e72e4168e62564358c31453a032dc53e391f8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step07.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step07.stdout.txt",
+   "sha256": "840e2e114b3ab490e33cd2879b87ee16aacbad5f1dfbf03a5de641fcd887636e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step08.cmd.json",
+   "sha256": "3fa188a031394cd5175df665e6ac0c322cd2c963c9169c48a5f358f4f8ef40c2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step08.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step08.stdout.txt",
+   "sha256": "0724523dfface12032d6e0c5526f8ba2ddff0cef9020784d11d73ee3d23befbe"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step09.cmd.json",
+   "sha256": "b6e7de641e8f59b5cce5089cac250dd52594a0010cd07d6c64f0f10ff6837d7d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step09.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step09.stdout.txt",
+   "sha256": "7a64a76c236e89f77e1860a4333eeeabdc1e5d499e015bb540ee0ec2e4319539"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step10.cmd.json",
+   "sha256": "b56de6901af9b1cbb8d68f30e56da91166a61e18588f71b7c795bc995736cd68"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step10.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step10.stdout.txt",
+   "sha256": "0157935ba49093d17e7c5b25d05b12dddd11ac762fa95bdea2eaaacf3b16a6a2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step11.cmd.json",
+   "sha256": "e6ab81198f83005af134cdea3b0917087f16c21608839bab0028b1eb08b6b9a6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step11.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step11.stdout.txt",
+   "sha256": "70227feb909eae3179340415e22cd91c76c0a06c9faf84d128618953a7490ac2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step12.cmd.json",
+   "sha256": "ae4152f4af5cfa7203d3fde3e1104f3b7ea74f42fab78a58e47270bed8a486fe"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step12.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step12.stdout.txt",
+   "sha256": "0a45f67f2c71dd769507f1f3ef550ee0c3c7a72cc0748467ef18ae17ae5d918f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step13.cmd.json",
+   "sha256": "8a1b75d2ae5ed13b34c7b51b61d802ed79281d574d3ef98e4c395ce3eb53b12a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step13.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step13.stdout.txt",
+   "sha256": "1b276aafc23773620172658c438d141dc292522f6bab86bb55b072f7f6970172"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step14.cmd.json",
+   "sha256": "f05972aff3272df241557838b9db3e3e7e7c7ea6e6dd48b2eaa78641e8eb75d9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step14.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step14.stdout.txt",
+   "sha256": "3bddbe83fc671bbfdafb4e4ddae5126b1aaeff5cb077487dab4e4683dabb9d39"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step15.cmd.json",
+   "sha256": "3a8b59ba90696cfe864fa3aba293aadb55f631c22eae8aeed7ecfa9aea804ea6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step15.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step15.stdout.txt",
+   "sha256": "44091c2486a2a419ac41c328eb7fa5af5c75b41ee4c78ee926639b513473ad7f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step16.cmd.json",
+   "sha256": "865e09647a9522904f3f161589ea4b31bee43e9428e5db1271db0443cc567a56"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step16.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step16.stdout.txt",
+   "sha256": "ac69e10a27b00f3f6b0e010f056f0767c11586aed4820e0abdbcec7b9a730512"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step17.cmd.json",
+   "sha256": "5d368047e18a39e7ac9530c4f0d1c15d7c154267f59657f1c46905e178978920"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step17.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step17.stdout.txt",
+   "sha256": "5bb12ba6844f91cbd40a886ff464b9ff17cb774f75014c51e3761ec3db40cb72"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step18.cmd.json",
+   "sha256": "5bbb8036dc02a61518a2bb96798ba4fab89c1bc694b2e52cfb61b4f41073a792"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step18.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step18.stdout.txt",
+   "sha256": "e1457054d0dc484eacf9e569b9eea4c9d78aec73f130f8635c852faf529e33bf"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step19.cmd.json",
+   "sha256": "721ca5b4b4c37af6cc19560e5864de706f07e236974ce4ed030e3ff83eea7233"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step19.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step19.stdout.txt",
+   "sha256": "7ed8ed40c4a499343a60230f305660e6062dee7d3d17a31d0a413e092349c16e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step20.cmd.json",
+   "sha256": "62ea109b32520d71c7f93ef2cdf6612051bcddb2a60bed55bbbf38110567494d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step20.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step20.stdout.txt",
+   "sha256": "b9946a2e570b0dbe6daa8de4be3cf0ca71dd9fadf4083e5c4ce14d07c48bc4a4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step21.cmd.json",
+   "sha256": "c3535ff8931ff585d57704cc5ab38f2dd35e5c069175bd1d0c12ac1e2ba3fc36"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step21.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step21.stdout.txt",
+   "sha256": "95556d4e9f639d2e633eb449730d1827e4514eb7cb74efa24cf5eb44ed730aee"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step22.cmd.json",
+   "sha256": "e76d9c958cf69f2d69abafce87965b8582d913263b683f915e22b257680ee145"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step22.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C0/step22.stdout.txt",
+   "sha256": "239eda85e46cc56edb96795af9356dfba4e9108fdde2720268771ebe74a08d0b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C1/asserts.json",
+   "sha256": "1d4413edec0f5ec228269bbb3e9bae1e99a68400e6755db70735864d05f31f5c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C1/case.json",
+   "sha256": "0e79dac33813c96e78e8da2d07fe55f8adc528e912171812be8a9769d9f3172e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C1/step01.cmd.json",
+   "sha256": "d0b1f27a09094444b1b9b53c02d1cb6ab59822adc19dbb941284d23f43add651"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C1/step01.stdout.txt",
+   "sha256": "0415b88aaec5dc415eb971936706af3a7346c92b6437df78569612df42155454"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C2/asserts.json",
+   "sha256": "e6cbe8c7c2c76cd994eef566a1caefd840492752e254193dafba085c696d38b7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C2/case.json",
+   "sha256": "a2b6a67364b3aa14083ab7c39dbc575420cfacd93c40ab1e56bc9a28179ecf1d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C2/step01.cmd.json",
+   "sha256": "713d66a8d6dbd5c4e2710861749f463db010c70b65a815f00a6ce067ea18215d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C2/step01.stdout.txt",
+   "sha256": "8c5ecbd21eb9b11c9291033bfd124c92ebe2628be97da2ca95e37f0c31121997"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C3/asserts.json",
+   "sha256": "e6cbe8c7c2c76cd994eef566a1caefd840492752e254193dafba085c696d38b7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C3/case.json",
+   "sha256": "6489defeb4fd70327a46f1a753da691b85719409177bbb6e09bfc628f9251a3e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C3/step01.cmd.json",
+   "sha256": "89a1408d9f8cf3a11727313544fb78d3730250f54f4883ca55543d59e7906792"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C3/step01.stdout.txt",
+   "sha256": "20537d13e761067ea283ce8fcb1595223d60c687e3efba04e2740532592bf5bc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C4/asserts.json",
+   "sha256": "e6cbe8c7c2c76cd994eef566a1caefd840492752e254193dafba085c696d38b7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C4/case.json",
+   "sha256": "9cbd98a6d3369e981d4a43537970976f0fb7224528c545ef65090fdad7471d0e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C4/step01.cmd.json",
+   "sha256": "18e7e671d9774e27a9a647c4b5b8bc194fb0dcd1c49d663a6c5d3b89e908884f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C4/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C4/step01.stdout.txt",
+   "sha256": "e3350bc65002d2a33f5d5a6721d4aafb04e88689bc9c512fc406968ea20f955e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C5/asserts.json",
+   "sha256": "e6cbe8c7c2c76cd994eef566a1caefd840492752e254193dafba085c696d38b7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C5/case.json",
+   "sha256": "39fd9b1bfea67492dfe4fc057b0bf811a84ab01d2bf4d85de6ba3c32df846722"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C5/step01.cmd.json",
+   "sha256": "0351d30fcb279b04fc43e64a22e5adb1ba58e7dd54b6a85b0c1a04658f7c6291"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C5/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C5/step01.stdout.txt",
+   "sha256": "3662ea0a40bcb9b61065183569ecb4d449c69c5f87214637dce900b40cad4f1f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C6/asserts.json",
+   "sha256": "6cf6873d6692eb497033a480b65c59f7aee812be07bc46f2d1d564d71aab8112"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C6/case.json",
+   "sha256": "98e9b9c25e09002c8a6cf1f426fd0d9d3271b65c5e163ce339a23fc6992ba749"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C6/step01.cmd.json",
+   "sha256": "89c22783f383ed2cbe33a704bcca03847861d15abfd566a88671b1bf9ce126ed"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C6/step01.stderr.txt",
+   "sha256": "4cda45cec3c89d71584a555886c2057517fec609073f6750dfe6a0087dd6fcbc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C6/step01.stdout.txt",
+   "sha256": "27585bfe3e5aed37a39486be351773030378fe5182757dca143e465d1196b3bd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/asserts.json",
+   "sha256": "627a5eaa74a7adab6e92e89645031b3a875cee6b20b4c30cdcb0a4c37477a0b0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/case.json",
+   "sha256": "4c84afe358bab4df463f77abdd6359affc201ba8d7b2758fde4eb847537c57c6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step01.cmd.json",
+   "sha256": "acf36945dd01eca5a2aa6fbf811de22c6280a2367bda8467d434598c154fa6a4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step01.stdout.txt",
+   "sha256": "e60ea0519bc5210799be3ea38f1a2b6c816e25c8cf6de2249b94ade13b973c89"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step02.cmd.json",
+   "sha256": "5a793fb5ef4996efbfcaf3593a5c2cf35b5b0b111296a6d630ff95d7c0f13b61"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step02.stderr.txt",
+   "sha256": "4cda45cec3c89d71584a555886c2057517fec609073f6750dfe6a0087dd6fcbc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__C7/step02.stdout.txt",
+   "sha256": "2622d8330a02e82ee61b66777c97090ab6af6a08d3fd73ea6d231fb8a12413fc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__S01/case.json",
+   "sha256": "e7680f26ace43b90fd9d4072641da1c85625a395abab11ff3d95cd633d6006a3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__S01/step01.cmd.json",
+   "sha256": "d322a2eb0e02a32bcff06ef49164fa86a3285da4d0da0e87aec78594636a19e5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__X1/asserts.json",
+   "sha256": "627a5eaa74a7adab6e92e89645031b3a875cee6b20b4c30cdcb0a4c37477a0b0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__X1/case.json",
+   "sha256": "0c1467b08a348e126437848d43a0b2f920d186bffef4e5190a8609423bd03522"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__X1/step01.cmd.json",
+   "sha256": "b9e2321ebe943819262118d1ac2bfe8c7dba5b831815680f4e15db984150e142"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__X1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/marketing-03.1__X1/step01.stdout.txt",
+   "sha256": "2622d8330a02e82ee61b66777c97090ab6af6a08d3fd73ea6d231fb8a12413fc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/scratch/image_assets/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.json",
+   "sha256": "5c325a008ba85657f753139a06fb9d3401db5d5bbf1c7bc6640d3c13186741c6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/scratch/image_assets/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.png",
+   "sha256": "14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-03.1/20261024T111309-2930/scratch/packshots/mat-ong-sam-300ml.png",
+   "sha256": "aabab111cb0dbbe9929f163d12949cabbbc10050baff605da05521d9d8a5d38d"
+  }
+ ],
+ "loi_san_pham": []
+}

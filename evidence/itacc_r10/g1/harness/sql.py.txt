@@ -1,0 +1,9 @@
+import os, sys, psycopg
+sys.stdout.reconfigure(encoding="utf-8")
+c = psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5, autocommit=True)
+for q in sys.argv[1:]:
+    cur = c.execute(q)
+    if cur.description:
+        for r in cur.fetchall(): print(r)
+    else:
+        print("ok", cur.rowcount)

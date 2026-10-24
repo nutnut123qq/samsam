@@ -1,0 +1,97 @@
+#1 ceo/weekly_report 2026-W42 status=approved created_by=agent:ceo_report decided_by=TGĐ Duyệt Thử IT is_sample=False
+  # Báo cáo tuần 2026-W42 — TGĐ
+  
+  **ĐỎ — chưa có người nhận cảnh báo độc lập** (data/red_alert_routing.json, external-dep: Pháp chế xác nhận)
+  
+  **Kỳ:** 12/10/2026 → 18/10/2026 (giờ VN) · **Kỳ trước:** 2026-W41 · **Sinh lúc:** 23/10/2026 10:22 giờ VN
+  
+  Mọi con số do code điền từ bảng `channel_snapshots` (chụp bởi `pipelines.cockpit`); thiếu số hiện `[chưa có dữ liệu]`, không hiện 0. Dòng *(MẪU)* là số liệu mẫu, không phải số vận hành thật.
+  
+  ## Số liệu điều hành
+  
+  | Chỉ số | Kênh | Kỳ này | Kỳ trước | Δ | Đánh giá | Nguồn |
+  |---|---|---|---|---|---|---|
+  | Lead mới (leads.new) | noi_bo | 0 lead | [chưa có dữ liệu] | — | — | api · db:leads · chụp 23/10/2026 |
+  | Câu hỏi chatbot (chatbot.questions) | noi_bo | 0 câu | [chưa có dữ liệu] | — | — | api · file:conversations.jsonl · chụp 23/10/2026 |
+  | Câu chatbot chưa trả lời được (chatbot.unanswered) | noi_bo | 0 câu | [chưa có dữ liệu] | — | — | api · file:conversations.jsonl · chụp 23/10/2026 |
+  | Nháp nội dung mới (content.drafts_created) | noi_bo | 0 bản | [chưa có dữ liệu] | — | — | api · db:content_drafts · chụp 23/10/2026 |
+  | Nháp nội dung được duyệt (content.drafts_approved) | noi_bo | 0 bản | [chưa có dữ liệu] | — | — | api · db:approvals · chụp 23/10/2026 |
+  | Nháp chờ duyệt cuối kỳ (content.drafts_pending_end) | noi_bo | 0 bản | [chưa có dữ liệu] | — | — | api · db:content_drafts · chụp 23/10/2026 |
+  | Nháp nội dung bị trả lại (content.drafts_rejected) | noi_bo | 0 bản | [chưa có dữ liệu] | — | — | api · db:content_drafts · chụp 23/1
+
+#3 ceo/weekly_board board:2026-W46 status=pending created_by=agent:da_pmo decided_by=None is_sample=False
+  # Bảng tiến độ triển khai — tuần 2026-W46 (ngày 10/11/2026)
+  
+  | Mã | Việc | Owner | Hạn | Gate | Evidence | Trạng thái |
+  |---|---|---|---|---|---|---|
+  | DA-01 | DA-01 PMO tiến độ go-live (sổ mốc + bảng tuần) | tgd | 24/10/2026 | Bảng tuần sinh từ project_milestones, mốc trễ tô TRỄ, nhắc T-7/T-2 | chưa có | **TRỄ** (chua_bat_dau) |
+  | MOC-A | Mốc A — dữ liệu chuẩn 100% sản phẩm, kiểm duyệt nội dung, backup hằng ngày | ben_a | 31/10/2026 | Golden master đủ 100% sản phẩm đã được Bên B xác nhận; kiểm duyệt nội dung tự động chạy trên mọi đầu ra; backup hằng ngày có job_runs thành công + bản sao ngoà… | chưa có | **TRỄ** (chua_bat_dau) |
+  | MOC-B | Mốc B — đăng nhập, phân quyền duyệt, kiểm thử tự động | ben_a | 07/11/2026 | Đăng nhập + phân quyền duyệt theo văn bản ủy quyền của Bên B (approvers 9 khối); bộ kiểm thử tự động chạy trước mỗi thay đổi (deploy_gate) | chưa có | **TRỄ** (chua_bat_dau) |
+  | DUYET-1111 | Duyệt chạy mùa 11.11 — TGĐ Bên B ký cho phép chạy | ben_b_tgd | 09/11/2026 | Văn bản cho phép chạy có chữ ký TGĐ Bên B — agent không ký thay, không coi bảng tuần là văn bản cho phép | chưa có | **TRỄ** (chua_bat_dau) |
+  | KD-A3-FORM | Form B2B quà Tết mở (KD-A3) | gd_ban_hang | 16/11/2026 | Form B2B mở trước 16/11; tài liệu chào hàng chỉ gồm SKU được phép theo golden (food, tpbvsk đã XNQC) | chưa có | chua_bat_dau |
+  | DA-05 | DA-05 danh sách tổ chức mua quà Tết go-live | gd_ban_hang | 21/11/2026 | org_prospects không PII, dedup b2b:hash; không agent nào tự liên hệ tổ chức | chưa
+
+#5 ceo/milestone_change milestone:MOC-A status=approved created_by=Người Đề Xuất Thử IT decided_by=Người Duyệt Thử IT is_sample=False
+  # Đề xuất đổi hạn mốc MOC-A
+  
+  code: MOC-A
+  old_due: 2026-10-31
+  new_due: 2026-11-14
+  by: Người Đề Xuất Thử IT
+  
+  Đổi hạn chỉ có hiệu lực sau khi người duyệt (agent không tự đổi).
+  
+
+#6 legal_hr/channel_takedown channel_post:2 status=pending created_by=agent:phap_che_a4 decided_by=None is_sample=False
+  Lệnh rà kênh PC-A4 — bài #2 trên kênh facebook (loại post)
+  Mã nội dung (sha256 12 ký tự đầu): f2c17394e4ec
+  Mức: S2 — mã vi phạm: lech_ban_duyet
+  Phát hiện: 23/10/2026 10:33 — hạn xử lý: 24/10/2026 10:33 giờ VN (24 giờ đồng hồ thật, gồm T7/CN/lễ Tết)
+  Thao tác GỠ/ẨN/SỬA do người được ủy quyền thực hiện trên kênh — agent không gỡ/sửa.
+  Duyệt mục này = Pháp chế xác nhận lệnh gỡ/sửa; vi phạm chỉ đóng khi bản xuất lại đã sạch hoặc người ghi nhận đã gỡ (python -m agents.ra_kenh --mark-removed <url> --by <tên>).
+
+#7 legal_hr/channel_takedown channel_post:3 status=pending created_by=agent:phap_che_a4 decided_by=None is_sample=False
+  Lệnh rà kênh PC-A4 — bài #3 trên kênh facebook (loại post)
+  Mã nội dung (sha256 12 ký tự đầu): 9b5624872b93
+  Mức: S2 — mã vi phạm: thieu_ban_duyet
+  Phát hiện: 23/10/2026 10:33 — hạn xử lý: 24/10/2026 10:33 giờ VN (24 giờ đồng hồ thật, gồm T7/CN/lễ Tết)
+  Thao tác GỠ/ẨN/SỬA do người được ủy quyền thực hiện trên kênh — agent không gỡ/sửa.
+  Duyệt mục này = Pháp chế xác nhận lệnh gỡ/sửa; vi phạm chỉ đóng khi bản xuất lại đã sạch hoặc người ghi nhận đã gỡ (python -m agents.ra_kenh --mark-removed <url> --by <tên>).
+
+#8 ceo/promo_deviation km:ea5362d81ed951d3:fa9d73e513148 status=pending created_by=agent:ceo_audit decided_by=None is_sample=False
+  Kiểm soát nội bộ ceo-04.5 (NHÁP): kênh shopee, SKU sapentol-30v — mã km_ngoai_ke_hoach (KM đang chạy không có bản duyệt hiệu lực). Đang chạy (file dòng 4 chương trình IT-FS-03): chiết khấu 20% (≈ 333.600 đ), 22/10/2026–05/11/2026. Bản duyệt hiệu lực: không có. Giá list golden: 417.000 đ. Kế hoạch KM đối chiếu: sha256 fa70be66a2ae. Việc cần làm: TGĐ/BKS yêu cầu GĐ bán hàng giải trình hoặc điều chỉnh trên Seller Center. Agent KHÔNG đổi KM/giá.
+
+#9 ceo/promo_deviation km:42ac9032066268da:s1 status=pending created_by=agent:ceo_audit decided_by=None is_sample=False
+  Kiểm soát nội bộ ceo-04.5 (NHÁP): kênh shopee, SKU saphraton-20v — mã km_ngoai_ke_hoach (KM đang chạy không có bản duyệt hiệu lực). Đang chạy (listing listing IT-1002 · saphraton-20v): giá KM 250.000 đ. Bản duyệt hiệu lực: không có. Giá list golden: 299.000 đ. Kế hoạch KM đối chiếu: sha256 fa70be66a2ae. Việc cần làm: TGĐ/BKS yêu cầu GĐ bán hàng giải trình hoặc điều chỉnh trên Seller Center. Agent KHÔNG đổi KM/giá.
+
+#10 ceo/promo_deviation km:810ccd633147672b:fa9d73e513148 status=pending created_by=agent:ceo_audit decided_by=None is_sample=False
+  Kiểm soát nội bộ ceo-04.5 (NHÁP): kênh shopee, SKU savina-12v — mã km_khac_loai (KM đang chạy khác loại với bản duyệt). Đang chạy (file dòng 3 chương trình IT-FS-02): giá KM 145.000 đ, 23/10/2026–24/10/2026. Bản duyệt hiệu lực: dòng 2 chương trình IT-KM-01 (plan): giá KM 140.000 đ, 20/10/2026–31/10/2026. Giá list golden: 159.000 đ. Kế hoạch KM đối chiếu: sha256 fa70be66a2ae. Việc cần làm: TGĐ/BKS yêu cầu GĐ bán hàng giải trình hoặc điều chỉnh trên Seller Center. Agent KHÔNG đổi KM/giá.
+
+#11 ceo/promo_deviation km:572824957affc4cc:fa9d73e513148 status=pending created_by=agent:ceo_audit decided_by=None is_sample=False
+  Kiểm soát nội bộ ceo-04.5 (NHÁP): kênh shopee, SKU savina-12v — mã km_sau_hon_duyet (giá sau KM thấp hơn mức bản duyệt cho phép). Đang chạy (file dòng 2 chương trình IT-KM-01): giá KM 120.000 đ, 20/10/2026–31/10/2026. Bản duyệt hiệu lực: dòng 2 chương trình IT-KM-01 (plan): giá KM 140.000 đ, 20/10/2026–31/10/2026. Giá list golden: 159.000 đ. Kế hoạch KM đối chiếu: sha256 fa70be66a2ae. Việc cần làm: TGĐ/BKS yêu cầu GĐ bán hàng giải trình hoặc điều chỉnh trên Seller Center. Agent KHÔNG đổi KM/giá.
+
+#12 legal_hr/golden_xnqc_sync savigout-30v:pending status=pending created_by=agent:phap_che_a1 decided_by=None is_sample=False
+  Đề xuất sửa data/golden_skus.json: savigout-30v xnqc_status none→pending theo hồ sơ #1 (da_nop, xác nhận bởi Pháp chế Thử IT); sau khi duyệt, người phụ trách golden sửa file rồi chạy `python -m ingest.golden_store`. Agent không ghi file golden.
+
+#13 ceo/hdtv_pack 2026-09 status=pending created_by=agent:hdtv_report decided_by=None is_sample=False
+  # Gói báo cáo HĐTV — tháng 2026-09
+  
+  **Kỳ:** 01/09/2026 → 30/09/2026 (giờ VN) · **Sinh lúc:** 23/10/2026 10:42 giờ VN
+  
+  Mọi con số do code điền từ DB/cấu hình và có nguồn (danh sách fact đi kèm bản dựng); thiếu số hiện `[chưa có dữ liệu]`, không hiện số không. Dòng *(MẪU)* là số liệu mẫu, không phải số vận hành thật.
+  
+  ## Chỉ số cockpit
+  
+  | Chỉ số | Kênh | Kỳ này | Kỳ trước | Δ | Nguồn |
+  |---|---|---|---|---|---|
+  | Lead mới (leads.new) | noi_bo | [chưa có dữ liệu] | [chưa có dữ liệu] | — | — |
+  | Câu hỏi chatbot (chatbot.questions) | noi_bo | [chưa có dữ liệu] | [chưa có dữ liệu] | — | — |
+  | Câu chatbot chưa trả lời được (chatbot.unanswered) | noi_bo | [chưa có dữ liệu] | [chưa có dữ liệu] | — | — |
+  | Nháp nội dung mới (content.drafts_created) | noi_bo | [chưa có dữ liệu] | [chưa có dữ liệu] | — | — |
+  | Nháp nội dung được duyệt (content.drafts_approved) | noi_bo | [chưa có dữ liệu] | [chưa có dữ liệu] | — | — |
+  | Nháp chờ duyệt cuối kỳ (content.drafts_pending_end) | noi_bo | [chưa có dữ liệu] | [chưa có dữ liệu] | — | — |
+  | Nháp nội dung bị trả lại (content.drafts_rejected) | noi_bo | [chưa có dữ liệu] | [chưa có dữ liệu] | — | — |
+  | Thời gian duyệt nháp nội dung — trung vị (content.review_hours_median) | noi_bo | [chưa có dữ liệu] | [chưa có dữ liệu] | — | — |
+  | Thời gian duyệt nháp nội dung — phân vị chín mươi (content.review_hours_p90) | noi_bo | [chưa có dữ liệu] | [chưa có dữ liệu] | — | — |
+  | Cảnh báo sàn còn mở cuối kỳ (market.alerts_open_end) | noi_bo | [chưa có dữ liệu] |
+

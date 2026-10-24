@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from price_list where valid_to is null and valid_from > date '2026-10-23'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'list' and valid_to is null and approved_by = 'Người Duyệt Giá Thử R12'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from price_list where sku_key = 'savina-12v' and channel = 'shopee' and kind = 'list' and valid_to is null and approved_by is null",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

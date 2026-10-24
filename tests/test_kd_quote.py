@@ -412,6 +412,21 @@ def _skus(db, *keys_):
         db.execute("insert into sku_master (sku_key, name, category, source)"
                    " values (%s, %s, %s, 'test') on conflict do nothing",
                    (k, g[k]["name"], g[k]["category"]))
+        # r12 L2: báo giá chỉ đọc giá price_list ĐÃ duyệt (không JSON) —
+        # dựng giá shopee list/floor đã duyệt = giá golden của ca.
+        for kind in ("list", "floor"):
+            v = ((g[k].get("prices") or {}).get("shopee") or {}).get(kind)
+            if v and not db.execute(
+                    "select 1 from price_list where sku_key = %s and channel ="
+                    " 'shopee' and kind = %s and approved_by is not null",
+                    (k, kind)).fetchone():
+                pid = db.execute(
+                    "insert into price_list (sku_key, channel, kind,"
+                    " price_vnd, valid_from) values (%s, 'shopee', %s, %s,"
+                    " '2026-01-01') returning id", (k, kind, v)).fetchone()[0]
+                db.execute("update price_list set approved_by = 'GĐ Bán Hàng"
+                           " Giả Lập (test)', approved_at = now() where id ="
+                           " %s", (pid,))
 
 
 def _cogs(db, sku, cost, approve=True):

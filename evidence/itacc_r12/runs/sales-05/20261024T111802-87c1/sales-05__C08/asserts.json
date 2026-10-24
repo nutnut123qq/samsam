@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from org_prospects",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from org_prospects where fit_reason like '%0900000333%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'sales' and object_type = 'org_prospect_batch'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

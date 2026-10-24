@@ -1,0 +1,80 @@
+# Nghiệm thu KỸ THUẬT NỘI BỘ r10 — brief cho agent kiểm theo khối
+
+Bạn kiểm HÀNH VI từng mục danh mục của nhóm khối được giao, trên máy dev, bằng entry point THỰC
+(CLI/module/job) chạy trên DB Postgres THỬ cô lập (Docker `samsam-itacc-r10`, 127.0.0.1:55432).
+Đây là kiểm kỹ thuật nội bộ — KHÔNG phải nghiệm thu hợp đồng, KHÔNG xác nhận thay hai bên.
+
+Repo: `D:\code\samsam` (đọc `AGENTS.md` bảng Commands trước — đó là entry point của từng tính năng).
+Khung tiêu chí: `D:\code\samsam\evidence\itacc_r10\criteria\khung.json` (mỗi mục: modules, output_sources,
+dau_ra, bang_chung_test, blocker_danh_muc, da_biet_thieu, tieu_chi_khung T1–T4).
+Fingerprint code đang kiểm: `97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001`.
+Scratchpad của bạn: `C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r10\<nhom>\`.
+
+## LUẬT CỨNG (vi phạm = hỏng cả đợt)
+1. DB: MỖI lệnh Bash là shell mới → luôn `source "<env file của khối>"` ở đầu MỖI lệnh chạy Python
+   (file env đặt DATABASE_URL tới DB thử, xóa PG*/…DATABASE_URL khác, OPENROUTER_API_KEY rỗng, tắt DEPLOY/
+   AUTH_MODE/RED_ALERT_NOTIFY). KHÔNG BAO GIỜ chạy lệnh Python của repo mà không source (dotenv sẽ nạp DSN
+   DB `samsam` thật). KHÔNG truy cập DB `samsam`. Không in DSN/mật khẩu (không `echo $DATABASE_URL`, không
+   `cat` file env). Login thử tạo trong cluster dùng tiền tố `it_<nhom>_` và DROP khi xong.
+2. KHÔNG sửa file nào trong repo trừ: `evidence/itacc_r10/<nhom>/**`, `evidence/itacc_r10/items/<id>.json`
+   (chỉ id của nhóm bạn), `evidence/itacc_r10/criteria/<nhom>.json` + `.lock.txt`. KHÔNG sửa `data/`, code,
+   test, docs. Cần cấu hình thử (approvers, routing, config JSON, users.json…) → bản sao trong scratchpad
+   của bạn + chạy qua wrapper Python monkeypatch hằng đường dẫn của module (vd `auth.DIRECTORS_DIR`), hoặc
+   biến môi trường/cờ `--out-dir`/`--file` mà CLI hỗ trợ. Ghi rõ là FIXTURE/HARNESS trong evidence.
+   Báo cáo file không được rơi vào `data/reports/` — dùng `--out-dir` tới scratchpad/evidence của bạn.
+   Không `git add/commit/stash/reset/clean/checkout`. Không đụng `.agents/`, `founder/`, `lv2-market-top.png`.
+3. Không gọi dịch vụ ngoài/có phí: không OpenRouter (key rỗng; LLM chỉ qua fake ở biên trong wrapper,
+   ghi rõ), không gửi Zalo/Messenger/SMTP/HTTP ra internet (DEPLOY tắt; SMTP/HTTP chỉ server giả localhost
+   nếu cần), không crawl web thật (dùng file RSS/HTML fixture cục bộ hoặc server giả 127.0.0.1).
+4. KHÔNG sửa lỗi sản phẩm. Phát hiện lỗi → tái hiện, lưu expected/actual + lệnh, ghi vào bảng lỗi. Được sửa
+   lỗi của chính harness/dữ liệu mồi (ghi lượt bị thay thế + lý do; giữ log lượt hỏng).
+5. KHÔNG chạy pytest (điều phối viên chạy full riêng). Phép kiểm của bạn là entry point thực + truy vấn
+   DB/file để assert. Lệnh >10s có thể bị đẩy nền — PHẢI đọc tới khi process exit rồi mới chạy lệnh kế;
+   không chạy chồng; không retry mù.
+6. Capture exit code NGAY sau lệnh đo (`cmd; rc=$?`), trước echo/ghi log.
+7. Rollout: tính năng chưa vào sổ = chạy thử (trial) → kiểm đúng hành vi trial (sinh nháp/hàng duyệt, chặn
+   gửi/verify-send). Có thể `python -m pipelines.rollout --seed --by "Người Thử IT"` trên DB thử. KHÔNG nâng
+   stage bằng SQL owner. Flow chỉ có ở `van_hanh` → wrapper đặt `pipelines.rollout._FORCE_MODE` (ghi rõ
+   FIXTURE) VÀ kiểm cả nhánh bị chặn khi không ép.
+8. Auth: mặc định chế độ dev (AUTH_MODE trống) là hành vi dev của sản phẩm — ghi mức kiểm. Danh tính/quyền
+   chế độ thực, B3, UI, DR, rotation, full pytest do điều phối viên kiểm — bạn không lặp lại.
+9. Dữ liệu fixture: GIẢ rõ ràng (tên "… Thử IT", SĐT dạng 0900000xxx, domain example.com); không dữ liệu
+   thật/cá nhân thật. Không dùng timestamp lùi/mốc dựng sẵn làm bằng chứng đủ ngày chạy thử hợp đồng; không
+   đếm đầu ra mẫu thành vận hành; không sửa bộ đếm/ngưỡng.
+
+## QUY TRÌNH
+**Pha 1 — tiêu chí TRƯỚC khi chạy.** Đọc khung + code liên quan từng mục, viết
+`evidence/itacc_r10/criteria/<nhom>.json`: mỗi mục `{id, tieu_chi_cu_the:[...], ca:[{ma, mo_ta, entry_point,
+dau_vao, expected}]}` (ca thuận + ca âm phù hợp rủi ro: tắt tính năng, dữ liệu lỗi, quyền, retry/idempotent,
+nguồn chưa duyệt, thiếu dữ liệu không bịa số…). Rồi ghi `criteria/<nhom>.lock.txt` = sha256 file + giờ
+Asia/Saigon. Từ đây không sửa criteria; ca thêm sau ghi là "bổ sung sau khóa" kèm lý do.
+
+**Pha 2 — chạy.** Mỗi ca: lệnh (DSN che), input (hash sha256 file fixture), exit code, expected/actual,
+PASS/FAIL/NOT_RUN. Lưu output/log gọn (đã che secret, không PII) vào `evidence/itacc_r10/<nhom>/` — file
+`.txt/.json/.md` (KHÔNG `.log` — bị gitignore). Harness/fixture lưu vào `evidence/itacc_r10/<nhom>/harness/`
+(không secret) để tái lập.
+
+**Pha 3 — bản ghi từng mục** `evidence/itacc_r10/items/<id>.json`:
+```
+{"id","ten","khoi","giai_doan","pham_vi","can_cu","tieu_chi":[...],
+ "fingerprint":"97051e55…","thoi_gian":"<ISO +07:00>","moi_truong":"Docker postgres:17 127.0.0.1:55432 DB <db>; dev mode; fake ở biên: …",
+ "dau_vao":[{"ten","sha256","provenance":"fixture thử IT"}],
+ "ca":[{"ma","mo_ta","lenh","expected","actual","exit","ket_qua":"PASS|FAIL|NOT_RUN","ly_do_not_run"}],
+ "trang_thai":"DAT|CHUA_KIEM|BI_CHAN","muc_kiem":"LOCAL|MOCK|SANDBOX",
+ "nguyen_nhan":"(BI_CHAN: CODE_FAIL|MISSING_ADAPTER|EXTERNAL_INPUT|ENVIRONMENT|SEPARATE_REPO|NON_SOFTWARE)",
+ "can_de_go":"…","gioi_han":"…","evidence":[{"path","sha256"}],"loi_san_pham":[...]}
+```
+
+## PHÂN LOẠI (mỗi mục đúng MỘT)
+- **DAT**: đã thực chạy MỌI tiêu chí kỹ thuật nội bộ bắt buộc, có đầu ra thực + assertion + evidence; 0 ca FAIL.
+  Ghi mức LOCAL/MOCK. Không suy là đạt production/nghiệm thu hợp đồng.
+- **CHUA_KIEM**: chưa chạy đủ hoặc thiếu evidence; ghi ca nào chưa chạy và vì sao. KHÔNG dùng để che FAIL.
+- **BI_CHAN**: không hoàn thành do thiếu adapter/repo/vendor/dữ liệu/quyền/môi trường, HOẶC lỗi sản phẩm đã
+  tái hiện (CODE_FAIL, ghi expected/actual). Có phần con PASS vẫn BI_CHAN nếu đầu ra thiết yếu chưa thực
+  hiện được. "Chặn đúng vì thiếu provider" KHÔNG làm OCR/STT/ảnh AI thành DAT (ghi ca chặn an toàn PASS riêng).
+- Mục `da_biet_thieu` trong khung (adapter/repo/ngoài phần mềm): kiểm phần nội bộ + preflight + nhánh chặn
+  chạy được, rồi BI_CHAN nêu chính xác phần thiếu. Không viết adapter/website.
+
+## TRẢ VỀ (tin nhắn cuối ≤ 60 dòng)
+Bảng `id | trạng thái | mức | nguyên nhân/ghi chú`, danh sách lỗi sản phẩm (mức độ, tái hiện, evidence),
+lỗi harness đã sửa, login/tài nguyên đã dọn, xác nhận không sửa file ngoài phạm vi và không chạm DB samsam.

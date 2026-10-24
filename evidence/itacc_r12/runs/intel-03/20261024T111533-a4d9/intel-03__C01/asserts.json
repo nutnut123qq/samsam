@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from competitor_observations",
+  "expect": 6,
+  "actual": 6,
+  "dat": true
+ },
+ {
+  "sql": "select string_agg(row_count::text, ',' order by id) from intel_imports where kind = 'competitor'",
+  "expect": "4,2",
+  "actual": "4,2",
+  "dat": true
+ }
+]

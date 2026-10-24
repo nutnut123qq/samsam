@@ -1,0 +1,18 @@
+"""HARNESS g2 — truy vấn assert DB thử → evidence/itacc_r10/g2/out/<ten>.json
+  python q.py <ten> "<SQL>" [...SQL]   (chỉ SELECT)"""
+import json, os, sys
+from pathlib import Path
+import psycopg
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+name, sqls = sys.argv[1], sys.argv[2:]
+c = psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5)
+res = []
+for s in sqls:
+    assert s.lstrip().lower().startswith(("select", "with")), "chỉ SELECT"
+    cur = c.execute(s)
+    cols = [d.name for d in cur.description]
+    rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+    res.append({"sql": s, "rows": rows})
+    print(f"-- {s}\n" + "\n".join(json.dumps(r, ensure_ascii=False, default=str) for r in rows[:40]))
+out = Path(__file__).resolve().parent.parent / "out" / f"{name}.json"
+out.write_text(json.dumps(res, ensure_ascii=False, indent=1, default=str), encoding="utf-8")

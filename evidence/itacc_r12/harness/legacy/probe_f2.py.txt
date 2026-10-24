@@ -1,0 +1,219 @@
+"""Probe F2 — nguồn dữ liệu website chỉ bật giỏ khi có giá web ĐÃ duyệt trong DB.
+
+Chạy: python -I probe_f2.py <ROOT> <OUT.json> <dsn_file>
+DB thật (DB test riêng của lượt, schema tạm ceo_db, ROLLBACK cuối mỗi ca).
+JSON golden LUÔN có prices.web.list = 99000 cho SKU thường và rượu ở MỌI ca
+(cùng điều kiện cho bản trước/sau sửa). Entry thật: website_row / website_feed.
+"""
+import copy
+import json
+import os
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from unittest.mock import patch
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG"):
+        os.environ[k] = ""
+os.environ["DATABASE_URL"] = Path(sys.argv[3]).read_text().split("'")[1]
+os.environ.update(OPENROUTER_API_KEY="", DEPLOY="0")
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+from agents import listing_export as le  # noqa: E402
+from pipelines import auth, content, rollout  # noqa: E402
+from tests.test_ceo_audit import ceo_db  # noqa: E402
+from tests.test_contract_c04_listing_export import RD, SKU, _master  # noqa: E402
+
+ALC = "ruou-sam-chai-thuy-tinh-500ml"
+JSON_PRICE = 99000
+TODAY = (datetime.now(timezone.utc) + timedelta(hours=7)).date()
+FEED_DIR = OUT.parent / "f2_feed"
+RDA = {**RD, (ALC, "web"): "TP_THUONG"}
+
+gc0, extra0 = content._cfg()
+GC = copy.deepcopy(gc0)
+for s in (SKU, ALC):
+    GC["golden"][s].setdefault("prices", {})["web"] = {"list": JSON_PRICE}
+
+
+def add_price(db, sku, price, *, kind="list", channel="web", frm=None,
+              to=None, approve=True):
+    """Thêm dòng qua đúng trigger append-only: INSERT mở chưa duyệt → UPDATE
+    duyệt → (tùy) UPDATE đóng valid_to."""
+    pid = db.execute(
+        "insert into price_list (sku_key, channel, kind, price_vnd, valid_from)"
+        " values (%s,%s,%s,%s,%s) returning id",
+        (sku, channel, kind, price, frm or TODAY - timedelta(days=10))).fetchone()[0]
+    if approve:
+        db.execute("update price_list set approved_by = 'GĐ Bán Hàng (probe)',"
+                   " approved_at = now() where id = %s", (pid,))
+    if to is not None:
+        db.execute("update price_list set valid_to = %s where id = %s", (to, pid))
+    return pid
+
+
+def seed_master(db):
+    for s, cat in ((SKU, "food"), (ALC, "alcohol")):
+        g = GC["golden"][s]
+        db.execute("insert into sku_master (sku_key, name, category,"
+                   " allowed_channels, source) values (%s,%s,%s,%s,'probe')"
+                   " on conflict do nothing",
+                   (s, g.get("name") or s, cat, ["web", "shopee", "tiktok"]))
+
+
+def case(name, setup, check, *, feed=False, rd=RD):
+    gen = ceo_db()
+    db = next(gen)
+    res = {"case": name}
+    try:
+        with patch.object(rollout, "_FORCE_MODE", "van_hanh"), \
+                patch.object(auth, "_APPROVAL_FORCE", False), \
+                patch.object(content, "_cfg", return_value=(GC, extra0)):
+            seed_master(db)
+            ctx = setup(db) or {}
+            res["db_price_rows"] = [list(map(str, r)) for r in db.execute(
+                "select id, sku_key, channel, kind, price_vnd, valid_from,"
+                " valid_to, approved_by is not null from price_list order by id"
+            ).fetchall()] if not ctx.get("no_read") else "(bảng giá không đọc được)"
+            out = {}
+            try:
+                if feed:
+                    for f in FEED_DIR.glob("*"):
+                        f.unlink()
+                    mp = le.website_feed(db, FEED_DIR, readiness=rd)
+                    man = json.loads(mp.read_text(encoding="utf-8"))
+                    rows = {r["sku_key"]: r for r in json.loads(
+                        (FEED_DIR / man["file"]).read_text(encoding="utf-8"))["rows"]}
+                    out = {"manifest": {k: man.get(k) for k in man if k.startswith("gia")},
+                           "row": rows[ctx.get("sku", SKU)]}
+                else:
+                    out = {"row": le.website_row(db, ctx.get("sku", SKU),
+                                                 GC["golden"][ctx.get("sku", SKU)], rd)}
+            except Exception as e:  # noqa: BLE001
+                out = {"exc": f"{type(e).__name__}: {str(e)[:160]}"}
+            out["files_written"] = sorted(p.name for p in FEED_DIR.glob("*")) if feed else None
+            res.update(ctx=ctx, out=out)
+            ok = check(out, ctx)
+            res["verdict"] = "PASS" if ok else "FAIL"
+    finally:
+        try:
+            next(gen)
+        except StopIteration:
+            pass
+    return res
+
+
+def row(o):
+    return o.get("row") or {}
+
+
+def no_cart(o, _c=None):
+    r = row(o)
+    return bool(r) and r.get("gio_hang") is False and r.get("gia_vnd") is None \
+        and any("giá" in x for x in r.get("ly_do") or [])
+
+
+FEED_DIR.mkdir(parents=True, exist_ok=True)
+R = []
+R.append(case("a) JSON có giá, DB KHÔNG có giá web → không giá, không giỏ",
+              lambda db: (_master(db), None)[1], no_cart))
+R.append(case("b) DB chỉ có giá web CHỜ duyệt → không dùng",
+              lambda db: {"pending_id": (_master(db), add_price(db, SKU, 120000, approve=False))[1]},
+              no_cart))
+
+
+def setup_ok(db):
+    _master(db)
+    return {"price_id": add_price(db, SKU, 120000)}
+
+
+R.append(case("c) giá DB ĐÃ duyệt 120000 khác JSON 99000 → dùng DB, có giỏ", setup_ok,
+              lambda o, c: row(o).get("gia_vnd") == 120000 and row(o).get("gio_hang") is True))
+R.append(case("c') website_feed: manifest ghi nguồn DB + phiên bản giá", setup_ok,
+              lambda o, c: "price_list" in json.dumps(o.get("manifest"), ensure_ascii=False)
+              and str(c["price_id"]) in json.dumps(o, ensure_ascii=False)
+              and row(o).get("gia_vnd") == 120000, feed=True))
+R.append(case("b') giá đã duyệt ĐÃ HẾT HẠN (valid_to = hôm nay) → không dùng",
+              lambda db: {"id": (_master(db), add_price(db, SKU, 120000, frm=TODAY - timedelta(days=30), to=TODAY))[1]},
+              no_cart))
+R.append(case("b'') giá đã duyệt CHƯA TỚI HẠN (valid_from = mai) → không dùng",
+              lambda db: {"id": (_master(db), add_price(db, SKU, 120000, frm=TODAY + timedelta(days=1)))[1]},
+              no_cart))
+R.append(case("d) chỉ có floor/promo web + list kênh khác đã duyệt → không fallback",
+              lambda db: (_master(db), add_price(db, SKU, 80000, kind="floor"),
+                          add_price(db, SKU, 110000, channel="shopee"),
+                          db.execute("insert into price_list (sku_key, channel, kind, price_vnd,"
+                                     " program_id, valid_from) values (%s,'web','promo',70000,"
+                                     "'km-probe',%s)", (SKU, TODAY - timedelta(days=1))),
+                          None)[-1],
+              no_cart))
+R.append(case("g) rượu có giá web ĐÃ duyệt + readiness thường → vẫn ẩn giá, không giỏ",
+              lambda db: {"sku": ALC, "id": add_price(db, ALC, 500000)},
+              lambda o, c: row(o).get("an_gia") is True and row(o).get("gio_hang") is False
+              and row(o).get("gia_vnd") is None, rd=RDA))
+
+
+def setup_edit(db):
+    did, _ = _master(db)
+    pid = add_price(db, SKU, 120000)
+    db.execute("update content_drafts set text = text || ' sửa' where id = %s", (did,))
+    return {"price_id": pid}
+
+
+R.append(case("f) mô tả sửa sau duyệt (có giá DB duyệt) → vẫn chặn giỏ", setup_edit,
+              lambda o, c: row(o).get("gio_hang") is False
+              and any("duyệt lại" in x for x in row(o).get("ly_do") or [])))
+
+
+def setup_unreadable(db):
+    _master(db)
+    add_price(db, SKU, 120000)
+    db.execute("alter table price_list rename to price_list_hidden")
+    return {"no_read": True}
+
+
+def refused(o, c):
+    return "exc" in o and not o.get("files_written")
+
+
+R.append(case("h) bảng giá KHÔNG đọc được (mất bảng) → website_feed từ chối, không ghi tệp",
+              setup_unreadable, refused, feed=True))
+R.append(case("h') bảng giá KHÔNG đọc được → website_row không trả thành công giả",
+              setup_unreadable, lambda o, c: "exc" in o or (row(o).get("gio_hang") is False
+                                                             and row(o).get("gia_vnd") is None)))
+
+
+def setup_noperm(db):
+    _master(db)
+    add_price(db, SKU, 120000)
+    sch = db.execute("select current_schema()").fetchone()[0]
+    db.execute("create role r5probe_noprice nologin")      # rollback cuối ca
+    db.execute(f"grant usage on schema {sch} to r5probe_noprice")
+    db.execute(f"grant select on all tables in schema {sch} to r5probe_noprice")
+    db.execute(f"grant execute on all functions in schema {sch} to r5probe_noprice")
+    db.execute("revoke select on price_list from r5probe_noprice")
+    db.execute("set local role r5probe_noprice")
+    return {"no_read": True}
+
+
+R.append(case("h'') KHÔNG có quyền SELECT price_list → website_feed từ chối, không ghi tệp",
+              setup_noperm, refused, feed=True))
+
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+for r in R:
+    o = r["out"]
+    rr = o.get("row") or {}
+    print(f"{r['verdict']}  {r['case']}  | gia={rr.get('gia_vnd')} gio_hang={rr.get('gio_hang')}"
+          f" gia_id={rr.get('gia_id')} ly_do={rr.get('ly_do')} manifest={o.get('manifest')}"
+          f" exc={o.get('exc')} files={o.get('files_written')}")
+n_fail = sum(r["verdict"] == "FAIL" for r in R)
+print(f"TỔNG {len(R)} ca, FAIL {n_fail}")
+sys.exit(1 if n_fail else 0)

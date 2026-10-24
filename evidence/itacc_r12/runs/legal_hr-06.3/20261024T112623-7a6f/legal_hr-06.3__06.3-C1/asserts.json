@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'hr_attendance' and status = 'pending' and created_by = 'agent:pc_hr' and payload like '%| `NV-IT01` | 4 | 1/10 | 1/10 | 1 | 18 | 1 |%' and payload like '%| `NV-IT02` | 1 | 0/0 | 0/0 | 0 | 21 | 0 |%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

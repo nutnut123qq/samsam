@@ -1,0 +1,1260 @@
+{
+ "id": "ceo-02.2",
+ "ten": "Sổ quyết định TGĐ",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Theo dõi tiến độ, sổ quyết định: 'việc nào chờ ký'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/ceo-02.2.json",
+  "sha256": "f9dce9d89b73c8cb5af0e29d3462eaea67b19970118bd6ca07ad28de8a0c28c3"
+ },
+ "ly_do_chay_lai": "r10/r11 CODE_FAIL (g1-L5) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+ "fingerprint_code_luc_khoa": "3fda9aa991de6d2eeb799572bd7e8f7debd43be221c224ad39484f69c8549e0a",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_ceo_v2.json",
+ "tieu_chi_sha256": "ee6f013a935052c58dc33ec374a5aaa0140830cff5cbb5d0af6a59b5e9ec2139",
+ "tieu_chi_khoa": "r12_ceo_v2.json ee6f013a935052c58dc33ec374a5aaa0140830cff5cbb5d0af6a59b5e9ec2139 2026-10-24T10:57:40+07:00",
+ "tieu_chi": [
+  "T1 `python -m agents.ceo_decisions --record/--follow/--propose/--list` exit đúng",
+  "T2 decision_log: dòng quyet_dinh có recorded_by = người, decided_by, basis; cap_nhat là dòng MỚI (không UPDATE); --propose liệt kê mục ceo đã quyết chưa vào sổ và không ghi gì; --list có mục chờ quyết/chờ ký",
+  "T3 ca âm: --by agent: bị chặn trước connect; căn cứ chưa quyết bị từ chối; căn cứ trùng bị từ chối; ngày tương lai bị từ chối; UPDATE/DELETE sổ bị DB chặn; xong thiếu bằng chứng bị chặn; tắt ceo-02.2 KHÔNG chặn người ghi",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_c01/c021/c022/c03/c043/c044/c05 dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống, login owner thử như r10); OPENROUTER_API_KEY rỗng, DEPLOY/RED_ALERT_NOTIFY tắt; rollout --seed (tính năng = chạy thử); fake ở biên: CHỈ ceo-02.1 C09 ép rollout._FORCE_MODE='van_hanh' bằng force_vanhanh.py.txt (= r10); không gọi AI (--llm tắt). DB samsam_itacc_r12_c022.",
+ "run_id": "20261024T111149-ede2",
+ "ca": [
+  {
+   "ma": "ceo-02.2__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:11:49+07:00",
+      "ket_thuc": "2026-10-24T11:11:50+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S01"
+  },
+  {
+   "ma": "ceo-02.2__S02",
+   "nguon_r10": "MOI",
+   "mo_ta": "Tái lập trạng thái hàng duyệt khối ceo mà r10 ceo-02.2 dùng (DB chung): weekly_report W42 pending (r10 ceo-01 C01+C06), weekly_board W46 pending (r10 ceo-02.1 C01–C02), milestone_change MOC-A đã duyệt bởi người khác (r10 ceo-02.1 C06+C08a)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and status = 'pending'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board' and status = 'pending'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'milestone_change' and status = 'approved'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.cockpit --import evidence\\itacc_r12\\fixtures/items/ceo-02.2/it_g1_cockpit.csv --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:11:50+07:00",
+      "ket_thuc": "2026-10-24T11:11:52+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.ceo_report --period week --ref 2026-10-12 --submit --out-dir evidence\\itacc_r12\\runs\\ceo-02.2\\20261024T111149-ede2\\scratch/rep",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:11:52+07:00",
+      "ket_thuc": "2026-10-24T11:11:57+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.da_pmo --seed",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:11:57+07:00",
+      "ket_thuc": "2026-10-24T11:11:58+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step03.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.da_pmo --board --date 2026-11-10 --submit --out-dir evidence\\itacc_r12\\runs\\ceo-02.2\\20261024T111149-ede2\\scratch/rep",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:11:58+07:00",
+      "ket_thuc": "2026-10-24T11:12:02+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step04.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step04.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.da_pmo --propose-due MOC-A --due 2026-11-14 --by Người Đề Xuất Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:02+07:00",
+      "ket_thuc": "2026-10-24T11:12:06+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step05.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step05.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.approval_queue --approve 3 --by Người Duyệt Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:06+07:00",
+      "ket_thuc": "2026-10-24T11:12:10+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step06.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step06.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and status = 'pending'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_board' and status = 'pending'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'milestone_change' and status = 'approved'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02"
+  },
+  {
+   "ma": "ceo-02.2__C01",
+   "nguon_r10": "C01",
+   "mo_ta": "Ghi quyết định căn cứ văn bản",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT' and recorded_by = 'Thư ký Thử IT' and decided_by = 'TGĐ Thử IT' and basis_kind = 'van_ban' and due_date = '2026-10-30'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.ceo_decisions --record --topic Chốt lịch thử IT --decision Đồng ý lịch thử --decided-by TGĐ Thử IT --note Biên bản họp thử IT số 01 --by Thư ký Thử IT --due 2026-10-30",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:10+07:00",
+      "ket_thuc": "2026-10-24T11:12:13+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT' and recorded_by = 'Thư ký Thử IT' and decided_by = 'TGĐ Thử IT' and basis_kind = 'van_ban' and due_date = '2026-10-30'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C01"
+  },
+  {
+   "ma": "ceo-02.2__C02",
+   "nguon_r10": "C02",
+   "mo_ta": "Người ghi là agent → exit 2 (argparse, trước connect), 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stderr_re": "--by phải là tên NGƯỜI"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.ceo_decisions --record --topic X --decision Y --decided-by TGĐ Thử IT --note Biên bản họp thử IT số 02 --by agent:x",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "--by phải là tên NGƯỜI",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:12:14+07:00",
+      "ket_thuc": "2026-10-24T11:12:15+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C02"
+  },
+  {
+   "ma": "ceo-02.2__C03",
+   "nguon_r10": "C03",
+   "mo_ta": "Căn cứ mục hàng duyệt chưa quyết (weekly_board pending — r10 #3) → exit 1, 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.ceo_decisions --record --basis approval_queue:2 --topic Bảng tuần --decision Duyệt --by Thư ký Thử IT",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:15+07:00",
+      "ket_thuc": "2026-10-24T11:12:18+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C03"
+  },
+  {
+   "ma": "ceo-02.2__C04",
+   "nguon_r10": "C04",
+   "mo_ta": "Duyệt mục weekly_report (r10 C04a) rồi --propose → liệt kê mục đã quyết, không ghi sổ",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "approval_queue #\\d+ `weekly_report` approved"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.approval_queue --approve 1 --by TGĐ Duyệt Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:18+07:00",
+      "ket_thuc": "2026-10-24T11:12:22+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.ceo_decisions --propose",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "approval_queue #\\d+ `weekly_report` approved",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:12:22+07:00",
+      "ket_thuc": "2026-10-24T11:12:24+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04"
+  },
+  {
+   "ma": "ceo-02.2__C05",
+   "nguon_r10": "C05",
+   "mo_ta": "Ghi theo căn cứ đã duyệt (decided_by lấy từ mục) + ghi trùng (r10 C05b) → exit 1",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 1
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log d where d.basis_kind = 'approval_queue' and d.basis_id = (select id from approval_queue where object_type = 'weekly_report' and object_id = '2026-W42') and d.decided_by = 'TGĐ Duyệt Thử IT' and d.recorded_by = 'Thư ký Thử IT'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.ceo_decisions --record --basis approval_queue:1 --topic Báo cáo tuần W42 --decision Duyệt báo cáo tuần --by Thư ký Thử IT --due 2026-10-31",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:24+07:00",
+      "ket_thuc": "2026-10-24T11:12:27+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.ceo_decisions --record --basis approval_queue:1 --topic Báo cáo tuần W42 --decision Duyệt lần 2 --by Thư ký Thử IT",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:27+07:00",
+      "ket_thuc": "2026-10-24T11:12:31+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log d where d.basis_kind = 'approval_queue' and d.basis_id = (select id from approval_queue where object_type = 'weekly_report' and object_id = '2026-W42') and d.decided_by = 'TGĐ Duyệt Thử IT' and d.recorded_by = 'Thư ký Thử IT'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05"
+  },
+  {
+   "ma": "ceo-02.2__C06",
+   "nguon_r10": "C06",
+   "mo_ta": "Theo dõi thực hiện: xong thiếu note exit 2 (C06a); có note → dòng cap_nhat mới (C06b); cập nhật nữa exit 1 đã đóng (C06c); dòng gốc không bị UPDATE",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 1
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log c where c.entry_kind = 'cap_nhat' and c.follow_status = 'xong' and c.parent_id = (select id from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT')",
+      "expect": 1
+     },
+     {
+      "sql": "select follow_status from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT'",
+      "expect": "mo"
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 3
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.ceo_decisions --follow 1 --status xong --by Thư ký Thử IT",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:31+07:00",
+      "ket_thuc": "2026-10-24T11:12:32+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.ceo_decisions --follow 1 --status xong --note BB nghiệm thu thử IT --by Thư ký Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:32+07:00",
+      "ket_thuc": "2026-10-24T11:12:37+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.ceo_decisions --follow 1 --status dang_lam --by Thư ký Thử IT",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:37+07:00",
+      "ket_thuc": "2026-10-24T11:12:38+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log c where c.entry_kind = 'cap_nhat' and c.follow_status = 'xong' and c.parent_id = (select id from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT')",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select follow_status from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT'",
+      "expect": "mo",
+      "actual": "mo",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 3,
+      "actual": 3,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2,
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06"
+  },
+  {
+   "ma": "ceo-02.2__C07",
+   "nguon_r10": "C07",
+   "mo_ta": "Ngày quyết tương lai → exit 1",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 3
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.ceo_decisions --record --topic Ngày tương lai --decision Thử --decided-by TGĐ Thử IT --note Biên bản tương lai thử IT --by Thư ký Thử IT --date 2027-01-01",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:38+07:00",
+      "ket_thuc": "2026-10-24T11:12:42+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C07/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C07/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 3,
+      "actual": 3,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C07"
+  },
+  {
+   "ma": "ceo-02.2__C08",
+   "nguon_r10": "C08",
+   "mo_ta": "Append-only ở DB: UPDATE/DELETE decision_log bằng login owner DB thử → trigger chặn, dữ liệu nguyên (r10 harness sql.py; r12 python -c tương đương)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "CHAN UPDATE:[^\\n]*append-only[\\s\\S]*CHAN DELETE:[^\\n]*append-only"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select topic from decision_log where id = (select min(id) from decision_log)",
+      "expect": "Chốt lịch thử IT"
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 3
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5,autocommit=True)\nprint('session_user', c.execute('select session_user').fetchone()[0])\nfor k, s in (('UPDATE', \"update decision_log set topic='sửa thử' where id=(select min(id) from decision_log)\"), ('DELETE', 'delete from decision_log where id=(select min(id) from decision_log)')):\n    try:\n        r = c.execute(s); print('KHONG_CHAN', k, r.rowcount)\n    except psycopg.Error as e:\n        print('CHAN', k + ':', type(e).__name__, str(e).splitlines()[0])\n",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "CHAN UPDATE:[^\\n]*append-only[\\s\\S]*CHAN DELETE:[^\\n]*append-only",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:12:42+07:00",
+      "ket_thuc": "2026-10-24T11:12:43+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C08/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C08/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select topic from decision_log where id = (select min(id) from decision_log)",
+      "expect": "Chốt lịch thử IT",
+      "actual": "Chốt lịch thử IT",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from decision_log",
+      "expect": 3,
+      "actual": 3,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C08"
+  },
+  {
+   "ma": "ceo-02.2__C09",
+   "nguon_r10": "C09",
+   "mo_ta": "Tắt ceo-02.2 không chặn người ghi (exit 0); bật lại",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log where topic = 'Quyết định khi tắt' and recorded_by = 'Thư ký Thử IT' and entry_kind = 'quyet_dinh'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable ceo-02.2 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:44+07:00",
+      "ket_thuc": "2026-10-24T11:12:45+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.ceo_decisions --record --topic Quyết định khi tắt --decision Ghi sổ người --decided-by TGĐ Thử IT --note Văn bản thử IT khi tắt --by Thư ký Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:45+07:00",
+      "ket_thuc": "2026-10-24T11:12:48+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.rollout --promote ceo-02.2 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:48+07:00",
+      "ket_thuc": "2026-10-24T11:12:49+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from decision_log where topic = 'Quyết định khi tắt' and recorded_by = 'Thư ký Thử IT' and entry_kind = 'quyet_dinh'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09"
+  },
+  {
+   "ma": "ceo-02.2__C10",
+   "nguon_r10": "C10",
+   "mo_ta": "--list in mục chờ quyết (hàng duyệt ceo pending — weekly_board) và 'Chờ ký' mốc can_ky (G1-L5 đã vá)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "Chờ quyết định \\(hàng duyệt khối ceo[^\\n]*\\n(?:- #\\d+[^\\n]*\\n)*?- #\\d+ weekly_board ",
+      "out_re": "Chờ ký \\(mốc cần văn bản ký[^\\n]*\\n- (?!\\(không có\\))[A-Z]"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from project_milestones where sign_required and status <> 'xong'",
+      "expect": 5
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.ceo_decisions --list",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "Chờ quyết định \\(hàng duyệt khối ceo[^\\n]*\\n(?:- #\\d+[^\\n]*\\n)*?- #\\d+ weekly_board ",
+        "khop": true
+       },
+       {
+        "out_re": "Chờ ký \\(mốc cần văn bản ký[^\\n]*\\n- (?!\\(không có\\))[A-Z]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:12:49+07:00",
+      "ket_thuc": "2026-10-24T11:12:53+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C10/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C10/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from project_milestones where sign_required and status <> 'xong'",
+      "expect": 5,
+      "actual": 5,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C10"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C01/asserts.json",
+   "sha256": "1fc7651641643f6385566334b871c4a9ef6410408377f33dec6ec6b369623f03"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C01/case.json",
+   "sha256": "d782d17f230ccd533d5ae1b61971e23559a8e368f83893382afd388e5ac70116"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C01/step01.cmd.json",
+   "sha256": "d2d48961bef30cc996560e725fda7ad3772b7de306c09b061b2a6a1911e45a8c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C01/step01.stdout.txt",
+   "sha256": "0c50ad7d4fc7bbf60e32f4b8ce47e06dbf63ea2145dec50686976225b50d550b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C02/asserts.json",
+   "sha256": "6d9f28e1338ee4f49ae2a5760ecc4f73a98319e9aa4901c88030f46b8097a8f9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C02/case.json",
+   "sha256": "a85e2d00ec41d685d3e273f66b7bbc8b95f8e58a5d92283923b2569fd23280e8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C02/step01.cmd.json",
+   "sha256": "ee5628d7a63a31dbe6d2db0010840d8604d1530111f8e73fcaa9c0a2edd1b61a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C02/step01.stderr.txt",
+   "sha256": "26c5a658ac35a7b0008413e541042ded95696973bfac00ee2128f089a2a2994f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C02/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C03/asserts.json",
+   "sha256": "6d9f28e1338ee4f49ae2a5760ecc4f73a98319e9aa4901c88030f46b8097a8f9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C03/case.json",
+   "sha256": "5c8b0a1bfcbc597b2da1afcc82bfd4f210fbf7f08538c3ce08fb059277b7e5a5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C03/step01.cmd.json",
+   "sha256": "3c30e1c3b8068161971a406c404995ae5bee5d6c9f0f9881da5e3374e6014d11"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C03/step01.stderr.txt",
+   "sha256": "813552ef70951170d5ea1e5845094b0f2641e24590e721b5872bb5f7804db438"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C03/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/asserts.json",
+   "sha256": "6d9f28e1338ee4f49ae2a5760ecc4f73a98319e9aa4901c88030f46b8097a8f9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/case.json",
+   "sha256": "89f8374f6bdfc32e9a54381d47fde950f7e604599c11c02b863aba970c0616a2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step01.cmd.json",
+   "sha256": "6dcb8ef519bf528177ab3ea6388d2096143d6932444b3e9ac2a142693ae2e78b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step01.stdout.txt",
+   "sha256": "096f595660774e4b695fb2b22abc5230de4c6ef870042a8d1f5d3e452dc7fb8f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step02.cmd.json",
+   "sha256": "f5b5c410818a8d86ce2830e46075671f4bd660614b522c70832db0e3258468b8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C04/step02.stdout.txt",
+   "sha256": "ec345b9bbcac4138df15083e5e328fb7af74399961d536f49d0034d4e7b531fc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/asserts.json",
+   "sha256": "0cf560c1fa1aedfbd6e850686ea49b88742c892bebcb2d05a5d75e62610dfa85"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/case.json",
+   "sha256": "537aeb2dedc74350a440bf9b4d49446eb513418133aa2686d66e6cc86ad42b03"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step01.cmd.json",
+   "sha256": "680a7552588f1a079ba001a72067f1e72d4acb64d11ec39cd002c52a25ad2ee9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step01.stdout.txt",
+   "sha256": "b46cf3ec379992904d3e13d0c478d204281c4a780c4b1afece5af8ef8ce704c8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step02.cmd.json",
+   "sha256": "3301dfaa26ff2311f02eec3282686c18293bb8510140e52b6298742e2dfa9b7b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step02.stderr.txt",
+   "sha256": "59a5297af1ec97078be9c50410c85851422d1cd726f5b441dc9631416a92f963"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C05/step02.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/asserts.json",
+   "sha256": "08db52ea37ccfd3448fa2233d340249092e6f874820d587d17776ce274895626"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/case.json",
+   "sha256": "98bf442e18ab8665990b12000371a0b16285ec1f88748e0c47acd7a16328234c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step01.cmd.json",
+   "sha256": "b7950760ca0718aa42bb47d2089b24a44166507fea8fcdb011126f323ad82cd0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step01.stderr.txt",
+   "sha256": "4f7a654cccb046bde99b84228774ec722673c26fac2e10bc3d3066d71b4a3cdf"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step02.cmd.json",
+   "sha256": "0d4363d98527fbd0d825f15068ce27df23910b44d9382d514a39e55127b674b7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step02.stdout.txt",
+   "sha256": "88d8ad93bd995d78490a1fd4e9c37356163d001f9387cf2e3ca6ec95baf137bf"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step03.cmd.json",
+   "sha256": "aa96cb43e134595e94a20cb98119d7ea83ca08c84ed796953c6dce377b3e4b50"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step03.stderr.txt",
+   "sha256": "c904d674b4734761a1450e678c2e9551512f7557974d81927794d13a0aa7a280"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C06/step03.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C07/asserts.json",
+   "sha256": "d941242e8af22370c6150d1c141135e384b969416823b93b8f6268e3e338edba"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C07/case.json",
+   "sha256": "e00f21fa6741e77e03741558da204e6871b71e409170fcc4b60e2c0838a440b9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C07/step01.cmd.json",
+   "sha256": "fd2f18aa85183e4564ad5e3cd69e2f82bc7df1b7eb0e89dea2cbf9519171d302"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C07/step01.stderr.txt",
+   "sha256": "e551f8a5e8f6c2ebf273a8d74a71d0b0c2e59cdcc6b230df6d7fef216d346f79"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C07/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C08/asserts.json",
+   "sha256": "0b7edc08786752017d3381ae9d80cf4ca5ddfa139b15b6f14f55e2c37acd581c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C08/case.json",
+   "sha256": "d768899ec6d69dcfb44fefe7b5a7f402462d6686a73384a1a8db82cb0dbceac9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C08/step01.cmd.json",
+   "sha256": "3eae820a0e736de81c0b250bf24d077affa9cdacfb66138901a6c0cd8e50c73f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C08/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C08/step01.stdout.txt",
+   "sha256": "7656049b3fe84fa979426376bdda8e4d83caaf97512cd3500db77ecfa2fc56ed"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/asserts.json",
+   "sha256": "77750f66df984397af73e1e8635821e0c9ca40a0547454c3e9161f6767eb4e01"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/case.json",
+   "sha256": "1e900aed6d40f0411a99a9e232f83bdc6581f3ac34d933bcebe315b690644cff"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step01.cmd.json",
+   "sha256": "f7711058a602ebf36bf7d48c207e914db9a1be8de4851d53525d84b620b3dc40"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step01.stdout.txt",
+   "sha256": "ae4dd4ceeb6c9644a1fc506d399fe9a8b6aa2fa9496c9853d08c1df6d490fbfa"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step02.cmd.json",
+   "sha256": "6720bf1b6ce66f0b201f0c12047067c3e41ecfbc367dca81f6a179dfa8af30ca"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step02.stdout.txt",
+   "sha256": "7fad8a33f590a6f3d1b1a50b55c2732c090f179bec15f1e096a9abdb99fcc68f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step03.cmd.json",
+   "sha256": "9f97512aa1c7afbe10676de83403b36212dd0d51dd574baa2dc1718e4b98fe56"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step03.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C09/step03.stdout.txt",
+   "sha256": "bb88cf33a1ccb12876535e3de56da88bf9a11216eff7f44d55188a6aad7d0a7d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C10/asserts.json",
+   "sha256": "e35ca7cb5dce421e136ba1370462f62d983c4e4a78fc50d26aa58ad02fc27254"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C10/case.json",
+   "sha256": "c076c0b62f8df9b06d99905afdf270b20c8f8b81b3af77169226230e9e1ca8fc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C10/step01.cmd.json",
+   "sha256": "1ebd63c69f7371dd795d5b2ce1ec39b0bcd5e0c535db5cd06172d342a9eaf279"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C10/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__C10/step01.stdout.txt",
+   "sha256": "0b5db778e3b4b15c7025b1cfb16232646794e88042a8b3bd8056cd3f9c36fa19"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S01/case.json",
+   "sha256": "dad26c8a4b8a24bfb820354a1bb93ceb87d7dca5e6f85f2ba4e62c131eb7a915"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S01/step01.cmd.json",
+   "sha256": "335fe1152b9d26c7a828b426bb943ee3dde6bfd0a37c16351146ddb167dc4335"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/asserts.json",
+   "sha256": "550850d523b343cb933c2345b5249c0d4c8749103764dfe57ef6c20c74f0448b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/case.json",
+   "sha256": "b868bf2bdd274b0d9bbaf9cb8fc8b2f5f4cea883ccb1d280a646b4744e92af8d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step01.cmd.json",
+   "sha256": "2b1ed6f185dab9ce7066aa9f32fdf3d98b34b9488c7c6eb5734615992fba0854"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step01.stdout.txt",
+   "sha256": "8d9c0d716293c6a7ec3873eef62aad7d778fa678943cdb8b35e7b6a9900aa83d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step02.cmd.json",
+   "sha256": "dfd09f0a579b90c90abae45995fc8ec3482a0f5564ca4332a0f34bca210426f3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step02.stdout.txt",
+   "sha256": "daf95c7b386c63e64d25293242a53fbd8ecd9fdc6724eae6e8fed22e2642d158"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step03.cmd.json",
+   "sha256": "83eb483d4c1c6722b61babc856a4c8ea41297dcf6d30d0c49ad7f680e80f01ce"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step03.stdout.txt",
+   "sha256": "93de021d5f9a650245950b13862e9a9e37ae57e075aa3e7f933891f78e585539"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step04.cmd.json",
+   "sha256": "6cbd778b432575160e0209a7dd375ecee1a3e23112ea228db65864688a802dfe"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step04.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step04.stdout.txt",
+   "sha256": "c3cabb789a45b03a79a835990c21577ac31da13162a645b93deac5de3407b659"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step05.cmd.json",
+   "sha256": "ff189a836bf98b545ff92378ace9ebd6df1094036136d5d44f3052fbf697785e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step05.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step05.stdout.txt",
+   "sha256": "8f08b0cb2e84367ea25db5193ddd1fec1d633ee97c36eadea8675ccf249197f1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step06.cmd.json",
+   "sha256": "c111f9b35dc566142d7444eeae0b6c29b565de8e4886c040fe28feb5307cf6a2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step06.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ceo-02.2__S02/step06.stdout.txt",
+   "sha256": "ed6f5ddab2964e6b09cc3ea8121b4f8c5433d1b83cba34569c3be54a4905e43e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/ket_qua.json",
+   "sha256": "ca528d89ec4b1923462b99aa07d3225f743119556f3f33baac7e4dd3cc9523eb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/scratch/rep/ceo-2026-W42.md",
+   "sha256": "56b0752f05ca2e0c55f9797150f36af46db088d2823ae447733dd4518c7601b5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-02.2/20261024T111149-ede2/scratch/rep/da-pmo-board-2026-11-10.md",
+   "sha256": "0ce156fa12a501779773571b6caa2fc8d12b09d1734a83c1821421ad92550260"
+  }
+ ],
+ "loi_san_pham": []
+}

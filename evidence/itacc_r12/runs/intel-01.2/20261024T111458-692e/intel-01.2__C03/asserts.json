@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'intel_topic'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like 'week-%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\intel-01.2\\20261024T111458-692e\\intel-01.2__C03\\out/repiw/intel-bulletin-week-*.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/out/repiw/intel-bulletin-week-2026-10-19.md",
+    "sha256": "d6babb328b6c440ea692efd8bdcb1a38229eb5d45b9199057a77d9e772c3a081"
+   }
+  ],
+  "dat": true
+ }
+]

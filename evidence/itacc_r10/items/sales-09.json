@@ -1,0 +1,51 @@
+{
+ "id": "sales-09",
+ "ten": "Chatbot trên website",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Chatbot chăm sóc khách: 'Trả lời khách 24/7 trên Zalo, website, Messenger'",
+ "tieu_chi": [
+  "Không có module/entry point chatbot website trong repo (danh mục modules rỗng) → không có gì để chạy; BI_CHAN SEPARATE_REPO",
+  "Phần nội bộ liên quan: luật kênh chung (rượu/sức khỏe) đã kiểm ở sales-01 — không tính thay chatbot website"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: không áp dụng",
+ "dau_vao": [],
+ "ca": [
+  {
+   "ma": "S09-C01",
+   "mo_ta": "Rà entry point",
+   "lenh": "ls connectors/ api/; grep -rln 'website.*chat|web_chat|webchat|chatbot website' connectors api app; grep CHAT_CHANNELS/SAN_CHANNELS connectors/channels.py",
+   "expected": "không có adapter web chat",
+   "actual": "connectors/ chỉ zalo/messenger/b2b_form/channels/zalo_garden; CHAT_CHANNELS=('zalo','messenger'); grep adapter website chat rỗng",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S09-C02",
+   "mo_ta": "Chatbot website thật",
+   "lenh": "(xem evidence)",
+   "expected": "-",
+   "actual": "-",
+   "exit": null,
+   "ket_qua": "NOT_RUN",
+   "ly_do_not_run": "Chatbot website ở repo riêng chưa được giao (SEPARATE_REPO)"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "SEPARATE_REPO",
+ "can_de_go": "Giao repo/owner chatbot website",
+ "gioi_han": "Không có module trong repo; luật kênh chung kiểm ở sales-01 không tính thay chatbot website.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/out/S09-C01.txt",
+   "sha256": "4dbd146b78b660ff5d77bec9a323735aed141876009fba8dd365ca2290378819"
+  }
+ ],
+ "loi_san_pham": [],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from xnqc_dossiers where sku_key = 'savigout-30v' and status = 'da_nop'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from xnqc_dossiers where sku_key = 'savina-12v' and status = 'da_cap' and ngay_het_han = '2026-10-01'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from xnqc_dossiers where sku_key = 'saphraton-20v' and status = 'da_cap' and ngay_het_han = '2026-11-05'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

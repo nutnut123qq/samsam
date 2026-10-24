@@ -1,0 +1,17 @@
+[
+ {
+  "sql": "select id, object_type, object_id, created_by, status, risk, title, payload from approval_queue where object_type='dealer_price_alert' order by id",
+  "rows": [
+   {
+    "id": 54,
+    "object_type": "dealer_price_alert",
+    "object_id": "dp:DLTHU01:saphraton-20v:shopee:2026-10-23",
+    "created_by": "agent:kd_price",
+    "status": "pending",
+    "risk": "high",
+    "title": "Đại lý bán dưới giá sàn (quan sát tay) — đại lý DLTHU01, SKU saphraton-20v, kênh shopee, ngày 23/10/2026",
+    "payload": "Giá đại lý quan sát tay dưới giá sàn (A5, NHÁP): đại lý DLTHU01, SKU saphraton-20v, kênh shopee, ngày 23/10/2026. Số liệu: giá quan sát 200.000 đ, giá sàn golden 236.000 đ (cùng kênh, kênh shopee). Nguồn: quan sát #1, trang shopee.example.com. Việc cần làm: GĐ bán hàng xác minh lại trang nguồn và làm việc với đại lý theo hợp đồng đại lý. Agent KHÔNG liên hệ đại lý, KHÔNG đổi giá."
+   }
+  ]
+ }
+]

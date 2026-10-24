@@ -815,7 +815,9 @@ def collect(conn, golden_skus: dict | None, golden_why: str | None = None,
     data["stale_stock"] = sorted((sku, kho) for sku, s in stock.items()
                                  for kho in s["stale"])
     if "allocation_proposals" not in missing:
-        for (cid, cdate, run_id, status, sku, stock, lo, ba, hi) in \
+        # r12 P-01: biến KHÔNG trùng dict tồn kho `stock` (mục cận hạn bên
+        # dưới còn dùng) — trước đây vòng lặp đè `stock` thành số → crash.
+        for (cid, cdate, run_id, status, sku, run_stock, lo, ba, hi) in \
                 conn.execute(
                 "with latest as (select distinct on (cutoff_id) cutoff_id,"
                 " run_id from allocation_proposals"
@@ -827,14 +829,14 @@ def collect(conn, golden_skus: dict | None, golden_why: str | None = None,
                 " on l.run_id = p.run_id and l.cutoff_id = p.cutoff_id"
                 " group by p.cutoff_id, p.run_id, p.sku_key"):
             sums = {"low": int(lo), "base": int(ba), "high": int(hi)}
-            level, text = shortage(stock, sums)
-            if stock is None:
+            level, text = shortage(run_stock, sums)
+            if run_stock is None:
                 if sku not in data["no_stock"]:
                     data["no_stock"].append(sku)
             elif level:
                 data["shortages"].append({
                     "cutoff_id": cid, "cutoff_date": cdate, "run_id": run_id,
-                    "status": status, "sku_key": sku, "stock_total": stock,
+                    "status": status, "sku_key": sku, "stock_total": run_stock,
                     **sums, "flag": text})
         for run_id, created in conn.execute(
                 "select run_id, min(created_at) from allocation_proposals"
@@ -1265,42 +1267,77 @@ def cmd_bulletin(args) -> int:
     day = args.date or _today_vn()
 
     def run(conn):
+        from pipelines import rollout
+        # r12 G1-L1/GATE-OUT: bản tin (production-01) và cận hạn
+        # (production-04.3) là 2 tính năng — tắt cái nào chỉ ẩn/không ghi
+        # phần đó, phần kia vẫn chạy; có phần bị chặn → exit 2.
+        blk = {"bantin": rollout.blocked(conn, "bản tin sản xuất",
+                                         fid="production-01"),
+               "canhan": rollout.blocked(conn, "cảnh báo cận hạn",
+                                         fid="production-04.3")}
+        if all(blk.values()):
+            for w in blk.values():
+                rollout.say_blocked(w)
+            return rollout.EXIT_BLOCKED
         near = dt.timedelta(days=cfg["near_expiry_days"])
         data = collect(conn, golden, why, day + near, day - near)
         data["date"], data["period"] = day, args.period
         text = render_bulletin(data, dt.datetime.now(TZ_VN), cfg)
-        print(text, end="")
+        bantin, canhan = split_fefo(text)
+        if blk["canhan"]:
+            text = bantin
+        print(canhan if blk["bantin"] else text, end="")
+        rc = 0
         if args.out_dir:
-            return _write_bulletin(text, data, args.out_dir, day, args.period)
-        return 0
+            rc = _write_bulletin(text, data, args.out_dir, day, args.period,
+                                 skip={k for k, w in blk.items() if w})
+        for w in blk.values():
+            if w:
+                rc = rollout.say_blocked(w)
+        return rc
     return _db_call(run)
 
 
 FEFO_HEAD = "## Hàng cận hạn (FEFO)"
 
 
-def _write_bulletin(text, data, out_dir, day, period) -> int:
+def split_fefo(text: str) -> tuple[str, str]:
+    """→ (bản tin bỏ mục cận hạn, tài liệu chỉ tiêu đề + mục cận hạn).
+    Mục cận hạn kết thúc ở tiêu đề `## ` kế tiếp (tiến độ/phiếu kiểm nghiệm
+    thuộc bản tin, không thuộc cận hạn)."""
+    head, sep, rest = text.partition(FEFO_HEAD)
+    if not sep:
+        return text, ""
+    fefo, nxt, tail = rest.partition("\n## ")
+    title = head.splitlines()[0] if head else "# Bản tin Sản xuất"
+    return (head + (f"## {tail}" if nxt else ""),
+            f"{title}\n\n{FEFO_HEAD}{fefo}" + ("\n" if nxt else ""))
+
+
+def _write_bulletin(text, data, out_dir, day, period, skip=()) -> int:
     """docx P2 (PL01 Sản xuất: "báo cáo tuần, tháng…", "cảnh báo hàng cận
     hạn"; PL02 mục 1): trước đây chỉ in stdout → production-01 (bản tin) và
-    production-04.2 (cận hạn) không có đầu ra lưu để đếm/duyệt. Ghi qua
+    production-04.3 (cận hạn) không có đầu ra lưu để đếm/duyệt. Ghi qua
     `write_report` (cổng tắt + nhãn giai đoạn + sổ `report_outputs`):
     `sx-bantin-<tuan|thang>-<ngày>.md` (production-01) và
-    `sx-canhan-<ngày>.md` = mục cận hạn (production-04.2). Có dữ liệu
-    `source='sample'` → cờ mẫu (không đếm)."""
+    `sx-canhan-<ngày>.md` = mục cận hạn (production-04.3). Có dữ liệu
+    `source='sample'` → cờ mẫu (không đếm). `skip` = phần bị cổng chặn
+    (r12: mỗi file kiểm RIÊNG — file này bị chặn không bỏ file kia)."""
     from agents.report import write_report
     from pipelines import rollout
     smp = bool(data.get("sample"))
-    head, _, fefo = text.partition(FEFO_HEAD)
-    title = head.splitlines()[0] if head else "# Bản tin Sản xuất"
+    _, fefo = split_fefo(text)
     tag = "thang" if period == "month" else "tuan"
-    try:
-        for t, name in ((text, f"sx-bantin-{tag}-{day.isoformat()}.md"),
-                        (f"{title}\n\n{FEFO_HEAD}{fefo}",
-                         f"sx-canhan-{day.isoformat()}.md")):
+    rc = 0
+    for key, t, name in (("bantin", text, f"sx-bantin-{tag}-{day.isoformat()}.md"),
+                         ("canhan", fefo, f"sx-canhan-{day.isoformat()}.md")):
+        if key in skip or not t:
+            continue
+        try:
             print(f"[done] {write_report(t, Path(out_dir), name, sample=smp)}")
-    except rollout.RolloutBlocked as e:
-        return _err(f"{e}")
-    return 0
+        except rollout.RolloutBlocked as e:
+            rc = rollout.say_blocked(str(e))
+    return rc
 
 
 def main(argv: list[str] | None = None) -> int:

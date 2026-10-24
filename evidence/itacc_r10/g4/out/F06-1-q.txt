@@ -1,0 +1,5 @@
+# db samsam_itacc_r10_fin
+> select id, quarter, period_start, period_end, gross_vnd, platform_fee_vnd, cancel_vnd, refund_vnd, net_vnd, payout_vnd, fee_rate, ops_fee_vnd, report_sha256, recorded_by from revenue_quarters order by id
+[1, "2026-Q3", "2026-07-01", "2026-10-01", 3100000, 348000, 200000, 400000, 2152000, 2138000, null, null, "34ec42dbdaa68306a06191eb439ebbf34c110c69dd4533004f321d3541a6f452", "agent:rev_share"]
+> select feature_id, name, sha256, is_sample from report_outputs order by id
+["finance-06", "doi-soat-2026-Q3.md", "db49e15f0aad1bf24ad82b5185482aefd57aa0df80a212c7bb32a5637602c04a", false]

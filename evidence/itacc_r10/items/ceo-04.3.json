@@ -1,0 +1,187 @@
+{
+ "id": "ceo-04.3",
+ "ten": "So bài đăng/listing đang chạy với bản đã duyệt",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Kiểm soát nội bộ: 'Mỗi ngày so bài đăng ... đang chạy với bản đã duyệt'",
+ "tieu_chi": [
+  "T1 `python -m agents.ceo_audit --report --now <ISO> --out-dir <scratch>` exit 0",
+  "T2 ceo-audit-<ngày>.md phân loại đúng: bài khớp bản duyệt → khop; bài sửa sau duyệt → lech_ban_duyet; bài không bản duyệt → thieu_ban_duyet; listing tiêu đề khớp bản duyệt listing → khop; listing không có bản duyệt → thieu; listing không map SKU → khong_xac_dinh_sku; tỷ lệ tuân thủ theo kênh; không chép text bài",
+  "T3 ca âm: chỉ đọc (không ghi bảng); tính năng ceo-04.3 tắt → không sinh ceo-audit nhưng không được chặn đầu ra tính năng khác (ceo-gia của ceo-04.4)",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+  "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_ceo; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [
+  {
+   "ten": "it_g1_posts.csv",
+   "sha256": "c5bbefe14078421267dcba8531910e9b22dfb29068d37aff14c4b3fc4f0cc6ce",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_listing_shopee.csv",
+   "sha256": "a9da8214a604cbaa9181516f18cd8b69f94898d4ba8f09880079d3c9dae9950a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "mk_drafts.py",
+   "sha256": "138ffb466a7b37fd8a126249e5aa717a66900ef0b9788eb624102ac88a685733",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Fixture: nháp đã duyệt + bài đăng + listing",
+   "lenh": "python -m agents.ra_kenh --file evidence/itacc_r10/g1/harness/it_g1_posts.csv --by Quản lý MXH Thử IT",
+   "expected": "dữ liệu nạp, exit 0",
+   "actual": "Nháp #4/#5 (post) #6 (listing mat-ong-sam-300ml) duyệt qua pipelines.store --approve (lượt 1 #1–3 thiếu nhãn AI bị guardrail chặn → reject, giữ log ceo043_fx_posts_luot1_hong/ceo043_fx_appr*); ra_kenh nạp 3 bài (lượt 1 hỏng do is_ai=true sai định dạng → sửa 1); market_csv listing 5 dòng map 4",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Audit",
+   "lenh": "python -m agents.ceo_audit --report --now 2026-10-23T10:00:00+07:00 --out-dir <scratch>/rep43",
+   "expected": "exit 0; số đếm khop/lech/thieu/khong_xac_dinh_sku đúng fixture; tỷ lệ theo kênh",
+   "actual": "facebook mẫu số 3: khớp 1 (it-1), lech_ban_duyet 1 (it-2), thieu 1 (it-3); shopee mẫu số 5: khớp 1 (mat-ong title khớp nháp #6), thieu 3 (không có listing duyệt), khong_xac_dinh_sku 1 (IT-1005); tiktok 'chưa có dữ liệu quan sát'; nhãn CHẠY THỬ; report_outputs ceo-04.3; không chép text bài/tiêu đề",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Chỉ đọc",
+   "lenh": "SQL đếm trước/sau qua harness sql.py (login owner DB thử) — ceo043_C03_after.txt",
+   "expected": "không đổi",
+   "actual": "đếm approval_queue/red_alerts/channel_posts/market_alerts/content_drafts/approvals trước = sau = (5,0,3,2,6,8)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Tắt ceo-04.3",
+   "lenh": "python -m agents.ceo_audit --report --now 2026-10-24T10:00:00+07:00 --out-dir <scratch>/rep43",
+   "expected": "không ceo-audit-2026-10-24.md; ceo-gia-2026-10-24.md VẪN sinh (tính năng ceo-04.4 độc lập); bật lại",
+   "actual": "tắt ceo-04.3 → không sinh ceo-audit-2026-10-24.md (đúng) NHƯNG RolloutBlocked không bắt → traceback exit 1 và ceo-gia-2026-10-24.md (tính năng ceo-04.4 đang chạy thử) KHÔNG được sinh — tắt 1 tính năng chặn đầu ra tính năng khác",
+   "exit": "1",
+   "ket_qua": "FAIL",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Sửa ceo_audit để tắt ceo-04.3 không chặn ceo-gia (bắt RolloutBlocked từng báo cáo). Ngoài code: file bài đã đăng + listing Seller Center thật; approvers khối ceo; bật timer job ceo_audit",
+ "gioi_han": "Bài đăng/listing là file fixture; mapping cột Seller Center chưa xác minh với file thật",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_listing_shopee.csv",
+   "sha256": "a9da8214a604cbaa9181516f18cd8b69f94898d4ba8f09880079d3c9dae9950a"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_posts.csv",
+   "sha256": "c5bbefe14078421267dcba8531910e9b22dfb29068d37aff14c4b3fc4f0cc6ce"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/mk_drafts.py",
+   "sha256": "138ffb466a7b37fd8a126249e5aa717a66900ef0b9788eb624102ac88a685733"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C02.txt",
+   "sha256": "a4f3d4cdeb8c6e0c018548138686d5af66293407bf01112ee8b9c40f67a7c606"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C03_after.txt",
+   "sha256": "a4bfd67573fbf2e137094f16c7f595b5b03dbcfc3e052056ba303d50e39d7330"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C03_before.txt",
+   "sha256": "a4bfd67573fbf2e137094f16c7f595b5b03dbcfc3e052056ba303d50e39d7330"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C04.txt",
+   "sha256": "5ac3550a67ebf295cfce88304298ac88000795f301c596f3df6254e12b99d474"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C04a.txt",
+   "sha256": "6a39dc74b31659ccc15f2bc79d108ba9f019a2848f228c93b64051cbd65b3a8a"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_C04b.txt",
+   "sha256": "a16eb697ca0a322f39129d14520edc3b70a45e47500e1af3c8ae80d526eb679c"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_fx_posts.txt",
+   "sha256": "a68c26cc105cff8bd23a42b98dc6e3190e5049248956a28cc54d669ba34ae47e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo043_fx_posts_luot1_hong.txt",
+   "sha256": "1458d903424167a19e8407a75c27de62fd4dc9b08c13eda8a7a51bd737307c70"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/db_approval_queue_ceo.txt",
+   "sha256": "ce9ecb14195de2f4b39823c082b3e00346a79d5b08505db53e5b22f435d186a6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/ceo-audit-2026-10-23.md",
+   "sha256": "3b9c1678887b59ae19d0c40ce4debf9f2c17107b3c648337570208d41800cb01"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/ceo-audit-2026-10-25.md",
+   "sha256": "527b6f662210a7042c59e862b74e46f077542a26314f8357d9355165527360e1"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "g1-L1",
+   "muc_do": "TRUNG BÌNH",
+   "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+   "tai_hien": [
+    "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+    "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+    "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+   ],
+   "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+   "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+   "evidence": [
+    "out/ceo043_C04.txt",
+    "out/intel03_C06.txt",
+    "out/intel012_C03.txt"
+   ]
+  },
+  {
+   "ma": "g1-L2",
+   "muc_do": "THẤP",
+   "tieu_de": "RolloutBlocked không được bắt ở một số CLI → traceback Python, exit 1 (job_runs ghi lỗi chung)",
+   "tai_hien": [
+    "da_pmo --board --submit khi ceo-02.1 tắt (out/ceo021_C10.txt)",
+    "ceo_audit --report khi ceo-04.3/04.4 tắt (out/ceo043_C04.txt, out/ceo044_C03.txt)",
+    "ceo_risk --report khi ceo-03 tắt (out/ceo03_C05.txt)",
+    "intel_bulletin --suggest / bản tin khi intel-01.2/01.1 tắt (out/intel012_C03.txt, out/intel011_C06.txt)"
+   ],
+   "expected": "thông điệp [rollout]/[blocked] + exit code có chủ đích như ceo_promo/combo_price/hdtv_report",
+   "actual": "traceback pipelines.rollout.RolloutBlocked, exit 1",
+   "evidence": [
+    "out/ceo021_C10.txt",
+    "out/ceo03_C05.txt",
+    "out/intel011_C06.txt"
+   ]
+  }
+ ],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

@@ -1,0 +1,36 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.rev_share",
+  "--now",
+  "2026-10-23T10:30:00+07:00",
+  "--quarter",
+  "2026-Q3",
+  "--dry-run"
+ ],
+ "env_doi": [
+  "PROBE_CALL_MAIN",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:23:36+07:00",
+ "ket_thuc": "2026-10-24T11:23:42+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?s)\\A(?=.*\\| Tỷ lệ phí vận hành \\| 5% \\|)(?=.*\\| Phí vận hành \\(quy đổi sản phẩm\\) \\| — \\(có kênh bất thường)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "7fabe567e43b4bd22e3f56d1fdc0c574296222cbecc354951fd29f3699bf39b6",
+ "stderr_sha256": "1d0c276878f65b0175d0a175f789f0a9ab984f7f8d08a347fd163beb4262862c"
+}

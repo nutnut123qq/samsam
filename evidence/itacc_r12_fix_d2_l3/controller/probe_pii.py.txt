@@ -1,0 +1,18 @@
+import os,sys,json
+from pathlib import Path
+sys.stdout.reconfigure(encoding='utf-8');sys.path.insert(0,sys.argv[1])
+for k in list(os.environ):
+ if k.endswith('DATABASE_URL') or k.startswith('PG') or k in ('OPENROUTER_API_KEY','DEPLOY'):os.environ.pop(k,None)
+import psycopg
+psycopg.connect=lambda *a,**k: (_ for _ in ()).throw(RuntimeError('controller: DB access forbidden'))
+from pipelines import guardrail
+from pipelines.pii import _mask_pii
+contacts=['0912345678','(0912) 345 678','+84 (912) 345 678','(0912) - (345) - (678)','1800577732']
+rows=[]
+for phone in contacts:
+ t='Gọi '+phone+' để đặt quà. Nội dung có sử dụng AI.'
+ r=guardrail.check_publish(t,channel='facebook',content_type='post',is_ai=True)
+ rows.append({'contact_fixture':phone,'ok':r['ok'],'codes':[v.get('code',v.get('type')) for v in r['violations']],'existing_mask_changes':_mask_pii(phone)!=phone})
+print(json.dumps(rows,ensure_ascii=False,indent=2))
+
+

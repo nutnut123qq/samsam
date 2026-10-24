@@ -1,0 +1,19 @@
+"""(lượt 2 — lượt 1 thiếu nhãn AI nên không duyệt được) HARNESS/FIXTURE ceo-04.3: tạo nháp bằng hàm sản phẩm pipelines.store.save_draft
+(đường Content Studio dùng) — người tạo 'Biên tập Thử IT', is_ai=True."""
+import sys, json
+sys.path.insert(0, r"D:\code\samsam")
+from ingest.lead_store import connect
+from pipelines import store, guardrail
+conn = connect()
+out = {}
+specs = [
+  ("post_ok", "facebook", "post", None, "Mật ong sâm Thử IT: món quà Tết ấm áp cho gia đình. Thông tin chi tiết xem tại fanpage. Nội dung có sử dụng AI"),
+  ("post_sua", "facebook", "post", None, "Hộp quà Tết Thử IT đã sẵn sàng giao trước Tết. Nội dung có sử dụng AI"),
+  ("listing_mo", "shopee", "listing", "mat-ong-sam-300ml", "Mật ong sâm 300ml hộp quà Thử IT\nMô tả: mật ong pha sâm, hũ thủy tinh 300ml. Nội dung có sử dụng AI"),
+]
+for key, ch, ct, sku, text in specs:
+    g = guardrail.check(text)
+    did = store.save_draft(conn, f"fixture IT {key}", ch, text, g, created_by="Biên tập Thử IT",
+                           content_type=ct, sku=sku, is_ai=True)
+    out[key] = did
+print(json.dumps(out))

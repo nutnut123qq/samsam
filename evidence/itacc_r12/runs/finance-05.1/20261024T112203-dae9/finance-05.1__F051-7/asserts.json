@@ -1,0 +1,30 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\finance-05.1\\20261024T112203-dae9\\finance-05.1__F051-7\\out/director-finance-*.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/finance-05.1/20261024T112203-dae9/finance-05.1__F051-7/out/director-finance-2026-10-23.md",
+    "sha256": "e38ea9b99feb4335da4af0fe38b3b7495d7d37529988ca7cd20b2fb8604d90f9"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\finance-05.1\\20261024T112203-dae9\\finance-05.1__F051-7\\out/director-finance-*.md",
+  "re": "(?s)\\A(?=.*## Công nợ đại lý quá hạn)(?=.*## P&L tháng)(?=.*## Chi phí vận hành tháng 10/2026)(?=.*## Dòng tiền 13 tuần)(?=.*## Đề xuất ngân sách ads)",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\finance-05.1\\20261024T112203-dae9\\finance-05.1__F051-7\\out/director-finance-*.md",
+  "re": "## Chi phí vận hành tháng 10/2026(?:(?!\\n## )[\\s\\S])*\\[CẢNH BÁO 80%\\] `ai`(?:(?!\\n## )[\\s\\S])*\\[CẢNH BÁO 80%\\] `cloud`(?:(?!\\n## )[\\s\\S])*\\[VƯỢT TRẦN 100%\\] `saas`(?:(?!\\n## )[\\s\\S])*chờ TGĐ ký: 1",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ }
+]

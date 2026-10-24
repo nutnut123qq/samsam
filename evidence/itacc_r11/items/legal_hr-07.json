@@ -1,0 +1,654 @@
+{
+ "id": "legal_hr-07",
+ "ten": "Cập nhật văn bản pháp luật mới",
+ "khoi": "legal_hr",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Nhân sự: 'cập nhật văn bản pháp luật mới (P2)'",
+ "luot": "r11",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/legal_hr-07.json",
+  "sha256": "2fca6cfdc223e9e023ac775e27f796cdf0f0b81307e55332968197a2ce4abdcd"
+ },
+ "ly_do_chay_lai": "r10 chấm PASS 'theo ý định' dù ca 07-C1 đã khóa yêu cầu 2 dòng intel_items (thực tế 1). Lượt r11: đính chính tiêu chí (bộ lọc chủ đề loại tin lạc TRƯỚC khi lưu → chính xác 1 dòng + 0 dòng tin lạc + bằng chứng off_topic=1), khóa trước khi chạy, chạy lại đủ flow.",
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "tieu_chi_file": "evidence/itacc_r11/criteria/r11.json",
+ "tieu_chi_sha256": "601f16a149d825ea76f94ccc3a805cad5f8ac23f10f1aaa3f96eb2a3f7c6cd34",
+ "tieu_chi_khoa": "sha256 601f16a149d825ea76f94ccc3a805cad5f8ac23f10f1aaa3f96eb2a3f7c6cd34  criteria/r11.json  khoa_luc 2026-10-23T14:25:52+07:00 (Asia/Saigon) — khóa TRƯỚC mọi lần chạy r11\ntham_chieu_r10 criteria/g3.json sha256 4de39b8b0fa1f8b62f3b0a9902428b6ac98321ebc7f007403561e84b4378581e (giữ nguyên, khớp khóa r10 4de39b8b…581e: True)",
+ "tieu_chi": [
+  "T1 `crawler.intel --run --source chinhphu-van-ban --sources <fixture>` (RSS giả 127.0.0.1:18793) → `pipelines.intel_alert --run` → `pipelines.legal_updates --submit` exit đúng",
+  "T2 intel_items CHÍNH XÁC 1 dòng: url …/van-ban/nd-thu-it-01, source chinhphu-van-ban, tiêu đề tin nghị định, chủ đề có tpbvsk; 0 dòng tin không liên quan; stdout bộ lọc '2 tin, 1 đúng chủ đề, mới 1' + 'off_topic=1'. red_alerts source_agent='intel_red_alert' detail.rules có 'legal_doc'; approval_queue legal_hr/legal_doc_review pending, object_id intel:<id>, payload template (nguồn, link, sha256 tiêu đề, 'KHÔNG diễn giải')",
+  "T3 thiếu người nhận cảnh báo → exit 1 fail-closed (dòng vẫn ghi, route_error); legal_updates chạy lại → 0 mục mới; tắt legal_hr-07 → không sinh cảnh báo legal_doc mới, không mục mới, luật khác (regulation) vẫn chạy",
+  "T4 không mạng ngoài (chỉ 127.0.0.1, socket guard), không gửi, không LLM (llm.enabled=false trong fixture nguồn; llm_usage 0 dòng)"
+ ],
+ "dinh_chinh_r10": "ĐÍNH CHÍNH tiêu chí r10 (lỗi KỲ VỌNG của harness — KHÔNG phải evidence cũ đã đạt ca khóa): ca 07-C1 r10 khóa 'intel_items 2 dòng' cho fixture rss_it.xml gồm 1 tin nghị định quảng cáo TPBVSK + 1 tin không liên quan. Đọc code: crawler/intel.py build_items() gọi classify(title, snippet, topics); tin 0 chủ đề → `off += 1; continue` (KHÔNG lưu), run() in `[src] <id>: N tin, M đúng chủ đề, mới K` và `[done] … off_topic=…`. Thiết kế đúng là lọc trước khi lưu ⇒ kỳ vọng đúng cho fixture = CHÍNH XÁC 1 dòng intel_items (tin nghị định, đúng nội dung/nguồn/chủ đề), 0 dòng cho tin không liên quan, off_topic=1. Bản ghi r10 chấm PASS 'theo ý định' là sai quy trình; r10 giữ nguyên làm lịch sử (criteria/g3.json không sửa).",
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r11 (postgres:17-alpine) chỉ bind 127.0.0.1:55441; mỗi mục 1 DB samsam_itacc_r11_<mã> dựng mới (apply_schema --roles ×2 + core_store + golden_store); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; DEPLOY/RED_ALERT_NOTIFY tắt; INTEL_HASH_SALT + CONTACT_VAULT_KEY giá trị thử sinh ngẫu nhiên (không lưu repo); mạng ngoài localhost bị chặn trong harness run.py.txt; RSS giả http.server 127.0.0.1:18793. DB samsam_itacc_r11_l07.",
+ "run_id": "20261023T144012-9ab4",
+ "dau_vao": [
+  {
+   "ten": "sources_it.json",
+   "sha256": "b7e3fcfc8d5c24958c0c1f33e6773b52c147dd0fb1600ca19db680ca66a768f9",
+   "r10_ghi": "b7e3fcfc8d5c24958c0c1f33e6773b52c147dd0fb1600ca19db680ca66a768f9",
+   "khop_r10": true
+  },
+  {
+   "ten": "sources_it2.json",
+   "sha256": "c0caa808a9e316e2254fad528fef24edc6721d72616f0a152d54306be1d949ab",
+   "r10_ghi": "c0caa808a9e316e2254fad528fef24edc6721d72616f0a152d54306be1d949ab",
+   "khop_r10": true
+  },
+  {
+   "ten": "rss/rss_it.xml",
+   "sha256": "59c37b746597fb661c13b1b9885f78dd48e43ddbec4b24ee78672f6f588593a6"
+  },
+  {
+   "ten": "rss/rss_it2.xml",
+   "sha256": "2e76230cf17208cfd47bfb7f495d66cabeda7250954e1633be1400c2426ac634"
+  },
+  {
+   "ten": "rss/robots.txt",
+   "sha256": "16ceb5ee3e0dc13aa9adf31a3ebbe45a1d965b8c2b9f72eaf84e5911e140ed95"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "legal_hr-07__S01",
+   "mo_ta": "seed sổ rollout + bật RSS giả",
+   "tien_quyet": true,
+   "khac_r10": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {}
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:40:12+07:00",
+      "ket_thuc": "2026-10-23T14:40:13+07:00",
+      "stdout": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01"
+  },
+  {
+   "ma": "legal_hr-07__C1",
+   "mo_ta": "thu RSS giả",
+   "tien_quyet": false,
+   "khac_r10": "ĐÍNH CHÍNH: expected 2 dòng → chính xác 1 dòng + 0 dòng tin lạc + bằng chứng bộ lọc (xem dinh_chinh_r10)",
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "chinhphu-van-ban: 2 tin, 1 đúng chủ đề, mới 1(.|\\n)*off_topic=1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from intel_items",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from intel_items where url like '%/van-ban/nd-thu-it-01' and source = 'chinhphu-van-ban' and title like 'Nghị định mới quy định quảng cáo thực phẩm bảo vệ sức khỏe%' and 'tpbvsk' = any(topics)",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from intel_items where url like '%tb-thu-it-02%' or title like 'Thông báo lịch họp%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r11\\harness/run.py.txt -m crawler.intel --run --source chinhphu-van-ban --sources evidence\\itacc_r11\\fixtures/sources_it.json --max-requests 5",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "chinhphu-van-ban: 2 tin, 1 đúng chủ đề, mới 1(.|\\n)*off_topic=1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-23T14:40:15+07:00",
+      "ket_thuc": "2026-10-23T14:40:20+07:00",
+      "stdout": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from intel_items",
+      "file_glob": null,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from intel_items where url like '%/van-ban/nd-thu-it-01' and source = 'chinhphu-van-ban' and title like 'Nghị định mới quy định quảng cáo thực phẩm bảo vệ sức khỏe%' and 'tpbvsk' = any(topics)",
+      "file_glob": null,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from intel_items where url like '%tb-thu-it-02%' or title like 'Thông báo lịch họp%'",
+      "file_glob": null,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C1"
+  },
+  {
+   "ma": "legal_hr-07__C2",
+   "mo_ta": "quét cảnh báo (chưa có người nhận độc lập)",
+   "tien_quyet": false,
+   "khac_r10": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from red_alerts where source_agent = 'intel_red_alert' and detail->'rules' ? 'legal_doc' and route_error is not null",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from red_alert_deliveries",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r11\\harness/run.py.txt -m pipelines.intel_alert --run",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:40:20+07:00",
+      "ket_thuc": "2026-10-23T14:40:54+07:00",
+      "stdout": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C2/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from red_alerts where source_agent = 'intel_red_alert' and detail->'rules' ? 'legal_doc' and route_error is not null",
+      "file_glob": null,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from red_alert_deliveries",
+      "file_glob": null,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C2"
+  },
+  {
+   "ma": "legal_hr-07__C3",
+   "mo_ta": "đẩy hàng Pháp chế",
+   "tien_quyet": false,
+   "khac_r10": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'legal_doc_review' and status = 'pending'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue q join intel_items i on q.object_id = 'intel:' || i.id::text where q.object_type = 'legal_doc_review' and q.payload like '%Link: ' || i.url || '%' and q.payload like '%sha256 tiêu đề: ' || encode(sha256(convert_to(i.title, 'UTF8')), 'hex') || '%' and q.payload like '%KHÔNG diễn giải%' and q.payload like '%Nguồn: chinhphu-van-ban%'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r11\\harness/run.py.txt -m pipelines.legal_updates --submit",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:40:54+07:00",
+      "ket_thuc": "2026-10-23T14:41:14+07:00",
+      "stdout": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'legal_hr' and object_type = 'legal_doc_review' and status = 'pending'",
+      "file_glob": null,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue q join intel_items i on q.object_id = 'intel:' || i.id::text where q.object_type = 'legal_doc_review' and q.payload like '%Link: ' || i.url || '%' and q.payload like '%sha256 tiêu đề: ' || encode(sha256(convert_to(i.title, 'UTF8')), 'hex') || '%' and q.payload like '%KHÔNG diễn giải%' and q.payload like '%Nguồn: chinhphu-van-ban%'",
+      "file_glob": null,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "file_glob": null,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C3"
+  },
+  {
+   "ma": "legal_hr-07__C4",
+   "mo_ta": "chạy lại legal_updates",
+   "tien_quyet": false,
+   "khac_r10": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'legal_doc_review'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r11\\harness/run.py.txt -m pipelines.legal_updates --submit",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:41:15+07:00",
+      "ket_thuc": "2026-10-23T14:41:22+07:00",
+      "stdout": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C4/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'legal_doc_review'",
+      "file_glob": null,
+      "actual": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C4"
+  },
+  {
+   "ma": "legal_hr-07__C5",
+   "mo_ta": "tắt legal_hr-07; thu tin mới; quét; đẩy hàng",
+   "tien_quyet": false,
+   "khac_r10": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "mới 1"
+     },
+     {
+      "expect_exit": 1
+     },
+     {
+      "expect_exit": [
+       1,
+       2
+      ]
+     },
+     {}
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from intel_items",
+      "expect": 2
+     },
+     {
+      "sql": "select count(*) from red_alerts where source_agent = 'intel_red_alert' and detail->'rules' ? 'legal_doc'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from red_alerts r join intel_items i on r.detail->>'intel_item_id' = i.id::text where i.url like '%tt-thu-it-03' and r.detail->'rules' ? 'regulation' and not (r.detail->'rules' ? 'legal_doc')",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'legal_doc_review'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable legal_hr-07 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:41:22+07:00",
+      "ket_thuc": "2026-10-23T14:41:23+07:00",
+      "stdout": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r11\\harness/run.py.txt -m crawler.intel --run --source chinhphu-van-ban --sources evidence\\itacc_r11\\fixtures/sources_it2.json --max-requests 5",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "mới 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-23T14:41:23+07:00",
+      "ket_thuc": "2026-10-23T14:41:36+07:00",
+      "stdout": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step02.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r11\\harness/run.py.txt -m pipelines.intel_alert --run",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:41:36+07:00",
+      "ket_thuc": "2026-10-23T14:41:44+07:00",
+      "stdout": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step03.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step03.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r11\\harness/run.py.txt -m pipelines.legal_updates --submit",
+      "exit": 1,
+      "expect_exit": [
+       1,
+       2
+      ],
+      "regex": [],
+      "bat_dau": "2026-10-23T14:41:44+07:00",
+      "ket_thuc": "2026-10-23T14:41:49+07:00",
+      "stdout": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step04.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step04.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from intel_items",
+      "file_glob": null,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from red_alerts where source_agent = 'intel_red_alert' and detail->'rules' ? 'legal_doc'",
+      "file_glob": null,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from red_alerts r join intel_items i on r.detail->>'intel_item_id' = i.id::text where i.url like '%tt-thu-it-03' and r.detail->'rules' ? 'regulation' and not (r.detail->'rules' ? 'legal_doc')",
+      "file_glob": null,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'legal_doc_review'",
+      "file_glob": null,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "file_glob": null,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0,
+    1,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Nguồn RSS là server GIẢ http.server 127.0.0.1:18793 (fixture tin giả) — không phải nguồn văn bản thật; URL nguồn tầng A chưa Pháp chế xác minh; gửi cảnh báo thật không kiểm (chỉ nhánh fail-closed thiếu người nhận); không LLM (llm.enabled=false). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/ket_qua.json",
+   "sha256": "8a6bcebbe9ccf8fec0775f07374830b970c23134dd960051ded440a3d9c99bb2"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C1/asserts.json",
+   "sha256": "bb15e90b65556a2cba946b44eca8b421670cd41fc1c19c265172f3457a6e7803"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C1/case.json",
+   "sha256": "17e6675012840ecf9ca22fc025560871f2aeeddf0694965d71d0c250e3d958e4"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C1/step01.cmd.json",
+   "sha256": "86d35f8ddffdea2d0599f9d849c102c3dd9ee94a4e6477b0970a11201a52c54d"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C1/step01.stdout.txt",
+   "sha256": "54d709277e411525c328c179f3e57e4b7c81efdb31eda779ef64fdad16c8cf70"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C2/asserts.json",
+   "sha256": "5be76b32d046877fb942d5e1bd557ac82a05acc9c4911bf880040a2d22b39ae3"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C2/case.json",
+   "sha256": "ea9eb6f3c389b99c2d0cf1fe02f956675aa533baf009124d1eb8fcb9a92c87ce"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C2/step01.cmd.json",
+   "sha256": "d25993fc166238b3ebcdb5226eb7350093687e1452e490e534878ce3793baf69"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C2/step01.stderr.txt",
+   "sha256": "46056100801ff4323db173a87712936ab132f8101affbeb1fc083b1efb23716a"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C2/step01.stdout.txt",
+   "sha256": "931efb11177b6c9a4d7ef8355a5d66a7d058d9069aec568b464e7cc8245e2984"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C3/asserts.json",
+   "sha256": "1443e658dc62285c706b83d0a407611bff77dc5eeee9161e52c0812741e54696"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C3/case.json",
+   "sha256": "3736bd99d8afcf5722940dbe2b31489a4d419f2ebbd27f738afbf6e59126a0c9"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C3/step01.cmd.json",
+   "sha256": "082fc118b23a720326bf929617edcac0dde1a9693488d5f4f55d963b790b9e6f"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C3/step01.stdout.txt",
+   "sha256": "c5e124c72efb9ef04c29dbb9478d7c8e843d21bfac1f5e23f11272cd32136519"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C4/asserts.json",
+   "sha256": "05aeb72683414fa62709381384bcf7add543529e9f796e0d8c18bb6707a12a8f"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C4/case.json",
+   "sha256": "bb38065760bf95b3cfa912d0c22c51bad88a46d3f6ab3de8911345f4ae7767ca"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C4/step01.cmd.json",
+   "sha256": "53f2b8007d2f5eee524e407a88bc5e51a8810e501bd0e0f8f03613606d61433e"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C4/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C4/step01.stdout.txt",
+   "sha256": "413441a7d912da40f544da58ff8cfbfab79da0b8b7fb59120a2569287de27f69"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/asserts.json",
+   "sha256": "a0c43ddc2c4e4c3d651202980aad080fd12a09ec50008cefe5bd588ea14bf214"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/case.json",
+   "sha256": "8acea2c0abff28014b31fadeec6de8601f54c2985b6809176d34e3933e351fc3"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step01.cmd.json",
+   "sha256": "7778f2a3424a4ba93e20c680c82d2dd435f3033ee1cba2f75f4cbe88bd9beafc"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step01.stdout.txt",
+   "sha256": "3fcea66422663c83950b6d44eedfc68201d17d21f5c78d687ad06556e8c14601"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step02.cmd.json",
+   "sha256": "e7fedf8de023146d07fbc6e19ae8e3f0f2384871ce0987625bce10f0e9f0314a"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step02.stdout.txt",
+   "sha256": "6747c5d718dbcf7e42fb4a0fa1d1a9ecd6f42a4b1dcaf4c3f134d4c22d472873"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step03.cmd.json",
+   "sha256": "a6ee473ecc005ab2da5fca32b9e16a106763aa66b9b6ba211f79c32d2355d89f"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step03.stderr.txt",
+   "sha256": "c60cc85a1862c2c5ff087eb6997da182909c20b10a0ce63d63963722318ade4a"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step03.stdout.txt",
+   "sha256": "57a96ea834d5652b23a51cc5f3cea8cb161dd450ba9f16379aa7f1cf3da98881"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step04.cmd.json",
+   "sha256": "00eff3d1fcd01a1a6da9d4967c2c00e32b3a752eea10bcd18908d41e294fd01a"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step04.stderr.txt",
+   "sha256": "22b06d63f4a4bd71153924a7af85b624a6d099f822ba514428b78e9906876b03"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__C5/step04.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01/case.json",
+   "sha256": "51c7d782ff18fc35ea5de25638102e8ba87e8aab5f328be9562d635f2aaf4bce"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01/step01.cmd.json",
+   "sha256": "8513c9dc619f0d23dd71d5e171b217248a468f5ec328b756b0586875d4702bc2"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01/step02.bg_stderr.txt",
+   "sha256": "fa94b809c5039e9a5d7bc53672c3f103388b67920da3fc7e3ad4d03d14487754"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/legal_hr-07/20261023T144012-9ab4/legal_hr-07__S01/step02.bg_stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+ ],
+ "loi_san_pham": []
+}

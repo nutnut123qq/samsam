@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select string_agg(lot_code || ':' || intake_status, ',' order by lot_code) from production_lots",
+  "expect": "IT-LOT-001:passed,IT-LOT-002:passed,IT-LOT-003:passed,IT-LOT-004:failed",
+  "actual": "IT-LOT-001:passed,IT-LOT-002:passed,IT-LOT-003:passed,IT-LOT-004:failed",
+  "dat": true
+ }
+]

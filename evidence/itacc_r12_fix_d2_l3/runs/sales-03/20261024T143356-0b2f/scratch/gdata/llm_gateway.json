@@ -1,0 +1,14 @@
+{
+  "_doc": "Cấu hình LLM gateway (pipelines/llm_gateway.py, v3.1). Không chứa secret. Giá USD/1M token + cap USD/tháng là ƯỚC TÍNH — giá trị thật do công ty chốt (external-dep). Env override: LLM_PROVIDER_ONLY=a,b ; LLM_KILL=agent1,agent2 ; LLM_CAP_DEFAULT_USD=<số>. pii_allow: liên hệ CÔNG KHAI của công ty (hotline/email; mục có chữ = địa chỉ showroom công khai, v13.1) — gateway giữ nguyên, mọi SĐT/email/tên xưng danh/địa chỉ có số nhà khác bị che. Cap <= 0 = tắt agent; không đọc được chi tiêu tháng = chặn (fail-closed, v13.1).",
+  "provider_only": ["openai", "azure"],
+  "prices_usd_per_1m": {
+    "openai/gpt-4o-mini": {"in": 0.15, "out": 0.60},
+    "openai/text-embedding-3-small": {"in": 0.02, "out": 0.0},
+    "google/gemini-2.5-flash-lite": {"in": 0.10, "out": 0.40}
+  },
+  "monthly_cap_usd": {"default": 5.0, "chatbot": 20.0, "content": 10.0, "ingest": 5.0, "smoke": 0.5, "persona_sim": 2.0, "intel": 1.0, "cockpit": 0.5, "guardrail_llm": 2.0, "redteam": 0.5, "ci_judge": 1.0, "mkt_video": 2.0, "sx_tracuu": 1.0, "kd_livestream": 2.0, "mkt_youtube": 2.0},
+  "kill": [],
+  "kill_features": [],
+  "feature_caps_usd": {"_doc": "Đợt hoàn thiện 22/10 (PL01 Cổng AI an toàn: giới hạn chi phí TỪNG TÍNH NĂNG) — trần USD/tháng theo mã tính năng danh mục, kiểm THÊM vào trần theo agent. GIẢ ĐỊNH = bằng trần agent mặc định; Quản lý AI (Bên B) chốt từng tính năng. Trần ≤ 0 = tắt tính năng đó.", "default": 5.0},
+  "pii_allow": ["0235 3699 899", "vnsamsam@gmail.com", "425 Phan Bội Châu"]
+}

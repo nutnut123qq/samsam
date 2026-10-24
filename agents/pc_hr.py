@@ -63,7 +63,7 @@ from agents.fp_pnl import parse_month
 from ingest.lead_store import connect
 from ingest.market_csv import MAX_PRINT_ERRS, _clean, _TableError
 from ingest.settlement_csv import _to_date, map_header, read_table
-from pipelines import director
+from pipelines import director, rollout
 from pipelines.guardrail import check as guardrail_check
 from pipelines.period import parse_shift, vn_date
 from pipelines.pii import _mask_pii
@@ -589,6 +589,12 @@ def main(argv=None) -> int:
             ap.error("thư mục CV nằm TRONG repo — CV có dữ liệu cá nhân, đặt "
                      "ngoài repo (HR_INBOX_DIR)")
 
+    # r12 RB: mỗi lệnh con là 1 tính năng — tắt → chặn trước khi đọc CV/file.
+    fid = {"jd": "legal_hr-06.1", "screen": "legal_hr-06.2",
+           "attendance": "legal_hr-06.3"}[op]
+    why = rollout.blocked(None, "nhân sự PC-HR", fid=fid)
+    if why:
+        return rollout.say_blocked(why)
     try:
         dcfg = director.load_config(BLOCK)
         if op == "attendance":
@@ -666,6 +672,9 @@ def main(argv=None) -> int:
     print(f"[submit] {otype} → mục hàng duyệt #{qid} (khối {BLOCK}, chờ "
           "Chuyên viên pháp chế duyệt — agent không tự duyệt/gửi)")
     return 0
+
+
+main = rollout.cli_entry(main)
 
 
 if __name__ == "__main__":

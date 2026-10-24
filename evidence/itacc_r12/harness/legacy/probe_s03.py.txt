@@ -1,0 +1,213 @@
+"""Probe S03 — xuất tệp listing cho sàn (shopee/tiktok) chỉ dùng giá list ĐÃ duyệt
+còn hiệu lực trong price_list, manifest + --verify truy được phiên bản giá.
+
+Chạy: python -I probe_s03.py <ROOT> <OUT.json> <dsn_file>
+DB thật (DB test riêng, schema tạm ceo_db, ROLLBACK mỗi ca). Golden JSON GIỮ
+NGUYÊN (có/không giá kênh tùy repo) — giống nhau cho bản trước/sau sửa.
+Entry thật: listing_export.export / verify / main(--verify).
+"""
+import json
+import os
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from unittest.mock import patch
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG"):
+        os.environ[k] = ""
+os.environ["DATABASE_URL"] = Path(sys.argv[3]).read_text().split("'")[1]
+os.environ.update(OPENROUTER_API_KEY="", DEPLOY="0")
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+from agents import listing_export as le  # noqa: E402
+from pipelines import auth, content, rollout  # noqa: E402
+from tests.test_ceo_audit import ceo_db  # noqa: E402
+from tests.test_contract_c04_listing_export import RD, SKU, _master  # noqa: E402
+
+TODAY = (datetime.now(timezone.utc) + timedelta(hours=7)).date()
+RDT = {**RD, (SKU, "tiktok"): "TP_THUONG"}
+DIR = OUT.parent / "s03_out"
+GOLD = content._cfg()[0]["golden"][SKU]
+JSON_PRICES = {ch: ((GOLD.get("prices") or {}).get(ch) or {}).get("list")
+               for ch in ("shopee", "tiktok", "web")}
+
+
+def add_price(db, price, *, channel="shopee", kind="list", frm=None, to=None,
+              approve=True, program=None):
+    db.execute("insert into sku_master (sku_key, name, category,"
+               " allowed_channels, source) values (%s,%s,'food',"
+               " '{web,shopee,tiktok}','probe') on conflict do nothing",
+               (SKU, GOLD.get("name") or SKU))
+    pid = db.execute(
+        "insert into price_list (sku_key, channel, kind, price_vnd, program_id,"
+        " valid_from) values (%s,%s,%s,%s,%s,%s) returning id",
+        (SKU, channel, kind, price, program,
+         frm or TODAY - timedelta(days=10))).fetchone()[0]
+    if approve:
+        db.execute("update price_list set approved_by = 'GĐ Bán Hàng (probe)',"
+                   " approved_at = now() where id = %s", (pid,))
+    if to is not None:
+        db.execute("update price_list set valid_to = %s where id = %s", (to, pid))
+    return pid
+
+
+def clean():
+    DIR.mkdir(parents=True, exist_ok=True)
+    for f in DIR.glob("*"):
+        f.unlink()
+
+
+def files():
+    return sorted(p.name for p in DIR.glob("*"))
+
+
+def export(db, channel="shopee"):
+    clean()
+    try:
+        mp = le.export(db, SKU, channel, DIR, readiness=RDT)
+        man = json.loads(mp.read_text(encoding="utf-8"))
+        return {"manifest": {k: v for k, v in man.items() if k.startswith("gia")},
+                "files": files(), "mp": str(mp)}
+    except Exception as e:  # noqa: BLE001
+        return {"exc": f"{type(e).__name__}: {str(e)[:160]}", "files": files()}
+
+
+def case(name, body, check):
+    gen = ceo_db()
+    db = next(gen)
+    res = {"case": name}
+    try:
+        with patch.object(rollout, "_FORCE_MODE", "van_hanh"), \
+                patch.object(auth, "_APPROVAL_FORCE", False):
+            _master(db)
+            try:
+                res["out"] = body(db)
+            except Exception as e:  # noqa: BLE001
+                res["out"] = {"exc": f"{type(e).__name__}: {str(e)[:160]}"}
+            res["verdict"] = "PASS" if check(res["out"]) else "FAIL"
+    finally:
+        try:
+            next(gen)
+        except StopIteration:
+            pass
+    return res
+
+
+def refused(o):
+    return "exc" in o and o.get("files") == []
+
+
+R = []
+R.append(case("a) JSON có/không giá, DB KHÔNG có giá shopee → chặn, không tệp",
+              lambda db: export(db), refused))
+R.append(case("b) DB chỉ có giá shopee CHỜ duyệt → chặn",
+              lambda db: (add_price(db, 150000, approve=False), export(db))[1], refused))
+R.append(case("c) giá shopee đã duyệt ĐÃ HẾT HẠN → chặn",
+              lambda db: (add_price(db, 150000, frm=TODAY - timedelta(days=30), to=TODAY),
+                          export(db))[1], refused))
+R.append(case("d) giá shopee đã duyệt CHƯA TỚI HẠN → chặn",
+              lambda db: (add_price(db, 150000, frm=TODAY + timedelta(days=1)), export(db))[1],
+              refused))
+R.append(case("e) chỉ có list web/tiktok + floor/promo shopee đã duyệt → không fallback, chặn",
+              lambda db: (add_price(db, 120000, channel="web"),
+                          add_price(db, 130000, channel="tiktok"),
+                          add_price(db, 90000, kind="floor"),
+                          add_price(db, 80000, kind="promo", program="km-probe"),
+                          export(db))[-1], refused))
+
+
+def ok_db(channel, price):
+    def body(db):
+        pid = add_price(db, price, channel=channel)
+        o = export(db, channel)
+        o["price_id"] = pid
+        if "mp" in o:
+            o["verify"] = le.verify(db, o["mp"], readiness=RDT)
+        return o
+    return body
+
+
+for ch, price in (("shopee", 151000), ("tiktok", 152000)):
+    R.append(case(f"f) {ch}: giá DB ĐÃ duyệt {price} (JSON={JSON_PRICES[ch]}) → dùng DB, manifest có id",
+                  ok_db(ch, price),
+                  lambda o, p=price: o.get("manifest", {}).get("gia_vnd") == p
+                  and o["manifest"].get("gia_id") == o.get("price_id")
+                  and "price_list" in str(o["manifest"].get("gia_nguon"))
+                  and o.get("verify") == []))
+
+
+def unreadable(how):
+    def body(db):
+        add_price(db, 151000)
+        if how == "mat_bang":
+            db.execute("alter table price_list rename to price_list_hidden")
+        else:
+            sch = db.execute("select current_schema()").fetchone()[0]
+            db.execute("create role r6probe_noprice nologin")   # rollback cuối ca
+            db.execute(f"grant usage on schema {sch} to r6probe_noprice")
+            db.execute(f"grant select on all tables in schema {sch} to r6probe_noprice")
+            db.execute(f"grant execute on all functions in schema {sch} to r6probe_noprice")
+            db.execute("revoke select on price_list from r6probe_noprice")
+            db.execute("set local role r6probe_noprice")
+        return export(db)
+    return body
+
+
+R.append(case("g) bảng giá không đọc được (mất bảng) → không tệp", unreadable("mat_bang"), refused))
+R.append(case("g') KHÔNG quyền SELECT price_list → không tệp", unreadable("khong_quyen"), refused))
+
+
+def tamper(kind):
+    def body(db):
+        pid = add_price(db, 151000)
+        o = export(db)
+        mp = Path(o["mp"])
+        man = json.loads(mp.read_text(encoding="utf-8"))
+        if kind == "csv_gia":
+            f = mp.with_name(man["file"])
+            f.write_bytes(f.read_bytes().replace(b"151000", b"99000"))
+        elif kind == "manifest_gia":
+            man["gia_vnd"] = 99000
+            mp.write_text(json.dumps(man), encoding="utf-8")
+        elif kind == "gia_moi_duyet":
+            db.execute("update price_list set valid_to = %s where id = %s", (TODAY, pid))
+            add_price(db, 160000, frm=TODAY)
+        elif kind == "gia_het_han":
+            db.execute("update price_list set valid_to = %s where id = %s", (TODAY, pid))
+        o["verify"] = le.verify(db, mp, readiness=RDT)
+        return o
+    return body
+
+
+for kind in ("csv_gia", "manifest_gia", "gia_moi_duyet", "gia_het_han"):
+    R.append(case(f"h) {kind} sau khi xuất → --verify phát hiện lệch", tamper(kind),
+                  lambda o: bool(o.get("verify"))))
+
+
+def f2_regress(db):
+    add_price(db, 120000, channel="web")
+    r = le.website_row(db, SKU, GOLD, {**RD, (SKU, "web"): "TP_THUONG"})
+    return {"gia_vnd": r["gia_vnd"], "gio_hang": r["gio_hang"]}
+
+
+R.append(case("i) F2 hồi quy: website vẫn lấy giá web DB đã duyệt", f2_regress,
+              lambda o: o.get("gia_vnd") == 120000 and o.get("gio_hang") is True))
+
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+print("JSON golden giá kênh (không đổi):", JSON_PRICES)
+for r in R:
+    o = r["out"]
+    print(f"{r['verdict']}  {r['case']}  | manifest={o.get('manifest')} exc={o.get('exc')}"
+          f" files={o.get('files')} verify={o.get('verify')}"
+          + (f" {o}" if "gia_vnd" in o and "manifest" not in o else ""))
+n = sum(r["verdict"] == "FAIL" for r in R)
+print(f"TỔNG {len(R)} ca, FAIL {n}")
+sys.exit(1 if n else 0)

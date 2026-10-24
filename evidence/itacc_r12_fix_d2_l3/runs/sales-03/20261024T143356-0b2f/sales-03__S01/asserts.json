@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel in ('shopee','tiktok','web','zalo') and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+  "expect": 8,
+  "actual": 8,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select readiness from sku_readiness where sku_key = 'mat-ong-sam-300ml' and channel = 'web'",
+  "expect": "TP_THUONG",
+  "actual": "TP_THUONG",
+  "dat": true
+ },
+ {
+  "sql": "select stage from feature_rollout where feature_id = 'sales-03'",
+  "expect": "chay_thu",
+  "actual": "chay_thu",
+  "dat": true
+ }
+]

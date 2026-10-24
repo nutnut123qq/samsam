@@ -1,0 +1,214 @@
+"""Pha 3: sinh evidence/itacc_r10/items/<id>.json cho nhóm g1 từ results.jsonl + criteria."""
+import hashlib
+import json
+import re
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+REPO = Path(r"D:\code\samsam")
+EV = REPO / "evidence" / "itacc_r10" / "g1"
+G = Path(__file__).resolve().parent
+FP = "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001"
+NOW = datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+
+khung = {i["id"]: i for i in json.loads((REPO / "evidence/itacc_r10/criteria/khung.json").read_text("utf-8"))["items"]}
+crit = {i["id"]: i for i in json.loads((REPO / "evidence/itacc_r10/criteria/g1.json").read_text("utf-8"))["items"]}
+results = [json.loads(l) for l in (G / "results.jsonl").read_text("utf-8").splitlines() if l.strip()]
+
+
+def sha(p: Path) -> str:
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def rel(p: Path) -> str:
+    return p.relative_to(REPO).as_posix()
+
+
+def lenh(tag: str) -> str:
+    f = EV / "out" / f"{tag}.txt"
+    if not f.exists():
+        return tag
+    first = f.read_text("utf-8").splitlines()[0]
+    if not first.startswith("$"):
+        return "SQL đếm trước/sau qua harness sql.py (login owner DB thử) — " + f.name
+    first = re.sub(r"/[cd]/Users/hahuy/AppData/Local/Temp/claude/[^ ]*?/scratchpad/r10/g1/", "<scratch>/", first)
+    return first.lstrip("$ ").replace("/d/code/samsam/evidence/itacc_r10/g1/", "evidence/itacc_r10/g1/")
+
+
+H = EV / "harness"
+def inp(*names):
+    return [{"ten": n, "sha256": sha(H / n), "provenance": "fixture thử IT"} for n in names]
+
+
+L = {
+ "L1": {"ma": "g1-L1", "muc_do": "TRUNG BÌNH", "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+        "tai_hien": ["rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+                     "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+                     "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"],
+        "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+        "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+        "evidence": ["out/ceo043_C04.txt", "out/intel03_C06.txt", "out/intel012_C03.txt"]},
+ "L2": {"ma": "g1-L2", "muc_do": "THẤP", "tieu_de": "RolloutBlocked không được bắt ở một số CLI → traceback Python, exit 1 (job_runs ghi lỗi chung)",
+        "tai_hien": ["da_pmo --board --submit khi ceo-02.1 tắt (out/ceo021_C10.txt)", "ceo_audit --report khi ceo-04.3/04.4 tắt (out/ceo043_C04.txt, out/ceo044_C03.txt)",
+                     "ceo_risk --report khi ceo-03 tắt (out/ceo03_C05.txt)", "intel_bulletin --suggest / bản tin khi intel-01.2/01.1 tắt (out/intel012_C03.txt, out/intel011_C06.txt)"],
+        "expected": "thông điệp [rollout]/[blocked] + exit code có chủ đích như ceo_promo/combo_price/hdtv_report",
+        "actual": "traceback pipelines.rollout.RolloutBlocked, exit 1",
+        "evidence": ["out/ceo021_C10.txt", "out/ceo03_C05.txt", "out/intel011_C06.txt"]},
+ "L3": {"ma": "g1-L3", "muc_do": "TRUNG BÌNH", "tieu_de": "Gói HĐTV in 'Thực chi 0đ / 0.0% trần' khi KHÔNG có nguồn chi nào (opex_entries 0 dòng, llm_usage 0 dòng)",
+        "tai_hien": ["python -m agents.hdtv_report --month 2026-09 --out-dir … trên DB không có opex_entries (out/ceo05_C01.txt, reports/hdtv-2026-09.md mục 'Chi so ngân sách vận hành')"],
+        "expected": "thiếu số → [chưa có dữ liệu] (đúng cam kết in ở đầu chính trang), không hiện 0",
+        "actual": "agents/hdtv_report.py sec_opscost: spent = acts.get(scope, 0) → 0đ cho cả 6 phạm vi",
+        "evidence": ["out/ceo05_C01.txt", "reports/hdtv-2026-09.md"]},
+ "L4": {"ma": "g1-L4", "muc_do": "THẤP", "tieu_de": "Báo cáo file ceo-<kỳ>.md (ceo-01) / hdtv-<kỳ>.md (ceo-05) không thuộc output_sources report → không nhãn 'CHẠY THỬ — KHÔNG GỬI', không qua cổng tắt, không vào report_outputs",
+        "tai_hien": ["ceo_report --period week --ref 2026-10-12 --submit --out-dir → file không nhãn (out/ceo01_C06.txt, reports/ceo-2026-W42.md)",
+                     "rollout --disable ceo-01 → ceo_report vẫn GHI ceo-2026-W41.md dù mục hàng duyệt bị chặn (out/ceo01_C09.txt)"],
+        "expected": "báo cáo .md của tính năng chạy thử mang nhãn trong nội dung (v15.2 P8.5) và không sinh khi tính năng tắt",
+        "actual": "không nhãn; file vẫn sinh khi tắt; report_outputs 0 dòng (chỉ mục hàng duyệt được cổng giai đoạn)",
+        "evidence": ["out/ceo01_C06.txt", "out/ceo01_C09.txt", "reports/ceo-2026-W42.md", "reports/hdtv-2026-09.md"]},
+ "L5": {"ma": "g1-L5", "muc_do": "THẤP", "tieu_de": "ceo_decisions --list không in 'việc chờ quyết/chờ ký' dù read() đã đọc (chỉ có ở section trang TGĐ/bản tin)",
+        "tai_hien": ["python -m agents.ceo_decisions --list (out/ceo022_C10.txt) so với ceo_report --bulletin (reports/director-ceo-2026-10-23.md)"],
+        "expected": "CLI sổ quyết định hiện được việc chờ ký (PL01: 'việc nào chờ ký')", "actual": "--list chỉ in sổ + mốc trễ",
+        "evidence": ["out/ceo022_C10.txt", "out/ceo022_C10b.txt"]},
+ "L6": {"ma": "g1-L6", "muc_do": "THẤP", "tieu_de": "combo_price: nhánh thieu_du_lieu không tới được — thành phần thiếu giá list đã duyệt bị báo nhom_han_che",
+        "tai_hien": ["golden fixture mật ong 2 hũ tự công bố OK nhưng list chưa duyệt; combo it-c → python -m agents.combo_price --dry-run (out/intel052_C02.txt)"],
+        "expected": "thieu_du_lieu ('thiếu giá list ĐÃ DUYỆT của <sku>')",
+        "actual": "nhom_han_che vì v_promotable đã đòi giá list đã duyệt trước bước evaluate() kiểm giá",
+        "evidence": ["out/intel052_C02.txt"]},
+}
+
+ENV_CEO = "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_ceo; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử"
+ENV_INTEL = "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_intel; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử"
+
+CFG = {
+ "ceo-01": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_CEO + "; fake ở biên: không",
+   inputs=["it_g1_cockpit.csv", "it_g1_cockpit_sua.csv", "it_g1_cockpit_loi.csv"], rep=["ceo-2026-W42.md"], loi=["L4"],
+   go="Đưa ceo-<kỳ>.md vào output_sources report của ceo-01 (hoặc gắn nhãn/cổng tắt cho file) — lỗi THẤP; đầu ra thiết yếu (mục ceo/weekly_report có số + nguồn) đã đạt. Ngoài code: số kênh ngoài thật do người xuất CSV; người nhận cảnh báo độc lập (routing)",
+   gh="Số liệu là fixture; chatbot.* đọc data/conversations.jsonl của repo (chỉ đọc); không kiểm LLM (--llm tắt, không key)"),
+ "ceo-02.1": dict(st="DAT", mk="LOCAL", nn="", env=ENV_CEO + "; fake ở biên: rollout._FORCE_MODE='van_hanh' CHỈ ca C09 (harness/force_vanhanh.py)",
+   inputs=[], rep=["da-pmo-board-2026-11-10.md"], loi=[],
+   go="", gh="Nhánh áp hạn ở van_hanh chạy bằng FIXTURE ép giai đoạn; sổ mốc data/projects/milestones.json là BẢN DEV SOẠN; người duyệt chưa đối chiếu ủy quyền (dev). Ghi chú: tắt tính năng → traceback (g1-L2), apply-due ở chạy thử in thêm 'LỆCH bản duyệt' gây hiểu nhầm"),
+ "ceo-02.2": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_CEO + "; fake ở biên: không",
+   inputs=[], rep=["director-ceo-2026-10-23.md"], loi=["L5"],
+   go="Thêm mục chờ quyết/chờ ký vào --list (lỗi THẤP); yêu cầu PL01 'việc nào chờ ký' đã hiện ở trang TGĐ/bản tin khối ceo",
+   gh="Append-only kiểm bằng login owner (trigger); quyền app_human/svc_ui chế độ thực do điều phối viên kiểm"),
+ "ceo-03": dict(st="DAT", mk="LOCAL", nn="", env=ENV_CEO + "; fake ở biên: không",
+   inputs=["ceo03_fixture.sql"], rep=["ceo-risk-2026-10-23.md"], loi=[],
+   go="", gh="Hồ sơ da_cap dựng bằng SQL fixture (đường CLI đòi tài liệu doc_intake); luật mức data/ceo_risk.json + phap_che.json là BẢN DEV SOẠN chờ Pháp chế. Ghi chú: tắt → traceback (g1-L2)"),
+ "ceo-04.3": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_CEO + "; fake ở biên: không",
+   inputs=["it_g1_posts.csv", "it_g1_listing_shopee.csv", "mk_drafts.py"], rep=["ceo-audit-2026-10-23.md", "ceo-audit-2026-10-25.md"], loi=["L1", "L2"],
+   go="Sửa ceo_audit để tắt ceo-04.3 không chặn ceo-gia (bắt RolloutBlocked từng báo cáo). Ngoài code: file bài đã đăng + listing Seller Center thật; approvers khối ceo; bật timer job ceo_audit",
+   gh="Bài đăng/listing là file fixture; mapping cột Seller Center chưa xác minh với file thật"),
+ "ceo-04.4": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_CEO + "; fake ở biên: không",
+   inputs=["it_g1_listing_shopee.csv"], rep=["ceo-gia-2026-10-23.md"], loi=["L1"],
+   go="Cùng sửa g1-L1. Ngoài code: listing thật có cột mô tả (hiện 'Mô tả sản phẩm' bị drop trong mapping → mô tả luôn không so được); giá list golden do người duyệt",
+   gh="So mô tả chưa kiểm được nhánh khop/lech (file không có cột)"),
+ "ceo-04.5": dict(st="DAT", mk="LOCAL", nn="", env=ENV_CEO + "; fake ở biên: không",
+   inputs=["it_g1_km_plan.csv", "it_g1_km_running.csv", "it_g1_km_running2.csv", "it_g1_km_plan_loi.csv"], rep=[], loi=[],
+   go="", gh="Kế hoạch KM/file KM là fixture; ghi chú: quy % → giá dùng giá list golden kể cả CHƯA duyệt (payload sapentol 417.000) — nên xem lại"),
+ "ceo-04.6": dict(st="DAT", mk="LOCAL", nn="", env=ENV_CEO + "; fake ở biên: tấn công giả lập bằng SQL owner + session_replication_role=replica (harness/ceo046_*.sql)",
+   inputs=["it_g1_orders_shopee.csv", "it_g1_settlement_shopee.csv", "it_g1_cockpit_thang.csv", "ceo046_tamper.sql", "ceo046_delete_tail.sql"],
+   rep=["bks-audit-2026-09_sach.md", "bks-audit-2026-09_sau_sua.md", "bks-recon-2026-09.md"], loi=[],
+   go="", gh="Neo đuôi chỉ là neo NỘI BỘ (audit_runs) — neo ngoài/object-lock là external-dep; cảnh báo chuỗi chưa tới người (routing rỗng)"),
+ "ceo-05": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_CEO + "; fake ở biên: không",
+   inputs=[], rep=["hdtv-2026-09.md", "hdtv-2026-Q3.md"], loi=["L3", "L4"],
+   go="Sửa sec_opscost: không có dòng chi/nguồn → [chưa có dữ liệu] (lỗi TRUNG BÌNH vì gói trình HĐTV); nhãn chạy thử cho hdtv-*.md (g1-L4). P2 — chưa đến giai đoạn",
+   gh="Tháng 2026-09 gần như không dữ liệu nguồn → chủ yếu kiểm nhánh thiếu số"),
+ "ceo-90": dict(st="BI_CHAN", mk="LOCAL", nn="NON_SOFTWARE", env="Máy dev, chỉ đọc tài liệu repo + rollout --catalog (không DB nghiệp vụ)",
+   inputs=["parse_so_nghia_vu.py"], rep=[], loi=[],
+   go="Hai bên thực hiện + xác nhận từng nghĩa vụ N01–N22 (nhân sự toàn thời gian, bàn giao đầu vào, đào tạo, trực, góp/hoàn trả bằng sản phẩm, bảo hành, bàn giao/xóa bản sao khi chấm dứt); PL05 chưa được cung cấp",
+   gh="Chỉ kiểm cấu trúc sổ + danh mục; mọi nghĩa vụ đang de_xuat"),
+ "intel-01.1": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_INTEL + "; fake ở biên: RSS fixture qua http.server 127.0.0.1:18741 (không internet), REPORTS_DIR→scratch (harness/patch_run.py)",
+   inputs=["it_g1_sources.json", "mk_feed.py", "feed/feed_b.xml"], rep=["intel-bulletin-day-2026-10-23.md"], loi=["L1", "L2"],
+   go="Sửa intel_bulletin để intel-01.2 tắt không làm mất bản tin (bắt RolloutBlocked trong suggest). Ngoài code: BGĐ/Quản lý MXH duyệt nguồn data/intel_sources.json (17/17 chờ duyệt); Pháp chế xem điều khoản RSS",
+   gh="Không thu nguồn thật; bản tin không có --out-dir (phải patch REPORTS_DIR); LLM tóm tắt không kiểm (tắt)"),
+ "intel-01.2": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_INTEL + "; fake ở biên: như intel-01.1",
+   inputs=["it_g1_sources.json"], rep=[], loi=["L1", "L2"],
+   go="Bắt RolloutBlocked trong suggest() (exit có chủ đích, không mất bản tin)", gh="Gợi ý là template tất định; approvers khối intel rỗng (dev)"),
+ "intel-02.1": dict(st="DAT", mk="MOCK", nn="", env=ENV_INTEL + "; fake ở biên: RSS fixture 127.0.0.1; sender email GIẢ + routing fixture (harness/mock_deliver.py); đồng hồ +2h05 cho leo thang (harness/esc_clock.py)",
+   inputs=["it_g1_sources.json", "feed_round.py", "cfg/intel_alert_rules_thieu_nhom.json"], rep=["intel-bulletin-day-2026-10-23.md"], loi=[],
+   go="", gh="Gửi thật tới người nhận độc lập chưa kiểm (routing rỗng, SMTP chưa cấu hình — Pháp chế/Bên B); leo thang kiểm bằng đồng hồ tiêm, không đợi 2 giờ thật; luật data/intel_alert_rules.json GIẢ ĐỊNH; chính sách tồn/cấp 2/ngoài giờ chưa cấu hình"),
+ "intel-02.2": dict(st="DAT", mk="MOCK", nn="", env=ENV_INTEL + "; fake ở biên: như intel-02.1",
+   inputs=["it_g1_sources.json", "feed_round.py", "cfg/intel_alert_rules_thieu_nhom.json"], rep=["intel-bulletin-day-2026-10-23.md"], loi=[],
+   go="", gh="Như intel-02.1"),
+ "intel-02.3": dict(st="DAT", mk="MOCK", nn="", env=ENV_INTEL + "; fake ở biên: như intel-02.1",
+   inputs=["it_g1_sources.json", "feed_round.py", "cfg/intel_alert_rules_thieu_nhom.json"], rep=["intel-bulletin-day-2026-10-23.md"], loi=[],
+   go="", gh="Như intel-02.1"),
+ "intel-03": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_INTEL + "; fake ở biên: không",
+   inputs=["it_g1_competitor.csv", "it_g1_competitor_2.csv", "it_g1_competitor_tuan42.csv", "it_g1_competitor_loi.csv"],
+   rep=["intel-doithu-2026-10-19.md", "intel-doithu-2026-10-12.md"], loi=["L1"],
+   go="Sửa write_weekly để tắt intel-03 không chặn báo cáo trend. Ngoài code: dữ liệu đối thủ nhập tay thật (chưa có nguồn tự động hợp lệ)",
+   gh="Quan sát trước ngày hiệu lực golden → 'chưa có giá golden' (đúng); lượt 1 dữ liệu mồi không có golden hiệu lực"),
+ "intel-04.1": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_INTEL + "; fake ở biên: không",
+   inputs=["it_g1_multiTimeline.csv", "it_g1_relatedQueries.csv", "it_g1_multiTimeline_khong_neo.csv", "it_g1_multiTimeline_theo_ngay.csv"],
+   rep=["intel-trend-2026-10-19.md", "intel-doithu-2026-10-19_khi_tat_intel-04.1.md"], loi=["L1"],
+   go="Cùng sửa g1-L1. Ngoài code: file Google Trends xuất tay thật", gh="Ngày tuần trong fixture là thứ Hai (Google xuất Chủ nhật) — import không chặn"),
+ "intel-04.2": dict(st="DAT", mk="LOCAL", nn="", env=ENV_INTEL + "; fake ở biên: không",
+   inputs=["it_g1_relatedQueries.csv", "it_g1_relatedQueries_2.csv", "cfg/keyword_competitors_hong.json"], rep=[], loi=[],
+   go="", gh="Lọc tất định (chưa có lớp LLM-check ẩn ý); danh sách đối thủ chưa duyệt → nhóm CHỜ QUYẾT; ghi chú: query đã che SĐT lúc nạp ('… gọi ***') vẫn vào danh sách đề xuất"),
+ "intel-05.1": dict(st="BI_CHAN", mk="MOCK", nn="EXTERNAL_INPUT", env=ENV_INTEL + "; fake ở biên: gateway LLM GIẢ của chính sản phẩm (--dry-run)",
+   inputs=["cfg/sim_config_dpia_true.json"], rep=[], loi=[],
+   go="Pháp chế + TGĐ ký DPIA/TIA rồi NGƯỜI đổi dpia_signed; hạ tầng mở provider_only đủ 3 nhà cung cấp + key OpenRouter cho chạy thật",
+   gh="Chỉ kiểm dry-run (số giả) + các cổng chặn; chạy thật (đầu ra thiết yếu) chưa thực hiện được"),
+ "intel-05.2": dict(st="BI_CHAN", mk="LOCAL", nn="CODE_FAIL", env=ENV_INTEL + "; fake ở biên: không",
+   inputs=["it_g1_golden_skus.json", "it_g1_bom.json"], rep=[], loi=["L6"],
+   go="Tách kiểm readiness và kiểm giá đã duyệt trong combo_price (lỗi THẤP — mục đề xuất chính đã đạt). Ngoài code: mức chiết khấu data/combo_price.json GIẢ ĐỊNH; giá vốn đã duyệt; thử trên khách giả lập chờ DPIA",
+   gh="Golden fixture đổi self_declaration_ok cho SKU mật ong; không có giá vốn → chỉ kiểm khong_tinh_duoc (chưa kiểm dat/lo/duoi_san)"),
+ "intel-06": dict(st="DAT", mk="LOCAL", nn="", env=ENV_INTEL + "; fake ở biên: không",
+   inputs=["cfg/scenario_thieu_trend.json"], rep=["kich-ban-mat-ong-sam-300ml-shopee-2026-10-26.md"], loi=[],
+   go="", gh="Giả định data/scenario_assumptions.json chờ GĐ KD/TC chốt (baseline là FIXTURE); tiêu chí 'tuần Tết cao hơn' viết khái quát — tuần chứa Tết thấp hơn đúng hệ số giả định 0,6"),
+}
+
+EXTRA_EV = {
+ "ceo-04.3": ["out/ceo043_fx_posts_luot1_hong.txt", "out/ceo043_C03_before.txt", "out/ceo043_C03_after.txt", "out/db_approval_queue_ceo.txt"],
+ "ceo-03": ["out/ceo03_C02_luot1_now_truoc_fixture.txt", "out/ceo03_C03_before.txt", "out/ceo03_C03_after.txt"],
+ "ceo-01": ["out/db_approval_queue_ceo.txt", "out/ceo_seed_rollout.txt"], "ceo-02.1": ["out/db_approval_queue_ceo.txt"],
+ "ceo-04.5": ["out/db_approval_queue_ceo.txt"], "ceo-05": ["out/db_approval_queue_ceo.txt"],
+ "ceo-90": ["out/ceo90_C01_luot1_parser_hong.txt", "out/ceo90_C02b.txt"],
+ "intel-01.1": ["out/intel_httpd_requests.txt", "out/intel_seed_rollout.txt"], "intel-01.2": ["out/db_approval_queue_intel.txt"],
+ "intel-02.1": ["out/db_approval_queue_intel.txt", "out/intel02_C04a.txt", "out/intel02_C04c.txt"],
+ "intel-02.2": ["out/db_approval_queue_intel.txt", "out/intel02_C04a.txt", "out/intel02_C04c.txt"],
+ "intel-02.3": ["out/db_approval_queue_intel.txt", "out/intel02_C04a.txt", "out/intel02_C04c.txt"],
+ "intel-03": ["out/intel03_C04_luot1_golden_chua_hieu_luc.txt"], "intel-04.2": ["out/db_approval_queue_intel.txt"],
+ "intel-05.2": ["out/db_approval_queue_intel.txt"], "intel-06": ["out/intel06_C01_C04_verify.txt"],
+}
+HARNESS_COMMON = ["patch_run.py", "force_vanhanh.py"]
+
+crit_exp = {(i, c["ma"]): c for i, it in crit.items() for c in it["ca"]}
+summary = []
+for fid, cfg in CFG.items():
+    k, cr = khung[fid], crit[fid]
+    rs = [r for r in results if r["id"] == fid]
+    ca, tags = [], []
+    for r in rs:
+        ce = crit_exp.get((fid, r["ma"]))
+        exp = ce["expected"] if ce else "(bổ sung sau khóa — xem actual)"
+        ca.append({"ma": r["ma"], "mo_ta": ce["mo_ta"] if ce else "bổ sung sau khóa", "lenh": lenh(r["tag"]) if r["tag"] != "-" else "—",
+                   "expected": exp, "actual": r["actual"], "exit": r["exit"], "ket_qua": r["ket_qua"],
+                   "ly_do_not_run": r["actual"] if r["ket_qua"] == "NOT_RUN" else ""})
+        if r["tag"] != "-":
+            tags.append(r["tag"])
+    # mọi file out/ bắt đầu bằng tiền tố tag (gồm _a/_b/_off/_on…)
+    evs = set()
+    for t in tags:
+        for f in (EV / "out").glob(t + "*.txt"):
+            evs.add(f)
+    for e in EXTRA_EV.get(fid, []):
+        evs.add(EV / e)
+    for r in cfg["rep"]:
+        evs.add(EV / "reports" / r)
+    for n in cfg["inputs"] + HARNESS_COMMON:
+        evs.add(H / n)
+    evid = [{"path": rel(p), "sha256": sha(p)} for p in sorted(evs) if p.exists()]
+    loi = [L[x] for x in cfg["loi"]]
+    nfail = sum(1 for c in ca if c["ket_qua"] == "FAIL")
+    assert not (cfg["st"] == "DAT" and nfail), fid
+    rec = {"id": fid, "ten": k["ten"], "khoi": k["khoi"], "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"], "can_cu": k["can_cu"],
+           "tieu_chi": cr["tieu_chi_cu_the"], "fingerprint": FP, "thoi_gian": NOW, "moi_truong": cfg["env"],
+           "dau_vao": inp(*cfg["inputs"]), "ca": ca, "trang_thai": cfg["st"], "muc_kiem": cfg["mk"],
+           "nguyen_nhan": cfg["nn"], "can_de_go": cfg["go"], "gioi_han": cfg["gh"], "evidence": evid, "loi_san_pham": loi,
+           "nhom": "g1", "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"}
+    out = REPO / "evidence" / "itacc_r10" / "items" / f"{fid}.json"
+    out.write_bytes(json.dumps(rec, ensure_ascii=False, indent=1).encode("utf-8"))
+    summary.append((fid, cfg["st"], cfg["mk"], cfg["nn"], len(ca), nfail, len(evid)))
+for s in summary:
+    print(s)

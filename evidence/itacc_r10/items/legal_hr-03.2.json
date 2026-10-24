@@ -1,0 +1,131 @@
+{
+ "id": "legal_hr-03.2",
+ "ten": "Xếp mức được phép quảng bá",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Kho giấy tờ sản phẩm: 'xếp mức được phép quảng bá cho từng sản phẩm'",
+ "tieu_chi": [
+  "T1 `python -m agents.xnqc --sync-golden` exit 0; `python -m ingest.golden_store` nạp golden",
+  "T2 hồ sơ lệch golden → mục legal_hr/golden_xnqc_sync created_by 'agent:phap_che_a1' pending; sau khi người sửa golden (FIXTURE file) + nạp → view sku_readiness đổi mức (MO_TA→QC_DAY_DU)",
+  "T3 chạy lại → không trùng; da_cap thiếu scan verified → từ chối; tính năng tắt + loader_gate chưa cấu hình → golden_store exit 2 không nạp",
+  "T4 agent không ghi file golden/sku_master"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_legal; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); FIXTURE golden bản sao (saphraton-20v xnqc approved) nạp qua golden_store --file",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/golden_fixture_xnqc.json",
+   "sha256": "b459a412f56364ddbfcbb0cb2f69491adec076baa93e7a3db577155e234d8f19",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "03.2-C0",
+   "mo_ta": "mồi hồ sơ add + da_nop",
+   "lenh": "python -m agents.xnqc --set 1 --status da_nop --ngay-nop 2026-10-20 --by Pháp Chế Thử IT",
+   "expected": "da_nop",
+   "actual": "hồ sơ #1 chuan_bi → da_nop (dev); --set tự gọi sync_golden → mục #3",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.2-C1",
+   "mo_ta": "--sync-golden",
+   "lenh": "python -m agents.xnqc --sync-golden",
+   "expected": "golden_xnqc_sync T2",
+   "actual": "mục #3 legal_hr/golden_xnqc_sync agent:phap_che_a1 pending 'none→pending theo hồ sơ #1' (sinh ở bước --set qua cùng hàm sync_golden); CLI --sync-golden exit 0 xác nhận không còn lệch mới",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.2-C2",
+   "mo_ta": "chạy lại",
+   "lenh": "python -m agents.xnqc --sync-golden",
+   "expected": "không trùng",
+   "actual": "'không có', tổng 1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.2-C3",
+   "mo_ta": "da_cap thiếu scan",
+   "lenh": "python -m agents.xnqc --set 1 --status da_cap --so-giay XNQC-THU-IT-01 --ngay-cap 2026-10-21 --doc-sha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --by Pháp Chế Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 'scan giấy không có trong documents', trạng thái giữ da_nop",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.2-C4",
+   "mo_ta": "golden FIXTURE xnqc approved",
+   "lenh": "python -m ingest.golden_store --file evidence/itacc_r10/g3/harness/fixtures/golden_fixture_xnqc.json",
+   "expected": "QC_DAY_DU",
+   "actual": "sku_readiness saphraton-20v×shopee MO_TA → QC_DAY_DU",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "03.2-C5",
+   "mo_ta": "tắt → loader chặn",
+   "lenh": "python -m ingest.golden_store",
+   "expected": "exit 2 không nạp",
+   "actual": "exit 2 loader-gate 'tính năng TẮT: legal_hr-03.2 → KHÔNG nạp'; readiness không đổi",
+   "exit": 2,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "Chính sách loader_gate chưa cấu hình; người sửa golden mô phỏng bằng file FIXTURE; da_cap thật cần scan verified (doc_intake).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C0a.txt",
+   "sha256": "cc5fca102964602a3d646bdcb6e4843d2c8c09feaf5e4c7d38f6a7bd683b650f"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C0b.txt",
+   "sha256": "9777fa99909274f99bed36bc8192ba61ba9b671e062c38b7b2593ad9f5431c03"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C1.txt",
+   "sha256": "cc720002332d0e68543f58ce1e3221a1d78c578d1393c37cd5b5a657aa482e24"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C2.txt",
+   "sha256": "cc720002332d0e68543f58ce1e3221a1d78c578d1393c37cd5b5a657aa482e24"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C3.txt",
+   "sha256": "05dffb09d4928c909ca6957b311f21084ed773efa3419f3d399407b00ded0d20"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C4.txt",
+   "sha256": "e750602417dd196cc4db5fecc8905c3a59f510bb05d926310fd8eb43d28a12ff"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C4.db.json",
+   "sha256": "f6da5a481a62257c3ca5499562cdfd4b303f76aa3335f104963a854794eb132d"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C5a.txt",
+   "sha256": "6e5bd6e4fea05d2cdf979060ae18d2fd5ce0e214a27031ad9b9bd859ac128739"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C5.txt",
+   "sha256": "40cf35d174ec868e17d7fa7895c54628a139c1503de09ec2495ae2e707a2be7b"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C5c.txt",
+   "sha256": "02c6b3c3eac83f85c5ff5385570eea1f9ea1a544da905310c0e9f2f4620431d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-03.2-C5b.txt",
+   "sha256": "dfceb80e5824221c7c1ff044610746aba4ef2ac19400c4ebeec7d458de1cea67"
+  }
+ ],
+ "loi_san_pham": []
+}

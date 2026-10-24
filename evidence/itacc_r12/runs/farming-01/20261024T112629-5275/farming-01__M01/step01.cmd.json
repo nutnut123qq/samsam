@@ -1,0 +1,26 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    svc=mk('svc_ui')\n    from agents import garden as g\n    with psycopg.connect(svc,connect_timeout=5) as c:\n        print('SVC_READ', len(g.active_plots(c)), len(g.recent_logs(c)), len(g.anomaly_check(c)))\nfinally:\n    drop()\n"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:27:51+07:00",
+ "ket_thuc": "2026-10-24T11:27:53+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "SVC_READ \\d+ \\d+ \\d+[\\s\\S]*DROPPED 1",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "7274f05a08a648a12f696aee2784e00af122a3664b6167d909d172d0672d3569",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

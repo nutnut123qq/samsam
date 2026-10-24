@@ -1,0 +1,107 @@
+"""HARNESS r12 — dựng evidence/itacc_r12/items/<id>.json từ log GỐC của lượt chạy hiện hành (runs/<id>/<run_id>/) + tiêu
+chí đã khóa, theo cấu hình evidence/itacc_r12/items_cfg.json (id → tiêu chí, run hiện hành, mức kiểm, giới hạn, lượt bị
+thay thế, ánh xạ ca UI). Quy tắc trạng thái (không chấm tay):
+- mọi ca PASS → DAT; có FAIL → BI_CHAN (CODE_FAIL, kèm `loi_san_pham` phải khai trong cfg); có NOT_RUN/LOI_HARNESS mà
+  không FAIL → CHUA_KIEM;
+- mục đang bị chặn vì lý do NGOÀI code (MISSING_ADAPTER/EXTERNAL_INPUT/SEPARATE_REPO/NON_SOFTWARE — tổng hợp r11) giữ
+  BI_CHAN + nguyên nhân cũ dù ca chạy được đều PASS;
+- ca tiêu chí `not_run` bắt đầu "UI —": kết quả lấy từ bước của lượt UI thật (ui_results.json) theo `ui_map` khai trong
+  cfg TRƯỚC khi dựng; thiếu ánh xạ → giữ NOT_RUN.
+python -I build_items_r12.py.txt [id ...]   (không đối số = mọi id trong cfg)"""
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r12"
+CFG = json.loads((EV / "items_cfg.json").read_text(encoding="utf-8"))
+KHUNG = {i["id"]: i for i in json.loads((REPO / "evidence/itacc_r10/criteria/khung.json").read_text(encoding="utf-8"))["items"]}
+SMAP = json.loads((REPO / "evidence/itacc_r11/source_map.json").read_text(encoding="utf-8"))["items"]
+TH11 = {i["id"]: i for i in json.loads((REPO / "evidence/itacc_r11/tong_hop.json").read_text(encoding="utf-8"))["items"]}
+NONCODE = {"MISSING_ADAPTER", "EXTERNAL_INPUT", "SEPARATE_REPO", "NON_SOFTWARE"}
+
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def rel(p):
+    return str(Path(p).resolve().relative_to(REPO)).replace("\\", "/")
+
+
+ids = sys.argv[1:] or [k for k in CFG["items"]]
+for fid in ids:
+    c = CFG["items"][fid]
+    crit_p = EV / c["criteria"]
+    lock_p = crit_p.with_name(crit_p.name.replace(".json", ".lock.txt"))
+    crit = json.loads(crit_p.read_text(encoding="utf-8"))
+    citem = next(i for i in crit["items"] if i["id"] == fid)
+    run = EV / "runs" / fid / c["run_id"]
+    kq = json.loads((run / "ket_qua.json").read_text(encoding="utf-8"))
+    lock = lock_p.read_text(encoding="utf-8").split()
+    assert kq["criteria_sha256"] == sha(crit_p) == lock[1], f"{fid}: hash tiêu chí ≠ khóa ≠ lượt chạy"
+    ui = {}
+    for up in c.get("ui_runs", []):
+        for s in json.loads((REPO / up / "ui_results.json").read_text(encoding="utf-8")):
+            ui[s["step"]] = {**s, "run": up}
+    cases = []
+    for ca in citem["ca"]:
+        cdir = run / ca["ma"]
+        cr = json.loads((cdir / "case.json").read_text(encoding="utf-8"))
+        asserts = json.loads((cdir / "asserts.json").read_text(encoding="utf-8")) if (cdir / "asserts.json").exists() else []
+        steps = []
+        for st in sorted(cdir.glob("step*.cmd.json")):
+            s = json.loads(st.read_text(encoding="utf-8"))
+            steps.append({"argv": " ".join(s["argv"]).replace(str(REPO) + "\\", ""), "exit": s["exit"],
+                          "expect_exit": s["expect_exit"], "regex": s["regex"], "bat_dau": s["bat_dau"],
+                          "ket_thuc": s["ket_thuc"], "stdout": rel(st.with_name(st.name.replace(".cmd.json", ".stdout.txt"))),
+                          "stderr": rel(st.with_name(st.name.replace(".cmd.json", ".stderr.txt")))})
+        res, ui_ev = cr["ket_qua"], None
+        if res == "NOT_RUN" and str(ca.get("not_run", "")).startswith("UI —") and ca["ma"] in c.get("ui_map", {}):
+            got = [ui.get(n) for n in c["ui_map"][ca["ma"]]]
+            ui_ev = [{"step": n, "verdict": g["verdict"] if g else "THIEU", "run": g["run"] if g else None,
+                      "shot": g.get("shot") if g else None} for n, g in zip(c["ui_map"][ca["ma"]], got)]
+            res = ("PASS" if all(g and g["verdict"] == "PASS" for g in got) else
+                   "FAIL" if any(g and g["verdict"] == "FAIL" for g in got) else "NOT_RUN")
+        cases.append({"ma": ca["ma"], "nguon_r10": ca.get("nguon_r10"), "mo_ta": ca.get("mo_ta"),
+                      "tien_quyet": bool(ca.get("tien_quyet")),
+                      "expected": {"buoc": [{k: b.get(k) for k in ("expect_exit", "stdout_re", "stderr_re", "out_re")
+                                             if k in b} for b in ca.get("buoc", [])], "kiem": ca.get("kiem", [])},
+                      "actual": {"buoc": steps, "kiem": asserts, "ui": ui_ev},
+                      "exit": [s["exit"] for s in steps], "ket_qua": res,
+                      "ly_do_not_run": cr.get("ly_do_not_run") if res == "NOT_RUN" else None,
+                      "loi_harness": cr.get("loi_harness"), "thu_muc": rel(cdir)})
+    res = [x["ket_qua"] for x in cases]
+    old11 = TH11[fid]
+    if "FAIL" in res:
+        st, cause = "BI_CHAN", "CODE_FAIL: " + "; ".join(c.get("loi_san_pham", [])) if c.get("loi_san_pham") else "CHUA_XAC_MINH"
+        if not c.get("loi_san_pham"):
+            st = "CHUA_KIEM"      # FAIL chưa xác minh là lỗi sản phẩm → không kết luận
+    elif any(r in ("NOT_RUN", "LOI_HARNESS") for r in res):
+        st, cause = "CHUA_KIEM", "XEM_CA"
+    else:
+        st, cause = "DAT", ""
+    if old11["trang_thai"] == "BI_CHAN" and old11["nguyen_nhan"] in NONCODE:
+        st, cause = "BI_CHAN", old11["nguyen_nhan_day_du"] + (" · ca chạy được r12: " + ", ".join(
+            f"{k}={res.count(k)}" for k in ("PASS", "FAIL", "NOT_RUN") if res.count(k)))
+    old = REPO / SMAP[fid]["path"]
+    k = KHUNG[fid]
+    files = sorted(p for p in run.rglob("*") if p.is_file())
+    rec = {"id": fid, "ten": k["ten"], "khoi": k["khoi"], "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"],
+           "can_cu": k["can_cu"], "luot": "r12", "supersedes": {"path": SMAP[fid]["path"], "sha256": sha(old)},
+           "ly_do_chay_lai": c["ly_do"], "fingerprint_code_luc_khoa": crit.get("fingerprint_code"),
+           "tieu_chi_file": rel(crit_p), "tieu_chi_sha256": sha(crit_p), "tieu_chi_khoa": " ".join(lock),
+           "tieu_chi": citem.get("tieu_chi_cu_the"), "moi_truong": crit.get("moi_truong", "") + f" DB {citem['db']}.",
+           "run_id": c["run_id"], "ca": cases, "trang_thai": st, "muc_kiem": c["muc_kiem"], "nguyen_nhan": cause,
+           "can_de_go": old11.get("nguyen_nhan_day_du") if st == "BI_CHAN" and old11["nguyen_nhan"] in NONCODE else
+           ("vá lỗi sản phẩm đã ghi" if st == "BI_CHAN" else ""),
+           "gioi_han": c["gioi_han"] + " Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+           "luot_bi_thay_the": c.get("luot_bi_thay_the", []),
+           "evidence": [{"path": rel(p), "sha256": sha(p)} for p in files], "loi_san_pham": c.get("loi_san_pham", [])}
+    p = EV / "items" / f"{fid}.json"
+    p.parent.mkdir(exist_ok=True)
+    p.open("w", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))
+    print(fid, st, c["muc_kiem"], f"{res.count('PASS')}/{len(res)} PASS", f"FAIL {res.count('FAIL')}",
+          f"NOT_RUN {res.count('NOT_RUN')}", len(files), "file")

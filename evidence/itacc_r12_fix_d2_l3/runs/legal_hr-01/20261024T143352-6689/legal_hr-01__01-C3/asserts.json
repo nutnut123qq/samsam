@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select count(*) > 0 and bool_and(guardrail is not null and guardrail ? 'ok') from content_drafts",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

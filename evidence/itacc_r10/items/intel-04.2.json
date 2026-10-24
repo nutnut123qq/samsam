@@ -1,0 +1,152 @@
+{
+ "id": "intel-04.2",
+ "ten": "Gợi ý từ khóa an toàn pháp lý",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Xu hướng và từ khóa: 'gợi ý từ khóa an toàn về pháp lý'",
+ "tieu_chi": [
+  "T1 `python scripts/intel_weekly.py --suggest-keywords [--dry-run]` exit đúng",
+  "T2 mục intel/keyword_suggest created_by=agent:intel_keywords pending: danh sách đề xuất KHÔNG chứa từ khóa công dụng/bệnh/từ cấm/rượu/PII/chỉ dẫn địa lý chưa xác nhận; từ khóa bị loại chỉ ghi id + lý do (không chép); thương hiệu đối thủ khi danh sách chưa duyệt → CHỜ QUYẾT",
+  "T3 ca âm: dry-run không ghi; chạy lại skip; cấu hình đối thủ hỏng → exit 1; tắt → exit 2",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_intel; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [
+  {
+   "ten": "it_g1_relatedQueries.csv",
+   "sha256": "3c82d782e895829c780182f163bba05a348297aeb3a361a6b4cfe2feb4d7471a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_relatedQueries_2.csv",
+   "sha256": "a66aabc481be853c5b8413db859673d36aa88fbeeb7a53fbbc44c277c80395c6",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "cfg/keyword_competitors_hong.json",
+   "sha256": "32a7d5e5360a4da8286bae922c0b679720f58751deb260743b0168e173669c47",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Dry-run",
+   "lenh": "python scripts/intel_weekly.py --suggest-keywords --dry-run",
+   "expected": "exit 0, approval_queue không đổi",
+   "actual": "dry-run: an toàn 4, loại 4, chờ quyết 2; '[dry-run] kw:3 — KHÔNG ghi DB'; approval_queue 2→2",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Gợi ý",
+   "lenh": "python scripts/intel_weekly.py --suggest-keywords",
+   "expected": "exit 0; 1 mục keyword_suggest; safe không có 'chữa'/'tiểu đường'/'rượu'/SĐT; excluded chỉ id; từ có KGC/Cheong Kwan Jang vào CHỜ QUYẾT",
+   "actual": "mục #3 intel/keyword_suggest kw:3 created_by=agent:intel_keywords pending; danh sách đề xuất KHÔNG chứa 'chữa'/'tiểu đường'/'rượu'/SĐT/'ngọc linh'/KGC/'hàn quốc'; loại: chỉ dẫn địa lý 3, nhóm cấm QC 1, bệnh 1, từ cấm 1 — chỉ ghi trends_related #id, không chép từ bị loại; 'nhân sâm hàn quốc'/'hồng sâm KGC chính hãng' vào CHỜ QUYẾT (danh sách đối thủ chưa duyệt). Ghi chú: query đã bị che SĐT lúc nạp ('nhân sâm tươi gọi ***') vẫn vào danh sách đề xuất",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Chạy lại",
+   "lenh": "python scripts/intel_weekly.py --suggest-keywords",
+   "expected": "[skip], không mục mới",
+   "actual": "[skip] kw:3 đã có mục #3; vẫn 1 mục",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Cấu hình đối thủ hỏng",
+   "lenh": "python evidence/itacc_r10/g1/harness/patch_run.py scripts.intel_weekly COMPETITORS_FILE=evidence/itacc_r10/g1/harness/cfg/keyword_competitors_hong.json -- --suggest-keywords --import 3",
+   "expected": "exit 1, không mục",
+   "actual": "HARNESS COMPETITORS_FILE→JSON da_duyet thiếu duyet_boi/can_cu/xu_ly → '[err] … — không đề xuất (fail-closed)' exit 1; 0 mục mới",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Tắt",
+   "lenh": "python scripts/intel_weekly.py --suggest-keywords --import 6",
+   "expected": "exit 2, 0 mục; bật lại",
+   "actual": "tắt intel-04.2 → '[rollout] … không sinh đầu ra' exit 2 với import #6 mới; vẫn 1 mục; bật lại",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Lọc tất định (chưa có lớp LLM-check ẩn ý); danh sách đối thủ chưa duyệt → nhóm CHỜ QUYẾT; ghi chú: query đã che SĐT lúc nạp ('… gọi ***') vẫn vào danh sách đề xuất",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/cfg/keyword_competitors_hong.json",
+   "sha256": "32a7d5e5360a4da8286bae922c0b679720f58751deb260743b0168e173669c47"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_relatedQueries.csv",
+   "sha256": "3c82d782e895829c780182f163bba05a348297aeb3a361a6b4cfe2feb4d7471a"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_relatedQueries_2.csv",
+   "sha256": "a66aabc481be853c5b8413db859673d36aa88fbeeb7a53fbbc44c277c80395c6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/db_approval_queue_intel.txt",
+   "sha256": "55246a120d2dc67f7ef5fcde53c7cea375a2c46ce86403cc68de0b423ed155e5"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel042_C01.txt",
+   "sha256": "f39390191457e79d6c51e8a94c34fa7f645000f2500b5a9063e03563cdf02931"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel042_C02.txt",
+   "sha256": "bb25338939b7eb207b725b8cfc5a13708e7edea06daa3dd7aa670ef5c8e43fbf"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel042_C03.txt",
+   "sha256": "64f98b4f8970968d484b3a6f2010e2b4717c25d776482e9c658c87d6905a0803"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel042_C04.txt",
+   "sha256": "ac924653bc8059c410382833b29d957476c0c941e9af584ad3cd7217352dd247"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel042_C05.txt",
+   "sha256": "5f49ad398e319025cf6c9d9b6ccbe70ed1dcfc027409da9f04695549aa121c70"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel042_C05a.txt",
+   "sha256": "e28e443abdfb6f89b9e61047bd49009e7fc08fa5ece9114e203ebe3ff1b7fdfb"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel042_C05b.txt",
+   "sha256": "cd0a9c859de386e3e659cbe1b8389e534463dad77f47441ff84f8d3ac382b12b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel042_C05x.txt",
+   "sha256": "4b0223232ba2ec94d19c42bac640033479c7ccb3d5c7b927d9fc2fede3f35ceb"
+  }
+ ],
+ "loi_san_pham": [],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

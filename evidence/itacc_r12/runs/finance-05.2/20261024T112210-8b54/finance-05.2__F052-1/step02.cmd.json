@@ -1,0 +1,22 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import re,sys\nt=open(sys.argv[1],encoding='utf-8').read()\nrows=[l for l in t.splitlines() if re.match(r'\\| \\d\\d/\\d\\d',l)]\nn=lambda s:int(s.strip().replace('.','').replace('đ',''))\nbad=[]\nfor l in rows:\n    c=[x.strip() for x in l.strip('|').split('|')]\n    lo,ba,hi,o,sl,sb,sh=[n(x) for x in c[1:8]]\n    if not (lo<=ba<=hi and sl<=sb<=sh): bad.append(l)\nprint('so_tuan',len(rows),'lech',bad)\nsys.exit(0 if len(rows)==13 and not bad else 1)",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-1\\out/dong-tien-2026-10-26.md"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:22:26+07:00",
+ "ket_thuc": "2026-10-24T11:22:27+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "975c54b83ec21e2fe8057089c67f59d32a93b812aa07830c413450a9400df4b9",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

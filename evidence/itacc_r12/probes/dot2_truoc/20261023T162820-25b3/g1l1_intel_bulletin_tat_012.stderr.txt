@@ -1,0 +1,19 @@
+[wrap] FIXTURE scripts.intel_bulletin.REPORTS_DIR = C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\ext\20261023T162820-25b3\ib_tat012
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r12\harness\wrap.py.txt", line 85, in <module>
+    sys.exit(m.main(argv[2:]))
+             ^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\scripts\intel_bulletin.py", line 372, in main
+    data["suggested"] = suggest(conn, args.period, start, end,
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\scripts\intel_bulletin.py", line 335, in suggest
+    qid = director.submit(conn, "intel", "intel_topic", oid, title,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\director.py", line 172, in submit
+    return aq.enqueue(conn, object_type=object_type, object_id=object_id,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\approval_queue.py", line 88, in enqueue
+    _rollout().check_generate(conn, _feature_of((block, object_type, by)),
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\rollout.py", line 671, in check_generate
+    raise RolloutBlocked(_why(fid, "tat", what) + " — không sinh đầu ra")
+pipelines.rollout.RolloutBlocked: hàng duyệt intel/intel_topic: tính năng intel-01.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra

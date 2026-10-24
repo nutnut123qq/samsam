@@ -1,0 +1,28 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    sal=mk('app_human','Bán Hàng Thử R12',['sales'])\n    print('SAL_RELEASE', *tryq(sal, 'select garden_media_release_human(%s,%s,%s,%s)', (os.environ['SHA'],'cap','Bán Hàng Thử R12',None)))\nfinally:\n    drop()\n"
+ ],
+ "env_doi": [
+  "SHA"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:34:14+07:00",
+ "ket_thuc": "2026-10-24T11:34:16+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "SAL_RELEASE ERR 42501[\\s\\S]*DROPPED 1",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e952a6a7cc5661de7c52108a15c561ef941380ed02b1a946eb375a8939fc3b13",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

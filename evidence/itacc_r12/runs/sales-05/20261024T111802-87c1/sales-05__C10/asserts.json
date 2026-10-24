@@ -1,0 +1,15 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type in ('b2b_quote', 'b2b_quote_matrix')",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\sales-05\\20261024T111802-87c1\\sales-05__C10\\out/bao-gia-*",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ }
+]

@@ -1,0 +1,22 @@
+{
+ "ca": "l3_dbloi_suckhoe",
+ "argv": [
+  "python",
+  "-c",
+  "\nimport json, os, sys\nfrom pathlib import Path\nfrom connectors import zalo, channels\nfrom api import rag\nzalo.CONV_LOG = Path(sys.argv[2]) / 'conv.jsonl'\nzalo.SEEN_DB = Path(sys.argv[2]) / 'seen.db'\nrag.answer = lambda *a, **k: {'answer': rag.NO_DATA, 'sources': []}\nif sys.argv[3] == 'db_loi':\n    channels._connect = lambda: None\nout = []\nr = zalo._reply_turn('uid-r12-' + sys.argv[1], sys.argv[4], 'm-' + sys.argv[1], send=lambda u, t: out.append(t) or True)\nprint(json.dumps({'text': r.get('text'), 'sent': out}, ensure_ascii=False))\n",
+  "dbloi_suckhoe",
+  "C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261023T163151-a0f9\\l3",
+  "db_loi",
+  "Uống sâm có chữa tiểu đường không?"
+ ],
+ "env_doi": [
+  "CHANNEL_HASH_SALT",
+  "DEPLOY"
+ ],
+ "bat_dau": "2026-10-23T16:34:05+07:00",
+ "ket_thuc": "2026-10-23T16:34:08+07:00",
+ "exit": 0,
+ "llm_calls": null,
+ "stdout_sha256": "6c2e240aa6700a00a87c7ee0571356b155456419e70cdc39e32b5d026c5860df",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

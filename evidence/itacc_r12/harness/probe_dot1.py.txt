@@ -1,0 +1,200 @@
+"""PROBE r12 đợt 1 — P-01, UI-01, UI-02, G5-01, G5-02. Cùng input/assertion chạy trên snapshot baseline (trước vá)
+và working tree (sau vá).  python -I probe_dot1.py.txt <ROOT> <envfile> <label>"""
+import importlib.machinery
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+H = Path(__file__).resolve().parent
+_l = importlib.machinery.SourceFileLoader("plib", str(H / "plib.py.txt"))
+plib = importlib.util.module_from_spec(importlib.util.spec_from_loader("plib", _l))
+_l.exec_module(plib)
+ROOT, ENVF, LABEL = sys.argv[1], sys.argv[2], sys.argv[3]
+p = plib.P(ROOT, ENVF, LABEL)
+F, S = plib.FIX, p.dir / "scratch"
+GD_VT, GD_SX = "GĐ Vùng Trồng Thử R12", "GĐ Sản Xuất Thử R12"
+# kho media/thư mục marketing PHẢI ngoài repo (sản phẩm từ chối kho trong repo) — scratchpad ngoài cả 2 cây mã
+import os as _os
+EXT = Path(_os.environ["PROBE_EXT_DIR"]) / p.run_id
+EXT.mkdir(parents=True, exist_ok=False)
+
+
+def files_text(d):
+    d = Path(d)
+    return "\n".join(f.read_text(encoding="utf-8") for f in sorted(d.glob("*.md"))) if d.exists() else ""
+
+
+def section(text, head):
+    i = text.find(head)
+    if i < 0:
+        return ""
+    j = text.find("\n## ", i + 3)
+    return text[i:j if j > 0 else len(text)]
+
+
+# ---------------------------------------------------------------- P-01
+try:
+    for n, a in (("p01_s1", ["python", "-m", "ingest.inventory_csv", "--file", F / "inv_ok.csv"]),
+                 ("p01_s2", ["python", "-m", "pipelines.production", "lots", "--load", F / "lots_ok.json"]),
+                 ("p01_s3", ["python", "-m", "pipelines.production", "lots", "--load", F / "lots_r12_extra.json"])):
+        assert p.run(n, a)[0] == 0, n
+    for lot in ("IT-LOT-001", "IT-LOT-002", "IT-LOT-003", "IT-R12-X01"):
+        assert p.run(f"p01_intake_{lot}", ["python", "-m", "pipelines.production", "intake", "--lot", lot,
+                                            "--result", "passed", "--by", "QA Thử R12"])[0] == 0
+    rc, so, se, _ = p.run("p01_a_bulletin_khong_phan_bo", ["python", "-m", "pipelines.production", "bulletin",
+                                                           "--date", "2026-10-23", "--out-dir", S / "p01a"])
+    t = files_text(S / "p01a")
+    p.check("P-01", "a_khong_phan_bo_van_sinh (positive control)", rc == 0 and "IT-LOT-001" in t,
+            "exit 0, bản tin có lô cận hạn", {"exit": rc, "co_IT-LOT-001": "IT-LOT-001" in t})
+    assert p.run("p01_s4_allocate", ["python", "-m", "pipelines.production", "allocate", "--cutoff", "chot_11_11",
+                                     "--start", "2026-10-26"])[0] == 0
+    n_alloc = p.q("select count(*) from allocation_proposals")
+    rc, so, se, _ = p.run("p01_b_bulletin_co_phan_bo", ["python", "-m", "pipelines.production", "bulletin",
+                                                        "--date", "2026-10-23", "--out-dir", S / "p01b"])
+    t = files_text(S / "p01b")
+    near = section(t, "## Hàng cận hạn")
+    ok = (rc == 0 and n_alloc > 0 and "TypeError" not in se and "IT-LOT-001" in near and "IT-LOT-002" in near
+          and "IT-R12-X01" in near and "IT-LOT-003" not in near and "chot_11_11" in section(t, "## Thiếu hàng"))
+    p.check("P-01", "b_co_phan_bo_va_lo_can_han", ok,
+            "exit 0; cận hạn có IT-LOT-001/002 (có tồn) + IT-R12-X01 (SKU chưa có tồn), không có IT-LOT-003 (HSD 2028); mục thiếu hàng có mốc chot_11_11",
+            {"exit": rc, "allocation_rows": n_alloc, "typeerror": "TypeError" in se, "can_han": near[:400]})
+    files = sorted(f.name for f in (S / "p01b").glob("*.md")) if (S / "p01b").exists() else []
+    p.check("P-01", "c_ra_ca_hai_file_bantin_canhan", any(f.startswith("sx-bantin-") for f in files)
+            and any(f.startswith("sx-canhan-") for f in files), "có sx-bantin-* và sx-canhan-*", files)
+except Exception as e:  # noqa: BLE001
+    p.error("P-01", "setup", e)
+
+# ---------------------------------------------------------------- UI-01 / UI-02 (login svc_ui + người thật tạm)
+try:
+    svc, svc_dsn = p.login("svc", "svc_ui")
+    _, far_dsn = p.login("far", "app_human", person="Nông Dân Thử R12", blocks=["farming"])
+    _, sal_dsn = p.login("sal", "app_human", person="Bán Hàng Thử R12", blocks=["sales"])
+    READ = ("import psycopg,os; from agents import garden as g; c=psycopg.connect(os.environ['DATABASE_URL']);"
+            "print(len(g.active_plots(c)), len(g.recent_logs(c)), len(g.anomaly_check(c)))")
+    rc, so, se, _ = p.run("ui01_a_svc_ui_doc_vuon", ["python", "-c", READ], env={"DATABASE_URL": svc_dsn})
+    p.check("UI-01", "a_svc_ui_doc_khoanh_nhat_ky", rc == 0 and "InsufficientPrivilege" not in se,
+            "svc_ui đọc được plots/plot_logs (cột tab cần)", {"exit": rc, "stdout": so.strip(), "loi": se.strip()[-160:]})
+    INS = ("import psycopg,os; c=psycopg.connect(os.environ['DATABASE_URL']);"
+           "c.execute(\"insert into plot_logs (plot_id, ts, activity, author, source) values ('KV-A01', now(), 'x', 'y', 'manual')\"); c.commit()")
+    rc, so, se, _ = p.run("ui01_b_svc_ui_khong_insert", ["python", "-c", INS], env={"DATABASE_URL": svc_dsn})
+    p.check("UI-01", "b_svc_ui_KHONG_ghi_thang_plot_logs", rc != 0 and ("permission denied" in se or "42501" in se),
+            "svc_ui không INSERT plot_logs trực tiếp (ít quyền)", {"exit": rc, "loi": se.strip()[-160:]})
+    rc, so, se, _ = p.run("ui01_c_svc_ui_khong_select_moi_cot", ["python", "-c",
+                          "import psycopg,os; c=psycopg.connect(os.environ['DATABASE_URL']); print(c.execute('select * from plots').fetchall()[:1])"],
+                          env={"DATABASE_URL": svc_dsn})
+    p.check("UI-01", "c_svc_ui_khong_select_moi_cot_plots", rc != 0 and "permission denied" in se,
+            "không cấp SELECT mọi cột", {"exit": rc, "loi": se.strip()[-120:]})
+    WR = ("import psycopg,os,sys; from datetime import datetime,timezone; from agents import garden as g;"
+          "c=psycopg.connect(os.environ['DATABASE_URL']);"
+          "lid,w=g.add_log_human(c,'KV-A01',datetime.now(timezone.utc),'tưới nước','tưới thử R12',sys.argv[1]); c.commit(); print(lid)")
+    rc, so, se, _ = p.run("ui01_d_nguoi_farming_ghi", ["python", "-c", WR, "Nông Dân Thử R12"], env={"DATABASE_URL": far_dsn})
+    row = p.rows("select author, row_hash is not null, source from plot_logs where detail = 'tưới thử R12'")
+    p.check("UI-01", "d_nguoi_khoi_farming_ghi_qua_duong_hop_le", rc == 0 and row == [("Nông Dân Thử R12", True, "manual")],
+            "login người khối farming ghi được, author = người của login, có hash chain",
+            {"exit": rc, "row": row, "loi": se.strip()[-200:]})
+    rc, so, se, _ = p.run("ui01_e_nguoi_sales_bi_chan", ["python", "-c", WR, "Bán Hàng Thử R12"], env={"DATABASE_URL": sal_dsn})
+    p.check("UI-01", "e_nguoi_khac_khoi_bi_chan", rc != 0 and p.q("select count(*) from plot_logs where author = 'Bán Hàng Thử R12'") == 0,
+            "khối sales bị chặn, 0 dòng", {"exit": rc, "loi": se.strip()[-200:]})
+    rc, so, se, _ = p.run("ui01_f_ghi_ten_nguoi_khac", ["python", "-c", WR, "Người Khác Thử R12"], env={"DATABASE_URL": far_dsn})
+    p.check("UI-01", "f_ghi_thay_ten_nguoi_khac_bi_chan", rc != 0 and p.q("select count(*) from plot_logs where author = 'Người Khác Thử R12'") == 0,
+            "không ghi thay tên người khác", {"exit": rc, "loi": se.strip()[-160:]})
+    rc, so, se, _ = p.run("ui02_a_svc_ui_doc_chunks", ["python", "-c",
+                          "import psycopg,os; c=psycopg.connect(os.environ['DATABASE_URL']); print(c.execute('select count(*) from chunks').fetchone()[0])"],
+                          env={"DATABASE_URL": svc_dsn})
+    p.check("UI-02", "a_svc_ui_doc_kb_cong_khai", rc == 0, "svc_ui SELECT chunks (KB công khai)", {"exit": rc, "loi": se.strip()[-160:]})
+    rc, so, se, _ = p.run("ui02_b_svc_ui_khong_doc_kb_noi_bo", ["python", "-c",
+                          "import psycopg,os; c=psycopg.connect(os.environ['DATABASE_URL']); print(c.execute('select count(*) from chunks_internal').fetchone()[0])"],
+                          env={"DATABASE_URL": svc_dsn})
+    p.check("UI-02", "b_svc_ui_KHONG_doc_kb_noi_bo", rc != 0 and "permission denied" in se,
+            "không mở chunks_internal", {"exit": rc, "loi": se.strip()[-160:]})
+except Exception as e:  # noqa: BLE001
+    p.error("UI-01/02", "setup", e)
+
+# ---------------------------------------------------------------- G5-01
+try:
+    rc, so, se, _ = p.run("g501_s1_media", ["python", "scripts/garden_media.py", "--file", F / "anh_vuon_r12.jpg",
+                                            "--plot", "KV-A01", "--date", "2026-10-22", "--by", "Nông Dân Thử R12",
+                                            "--store", EXT / "media"])
+    sha = p.q("select sha256 from garden_media order by id desc limit 1")
+    assert rc == 0 and sha, (rc, se[-200:])
+    rc, so, se, _ = p.run("g501_a_agent_cap", ["python", "scripts/garden_media_mkt.py", "--release", sha, "--by", "agent:mkt"])
+    p.check("G5-01", "a_agent_khong_cap", rc != 0 and p.q("select count(*) from garden_media_releases") == 0,
+            "agent bị chặn, 0 dòng", {"exit": rc})
+    rc, so, se, _ = p.run("g501_b_nguoi_cap", ["python", "scripts/garden_media_mkt.py", "--release", sha, "--by", GD_VT])
+    rel = p.rows("select action, by_person from garden_media_releases")
+    vis = p.q("select count(*) from v_garden_media_marketing")
+    p.check("G5-01", "b_nguoi_cap_duoc_marketing_thay", rc == 0 and rel == [("cap", GD_VT)] and vis == 1,
+            "exit 0, 1 dòng cap, view marketing 1", {"exit": rc, "rel": rel, "view": vis, "loi": (so + se).strip()[-200:]})
+    rc, so, se, _ = p.run("g501_c_marketing_lay", ["python", "scripts/garden_media_mkt.py", "--get", sha, "--out", EXT / "mkt", "--store", EXT / "media"])
+    got = sorted((EXT / "mkt").glob("*")) if (EXT / "mkt").exists() else []
+    p.check("G5-01", "c_marketing_lay_tu_lieu_da_cap", rc == 0 and len(got) == 1, "exit 0, 1 file", {"exit": rc, "files": [g.name for g in got]})
+    cols = [r[0] for r in p.rows("select column_name from information_schema.columns where table_name = 'v_garden_media_marketing'")]
+    p.check("G5-01", "d_view_marketing_khong_lo_khoanh_gps", not any(c in ("plot_id", "gps", "lat", "lon", "location") for c in cols),
+            "view không có cột khoảnh/vị trí", cols)
+    rc, so, se, _ = p.run("g501_e_thu_hoi", ["python", "scripts/garden_media_mkt.py", "--revoke", sha, "--by", GD_VT])
+    vis2 = p.q("select count(*) from v_garden_media_marketing")
+    rc2, so2, se2, _ = p.run("g501_f_lay_sau_thu_hoi", ["python", "scripts/garden_media_mkt.py", "--get", sha, "--out", EXT / "mkt2", "--store", EXT / "media"])
+    p.check("G5-01", "e_thu_hoi_duoc_va_marketing_mat_quyen", rc == 0 and vis2 == 0 and rc2 != 0,
+            "thu hồi exit 0; view 0; --get sau thu hồi bị từ chối", {"exit_thu_hoi": rc, "view": vis2, "exit_get": rc2})
+    _, sal2 = p.logins["sal"]
+    rc, so, se, _ = p.run("g501_g_nguoi_khac_khoi_db", ["python", "-c",
+                          "import psycopg,os,sys; c=psycopg.connect(os.environ['DATABASE_URL']);"
+                          "print(c.execute('select garden_media_release_human(%s,%s,%s,%s)',(sys.argv[1],'cap','Bán Hàng Thử R12',None)).fetchone()); c.commit()", sha],
+                          env={"DATABASE_URL": sal2})
+    p.check("G5-01", "g_login_nguoi_khoi_sales_bi_DB_chan", rc != 0 and ("42501" in se or "không được ủy quyền" in se),
+            "42501", {"exit": rc, "loi": se.strip()[-160:]})
+except Exception as e:  # noqa: BLE001
+    p.error("G5-01", "setup", e)
+
+# ---------------------------------------------------------------- G5-02
+try:
+    p.exec_admin("insert into plots (id, variety, tree_count, planted_year, status, source) values"
+                 " ('IT-R12-K1', 'Sâm Thử R12', 100, 2020, 'active', 'fixture:r12')")
+    assert p.run("g502_s1_lots", ["python", "-m", "pipelines.production", "lots", "--load", F / "lots_qr.json"])[0] == 0
+    assert p.run("g502_s2_intake", ["python", "-m", "pipelines.production", "intake", "--lot", "IT-R12-QR1",
+                                    "--result", "passed", "--by", "QA Thử R12"])[0] == 0
+    assert p.run("g502_s3_log", ["python", "-m", "agents.garden", "--plot", "IT-R12-K1", "--activity", "thu hoạch",
+                                 "--detail", "thu hoạch thử R12 5kg", "--author", "Nông Dân Thử R12"])[0] == 0
+    lid = p.q("select max(id) from plot_logs where detail = 'thu hoạch thử R12 5kg'")
+    rc, so, se, _ = p.run("g502_a_agent_link", ["python", "-m", "pipelines.qr_trace", "link", "--lot", "IT-R12-QR1",
+                                                "--log", lid, "--by", "agent:qr"])
+    n_ag = p.q("select count(*) from lot_origins where linked_by like 'agent:%%'")
+    p.check("G5-02", "a_agent_khong_anh_xa", rc != 0 and n_ag == 0, "agent bị chặn, 0 dòng agent:", {"exit": rc, "dong_agent": n_ag})
+
+    def reset(tag, want):
+        """Khôi phục trạng thái (0/1 ánh xạ) bằng CLI người qua owner dev — để ca sau kiểm ĐỘC LẬP."""
+        n = p.q("select count(*) from lot_origins")
+        if n == 1 and want == 0:
+            p.run(f"g502_reset_{tag}", ["python", "-m", "pipelines.qr_trace", "unlink", "--lot", "IT-R12-QR1", "--log", lid, "--by", GD_VT])
+        if n == 0 and want == 1:
+            p.run(f"g502_reset_{tag}", ["python", "-m", "pipelines.qr_trace", "link", "--lot", "IT-R12-QR1", "--log", lid, "--by", GD_VT])
+    reset("truoc_b", 0)
+    rc, so, se, _ = p.run("g502_b_nguoi_link", ["python", "-m", "pipelines.qr_trace", "link", "--lot", "IT-R12-QR1",
+                                                "--log", lid, "--by", GD_VT])
+    p.check("G5-02", "b_nguoi_anh_xa_duoc (positive control)", rc == 0 and p.q("select count(*) from lot_origins") == 1,
+            "exit 0, 1 ánh xạ", {"exit": rc, "loi": (so + se).strip()[-200:]})
+    reset("truoc_c", 1)
+    rc, so, se, _ = p.run("g502_c_agent_unlink", ["python", "-m", "pipelines.qr_trace", "unlink", "--lot", "IT-R12-QR1",
+                                                  "--log", lid, "--by", "system:qr"])
+    p.check("G5-02", "c_he_thong_khong_go", rc != 0 and p.q("select count(*) from lot_origins") == 1, "bị chặn, vẫn 1 ánh xạ", {"exit": rc})
+    reset("truoc_d", 1)
+    _, sal3 = p.logins["sal"]
+    rc, so, se, _ = p.run("g502_d_login_sales_go_db", ["python", "-c",
+                          "import psycopg,os,sys; c=psycopg.connect(os.environ['DATABASE_URL']);"
+                          "print(c.execute('select unlink_lot_origin(%s,%s,%s)',('IT-R12-QR1',int(sys.argv[1]),'Bán Hàng Thử R12')).fetchone()); c.commit()", lid],
+                          env={"DATABASE_URL": sal3})
+    p.check("G5-02", "d_login_nguoi_sai_khoi_bi_DB_chan", rc != 0 and p.q("select count(*) from lot_origins") == 1,
+            "42501 (khối sales không thao tác ánh xạ khoảnh)", {"exit": rc, "loi": se.strip()[-160:]})
+    reset("truoc_e", 1)
+    _, far3 = p.logins["far"]
+    rc, so, se, _ = p.run("g502_e_login_farming_go_db", ["python", "-c",
+                          "import psycopg,os,sys; c=psycopg.connect(os.environ['DATABASE_URL']);"
+                          "print(c.execute('select unlink_lot_origin(%s,%s,%s)',('IT-R12-QR1',int(sys.argv[1]),'Nông Dân Thử R12')).fetchone()); c.commit()", lid],
+                          env={"DATABASE_URL": far3})
+    p.check("G5-02", "e_login_nguoi_khoi_farming_go_duoc (positive control)", rc == 0 and p.q("select count(*) from lot_origins") == 0,
+            "exit 0, 0 ánh xạ; log actor = người của login", {"exit": rc, "loi": se.strip()[-160:]})
+except Exception as e:  # noqa: BLE001
+    p.error("G5-02", "setup", e)
+p.finish(__file__)

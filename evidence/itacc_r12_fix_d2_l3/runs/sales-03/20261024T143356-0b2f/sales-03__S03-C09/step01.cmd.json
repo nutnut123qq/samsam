@@ -1,0 +1,35 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+  "D:\\code\\samsam\\evidence\\itacc_r12_fix_d2_l3\\runs\\sales-03\\20261024T143356-0b2f\\scratch/gdata",
+  "van_hanh",
+  "agents.listing_export",
+  "--sku",
+  "saphraton-20v",
+  "--channel",
+  "shopee",
+  "--out",
+  "D:\\code\\samsam\\evidence\\itacc_r12_fix_d2_l3\\runs\\sales-03\\20261024T143356-0b2f\\scratch/export_x"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T14:34:54+07:00",
+ "ket_thuc": "2026-10-24T14:34:57+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stderr_re": "\\[từ chối\\] saphraton-20v",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "19d3731086d5d804592a2a2af6e3b39f72dccd6b5ac390f7775b473441d6e993"
+}

@@ -1,0 +1,40 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "agents.xnqc",
+  "--draft",
+  "--sku",
+  "saphraton-20v",
+  "--loai",
+  "maket",
+  "--ten",
+  "maket fanpage Thử IT",
+  "--maket",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/legal_hr-02/maket_xnqc.txt",
+  "--submit"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:25:36+07:00",
+ "ket_thuc": "2026-10-24T11:25:41+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\[skip\\]",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*((?i:duplicate)|Traceback))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "9c212562a08b9a92924be0082188c21425c5d6e459512771025a531fbfefd7b5",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -284,6 +284,11 @@ def _date_arg(s: str) -> date:
 
 
 def _board(conn, a) -> int:
+    # r12 RB: bảng tuần là đầu ra của ceo-02.1 — tắt thì chặn TRƯỚC khi ghi
+    # file/đẩy hàng duyệt (trước đây ghi file rồi traceback ở submit).
+    from pipelines import rollout
+    if why := rollout.blocked(conn, "bảng tiến độ tuần", fid="ceo-02.1"):
+        return rollout.say_blocked(why)
     today = a.date or datetime.now(VN_TZ).date()
     rows = [dict(zip(COLS, r)) for r in conn.execute(
         f"select {', '.join(COLS)} from project_milestones order by"
@@ -478,6 +483,11 @@ def main(argv=None) -> int:
         with suppress(Exception):
             conn.close()
 
+
+# r12 RB: RolloutBlocked lọt tới đỉnh → '[rollout] lý do', exit 2 (không traceback).
+from pipelines.rollout import cli_entry as _cli_entry
+
+main = _cli_entry(main)
 
 if __name__ == "__main__":
     raise SystemExit(main())

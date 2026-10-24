@@ -1,0 +1,506 @@
+{
+ "id": "legal_hr-06.2",
+ "ten": "Sàng lọc hồ sơ",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Nhân sự: 'sàng lọc hồ sơ'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/legal_hr-06.2.json",
+  "sha256": "d45582d1a4591009d2cb96a8d7bb67be466fb3e051cac3ffe3a9fd0d4b1bc151"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/pc_hr.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "116fc4a9b4a9010664ee2dcee2d4d09ad96feabebe3e7e1704bd2a5f3a9f9838",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_prod_legal_v2.json",
+ "tieu_chi_sha256": "23facd919d6513382ada6d4fb54a5c45fd5472e20116e6f010e11eee2013636c",
+ "tieu_chi_khoa": "r12_prod_legal_v2.json 23facd919d6513382ada6d4fb54a5c45fd5472e20116e6f010e11eee2013636c 2026-10-24T11:30:59+07:00",
+ "tieu_chi": [
+  "T1 `python -m agents.pc_hr --screen --jd <vi_tri> --dir <ngoài repo>` exit 0",
+  "T2 approval_queue legal_hr/hr_screening pending: mã ứng viên = 12 hex đầu sha256 nội dung, xếp tất định (bắt buộc↓, ưu tiên↓, mã), KHÔNG tên/SĐT/email/tên file trong payload; file không đọc được đứng cuối 'cần người đọc tay'",
+  "T3 thư mục trong repo → exit 2; cấu hình có tiêu chí phân biệt đối xử → exit 1; không tự loại ai (r12 RB: tắt legal_hr-06.2 → exit 2 '[rollout] … legal_hr-06.2')",
+  "T4 không liên hệ ứng viên"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_{p01,p043,p051,p052,l01,l02,l032,l061,l062,l063} dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); rollout --seed (tính năng = chạy thử); AI giả ở biên (_client) — r10 run.py.txt hoặc wrap.py.txt, 0 gọi OpenRouter; kho phiếu/CV ngoài repo dưới scratchpad r12/ext_prod_legal DB samsam_itacc_r12_l062.",
+ "run_id": "20261024T113324-4810",
+ "ca": [
+  {
+   "ma": "legal_hr-06.2__S00",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai trên DB thử (tính năng = chạy thử) — như *-seed r10",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:33:24+07:00",
+      "ket_thuc": "2026-10-24T11:33:26+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S00/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S00/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S00"
+  },
+  {
+   "ma": "legal_hr-06.2__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "chép 4 CV GIẢ r10 (bản chép trong {FX12}) sang thư mục NGOÀI repo (như scratchpad r10/g3/cv)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import shutil,sys; s,d=sys.argv[1],sys.argv[2]; assert 'ext_prod_legal' in d; shutil.rmtree(d, ignore_errors=True); shutil.copytree(s, d); print('[harness] chép CV ngoài repo') evidence\\itacc_r12\\fixtures/items/legal_hr-06.2/cv C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_prod_legal/l062/cv",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:33:26+07:00",
+      "ket_thuc": "2026-10-24T11:33:26+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S01"
+  },
+  {
+   "ma": "legal_hr-06.2__06.2-C1",
+   "nguon_r10": "06.2-C1",
+   "mo_ta": "3 CV + 1 file không UTF-8 → hr_screening pending: 2033d7a8e330 > 91244abb6f8b > 583640a67bd7 > a32313eb2ca1 'cần người đọc tay' (mã = sha256[:12] tính độc lập từ fixture), không PII/tên file",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_screening' and status = 'pending' and created_by = 'agent:pc_hr'",
+      "expect": 1
+     },
+     {
+      "sql": "select 0 < position('`2033d7a8e330`' in p) and position('`2033d7a8e330`' in p) < position('`91244abb6f8b`' in p) and position('`91244abb6f8b`' in p) < position('`583640a67bd7`' in p) and position('`583640a67bd7`' in p) < position('`a32313eb2ca1`' in p) from (select payload from approval_queue where object_type = 'hr_screening' and status = 'pending' order by id limit 1) t(p)",
+      "expect": true
+     },
+     {
+      "sql": "select p like '%| 4 | `a32313eb2ca1` | — | — | cần người đọc tay%' from (select payload from approval_queue where object_type = 'hr_screening' and status = 'pending' order by id limit 1) t(p)",
+      "expect": true
+     },
+     {
+      "sql": "select p ~ '(Ứng Viên Thử IT|0900000|example\\.com|ung-vien|a-it@)' from (select payload from approval_queue where object_type = 'hr_screening' and status = 'pending' order by id limit 1) t(p)",
+      "expect": false
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.pc_hr --screen --jd nv_cskh --dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_prod_legal/l062/cv",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:33:26+07:00",
+      "ket_thuc": "2026-10-24T11:33:31+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_screening' and status = 'pending' and created_by = 'agent:pc_hr'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select 0 < position('`2033d7a8e330`' in p) and position('`2033d7a8e330`' in p) < position('`91244abb6f8b`' in p) and position('`91244abb6f8b`' in p) < position('`583640a67bd7`' in p) and position('`583640a67bd7`' in p) < position('`a32313eb2ca1`' in p) from (select payload from approval_queue where object_type = 'hr_screening' and status = 'pending' order by id limit 1) t(p)",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select p like '%| 4 | `a32313eb2ca1` | — | — | cần người đọc tay%' from (select payload from approval_queue where object_type = 'hr_screening' and status = 'pending' order by id limit 1) t(p)",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select p ~ '(Ứng Viên Thử IT|0900000|example\\.com|ung-vien|a-it@)' from (select payload from approval_queue where object_type = 'hr_screening' and status = 'pending' order by id limit 1) t(p)",
+      "expect": false,
+      "actual": false,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C1"
+  },
+  {
+   "ma": "legal_hr-06.2__06.2-C2",
+   "nguon_r10": "06.2-C2",
+   "mo_ta": "thư mục trong repo → exit 2",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_screening'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.pc_hr --screen --jd nv_cskh --dir evidence/itacc_r10/g3",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:33:32+07:00",
+      "ket_thuc": "2026-10-24T11:33:33+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C2/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_screening'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C2"
+  },
+  {
+   "ma": "legal_hr-06.2__06.2-C3",
+   "nguon_r10": "06.2-C3",
+   "mo_ta": "JD có tiêu chí giới tính (FIXTURE jd_bad.json vá agents.pc_hr.JD_FILE qua wrap.py.txt — r10 qua g3 run.py --set) → exit 1",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_screening'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.pc_hr --screen --jd nv_cskh --dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_prod_legal/l062/cv",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:33:33+07:00",
+      "ket_thuc": "2026-10-24T11:33:40+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_screening'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C3"
+  },
+  {
+   "ma": "legal_hr-06.2__X01",
+   "nguon_r10": "MOI",
+   "mo_ta": "r12 RB: tắt legal_hr-06.2 → --screen exit 2 '[rollout] … legal_hr-06.2', 0 dòng mới",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*legal_hr-06\\.2",
+      "out_re": "\\A(?![\\s\\S]*(Traceback))"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_screening'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable legal_hr-06.2 --by Người Thử R12 --note kiem tat r12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:33:40+07:00",
+      "ket_thuc": "2026-10-24T11:33:42+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.pc_hr --screen --jd nv_cskh --dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_prod_legal/l062/cv",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*legal_hr-06\\.2",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*(Traceback))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:33:42+07:00",
+      "ket_thuc": "2026-10-24T11:33:43+07:00",
+      "stdout": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'hr_screening'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [
+  {
+   "lot": "lo3",
+   "criteria": "r12_prod_legal.json",
+   "run_id": "20261024T112556-b430",
+   "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T112556-b430",
+   "ly_do": "lượt lo3 dùng tiêu chí v1: regex PII không phân biệt hoa thường khớp nhãn cột 'Mã ứng viên' — LỖI TIÊU CHÍ, không có PII thật trong payload (mk_prod_legal_v2.py.txt)"
+  }
+ ],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/ket_qua.json",
+   "sha256": "0ac14fb8eb3cec1c027374685ea560adf949a51c11d8d2e6483aba6121a8d1c0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C1/asserts.json",
+   "sha256": "4fada031efa698d968d88b1474d88ae14218aa002a8768e745da73fa80eb1d52"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C1/case.json",
+   "sha256": "650901423180993d26a647e37232a671dffb4de19e0be8869f5d48bf4e9d07f9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C1/step01.cmd.json",
+   "sha256": "6457ac2cb0f6c313cfb961c90993e25da501399402b6f337cca4721b45feb57b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C1/step01.stdout.txt",
+   "sha256": "578569629b2f5926d3b75fd2467685b8be8a0566c5e17d1fdd568f6e78ec467c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C2/asserts.json",
+   "sha256": "9f878658b5d76897b4b741a77b9f83195971981ad24142a2cd619c986f477aea"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C2/case.json",
+   "sha256": "4fba949fb006ab93cf49df90e53728d18718b9a21b194b80934b28cbce3328d3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C2/step01.cmd.json",
+   "sha256": "5dae3f31cbe059459248dffb0c4bc3a9ec058b4422961aeabe5d629d20da32cb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C2/step01.stderr.txt",
+   "sha256": "502a4a5b07e7d0df5f95dbd912963553900e598fcb07faf76eb796a2d29b5c0b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C2/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C3/asserts.json",
+   "sha256": "9f878658b5d76897b4b741a77b9f83195971981ad24142a2cd619c986f477aea"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C3/case.json",
+   "sha256": "544a2d2cfff735144ed000de82c291776ccb134652ca580fa8a2e13650dc27fd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C3/step01.cmd.json",
+   "sha256": "89fa13bf7271871efddd3e18e9631daa0b886122cbe9398ae710a814455348dc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C3/step01.stderr.txt",
+   "sha256": "eae5e4f07e1ec9bc7e74a04fdb242c4dcba88669b2062884c6ca8be634393fe4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__06.2-C3/step01.stdout.txt",
+   "sha256": "13cd6dfda4a4dc568b59e53d27bce57bd93a91ae0986be90ca544cc1ca4b3ceb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S00/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S00/case.json",
+   "sha256": "fc75c153370be6b0f8d7f332eeb34a373d2050ca50d957e53f1e95c4d95a55cb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S00/step01.cmd.json",
+   "sha256": "d8d79688b50279c7cad5d39fede35b0899132ca98ba61d9fa9c07e2ac092d989"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S00/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S00/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S01/case.json",
+   "sha256": "334d668b2affc0118187ce08fb10141020ab2942398760b1b4d8349ef82e1651"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S01/step01.cmd.json",
+   "sha256": "7a61b68e3021060bc3c1f3561807d08e8e357a6141c7fc95da7772fb56c1c94b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__S01/step01.stdout.txt",
+   "sha256": "f67169417102cddca882214c89590770a8e3df7b35dffac5366242c92c34f6c3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/asserts.json",
+   "sha256": "9f878658b5d76897b4b741a77b9f83195971981ad24142a2cd619c986f477aea"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/case.json",
+   "sha256": "63ff74f6e7aa37ba8edb78063883aec5d456de04697dbff8609d40c12583e749"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step01.cmd.json",
+   "sha256": "1c83ebc27851a375d09633af8c3927bd7d381b109314af788a3b75e7c91ef06d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step01.stdout.txt",
+   "sha256": "d40961f2f795b17e5e564326f8a4d46a7bb4a1581409f137d2de95723ca54ebe"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step02.cmd.json",
+   "sha256": "ff9c579ff300d249bcd1fc5cc0594ad89eabfaa04ebecfc9fafd96e8d0c24b97"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T113324-4810/legal_hr-06.2__X01/step02.stdout.txt",
+   "sha256": "97915964e2f25e0700b082d0fd850af47863bfd313ae0c92e173301175ad2db4"
+  }
+ ],
+ "loi_san_pham": []
+}

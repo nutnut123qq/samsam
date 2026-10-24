@@ -435,6 +435,11 @@ def _print_list(data: dict, today: date) -> None:
         print(f"- TRỄ {_txt(r['code'], 40)} — hạn {_d(r['due_date'])} (trễ"
               f" {(today - r['due_date']).days} ngày, owner"
               f" {_txt(r['owner_role'], 40)}, {r['status']})")
+    # r12 G1-L5: việc chờ quyết/chờ ký (PL01 "việc nào chờ ký") — read() đã
+    # đọc nhưng trước đây chỉ hiện ở trang TGĐ/bản tin, --list bỏ sót.
+    for ln in wait_lines(data, today):
+        if ln:
+            print(ln)
 
 
 def main(argv=None) -> int:

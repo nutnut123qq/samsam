@@ -1,0 +1,169 @@
+"""HARNESS r12 — nâng cấp schema/roles từ snapshot baseline (fingerprint 97051e55…) có LỊCH SỬ → working tree ×2.
+DB riêng samsam_itacc_r12_<mã> trên container r12 (KHÔNG samsam). Không in DSN/mật khẩu.
+  python -I upgrade_r12.py.txt <base_tree> <repo> <admin_env> <db>
+Kiểm: (1) dữ liệu/đuôi hash chain không đổi; (2) quyền chỉ THÊM đúng tập r12 (svc_ui SELECT cột plots/plot_logs +
+SELECT chunks; app_human EXECUTE plot_log_add_human), không BỚT; (3) function mới/đổi: SECURITY DEFINER, search_path cố
+định, không PUBLIC EXECUTE; link/unlink_lot_origin dùng human_actor; (4) hành vi sau nâng cấp bằng login THẬT (không
+owner): svc_ui đọc plots/chunks được, không ghi plot_logs; login người khối farming ghi qua function được, đúng tên;
+login người khối sales / ghi tên khác / tên agent bị chặn."""
+import os
+import re
+import secrets
+import subprocess
+import sys
+from pathlib import Path
+
+import psycopg
+from psycopg import conninfo
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+BASE, REPO, ADM, DB = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), sys.argv[4]
+assert DB.startswith("samsam_itacc_r12_")
+d = conninfo.conninfo_to_dict(ADM.read_text().split("'")[1])
+assert d["host"] == "127.0.0.1" and str(d["port"]) == "55451"
+d["dbname"] = "postgres"
+with psycopg.connect(conninfo.make_conninfo(**d), autocommit=True, connect_timeout=5) as c:
+    if c.execute("select 1 from pg_database where datname = %s", (DB,)).fetchone():
+        raise SystemExit(f"DB {DB} đã có — không ghi đè")
+    c.execute(f"create database {DB}")
+d["dbname"] = DB
+DSN = conninfo.make_conninfo(**d)
+ENV = {k: v for k, v in os.environ.items() if not k.endswith("DATABASE_URL") and not k.startswith("PG")
+       and k not in ("AUTH_MODE", "DEPLOY", "APPROVAL_ENFORCE", "ITACC_ADMIN")}
+ENV.update(DATABASE_URL=DSN, OPENROUTER_API_KEY="", PYTHONIOENCODING="utf-8")
+print(f"DB {DB} tạo mới (KHÔNG samsam) · nền {BASE.name}")
+
+
+def run(tree, *args, ok=(0,)):
+    p = subprocess.run([sys.executable, *args], cwd=tree, env=ENV, capture_output=True, encoding="utf-8",
+                       errors="replace", timeout=900, check=False)
+    tail = [x for x in (p.stdout + p.stderr).splitlines() if x.strip()][-2:]
+    print(f"[run:{'nen' if tree == BASE else 'repo'}] {' '.join(args)} -> exit {p.returncode}")
+    for x in tail:
+        print("    " + x[:200])
+    if p.returncode not in ok:
+        raise SystemExit(1)
+
+
+def q(sql, a=None, dsn=DSN):
+    with psycopg.connect(dsn, connect_timeout=5) as c:
+        cur = c.execute(sql, a)
+        return cur.fetchall() if cur.description else []
+
+
+# --- 1. DB nền (mã baseline) + lịch sử
+run(BASE, "scripts/apply_schema.py", "--roles")
+run(BASE, "-m", "ingest.core_store")
+run(BASE, "-m", "ingest.golden_store")
+run(BASE, "-m", "pipelines.rollout", "--seed", "--by", "Owner Nền R12")
+q("update feature_rollout set stage = 'tat', stage_since = now() - interval '30 days' where feature_id = 'sales-07.1'")
+q("insert into llm_usage (agent_id, model, cost_usd, ok) values ('chatbot', 'm', 0.2, true)")
+PRIV = ("select grantee, table_name, privilege_type from information_schema.role_table_grants where table_schema ="
+        " 'public' and grantee <> current_user union select grantee, table_name || '(' || column_name || ')',"
+        " privilege_type from information_schema.column_privileges where table_schema = 'public' and grantee <>"
+        " current_user union select grantee, 'function ' || routine_name, privilege_type from"
+        " information_schema.routine_privileges where routine_schema = 'public' and grantee <> current_user and"
+        " grantee <> 'PUBLIC'")
+
+
+def counts():
+    tabs = [r[0] for r in q("select tablename from pg_tables where schemaname='public' order by 1")]
+    return {t: q(f'select count(*) from public."{t}"')[0][0] for t in tabs}
+
+
+KEEP = {"rollout": "select feature_id, stage, stage_since from feature_rollout order by 1",
+        "plot_logs": "select id, plot_id, author, row_hash from plot_logs order by id",
+        "llm": "select agent_id, cost_usd from llm_usage order by id"}
+k0, c0, p0 = {k: q(v) for k, v in KEEP.items()}, counts(), set(q(PRIV))
+tail0 = q("select id, left(row_hash, 12) from agent_action_log order by id desc limit 1")
+print(f"trước: {len(c0)} bảng, {sum(c0.values())} dòng, đuôi log {tail0}")
+# --- 2. áp revision hiện tại ×2
+run(REPO, "scripts/apply_schema.py", "--roles")
+run(REPO, "scripts/apply_schema.py", "--roles")
+c1, p1 = counts(), set(q(PRIV))
+tail1 = q("select id, left(row_hash, 12) from agent_action_log order by id desc limit 1")
+changed = {t: (c0[t], c1.get(t)) for t in c0 if c1.get(t) != c0[t]}
+print(f"sau ×2: {len(c1)} bảng, dòng đổi: {changed or 'không'}, đuôi log {tail1}")
+assert set(c0) <= set(c1) and not changed and tail1 == tail0
+for k, v in KEEP.items():
+    assert q(v) == k0[k], f"đổi: {k}"
+print("feature_rollout / plot_logs (hash) / llm_usage giữ nguyên")
+added, removed = sorted(p1 - p0), sorted(p0 - p1)
+print(f"quyền THÊM ({len(added)}):")
+for g in added:
+    print(f"    {g}")
+print(f"quyền BỚT: {removed}")
+EXPECT = ({("svc_ui", f"plots({c})", "SELECT") for c in ("id", "location", "status")}
+          | {("svc_ui", f"plot_logs({c})", "SELECT") for c in ("id", "plot_id", "ts", "activity", "detail", "author",
+                                                                "source")}
+          | {("svc_ui", "chunks", "SELECT"), ("app_human", "function plot_log_add_human", "EXECUTE")})
+# chunks: grant cấp bảng hiện ra cả dạng cột (column_privileges) — chấp nhận các cột chunks của svc_ui
+extra = {g for g in added if g not in EXPECT and not (g[0] == "svc_ui" and g[1].startswith("chunks(")
+                                                      and g[2] == "SELECT")}
+print(f"  ngoài tập r12 dự kiến: {sorted(extra)}")
+assert not removed and not extra and EXPECT <= set(added) | {g for g in p0}, (removed, extra)
+for fn, sd, cfg, acl, src in q("select proname, prosecdef, proconfig, proacl::text, prosrc from pg_proc where proname"
+                               " in ('plot_log_add_human', 'link_lot_origin', 'unlink_lot_origin') order by 1"):
+    pub = acl is None or re.search(r"(^|[{,])=X/", acl) is not None
+    print(f"  {fn}: security_definer={sd} search_path={[x for x in (cfg or []) if x.startswith('search_path')]}"
+          f" public_execute={pub} human_actor={'human_actor(' in src}")
+    assert sd and cfg and any(x.startswith("search_path") for x in cfg) and not pub and "human_actor(" in src
+run(REPO, "-m", "pipelines.store", "--verify-log")
+run(REPO, "-m", "agents.garden_director", "--verify")
+# --- 3. hành vi sau nâng cấp — login THẬT (không owner)
+pw = {k: secrets.token_urlsafe(16) for k in ("svc", "vuon", "sales")}
+names = {"svc": "r12up_svc", "vuon": "r12up_vuon", "sales": "r12up_sales"}
+with psycopg.connect(DSN, autocommit=True) as c:
+    for k, n in names.items():
+        c.execute(f"drop role if exists {n}")
+        c.execute(f"create role {n} login password '{pw[k]}' in role {'svc_ui' if k == 'svc' else 'app_human'}")
+    c.execute("insert into human_logins (db_login, person, blocks, granted_by) values"
+              " ('r12up_vuon', 'Vườn Nâng Cấp R12', '{farming}', 'up-r12'),"
+              " ('r12up_sales', 'Bán Hàng Nâng Cấp R12', '{sales}', 'up-r12')")
+plot = q("select id from plots where status = 'active' order by id limit 1")[0][0]
+
+
+def as_(k, sql, a=None):
+    dd = conninfo.conninfo_to_dict(DSN)
+    dd.update(user=names[k], password=pw[k])
+    return q(sql, a, dsn=conninfo.make_conninfo(**dd))
+
+
+def denied(k, sql, a=None):
+    try:
+        as_(k, sql, a)
+    except psycopg.Error as e:
+        return e.sqlstate
+    return None
+
+
+ADD = "select plot_log_add_human(%s, now() - interval '1 hour', 'tưới nước', 'nâng cấp r12', %s)"
+try:
+    n_pl = as_("svc", "select count(*) from plot_logs")[0][0]
+    n_ck = as_("svc", "select count(*) from chunks")[0][0]
+    print(f"  svc_ui đọc plot_logs={n_pl}, chunks={n_ck} → được")
+    st = denied("svc", "insert into plot_logs (plot_id, ts, activity, author, source) values (%s, now(), 'x', 'Ai Đó',"
+                " 'manual')", (plot,))
+    print(f"  svc_ui ghi thẳng plot_logs → {st}")
+    assert st == "42501"
+    st = denied("svc", ADD, (plot, "Vườn Nâng Cấp R12"))
+    print(f"  svc_ui gọi plot_log_add_human → {st}")
+    assert st == "42501"
+    lid = as_("vuon", ADD, (plot, "Vườn Nâng Cấp R12"))[0][0]
+    au = q("select author, row_hash is not null from plot_logs where id = %s", (lid,))[0]
+    print(f"  login người khối farming ghi qua function → #{lid} author={au[0]!r} hash={au[1]}")
+    assert au == ("Vườn Nâng Cấp R12", True)
+    for k, by, why in (("sales", "Bán Hàng Nâng Cấp R12", "khối sales"), ("vuon", "Người Khác R12", "ghi tên khác"),
+                       ("vuon", "agent:garden", "tên agent")):
+        st = denied(k, ADD, (plot, by))
+        print(f"  {why} → {st}")
+        assert st is not None
+    run(REPO, "-m", "agents.garden_director", "--verify")
+    run(REPO, "-m", "pipelines.store", "--verify-log")
+finally:
+    with psycopg.connect(DSN, autocommit=True) as c:
+        c.execute("delete from human_logins where granted_by = 'up-r12'")
+        for n in names.values():
+            c.execute(f"drop owned by {n}")
+            c.execute(f"drop role if exists {n}")
+print("UPGRADE OK")

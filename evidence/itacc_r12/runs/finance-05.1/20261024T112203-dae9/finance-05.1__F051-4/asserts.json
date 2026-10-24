@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'opex_over_x' and block = 'finance' and status = 'pending' and created_by = 'agent:fp_opscost' and payload like '%7.500.000%' and payload like '%saas%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'opex_over_x'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

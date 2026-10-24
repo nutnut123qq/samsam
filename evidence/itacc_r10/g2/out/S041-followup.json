@@ -1,0 +1,24 @@
+[
+ {
+  "sql": "select id, object_type, object_id, created_by, status, title, payload from approval_queue where object_type='lead_followup' order by id",
+  "rows": [
+   {
+    "id": 49,
+    "object_type": "lead_followup",
+    "object_id": "lead:8:chua_gan",
+    "created_by": "agent:sales_director",
+    "status": "pending",
+    "title": "Lead quá hạn người phụ trách/xử lý — lead #8",
+    "payload": "Lead #8 (kênh messenger, ý định hỏi giá) — CHƯA có người phụ trách; hạn 22/10/2026 13:30 (giờ VN, giờ làm việc GIẢ ĐỊNH). Việc cần làm: GĐ bán hàng gán người phụ trách (`python -m ingest.crm --owner 8 --staff <mã NV> --by <tên>`). Hệ thống không tự liên hệ khách."
+   }
+  ]
+ },
+ {
+  "sql": "select max(id) from approval_queue",
+  "rows": [
+   {
+    "max": 49
+   }
+  ]
+ }
+]

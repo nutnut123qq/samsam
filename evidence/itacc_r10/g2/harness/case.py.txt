@@ -1,0 +1,59 @@
+"""HARNESS g2 — chạy 1 lệnh đo, ghi lệnh + exit + output đã che vào
+evidence/itacc_r10/g2/out/<ma>.txt. Không chứa secret. Dùng:
+  python case.py <ma> [--stdin FILE] [--env K=V ...] -- <argv...>
+Exit của case.py = exit của lệnh đo (đo NGAY sau khi process kết thúc)."""
+import hashlib, os, re, subprocess, sys
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+OUT = Path(__file__).resolve().parent.parent / "out"
+_RED = [(re.compile(r"(postgres(?:ql)?://[^:/\s]+:)[^@\s]+@"), r"\1***@"),
+        (re.compile(r"password=\S+"), "password=***"),
+        (re.compile(r"sk-or-[A-Za-z0-9_-]+"), "sk-or-***")]
+
+
+def red(s: str) -> str:
+    for rx, rep in _RED:
+        s = rx.sub(rep, s)
+    return s
+
+
+def main():
+    a = sys.argv[1:]
+    ma = a.pop(0)
+    stdin_f, env = None, dict(os.environ)
+    env["PYTHONIOENCODING"] = "utf-8"
+    extra = []
+    while a and a[0] != "--":
+        k = a.pop(0)
+        if k == "--stdin":
+            stdin_f = a.pop(0)
+        elif k == "--env":
+            kv = a.pop(0)
+            key, _, val = kv.partition("=")
+            env[key] = val
+            extra.append(f"{key}={'<set>' if 'KEY' in key or 'SECRET' in key else val}")
+    a.pop(0)
+    data = Path(stdin_f).read_bytes() if stdin_f else b""
+    t0 = datetime.now(timezone(timedelta(hours=7)))
+    p = subprocess.run(a, input=data, capture_output=True, env=env,
+                       cwd=r"D:\code\samsam", timeout=900)
+    rc = p.returncode
+    out = red(p.stdout.decode("utf-8", "replace"))
+    err = red(p.stderr.decode("utf-8", "replace"))
+    OUT.mkdir(parents=True, exist_ok=True)
+    rec = [f"# ma: {ma}", f"# luc: {t0.isoformat(timespec='seconds')}",
+           f"# lenh: {' '.join(extra)} {' '.join(a)}".replace("  ", " "),
+           f"# stdin: {stdin_f or '-'}"
+           + (f" sha256={hashlib.sha256(data).hexdigest()}" if stdin_f else ""),
+           "# DB: DATABASE_URL tới DB thử (che) — env file khối sales",
+           f"# exit: {rc}", "## stdout", out, "## stderr", err]
+    (OUT / f"{ma}.txt").write_bytes("\n".join(rec).encode("utf-8"))
+    print(f"[{ma}] exit={rc}")
+    tail = (out + ("\n[stderr]\n" + err if err.strip() else ""))
+    print(tail[-3000:])
+    sys.exit(rc)
+
+
+main()

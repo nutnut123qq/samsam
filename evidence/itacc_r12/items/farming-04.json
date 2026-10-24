@@ -1,0 +1,1297 @@
+{
+ "id": "farming-04",
+ "ten": "Kho tư liệu vườn",
+ "khoi": "farming",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Vùng trồng / Kho tư liệu vườn: 'Ảnh, video thật từ vườn đã xóa vị trí GPS, cấp cho Marketing'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/farming-04.json",
+  "sha256": "361174e4e6fa223d56ec02fdd219ac67d3be325eb92e163f8228612e39450806"
+ },
+ "ly_do_chay_lai": "r10/r11 CODE_FAIL (BUG-G5-01) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+ "fingerprint_code_luc_khoa": "116fc4a9b4a9010664ee2dcee2d4d09ad96feabebe3e7e1704bd2a5f3a9f9838",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_farming_v3.json",
+ "tieu_chi_sha256": "e6e880f1bc7f5e683911840b35481c102e5efedfa3827d4e53562a0ea1d27fa8",
+ "tieu_chi_khoa": "r12_farming_v3.json e6e880f1bc7f5e683911840b35481c102e5efedfa3827d4e53562a0ea1d27fa8 2026-10-24T11:32:46+07:00",
+ "tieu_chi": [
+  "T1 `scripts/garden_media.py` nhận ảnh có GPS / video có vị trí → kho NGOÀI repo + garden_media; tệp kho không EXIF/GPS/vị trí (check_media RESULT PASS)",
+  "T2 G5-01 (r12 vá — media_cap/media_thu_hoi thuộc auth.ACTIONS): `garden_media_mkt --release --by <người>` exit 0, 1 dòng garden_media_releases cap by_person = người; `--list` thấy sha; `--get` trả tệp sha khớp + sạch EXIF; `--revoke` exit 0 rồi `--get` bị từ chối; view marketing không có cột khoảnh/vị trí",
+  "T3 Ca âm: kho trong repo → exit 2 không tạo thư mục; tệp không phải ảnh → exit ≠0, 0 dòng; `--by agent:mkt` → exit 1 vì agent (không phải lỗi 'hành động không hợp lệ'), 0 dòng; login người khối sales gọi function cấp → 42501",
+  "T4 Không gửi/đăng ra ngoài, không tự quyết thay người; dev mode (chế độ thực theo approvers khối — không kiểm ở đây)"
+ ],
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451; mỗi mục 1 DB samsam_itacc_r12_farm<mã> dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống), DEPLOY tắt (bước Zalo đặt DEPLOY rỗng), OPENROUTER_API_KEY rỗng; CDN Zalo = FakeClient của harness r10 (không mạng); ffmpeg imageio-ffmpeg; vt_thuhoach qua wrap.py.txt (chặn mạng ngoài, PROBE_CALL_MAIN=1). DB samsam_itacc_r12_farm04.",
+ "run_id": "20261024T113353-7115",
+ "ca": [
+  {
+   "ma": "farming-04__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai (tính năng co_code = chạy thử) — như r10 F01-09a",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:33:53+07:00",
+      "ket_thuc": "2026-10-24T11:33:55+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S01"
+  },
+  {
+   "ma": "farming-04__S02",
+   "nguon_r10": "MOI",
+   "mo_ta": "khoảnh FIXTURE IT-K01..K04 (owner, đúng giá trị evidence/itacc_r10/g5/seed_farm_plots.txt) — DB r12 riêng mục",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+      "expect": 4
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:33:55+07:00",
+      "ket_thuc": "2026-10-24T11:33:57+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S02"
+  },
+  {
+   "ma": "farming-04__C01",
+   "nguon_r10": "F04-01",
+   "mo_ta": "Nạp ảnh GPS → row + tệp kho",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\] [0-9a-f]{12} — gỡ \\d+ thẻ EXIF, có GPS: có"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where plot_id = 'IT-K01' and ext = 'jpg' and had_gps and exif_removed > 0 and source = 'cli:garden_media'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media.py --file evidence\\itacc_r12\\fixtures/items/farming-04/anh_gps2.jpg --plot IT-K01 --date 2026-10-22 --by Người Thử IT --store C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/media",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\] [0-9a-f]{12} — gỡ \\d+ thẻ EXIF, có GPS: có",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:33:57+07:00",
+      "ket_thuc": "2026-10-24T11:33:58+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where plot_id = 'IT-K01' and ext = 'jpg' and had_gps and exif_removed > 0 and source = 'cli:garden_media'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C01"
+  },
+  {
+   "ma": "farming-04__C03",
+   "nguon_r10": "F04-02",
+   "mo_ta": "Nạp video vị trí (chạy TRƯỚC F04-01b vì F04-01b kiểm cả mp4)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "video mp4 đã gỡ metadata"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where plot_id = 'IT-K01' and ext = 'mp4'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media.py --file evidence\\itacc_r12\\fixtures/items/farming-04/video_vitri2.mp4 --plot IT-K01 --date 2026-10-22 --by Người Thử IT --store C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/media",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "video mp4 đã gỡ metadata",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:33:58+07:00",
+      "ket_thuc": "2026-10-24T11:34:00+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where plot_id = 'IT-K01' and ext = 'mp4'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C03"
+  },
+  {
+   "ma": "farming-04__C02",
+   "nguon_r10": "F04-01b",
+   "mo_ta": "Assert kho sạch (sha lấy từ garden_media thay hằng r10)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\.jpg sha_ok=True exif_tags=0 gps=False[\\s\\S]*\\.mp4 sha_ok=True video_has_gps=False has_xyz=False has_location_str=False[\\s\\S]*RESULT PASS"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/check_media.py.txt C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/media a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b 238d2b7965d74927962fc293ceaa7f37fe5a4bb3de5358ce651b7119feaeff4e",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\.jpg sha_ok=True exif_tags=0 gps=False[\\s\\S]*\\.mp4 sha_ok=True video_has_gps=False has_xyz=False has_location_str=False[\\s\\S]*RESULT PASS",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:01+07:00",
+      "ket_thuc": "2026-10-24T11:34:02+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C02"
+  },
+  {
+   "ma": "farming-04__C04",
+   "nguon_r10": "F04-03",
+   "mo_ta": "Âm: kho trong repo ({SCR} của run — trong repo) → exit 2, không tạo thư mục",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stderr_re": "nằm TRONG repo"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/tmp_store_should_not_exist",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from garden_media",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media.py --file evidence\\itacc_r12\\fixtures/items/farming-04/anh_gps2.jpg --plot IT-K01 --date 2026-10-22 --by Người Thử IT --store evidence\\itacc_r12\\runs\\farming-04\\20261024T113353-7115\\scratch/tmp_store_should_not_exist",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "nằm TRONG repo",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:02+07:00",
+      "ket_thuc": "2026-10-24T11:34:03+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C04/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\farming-04\\20261024T113353-7115\\scratch/tmp_store_should_not_exist",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from garden_media",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C04"
+  },
+  {
+   "ma": "farming-04__C05",
+   "nguon_r10": "F04-04",
+   "mo_ta": "Âm: tệp không phải ảnh → exit ≠0, 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": [
+       1,
+       2
+      ]
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media.py --file evidence\\itacc_r12\\fixtures/items/farming-04/khong_phai_anh.jpg --plot IT-K01 --date 2026-10-22 --by Người Thử IT --store C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/media",
+      "exit": 1,
+      "expect_exit": [
+       1,
+       2
+      ],
+      "regex": [],
+      "bat_dau": "2026-10-24T11:34:03+07:00",
+      "ket_thuc": "2026-10-24T11:34:04+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C05/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C05"
+  },
+  {
+   "ma": "farming-04__C06",
+   "nguon_r10": "F04-06",
+   "mo_ta": "Âm: agent cấp → exit 1 VÌ agent (không còn lỗi 'không hợp lệ' của BUG-G5-01), 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "out_re": "^(?![\\s\\S]*không hợp lệ)[\\s\\S]*agent"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media_releases",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media_mkt.py --release a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b --by agent:mkt",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "out_re": "^(?![\\s\\S]*không hợp lệ)[\\s\\S]*agent",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:04+07:00",
+      "ket_thuc": "2026-10-24T11:34:05+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C06/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C06/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media_releases",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C06"
+  },
+  {
+   "ma": "farming-04__C07",
+   "nguon_r10": "F04-05a",
+   "mo_ta": "Cấp cho Marketing (người) → exit 0, 1 dòng releases cap",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\] [0-9a-f]{12} đã cập nhật"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media_releases where action = 'cap' and by_person = 'GĐ Vùng Trồng Thử IT'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from garden_media_releases",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from v_garden_media_marketing",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media_mkt.py --release a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b --by GĐ Vùng Trồng Thử IT --note cấp thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\] [0-9a-f]{12} đã cập nhật",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:06+07:00",
+      "ket_thuc": "2026-10-24T11:34:07+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C07/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C07/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media_releases where action = 'cap' and by_person = 'GĐ Vùng Trồng Thử IT'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from garden_media_releases",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from v_garden_media_marketing",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C07"
+  },
+  {
+   "ma": "farming-04__C08",
+   "nguon_r10": "F04-05b",
+   "mo_ta": "--list có sha",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?m)^[0-9a-f]{64} jpg \\d+B chụp 2026-10-22 cấp \\d{4}-\\d{2}-\\d{2}\\r?$[\\s\\S]*\\[done\\] 1 tư liệu đang được cấp"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media_mkt.py --list",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?m)^[0-9a-f]{64} jpg \\d+B chụp 2026-10-22 cấp \\d{4}-\\d{2}-\\d{2}\\r?$[\\s\\S]*\\[done\\] 1 tư liệu đang được cấp",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:07+07:00",
+      "ket_thuc": "2026-10-24T11:34:08+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C08/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C08/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C08"
+  },
+  {
+   "ma": "farming-04__C09",
+   "nguon_r10": "F04-05c",
+   "mo_ta": "--get → tệp (kho qua env GARDEN_MEDIA_DIR như r10; thư mục ra ngoài repo)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\] [0-9a-f]{12} → [0-9a-f]{64}\\.jpg"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out/*.jpg'}",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media_mkt.py --get a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/mkt_out",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\] [0-9a-f]{12} → [0-9a-f]{64}\\.jpg",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:08+07:00",
+      "ket_thuc": "2026-10-24T11:34:09+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C09/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C09/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/mkt_out/*.jpg",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/mkt_out/a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b.jpg",
+        "sha256": "a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b"
+       }
+      ],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C09"
+  },
+  {
+   "ma": "farming-04__C11",
+   "nguon_r10": "F04-DIAG2",
+   "mo_ta": "r10 chẩn đoán (--get sau khi cấp bằng function DB) → r12 cấp bằng CLI: --get lại + kiểm tệp ra sha khớp, exif (0, False)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "n_files 1[\\s\\S]*sha_ok True exif_stats \\(0, False\\)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media_mkt.py --get a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/mkt_out",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:34:09+07:00",
+      "ket_thuc": "2026-10-24T11:34:10+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step01.stderr.txt"
+     },
+     {
+      "argv": "python -c import sys,glob,hashlib\nfrom scripts import garden_media as gm\nfs=glob.glob(sys.argv[1]+'/*.jpg'); print('n_files',len(fs))\np=fs[0]; d=open(p,'rb').read(); name=p.replace('\\\\','/').rsplit('/',1)[1].split('.')[0]\nImage,_=gm._pil()\nwith Image.open(p) as im: st=gm._exif_stats(im)\nprint('sha_ok',hashlib.sha256(d).hexdigest()==name,'exif_stats',st)\n C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/mkt_out",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "n_files 1[\\s\\S]*sha_ok True exif_stats \\(0, False\\)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:10+07:00",
+      "ket_thuc": "2026-10-24T11:34:11+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step02.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11"
+  },
+  {
+   "ma": "farming-04__C10",
+   "nguon_r10": "F04-07",
+   "mo_ta": "Thu hồi rồi get → --revoke exit 0; --get bị từ chối",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\] [0-9a-f]{12} đã cập nhật"
+     },
+     {
+      "expect_exit": 1,
+      "stderr_re": "chưa được cấp cho Marketing"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media_releases where action = 'thu_hoi' and by_person = 'GĐ Vùng Trồng Thử IT'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from v_garden_media_marketing",
+      "expect": 0
+     },
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out_after/*'}",
+      "count": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media_mkt.py --revoke a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b --by GĐ Vùng Trồng Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\] [0-9a-f]{12} đã cập nhật",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:11+07:00",
+      "ket_thuc": "2026-10-24T11:34:12+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step01.stderr.txt"
+     },
+     {
+      "argv": "python scripts/garden_media_mkt.py --get a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/mkt_out_after",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stderr_re": "chưa được cấp cho Marketing",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:12+07:00",
+      "ket_thuc": "2026-10-24T11:34:13+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media_releases where action = 'thu_hoi' and by_person = 'GĐ Vùng Trồng Thử IT'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from v_garden_media_marketing",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/mkt_out_after/*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10"
+  },
+  {
+   "ma": "farming-04__C12",
+   "nguon_r10": "F04-DIAG5",
+   "mo_ta": "Sau thu hồi, --get → từ chối",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stderr_re": "chưa được cấp cho Marketing"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-' || md5('{SCR}') || '/mkt_out2/*'}",
+      "count": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/garden_media_mkt.py --get a515b6f33d03309d755313aad645d13adf88479745f7863ffafce7abda47909b --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/mkt_out2",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stderr_re": "chưa được cấp cho Marketing",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:13+07:00",
+      "ket_thuc": "2026-10-24T11:34:14+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C12/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C12/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-1a940f3065e936bd838ec12a651ad421/mkt_out2/*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C12"
+  },
+  {
+   "ma": "farming-04__M01",
+   "nguon_r10": "MOI",
+   "mo_ta": "view marketing không có cột khoảnh/tác giả/vị trí",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [],
+    "kiem": [
+     {
+      "sql": "select count(*) from information_schema.columns where table_name = 'v_garden_media_marketing' and column_name in ('plot_id','author','gps','lat','lon','location','had_gps')",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": [
+     {
+      "sql": "select count(*) from information_schema.columns where table_name = 'v_garden_media_marketing' and column_name in ('plot_id','author','gps','lat','lon','location','had_gps')",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M01"
+  },
+  {
+   "ma": "farming-04__M02",
+   "nguon_r10": "MOI",
+   "mo_ta": "G5-01: login người khối sales (thật, in role app_human) gọi garden_media_release_human → 42501, 0 dòng mới",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "SAL_RELEASE ERR 42501[\\s\\S]*DROPPED 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media_releases",
+      "expect": 2
+     },
+     {
+      "sql": "select count(*) from garden_media_releases where by_person = 'Bán Hàng Thử R12'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    sal=mk('app_human','Bán Hàng Thử R12',['sales'])\n    print('SAL_RELEASE', *tryq(sal, 'select garden_media_release_human(%s,%s,%s,%s)', (os.environ['SHA'],'cap','Bán Hàng Thử R12',None)))\nfinally:\n    drop()\n",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "SAL_RELEASE ERR 42501[\\s\\S]*DROPPED 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:34:14+07:00",
+      "ket_thuc": "2026-10-24T11:34:16+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media_releases",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from garden_media_releases where by_person = 'Bán Hàng Thử R12'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M02"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [
+  {
+   "lot": "lo3",
+   "criteria": "r12_farming.json",
+   "run_id": "20261024T112800-228b",
+   "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T112800-228b",
+   "ly_do": "lượt lo3 dùng tiêu chí v1: C08 regex `$` không khớp CRLF stdout Windows; C09 runner lỗi relative_to với tệp ngoài repo — LỖI HARNESS (mk_farming_v3.py.txt + runner _rel)"
+  }
+ ],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C01/asserts.json",
+   "sha256": "7c03d19a046cf3e31dc1ad5d395802da6e3057fc9f99e905706d08b5850e7362"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C01/case.json",
+   "sha256": "06c97f54453ac7695496317d4f2334f87e65037b57193527a9539e9ccfdc9ee5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C01/step01.cmd.json",
+   "sha256": "b2bc11550415108c7608caadd39858d774c331965f43d7fdc95ac24f754cf00a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C01/step01.stdout.txt",
+   "sha256": "629270d46117793424416d1f8b78e6cd1f041294bbb27dd8d94359c1cfb9aa3e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C02/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C02/case.json",
+   "sha256": "dac18d7fe697e18ed31e43ebd7d10f05325bf154f0f98f47f27fa89882955459"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C02/step01.cmd.json",
+   "sha256": "0c69866b0898d9b35fd69113fdb18f67a2bb8bd79e252767cc961a0431fb8d8b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C02/step01.stdout.txt",
+   "sha256": "bc299531b18c2c394e9439840443301f5fcda2742f16ca4df3eafa7c6072bed5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C03/asserts.json",
+   "sha256": "2c8a336c4c2fb11377430ed5118f50301e0361d60424c2e7e082ff5c10c8bc5b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C03/case.json",
+   "sha256": "ec07578ab5f15c58e08c13e57f667b522ffd33213090642500ac7397185cacf0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C03/step01.cmd.json",
+   "sha256": "d14fb05aebcd51a995852cb28f2066792751131bfcee4172793fd4370ef9e503"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C03/step01.stdout.txt",
+   "sha256": "841d53fa5b068a22b13f82e5cdbfe02b6e6d57943413ceedd5268ab391405af5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C04/asserts.json",
+   "sha256": "7f88b737de77b7ee34fb55acbc30d1bfb9f0461579edfc050f07910e5f73cba8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C04/case.json",
+   "sha256": "bdad4eb76a707f318b2bbbc8c964e8db3e443665c4234a7a64ea2b5f8e4267c6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C04/step01.cmd.json",
+   "sha256": "d933cccce06549e90de77eedb34f39ed88004d2c1e0c9df5d0bb09398ed1d029"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C04/step01.stderr.txt",
+   "sha256": "b6598ed9a2ac8559585049573cf7041189c1001e704d5fce54cbe1358f1ec013"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C04/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C05/asserts.json",
+   "sha256": "72efe6fbb0132aa283e7cb1f6032a8569572cfb6c3d53049b9b379c635bcfe38"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C05/case.json",
+   "sha256": "e24e9c2d1a8e7fd1446a067e3af8d3d87fa13ea4bed24c14da5184232c73c472"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C05/step01.cmd.json",
+   "sha256": "8cb06e74fd93ce13ac86f4978fe8742df79cb2248114be8b70b95d6a5388ece7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C05/step01.stderr.txt",
+   "sha256": "31de1764e3ee4a32c477068e28d98e2d23420c5209942047091f410c9be13888"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C05/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C06/asserts.json",
+   "sha256": "dc928dadbe08691f80a369f242e4d17c258dfa2885b9086084222225226f57c0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C06/case.json",
+   "sha256": "d63643ebf0f0ceaa440d911d81e0865c3fb578f354054cd2cd417cc1ad135ae8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C06/step01.cmd.json",
+   "sha256": "9c7e7457488399e5d10b53cdece1dc9ca112fbe9ccb70619497a1db9157d2d79"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C06/step01.stderr.txt",
+   "sha256": "f5bff68df14f786f7874e47c19ea535f536a1d579b8db76c84ff483c8b8cc9c6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C06/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C07/asserts.json",
+   "sha256": "65b60254897e5b8816ca1ca0d61af6c87277ff4002e84523d55fd32589ca3fb4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C07/case.json",
+   "sha256": "9d2d1fe1a99694baa208fb73be5789a66d0f90847ab3d639023324f8aaa0fdda"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C07/step01.cmd.json",
+   "sha256": "42bf2c545127974a71a13071fbfa6234b257dbc887b9ab59e617c885e56f8479"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C07/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C07/step01.stdout.txt",
+   "sha256": "1a9abfa7af30d90be38d7e05a775ad758b5067976e0c97846184c44fe09b4710"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C08/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C08/case.json",
+   "sha256": "5cf518300f5efafeeae881060e12be17b1e01237dc38bc4c1967de616ae2619a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C08/step01.cmd.json",
+   "sha256": "e1dda9d9e9036282c7a617c148cb370f3b0e8acf4c7c7f61334f25372b09348a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C08/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C08/step01.stdout.txt",
+   "sha256": "870be846c3fdffa758d8aefcf98d406a7afe86556e7e87c912c41573f8305503"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C09/asserts.json",
+   "sha256": "749bff4c55019256f13f174dbddad8c13cfae81eaa43324633cce6fc73d2d9dc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C09/case.json",
+   "sha256": "6924d9ddb6eace22f5f4a65c1f5febb739608c3dc4f904df31c0c098a87ba498"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C09/step01.cmd.json",
+   "sha256": "a2374f732c797ae0ee9e1f4971bd6b418c170e98fd290715db21fd86a415898b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C09/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C09/step01.stdout.txt",
+   "sha256": "4074768288a83e77aa01ed51a909ef9a75e683c247c46ee8f9db6b545530ec0c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/asserts.json",
+   "sha256": "f9be814b08eccd4929c92c332e9880b9f5fd606dce9284511f36b91f72c304b9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/case.json",
+   "sha256": "0cb4e37dcf7a3c976d78e74b9e07f7e9c2600b44f240b79cda63f8f6c74471d5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step01.cmd.json",
+   "sha256": "658b7ebbdf6bcc4ca03f173f3269c222b700266abe3d232786c41ce93684a6ea"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step01.stdout.txt",
+   "sha256": "1a9abfa7af30d90be38d7e05a775ad758b5067976e0c97846184c44fe09b4710"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step02.cmd.json",
+   "sha256": "6ea73d8cebcbd20f83ca42a2c38f6ff6f084030e5bdb58b310bb1be7f3de0f8b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step02.stderr.txt",
+   "sha256": "09a2c7e6f0de74cd1bad332e1830c7e4ce5bfdcfe5d198b6fdba042d38da9859"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C10/step02.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/case.json",
+   "sha256": "afb2fb9f96ea6fae5697793bb47feb69da91c22d592ae3f715e6ce02225df4ef"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step01.cmd.json",
+   "sha256": "1368f48dec63df19f19020721db34bee63a285a591758b2bae5c2876f9b59dc0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step01.stdout.txt",
+   "sha256": "4074768288a83e77aa01ed51a909ef9a75e683c247c46ee8f9db6b545530ec0c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step02.cmd.json",
+   "sha256": "74c5dd54e4c476c4183b2e3378d69523b37c16174a2f8ea9fa3b572921e280ff"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C11/step02.stdout.txt",
+   "sha256": "02227086f602eb59fdc4511cb9f3095cb26355aca0a3141e7f1c78287a60bceb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C12/asserts.json",
+   "sha256": "3b55173c84b2be5c0e0efcc33321c9334f1caa9a6e3d38a575ec80201d62f5a5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C12/case.json",
+   "sha256": "4f12f4fa97c346785ceba751488c333b1245f594ea007d4193767b889b5db1aa"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C12/step01.cmd.json",
+   "sha256": "9b27b74cc483e44570f38eb3969fbc26c4afd39099c7d5b750d18dfb5f2b1afc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C12/step01.stderr.txt",
+   "sha256": "09a2c7e6f0de74cd1bad332e1830c7e4ce5bfdcfe5d198b6fdba042d38da9859"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__C12/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M01/asserts.json",
+   "sha256": "7c60fa0760bfd31134381a65975d2347b08539e43676274857118a106a8cf143"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M01/case.json",
+   "sha256": "25ad4319caf776d80c175ff65d370b1cfb97c71eaf72392fd4732df196cba42c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M02/asserts.json",
+   "sha256": "cab45551f1ecb7705b15de7221125748dc3d9447d293594c4393edeae7140766"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M02/case.json",
+   "sha256": "61699e96d80e0aef9e0b7608a54c46e4f98105d8bde74b28e8b98f0f5b51f6c8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M02/step01.cmd.json",
+   "sha256": "a4135b6da1cfcadb860704ec6f0b0029e10ebdf6bed9116c78d6ee79783da139"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__M02/step01.stdout.txt",
+   "sha256": "e952a6a7cc5661de7c52108a15c561ef941380ed02b1a946eb375a8939fc3b13"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S01/case.json",
+   "sha256": "2d722df760641e97d764a16d6613f14e06b513b41a10ceb1a16405861a4e1c28"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S01/step01.cmd.json",
+   "sha256": "35e48bb94e94cff547dd51a4646c04a2a710c539fdcfd95f485ba291fca181da"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S02/asserts.json",
+   "sha256": "4cf636e88930608faa9dd24f96c53220b83a1283ca0d9aa122875d2034d89f9c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S02/case.json",
+   "sha256": "74ee08203e02c0da7b7cac4ea30ca4e8f698747e23ab70d2ce6cd6544f560f17"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S02/step01.cmd.json",
+   "sha256": "f35c0e535f849dd5ce08c2c421f3a6ec2a90c4e9b04cd2340343d1f713820a46"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/farming-04__S02/step01.stdout.txt",
+   "sha256": "6f8aa80ad50cc17c10952ec5d93ac2addd4a2ba2eeac0003c34212bddb2e33b2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-04/20261024T113353-7115/ket_qua.json",
+   "sha256": "15990539296e2ce2fde478ff36c821457e4d99fcced23554742dd750f9979899"
+  }
+ ],
+ "loi_san_pham": []
+}

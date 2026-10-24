@@ -1,0 +1,38 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and block = 'intel' and status = 'pending' and created_by = 'agent:intel_keywords'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and object_id = 'kw:' || (select max(id) from intel_imports where kind = 'trend_related')::text",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'Từ khóa đề xuất(.*)Lý do loại') is not null and substring(payload from 'Từ khóa đề xuất(.*)Lý do loại') !~* 'chữa|tiểu đường|rượu|ngọc linh|kgc|hàn quốc|cheong'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'Lý do loại(.*)CHỜ QUYẾT') ~ 'trends_related #[0-9]+' and substring(payload from 'Lý do loại(.*)CHỜ QUYẾT') !~* 'chữa|tiểu đường|rượu|ngọc linh'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'CHỜ QUYẾT(.*)$') like '%nhân sâm hàn quốc%' and substring(payload from 'CHỜ QUYẾT(.*)$') like '%hồng sâm KGC chính hãng%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and payload ~* 'sâm chữa tiểu đường|rượu sâm ngọc linh|sâm ngọc linh giá bao nhiêu|0900000456'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

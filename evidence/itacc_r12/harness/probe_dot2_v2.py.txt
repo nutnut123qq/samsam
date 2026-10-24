@@ -1,0 +1,299 @@
+"""v2 (24/10): chỉ đổi --date bản tin intel sang ngày VN hôm nay — xem mk_probe_ngay_v.py.txt | PROBE r12 đợt 2 — G1-L1, D1/P052/L5, L3, RB (phần không cần dữ liệu B2B), GATE-OUT. Cùng input/assertion trên
+snapshot baseline và working tree.  python -I probe_dot2.py.txt <ROOT> <envfile> <label>
+Bất biến chung khi đúng tính năng TẮT: exit 2, stdout có '[rollout]' + mã tính năng, KHÔNG traceback, 0 file/dòng
+đầu ra của tính năng đó, 0 lời gọi AI (đếm ở biên _client), không in nội dung nghiệp vụ ra stdout. Đối chứng dương:
+tính năng bật thì vẫn chạy/gọi AI; lệnh nhiều đầu ra thì phần còn bật VẪN sinh."""
+import importlib.machinery
+import importlib.util
+import json
+import os
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+H = Path(__file__).resolve().parent
+_l = importlib.machinery.SourceFileLoader("plib", str(H / "plib.py.txt"))
+plib = importlib.util.module_from_spec(importlib.util.spec_from_loader("plib", _l))
+_l.exec_module(plib)
+ROOT, ENVF, LABEL = sys.argv[1], sys.argv[2], sys.argv[3]
+p = plib.P(ROOT, ENVF, LABEL)
+F = plib.FIX
+EXT = Path(os.environ["PROBE_EXT_DIR"]) / p.run_id
+EXT.mkdir(parents=True, exist_ok=False)
+BY = "Người Thử R12"
+PY = "python"
+from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+HOM_NAY = _dt.now(_tz(_td(hours=7))).date().isoformat()   # ngày VN lúc chạy (fixture theo ngày)
+
+
+def resp(name):
+    d = json.loads((F / name).read_text(encoding="utf-8"))
+    return d["responses"] if isinstance(d, dict) and "responses" in d else [json.dumps(d, ensure_ascii=False)]
+
+
+def tat(fid):
+    rc = p.run(f"tat_{fid}", [PY, "-m", "pipelines.rollout", "--disable", fid, "--by", BY])[0]
+    assert rc == 0, f"không tắt được {fid}"
+
+
+def bat(fid):
+    assert p.run(f"bat_{fid}", [PY, "-m", "pipelines.rollout", "--promote", fid, "--by", BY])[0] == 0
+
+
+def files(d, pre=""):
+    d = Path(d)
+    return sorted(f.name for f in d.glob(f"{pre}*")) if d.exists() else []
+
+
+def blocked_ok(rc, so, se, fid):
+    return {"exit_2": rc == 2, "rollout_msg": "[rollout]" in so and fid in so, "khong_traceback": "Traceback" not in se}
+
+
+def chk_blocked(bug, case, rc, so, se, fid, extra_ok=True, **extra):
+    b = blocked_ok(rc, so, se, fid)
+    p.check(bug, case, all(b.values()) and extra_ok,
+            f"exit 2 + '[rollout] … {fid}', không traceback, không đầu ra/side effect của {fid}",
+            {**b, "exit": rc, **extra, "stderr_cuoi": se.strip()[-160:]})
+
+
+assert p.run("s_seed", [PY, "-m", "pipelines.rollout", "--seed", "--by", BY])[0] == 0
+assert p.run("s_golden", [PY, "-m", "ingest.golden_store", "--file", F / "golden_fixture_food.json"])[0] == 0
+
+# ================================================================ D1 / P052 / L5 — 0 lời gọi AI khi tắt
+try:
+    assert p.run("s_packshot", [PY, H / "mk_packshot.py.txt", EXT / "packshots", "mat-ong-sam-300ml"])[0] == 0
+    (EXT / "broll").mkdir()
+    venv = {"PACKSHOT_DIR": EXT / "packshots", "IMAGE_OUT_DIR": EXT / "img", "VIDEO_OUT_DIR": EXT / "video", "BROLL_DIR": EXT / "broll"}
+    rc, so, se, n = p.run("d1_video_bat", [PY, "-m", "pipelines.video_studio", "--sku", "mat-ong-sam-300ml",
+                          "--channel", "tiktok", "--brief", "Video quà tặng Thử R12"], env=venv, wrap=True, llm=resp("fake_video.json"))
+    p.check("D1", "video_bat_van_goi_AI (positive control)", n >= 1, "tính năng bật → ≥1 lời gọi AI", {"exit": rc, "llm_calls": n})
+    v0 = p.q("select count(*) from content_drafts where content_type = 'video'")
+    tat("marketing-02.2")
+    rc, so, se, n = p.run("d1_video_tat", [PY, "-m", "pipelines.video_studio", "--sku", "mat-ong-sam-300ml",
+                          "--channel", "facebook", "--brief", "Video khi tắt Thử R12"], env=venv, wrap=True, llm=resp("fake_video.json"))
+    v1 = p.q("select count(*) from content_drafts where content_type = 'video'")
+    chk_blocked("D1", "video_tat_0_loi_goi_AI", rc, so, se, "marketing-02.2", n == 0 and v1 == v0, llm_calls=n, video_drafts=[v0, v1])
+except Exception as e:  # noqa: BLE001
+    p.error("D1", "video", e)
+try:
+    rc, so, se, n = p.run("d1_yt_bat", [PY, "-m", "agents.mkt_youtube", "--brief", "Video dài kể chuyện vùng quê Quảng Nam Thử R12"],
+                          wrap=True, llm=resp("fake_yt.json"))
+    p.check("D1", "youtube_bat_van_goi_AI (positive control)", n >= 1, "≥1 lời gọi AI", {"exit": rc, "llm_calls": n})
+    y0 = p.q("select count(*) from content_drafts where channel = 'youtube'")
+    tat("marketing-07.2")
+    rc, so, se, n = p.run("d1_yt_tat", [PY, "-m", "agents.mkt_youtube", "--brief", "Video dài khi tính năng tắt Thử R12"],
+                          wrap=True, llm=resp("fake_yt.json"))
+    y1 = p.q("select count(*) from content_drafts where channel = 'youtube'")
+    chk_blocked("D1", "youtube_tat_0_loi_goi_AI", rc, so, se, "marketing-07.2", n == 0 and y1 == y0, llm_calls=n, drafts=[y0, y1])
+except Exception as e:  # noqa: BLE001
+    p.error("D1", "youtube", e)
+try:
+    rc, so, se, n = p.run("s_kb_internal", [PY, "-m", "ingest.kb_internal", "--file", F / "rd_baoquan.md", "--collection",
+                          "internal:sx", "--approved-by", "GĐ Sản Xuất Thử R12", "--doc-id", "rd-baoquan-thu-r12"], wrap=True)
+    assert rc == 0, (rc, se[-300:])
+    rset = {"PROBE_SET": f"agents.sx_tracuu:REPORTS_DIR={EXT / 'rd_bat'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, n = p.run("p052_bat", [PY, "-m", "agents.sx_tracuu", "--ask", "bảo quản sâm khô độ ẩm", "--llm", "--out"],
+                          env=rset, wrap=True)
+    chat_bat = len([c for c in json.loads((p.dir / "p052_bat.llmcalls.json").read_text(encoding="utf-8")) if c["kind"] == "chat"])
+    p.check("P052", "sx_tracuu_bat_van_goi_chat (positive control)", chat_bat >= 1 and bool(files(EXT / "rd_bat", "sx-tomtat-")),
+            "05.2 bật → ≥1 lời gọi chat + có sx-tomtat", {"exit": rc, "chat_calls": chat_bat, "files": files(EXT / "rd_bat")})
+    tat("production-05.2")
+    rset2 = {"PROBE_SET": f"agents.sx_tracuu:REPORTS_DIR={EXT / 'rd_tat'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, n = p.run("p052_tat", [PY, "-m", "agents.sx_tracuu", "--ask", "bảo quản sâm khô độ ẩm", "--llm", "--out"],
+                          env=rset2, wrap=True)
+    chat_tat = len([c for c in json.loads((p.dir / "p052_tat.llmcalls.json").read_text(encoding="utf-8")) if c["kind"] == "chat"])
+    chk_blocked("P052", "sx_tracuu_tat_0_loi_goi_chat_0_tom_tat", rc, so, se, "production-05.2",
+                chat_tat == 0 and not files(EXT / "rd_tat", "sx-tomtat-"), chat_calls=chat_tat, files=files(EXT / "rd_tat"))
+except Exception as e:  # noqa: BLE001
+    p.error("P052", "sx_tracuu", e)
+try:
+    assert p.run("s_golden_g2", [PY, "-m", "ingest.golden_store", "--file", F / "golden_fixture_g2.json"])[0] == 0
+    for pid, in p.rows("select id from price_list where sku_key = 'mat-ong-sam-300ml' and approved_by is null order by id"):
+        p.run(f"s_duyet_gia_{pid}", [PY, "-m", "ingest.golden_store", "--approve-price", pid, "--by", "Người Duyệt Giá Thử R12"])
+    live = [PY, "-m", "agents.kd_live", "--channel", "tiktok", "--cart", "mat-ong-sam-300ml", "--day"]
+    rc, so, se, n = p.run("l5_live_bat", live + ["2026-10-27", "--brief", "Phiên live thử R12"], wrap=True, llm=resp("fake_live.json"))
+    p.check("L5", "kd_live_bat_van_goi_AI (positive control)", n >= 1, "≥1 lời gọi AI", {"exit": rc, "llm_calls": n, "loi": se.strip()[-160:]})
+    l0 = p.q("select count(*) from content_drafts where content_type = 'livestream_script'")
+    tat("sales-07.1")
+    rc, so, se, n = p.run("l5_live_tat", live + ["2026-11-04", "--brief", "Phiên live khi tắt R12"], wrap=True, llm=resp("fake_live.json"))
+    l1 = p.q("select count(*) from content_drafts where content_type = 'livestream_script'")
+    chk_blocked("L5", "kd_live_tat_0_loi_goi_AI", rc, so, se, "sales-07.1", n == 0 and l1 == l0, llm_calls=n, drafts=[l0, l1])
+except Exception as e:  # noqa: BLE001
+    p.error("L5", "kd_live", e)
+
+# ================================================================ G1-L1 — tắt 1 tính năng không làm mất đầu ra tính năng khác
+try:
+    tat("ceo-04.3")
+    rc, so, se, _ = p.run("g1l1_ceo_audit_tat_043", [PY, "-m", "agents.ceo_audit", "--report", "--now", "2026-10-24T10:00:00+07:00",
+                                                     "--out-dir", EXT / "ceo43"])
+    fs = files(EXT / "ceo43")
+    ok = any(f.startswith("ceo-gia-2026-10-24") for f in fs) and not any(f.startswith("ceo-audit-") for f in fs)
+    chk_blocked("G1-L1", "ceo_audit_tat_043_van_sinh_ceo_gia_cua_044", rc, so, se, "ceo-04.3", ok, files=fs)
+    tat("ceo-04.4")
+    rc, so, se, _ = p.run("rb_ceo_audit_tat_ca_hai", [PY, "-m", "agents.ceo_audit", "--report", "--now", "2026-10-25T10:00:00+07:00",
+                                                      "--out-dir", EXT / "ceo44"])
+    chk_blocked("RB", "ceo_audit_tat_ca_hai_khong_file", rc, so, se, "ceo-04", not files(EXT / "ceo44"), files=files(EXT / "ceo44"))
+except Exception as e:  # noqa: BLE001
+    p.error("G1-L1", "ceo_audit", e)
+try:
+    tat("intel-03")
+    rc, so, se, _ = p.run("g1l1_intel_weekly_tat_03", [PY, "scripts/intel_weekly.py", "--week", "2026-10-19", "--out-dir", EXT / "iw"])
+    fs = files(EXT / "iw")
+    ok = any(f.startswith("intel-trend-") for f in fs) and not any(f.startswith("intel-doithu-") for f in fs)
+    chk_blocked("G1-L1", "intel_weekly_tat_03_van_sinh_trend_cua_04.1", rc, so, se, "intel-03", ok, files=fs)
+except Exception as e:  # noqa: BLE001
+    p.error("G1-L1", "intel_weekly", e)
+try:
+    for i in (1, 2):
+        p.exec_admin("insert into intel_items (url, domain, source, tier, title, snippet, published_at, content_sha256, topics)"
+                     " values (%s, 'example.com', 'it-r12', 'B', %s, 'tin thử R12 về nhân sâm', now(), %s, '{sam}')",
+                     (f"https://example.com/r12-{i}", f"Tin thử R12 nhân sâm số {i}", f"{i:064d}"))
+    tat("intel-01.2")
+    ib = {"PROBE_SET": f"scripts.intel_bulletin:REPORTS_DIR={EXT / 'ib_tat012'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, _ = p.run("g1l1_intel_bulletin_tat_012", [PY, "-m", "scripts.intel_bulletin", "--period", "day", "--date",
+                                                          HOM_NAY, "--suggest"], env=ib, wrap=True)
+    n_top = p.q("select count(*) from approval_queue where object_type = 'intel_topic'")
+    fs = files(EXT / "ib_tat012", "intel-bulletin-")
+    chk_blocked("G1-L1", "intel_bulletin_tat_012_van_sinh_ban_tin_011", rc, so, se, "intel-01.2", bool(fs) and n_top == 0,
+                files=fs, intel_topic=n_top)
+    bat("intel-01.2")
+    ib2 = {"PROBE_SET": f"scripts.intel_bulletin:REPORTS_DIR={EXT / 'ib_bat'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, _ = p.run("g1l1_intel_bulletin_bat (positive)", [PY, "-m", "scripts.intel_bulletin", "--period", "day", "--date",
+                                                                 HOM_NAY, "--suggest"], env=ib2, wrap=True)
+    n_top2 = p.q("select count(*) from approval_queue where object_type = 'intel_topic'")
+    p.check("G1-L1", "intel_bulletin_bat_ca_hai_sinh (positive control)", rc == 0 and n_top2 >= 1 and bool(files(EXT / "ib_bat", "intel-bulletin-")),
+            "exit 0, ≥1 intel_topic, có bản tin", {"exit": rc, "intel_topic": n_top2})
+    tat("intel-01.1")
+    ib3 = {"PROBE_SET": f"scripts.intel_bulletin:REPORTS_DIR={EXT / 'ib_tat011'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, _ = p.run("rb_intel_bulletin_tat_011", [PY, "-m", "scripts.intel_bulletin", "--period", "day", "--date", HOM_NAY],
+                          env=ib3, wrap=True)
+    chk_blocked("RB", "intel_bulletin_tat_011_khong_file", rc, so, se, "intel-01.1", not files(EXT / "ib_tat011"), files=files(EXT / "ib_tat011"))
+except Exception as e:  # noqa: BLE001
+    p.error("G1-L1", "intel_bulletin", e)
+
+# ================================================================ RB — CLI bị chặn: báo rõ, exit 2, chặn trước side effect
+try:
+    tat("ceo-02.1")
+    rc, so, se, _ = p.run("rb_da_pmo", [PY, "-m", "agents.da_pmo", "--board", "--date", "2026-11-17", "--submit", "--out-dir", EXT / "pmo"])
+    chk_blocked("RB", "da_pmo_board_submit", rc, so, se, "ceo-02.1",
+                not files(EXT / "pmo") and p.q("select count(*) from approval_queue where object_type = 'weekly_board'") == 0,
+                files=files(EXT / "pmo"))
+    tat("ceo-03")
+    rc, so, se, _ = p.run("rb_ceo_risk", [PY, "-m", "agents.ceo_risk", "--report", "--now", "2026-10-24T09:00:00+07:00", "--out-dir", EXT / "risk"])
+    chk_blocked("RB", "ceo_risk_report", rc, so, se, "ceo-03", not files(EXT / "risk"), files=files(EXT / "risk"))
+    tat("marketing-01.2")
+    rc, so, se, _ = p.run("rb_mkt_director", [PY, "-m", "agents.mkt_director", "--briefs", "--today", "2026-11-05", "--horizon-days", "30"])
+    chk_blocked("RB", "mkt_director_briefs", rc, so, se, "marketing-01.2",
+                p.q("select count(*) from approval_queue where object_type = 'campaign_brief'") == 0)
+    tat("marketing-06.1")
+    rc, so, se, _ = p.run("rb_seo_web", [PY, "-m", "agents.seo_web", "--from-crawl", "--submit", "--out-dir", EXT / "seo"], wrap=True)
+    chk_blocked("RB", "seo_web_submit_khong_ghi_bao_cao", rc, so, se, "marketing-06.1",
+                not files(EXT / "seo") and p.q("select count(*) from approval_queue where object_type = 'seo_web_fix'") == 0,
+                files=files(EXT / "seo"))
+    tat("legal_hr-06.1")
+    rc, so, se, _ = p.run("rb_pc_hr", [PY, "-m", "agents.pc_hr", "--jd", "nv_van_hanh_san"])
+    chk_blocked("RB", "pc_hr_jd", rc, so, se, "legal_hr-06.1", p.q("select count(*) from approval_queue where object_type = 'hr_jd'") == 0)
+    tat("sales-03")
+    rc, so, se, _ = p.run("rb_content_listing", [PY, "-m", "pipelines.content", "--listing", "--sku", "mat-ong-sam-300ml",
+                                                 "--channel", "tiktok", "--no-llm"])
+    chk_blocked("RB", "content_listing", rc, so, se, "sales-03",
+                p.q("select count(*) from content_drafts where content_type = 'listing'") == 0)
+    tat("sales-07.3")
+    fc = {"PROBE_SET": f"agents.kd_forecast:REPORTS_DIR={EXT / 'fc'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, _ = p.run("rb_kd_forecast", [PY, "-m", "agents.kd_forecast", "--start", "2026-11-16", "--sku", "saphraton-20v", "--write"],
+                          env=fc, wrap=True)
+    chk_blocked("RB", "kd_forecast_write", rc, so, se, "sales-07.3", not files(EXT / "fc"), files=files(EXT / "fc"))
+    p.exec_admin("insert into plots (id, variety, tree_count, planted_year, status, source) values"
+                 " ('IT-R12-V1', 'Sâm Thử R12', 500, 2019, 'active', 'fixture:r12')")
+    tat("farming-05.2")
+    vt = {"PROBE_SET": f"agents.vt_thuhoach:REPORTS_DIR={EXT / 'vt'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, _ = p.run("rb_vt_thuhoach", [PY, "-m", "agents.vt_thuhoach", "--date", "2026-10-24", "--submit"], env=vt, wrap=True)
+    chk_blocked("RB", "vt_thuhoach_submit_khong_ghi_bao_cao", rc, so, se, "farming-05.2",
+                not files(EXT / "vt") and p.q("select count(*) from approval_queue where object_type = 'harvest_forecast'") == 0,
+                files=files(EXT / "vt"))
+    tat("finance-04.1")
+    pn = {"PROBE_SET": f"agents.fp_pnl:REPORTS_DIR={EXT / 'pnl'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, _ = p.run("rb_fp_pnl", [PY, "-m", "agents.fp_pnl", "--pnl", "--month", "2026-08"], env=pn, wrap=True)
+    chk_blocked("RB", "fp_pnl_pnl", rc, so, se, "finance-04.1", not files(EXT / "pnl"), files=files(EXT / "pnl"))
+except Exception as e:  # noqa: BLE001
+    p.error("RB", "cli", e)
+
+# ================================================================ GATE-OUT — tắt thì KHÔNG in nội dung nghiệp vụ ra stdout
+try:
+    tat("production-05.1")
+    st = {"PROBE_SET": f"agents.sx_tracuu:REPORTS_DIR={EXT / 'rd51'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, n = p.run("go_sx_tracuu_tat_051", [PY, "-m", "agents.sx_tracuu", "--ask", "bảo quản sâm khô độ ẩm", "--out"],
+                          env=st, wrap=True)
+    chk_blocked("GATE-OUT", "sx_tracuu_tat_051_khong_in_trich_doan_0_embed", rc, so, se, "production-05.1",
+                n == 0 and not files(EXT / "rd51") and "độ ẩm" not in so.replace("bảo quản sâm khô độ ẩm", ""),
+                llm_calls=n, stdout_dong=len(so.splitlines()))
+    tat("finance-05.2")
+    rc, so, se, _ = p.run("go_fp_cash", [PY, "-m", "agents.fp_cash", "--forecast", "--start", "2026-10-26", "--out-dir", EXT / "cash"])
+    chk_blocked("GATE-OUT", "fp_cash_tat_khong_in_du_bao", rc, so, se, "finance-05.2",
+                len(so.strip().splitlines()) <= 2 and not files(EXT / "cash"), stdout_dong=len(so.strip().splitlines()))
+    for n_, a in (("go_s_inv", [PY, "-m", "ingest.inventory_csv", "--file", F / "inv_ok.csv"]),
+                  ("go_s_lots", [PY, "-m", "pipelines.production", "lots", "--load", F / "lots_ok.json"])):
+        assert p.run(n_, a)[0] == 0
+    assert p.run("go_s_intake", [PY, "-m", "pipelines.production", "intake", "--lot", "IT-LOT-001", "--result", "passed", "--by", "QA Thử R12"])[0] == 0
+    tat("production-01")
+    rc, so, se, _ = p.run("go_bulletin_tat_01", [PY, "-m", "pipelines.production", "bulletin", "--date", "2026-10-23", "--out-dir", EXT / "pb1"])
+    fs = files(EXT / "pb1")
+    ok = any(f.startswith("sx-canhan-") for f in fs) and not any(f.startswith("sx-bantin-") for f in fs) and "## Thiếu hàng" not in so
+    chk_blocked("GATE-OUT", "bulletin_tat_01_van_sinh_canhan_khong_in_bantin", rc, so, se, "production-01", ok, files=fs)
+    bat("production-01")
+    tat("production-04.3")
+    rc, so, se, _ = p.run("go_bulletin_tat_043", [PY, "-m", "pipelines.production", "bulletin", "--date", "2026-10-23", "--out-dir", EXT / "pb2"])
+    fs = files(EXT / "pb2")
+    ok = any(f.startswith("sx-bantin-") for f in fs) and not any(f.startswith("sx-canhan-") for f in fs) and "## Hàng cận hạn" not in so
+    chk_blocked("GATE-OUT", "bulletin_tat_043_van_sinh_bantin_khong_in_canhan", rc, so, se, "production-04.3", ok, files=fs)
+except Exception as e:  # noqa: BLE001
+    p.error("GATE-OUT", "setup", e)
+
+# ================================================================ L3 — không hứa chuyển người khi không ghi được handoff
+L3 = r"""
+import json, os, sys
+from pathlib import Path
+from connectors import zalo, channels
+from api import rag
+zalo.CONV_LOG = Path(sys.argv[2]) / 'conv.jsonl'
+zalo.SEEN_DB = Path(sys.argv[2]) / 'seen.db'
+rag.answer = lambda *a, **k: {'answer': rag.NO_DATA, 'sources': []}
+if sys.argv[3] == 'db_loi':
+    channels._connect = lambda: None
+out = []
+r = zalo._reply_turn('uid-r12-' + sys.argv[1], sys.argv[4], 'm-' + sys.argv[1], send=lambda u, t: out.append(t) or True)
+print(json.dumps({'text': r.get('text'), 'sent': out}, ensure_ascii=False))
+"""
+PROMISE = ("nhân viên sẽ", "sẽ liên hệ", "sẽ phản hồi", "Nhân viên Sâm Sâm sẽ")
+try:
+    ch = {"CHANNEL_HASH_SALT": "muoi-thu-r12-kenh-chat-0001", "DEPLOY": None}
+    (EXT / "l3").mkdir()
+
+    def turn(tag, mode, q):
+        rc, so, se, _ = p.run(f"l3_{tag}", [PY, "-c", L3, tag, EXT / "l3", mode, q], env=ch)
+        try:
+            d = json.loads(so.strip().splitlines()[-1])
+        except Exception:  # noqa: BLE001
+            d = {"text": None}
+        return rc, d, se
+
+    h0 = p.q("select count(*) from approval_queue where object_type = 'cskh_handoff'")
+    rc, d, se = turn("bat_thuong", "ok", "Hũ 300ml giá bao nhiêu vậy shop?")
+    h1 = p.q("select count(*) from approval_queue where object_type = 'cskh_handoff'")
+    p.check("L3", "chatbot_chay_thu_ghi_handoff_roi_hen (positive control)", rc == 0 and h1 == h0 + 1 and any(x in (d.get("text") or "") for x in PROMISE),
+            "ghi được cskh_handoff → được hẹn nhân viên", {"exit": rc, "handoff": [h0, h1], "text": d.get("text")})
+    rc, d, se = turn("dbloi_suckhoe", "db_loi", "Uống sâm có chữa tiểu đường không?")
+    h2 = p.q("select count(*) from approval_queue where object_type = 'cskh_handoff'")
+    p.check("L3", "loi_ghi_handoff_khong_hua", rc == 0 and h2 == h1 and not any(x in (d.get("text") or "") for x in PROMISE)
+            and "1800577732" in (d.get("text") or ""), "không ghi được handoff → không hứa, có hotline", {"exit": rc, "text": d.get("text")})
+    tat("sales-01")
+    for tag, q in (("tat_thuong", "Hũ 300ml còn hàng không shop?"), ("tat_suckhoe", "Uống sâm có hết mất ngủ không shop?")):
+        rc, d, se = turn(tag, "ok", q)
+        h3 = p.q("select count(*) from approval_queue where object_type = 'cskh_handoff'")
+        p.check("L3", f"chatbot_tat_{tag}_khong_hua_khong_traceback", rc == 0 and "Traceback" not in se and h3 == h1
+                and not any(x in (d.get("text") or "") for x in PROMISE) and "1800577732" in (d.get("text") or ""),
+                "tắt: 0 handoff, không hứa nhân viên, có hotline, không traceback",
+                {"exit": rc, "handoff": h3, "text": d.get("text"), "traceback": "Traceback" in se})
+except Exception as e:  # noqa: BLE001
+    p.error("L3", "setup", e)
+p.finish(__file__)

@@ -1,0 +1,349 @@
+{
+ "id": "sales-01",
+ "ten": "Chatbot chăm sóc khách (Zalo, Messenger)",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Chatbot chăm sóc khách: 'Trả lời khách 24/7 trên Zalo, website, Messenger bằng câu đã duyệt; câu hỏi sức khỏe chuyển cho người thật'",
+ "tieu_chi": [
+  "Handler webhook THẬT (connectors.zalo.Handler / connectors.messenger) chạy trên 127.0.0.1 cổng động, DEPLOY tắt (send_text thật = dry-run, 0 request ra Zalo/Meta); LLM/embedding = FAKE ở biên (api.rag.chat/embed) — mức MOCK",
+  "Chạy thử (feature_rollout sales-01 = chay_thu): câu bot KHÔNG tới khách; khách nhận HOLD_TEXT; approval_queue sales/cskh_reply created_by agent:kd_a1 payload = câu bot đã che PII; sales/cskh_handoff lý do rollout",
+  "Luật trước LLM: rượu → template alcohol, sức khỏe → template health + cskh_handoff; 0 lời gọi fake LLM",
+  "Che PII: convlog (đường scratchpad) không chứa SĐT/email thô; stdout không in user_id thô",
+  "Chữ ký sai → 403, không xử lý; dedup cùng msg_id → xử lý 1 lần",
+  "Hạn chót: answer() vượt ngân sách → HANDOFF_TEXT + convlog error deadline:* + cskh_handoff lý do deadline (ngân sách rút ngắn trong harness, ghi FIXTURE)",
+  "Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có dòng Nguồn: <url fixture>; gửi vẫn dry-run (sent=false) → KHÔNG có file_output_evidence (không đếm đầu ra không gửi thật)",
+  "sales_director --run gom convlog answered:false → cskh_handoff created_by agent:sales_director; chạy lại không nhân đôi",
+  "data/conversations.jsonl và data/zalo_seen.db thật KHÔNG đổi (sha trước/sau)",
+  "Tắt (rollout --disable) → 0 lời gọi LLM, không cskh_reply"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: LLM/embedding fake (harness fake_llm.py) + chunk KB fixture example.com; OA/Meta secret giả; send_text thật dry-run",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/fake_rag_answer.txt",
+   "sha256": "c6d05b043988052d85a32ca772f17d35df5b78c35d00421bb9f561692aeb32f7",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "S01-C01",
+   "mo_ta": "Zalo câu hỏi thường, chạy thử",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "HTTP 200; khách nhận HOLD_TEXT (dry-run); 1 cskh_reply agent:kd_a1 payload=câu fake đã che; 1 cskh_handoff; convlog rollout=chay_thu",
+   "actual": "HTTP 200; convlog (scratchpad) answer = câu chào/chính sách + HOLD_TEXT, sent=false (dry-run), rollout=chay_thu, provenance live; approval_queue +cskh_reply agent:kd_a1 payload 'Mật ong sâm 300ml là thực phẩm đóng hũ 300ml của Sâm Sâm [1].\\nNguồn: https://example.com/it-g2/mat-ong-sam-300ml' + cskh_handoff lý do chua_van_hanh (payload không câu khách); fake: 1 embed + 1 chat feature sales-01",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C02",
+   "mo_ta": "Chữ ký sai",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "HTTP 403; 0 convlog/queue",
+   "actual": "HTTP 403; convlog +0; queue +0; fake +0",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C03",
+   "mo_ta": "Câu sức khỏe",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "template health; handoff health; 0 lời gọi",
+   "actual": "route=health, câu template sức khỏe; cskh_handoff lý do suc_khoe; fake +0",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C04",
+   "mo_ta": "Câu rượu",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "template alcohol; 0 lời gọi",
+   "actual": "route=alcohol, template cố định; cskh_handoff lý do san_pham_han_che; fake +0",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C05",
+   "mo_ta": "PII trong câu khách",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "convlog/payload không SĐT/email thô; stdout không user_id thô",
+   "actual": "convlog question 'Tôi tên ***, SĐT ***, email ***, ...'; grep SĐT/email/uid thô trong convlog=False, trong stdout harness=0; payload cskh_reply không PII",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C06",
+   "mo_ta": "Dedup retry cùng msg_id",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "xử lý 1 lần",
+   "actual": "POST 200/200; lần 2: convlog +0, fake +0",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C07",
+   "mo_ta": "Hạn chót trả lời (FIXTURE CHAT_BUDGET_S=4, SEND_RESERVE_S=1, fake chat ngủ 6s)",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "HANDOFF_TEXT; error deadline:*; handoff deadline",
+   "actual": "convlog error=deadline:tra_loi sau ~4.8s, answered=false; stdout '[deadline] ... chuyển người'; cskh_handoff lý do qua_han_tra_loi",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C08",
+   "mo_ta": "Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có nguồn",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "có 'Nguồn:' + URL; sent=false; file_output_evidence 0",
+   "actual": "convlog answer chứa 'Nguồn: https://example.com/it-g2/mat-ong-sam-300ml', answered=true, sent=false; file_output_evidence=0",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C09",
+   "mo_ta": "Messenger HMAC",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "đúng → cskh_reply messenger; sai → 403",
+   "actual": "HTTP 200 → cskh_reply + cskh_handoff kênh messenger; chữ ký sai HTTP 403",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C10",
+   "mo_ta": "sales_director gom handoff",
+   "lenh": "python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv -m agents.sales_director --run --dry-run ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv -m agents.sales_director --run ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv -m agents.sales_director --run",
+   "expected": "cskh_handoff agent:sales_director; lần 2 0 mới",
+   "actual": "dry-run 0 ghi; run1 đẩy 24 (7 cskh_handoff agent:sales_director gom/khách/ngày, payload chỉ kênh/giờ/mã tham chiếu + 17 price_review); run2 0 mới",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C11",
+   "mo_ta": "/healthz /readyz",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all",
+   "expected": "200 up; db ok",
+   "actual": "healthz 200 {status: up}; readyz 200 {config ok, db ok}",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-C12",
+   "mo_ta": "Tắt tính năng",
+   "lenh": "python -m pipelines.rollout --disable sales-01 --by Người Thử IT --note kiểm nhánh tắt r10 g2 ;; python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv C12_tat",
+   "expected": "0 lời gọi; không cskh_reply; khách HOLD_TEXT",
+   "actual": "fake +0; queue +0 (không cskh_reply); convlog rollout=tat, khách nhận HOLD_TEXT (dry-run) — NHƯNG traceback RolloutBlocked trong luồng, không có cskh_handoff (xem S01-X1/L3)",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S01-X1",
+   "mo_ta": "BỔ SUNG SAU KHÓA (phát hiện ở C12): câu sức khỏe khi chatbot TẮT phải vẫn chuyển người (PL01, docstring record_handoff 'không raise')",
+   "lenh": "python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv X1_tat_health",
+   "expected": "template sức khỏe + 1 mục cskh_handoff, không ngoại lệ",
+   "actual": "khách nhận template hứa nhân viên phản hồi; approval_queue +0; Exception in thread ... RolloutBlocked (L3)",
+   "exit": 0,
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Vá L3 (bắt RolloutBlocked ở record_handoff hoặc cho cskh_handoff đi đường riêng khi tắt) rồi chạy lại S01-X1; secret OA/Meta + server Bên B để kiểm gửi thật",
+ "gioi_han": "Webhook chạy bằng Handler thật trên 127.0.0.1 (không qua main() vì main bind 0.0.0.0); không gửi thật tới Zalo/Meta (DEPLOY tắt) nên file_output_evidence nguồn conversations không thể sinh (đúng thiết kế); câu trả lời LLM là fake; vận hành 24/7 + secret OA/Meta = blocker danh mục C01.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post.py",
+   "sha256": "09d71906afc3419051c2a7e3bfca166a96497b75be67087efc4640c102e6d9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post2.py",
+   "sha256": "1ab72f65b0881f3e20f7da54403a360f526728a95638f6dce6c6cf6ab872314e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/case.py",
+   "sha256": "0d5e5ea91967bf225c4ff3c733a5817c1ff87bb36095d808aa546fa8186b1340"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fake_llm.py",
+   "sha256": "adbc2f9799ed0ac98bf5ca1f83c7c11c2900579da8dc9bc2aa4ca3e91481cc81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fu_probe.py",
+   "sha256": "cd000fe41aa6172cf25198596a21d765938df14d3d1c2c9721812bc926b84953"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_golden_fixture.py",
+   "sha256": "82dcec52b25e0cb39b9111a0d2031d75c3d2b1c72ef60fcc71ebd747fdf0abb1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_items.py",
+   "sha256": "dfe2f77d4674e3134ba3fe9b26b320d6e1f8c54bebff43405b10cc98357b72c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/q.py",
+   "sha256": "1f522e8a212386aa99f6b6b44c4831b6aface0ecf34266af1c39eff527f274c1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/run_mod.py",
+   "sha256": "a5e9c3d3fdf5ad9706b50d5c01e7f1a66d8ab94ca05f8d449d57e6648519391b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/seed_chunk.py",
+   "sha256": "e2c8e72b3c8bd29336aa00af4138a19700aa0721aa993ef1286d2b235ad47b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/shift_orders.py",
+   "sha256": "b630f0394d2543a79471f4174f56d87461bb4c687718ff5d3da83a0d16791afe"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/zalo_e2e.py",
+   "sha256": "f6f1700f4569219eff9446fce3724d65f259fbddaba0930cc0ccc876ee416ae4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S01-C10-dryrun.txt",
+   "sha256": "9e9d0f59d0f00411d58ddf1f194c601c0af630de79869823d451f80a6aeabbb4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S01-C10-run1.txt",
+   "sha256": "d972050dfa0b838b0a45618464e5d05ea196744e979199686be84993594d8ddc"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S01-C10-run2.txt",
+   "sha256": "87ea0d7672663fcd648ac1166f7bf595e25f7ddea22bf10682876833e702eccf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S01-C12.txt",
+   "sha256": "73efa669aeb833abde135fc56542ba582457634abc598925b90e9a4633421619"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S01-db.json",
+   "sha256": "bb09d753fb8334cf1d18b7edbfee9dcd5708f59bfe85d5efbcbf58e8d6a6caea"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S01-E2E-all.txt",
+   "sha256": "f1e9a6702162af4c44cbb842acb90e58f5114a3edf8ff9ebd532f0f9875cc5ed"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S01-X1.txt",
+   "sha256": "4345725e15675be680d0ac56ec767e47f42422cab6e8923c35597ce9ed00aa27"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C01_thuong.json",
+   "sha256": "b89f7f66d8c821c2a7a55b40516a1d9e170e59b1ecbe7e34c5df814fec046e24"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C02_badsig.json",
+   "sha256": "c60d96c660059ffa331dedb02edbee9ee882feeffdbb539a85f74e37104158d7"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C03_health.json",
+   "sha256": "7dfc0883c9891961c7b993bc7314a699055515b774fbd9c153bec2cb442aa329"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C04_alcohol.json",
+   "sha256": "d19b22ebd2a9dfec16ff75535971bde24b51121cde77229a41d0e089cf022126"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C05_pii.json",
+   "sha256": "07b9a1c18326dc97a287b3614f18717706ddcb80955a8826d974126341309f4a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C06_dedup.json",
+   "sha256": "9a9121a9093a6eda41fd03a3dc4b7f458ad9fb0334d7c53c3fcf48b5b61fd03d"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C07_deadline.json",
+   "sha256": "1e8ab1dd49a0f33f447c84bf9d9c115c79d7ce9c2c3acee5d686f3ebd0346c65"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C08_vanhanh.json",
+   "sha256": "6c8ee2cbf099b2f8f63e26381b245460d25332b7b99b915520c22ef13599ff50"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C09_messenger.json",
+   "sha256": "3ce06ce8359de94afeec28f8b34f16ebed988f2bf1d754dbf66eb5f1c9c8a388"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C11_endpoints.json",
+   "sha256": "11e4b5f2d429cd626758fe702cc45fd2e0c2c6c09a402083dc00183df724ec02"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_C12_tat.json",
+   "sha256": "82ffdba701d0432478a5d0fcf2a222f41ae7e9f1698c587c0d52a7eca9a1233a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_tail_all.json",
+   "sha256": "d246d78f35656f93c12bb3f18ad5d4c5b0c3ce899999dedf956014341da704b5"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/sales-01_X1_tat_health.json",
+   "sha256": "75d03e11448607c71f2c2ba3c69fabba7f06fb75cc2d47b316f8b20a08b6fd50"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt",
+   "sha256": "6318bbc062812637309bbc78e092657139921c2ff309792bd10b70bd6a306179"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt",
+   "sha256": "0627f43797cc5b00090dcdaddc96bf287ec3a0575fe234785a105ab05814f01c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/TAT-disable-sales-01.txt",
+   "sha256": "4ca6fa14550c185f3d4d7279ba2e2b2f23d0f31d551006f20be02ed79f7b83cb"
+  },
+  {
+   "path": "evidence/itacc_r10/ui/shots/19_chat_cau_thuong_co_tra_loi.png",
+   "sha256": "86c33e702bf3d34f3f8ee2958745b97115d8cc2f3f90118c5e3684488083170b"
+  },
+  {
+   "path": "evidence/itacc_r10/ui/streamlit_run6_log.txt",
+   "sha256": "0c20985f8978fba3468f5bbd73782c99d5e30f065fe3128874d71dda2ff0a4e7"
+  },
+  {
+   "path": "evidence/itacc_r10/ui/ui_results_run6.json",
+   "sha256": "54b5c4f471bd41693b9d59f853ff103a9e369436419e6ce98e46b9c3a6108335"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "L3",
+   "muc_do": "Trung bình",
+   "tom_tat": "Chatbot sales-01 ở giai đoạn TẮT: khách vẫn nhận câu hứa 'nhân viên sẽ phản hồi' (HOLD_TEXT / template sức khỏe) nhưng KHÔNG có mục cskh_handoff; RolloutBlocked thoát khỏi channels.record_handoff (docstring: 'không raise') → traceback trong luồng trả lời. Trái PL01 'câu hỏi sức khỏe chuyển cho người thật' và docstring _reply_held ('+ mục handoff'). sales_director cũng bị chặn sinh cskh_handoff cùng tính năng → không ai được báo.",
+   "tai_hien": "rollout --disable sales-01 --by 'Người Thử IT'; POST user_send_text câu sức khỏe/câu thường vào Handler zalo thật (harness zalo_e2e.py X1_tat_health / C12_tat)",
+   "expected": "khách nhận template + 1 mục cskh_handoff (lý do suc_khoe/rollout), không ngoại lệ",
+   "actual": "convlog answered=false route=health; approval_queue +0; stderr 'Exception in thread ... RolloutBlocked: hàng duyệt sales/cskh_handoff: tính năng sales-01 đang tắt'",
+   "evidence": [
+    "evidence/itacc_r10/g2/out/S01-X1.txt",
+    "evidence/itacc_r10/g2/out/sales-01_X1_tat_health.json",
+    "evidence/itacc_r10/g2/out/S01-C12.txt"
+   ],
+   "vi_tri_code": "connectors/channels.py record_handoff (chỉ bắt psycopg.Error); pipelines/approval_queue.py enqueue → rollout.check_generate"
+  },
+  {
+   "ma": "UI-02",
+   "muc_do": "TRUNG BÌNH",
+   "nguon": "điều phối viên — UI thật r10 (bổ sung, không đổi kết luận nhóm)",
+   "tom_tat": "Tab 'Chat Sâm Sâm' ở chế độ thực (Streamlit dùng login in role svc_ui) lỗi psycopg InsufficientPrivilege 'permission denied for table chunks' khi trả lời câu thường — traceback hiện cho người dùng (lộ đường dẫn mã). Câu sức khỏe vẫn chuyển người (luật trước truy hồi).",
+   "evidence": [
+    "evidence/itacc_r10/ui/shots/19_chat_cau_thuong_co_tra_loi.png",
+    "evidence/itacc_r10/ui/streamlit_run6_log.txt",
+    "evidence/itacc_r10/ui/ui_results_run6.json"
+   ]
+  }
+ ],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

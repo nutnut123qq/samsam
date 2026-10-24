@@ -1,0 +1,36 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\finance-03.1\\20261024T112125-8269\\finance-03.1__F031-5\\out/director-finance-*.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/finance-03.1/20261024T112125-8269/finance-03.1__F031-5/out/director-finance-2026-10-24.md",
+    "sha256": "ab1fbc55c2e40714a02795ecdf6b2a5bc82ca065febcc75199aff07220d09a93"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\finance-03.1\\20261024T112125-8269\\finance-03.1__F031-5\\out/director-finance-*.md",
+  "re": "(?s)\\A(?=.*\\A> \\*\\*CHẠY THỬ)(?=.*\\| `IT-DL01` \\| 12\\.000\\.000đ \\|)(?=.*\\| `IT-DL02` \\| 4\\.000\\.000đ \\|)(?=.*\\| `IT-DL03` \\| 1\\.000\\.000đ \\|)(?=.*Tổng quá hạn: 17\\.000\\.000đ — nguồn: sổ công nợ nạp tay \\(`dealer_ar`\\))",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\finance-03.1\\20261024T112125-8269\\finance-03.1__F031-5\\out/director-finance-*.md",
+  "re": "`IT-DL04`",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from report_outputs where feature_id = 'finance-03.1' and not is_sample",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

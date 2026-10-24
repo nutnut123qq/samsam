@@ -1,0 +1,27 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import sys,glob,hashlib\nfrom scripts import garden_media as gm\nfs=glob.glob(sys.argv[1]+'/*.jpg'); print('n_files',len(fs))\np=fs[0]; d=open(p,'rb').read(); name=p.replace('\\\\','/').rsplit('/',1)[1].split('.')[0]\nImage,_=gm._pil()\nwith Image.open(p) as im: st=gm._exif_stats(im)\nprint('sha_ok',hashlib.sha256(d).hexdigest()==name,'exif_stats',st)\n",
+  "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-04-88c1fcab729262d32b23227fb81e6f9c/mkt_out"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:28:18+07:00",
+ "ket_thuc": "2026-10-24T11:28:19+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "n_files 1[\\s\\S]*sha_ok True exif_stats \\(0, False\\)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "02227086f602eb59fdc4511cb9f3095cb26355aca0a3141e7f1c78287a60bceb",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

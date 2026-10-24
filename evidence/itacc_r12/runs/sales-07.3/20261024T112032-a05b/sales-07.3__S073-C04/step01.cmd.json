@@ -1,0 +1,33 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.kd_forecast",
+  "--sku",
+  "khong-co-sku",
+  "--write"
+ ],
+ "env_doi": [
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:20:52+07:00",
+ "ket_thuc": "2026-10-24T11:20:57+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stderr_re": "khong-co-sku' không có trong golden",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "f1b22a46b6532918b0708c6d03695fbff61ef2056059c9ff6cd49f3a20f33071"
+}

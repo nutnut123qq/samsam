@@ -678,8 +678,16 @@ def test_link_ok_and_refusals(db, proxy, run, capsys):
                "A") == 1
     _raises(db, "select link_lot_origin('KHONG-CO', %s, '{}', 'A')", (lid,),
             match="không có lô")
-    _raises(db, "select link_lot_origin(%s, %s, '{}', '  ')", (LOT, lid),
-            match="thiếu tên")
+    # r12 G5-02: tên người qua cổng chung `human_actor` (trước: function tự
+    # báo "thiếu tên" và vẫn nhận tên agent:/system:) — rỗng/agent/system đều
+    # bị chặn 42501, kể cả login owner; không ghi dòng nào.
+    for bad in ("  ", "agent:qr", "system:job"):
+        for fn in ("link_lot_origin(%s, %s, '{}', %s)",
+                   "unlink_lot_origin(%s, %s, %s)"):
+            _raises(db, f"select {fn}", (LOT, lid, bad),
+                    exc=psycopg.errors.InsufficientPrivilege,
+                    match="không hợp lệ")
+    assert _count(db, "lot_origins", "linked_by ~* '^(agent|system):'") == 0
     # lô SKU ngoài pilot_skus → từ chối TRƯỚC khi gọi function
     _mk_lot(db, "LOT-SAP-001", sku="saphraton-20v")
     assert run("link", "--lot", "LOT-SAP-001", "--log", str(lid), "--by",

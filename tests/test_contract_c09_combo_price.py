@@ -79,7 +79,7 @@ def test_db_submit_idempotent_and_rollout(db, monkeypatch):
     monkeypatch.setattr("agents.kd_listing.golden_prices",
                         lambda conn, today: PRICES)
     monkeypatch.setattr("agents.combo_price.fetch_versions", lambda c: COGS)
-    monkeypatch.setattr("agents.combo_price.promotable_set",
+    monkeypatch.setattr("agents.combo_price.allowed_set",
                         lambda conn: PROM)
     c = TxConn(db)
     recs = cp.propose(c, TODAY, CFG, NET)

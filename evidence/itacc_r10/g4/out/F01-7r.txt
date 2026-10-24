@@ -1,0 +1,19 @@
+# ca F01-7r
+# gio 2026-10-23T10:23:16+07:00
+# lenh python -m ingest.settlement_csv --report
+# exit 0
+--- stdout ---
+[report] đối soát quyết toán sàn — CHỈ BÁO CÁO, không bút toán:
+  shopee: 8 dòng — khop=4, lech=1, thieu_chung_tu=1, hoan=2
+    thực nhận theo file 2.094.000đ; tính lại 2.108.000đ; chênh -14.000đ; affiliate sàn khấu trừ 0đ; đơn ở ≥2 file quyết toán: 2
+    khoản xuất lại ở ≥2 file: trùng 1, lệch 1 — tổng tiền tính 7 khoản (trùng nguyên văn tính 1 lần; lệch giữ cả hai, chờ người đối soát): qt_shopee_s1.csv, qt_shopee_s2.csv
+    [hoan] qt_shopee_s1.csv dòng 4: phi_co_dinh chênh -8.000đ; phi_thanh_toan chênh -10.000đ; phi_dich_vu chênh -6.000đ
+    [hoan] qt_shopee_s1.csv dòng 5: -
+    [lech] qt_shopee_s1.csv dòng 3: thuc_nhan chênh -14.000đ
+    [thieu_chung_tu] qt_shopee_s1.csv dòng 6: -
+  tiktok: 1 dòng — khop=1, lech=0, thieu_chung_tu=0, hoan=0
+    thực nhận theo file 440.000đ; tính lại 440.000đ; chênh 0đ; affiliate sàn khấu trừ 0đ; đơn ở ≥2 file quyết toán: 0
+    khoản xuất lại ở ≥2 file: trùng 0, lệch 0 — tổng tiền tính 1 khoản (trùng nguyên văn tính 1 lần; lệch giữ cả hai, chờ người đối soát)
+
+--- stderr ---
+

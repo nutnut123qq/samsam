@@ -1,0 +1,59 @@
+"""HARNESS g2 — chạy module sản phẩm THẬT (runpy __main__) sau khi đặt
+fixture/patch ở biên. Mọi patch là FIXTURE/HARNESS, ghi rõ trong evidence.
+  python run_mod.py [--force-mode M] [--fake-llm] [--guardrail-data DIR]
+                    [--data-dir DIR] [--reports-dir DIR] -m MODULE args...
+--force-mode   : pipelines.rollout._FORCE_MODE = M (FIXTURE ép giai đoạn)
+--fake-llm     : thay pipelines.llm_gateway.chat/embed bằng fake (MOCK biên)
+--guardrail-data: pipelines.guardrail.DATA_DIR = DIR (bản sao data + golden fixture)
+--data-dir     : convlog đọc từ DIR (lead_store.harvest/ sales_director)
+--reports-dir  : agents.report.REPORTS_DIR = DIR (báo cáo không rơi vào data/reports)
+"""
+import runpy, sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, r"D:\code\samsam")
+
+a = sys.argv[1:]
+opts = {}
+while a and a[0] != "-m":
+    k = a.pop(0)
+    if k == "--fake-llm":
+        opts["fake"] = True
+    else:
+        opts[k.lstrip("-")] = a.pop(0)
+a.pop(0)
+mod = a.pop(0)
+
+if opts.get("fake"):
+    import fake_llm
+    fake_llm.install()
+if "force-mode" in opts:
+    from pipelines import rollout
+    rollout._FORCE_MODE = opts["force-mode"]
+if "guardrail-data" in opts:
+    from pipelines import guardrail
+    guardrail.DATA_DIR = Path(opts["guardrail-data"])
+if "reports-dir" in opts:
+    from agents import report
+    report.REPORTS_DIR = Path(opts["reports-dir"])
+if "data-dir" in opts:
+    from ingest import lead_store
+    d = Path(opts["data-dir"])
+    lead_store.DATA_DIR = d
+    lead_store.harvest.__defaults__ = (d,)
+    lead_store.convlog_stats.__defaults__ = (d,)
+
+sys.argv = [mod] + a
+if mod == "ingest.lead_store":
+    # runpy sẽ định nghĩa lại DATA_DIR/harvest → gọi đúng khối __main__ của
+    # module (job_run + main) trên module đã patch.
+    from ingest import lead_store
+    from pipelines.job_runs import job_run
+    with job_run("ingest.lead_store") as run:
+        rc = lead_store.main()
+        run["ok"] = rc == 0
+    raise SystemExit(rc)
+runpy.run_module(mod, run_name="__main__", alter_sys=True)

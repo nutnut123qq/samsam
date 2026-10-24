@@ -1,0 +1,26 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5,autocommit=True)\nprint('session_user', c.execute('select session_user').fetchone()[0])\nfor k, s in (('UPDATE', \"update decision_log set topic='sửa thử' where id=(select min(id) from decision_log)\"), ('DELETE', 'delete from decision_log where id=(select min(id) from decision_log)')):\n    try:\n        r = c.execute(s); print('KHONG_CHAN', k, r.rowcount)\n    except psycopg.Error as e:\n        print('CHAN', k + ':', type(e).__name__, str(e).splitlines()[0])\n"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:12:42+07:00",
+ "ket_thuc": "2026-10-24T11:12:43+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "CHAN UPDATE:[^\\n]*append-only[\\s\\S]*CHAN DELETE:[^\\n]*append-only",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "7656049b3fe84fa979426376bdda8e4d83caaf97512cd3500db77ecfa2fc56ed",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

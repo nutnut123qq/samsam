@@ -1,0 +1,174 @@
+"""HARNESS r12 — thư viện probe trước/sau (nạp bằng importlib từ file .py.txt).
+
+P(root, envfile, label): chạy CLI của CÂY MÃ `root` (snapshot baseline hoặc working tree) trên DB thử của envfile,
+lưu evidence GỐC dưới evidence/itacc_r12/probes/<label>/<run_id>/ (mkdir exist_ok=False, file mở 'x'):
+<ca>.cmd.json (argv an toàn, giờ VN, exit lấy từ tiến trình, sha256), <ca>.stdout.txt, <ca>.stderr.txt.
+Bộ lọc secret tự động (mật khẩu DSN/login thử, muối, khóa vault) — không sửa nội dung nghiệp vụ.
+`wrap=True`: chạy qua wrap.py.txt — chặn socket ngoài localhost + fake AI ở BIÊN CUỐI (llm_gateway._client) có bộ đếm
+lời gọi ghi ra <ca>.llmcalls.json. check(): ghi kết quả bất biến PASS/FAIL (expected/actual)."""
+import hashlib
+import json
+import os
+import re
+import secrets
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+VN = timezone(timedelta(hours=7))
+EV12 = Path(__file__).resolve().parents[1]
+HARNESS = EV12 / "harness"
+FIX = EV12 / "fixtures"
+
+
+def now():
+    return datetime.now(VN).isoformat(timespec="seconds")
+
+
+def load_env(p):
+    env = {}
+    for line in Path(p).read_text(encoding="utf-8").splitlines():
+        m = re.match(r"export (\w+)='(.*)'$", line.strip())
+        if m:
+            env[m.group(1)] = m.group(2)
+    return env
+
+
+class P:
+    def __init__(self, root, envfile, label, fingerprint=None):
+        from psycopg import conninfo
+        self.root = Path(root).resolve()
+        self.env = load_env(envfile)
+        d = conninfo.conninfo_to_dict(self.env["DATABASE_URL"])
+        assert d.get("host") == "127.0.0.1" and str(d.get("port")) == "55451" \
+            and str(d.get("dbname", "")).startswith("samsam_itacc_r12_"), "DB không phải DB thử r12"
+        self.db = d["dbname"]
+        self.secrets = [v for v in (d.get("password"), self.env.get("INTEL_HASH_SALT"),
+                                    self.env.get("CONTACT_VAULT_KEY")) if v]
+        self.run_id = datetime.now(VN).strftime("%Y%m%dT%H%M%S") + "-" + secrets.token_hex(2)
+        self.dir = EV12 / "probes" / label / self.run_id
+        self.dir.mkdir(parents=True, exist_ok=False)
+        (self.dir / "scratch").mkdir()
+        self.results, self.label, self.fp = [], label, fingerprint
+        self.logins = {}
+
+    # ---- lệnh ----
+    def redact(self, t):
+        t = re.sub(r"(postgres(?:ql)?://[^:/\s]+:)[^@\s]+@", r"\1***@", t)
+        t = re.sub(r"(password\s*=\s*)\S+", r"\1***", t, flags=re.I)
+        for s in self.secrets:
+            t = t.replace(s, "***")
+        return t
+
+    def child_env(self, over=None):
+        e = {k: v for k, v in os.environ.items()
+             if not (k.startswith("PG") or k.endswith("DATABASE_URL") or k in (
+                 "DEPLOY", "AUTH_MODE", "APPROVAL_ENFORCE", "RED_ALERT_NOTIFY", "LLM_KILL_FEATURES",
+                 "INTEL_HASH_SALT", "CONTACT_VAULT_KEY", "OPENROUTER_API_KEY", "PYTHONPATH"))}
+        e.update(self.env)
+        e.update(PYTHONIOENCODING="utf-8", OPENROUTER_API_KEY="", PROBE_ROOT=str(self.root))
+        for k, v in (over or {}).items():
+            if v is None:
+                e.pop(k, None)
+            else:
+                e[k] = str(v)
+        return e
+
+    def run(self, name, argv, env=None, stdin=None, wrap=False, llm=None, timeout=600):
+        name = re.sub(r"[^\w.\-]", "_", name)
+        argv = [sys.executable if a == "python" else str(a) for a in argv]
+        over = dict(env or {})
+        if wrap:
+            assert argv[0] == sys.executable
+            llm_log = self.dir / f"{name}.llmcalls.json"
+            over["PROBE_LLM_LOG"] = str(llm_log)
+            if llm is not None:
+                over["PROBE_LLM_RESPONSES"] = json.dumps(llm, ensure_ascii=False)
+            argv = [sys.executable, str(HARNESS / "wrap.py.txt")] + argv[1:]
+        stdin_b = Path(stdin).read_bytes() if stdin else None
+        t0 = now()
+        p = subprocess.run(argv, cwd=self.root, env=self.child_env(over), input=stdin_b,
+                           capture_output=True, timeout=timeout)
+        rc = p.returncode
+        t1 = now()
+        so = self.redact(p.stdout.decode("utf-8", "replace"))
+        se = self.redact(p.stderr.decode("utf-8", "replace"))
+        open(self.dir / f"{name}.stdout.txt", "x", encoding="utf-8").write(so)
+        open(self.dir / f"{name}.stderr.txt", "x", encoding="utf-8").write(se)
+        safe = ["python" if a == sys.executable else a.replace(str(self.root), "<ROOT>") for a in argv]
+        calls = None
+        if wrap:
+            lp = self.dir / f"{name}.llmcalls.json"
+            calls = len(json.loads(lp.read_text(encoding="utf-8"))) if lp.exists() else 0
+        rec = {"ca": name, "argv": safe, "env_doi": sorted(over), "bat_dau": t0, "ket_thuc": t1, "exit": rc,
+               "llm_calls": calls,
+               "stdout_sha256": hashlib.sha256(so.encode("utf-8")).hexdigest(),
+               "stderr_sha256": hashlib.sha256(se.encode("utf-8")).hexdigest()}
+        open(self.dir / f"{name}.cmd.json", "x", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))
+        return rc, so, se, calls
+
+    # ---- DB ----
+    def q(self, sql, args=(), dsn=None):
+        import psycopg
+        with psycopg.connect(dsn or self.env["DATABASE_URL"], connect_timeout=5) as c:
+            cur = c.execute(sql, args)
+            if cur.description is None:
+                c.commit()
+                return None
+            r = cur.fetchone()
+            return None if r is None else r[0]
+
+    def rows(self, sql, args=(), dsn=None):
+        import psycopg
+        with psycopg.connect(dsn or self.env["DATABASE_URL"], connect_timeout=5) as c:
+            return c.execute(sql, args).fetchall()
+
+    def exec_admin(self, sql, args=()):
+        import psycopg
+        with psycopg.connect(self.env["DATABASE_URL"], connect_timeout=5, autocommit=True) as c:
+            c.execute(sql, args)
+
+    def login(self, key, role, person=None, blocks=None):
+        """Login Postgres THẬT tạm (không owner/superuser) in role `role`; ánh xạ human_logins nếu person."""
+        from psycopg import conninfo
+        name = f"r12_{key}_{secrets.token_hex(3)}"
+        pw = secrets.token_urlsafe(18)
+        self.secrets.append(pw)
+        self.exec_admin(f"create role {name} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}")
+        if person:
+            self.exec_admin("insert into human_logins (db_login, person, blocks, granted_by) values (%s, %s, %s, 'probe-r12')",
+                            (name, person, list(blocks or [])))
+        d = conninfo.conninfo_to_dict(self.env["DATABASE_URL"])
+        d.update(user=name, password=pw)
+        self.logins[key] = (name, conninfo.make_conninfo(**d))
+        return self.logins[key]
+
+    def drop_logins(self):
+        for name, _ in self.logins.values():
+            try:
+                self.exec_admin(f"reassign owned by {name} to current_user")
+                self.exec_admin(f"drop owned by {name}")
+                self.exec_admin(f"drop role if exists {name}")
+            except Exception:  # noqa: BLE001
+                pass
+
+    # ---- kết quả ----
+    def check(self, bug, case, ok, expected, actual):
+        self.results.append({"loi": bug, "ca": case, "ket_qua": "PASS" if ok else "FAIL",
+                             "expected": expected, "actual": actual})
+        print(("PASS" if ok else "FAIL"), bug, case, json.dumps(actual, ensure_ascii=False, default=str)[:220], flush=True)
+
+    def error(self, bug, case, e):
+        self.results.append({"loi": bug, "ca": case, "ket_qua": "LOI_HARNESS", "loi_harness": f"{type(e).__name__}: {e}"[:400]})
+        print("LOI_HARNESS", bug, case, type(e).__name__, str(e)[:200], flush=True)
+
+    def finish(self, probe_file):
+        self.drop_logins()
+        out = {"label": self.label, "run_id": self.run_id, "root": str(self.root), "db": self.db,
+               "fingerprint": self.fp, "probe_sha256": hashlib.sha256(Path(probe_file).read_bytes()).hexdigest(),
+               "ket_thuc": now(), "ket_qua": self.results}
+        open(self.dir / "ket_qua.json", "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+        c = {k: sum(r["ket_qua"] == k for r in self.results) for k in ("PASS", "FAIL", "LOI_HARNESS")}
+        print("TONG", self.label, self.run_id, c, flush=True)
+        return c

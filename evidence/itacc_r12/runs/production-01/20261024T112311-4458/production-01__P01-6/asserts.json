@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from allocation_proposals where status <> 'approved' or decided_by is distinct from 'GĐ Sản xuất Thử IT'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approvals where object_type = 'allocation_run' and decision = 'approved' and approved_by = 'GĐ Sản xuất Thử IT'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

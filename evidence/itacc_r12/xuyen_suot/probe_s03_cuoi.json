@@ -1,0 +1,186 @@
+[
+ {
+  "case": "a) JSON có/không giá, DB KHÔNG có giá shopee → chặn, không tệp",
+  "out": {
+   "exc": "ExportError: mat-ong-sam-120ml-1hu × shopee: chưa có giá list kênh còn hiệu lực trong price_list",
+   "files": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "b) DB chỉ có giá shopee CHỜ duyệt → chặn",
+  "out": {
+   "exc": "ExportError: mat-ong-sam-120ml-1hu × shopee: giá list #1 đang CHỜ người duyệt — không xuất",
+   "files": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "c) giá shopee đã duyệt ĐÃ HẾT HẠN → chặn",
+  "out": {
+   "exc": "ExportError: mat-ong-sam-120ml-1hu × shopee: chưa có giá list kênh còn hiệu lực trong price_list",
+   "files": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "d) giá shopee đã duyệt CHƯA TỚI HẠN → chặn",
+  "out": {
+   "exc": "ExportError: mat-ong-sam-120ml-1hu × shopee: chưa có giá list kênh còn hiệu lực trong price_list",
+   "files": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "e) chỉ có list web/tiktok + floor/promo shopee đã duyệt → không fallback, chặn",
+  "out": {
+   "exc": "ExportError: mat-ong-sam-120ml-1hu × shopee: chưa có giá list kênh còn hiệu lực trong price_list",
+   "files": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "f) shopee: giá DB ĐÃ duyệt 151000 (JSON=745000) → dùng DB, manifest có id",
+  "out": {
+   "manifest": {
+    "gia_vnd": 151000,
+    "gia_id": 1,
+    "gia_ngay_hieu_luc": "2026-10-24",
+    "gia_nguon": "price_list kênh đích loại list ĐÃ duyệt, hiệu lực theo ngày giờ VN (không fallback golden JSON/kênh khác/floor/promo)"
+   },
+   "files": [
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.csv",
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json"
+   ],
+   "mp": "D:\\code\\samsam\\evidence\\itacc_r12\\xuyen_suot\\s03_out\\listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json",
+   "price_id": 1,
+   "verify": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "f) tiktok: giá DB ĐÃ duyệt 152000 (JSON=None) → dùng DB, manifest có id",
+  "out": {
+   "manifest": {
+    "gia_vnd": 152000,
+    "gia_id": 1,
+    "gia_ngay_hieu_luc": "2026-10-24",
+    "gia_nguon": "price_list kênh đích loại list ĐÃ duyệt, hiệu lực theo ngày giờ VN (không fallback golden JSON/kênh khác/floor/promo)"
+   },
+   "files": [
+    "listing-tiktok-mat-ong-sam-120ml-1hu-d1.csv",
+    "listing-tiktok-mat-ong-sam-120ml-1hu-d1.manifest.json"
+   ],
+   "mp": "D:\\code\\samsam\\evidence\\itacc_r12\\xuyen_suot\\s03_out\\listing-tiktok-mat-ong-sam-120ml-1hu-d1.manifest.json",
+   "price_id": 1,
+   "verify": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "g) bảng giá không đọc được (mất bảng) → không tệp",
+  "out": {
+   "exc": "ExportError: không đọc được bảng giá đã duyệt (price_list: UndefinedTable) — không xuất",
+   "files": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "g') KHÔNG quyền SELECT price_list → không tệp",
+  "out": {
+   "exc": "ExportError: không đọc được bảng giá đã duyệt (price_list: InsufficientPrivilege) — không xuất",
+   "files": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "h) csv_gia sau khi xuất → --verify phát hiện lệch",
+  "out": {
+   "manifest": {
+    "gia_vnd": 151000,
+    "gia_id": 1,
+    "gia_ngay_hieu_luc": "2026-10-24",
+    "gia_nguon": "price_list kênh đích loại list ĐÃ duyệt, hiệu lực theo ngày giờ VN (không fallback golden JSON/kênh khác/floor/promo)"
+   },
+   "files": [
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.csv",
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json"
+   ],
+   "mp": "D:\\code\\samsam\\evidence\\itacc_r12\\xuyen_suot\\s03_out\\listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json",
+   "verify": [
+    "tệp CSV đã bị sửa (sha lệch manifest)"
+   ]
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "h) manifest_gia sau khi xuất → --verify phát hiện lệch",
+  "out": {
+   "manifest": {
+    "gia_vnd": 151000,
+    "gia_id": 1,
+    "gia_ngay_hieu_luc": "2026-10-24",
+    "gia_nguon": "price_list kênh đích loại list ĐÃ duyệt, hiệu lực theo ngày giờ VN (không fallback golden JSON/kênh khác/floor/promo)"
+   },
+   "files": [
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.csv",
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json"
+   ],
+   "mp": "D:\\code\\samsam\\evidence\\itacc_r12\\xuyen_suot\\s03_out\\listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json",
+   "verify": [
+    "gia_vnd lệch (hiện 151000)"
+   ]
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "h) gia_moi_duyet sau khi xuất → --verify phát hiện lệch",
+  "out": {
+   "manifest": {
+    "gia_vnd": 151000,
+    "gia_id": 1,
+    "gia_ngay_hieu_luc": "2026-10-24",
+    "gia_nguon": "price_list kênh đích loại list ĐÃ duyệt, hiệu lực theo ngày giờ VN (không fallback golden JSON/kênh khác/floor/promo)"
+   },
+   "files": [
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.csv",
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json"
+   ],
+   "mp": "D:\\code\\samsam\\evidence\\itacc_r12\\xuyen_suot\\s03_out\\listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json",
+   "verify": [
+    "gia_vnd lệch (hiện 160000)",
+    "gia_id lệch (hiện 2)",
+    "tệp dựng lại khác bản đã xuất"
+   ]
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "h) gia_het_han sau khi xuất → --verify phát hiện lệch",
+  "out": {
+   "manifest": {
+    "gia_vnd": 151000,
+    "gia_id": 1,
+    "gia_ngay_hieu_luc": "2026-10-24",
+    "gia_nguon": "price_list kênh đích loại list ĐÃ duyệt, hiệu lực theo ngày giờ VN (không fallback golden JSON/kênh khác/floor/promo)"
+   },
+   "files": [
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.csv",
+    "listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json"
+   ],
+   "mp": "D:\\code\\samsam\\evidence\\itacc_r12\\xuyen_suot\\s03_out\\listing-shopee-mat-ong-sam-120ml-1hu-d1.manifest.json",
+   "verify": [
+    "không dựng lại được: mat-ong-sam-120ml-1hu × shopee: chưa có giá list kênh còn hiệu lực trong price_list"
+   ]
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "i) F2 hồi quy: website vẫn lấy giá web DB đã duyệt",
+  "out": {
+   "gia_vnd": 120000,
+   "gio_hang": true
+  },
+  "verdict": "PASS"
+ }
+]

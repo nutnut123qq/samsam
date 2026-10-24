@@ -1,0 +1,35 @@
+[
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\marketing-02.2__C5\\out/llm.json",
+  "re": "\\A\\[\\]\\s*\\Z",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/video_c5/*",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from content_drafts where content_type = 'video'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from content_drafts where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-02.2' and kind = 'disable')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from video_assets",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

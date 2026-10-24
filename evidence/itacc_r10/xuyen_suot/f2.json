@@ -1,0 +1,394 @@
+[
+ {
+  "case": "a) JSON có giá, DB KHÔNG có giá web → không giá, không giỏ",
+  "db_price_rows": [],
+  "ctx": {},
+  "out": {
+   "row": {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "ten_san_pham": "Mật ong sâm 120ml (1 hũ)",
+    "quy_cach": "120ml x 1 hũ",
+    "so_dksp": null,
+    "mo_ta": "Mật ong sâm 120ml (1 hũ)\n\nThông tin sản phẩm:\nTên sản phẩm: Mật ong sâm 120ml (1 hũ)\nQuy cách: 120ml x 1 hũ\nHạn sử dụng: Xem trên bao bì\n\nTừ khóa: Mật ong sâm 120ml (1 hũ), Sâm Sâm\n\nNội dung có sử dụng AI",
+    "draft_id": 1,
+    "approved_sha256": "94bb03a334216cdceefd2bda3e69d859c36611e5c85792902e96bd75b5cfbcc4",
+    "gia_vnd": null,
+    "gia_id": null,
+    "an_gia": false,
+    "gio_hang": false,
+    "ly_do": [
+     "chưa có giá list kênh web còn hiệu lực trong price_list"
+    ]
+   },
+   "files_written": null
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "b) DB chỉ có giá web CHỜ duyệt → không dùng",
+  "db_price_rows": [
+   [
+    "1",
+    "mat-ong-sam-120ml-1hu",
+    "web",
+    "list",
+    "120000",
+    "2026-10-13",
+    "None",
+    "False"
+   ]
+  ],
+  "ctx": {
+   "pending_id": 1
+  },
+  "out": {
+   "row": {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "ten_san_pham": "Mật ong sâm 120ml (1 hũ)",
+    "quy_cach": "120ml x 1 hũ",
+    "so_dksp": null,
+    "mo_ta": "Mật ong sâm 120ml (1 hũ)\n\nThông tin sản phẩm:\nTên sản phẩm: Mật ong sâm 120ml (1 hũ)\nQuy cách: 120ml x 1 hũ\nHạn sử dụng: Xem trên bao bì\n\nTừ khóa: Mật ong sâm 120ml (1 hũ), Sâm Sâm\n\nNội dung có sử dụng AI",
+    "draft_id": 1,
+    "approved_sha256": "94bb03a334216cdceefd2bda3e69d859c36611e5c85792902e96bd75b5cfbcc4",
+    "gia_vnd": null,
+    "gia_id": null,
+    "an_gia": false,
+    "gio_hang": false,
+    "ly_do": [
+     "giá list kênh web #1 đang CHỜ người duyệt — chưa dùng"
+    ]
+   },
+   "files_written": null
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "c) giá DB ĐÃ duyệt 120000 khác JSON 99000 → dùng DB, có giỏ",
+  "db_price_rows": [
+   [
+    "1",
+    "mat-ong-sam-120ml-1hu",
+    "web",
+    "list",
+    "120000",
+    "2026-10-13",
+    "None",
+    "True"
+   ]
+  ],
+  "ctx": {
+   "price_id": 1
+  },
+  "out": {
+   "row": {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "ten_san_pham": "Mật ong sâm 120ml (1 hũ)",
+    "quy_cach": "120ml x 1 hũ",
+    "so_dksp": null,
+    "mo_ta": "Mật ong sâm 120ml (1 hũ)\n\nThông tin sản phẩm:\nTên sản phẩm: Mật ong sâm 120ml (1 hũ)\nQuy cách: 120ml x 1 hũ\nHạn sử dụng: Xem trên bao bì\n\nTừ khóa: Mật ong sâm 120ml (1 hũ), Sâm Sâm\n\nNội dung có sử dụng AI",
+    "draft_id": 1,
+    "approved_sha256": "94bb03a334216cdceefd2bda3e69d859c36611e5c85792902e96bd75b5cfbcc4",
+    "gia_vnd": 120000,
+    "gia_id": 1,
+    "an_gia": false,
+    "gio_hang": true,
+    "ly_do": []
+   },
+   "files_written": null
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "c') website_feed: manifest ghi nguồn DB + phiên bản giá",
+  "db_price_rows": [
+   [
+    "1",
+    "mat-ong-sam-120ml-1hu",
+    "web",
+    "list",
+    "120000",
+    "2026-10-13",
+    "None",
+    "True"
+   ]
+  ],
+  "ctx": {
+   "price_id": 1
+  },
+  "out": {
+   "manifest": {
+    "gia_nguon": "price_list kênh web loại list ĐÃ duyệt, hiệu lực theo ngày giờ VN (không fallback golden JSON/kênh khác/floor/promo)",
+    "gia_ngay_hieu_luc": "2026-10-23",
+    "gia_phien_ban": {
+     "mat-ong-sam-120ml-1hu": 1
+    }
+   },
+   "row": {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "ten_san_pham": "Mật ong sâm 120ml (1 hũ)",
+    "quy_cach": "120ml x 1 hũ",
+    "so_dksp": null,
+    "mo_ta": "Mật ong sâm 120ml (1 hũ)\n\nThông tin sản phẩm:\nTên sản phẩm: Mật ong sâm 120ml (1 hũ)\nQuy cách: 120ml x 1 hũ\nHạn sử dụng: Xem trên bao bì\n\nTừ khóa: Mật ong sâm 120ml (1 hũ), Sâm Sâm\n\nNội dung có sử dụng AI",
+    "draft_id": 1,
+    "approved_sha256": "94bb03a334216cdceefd2bda3e69d859c36611e5c85792902e96bd75b5cfbcc4",
+    "gia_vnd": 120000,
+    "gia_id": 1,
+    "an_gia": false,
+    "gio_hang": true,
+    "ly_do": []
+   },
+   "files_written": [
+    "website-feed-2026-10-23.json",
+    "website-feed-2026-10-23.manifest.json"
+   ]
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "b') giá đã duyệt ĐÃ HẾT HẠN (valid_to = hôm nay) → không dùng",
+  "db_price_rows": [
+   [
+    "1",
+    "mat-ong-sam-120ml-1hu",
+    "web",
+    "list",
+    "120000",
+    "2026-09-23",
+    "2026-10-23",
+    "True"
+   ]
+  ],
+  "ctx": {
+   "id": 1
+  },
+  "out": {
+   "row": {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "ten_san_pham": "Mật ong sâm 120ml (1 hũ)",
+    "quy_cach": "120ml x 1 hũ",
+    "so_dksp": null,
+    "mo_ta": "Mật ong sâm 120ml (1 hũ)\n\nThông tin sản phẩm:\nTên sản phẩm: Mật ong sâm 120ml (1 hũ)\nQuy cách: 120ml x 1 hũ\nHạn sử dụng: Xem trên bao bì\n\nTừ khóa: Mật ong sâm 120ml (1 hũ), Sâm Sâm\n\nNội dung có sử dụng AI",
+    "draft_id": 1,
+    "approved_sha256": "94bb03a334216cdceefd2bda3e69d859c36611e5c85792902e96bd75b5cfbcc4",
+    "gia_vnd": null,
+    "gia_id": null,
+    "an_gia": false,
+    "gio_hang": false,
+    "ly_do": [
+     "chưa có giá list kênh web còn hiệu lực trong price_list"
+    ]
+   },
+   "files_written": null
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "b'') giá đã duyệt CHƯA TỚI HẠN (valid_from = mai) → không dùng",
+  "db_price_rows": [
+   [
+    "1",
+    "mat-ong-sam-120ml-1hu",
+    "web",
+    "list",
+    "120000",
+    "2026-10-24",
+    "None",
+    "True"
+   ]
+  ],
+  "ctx": {
+   "id": 1
+  },
+  "out": {
+   "row": {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "ten_san_pham": "Mật ong sâm 120ml (1 hũ)",
+    "quy_cach": "120ml x 1 hũ",
+    "so_dksp": null,
+    "mo_ta": "Mật ong sâm 120ml (1 hũ)\n\nThông tin sản phẩm:\nTên sản phẩm: Mật ong sâm 120ml (1 hũ)\nQuy cách: 120ml x 1 hũ\nHạn sử dụng: Xem trên bao bì\n\nTừ khóa: Mật ong sâm 120ml (1 hũ), Sâm Sâm\n\nNội dung có sử dụng AI",
+    "draft_id": 1,
+    "approved_sha256": "94bb03a334216cdceefd2bda3e69d859c36611e5c85792902e96bd75b5cfbcc4",
+    "gia_vnd": null,
+    "gia_id": null,
+    "an_gia": false,
+    "gio_hang": false,
+    "ly_do": [
+     "chưa có giá list kênh web còn hiệu lực trong price_list"
+    ]
+   },
+   "files_written": null
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "d) chỉ có floor/promo web + list kênh khác đã duyệt → không fallback",
+  "db_price_rows": [
+   [
+    "1",
+    "mat-ong-sam-120ml-1hu",
+    "web",
+    "floor",
+    "80000",
+    "2026-10-13",
+    "None",
+    "True"
+   ],
+   [
+    "2",
+    "mat-ong-sam-120ml-1hu",
+    "shopee",
+    "list",
+    "110000",
+    "2026-10-13",
+    "None",
+    "True"
+   ],
+   [
+    "3",
+    "mat-ong-sam-120ml-1hu",
+    "web",
+    "promo",
+    "70000",
+    "2026-10-22",
+    "None",
+    "False"
+   ]
+  ],
+  "ctx": {},
+  "out": {
+   "row": {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "ten_san_pham": "Mật ong sâm 120ml (1 hũ)",
+    "quy_cach": "120ml x 1 hũ",
+    "so_dksp": null,
+    "mo_ta": "Mật ong sâm 120ml (1 hũ)\n\nThông tin sản phẩm:\nTên sản phẩm: Mật ong sâm 120ml (1 hũ)\nQuy cách: 120ml x 1 hũ\nHạn sử dụng: Xem trên bao bì\n\nTừ khóa: Mật ong sâm 120ml (1 hũ), Sâm Sâm\n\nNội dung có sử dụng AI",
+    "draft_id": 1,
+    "approved_sha256": "94bb03a334216cdceefd2bda3e69d859c36611e5c85792902e96bd75b5cfbcc4",
+    "gia_vnd": null,
+    "gia_id": null,
+    "an_gia": false,
+    "gio_hang": false,
+    "ly_do": [
+     "chưa có giá list kênh web còn hiệu lực trong price_list"
+    ]
+   },
+   "files_written": null
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "g) rượu có giá web ĐÃ duyệt + readiness thường → vẫn ẩn giá, không giỏ",
+  "db_price_rows": [
+   [
+    "1",
+    "ruou-sam-chai-thuy-tinh-500ml",
+    "web",
+    "list",
+    "500000",
+    "2026-10-13",
+    "None",
+    "True"
+   ]
+  ],
+  "ctx": {
+   "sku": "ruou-sam-chai-thuy-tinh-500ml",
+   "id": 1
+  },
+  "out": {
+   "row": {
+    "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+    "ten_san_pham": "Rượu sâm chai thủy tinh 500ml",
+    "quy_cach": "500ml chai thủy tinh",
+    "so_dksp": null,
+    "mo_ta": null,
+    "draft_id": null,
+    "approved_sha256": null,
+    "gia_vnd": null,
+    "gia_id": null,
+    "an_gia": true,
+    "gio_hang": false,
+    "ly_do": [
+     "kênh web: ruou-sam-chai-thuy-tinh-500ml là rượu — cấm quảng cáo/khuyến mại rượu (Luật 44/2019), không sinh nội dung/listing online",
+     "ruou-sam-chai-thuy-tinh-500ml: chưa có mô tả chuẩn (listing web) được người duyệt",
+     "rượu: ẩn giá + không giỏ hàng (PL01 mục 3a)"
+    ]
+   },
+   "files_written": null
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "f) mô tả sửa sau duyệt (có giá DB duyệt) → vẫn chặn giỏ",
+  "db_price_rows": [
+   [
+    "1",
+    "mat-ong-sam-120ml-1hu",
+    "web",
+    "list",
+    "120000",
+    "2026-10-13",
+    "None",
+    "True"
+   ]
+  ],
+  "ctx": {
+   "price_id": 1
+  },
+  "out": {
+   "row": {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "ten_san_pham": "Mật ong sâm 120ml (1 hũ)",
+    "quy_cach": "120ml x 1 hũ",
+    "so_dksp": null,
+    "mo_ta": null,
+    "draft_id": null,
+    "approved_sha256": null,
+    "gia_vnd": 120000,
+    "gia_id": 1,
+    "an_gia": false,
+    "gio_hang": false,
+    "ly_do": [
+     "mat-ong-sam-120ml-1hu: mô tả chuẩn #1 đã đổi sau duyệt (sha lệch) — phải duyệt lại"
+    ]
+   },
+   "files_written": null
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "h) bảng giá KHÔNG đọc được (mất bảng) → website_feed từ chối, không ghi tệp",
+  "db_price_rows": "(bảng giá không đọc được)",
+  "ctx": {
+   "no_read": true
+  },
+  "out": {
+   "exc": "ExportError: không đọc được bảng giá đã duyệt (price_list: UndefinedTable) — không xuất",
+   "files_written": []
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "h') bảng giá KHÔNG đọc được → website_row không trả thành công giả",
+  "db_price_rows": "(bảng giá không đọc được)",
+  "ctx": {
+   "no_read": true
+  },
+  "out": {
+   "exc": "ExportError: không đọc được bảng giá đã duyệt (price_list: UndefinedTable) — không xuất",
+   "files_written": null
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "h'') KHÔNG có quyền SELECT price_list → website_feed từ chối, không ghi tệp",
+  "db_price_rows": "(bảng giá không đọc được)",
+  "ctx": {
+   "no_read": true
+  },
+  "out": {
+   "exc": "ExportError: không đọc được bảng giá đã duyệt (price_list: InsufficientPrivilege) — không xuất",
+   "files_written": []
+  },
+  "verdict": "PASS"
+ }
+]

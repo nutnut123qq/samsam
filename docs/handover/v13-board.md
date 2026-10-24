@@ -2,6 +2,145 @@
 
 Bản phát hành mã nguồn 22/10/2026 gồm đợt hoàn thiện DOCX và vá F1/F2. Các checkpoint dưới ghi trạng thái lúc kiểm trước commit; chưa triển khai/nghiệm thu. Biên bản quét: `evidence/contract_g45_release_scan.log`.
 
+## Checkpoint mới — Vòng r12-fix (24/10/2026): vá ĐÚNG D2 + L3 (controller bác "20/20 FIXED" của r12) — CHƯA commit/merge/push/deploy
+
+Không dùng DB `samsam`; không đổi `acceptance_status` (0/96 nghiệm thu hợp đồng); không mở việc ngoài hai lỗi. Postgres Docker riêng `samsam-itacc-r12fix` (127.0.0.1:55452). Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Kết luận "20/20 FIXED" của r12 bên dưới là LỊCH SỬ — sai ở D2/L3.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| D2 SĐT dạng ngoặc lọt guardrail đăng bài | vá: luật `pii_ca_nhan` quét bản phẳng `pii._flatten_paren` (chống nối, ngân sách tuyến tính, cạn → chặn); probe cùng sha: baseline 16/4 P/F → bản sửa 20/0; luật VẪN chờ Pháp chế | `evidence/itacc_r12_fix_d2_l3/probes/d2_*` |
+| L3 quá 30 giây vẫn hứa nhân viên | vá: gửi ngay câu hotline không hứa, ghi handoff 1 lần SAU gửi (Zalo + Messenger); probe cùng sha: baseline 11/9 → bản sửa 20/0 | `probes/l3_*`, `tests/test_r12fix_d2_l3.py` |
+| Kiểm lại 5 mục (legal_hr-01, sales-01, marketing-01.1, sales-03, sales-07.1) | 5/5 ĐẠT theo tiêu chí mới khóa trước `criteria/r12fix_v1.json` (sales-01 C07 siết + C07M Messenger) | `items/`, `runs/` |
+| Tổng 96 (5 r12-fix + 91 kế thừa) | **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (r12: 84/0/12 — tổng không đổi); 0 vi phạm nhất quán | `tong_hop.json`, `source_map.json` |
+| Gate chốt (fp mã `8f9188ade140…`) | full 6773 passed in 6570.33s (1:49:30) EXIT 0; ruff_v2 EXIT 0, eval EXIT 0, dpia EXIT 0, redteam EXIT 0, secret_scan EXIT 0 | `evidence/itacc_r12_fix_d2_l3/gate/` |
+
+## Checkpoint mới — Vòng r12 (24/10/2026): VÁ 20 lỗi r10 + kiểm lại 48 mục + UI thật + gate chốt — CHƯA commit/merge/push/deploy
+
+Không dùng DB `samsam`; không đổi `acceptance_status` (0/96 nghiệm thu hợp đồng); không mở rộng adapter vendor/website/quan sát ngoài danh sách. Postgres Docker riêng `samsam-itacc-r12` (127.0.0.1:55451). Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| 20 lỗi r10 | 20/20 **FIXED** trên bản cuối (probe trước/sau cùng input: baseline 22 PASS/56 FAIL → bản cuối 78/78 PASS) | `evidence/itacc_r12/probes/`, `harness/probe_dot*.py.txt` |
+| Hai test fail full sơ bộ | `test_link_ok_and_refusals` (thông báo cũ — thêm ca âm rỗng/agent/system link+unlink); `test_hdtv_off_no_pack` (trả hdtv_report về giao diện v14.3 `[blocked]` stderr) | `gate/full_so_bo_fs1.txt` (FAIL, giữ) |
+| sales-04.2 | tiêu chí v3: chuyển yêu cầu không PII ≠ bàn giao PII; chỉ bàn giao có đồng ý được đếm — căn cứ playbook/SOP/runbook/test nghiệm thu | `criteria/r12_sales_a_v3.json`, `harness/mk_sales_a_v3.py.txt` |
+| UI thật | 28/28 PASS (26 bước r10 + 2 bước mới; baseline tái hiện UI-01/UI-02) | `ui/ui_sau_full_v3_20261024T110553`, `ui/anh_xa_buoc_r10_r12.json` |
+| 48 mục (24 CODE_FAIL + 24 ảnh hưởng) | 47 ĐẠT, farming-01 BỊ CHẶN (MISSING_ADAPTER STT) | `evidence/itacc_r12/items/`, `runs/` |
+| Tổng 96 (48 r12 + 48 kế thừa r10/r11, code sinh) | **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (r11: 60/0/36); BỊ CHẶN còn lại ngoài code: EXTERNAL_INPUT 4, MISSING_ADAPTER 4, NON_SOFTWARE 2, SEPARATE_REPO 2; 0 vi phạm nhất quán | `tong_hop.json`, `source_map.json` |
+| Gate chốt (fp mã `57538e8935d0…`) | full 6666 passed in 2994.46s (0:49:54) EXIT 0; ruff/eval/DPIA/red-team EXIT 0; secret 0 giá trị thật; nâng cấp schema ×2 OK; S04/S04b/r8/B3/S03/F1/F2 PASS | `evidence/itacc_r12/gate/`, `xuyen_suot/`, `runs/upgrade_up1.txt` |
+
+## Checkpoint mới — Vòng r11 (23/10/2026): kiểm lại 6 mục nghiệm thu kỹ thuật nội bộ bằng evidence gốc mới — CHƯA commit/merge/push/deploy
+
+Lý do: controller chưa chấp nhận chốt r10 (5 mục marketing dựa log tái tạo từ transcript; legal_hr-07 PASS "theo ý định"). Không sửa mã sản phẩm (fingerprint `97051e55…8001` không đổi), không vá 20 lỗi r10, không dùng DB `samsam`.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| Tiêu chí khóa trước khi chạy | `criteria/r11.json` `601f16a149d8…`; `r11_v2_marketing-03.2.json` `5dad880992c0…` (sửa lỗi fixture lượt v1, expected giữ); tiêu chí r10 giữ nguyên | `evidence/itacc_r11/criteria/` |
+| 6 mục (ID trạng thái mức PASS/FAIL/NOT_RUN) | marketing-03.2 ĐẠT LOCAL 10/0/0; marketing-05.1 ĐẠT LOCAL 6/0/0; marketing-05.2 ĐẠT LOCAL 8/0/0; marketing-06.1 ĐẠT LOCAL 4/0/0; marketing-06.2 ĐẠT LOCAL 6/0/0; legal_hr-07 ĐẠT MOCK 6/0/0 | `evidence/itacc_r11/items/`, `runs/` (stdout/stderr/exit gốc) |
+| Đính chính | legal_hr-07-C1: bộ lọc chủ đề loại tin lạc TRƯỚC khi lưu → chính xác 1 dòng + 0 tin lạc + `off_topic=1` (không phải 2 dòng); marketing-06.2-C3: tuần đã đóng 2026-10-12 (r10 khóa nhầm tuần hiện tại) | `criteria/r11.json` (`dinh_chinh_r10`, `khac_r10`) |
+| Tổng hợp hiện hành 96 (90 r10 + 6 r11, sinh bằng code) | **60 ĐẠT / 0 CHƯA KIỂM / 36 BỊ CHẶN** (checkpoint r10 cùng số); 0 vi phạm nhất quán; 2159 tham chiếu evidence khớp hash | `evidence/itacc_r11/tong_hop.json`, `source_map.json` |
+| Kế thừa r10 | 90 mục; full pytest 6619/0/0, UI 22/2/2, gate — cùng fingerprint, KHÔNG chạy lại ở r11 | `evidence/itacc_r10/` |
+
+## Checkpoint mới — Vòng r10 (23/10/2026): NGHIỆM THU KỸ THUẬT NỘI BỘ trên máy dev — CHƯA commit/merge/push/deploy
+
+KHÔNG phải nghiệm thu hợp đồng (vẫn 0/96 `da_nghiem_thu`, ma trận hợp đồng riêng). Fingerprint `97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001` (không đổi), Postgres Docker `samsam-itacc-r10` 127.0.0.1:55432, DB `samsam_itacc_r10*`, không chạm DB `samsam`, không sửa code sản phẩm.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| 96 mục (tiêu chí khóa trước khi chạy) | **60 ĐẠT / 0 CHƯA KIỂM / 36 BỊ CHẶN** trên 96 (BỊ CHẶN: CODE_FAIL 24, MISSING_ADAPTER 4, EXTERNAL_INPUT 4, SEPARATE_REPO 2, NON_SOFTWARE 2) | `docs/handover/nghiem-thu-ky-thuat-noi-bo.md`, `evidence/itacc_r10/items/`, `tong_hop.json` (0 vi phạm nhất quán) |
+| Lỗi sản phẩm tái hiện (không vá) | 20 lỗi: 1 CAO (P-01 crash bản tin sản xuất), TRUNG BÌNH gồm UI-01/UI-02 (svc_ui thiếu quyền đọc), G5-01 (media_cap), G1-L1 (tắt 1 tính năng chặn tính năng khác), G1-L3, D1 (tắt vẫn gọi LLM), L1, L2 (B2B giá chưa duyệt), L3 | hồ sơ mục 5 |
+| Xuyên suốt | probe S04 17, S04b 17, r8 13, B3 7, S03 14, F1 28, F2 12 PASS; job lock 3/3; SMTP giả STARTTLS 5/5; webhook readyz/DB lỗi/phục hồi 5/5; role không owner/superuser; DR Docker 3/3; hash chain sau khôi phục khớp; rotation tool 3/3 (Docker tạm — rotation thật vẫn MỞ) | `evidence/itacc_r10/xuyen_suot/` |
+| UI thật (Chromium) | 26 bước: 22 PASS, 2 FAIL (UI-01, UI-02), 2 NOT_RUN | `evidence/itacc_r10/ui/` |
+| Gate | Full pytest (tuần tự, 1 lượt, gồm 3 ca DR Docker thật): **6619 passed in 2392.64s (0:39:52)**, EXIT 0; FAILED: không; SKIPPED: 0. Evidence `evidence/itacc_r10/gate/full_pytest.txt`. ruff 0; eval tất định đạt; DPIA đạt; red-team 0/50 | `evidence/itacc_r10/gate/` |
+
+## Checkpoint mới — Vòng r9 (23/10/2026): B3 ma trận đúng người + đính chính A10 adapter — CHƯA commit/merge/push/deploy
+
+Tiêu chí xong (ghi TRƯỚC khi code): người B không dùng bằng chứng đăng nhập ghi cho người A chỉ vì cùng login; người hiện hành đăng nhập thật thì tính; chuẩn hóa tên theo cơ chế danh tính có sẵn (`p10_norm`); không DB/DB lỗi/login hết hạn/NOLOGIN/thiếu quyền/chưa đăng nhập vẫn không READY; A10 ghi rõ adapter nào chưa viết + chờ gì, không còn claim "mọi mục đã có adapter"; probe trước/sau cùng input; full + gate đạt trên code cuối; không commit/merge/push/deploy/test trên DB `samsam`.
+
+Kết quả (nền `17a4db173e37255c6bea62e995e27f989fdea4601ef87cf9af182c5209115693` → cuối `97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001`; hash probe `19e1466e24d3c299b25455a6a17abceb78fcf37de1752fa966efcddf8e2dc710`):
+
+| Mã | Trước vá (snapshot working tree) | Sau vá (cùng probe) | Bằng chứng | Trạng thái |
+|---|---|---|---|---|
+| B3 | FAIL c2: đổi ánh xạ login A→B, B CHƯA đăng nhập vẫn READY (6/7 PASS) | PASS 7/7 (c1 A READY; c2 B không READY + lý do; c3 B đăng nhập thật qua `person_connect` → READY; c4 hoa/thường/khoảng trắng/NFD cùng danh tính; c5 login khác không tính thay; c6 chưa đăng nhập/offline/lỗi quyền; c7 hết hạn/NOLOGIN/connlimit 0/rời app_human/sai khối) | `evidence/safety4_probe.log`, `tests/test_acceptance_matrix.py::test_db_login_check_real_db` (FAIL trên code cũ, đạt sau vá) | CODE_VERIFIED (DB test, login thật tạm) |
+| A10 | claim "không mục nào loại (1) — mỗi mục có code/adapter" SAI | đính chính: OCR/STT/ảnh AI chỉ có registry `none` — adapter nhà cung cấp CHƯA viết (marketing-02.1, production-03, data_platform-02.1, farming-01 = loại 1 sau quyết định vendor + 4); `market_api`, `anchor` OTS có adapter chưa sandbox (loại 2) | `doi-chieu-docx.md` A10 + A5 + ghi chú CODE_PARTIAL, `ho-so-san-sang-chay-thu.md`, board bảng nhà cung cấp | tài liệu; không đổi code_status/acceptance_status |
+| GATE | — | full 6619 passed/0 failed/0 skipped (DR 3 PASSED); ruff; eval tất định đạt (guardrail 130/132 ≥ 0.95); DPIA; red-team 0/50; probe F1 28/S03 14/S04 17/S04b 17/r8 13/B3 7 | `evidence/safety4_full_pytest.log`, `evidence/safety4_gates.log` | CODE_VERIFIED (máy dev) |
+
+Không đổi schema/roles → không phát sinh migration; không đổi auth/UI/đường ghi `human_login_checks` → UI 14 bước vẫn là evidence r8 (không chạy lại). Ma trận sinh lại trùng bản cũ: 0/96 sẵn sàng, 0/96 nghiệm thu.
+
+## Checkpoint mới — Vá 2 lỗ controller vòng r8 (22–23/10/2026) — tiêu chí ghi TRƯỚC khi code, kết quả ngay dưới
+
+Nền fingerprint `005a35d8e33d04bed98b82da05a0d228d930ca4eddc6360c778436eb6a0aea33` (snapshot working tree ngoài repo). **Đính chính:** checkpoint S04b dưới CHƯA ĐỦ — controller tái hiện CÙNG NGƯỜI có login thứ hai tự quyết mục nhãn agent; ma trận báo READY khi login hết hạn.
+
+| Mã | Lỗ | Tiêu chí xong |
+|---|---|---|
+| D1 | Hai login cùng ánh xạ một người: login A tạo mục nhãn `agent:`, login B quyết/override được; cùng lớp: giá vốn `cogs_versions` nhãn agent do người tạo rồi tự duyệt | Probe login thật trước FAIL / sau PASS: hàng duyệt (approve + override QA), draft, giá vốn — login khác của CÙNG NGƯỜI (theo `human_logins`, mọi trạng thái) bị chặn 42501, không ghi dở; người khác đúng khối + agent/dịch vụ vẫn được; không suy tác giả lịch sử |
+| D2 | Ma trận READY khi login hết hạn (VALID UNTIL) / không kết nối được | Ma trận kiểm điều kiện dùng được của role (hạn, LOGIN, giới hạn kết nối, CONNECT, app_human, không superuser) + TÁCH bằng chứng đăng nhập THẬT (lần mở phiên thành công gần nhất, có DB + thời điểm, không lưu mật khẩu); thiếu/hết hạn/lỗi → không READY; positive control READY sau đăng nhập thật |
+
+Kết quả (fingerprint cuối `17a4db173e37255c6bea62e995e27f989fdea4601ef87cf9af182c5209115693`; CHƯA commit/merge/push/deploy; không truy cập DB `samsam`):
+
+| Mã | Trước vá (probe_r8, snapshot working tree) | Sau vá (cùng probe, cùng hash) | Bằng chứng | Trạng thái |
+|---|---|---|---|---|
+| D1 | FAIL: login B CÙNG NGƯỜI quyết + override QA mục login A tạo nhãn agent; giá vốn nhãn agent rồi tự duyệt | PASS 8/8 (gồm đối chứng: người khác đúng khối, finance, svc_job) | `evidence/safety3_probe.log`, `tests/test_safety_s04_identity.py` | CODE_VERIFIED (DB test, login thật) |
+| D2 | FAIL: VALID UNTIL quá khứ / CONNECTION LIMIT 0 vẫn READY | PASS 5/5 (positive control READY sau đăng nhập thật; NOLOGIN; offline) | `evidence/safety3_probe.log`, `tests/test_acceptance_matrix.py` | CODE_VERIFIED; ma trận tái sinh 0/96 |
+| Tổng probe | 5/13 FAIL | 13/13 PASS | `evidence/safety3_probe.log` | — |
+| UI | — | 14/14 bước (thêm: mở quyền ghi đúng 1 bằng chứng đăng nhập) | `evidence/safety3_ui.log` | UI_VERIFIED localhost dev (chạy ở fingerprint 9aa21e15…, sau đó chỉ đổi 2 tài liệu) |
+| Nâng cấp | — | ×2 từ snapshot: dữ liệu/chuỗi hash/sổ rollout giữ; grant mới duy nhất `app_human` EXECUTE `human_login_check` (+ `svc_backup` SELECT mọi bảng theo thiết kế pg_dump); giá vốn cũ `created_login` null | `evidence/safety3_upgrade.log` | CODE_VERIFIED |
+| GATE | full lượt 1 FAIL 2 (drift tài liệu thiếu bảng mới — giữ `safety3_full_FAIL_run1.log`) | full lượt 2 6619 passed/0 failed/0 skipped (DR 3 PASSED); ruff; eval 22/22; DPIA; red-team 0/50; probe F1/F2/S03/S04/S04b/r8 đạt | `evidence/safety3_full_pytest.log`, `safety3_gates.log` | CODE_VERIFIED (máy dev) |
+
+## Checkpoint mới — Vá 2 lỗ controller đợt an toàn (22/10/2026) — tiêu chí ghi TRƯỚC khi code, kết quả ngay dưới
+
+Nền: working tree fingerprint `87092728a204152ca21e794e09b8040a3bb367670e48c53c75e3192ae260a3b5` (snapshot ngoài repo, gồm 9 file mới). **Đính chính: checkpoint S04 dưới ("CODE_VERIFIED") CHƯA ĐỦ** — controller tái hiện login người tạo draft nhãn `agent:` rồi tự duyệt.
+
+| Mã | Lỗ | Tiêu chí xong (kiểm được) |
+|---|---|---|
+| S04b | Login người (app_human, có `human_logins`) INSERT draft `created_by='agent:…'` + tự chọn `block`, rồi `approve_draft` chính mình → duyệt được; cùng lớp: `enqueue_item` nhãn agent rồi `decide_item` tự quyết; tên biến thể khoảng trắng qua mặt kiểm tự duyệt | Probe login THẬT trước FAIL / sau PASS: nhãn agent/system/auto_policy (+ biến thể) không tạo đường vòng; người không tự chọn khối; người tạo tự duyệt (cả biến thể tên) bị chặn; người khác đúng khối duyệt được; sai khối chặn; agent/dịch vụ tạo → người duyệt được; SQL trực tiếp + function + đường UI cùng giữ; bị từ chối không ghi dở; không mở rộng quyền dịch vụ/không ngoại lệ svc_ui |
+| MX | `acceptance.rows(conn=None)` bỏ qua điều kiện login → READY; có login người KHÁC cùng khối hoặc role không đăng nhập được vẫn tính | Không DB/DB lỗi → không READY + lý do "chưa kiểm/không kiểm được"; chỉ READY khi CHÍNH người duyệt đã cấu hình có ánh xạ active đúng khối tới login đăng nhập được (không superuser) + mọi điều kiện khác đạt; positive control READY thật |
+| UI | Chưa kiểm UI thật | Streamlit thật (venv tạm) chế độ thực, login DB thật: mở khóa đúng người, sai mật khẩu/người khác bị từ chối, svc_ui không quyết thay, tạo nháp được, người tạo không tự duyệt, người khác đúng khối duyệt được/sai khối chặn, reject/schedule/hàng duyệt chung không hồi quy, logout không dùng lại kết nối cũ; ảnh + đối chiếu DB |
+| GATE | — | Full pytest code cuối (gồm DR Docker), ruff, eval, DPIA, red-team; nâng cấp ×2 nếu đổi schema/roles |
+
+Kết quả (fingerprint cuối `005a35d8e33d04bed98b82da05a0d228d930ca4eddc6360c778436eb6a0aea33`, cùng cách tính; CHƯA commit/merge/push/deploy; không truy cập DB `samsam`):
+
+| Mã | Trước vá (probe, snapshot working tree) | Sau vá | Bằng chứng | Trạng thái |
+|---|---|---|---|---|
+| S04b | 11/17 FAIL — người tạo draft nhãn agent/system/auto_policy (cả biến thể) rồi tự duyệt; tự khai khối; tự duyệt bằng tên biến thể khoảng trắng; `enqueue_item` nhãn agent rồi tự quyết | 17/17 PASS (positive control: người khác đúng khối duyệt; agent_writer/svc_job tạo → người duyệt; svc_job đẩy mục → người quyết) | `evidence/safety2_s04b.log`, `tests/test_safety_s04_identity.py` (18) | CODE_VERIFIED (DB test, login thật) |
+| MX | 4/10 FAIL — `conn=None` READY; DB lỗi → crash; login người KHÁC cùng khối tính thay; role không đăng nhập được vẫn tính | 10/10 PASS (positive control READY thật trên DB) | `evidence/safety2_matrix.log`, `tests/test_acceptance_matrix.py` | CODE_VERIFIED; ma trận tái sinh: 0/96 READY |
+| UI | chưa kiểm | 14/14 bước PASS: Streamlit thật (venv tạm) + Chromium, chế độ thực, login DB thật, đối chiếu DB | `evidence/safety2_ui.log` (ảnh ngoài repo, sha256 trong log) | UI_VERIFIED (localhost dev — không phải nghiệm thu) |
+| Nâng cấp | — | snapshot trước vá → hiện tại ×2: dòng/chuỗi hash/sổ rollout giữ; 0 grant mới; dòng cũ `created_login` null (không suy diễn); 3 function SECURITY DEFINER + search_path, không EXECUTE PUBLIC | `evidence/safety2_s04b.log` | CODE_VERIFIED |
+| GATE | — | full 6617 passed/0 failed/0 skipped (39:21, DB mới, DR 3 PASSED); ruff; eval 22/22; DPIA; red-team 0/50; probe F1 28/28, F2 12/12, S03 14/14, S04 17/17 | `evidence/safety2_full_pytest.log`, `safety2_gates.log` | CODE_VERIFIED (máy dev) |
+
+## Checkpoint mới — An toàn + chuẩn bị nghiệm thu (nhánh `codex/safety-acceptance` từ `main` = `16b33fc`, CHƯA commit) — bảng việc + tiêu chí ghi TRƯỚC khi sửa, kết quả ngay dưới
+
+Nhóm: **A** = code/công cụ làm ngay trong repo + DB/container thử; **B** = thao tác quản trị/vận hành thật (cần quyền + đầu vào); **C** = thời gian chạy thử, người duyệt, xác nhận nghiệm thu hai bên. Agent KHÔNG có quyền: đổi credential thật, truy cập DB `samsam`, bật dịch vụ/timer thật, thao tác server Bên B, gửi tin/email, ký, tự duyệt, xác nhận nghiệm thu.
+
+| Mã | Yêu cầu DOCX / rủi ro đã biết | Hiện trạng (16b33fc) | Hành động đợt này | Tiêu chí kiểm | Môi trường | Người chịu trách nhiệm | Bằng chứng | Nhóm / trạng thái |
+|---|---|---|---|---|---|---|---|---|
+| S01 | Credential DB từng lộ trong lịch sử Git repo public (HĐ bảo mật; PL01 mục 8b) | Kiểm boolean 22/10: `.env` dev trùng giá trị lộ; checklist runbook 10.7 | Kiểm lại boolean hiện trạng + phương thức xác thực đường TCP; liệt kê tên biến/dịch vụ dùng credential; công cụ rotation KHÔNG đưa secret vào argv/log (verifier SCRAM tính phía client), kiểm mới-được/cũ-bị-từ-chối trên đường xác thực MẬT KHẨU, khôi phục khi lệch | Công cụ: container thử — đổi xong mật khẩu mới vào được, mật khẩu cũ bị từ chối (đường scram, không trust), không secret trong log/argv/`pg_stat_activity`; thật: tiêu chí đóng như user ghi | A: container Docker thử; B: dev/staging/server Bên B | A: Bên A dev; B: quản trị viên từng môi trường | `evidence/safety_s01_*.log` (không secret) | A làm; B CHƯA ĐÓNG tới khi quản trị viên chạy + kiểm |
+| S02 | Sự cố test 20/10 chạm DB `samsam` | UNVERIFIED (doi-chieu A7) | Timeline từ evidence repo (lệnh, thời điểm, loại thao tác, phạm vi); tách chứng cứ trực tiếp/suy đoán; xác định chính xác backup/log còn thiếu (cấu hình log server đọc qua DB test, không đọc `samsam`); gói kiểm chỉ đọc trên bản restore cô lập | Timeline có nguồn từng dòng; danh sách thiếu cụ thể; không kết luận "không ảnh hưởng" khi thiếu baseline | A: evidence repo + DB test; B: bản backup/log do quản trị viên cấp | A: Bên A; B: DBA/quản trị viên Bên B | `docs/handover/su-co-db-samsam.md` | A làm; kết luận giữ UNVERIFIED nếu thiếu |
+| S03 | PL01 3c "một bảng giá cho mọi kênh"; DONE: xuất tệp sàn lấy giá JSON | `listing_export --sku --channel shopee\|tiktok` giá `prices.<kênh>.list` JSON | Giá từ `price_list` đúng SKU/kênh/list, ĐÃ duyệt, còn hiệu lực (quy tắc `kd_listing.golden_prices`); manifest + `--verify` mang id/giá/ngày hiệu lực; không fallback | Probe trước FAIL/sau PASS: JSON có giá + DB thiếu/chờ/hết hạn/chưa tới → chặn; DB≠JSON → DB; lỗi đọc/quyền → không tệp; sửa tệp/manifest hoặc giá đổi → verify lệch; F1/F2 không hồi quy | A: DB test | Bên A | `evidence/safety_s03.log`, test C04 | A |
+| S04 | HĐ 6.7/7.2: người được ủy quyền duyệt; giới hạn: `svc_ui` login chung, DB tin tên UI truyền | Python `auth.authorize` + session UI; DB miễn kiểm cho `svc_ui` | Danh tính gắn PHIÊN xác thực ở DB: UI chế độ thực ghi quyết định bằng LOGIN NGƯỜI của chính người dùng (xác thực Postgres, `human_logins` + function `*_human` sẵn có); bỏ miễn trừ `svc_ui` cho quyết định mang tên người | Login thật trên DB test: đúng người/khối được; giả tên, sai khối, agent, `svc_ui`, dịch vụ, tự duyệt sai → 42501 + không ghi dở; gọi thẳng function/SQL không lách; quyền dịch vụ không mở rộng | A: DB test (login thật) | A: Bên A; B: Bên B cấp login + `human_logins` | `evidence/safety_s04.log` | A; phần tài khoản thật = B |
+| S05 | PL02 mục 2 + lỗi nghiêm trọng; PL01 mục 8 | Cơ chế có, rải nhiều đợt | Đối chiếu từng điều kiện ↔ cơ chế + test hiện có; chạy lại phần bị đợt này chạm; hạ tầng/quyết định thiếu → blocker chính xác | Bảng điều kiện → cơ chế → test/evidence → trạng thái; không số vận hành giả | A: DB test/Docker dev | Bên A; B: hạ tầng Bên B | bảng trong doi-chieu mục S | A + blocker B |
+| A01 | PL02 mục 1; 96 mục theo dõi (89 AI + 7) | Catalog + `rollout --catalog/--dossier` | Ma trận tập trung sinh từ catalog + sổ rollout: căn cứ, giai đoạn, đầu ra, provenance, người duyệt, môi trường, mức bằng chứng, thiếu gì, bước được phép kế; tiêu chí kiểm hành vi từng mục; điều kiện READY_FOR_TRIAL tường minh | 96 dòng, mỗi dòng có tiêu chí hành vi; mục thiếu điều kiện không READY; đầu ra đếm DISTINCT theo nguồn | A | Bên A | `docs/handover/ma-tran-nghiem-thu.md` + lệnh sinh | A |
+| A02 | PL02 1a–b; HĐ 6.7 | Rải ở dau-vao, sổ nghĩa vụ | Hồ sơ sẵn sàng chạy thử: ủy quyền 9 khối + login, vai QR, người nhận cảnh báo/trực/cấp leo thang, lịch làm việc, chính sách null, dữ liệu gốc, hạ tầng, vendor — mỗi dòng: chủ quản, trạng thái kiểm được bằng lệnh | Lệnh kiểm in thiếu gì (không tự điền tên/chữ ký/mức phí/cờ DPIA) | A (công cụ); B/C (điền) | Bên B từng đầu vào | `docs/handover/ho-so-san-sang-chay-thu.md` | A + B |
+| A03 | PL02 1a–c nguyên văn | Cổng `rollout` DB-only (v15/DOCX) | Test cơ chế trên DB test: 5 ngày làm việc + 50 đầu ra nội bộ; 10 ngày có người duyệt kiểm từng mục; lỗi nghiêm trọng → tắt + về chạy thử; gọi thẳng DB/function không vượt; mẫu/không rõ nguồn không tính | Test xanh trên DB test; dữ liệu thử không vào hồ sơ thật | A: DB test | Bên A | test + `evidence/safety_a03.log` | A |
+| A04 | PL02 1a–c thực tế | 0 mục có sổ rollout thật | KHÔNG chạy (không môi trường/người/tài khoản được cấp) → lịch việc + chủ trách nhiệm + điều kiện bắt đầu | — | B/C: server Bên B | Bên B + Bên A | ma trận A01 | C — chờ |
+| A05 | PL02 mục 2–3 | `ops_monthly` + KPI | Bảng chỉ số → nguồn, kỳ, mẫu số, timezone, xử lý thiếu; kiểm "không sự kiện/thiếu dữ liệu ≠ 100%" | Mỗi chỉ số có nguồn; thiếu → "chưa có dữ liệu" | A | Bên A; B: dữ liệu thật | doi-chieu mục KPI | A + C |
+| A06 | PL02 1d–e; HĐ 6.4–6.5 | `--dossier`, sổ nghĩa vụ mục 6 | Bổ sung phần thiếu của hồ sơ P1/P2: bảng chạy thử/người duyệt, nhật ký lỗi, tiêu chí kỹ thuật, phiên bản mã/schema/cấu hình, ngoại lệ; mẫu giao nhận/danh sách lỗi/đề nghị nghiệm thu lại — DỰ THẢO (PL05 chưa có) | Hồ sơ sinh được, chữ ký trống, đồng hồ 30/7 ngày chỉ từ bằng chứng nhận | A (công cụ/mẫu); C (gửi/ký) | Bên A soạn; người có quyền gửi | `docs/handover/mau-ho-so-nghiem-thu.md` | A + C |
+
+Kết quả (revision cuối fingerprint `87092728a204152ca21e794e09b8040a3bb367670e48c53c75e3192ae260a3b5` — 9 file mới, trừ DONE+board, so `16b33fc`; CHƯA commit/merge/push/deploy):
+
+| Mã | Kết quả | Bằng chứng | Trạng thái |
+|---|---|---|---|
+| S01 | Công cụ rotation (verifier SCRAM, không secret argv/log, kiểm mới/sai/cũ trên đường kiểm mật khẩu, trust → không kết luận) đạt trên Postgres Docker tạm; dev 22/10: `.env` role `postgres` CÒN trùng giá trị lộ, localhost TCP scram kiểm mật khẩu, listen chỉ localhost | `evidence/safety_s01_check.log`, `tests/test_safety_s01_rotation.py` | công cụ CODE_VERIFIED · rotation CHƯA ĐÓNG ở môi trường nào (không có quyền) |
+| S02 | Timeline có nguồn: 20/10 03:03:38–03:28:30 UTC, 22 file test, đọc 1 lần `xact_commit` 6675; log server `log_statement=none`, prefix không tên DB; thiếu backup trước sự cố | `docs/handover/su-co-db-samsam.md` | UNVERIFIED (thiếu baseline/log câu lệnh) |
+| S03 | Probe trước 12/14 FAIL (JSON 745000, tiktok bị chặn dù có giá DB, verify không bắt giá đổi) → sau 14/14 PASS; test hồi quy mới FAIL 7 trên bản trước | `evidence/safety_s03.log`, test C04 | CODE_VERIFIED (DB test) |
+| S04 (ĐÍNH CHÍNH 22/10: CHƯA ĐỦ — lỗ S04b ở checkpoint trên) | Probe login thật trước 6/17 FAIL (svc_ui duyệt/xếp lịch/ghi log bằng tên bất kỳ; DB không kiểm khối draft; chưa có phiên người) → sau 17/17 PASS; nâng cấp từ 16b33fc ×2 giữ dữ liệu/chuỗi hash/sổ rollout, chỉ thêm 2 grant chủ đích | `evidence/safety_s04.log`, `tests/test_safety_s04_identity.py` | CODE_VERIFIED (DB test, login thật) · UI Streamlit CHƯA chạy thật (thiếu streamlit, cần tải) · login/`human_logins` thật = Bên B |
+| S05 | Bảng điều kiện ↔ cơ chế ↔ test | doi-chieu A9 | code đạt; hạ tầng/khóa/offsite/giám sát ngoài = BLOCKED_INFRA |
+| A01 | Ma trận 96 mục sinh từ danh mục + điều kiện; READY 0/96 | `docs/handover/ma-tran-nghiem-thu.md`, `tests/test_acceptance_matrix.py` | CODE_VERIFIED |
+| A02/A04 | Hồ sơ sẵn sàng + lịch chạy thử; không mục nào bắt đầu | `docs/handover/ho-so-san-sang-chay-thu.md`, `evidence/safety_a02_status.log` | chờ Bên B |
+| A03 | PL02 1a–c ↔ test hiện có (không viết test trùng) | doi-chieu A9 | CODE_VERIFIED |
+| A05 | Chỉ số ↔ nguồn/kỳ/mẫu số/múi giờ; không sự kiện ≠ 100% | doi-chieu A9 | code đạt; dữ liệu thật chưa có |
+| A06 | `--dossier` DỰ THẢO + sự cố vận hành + phiên bản + ngoại lệ; mẫu giao nhận/lỗi/nghiệm thu lại | `docs/handover/mau-ho-so-nghiem-thu.md` | mẫu sẵn; gửi/ký = người có quyền |
+| GATE | full 6604 passed/0 failed/0 skipped (DR 3 PASSED, 47:55, DB mới); ruff sạch; eval 22/22 (guardrail 130/132); DPIA 0; red-team 0/50; probe F1 28/28, F2 12/12, S03 14/14, S04 17/17 trên revision cuối | `evidence/safety_full_pytest.log`, `safety_gates.log`, `safety_f1f2_regress.log` | CODE_VERIFIED (máy dev) |
+
 ## Checkpoint mới — Vá 2 lỗi controller đợt hoàn thiện (22/10/2026) — tiêu chí ghi TRƯỚC khi code, kết quả bên dưới
 
 Nền: working tree fingerprint `da55b0acb2f89f119bc6920accc3d3e481efc8051a1f37053a3d516126e0750b` (snapshot ngoài repo). CHƯA commit.
@@ -184,7 +323,7 @@ Website + chatbot website (sales-08/09): làm riêng theo quyết định user, 
 | Hai bên | Chốt 89 mục/P1 80–P2 9; ngày ký + ngày vận hành; tỷ lệ phí/mức thưởng; PL05 (mẫu biên bản); phương án/chi phí neo blockchain | C00, finance-06, ceo-90, farming-06 | catalog/`--catalog`, `rev_share` null = "chưa chốt", `anchor` provider none exit 2 | chạy `rev_share --quarter`, `anchor --submit` với provider thật |
 | Bên B | Server/UPS/offsite/monitor ngoài máy; login dịch vụ (`svc_webhook/job/loader/backup`, **`svc_ui` mới**) + login người + `human_logins` + `users.json db_login` + `approvers` theo văn bản ủy quyền; SMTP + người nhận cảnh báo; lịch nghỉ; 14 hồ sơ gốc; dữ liệu nghiệp vụ thật; API sandbox/key sàn; domain QR; repo website | F08, mọi mục cần người duyệt, data_platform-90/06/07.x, sales-08/09 | probe login thật không owner (P0/P0c), bind_service, timer drift | E2E trên server Bên B với login thật |
 | Pháp chế / chủ khối | Duyệt bộ ca red-team (3 known_gap major) + model/DPA LLM-check hoặc bộ từ vựng bệnh; DPIA/TIA/DPA; hạn lưu (`retention.json`); danh mục thành phần hồ sơ XNQC (`data/xnqc_draft.json`, mới); từ vựng nghi hàng giả (`ugc_rules.json counterfeit_terms`, mới); chính sách loader; cảnh báo tồn/cấp 2/ngoài giờ; ngưỡng + khung giờ 7 job mới | legal_hr-01/02, marketing-05, intel-*, sales-* | luật + mặc định chặn an toàn | rerun `redteam.py`, job thật |
-| Nhà cung cấp | OCR, STT, sinh nền ảnh (trong nước + DPA + key) | production-03, data_platform-02, farming-01, marketing-02.1 | registry `none` → exit 2 có lý do | gọi vendor thật trên dữ liệu mẫu được duyệt |
+| Nhà cung cấp | OCR, STT, sinh nền ảnh (trong nước + đặc tả API + DPA + key) | production-03, data_platform-02, farming-01, marketing-02.1 | registry `none` → exit 2 có lý do; adapter nhà cung cấp CHƯA viết (đính chính r9) | dev viết adapter sau khi chọn vendor + contract test → gọi vendor thật trên dữ liệu mẫu được duyệt |
 | Bảo mật | Mật khẩu từng lộ trong lịch sử Git — chưa có bằng chứng rotation (không in, không tự đổi) | toàn hệ | — | Bên B đổi mật khẩu + xác nhận |
 
 ## Phát hành mã nguồn v15 — 19/10/2026 (lịch sử — trước đợt DOCX)

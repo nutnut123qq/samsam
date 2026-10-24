@@ -1,0 +1,25 @@
+"""HARNESS r12 (FIXTURE DB, chỉ intel-03) — tái lập điều kiện đầu vào r10: golden (price_list) hiệu lực từ 2026-10-23.
+
+Lý do: golden_store ghi valid_from = NGÀY DỰNG DB (giờ VN). r10 dựng DB ngày 23/10/2026 nên quan sát đối thủ ngày 23/10
+(it_g1_competitor_2.csv) có giá golden; r12 dựng DB ngày khác → mọi quan sát 23/10 thành "chưa có giá golden" và ca
+intel-03__C04 (lệch % so golden) không còn cùng đầu vào. Script dời valid_from của các dòng giá ĐANG MỞ về 2026-10-23
+(trigger append-only của price_list tắt TRONG CÙNG 1 giao dịch rồi bật lại — chỉ trên DB thử của mục; không đổi giá,
+không duyệt dòng nào). Dùng: python -I lui_golden_2026-10-23.py.txt (DATABASE_URL do runner cấp)."""
+import os
+import sys
+
+import psycopg
+from psycopg import conninfo
+
+sys.stdout.reconfigure(encoding="utf-8")
+dsn = os.environ["DATABASE_URL"]
+d = conninfo.conninfo_to_dict(dsn)
+if not (d.get("host") == "127.0.0.1" and str(d.get("port")) == "55451" and d.get("dbname") == "samsam_itacc_r12_i03"):
+    sys.exit("[fixture] DATABASE_URL không phải DB thử samsam_itacc_r12_i03 — dừng")
+with psycopg.connect(dsn, connect_timeout=5) as c:
+    with c.transaction():
+        c.execute("alter table price_list disable trigger price_list_append_only_row")
+        n = c.execute("update price_list set valid_from = date '2026-10-23'"
+                      " where valid_to is null and approved_by is null and valid_from > date '2026-10-23'").rowcount
+        c.execute("alter table price_list enable trigger price_list_append_only_row")
+print(f"[fixture] price_list dòng mở: valid_from -> 2026-10-23 ({n} dòng)")

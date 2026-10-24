@@ -1,0 +1,31 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "agents.ceo_decisions",
+  "--list"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:12:49+07:00",
+ "ket_thuc": "2026-10-24T11:12:53+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "Chờ quyết định \\(hàng duyệt khối ceo[^\\n]*\\n(?:- #\\d+[^\\n]*\\n)*?- #\\d+ weekly_board ",
+   "khop": true
+  },
+  {
+   "out_re": "Chờ ký \\(mốc cần văn bản ký[^\\n]*\\n- (?!\\(không có\\))[A-Z]",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "0b5db778e3b4b15c7025b1cfb16232646794e88042a8b3bd8056cd3f9c36fa19",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

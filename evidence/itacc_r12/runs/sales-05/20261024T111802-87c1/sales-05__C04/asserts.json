@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix') and created_by = 'agent:kd_quote'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'finance' and object_type = 'b2b_margin_review' and created_by = 'agent:kd_quote'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type in ('b2b_quote', 'b2b_quote_matrix', 'b2b_margin_review') and (payload like '%0900000301%' or payload ilike '%lienhe.thu.it@example.com%' or payload like '%Người Liên Hệ Thử IT%')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

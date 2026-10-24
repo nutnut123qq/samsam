@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\production.py", line 1393, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\production.py", line 1389, in main
+    return cmd_bulletin(args)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\production.py", line 1276, in cmd_bulletin
+    return _db_call(run)
+           ^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\production.py", line 962, in _db_call
+    return fn(conn)
+           ^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\production.py", line 1269, in run
+    data = collect(conn, golden, why, day + near, day - near)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\production.py", line 861, in collect
+    total = stock[sku]["qty"] if sku in stock else None
+                                 ^^^^^^^^^^^^
+TypeError: argument of type 'int' is not iterable

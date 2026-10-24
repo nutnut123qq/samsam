@@ -1,0 +1,37 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import glob,hashlib,os,runpy,sys,psycopg; d,sql,v=sys.argv[1:4]; f=glob.glob(d+'/*.mp4'); assert len(f)==1,f; h=hashlib.sha256(open(f[0],'rb').read()).hexdigest(); c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); n=c.execute(sql,(h,)).fetchone()[0]; c.close(); print('SHA_DB_KHOP' if n==1 else 'SHA_DB_LECH',h,n,flush=True); sys.argv=[v,f[0]]+sys.argv[4:]; runpy.run_path(v,run_name='__main__')",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/video_c1",
+  "select count(*) from video_assets where file_sha256 = %s and created_by = 'agent:mkt04' and draft_id = (select max(id) from content_drafts where content_type = 'video')",
+  "D:\\code\\samsam\\evidence\\itacc_r10/g3/harness/verify_video.py.txt",
+  "32",
+  "1670",
+  "1016",
+  "154",
+  "0.5",
+  "6",
+  "10",
+  "15.5"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:13:26+07:00",
+ "ket_thuc": "2026-10-24T11:13:29+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*SHA_DB_KHOP )(?=.*duration_s (?:1[5-9]|[23]\\d|4[0-4])(?:\\.\\d+)?\\s|.*duration_s 45(?:\\.0+)?\\s)(?=.*audio_streams 0 video_streams 1\\b)(?=.*metadata_location_or_time False)(?=.*\\bt=0.5s label_region_meandiff_vs_first=)(?=.*\\bt=6s label_region_meandiff_vs_first=)(?=.*\\bt=10s label_region_meandiff_vs_first=)(?=.*\\bt=15.5s label_region_meandiff_vs_first=)(?!.*meandiff_vs_first=(?:\\d{2,}|nan|inf))(?!.*label_region_stddev=(?:\\d|1\\d)\\.\\d\\b)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e1f974f9cece44e0676964c308346e3cc72d5612e5f92c362c89dfa2ed8dc048",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

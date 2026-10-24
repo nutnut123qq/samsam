@@ -1,0 +1,35 @@
+# ma: S01-E2E-all
+# luc: 2026-10-23T10:21:07+07:00
+# lenh: python evidence/itacc_r10/g2/harness/zalo_e2e.py C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv all
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+[rollout] zalo: chatbot chay_thu — không gửi câu bot (uh=4492e1a7f9952526)
+[dry-run] zalo: DEPLOY tắt — không gửi (uh=4492e1a7f9952526)
+== C01_thuong: http=200 conv+1 calls+2 queue+[('cskh_reply', 'agent:kd_a1'), ('cskh_handoff', 'agent:kd_a1')]
+== C02_badsig: http=403 conv+0 calls+0 queue+[]
+[route] zalo: health (uh=3f0b1b7cb4acc7af)
+[dry-run] zalo: DEPLOY tắt — không gửi (uh=3f0b1b7cb4acc7af)
+== C03_health: http=200 conv+1 calls+0 queue+[('cskh_handoff', 'agent:kd_a1')]
+[route] zalo: alcohol (uh=e6a70530456e29bb)
+[dry-run] zalo: DEPLOY tắt — không gửi (uh=e6a70530456e29bb)
+== C04_alcohol: http=200 conv+1 calls+0 queue+[('cskh_handoff', 'agent:kd_a1')]
+[rollout] zalo: chatbot chay_thu — không gửi câu bot (uh=699297c992dd10e0)
+[dry-run] zalo: DEPLOY tắt — không gửi (uh=699297c992dd10e0)
+== C05_pii: http=200 conv+1 calls+2 queue+[('cskh_reply', 'agent:kd_a1'), ('cskh_handoff', 'agent:kd_a1')]
+[rollout] zalo: chatbot chay_thu — không gửi câu bot (uh=979caf3b2d26b9f1)
+[dry-run] zalo: DEPLOY tắt — không gửi (uh=979caf3b2d26b9f1)
+== C06_dedup: http=[200, 200] conv+1 calls+2 queue+[('cskh_reply', 'agent:kd_a1'), ('cskh_handoff', 'agent:kd_a1')]
+[deadline] zalo: quá 30 giây (tra_loi) -> chuyển người (uh=c379aa4de6d5b3cd)
+[dry-run] zalo: DEPLOY tắt — không gửi (uh=c379aa4de6d5b3cd)
+== C07_deadline: http=200 conv+1 calls+2 queue+[('cskh_handoff', 'agent:kd_a1')]
+[dry-run] zalo: DEPLOY tắt — không gửi (uh=56ae9eafdd4ea2a1)
+== C08_vanhanh: http=200 conv+1 calls+2 queue+[]
+[rollout] messenger: chatbot chay_thu — không gửi câu bot (uh=be2a2a596933abae)
+[dry-run] messenger: DEPLOY tắt — không gửi (uh=be2a2a596933abae)
+== C09_messenger: http=200 conv+1 calls+2 queue+[('cskh_reply', 'agent:kd_a1'), ('cskh_handoff', 'agent:kd_a1')]
+== C11_endpoints: http=[200, 200] conv+0 calls+0 queue+[]
+file_output_evidence=0
+
+## stderr

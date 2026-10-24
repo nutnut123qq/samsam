@@ -1,0 +1,19 @@
+{
+ "ca": "s_b2b_120",
+ "argv": [
+  "python",
+  "-c",
+  "\nimport json, sys\nfrom datetime import date\nfrom connectors import b2b_form\nfrom ingest import crm\nfrom ingest.lead_store import connect\nfrom urllib.parse import urlencode\nsku, qty, org, phone = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]\nf = {\"org_name\": org, \"org_type\": \"doanh_nghiep\", \"region\": \"Đà Nẵng\", \"contact_name\": \"Người Liên Hệ Thử R12\",\n     \"phone\": phone, \"email\": \"\", \"need_by\": \"\", \"consent\": \"b2b\", \"policy_version\": \"b2b-v0-nhap\", \"website\": \"\",\n     \"sku1\": sku, \"qty1\": qty}\nform, code = b2b_form.parse_form(urlencode(f).encode(), [sku], date(2026, 10, 23))\nassert form is not None, code\nconn = connect()\nrid, new = b2b_form.intake(conn, form, crm.load_vault_key(), today=date(2026, 10, 23))\nprint(json.dumps({\"rid\": rid, \"new\": new}))\n",
+  "mat-ong-sam-120ml-1hu",
+  "50",
+  "Công ty Thử R12 Giá Chưa Duyệt",
+  "0900001201"
+ ],
+ "env_doi": [],
+ "bat_dau": "2026-10-23T17:27:31+07:00",
+ "ket_thuc": "2026-10-23T17:27:36+07:00",
+ "exit": 0,
+ "llm_calls": null,
+ "stdout_sha256": "1304f31d07eb442532f55d6f7d2fc52a93e8f47683149592c49e982fea8bc9a7",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

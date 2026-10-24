@@ -1,0 +1,773 @@
+{
+ "id": "ceo-05",
+ "ten": "Báo cáo HĐTV",
+ "khoi": "ceo",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Báo cáo HĐTV (P2): 'Tổng hợp tiến độ, quyết định, rủi ro, chi phí hằng tháng'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/ceo-05.json",
+  "sha256": "5af0483b4e3704b24dfee3f50bcf477a36d8f68e38b054dc9cc822592dba1304"
+ },
+ "ly_do_chay_lai": "r10/r11 CODE_FAIL (g1-L3, g1-L4) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+ "fingerprint_code_luc_khoa": "3fda9aa991de6d2eeb799572bd7e8f7debd43be221c224ad39484f69c8549e0a",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_ceo_v2.json",
+ "tieu_chi_sha256": "ee6f013a935052c58dc33ec374a5aaa0140830cff5cbb5d0af6a59b5e9ec2139",
+ "tieu_chi_khoa": "r12_ceo_v2.json ee6f013a935052c58dc33ec374a5aaa0140830cff5cbb5d0af6a59b5e9ec2139 2026-10-24T10:57:40+07:00",
+ "tieu_chi": [
+  "T1 `python -m agents.hdtv_report --month 2026-09 --submit --record --out-dir <scratch>` exit 0",
+  "T2 hdtv-2026-09.md có 7 mục (cockpit, tiến độ & sổ quyết định, rủi ro, chi so ngân sách, P&L, ép trình QA, kiểm soát BKS); số không nguồn bị chặn bởi grounding (exit 0 = mọi số có nguồn); mục thiếu nguồn ghi 'chưa có dữ liệu'/'không đọc được' không bịa; 1 mục ceo/hdtv_pack pending + audit_runs hdtv_pack",
+  "T3 ca âm: chạy lại không nộp trùng; kỳ chưa đóng exit 2; tắt → exit 2 không file/mục",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+  "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_c01/c021/c022/c03/c043/c044/c05 dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống, login owner thử như r10); OPENROUTER_API_KEY rỗng, DEPLOY/RED_ALERT_NOTIFY tắt; rollout --seed (tính năng = chạy thử); fake ở biên: CHỈ ceo-02.1 C09 ép rollout._FORCE_MODE='van_hanh' bằng force_vanhanh.py.txt (= r10); không gọi AI (--llm tắt). DB samsam_itacc_r12_c05.",
+ "run_id": "20261024T111257-a0a1",
+ "ca": [
+  {
+   "ma": "ceo-05__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout trên DB thử riêng (r10 dùng chung DB samsam_itacc_r10_ceo, lệnh ceo_seed_rollout)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:57+07:00",
+      "ket_thuc": "2026-10-24T11:12:58+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__S01"
+  },
+  {
+   "ma": "ceo-05__C01",
+   "nguon_r10": "C01",
+   "mo_ta": "Gói tháng: 7 heading, mục hdtv_pack pending, audit_runs hdtv_pack; thiếu nguồn chi → [chưa có dữ liệu] không in 0đ (G1-L3 đã vá); nhãn CHẠY THỬ (G1-L4 đã vá)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/rep05/hdtv-2026-09.md",
+      "count": 1
+     },
+     {
+      "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+      "re": "## Chỉ số cockpit[\\s\\S]*## Tiến độ & Sổ quyết định[\\s\\S]*## Rủi ro pháp lý mở[\\s\\S]*## Chi so ngân sách vận hành[\\s\\S]*## P&L tóm tắt[\\s\\S]*## Ép trình QA \\(override_qa\\)[\\s\\S]*## Kiểm soát BKS",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack' and object_id like '%2026-09%' and status = 'pending' and created_by = 'agent:hdtv_report'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from audit_runs where kind = 'hdtv_pack' and period_label = '2026-09'",
+      "expect": 1
+     },
+     {
+      "sql": "select (select count(*) from opex_entries) + (select count(*) from llm_usage)",
+      "expect": 0
+     },
+     {
+      "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+      "re": "## Chi so ngân sách vận hành\\n(?:(?!\\n## )[\\s\\S])*?(?:\\|\\s*0đ\\s*\\||0\\.0%)",
+      "expect": false
+     },
+     {
+      "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+      "re": "## Chi so ngân sách vận hành\\n(?:(?!\\n## )[\\s\\S])*?\\| 2026-09 \\| `tong` \\| \\[chưa có dữ liệu\\] \\|",
+      "expect": true
+     },
+     {
+      "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+      "re": "## P&L tóm tắt(?:(?!\\n## )[\\s\\S])*?\\[chưa có dữ liệu\\]",
+      "expect": true
+     },
+     {
+      "file_re": "{SCR}/rep05/hdtv-2026-09.md",
+      "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-05 ",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.hdtv_report --month 2026-09 --submit --record --out-dir evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:12:58+07:00",
+      "ket_thuc": "2026-10-24T11:13:03+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/scratch/rep05/hdtv-2026-09.md",
+        "sha256": "91eb357bdada7d6b584f9e751cf1178d802b34aa8fb1c7c6a3cbd93149f76f7d"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+      "re": "## Chỉ số cockpit[\\s\\S]*## Tiến độ & Sổ quyết định[\\s\\S]*## Rủi ro pháp lý mở[\\s\\S]*## Chi so ngân sách vận hành[\\s\\S]*## P&L tóm tắt[\\s\\S]*## Ép trình QA \\(override_qa\\)[\\s\\S]*## Kiểm soát BKS",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack' and object_id like '%2026-09%' and status = 'pending' and created_by = 'agent:hdtv_report'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from audit_runs where kind = 'hdtv_pack' and period_label = '2026-09'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select (select count(*) from opex_entries) + (select count(*) from llm_usage)",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+      "re": "## Chi so ngân sách vận hành\\n(?:(?!\\n## )[\\s\\S])*?(?:\\|\\s*0đ\\s*\\||0\\.0%)",
+      "expect": false,
+      "actual": false,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+      "re": "## Chi so ngân sách vận hành\\n(?:(?!\\n## )[\\s\\S])*?\\| 2026-09 \\| `tong` \\| \\[chưa có dữ liệu\\] \\|",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+      "re": "## P&L tóm tắt(?:(?!\\n## )[\\s\\S])*?\\[chưa có dữ liệu\\]",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-09.md",
+      "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-05 ",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C01"
+  },
+  {
+   "ma": "ceo-05__X01",
+   "nguon_r10": "MOI",
+   "mo_ta": "G1-L4: gói vào report_outputs ceo-05 (chỉ kiểm)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [],
+    "kiem": [
+     {
+      "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-05' and name = 'hdtv-2026-09.md'",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": [
+     {
+      "sql": "select count(*) >= 1 from report_outputs where feature_id = 'ceo-05' and name = 'hdtv-2026-09.md'",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X01"
+  },
+  {
+   "ma": "ceo-05__C02",
+   "nguon_r10": "C02",
+   "mo_ta": "Chạy lại → exit 0 '[skipped]', không mục thứ 2",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[skipped\\]"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.hdtv_report --month 2026-09 --submit --out-dir evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[skipped\\]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:04+07:00",
+      "ket_thuc": "2026-10-24T11:13:08+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C02"
+  },
+  {
+   "ma": "ceo-05__C03",
+   "nguon_r10": "C03",
+   "mo_ta": "Kỳ chưa đóng (thêm --now 2026-10-23T11:00 = giờ chạy r10 để tái lập) → exit 2",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/rep05/hdtv-2026-10.md",
+      "count": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.hdtv_report --month 2026-10 --now 2026-10-23T11:00:00+07:00 --out-dir evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:08+07:00",
+      "ket_thuc": "2026-10-24T11:13:10+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-10.md",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C03"
+  },
+  {
+   "ma": "ceo-05__C04",
+   "nguon_r10": "C04",
+   "mo_ta": "Gói quý: file hdtv-2026-Q3.md; số quý thiếu tháng → [chưa đủ dữ liệu]",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/rep05/hdtv-2026-Q3.md",
+      "count": 1
+     },
+     {
+      "file_re": "{SCR}/rep05/hdtv-2026-Q3.md",
+      "re": "\\[chưa đủ dữ liệu\\]",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.hdtv_report --quarter 2026-Q3 --out-dir evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:10+07:00",
+      "ket_thuc": "2026-10-24T11:13:16+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C04/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-Q3.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/scratch/rep05/hdtv-2026-Q3.md",
+        "sha256": "f0f2c1c070eec4818e67351ebf961ba26c07ebd82ab5203f98039fb31321afe7"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-Q3.md",
+      "re": "\\[chưa đủ dữ liệu\\]",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C04"
+  },
+  {
+   "ma": "ceo-05__C05",
+   "nguon_r10": "C05",
+   "mo_ta": "Tắt → exit 2, không file/mục",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/rep05/hdtv-2026-08.md",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable ceo-05 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:16+07:00",
+      "ket_thuc": "2026-10-24T11:13:20+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.hdtv_report --month 2026-08 --submit --out-dir evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:20+07:00",
+      "ket_thuc": "2026-10-24T11:13:22+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\scratch/rep05/hdtv-2026-08.md",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05"
+  },
+  {
+   "ma": "ceo-05__X05",
+   "nguon_r10": "MOI",
+   "mo_ta": "ceo-05 tắt → exit 2 + thông báo chặn có ceo-05 (stdout|stderr), không traceback, không file/mục; bật lại",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stderr_re": "^(?![\\s\\S]*Traceback)",
+      "out_re": "\\[(rollout|blocked)\\][^\\n]*ceo-05\\b"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{OUT}/*",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.hdtv_report --month 2026-08 --submit --out-dir evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\ceo-05__X05\\out",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "^(?![\\s\\S]*Traceback)",
+        "khop": true
+       },
+       {
+        "out_re": "\\[(rollout|blocked)\\][^\\n]*ceo-05\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:22+07:00",
+      "ket_thuc": "2026-10-24T11:13:26+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.rollout --promote ceo-05 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:26+07:00",
+      "ket_thuc": "2026-10-24T11:13:28+07:00",
+      "stdout": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\ceo-05\\20261024T111257-a0a1\\ceo-05__X05\\out/*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'hdtv_pack'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C01/asserts.json",
+   "sha256": "3ab3bfedf88965afed8439c5225b82de65a197aed57a0045d32a0c91a356ad1f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C01/case.json",
+   "sha256": "60a896e9b79e75da2749a9375831d68a63aa5a2e8cc338c81c447c30bd0cda02"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C01/step01.cmd.json",
+   "sha256": "eb111177cfa3c5e12762ce791b0ad5d1646ac11cda50a9a1edb130e418d1d5f9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C01/step01.stdout.txt",
+   "sha256": "68176766663a3c67faefb998dc75890dbfc1a0f75b8f6614bb186fd08f449a36"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C02/asserts.json",
+   "sha256": "bb4783cd8363370eeaaef0149ef8c28172eed691a58880f9c2bbeaa7110e73b5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C02/case.json",
+   "sha256": "5fd2fdeb514d653f1375c07a0d6f2a144ac68247dc1fc828b62754b8bb12e342"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C02/step01.cmd.json",
+   "sha256": "dc9a289c55638ae30b066f499a59637e3482024f3e42b5856c07a721272dbf01"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C02/step01.stdout.txt",
+   "sha256": "32399794f75a157a0a5ec36fdc966e5118105eae1ba331e6a507148b05692852"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C03/asserts.json",
+   "sha256": "d300ff2eb72d39a89e9d01845d78c9a4ccd3395052d1fea7060cf4d291092fa7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C03/case.json",
+   "sha256": "de7794c91625a97ea501078647c5e6b5bcd020b14151b2967f94973d247abbb1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C03/step01.cmd.json",
+   "sha256": "632e9f0cdcb0c684371496b4167329cce5418f502464d34e385ef50f1820c5d8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C03/step01.stderr.txt",
+   "sha256": "5a0cf16459c458e1ac86080ec4b242c9b783a3d5d222e96e53436c94dcf5f70c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C03/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C04/asserts.json",
+   "sha256": "f49f57b91c2eb766e8c67f20d9f365c0f9a1d64764c8c102b1c2ead6f94395b1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C04/case.json",
+   "sha256": "e52f007a5fc63afe2ef8d8942441e8e6a756e0da1149fbb9ef23dcfb59262953"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C04/step01.cmd.json",
+   "sha256": "05145bbd7607c1879eb85dcb4f2d96ac013c820a0863375b98989f9d756d821e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C04/step01.stdout.txt",
+   "sha256": "1d3056d4f6c337fa1627dc2123525b838a40ba8a3cfee7e1ff119acda92c2bc3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/asserts.json",
+   "sha256": "320bb2b416ab0fbe32ef189e52ee3a05bb4b7b7da9d455f3c30651049912f884"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/case.json",
+   "sha256": "5f8d5b5bad94b1d2d5bc8c1545988a2ba6ee6c7716a42a3ebecd62152f9e5d60"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step01.cmd.json",
+   "sha256": "a04787f05f885eb10375059fa4b1466032ceaf50c740cb2cd8a8f1cf5b120e2f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step01.stdout.txt",
+   "sha256": "a786feada7bb7c688d25adcba6db33bf744ebf4e19ad9ae552f3bbe55d8b56f8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step02.cmd.json",
+   "sha256": "27fad47c17d4f939462a08574f92faec27dcb25757a440a04262af9df2bd66a1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step02.stderr.txt",
+   "sha256": "90e623262863c4dabb777aff6dd60e41bb381ba095c23d7b8ae17ac5fa2d2754"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__C05/step02.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__S01/case.json",
+   "sha256": "f8c5350a74ff6e9fe7ff515f5b2431cf19ae5383172496f78913dc976b2aa7a8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__S01/step01.cmd.json",
+   "sha256": "bee284ea022b4119354a09774984aff6922a6276c35900964f7c5bc0b5cbafb4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X01/asserts.json",
+   "sha256": "9ae9e1f2c86ce7f60467245f09990506b123fcca3d5044410a95f795f76f0445"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X01/case.json",
+   "sha256": "0228be80a520936bade1b0fac4207e921dd7b404cfaf04d8bcb4c747cc9fdb7f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/asserts.json",
+   "sha256": "0a00d3805675f984d86d285d7efc06ee34ecefba8630613e48cc3c46e2162356"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/case.json",
+   "sha256": "03ca4e14b562c4f9faffcbc6491363bab4c59caf7aa60060ae13e675a2920c61"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step01.cmd.json",
+   "sha256": "ba8717422988fd5d9793cae12d421e331b3921d10a08d7e162a54ccd79222409"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step01.stderr.txt",
+   "sha256": "90e623262863c4dabb777aff6dd60e41bb381ba095c23d7b8ae17ac5fa2d2754"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step02.cmd.json",
+   "sha256": "49ac1bd37713397e5ad3bda80f8f1482a6655adf71062399d07ff29c4c7cbdaf"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step02.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ceo-05__X05/step02.stdout.txt",
+   "sha256": "16dbd0cd2ad8e96cd70e5a48d7755c108ed8d4d494a0fedf60e647d962b7489f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/ket_qua.json",
+   "sha256": "aae4415fc28affe2104a62c7349aa21b174caa054da53a1e8167be04211c5b20"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/scratch/rep05/hdtv-2026-09.md",
+   "sha256": "f892901ccdb70b061f7551cc05c3a2af9f8361ab345597af4e764ca88b7ccae3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/scratch/rep05/hdtv-2026-Q3.md",
+   "sha256": "f0f2c1c070eec4818e67351ebf961ba26c07ebd82ab5203f98039fb31321afe7"
+  }
+ ],
+ "loi_san_pham": []
+}

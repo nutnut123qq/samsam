@@ -1,0 +1,206 @@
+{
+ "id": "intel-02.3",
+ "ten": "Báo động tin xấu về Sâm Sâm",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Báo động đỏ: 'Quét mỗi 60 phút: ... tin xấu về Sâm Sâm'",
+ "tieu_chi": [
+  "T1 `python -m pipelines.intel_alert --run` + `python -m pipelines.red_alert --escalate/--ack` exit đúng",
+  "T2 red_alerts source_agent=intel_red_alert detail.rules ∋ ['brand_negative'] cho tin xấu nhắc Sâm Sâm, có url/intel_item_id; leo thang 2 giờ: đúng 1 bản leo thang/cảnh báo gốc chưa xác nhận",
+  "T3 ca âm: thiếu người nhận → dòng vẫn ghi + exit 1 (fail-closed); chạy lại không trùng; ack bởi agent: bị từ chối; đã ack thì không leo thang; luật hỏng → exit 1; tính năng tắt → luật của nó không sinh cảnh báo (luật khác vẫn sinh)",
+  "T4 không gửi ra ngoài thật (DEPLOY tắt, RED_ALERT_NOTIFY tắt; gửi chỉ qua sender giả MOCK)"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_intel; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: như intel-02.1",
+ "dau_vao": [
+  {
+   "ten": "it_g1_sources.json",
+   "sha256": "66287f496686b58ea97a17288333c413ffd66c9efdbe92176ed6268fe21cbbf6",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "feed_round.py",
+   "sha256": "0f3cb98821bba2755dcf2eac97de023a9dc9932683c66a521597ff06ab55f2a5",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "cfg/intel_alert_rules_thieu_nhom.json",
+   "sha256": "3c468a790e57d25d49b6e9b6defb454ac55f565d1fb52a498ddda21f450d0778",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Quét cảnh báo",
+   "lenh": "python -m pipelines.intel_alert --run",
+   "expected": "red_alerts có dòng rules ∋ ['brand_negative']; route_error thiếu người nhận; exit 1 (fail-closed)",
+   "actual": "red_alerts source_agent=intel_red_alert: #4 rules ['brand_negative'] (Sâm Sâm bị tố hàng nhái), detail có intel_item_id + url nguồn; recipients rỗng + route_error 'thiếu người nhận độc lập' → exit 1 fail-closed (dòng vẫn ghi)",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Quét lại",
+   "lenh": "python -m pipelines.intel_alert --run",
+   "expected": "không red_alerts gốc mới",
+   "actual": "quét lại: alerts=0, red_alerts vẫn 4",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Leo thang sớm (chưa 2 giờ)",
+   "lenh": "python -m pipelines.red_alert --escalate",
+   "expected": "escalated=0 cho cảnh báo mới",
+   "actual": "red_alert --escalate ngay sau khi tạo: escalated=0; mốc bật leo thang ghi agent_action_log 03:48:43Z (sau ts các cảnh báo → không phải tồn)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Xác nhận",
+   "lenh": "python -m pipelines.red_alert --ack 3 --by agent:x",
+   "expected": "agent: bị từ chối exit 1; người → red_alert_acks có dòng; cảnh báo đã ack không leo thang",
+   "actual": "--ack 3 --by agent:x bị từ chối exit 1; --ack 3 --by 'Pháp chế Thử IT' exit 0 → red_alert_acks (intel02_C05b); xem trước leo thang loại #3",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C06",
+   "mo_ta": "Luật hỏng",
+   "lenh": "python evidence/itacc_r10/g1/harness/patch_run.py pipelines.intel_alert RULES_FILE=evidence/itacc_r10/g1/harness/cfg/intel_alert_rules_thieu_nhom.json -- --run",
+   "expected": "exit 1, không quét",
+   "actual": "HARNESS RULES_FILE→thiếu nhóm counterfeit: '[err] luật cảnh báo hỏng … không quét' exit 1",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C07",
+   "mo_ta": "Tính năng tắt",
+   "lenh": "python -m pipelines.intel_alert --run",
+   "expected": "tin chỉ khớp ['brand_negative'] không sinh cảnh báo (off), tin luật khác vẫn sinh; bật lại",
+   "actual": "R3: tin Sâm Sâm bị giả mạo bị bỏ (off=1); counterfeit #13, regulation #14, competitor_penalty #15 vẫn sinh; bật lại → chay_thu. Ghi chú: tin bị bỏ khi tắt được báo ở lần quét sau khi bật lại (đúng contract 'lookback')",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C08",
+   "mo_ta": "Gửi tới người nhận độc lập (MOCK)",
+   "lenh": "python evidence/itacc_r10/g1/harness/mock_deliver.py",
+   "expected": "routed=True, red_alert_deliveries ok",
+   "actual": "MOCK: routing fixture 1 người nhận phap_che (example.com) + sender giả → deliver_pending sent [1,2,4], red_alert_deliveries ok=true 3 dòng, không mở mạng",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Leo thang sau 2 giờ + chạy lại",
+   "lenh": "python evidence/itacc_r10/g1/harness/esc_clock.py",
+   "expected": "đúng 1 bản leo thang detail.escalation_of=<id gốc> cho cảnh báo chưa ack; chạy lại 0 bản mới",
+   "actual": "Chưa đủ 2 giờ thật → HARNESS FIXTURE đồng hồ (now = thật + 2h05, theo C04): escalate ghi 14 bản leo thang detail.escalation_of=<id gốc> — gốc #4 (brand_negative) → #18, #7/#10 → #21/#24; route_error thiếu người nhận → exit 1 fail-closed; lần 2 escalated=0 (intel02_C04c); không id gốc nào có >1 bản leo thang. Xem trước dry-run trước đó (intel02_C04a) cùng tập id",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Như intel-02.1",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/cfg/intel_alert_rules_thieu_nhom.json",
+   "sha256": "3c468a790e57d25d49b6e9b6defb454ac55f565d1fb52a498ddda21f450d0778"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/feed_round.py",
+   "sha256": "0f3cb98821bba2755dcf2eac97de023a9dc9932683c66a521597ff06ab55f2a5"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_sources.json",
+   "sha256": "66287f496686b58ea97a17288333c413ffd66c9efdbe92176ed6268fe21cbbf6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/db_approval_queue_intel.txt",
+   "sha256": "55246a120d2dc67f7ef5fcde53c7cea375a2c46ce86403cc68de0b423ed155e5"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C01.txt",
+   "sha256": "bcca8a9439d1467faa58d12e11ae4d23fa97cda181b5a55e151dda6f4aaa3aa5"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C02.txt",
+   "sha256": "3df6c20c59bcd6934691ce1436abb3f9910ad80f9fc1f0a1bb8cbae9c7a23235"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C03.txt",
+   "sha256": "d34fb881395b9665cc3bde526dd95d963d823d9aad3cfcfeb31581db96d9c8ba"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C04a.txt",
+   "sha256": "391d976b6016be4b40536b489e29274f74cce7963235d1e64eac528f53feb39b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C04b.txt",
+   "sha256": "00063ff57324c62b39f704c555cdd8d578f9fa7eba33995402ad4d46bbc13c6f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C04c.txt",
+   "sha256": "781d62b1a28b99b956c756647ddd3c03fd9628b0f3ef35096b3872ff9ff5f90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C05a.txt",
+   "sha256": "25cad7b3ca217799a95b638075a8ff26dacee3e571808926bcd93fec15277ee1"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C06.txt",
+   "sha256": "26ffdca8ee0f4158068383cdac75c054d2ba1ada89ba546876875efa4096865c"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C07_intel-02.3.txt",
+   "sha256": "e8b694fe3fe6800af2b44775affcd3c00b88c9159c1a08843fbc43efd6d5a6cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C07_intel-02.3_crawl.txt",
+   "sha256": "7e9b94ad05673cc2a243662fd109cc3760a39abecb8ad7aa408656cc194b41bb"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C07_intel-02.3_off.txt",
+   "sha256": "218be6cc2115fad21b707ae4ba60801214b05bfa51af236e22534d7a3b4ed306"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C07_intel-02.3_on.txt",
+   "sha256": "4c486d48012728e193227d2f8a548c4c6e96fce3c6f7fc1c757802ae8e8e93a6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel02_C08.txt",
+   "sha256": "9a54682e376b6c85d722ba4566a817c22f9b395bec6008af085cc1742b41c10f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/intel-bulletin-day-2026-10-23.md",
+   "sha256": "859ea1e08c94fb2836873e5525f9a1dcb43757ac2de6c676a9068097f29fa7ee"
+  }
+ ],
+ "loi_san_pham": [],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

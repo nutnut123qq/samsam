@@ -1,0 +1,220 @@
+{
+ "id": "ceo-04.6",
+ "ten": "Báo khi nhật ký bị sửa + đối soát độc lập BKS",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Kiểm soát nội bộ: 'báo khi nhật ký bị sửa'",
+ "tieu_chi": [
+  "T1 `python -m agents.bks_audit --report/--chain-alert` và `python -m agents.bks_recon --month` exit đúng",
+  "T2 bks-audit-<tháng>.md + audit_runs kind=inside_out (params.heads); chuỗi bị sửa → chain-alert exit 1 + red_alerts nguồn chain + báo cáo có chuoi_bi_sua; mất đuôi → mat_duoi_chuoi; bks-recon-<tháng>.md đối soát quyết toán ↔ đơn ↔ P&L ↔ cockpit có refs + audit_runs kind=recon",
+  "T3 ca âm: chuỗi sạch → exit 0 không cảnh báo; báo lặp cùng phát hiện không tạo cảnh báo mới; tháng chưa đóng → exit 2; tắt → không ghi audit_runs",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_ceo; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: tấn công giả lập bằng SQL owner + session_replication_role=replica (harness/ceo046_*.sql)",
+ "dau_vao": [
+  {
+   "ten": "it_g1_orders_shopee.csv",
+   "sha256": "72f577b6ff7a9d405b07a4d170fee940940fb99ef6704156c9bef81b26c684d1",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_settlement_shopee.csv",
+   "sha256": "8deab7b7e1dfee0efa7756d989651c9864ee44e45a964d7a68ddfce29a83c18f",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_cockpit_thang.csv",
+   "sha256": "24d105bb5a6ae7299a469115ba265101a240e62eaf7af679ed837dab68ab506d",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "ceo046_tamper.sql",
+   "sha256": "1176e0f16223e280fb305ae56593a9b0d0783bffa23bf50c9d8555a7ce54c45e",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "ceo046_delete_tail.sql",
+   "sha256": "0bfe8b7e596ccbb2a13c920a2aef4d9cc4efdbab80476c24e3175f66a7e133f4",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Chuỗi sạch",
+   "lenh": "python -m agents.bks_audit --chain-alert",
+   "expected": "exit 0, không red_alerts mới",
+   "actual": "chuỗi sạch: '[done] chuỗi nhật ký nguyên vẹn', red_alerts 0→0",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Audit tháng + neo đuôi",
+   "lenh": "python -m agents.bks_audit --report --month 2026-09 --record --out-dir <scratch>/rep46",
+   "expected": "exit 0; file bks-audit-2026-09.md; audit_runs inside_out params.heads",
+   "actual": "bks-audit-2026-09.md 0 phát hiện, nhãn CHẠY THỬ; audit_runs #2 inside_out params.heads agent_action_log {n 47, max_id 94, row_hash 977e3a…}",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Đối soát BKS",
+   "lenh": "python -m agents.bks_recon --month 2026-09 --seed 7 --record --out-dir <scratch>/rep46",
+   "expected": "exit 0; file bks-recon-2026-09.md có khác biệt có refs (file dòng N / channel_snapshots#id) hoặc thieu_nguon; audit_runs recon",
+   "actual": "bks-recon-2026-09.md: 4 nguồn shopee (QT giá trị 959.000/thực nhận 843.000, đơn sàn 459.000, P&L 843.000, cockpit 800.000); cockpit_lech Δ43.000 (nguồn file + channel_snapshots), don_lech Δ500.000, quyet_toan_lech dòng 3 thuc_nhan, quyet_toan_khong_don dòng 4, don_chua_quyet_toan market_snapshots#2 dòng 4 — khớp fixture; không chép mã đơn; audit_runs #3 recon seed 7 3/3",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Tháng chưa đóng",
+   "lenh": "python -m agents.bks_recon --month 2026-11 --out-dir <scratch>/rep46",
+   "expected": "exit 2",
+   "actual": "kỳ 2026-11 chưa đóng — exit 2",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Tắt ceo-04.6",
+   "lenh": "python -m agents.bks_audit --report --month 2026-09 --record --out-dir <scratch>/rep46/off",
+   "expected": "exit 2, audit_runs không thêm; bật lại",
+   "actual": "tắt ceo-04.6 → [blocked] exit 2, audit_runs 3→3, không file; bật lại",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C06",
+   "mo_ta": "Sửa nhật ký (giả lập tấn công trên DB thử)",
+   "lenh": "python -m agents.bks_audit --chain-alert",
+   "expected": "exit 1; 1 red_alerts source chain có fp",
+   "actual": "sửa detail dòng #12 (harness/ceo046_tamper.sql, replica) → --chain-alert exit 1, red_alerts #1 source bks_chain_watch có fp, route_error 'thiếu người nhận độc lập' (fail-closed)",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C07",
+   "mo_ta": "Báo lặp",
+   "lenh": "python -m agents.bks_audit --chain-alert",
+   "expected": "exit 1 'đã báo trước đó', không red_alerts mới",
+   "actual": "chạy lại: 'đã báo trước đó (cùng phát hiện)', red_alerts vẫn 1",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C08",
+   "mo_ta": "Báo cáo sau sửa + mất đuôi",
+   "lenh": "python -m agents.bks_audit --report --month 2026-09 --out-dir <scratch>/rep46c",
+   "expected": "báo cáo có chuoi_bi_sua và mat_duoi_chuoi",
+   "actual": "neo lại (audit_runs #4 heads max_id 100, C08a) rồi xóa dòng cuối #100 (harness/ceo046_delete_tail.sql) → báo cáo: chuoi_bi_sua #12 row_hash + mat_duoi_chuoi #100 dong_neo_mat,so_dong_giam",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Neo đuôi chỉ là neo NỘI BỘ (audit_runs) — neo ngoài/object-lock là external-dep; cảnh báo chuỗi chưa tới người (routing rỗng)",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/ceo046_delete_tail.sql",
+   "sha256": "0bfe8b7e596ccbb2a13c920a2aef4d9cc4efdbab80476c24e3175f66a7e133f4"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/ceo046_tamper.sql",
+   "sha256": "1176e0f16223e280fb305ae56593a9b0d0783bffa23bf50c9d8555a7ce54c45e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_cockpit_thang.csv",
+   "sha256": "24d105bb5a6ae7299a469115ba265101a240e62eaf7af679ed837dab68ab506d"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_orders_shopee.csv",
+   "sha256": "72f577b6ff7a9d405b07a4d170fee940940fb99ef6704156c9bef81b26c684d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_settlement_shopee.csv",
+   "sha256": "8deab7b7e1dfee0efa7756d989651c9864ee44e45a964d7a68ddfce29a83c18f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C01.txt",
+   "sha256": "94b4670c0cc86526e84a45fc0e3a2c04094b2b9a79076904390776f1da92f37f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C02.txt",
+   "sha256": "30665e74fa530e9edcf3b5d9f61963ab93c85b022860769f51138610a1217dd6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C03.txt",
+   "sha256": "74c62f7eaf5a781c2c738c3ddfd3ec5e388a299150500b26316ce8184f3244bd"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C04.txt",
+   "sha256": "93f8f87cbcec4c4e52b2d311f995fa9d432e93cdc2e3f352e0733cb48e2932fd"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C05.txt",
+   "sha256": "c955bedb78def7e347d5a35c7f6b5bc20158191623fe031ebad3af2e1cfb3d78"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C05a.txt",
+   "sha256": "1cf164ebefde44e437b915098c5f69916c415cfc8270b70c7f69e64909b52f6e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C05b.txt",
+   "sha256": "85167d9527b43214dba0a544751d71e47282826d0fe8e8d3ca942073f0832b69"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C06.txt",
+   "sha256": "672b75f1241d57175499e45e7110932ec5966b4eb285513382f15f56835ca290"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C07.txt",
+   "sha256": "cf37add6e6ea9b7a1f25760fa3833f4b88f3e7d4d969b4a1a614f608f15aeb6a"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C08.txt",
+   "sha256": "7e91139cfe06ff4b90763bf17880741383d23afde0db0681e2fa2184c1f201ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo046_C08a.txt",
+   "sha256": "1c1a96d9a3e7ca42dd476b6a02ab2bb3aa2d0ae2ec671446711ada93a515e376"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/bks-audit-2026-09_sach.md",
+   "sha256": "fa1944ff3e7da4a2b85c5007b76aa1275f69a386365fb1b9a86094abafe1e96f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/bks-audit-2026-09_sau_sua.md",
+   "sha256": "a0e25fb801a55d95b74b88a9547199bb6d3c9f323bfca521b2e693e68925a048"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/bks-recon-2026-09.md",
+   "sha256": "7033e9d1dd44d3edeee69302a284bf9d84b1300860a2215f66b7c9193403858a"
+  }
+ ],
+ "loi_san_pham": [],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

@@ -1,0 +1,223 @@
+"""HARNESS g2 — sales-01 E2E: Handler webhook THẬT của connectors.zalo /
+connectors.messenger chạy trên 127.0.0.1 cổng động (KHÔNG dùng main() vì
+main bind 0.0.0.0). DEPLOY tắt → send_text THẬT là dry-run (0 request ra
+Zalo/Meta). FIXTURE/HARNESS:
+  - zalo.CONV_LOG / SEEN_DB / TOKEN_STORE → scratchpad (không chạm data/)
+  - OA secret / Messenger app secret / CHANNEL_HASH_SALT = giá trị GIẢ
+  - LLM + embedding = fake ở biên (fake_llm.py) — mức MOCK
+  - ca deadline: rag.CHAT_BUDGET_S=4, SEND_RESERVE_S=1 (rút ngân sách 30s)
+  - ca van_hanh: rollout._FORCE_MODE='van_hanh'
+Dùng: python zalo_e2e.py <scratch_dir> <case...>   (case: all|tat|...)
+Kết quả JSON: evidence/itacc_r10/g2/out/sales-01_<case>.json"""
+import hashlib, hmac, json, os, sys, threading, time
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE)); sys.path.insert(0, r"D:\code\samsam")
+OUT = HERE.parent / "out"
+SCR = Path(sys.argv[1]); SCR.mkdir(parents=True, exist_ok=True)
+CASES = sys.argv[2:]
+
+os.environ["CHANNEL_HASH_SALT"] = "it-g2-fake-salt-0123456789"
+os.environ["MESSENGER_APP_SECRET"] = "it-g2-fake-msgr-secret"
+os.environ["IT_FAKE_CHAT"] = str(HERE.parent / "fixtures" / "fake_rag_answer.txt")
+os.environ["IT_FAKE_LOG"] = str(SCR / "fake_calls.jsonl")
+os.environ.pop("DEPLOY", None)
+
+import fake_llm  # noqa: E402
+fake_llm.install()
+import httpx  # noqa: E402
+import psycopg  # noqa: E402
+from connectors import messenger, zalo  # noqa: E402
+from api import rag  # noqa: E402
+from pipelines import rollout  # noqa: E402
+
+zalo.CONV_LOG = SCR / "conversations.jsonl"
+zalo.SEEN_DB = SCR / "zalo_seen.db"
+zalo.TOKEN_STORE = SCR / "zalo_tokens.json"
+zalo.APP_ID, zalo.OA_SECRET = "it-g2-app", "it-g2-fake-oa-secret"
+DB = psycopg.connect(os.environ["DATABASE_URL"], autocommit=True, connect_timeout=5)
+
+zs = zalo.ThreadingHTTPServer(("127.0.0.1", 0), zalo.Handler)
+ms = messenger.ThreadingHTTPServer(("127.0.0.1", 0), messenger.Handler)
+for s in (zs, ms):
+    threading.Thread(target=s.serve_forever, daemon=True).start()
+ZURL = f"http://127.0.0.1:{zs.server_address[1]}"
+MURL = f"http://127.0.0.1:{ms.server_address[1]}"
+
+
+def sign(raw, secret=None):
+    d = json.loads(raw)
+    return "mac=" + hashlib.sha256((d["app_id"] + raw.decode() + str(d["timestamp"])
+                                    + (secret or zalo.OA_SECRET)).encode()).hexdigest()
+
+
+def zpost(uid, text, mid, bad=False):
+    ev = {"app_id": zalo.APP_ID, "sender": {"id": uid}, "recipient": {"id": "oa-thu"},
+          "event_name": "user_send_text", "message": {"msg_id": mid, "text": text},
+          "timestamp": str(int(time.time() * 1000))}
+    raw = json.dumps(ev, ensure_ascii=False).encode()
+    sig = sign(raw, "sai-secret") if bad else sign(raw)
+    return httpx.post(ZURL + "/zalo-webhook", content=raw,
+                      headers={"X-ZEvent-Signature": sig}, timeout=10).status_code
+
+
+def mpost(psid, text, mid, bad=False):
+    ev = {"object": "page", "entry": [{"messaging": [{"sender": {"id": psid},
+          "message": {"mid": mid, "text": text}}]}]}
+    raw = json.dumps(ev, ensure_ascii=False).encode()
+    key = b"sai" if bad else os.environ["MESSENGER_APP_SECRET"].encode()
+    sig = "sha256=" + hmac.new(key, raw, hashlib.sha256).hexdigest()
+    return httpx.post(MURL + "/messenger-webhook", content=raw,
+                      headers={"X-Hub-Signature-256": sig,
+                               "Content-Type": "application/json"}, timeout=10).status_code
+
+
+def conv():
+    p = zalo.CONV_LOG
+    return [json.loads(x) for x in p.read_bytes().split(b"\n") if x.strip()] if p.exists() else []
+
+
+def calls():
+    p = Path(os.environ["IT_FAKE_LOG"])
+    return [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines()] if p.exists() else []
+
+
+def qmax():
+    return DB.execute("select coalesce(max(id),0) from approval_queue").fetchone()[0]
+
+
+def qrows(after):
+    return [dict(zip(("id", "block", "object_type", "object_id", "created_by", "status", "title", "payload"), r))
+            for r in DB.execute("select id, block, object_type, object_id, created_by, status, title, payload"
+                                " from approval_queue where id > %s order by id", (after,)).fetchall()]
+
+
+def wait_conv(n0, k=1, timeout=20):
+    t = time.time() + timeout
+    while time.time() < t:
+        c = conv()
+        if len(c) >= n0 + k:
+            time.sleep(0.8)   # để ghi DB sau convlog xong
+            return conv()[n0:]
+        time.sleep(0.2)
+    return conv()[n0:]
+
+
+def run_case(name, fn):
+    n0, c0, q0 = len(conv()), len(calls()), qmax()
+    res = {"case": name}
+    res.update(fn())
+    res["convlog_new"] = conv()[n0:]
+    res["fake_calls_new"] = calls()[c0:]
+    res["queue_new"] = qrows(q0)
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / f"sales-01_{name}.json").write_text(json.dumps(res, ensure_ascii=False, indent=1, default=str),
+                                               encoding="utf-8")
+    print(f"== {name}: http={res.get('http')} conv+{len(res['convlog_new'])} calls+{len(res['fake_calls_new'])}"
+          f" queue+{[(q['object_type'], q['created_by']) for q in res['queue_new']]}")
+    return res
+
+
+def c_thuong():
+    n0 = len(conv()); st = zpost("it-g2-u1", "Mật ong sâm 300ml đóng hũ bao nhiêu ml?", "it-g2-m1")
+    return {"http": st, "_": len(wait_conv(n0))}
+
+
+def c_badsig():
+    st = zpost("it-g2-u2", "Mật ong sâm 300ml còn hàng không?", "it-g2-m2", bad=True)
+    time.sleep(2)
+    return {"http": st}
+
+
+def c_health():
+    n0 = len(conv()); st = zpost("it-g2-u3", "Uống mật ong sâm có chữa được tiểu đường không?", "it-g2-m3")
+    wait_conv(n0); return {"http": st}
+
+
+def c_alcohol():
+    n0 = len(conv()); st = zpost("it-g2-u4", "Rượu sâm Ngọc Linh giá bao nhiêu?", "it-g2-m4")
+    wait_conv(n0); return {"http": st}
+
+
+PII_UID = "it-g2-uid-pii-777"
+
+
+def c_pii():
+    n0 = len(conv())
+    st = zpost(PII_UID, "Tôi tên Nguyễn Văn Thử, SĐT 0900000123, email khach.thu@example.com, hỏi mật ong sâm 300ml",
+               "it-g2-m5")
+    wait_conv(n0)
+    raw = zalo.CONV_LOG.read_bytes().decode("utf-8")
+    return {"http": st, "convlog_has_phone": "0900000123" in raw, "convlog_has_email": "khach.thu@example.com" in raw,
+            "convlog_has_raw_uid": PII_UID in raw}
+
+
+def c_dedup():
+    n0 = len(conv()); st1 = zpost("it-g2-u6", "Mật ong sâm 300ml dùng thế nào?", "it-g2-m6")
+    wait_conv(n0)
+    n1, k1 = len(conv()), len(calls())
+    st2 = zpost("it-g2-u6", "Mật ong sâm 300ml dùng thế nào?", "it-g2-m6")
+    time.sleep(4)
+    return {"http": [st1, st2], "lan2_conv_tang": len(conv()) - n1, "lan2_calls_tang": len(calls()) - k1}
+
+
+def c_deadline():
+    rag.CHAT_BUDGET_S, rag.SEND_RESERVE_S = 4.0, 1.0
+    try:
+        n0 = len(conv()); t0 = time.monotonic()
+        st = zpost("it-g2-u7", "Mật ong sâm 300ml [cham] bảo quản ra sao?", "it-g2-m7")
+        wait_conv(n0, timeout=15)
+        return {"http": st, "giay_toi_khi_co_convlog": round(time.monotonic() - t0, 2),
+                "fixture": "CHAT_BUDGET_S=4 SEND_RESERVE_S=1 (rút ngắn), fake chat ngủ 6s"}
+    finally:
+        rag.CHAT_BUDGET_S, rag.SEND_RESERVE_S = 30.0, 5.0
+
+
+def c_vanhanh():
+    rollout._FORCE_MODE = "van_hanh"
+    try:
+        n0 = len(conv()); st = zpost("it-g2-u8", "Mật ong sâm 300ml là gì?", "it-g2-m8")
+        wait_conv(n0); return {"http": st, "fixture": "_FORCE_MODE=van_hanh"}
+    finally:
+        rollout._FORCE_MODE = None
+
+
+def c_messenger():
+    n0 = len(conv()); st = mpost("900000001", "Mật ong sâm 300ml đóng gói thế nào?", "it-g2-mm1")
+    wait_conv(n0)
+    st_bad = mpost("900000002", "Mật ong sâm 300ml?", "it-g2-mm2", bad=True)
+    time.sleep(2)
+    return {"http": st, "http_bad": st_bad}
+
+
+def c_health_endpoints():
+    h = httpx.get(ZURL + "/healthz", timeout=5); r = httpx.get(ZURL + "/readyz", timeout=10)
+    return {"http": [h.status_code, r.status_code], "healthz": h.json(), "readyz": r.json()}
+
+
+def c_tat():
+    n0 = len(conv()); st = zpost("it-g2-u9", "Mật ong sâm 300ml giao hàng mấy ngày?", "it-g2-m9")
+    wait_conv(n0); return {"http": st, "stage_db": DB.execute(
+        "select stage from feature_rollout where feature_id='sales-01'").fetchone()}
+
+
+def c_tat_health():  # bổ sung sau khóa (S01-X1): câu sức khỏe khi chatbot TẮT
+    n0 = len(conv()); st = zpost("it-g2-u10", "Mật ong sâm có chữa được tiểu đường không?", "it-g2-m10")
+    wait_conv(n0); return {"http": st}
+
+
+ALL = [("C01_thuong", c_thuong), ("C02_badsig", c_badsig), ("C03_health", c_health),
+       ("C04_alcohol", c_alcohol), ("C05_pii", c_pii), ("C06_dedup", c_dedup),
+       ("C07_deadline", c_deadline), ("C08_vanhanh", c_vanhanh), ("C09_messenger", c_messenger),
+       ("C11_endpoints", c_health_endpoints)]
+sel = ALL if CASES == ["all"] else [(n, f) for n, f in ALL + [("C12_tat", c_tat), ("X1_tat_health", c_tat_health)] if n in CASES]
+for n, f in sel:
+    run_case(n, f)
+foe = DB.execute("select count(*) from file_output_evidence").fetchone()[0]
+print(f"file_output_evidence={foe}")
+(OUT / f"sales-01_tail_{'_'.join(CASES)}.json").write_text(json.dumps(
+    {"file_output_evidence": foe, "conv_path": "scratchpad (zalo.CONV_LOG patch)", "conv_lines": len(conv())},
+    ensure_ascii=False), encoding="utf-8")
+zs.shutdown(); ms.shutdown()

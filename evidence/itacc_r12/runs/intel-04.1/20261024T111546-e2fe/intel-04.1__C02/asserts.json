@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from trends_related",
+  "expect": 10,
+  "actual": 10,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from trends_related where query = 'rượu sâm ngọc linh' and 'ruou' = any(flags)",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from trends_related where query like '%0900000456%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

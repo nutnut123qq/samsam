@@ -1,0 +1,40 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "scripts.intel_bulletin",
+  "--period",
+  "week",
+  "--date",
+  "2026-10-24",
+  "--suggest"
+ ],
+ "env_doi": [
+  "PROBE_CALL_MAIN",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:15:29+07:00",
+ "ket_thuc": "2026-10-24T11:15:34+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*suggested_new=2)(?=[\\s\\S]*\\[rollout\\][^\\n]*intel-01\\.1)",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "f1d2fb4fed2dcde7328290a9adc7ad9277ebf1a01120215e8a46674d33563688",
+ "stderr_sha256": "d52b3d53663f71325876a509c40f796025f4b7aab415e6af0c35fd835de622d0"
+}

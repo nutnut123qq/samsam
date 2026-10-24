@@ -1,0 +1,22 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import glob,sys\nfs=glob.glob(sys.argv[1]+'/director-finance-*.md')\nassert len(fs)==1,fs\nt=open(fs[0],encoding='utf-8').read()\nsec=t.split('## Công nợ đại lý quá hạn',1)[1].split('\\n## ',1)[0]\nhead=[c.strip() for c in next(l for l in sec.splitlines() if l.startswith('| Đại lý')).strip('|').split('|')]\nrows=[l for l in sec.splitlines() if l.startswith('| `')]\nn=lambda s:int(s.strip().replace('.','').replace('đ','') or 0)\nbad=[]\nfor l in rows:\n    r=dict(zip(head,[c.strip() for c in l.strip('|').split('|')]))\n    if sum(n(r[k]) for k in ('0-30','31-60','61-90','>90'))!=n(r['Quá hạn']): bad.append(l)\nprint('cot',head,'so_dong',len(rows),'lech',bad)\nsys.exit(0 if '0-30' in head and len(rows)==3 and not bad else 1)",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\finance-03.1\\20261024T112125-8269\\finance-03.1__F031-6\\out"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:21:43+07:00",
+ "ket_thuc": "2026-10-24T11:21:43+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "366aa6645072302678e4eff7a4f6ccfe500b48ba9773ff260b1411641eb38c9b",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

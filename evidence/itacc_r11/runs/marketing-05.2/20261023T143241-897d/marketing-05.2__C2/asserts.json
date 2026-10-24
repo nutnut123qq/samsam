@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ugc_reply' and status = 'pending' and title like '%[kenh=facebook]%'",
+  "expect": 6,
+  "actual": 6,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ugc_reply' and payload ~ '0900000|Khách Thử IT|uid-it|tiểu đường'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

@@ -1,0 +1,160 @@
+"""PROBE r12-fix L3 v1 — chatbot quá 30 giây vẫn HỨA "nhân viên sẽ phản hồi" khi chưa có bằng chứng đã ghi mục handoff.
+Không DB thật (psycopg.connect bị chặn; `channels._connect` + `director.submit` thay bằng giả có ghi thứ tự), không mạng,
+transport giả (lambda — KHÔNG đăng ký live → convlog phải ghi provenance sample). Kiểm text ở ĐÚNG biên gửi (hàm send).
+Đồng hồ điều khiển: gọi `zalo._reply(..., t_recv=monotonic() - 26)` → hạn trả lời (nhận + 30 − 5) đã qua → DeadlineExceeded
+tất định; hạn gửi (nhận + 30) còn ~4 giây. Cùng mã/input/assertion cho baseline (working tree r12) và bản sửa.
+  python -I probe_l3.py.txt <ROOT> <out.json>
+Tiêu chí (khóa TRƯỚC khi sửa):
+- LỖI (baseline phải FAIL): nhánh quá hạn (Zalo + Messenger, mọi kết cục ghi handoff: DB down / lỗi DB / rollout chặn /
+  ghi được) → câu GỬI không hứa nhân viên, có hotline; gửi TRƯỚC mọi kết nối DB; ghi handoff đúng 1 lần SAU khi gửi;
+  không crash; còn ngân sách gửi lúc gửi; convlog provenance sample.
+- ĐỐI CHỨNG (baseline + bản sửa đều PASS): NO_DATA / gateway chặn / sức khỏe / rượu / chạy thử (held): ghi được → câu hứa;
+  không ghi được → câu hotline không hứa; ghi TRƯỚC khi gửi; đúng 1 lần."""
+import json
+import os
+import sys
+import time
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG") or k in ("OPENROUTER_API_KEY", "DEPLOY", "CONV_SAMPLE"):
+        os.environ.pop(k, None)
+os.environ["CHANNEL_HASH_SALT"] = "probe-salt-gia-khong-phai-that-0001"
+import psycopg  # noqa: E402
+
+psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm truy cập DB"))
+from unittest.mock import patch  # noqa: E402
+
+from api import rag  # noqa: E402
+from connectors import channels, zalo  # noqa: E402
+from pipelines import director, rollout  # noqa: E402
+from pipelines.llm_gateway import GatewayBlocked  # noqa: E402
+
+PROMISE = ("nhân viên sẽ", "nhân viên sâm sâm sẽ", "sẽ phản hồi", "sẽ liên hệ")
+HOTLINE = "1800577732"
+rows = []
+
+
+class FakeConn:
+    def __init__(self, ev):
+        self.ev = ev
+
+    def close(self):
+        self.ev.append(("close",))
+
+    def execute(self, *a, **k):
+        raise psycopg.OperationalError("probe: không có DB")
+
+
+def run(case_id, *, channel="zalo", answer=None, route=None, md="van_hanh", db="ok", late=False, entry="reply"):
+    ev, logs = [], []
+
+    def send(u, t):
+        dl = zalo._SEND_DEADLINE.get()
+        ev.append(("send", t, None if dl is None else round(dl - time.monotonic(), 2)))
+        return True
+
+    def connect():
+        ev.append(("connect",))
+        return None if db == "down" else FakeConn(ev)
+
+    def submit(*a, **k):
+        ev.append(("submit",))
+        if db == "error":
+            raise psycopg.OperationalError("probe: lỗi DB giả")
+        if db == "rollout":
+            raise rollout.RolloutBlocked("probe: chatbot tắt")
+        return 4242
+
+    gate = channels.Gate("", False, False)
+    err = None
+    with patch.object(channels, "pre_route", return_value=route), \
+            patch.object(channels, "consent_gate", return_value=gate), \
+            patch.object(channels, "chatbot_mode", return_value=md), \
+            patch.object(channels, "record_consent", return_value=None), \
+            patch.object(channels, "record_suggestion", return_value=None), \
+            patch.object(channels, "_connect", side_effect=connect), \
+            patch.object(director, "submit", side_effect=submit), \
+            patch.object(rag, "answer", side_effect=answer or (lambda *a, **k: {"answer": "x", "sources": []})), \
+            patch.object(zalo, "_log_conversation", side_effect=logs.append):
+        try:
+            if entry == "handle_text":
+                out = zalo.handle_text(f"fixture-{case_id}", "Xin thông tin hộp quà.", f"m-{case_id}",
+                                       channel=channel, send=send)
+            else:
+                t_recv = time.monotonic() - 26 if late else None
+                out = zalo._reply(f"fixture-{case_id}", "Xin thông tin hộp quà.", f"m-{case_id}",
+                                  channel=channel, send=send, t_recv=t_recv)
+        except BaseException as e:  # noqa: BLE001
+            out, err = None, repr(e)[:200]
+    sends = [e for e in ev if e[0] == "send"]
+    text = sends[-1][1] if sends else ""
+    low = text.casefold()
+    first = [e[0] for e in ev if e[0] in ("send", "connect", "submit")]
+    return {"err": err, "n_send": len(sends), "text": text, "hua": any(p in low for p in PROMISE),
+            "hotline": HOTLINE in text, "thu_tu": first, "n_connect": first.count("connect"),
+            "n_submit": first.count("submit"), "ngan_sach_con_lai_s": sends[-1][2] if sends else None,
+            "provenance": [lg.get("provenance") for lg in logs], "error_log": [lg.get("error") for lg in logs],
+            "deadline": (out or {}).get("deadline")}
+
+
+def case(nhom, ma, cond, expected, actual):
+    rows.append({"nhom": nhom, "ca": ma, "ket_qua": "PASS" if cond else "FAIL", "expected": expected,
+                 "actual": actual})
+
+
+def timeout(*a, **k):
+    raise rag.DeadlineExceeded("tra_loi")
+
+
+def blocked(*a, **k):
+    raise GatewayBlocked("probe: kill-switch")
+
+
+def no_data(*a, **k):
+    return {"answer": rag.NO_DATA, "sources": []}
+
+
+# --- LỖI: nhánh quá 30 giây ---
+for ch in ("zalo", "messenger"):
+    for db in ("down", "error", "rollout", "ok"):
+        a = run(f"late-{ch}-{db}", channel=ch, late=True, db=db)
+        exp_submit = 0 if db == "down" else 1
+        cond = (a["err"] is None and a["n_send"] == 1 and not a["hua"] and a["hotline"] and a["thu_tu"]
+                and a["thu_tu"][0] == "send" and a["n_connect"] == 1 and a["n_submit"] == exp_submit
+                and a["deadline"] is not None and (a["ngan_sach_con_lai_s"] or 0) > 0
+                and a["provenance"] == ["sample"])
+        case("LOI", f"qua_han_{ch}_{db}", cond,
+             f"gửi 1 lần, không hứa, có hotline, gửi trước DB, connect 1, submit {exp_submit}, không crash, còn ngân sách,"
+             " provenance sample", a)
+a = run("late-msgr-entry", channel="messenger", answer=timeout, db="ok", entry="handle_text")
+case("LOI", "qua_han_messenger_handle_text", a["err"] is None and not a["hua"] and a["hotline"] and a["thu_tu"][:1]
+     == ["send"] and a["n_submit"] == 1, "handle_text messenger, answer quá hạn → không hứa, hotline, gửi trước, ghi 1 lần",
+     a)
+
+# --- ĐỐI CHỨNG: các nhánh r12 đã vá (ghi TRƯỚC rồi mới chọn câu) ---
+H = channels.Route("health", channels.template("health"), "health")
+A = channels.Route("alcohol", channels.template("alcohol"), "alcohol")
+for tag, kw in (("no_data", {"answer": no_data}), ("gateway", {"answer": blocked}), ("suc_khoe", {"route": H}),
+                ("ruou", {"route": A}), ("held_chay_thu", {"md": "chay_thu"})):
+    for db in ("down", "ok"):
+        a = run(f"{tag}-{db}", db=db, **kw)
+        ok_rec = db == "ok"
+        cond = (a["err"] is None and a["n_send"] == 1 and a["hua"] is ok_rec and a["hotline"]
+                and a["thu_tu"][-1] == "send" and a["n_connect"] == 1 and a["n_submit"] == (1 if ok_rec else 0)
+                and a["provenance"] == ["sample"])
+        case("DOI_CHUNG", f"{tag}_{db}", cond,
+             ("ghi được → câu hứa" if ok_rec else "không ghi được → không hứa") + ", có hotline, ghi trước gửi, 1 lần", a)
+a = run("gateway-msgr-down", channel="messenger", answer=blocked, db="down")
+case("DOI_CHUNG", "gateway_messenger_down", a["err"] is None and not a["hua"] and a["hotline"],
+     "messenger gateway chặn + DB down → không hứa", a)
+out = {"probe": "l3_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1))
+for r in rows:
+    print(r["ket_qua"], r["nhom"], r["ca"])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

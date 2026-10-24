@@ -967,6 +967,10 @@ def main(argv=None) -> int:
         if conn is None:  # ghi-tác-vụ: DB chết -> exit 2, 0 lời gọi LLM
             print(f"[error] {cerr} — không ghi được nháp", file=sys.stderr)
             return 2
+        # r12 D1: tính năng TẮT → chặn TRƯỚC mọi lời gọi AI/dựng file.
+        from pipelines import rollout
+        if why := rollout.blocked(conn, "video nháp", fid="marketing-02.2"):
+            return rollout.say_blocked(why)
         readiness = store.readiness_from_db(conn)
         for sku in dict.fromkeys(skus):
             for ch in dict.fromkeys(args.channel):

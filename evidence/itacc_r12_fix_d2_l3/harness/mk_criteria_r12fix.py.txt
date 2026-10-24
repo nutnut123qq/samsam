@@ -1,0 +1,124 @@
+"""HARNESS r12-fix — sinh criteria/r12fix_v1.json (5 mục kiểm lại sau vá D2/L3) TỪ tiêu chí r12 đã khóa, rồi khóa.
+Mỗi mục: chép NGUYÊN ca r12 (cùng lệnh/fixture/kỳ vọng), đổi DB sang samsam_itacc_r12fix_<mã>; thêm ca MỚI (`nguon_r10`
+"MOI_R12FIX"). Chỉ một chỗ đổi kỳ vọng cũ, có lý do: sales-01__C07 assertion `sent_last_is_handoff_text=true` (r12 v4)
+chính là hành vi L3 controller bác (hứa nhân viên khi chưa ghi handoff) → v1 r12-fix đòi câu gửi KHÔNG hứa + có hotline
++ handoff ghi đúng 1 lần + transport giả không mang provenance live (siết, không nới); assertion cũ giữ ở
+`ky_vong_r12_v4`. Placeholder: {FX12}/{H} = fixture/harness r12 (CHỈ ĐỌC), {FXF}/{HF} = fixture/harness r12-fix.
+  python -I mk_criteria_r12fix.py.txt"""
+import copy
+import hashlib
+import json
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+EV = Path(__file__).resolve().parents[1]
+R12 = EV.parent / "itacc_r12" / "criteria"
+SRC = {"legal_hr-01": ("r12_prod_legal.json", "l01"), "sales-01": ("r12_sales_a_v4.json", "s01"),
+       "marketing-01.1": ("r12_sales_b.json", "m011"), "sales-03": ("r12_sales_b.json", "s03"),
+       "sales-07.1": ("r12_sales_b.json", "s071")}
+LY_DO = {
+    "legal_hr-01": "D2 — sửa luật pii_ca_nhan ở pipelines/guardrail.py (entry point của mục) + pipelines/pii.py",
+    "sales-01": "L3 — sửa nhánh quá 30 giây ở connectors/zalo.py (Zalo + Messenger dùng chung _reply_turn)",
+    "marketing-01.1": "D2 — nháp bài/ngày đi qua check_publish_llm → check_publish (luật 8 đổi)",
+    "sales-03": "D2 — nháp listing đi qua check_publish (luật 8 đổi)",
+    "sales-07.1": "D2 — kịch bản livestream đi qua check_publish (luật 8 đổi); câu có chữ số bị kd_live bỏ TRƯỚC guardrail"
+                  " (content._spec_like) nên không thêm ca SĐT ngoặc — chỉ kiểm hồi quy",
+}
+FACT = "{OUT}/facts.txt"
+
+
+def fre(re_, exp=True):
+    return {"file_re": FACT, "re": re_, "expect": exp}
+
+
+items = []
+src_sha = {}
+for iid, (f, code) in SRC.items():
+    p = R12 / f
+    src_sha[f] = hashlib.sha256(p.read_bytes()).hexdigest()
+    it = copy.deepcopy(next(i for i in json.loads(p.read_text(encoding="utf-8"))["items"] if i["id"] == iid))
+    it["db"] = f"samsam_itacc_r12fix_{code}"
+    it["nguon_tieu_chi"] = {"tep": f"evidence/itacc_r12/criteria/{f}", "sha256": src_sha[f]}
+    it["ly_do_kiem_lai"] = LY_DO[iid]
+    cas = it["ca"]
+    if iid == "legal_hr-01":
+        it["tieu_chi_cu_the"].append(
+            "T5 (r12-fix D2, MOI) SĐT cá nhân dạng NGOẶC ((0912) 345 678 / +84 (912) 345 678 / (0912) - (345) - (678) /"
+            " (+84) 912 345 678) bị chặn pii_ca_nhan ở mọi kênh công khai; số công ty pii_allow dạng ngoặc/+84, hotline"
+            " ngoặc, giá trong ngoặc, quy cách không gắn cờ; chuỗi '(' bệnh lý vẫn chặn < 3 giây; chat/internal_note giữ"
+            " phạm vi; luật vẫn 'chờ Pháp chế duyệt'")
+        cas.append({"ma": "legal_hr-01__X02", "nguon_r10": "MOI_R12FIX",
+                    "mo_ta": "r12-fix D2: SĐT dạng ngoặc trên entry point thật check_publish/check",
+                    "buoc": [{"argv": ["python", "{FXF}/items/legal_hr-01/d2_paren_cases.py.txt"], "expect_exit": 0,
+                              "stdout_re": "\\[tong\\] \\d+ ca, FAIL 0",
+                              "out_re": "\\A(?![\\s\\S]*(\\[FAIL\\]|Traceback))"}]})
+    elif iid == "sales-01":
+        it["tieu_chi_cu_the"] = [t if not t.startswith("T6 ") else
+                                 "T6 Hạn chót (FIXTURE CHAT_BUDGET_S=4, SEND_RESERVE_S=1, fake chat ngủ 6s): câu GỬI ở biên"
+                                 " send_text KHÔNG hứa nhân viên + có hotline 1800577732 (r12-fix L3; r10/r12 v4 đòi"
+                                 " HANDOFF_TEXT = hành vi controller bác) + convlog error deadline:* + cskh_handoff lý do"
+                                 " qua_han_tra_loi đúng 1 mục; transport giả không mang provenance live"
+                                 for t in it["tieu_chi_cu_the"]]
+        it["tieu_chi_cu_the"].append("T12 (r12-fix L3, MOI) như T6 trên đường Messenger (webhook Messenger thật → "
+                                     "zalo.handle_text channel=messenger)")
+        new = []
+        for c in cas:
+            if c["ma"] == "sales-01__C07":
+                c["ky_vong_r12_v4"] = [a for a in c["kiem"] if "sent_last_is_handoff_text" in a.get("re", "")]
+                c["kiem"] = [a for a in c["kiem"] if "sent_last_is_handoff_text" not in a.get("re", "")] + [
+                    fre("(?m)^sent_n=1$"), fre("(?m)^sent_last_has_promise=false$"),
+                    fre("(?m)^sent_last_has_hotline=true$"), fre("(?m)^n_cskh_handoff=1$"),
+                    fre("(?m)^conv_provenance=(?!\"live\")")]
+                c["buoc"][0]["argv"] = [a.replace("{H}/sales_a/zalo_e2e_r12_v2.py.txt",
+                                                  "{HF}/sales_a/zalo_e2e_r12fix_v3.py.txt") for a in c["buoc"][0]["argv"]]
+                c["doi_r12fix"] = ("harness v2 → v3 (bản sao v2 + bọc messenger.send_text + ca C07M; ca C07 không đổi);"
+                                   " kỳ vọng sent_last_is_handoff_text=true thay bằng 5 assertion siết (lý do ở _doc)")
+                new.append(c)
+                m = copy.deepcopy(c)
+                m.update(ma="sales-01__C07M", nguon_r10="MOI_R12FIX",
+                         mo_ta="r12-fix L3: hạn chót trên đường Messenger (cùng fixture C07)")
+                m.pop("ky_vong_r12_v4", None)
+                m.pop("doi_r12fix", None)
+                m.pop("ky_vong_v3", None)
+                m["buoc"][0]["argv"] = [a.replace("C07_deadline", "C07M_deadline_messenger")
+                                        for a in m["buoc"][0]["argv"]]
+                m["kiem"].append(fre("(?m)^conv_channel=\"messenger\"$"))
+                new.append(m)
+            else:
+                new.append(c)
+        it["ca"] = new
+    elif iid == "marketing-01.1":
+        it["tieu_chi_cu_the"].append(
+            "T5 (r12-fix D2, MOI) LLM giả trả bài có SĐT dạng ngoặc (0912) 345 678 → failed mã pii_ca_nhan, 0 dòng, exit 1"
+            " (cùng khuôn ca C3 từ cấm)")
+        k = next(n for n, c in enumerate(cas) if c["ma"] == "marketing-01.1__01.1-C3")
+        x = copy.deepcopy(cas[k])
+        x.update(ma="marketing-01.1__X01", nguon_r10="MOI_R12FIX",
+                 mo_ta="r12-fix D2: LLM giả trả bài có SĐT ngoặc (2026-10-26) → failed pii_ca_nhan, 0 dòng, exit 1")
+        st = x["buoc"][0]
+        st["argv"] = [a.replace("2026-10-24", "2026-10-26") for a in st["argv"]]
+        st["env"]["PROBE_LLM_RESPONSES"] = json.dumps(
+            ["Hộp quà Sâm Sâm mùa thu cho gia đình Thử IT — đặt hàng gọi (0912) 345 678 để được tư vấn."],
+            ensure_ascii=False)
+        st["stdout_re"] = "failed: [^\\n]*pii_ca_nhan"
+        x["kiem"] = [{"sql": "select count(*) from content_drafts where brief like '[daily 2026-10-26 #%'", "expect": 0}]
+        cas.insert(k + 1, x)
+    items.append(it)
+
+VN = timezone(timedelta(hours=7))
+crit = {"_doc": __doc__.split("\n  python")[0], "nguon_sha256": src_sha,
+        "fingerprint_code": "8f9188ade140c8aea64162400a772ae3f41c2780f788edb40fc9b254ae82aed3",
+        "moi_truong": "Postgres Docker riêng samsam-itacc-r12fix (127.0.0.1:55452), DB mới mỗi mục, dựng bằng working tree"
+                      " bản vá (schema/roles ×2 + core + golden); không DB samsam, không provider, không gửi ra ngoài",
+        "items": items}
+out = EV / "criteria" / "r12fix_v1.json"
+out.parent.mkdir(exist_ok=True)
+b = json.dumps(crit, ensure_ascii=False, indent=1).encode("utf-8")
+with open(out, "xb") as fh:
+    fh.write(b)
+h = hashlib.sha256(b).hexdigest()
+with open(out.with_name("r12fix_v1.lock.txt"), "x", encoding="utf-8") as fh:
+    fh.write(f"r12fix_v1.json {h} {datetime.now(VN).isoformat(timespec='seconds')}\n")
+print(h, {i["id"]: len(i["ca"]) for i in items})

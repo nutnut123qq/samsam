@@ -36,10 +36,15 @@ def _master(db, approve=True):
 def test_export_verify_and_tamper(db, tmp_path):
     did, text = _master(db)
     assert "Giá:" in text
+    # Đợt an toàn S03: giá xuất sàn = price_list ĐÃ duyệt (trước đây golden
+    # JSON 745000 — chính là lỗi) → test đặt giá DB khác JSON.
+    pid = _web_price(db, SKU, 151000, channel="shopee")
     mp = le.export(db, SKU, "shopee", tmp_path, readiness=RD)
     man = json.loads(mp.read_text(encoding="utf-8"))
     assert man["draft_id"] == did and man["transform"] == "bo_dong_gia"
-    assert man["gia_vnd"] > 0 and "CHƯA XÁC MINH" in man["mapping_status"]
+    assert man["gia_vnd"] == 151000 and man["gia_id"] == pid
+    assert "price_list" in man["gia_nguon"]
+    assert "CHƯA XÁC MINH" in man["mapping_status"]
     rows = list(csv.reader((tmp_path / man["file"]).read_text(
         encoding="utf-8-sig").splitlines()))
     assert rows[0][0] == "Mã SKU" and rows[1][0] == SKU
@@ -251,3 +256,76 @@ def test_website_feed_rollout_trial_blocks(db, tmp_path, monkeypatch):
     with pytest.raises(le.ExportError, match="không dùng"):
         le.website_feed(db, tmp_path, readiness=RD)
     assert list(tmp_path.iterdir()) == []
+
+
+# ---- đợt an toàn S03: xuất tệp sàn chỉ dùng giá list ĐÃ duyệt hiệu lực
+
+RDT = {**RD, (SKU, "tiktok"): "TP_THUONG"}
+
+
+def _refused(db, tmp_path, why, channel="shopee"):
+    with pytest.raises(le.ExportError, match=why):
+        le.export(db, SKU, channel, tmp_path, readiness=RDT)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_san_export_no_db_price_refused_even_if_json_has(db, tmp_path):
+    _master(db)
+    gold = content._cfg()[0]["golden"][SKU]
+    assert (gold.get("prices") or {}).get("shopee", {}).get("list")  # JSON có
+    _refused(db, tmp_path, "chưa có giá list kênh")
+
+
+def test_san_export_pending_expired_future_other_kind_refused(db, tmp_path):
+    _master(db)
+    pid = _web_price(db, SKU, 151000, channel="shopee", approve=False)
+    _refused(db, tmp_path, f"#{pid} đang CHỜ")
+    db.execute("update price_list set valid_to = %s where id = %s",
+               (_today(), pid))                       # đóng (hết hạn)
+    _web_price(db, SKU, 152000, channel="shopee", days_ago=-1)   # từ mai
+    _web_price(db, SKU, 90000, channel="shopee", kind="floor")
+    _web_price(db, SKU, 80000, channel="shopee", kind="promo",
+               program="km-t", approve=False)
+    _web_price(db, SKU, 120000, channel="web")
+    _web_price(db, SKU, 130000, channel="tiktok")
+    _refused(db, tmp_path, "chưa có giá list kênh")
+    # Kênh có giá duyệt của chính nó → xuất được bằng đúng giá đó
+    mp = le.export(db, SKU, "tiktok", tmp_path, readiness=RDT)
+    assert json.loads(mp.read_text(encoding="utf-8"))["gia_vnd"] == 130000
+
+
+@pytest.mark.parametrize("how", ["mat_bang", "khong_quyen"])
+def test_san_export_price_unreadable_refused(db, tmp_path, how):
+    _master(db)
+    _web_price(db, SKU, 151000, channel="shopee")
+    if how == "mat_bang":
+        db.execute("alter table price_list rename to price_list_x")
+    else:
+        sch = db.execute("select current_schema()").fetchone()[0]
+        db.execute("create role t_c04_noprice2 nologin")     # ROLLBACK cuối
+        db.execute(f"grant usage on schema {sch} to t_c04_noprice2")
+        db.execute(f"grant select on all tables in schema {sch}"
+                   " to t_c04_noprice2")
+        db.execute(f"grant execute on all functions in schema {sch}"
+                   " to t_c04_noprice2")
+        db.execute("revoke select on price_list from t_c04_noprice2")
+        db.execute("set local role t_c04_noprice2")
+    _refused(db, tmp_path, "không đọc được bảng giá")
+
+
+@pytest.mark.parametrize("change", ["gia_moi", "het_han", "manifest_gia"])
+def test_san_verify_detects_price_change(db, tmp_path, change):
+    _master(db)
+    pid = _web_price(db, SKU, 151000, channel="shopee")
+    mp = le.export(db, SKU, "shopee", tmp_path, readiness=RD)
+    assert le.verify(db, mp, readiness=RD) == []
+    if change == "manifest_gia":
+        man = json.loads(mp.read_text(encoding="utf-8"))
+        man["gia_vnd"] = 99000
+        mp.write_text(json.dumps(man), encoding="utf-8")
+    else:
+        db.execute("update price_list set valid_to = %s where id = %s",
+                   (_today(), pid))
+        if change == "gia_moi":
+            _web_price(db, SKU, 160000, channel="shopee", days_ago=0)
+    assert le.verify(db, mp, readiness=RD) != []

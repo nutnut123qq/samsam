@@ -1,0 +1,12 @@
+"""HARNESS r11 — tạo packshot MẪU bằng hàm sản phẩm image_studio.make_sample_packshot (không phải ảnh thật).
+python mk_packshot.py.txt <thư_mục> <sku_key>"""
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO))
+from pipelines.image_studio import make_sample_packshot  # noqa: E402
+
+out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
+p = make_sample_packshot(out / f"{sys.argv[2]}.png", sys.argv[2])
+print(f"[packshot] MẪU {p.name}")

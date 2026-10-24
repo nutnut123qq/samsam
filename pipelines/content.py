@@ -913,6 +913,10 @@ def main(argv=None) -> int:
         if conn is None:  # ghi-tác-vụ: DB chết -> exit 2, 0 lời gọi LLM
             print(f"[error] {err} — không ghi được nháp", file=sys.stderr)
             return 2
+        # r12 RB: listing tắt → chặn trước mọi lời gọi LLM/ghi nháp.
+        why = rollout.blocked(conn, "listing", fid="sales-03")
+        if why:
+            return rollout.say_blocked(why)
         try:
             items = listing_batch(conn, skus, args.channel,
                                   by=args.by.strip(), llm=not args.no_llm)

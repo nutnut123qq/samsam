@@ -1,0 +1,32 @@
+[
+ {
+  "sql": "select count(*) from social_mentions",
+  "expect": 6,
+  "actual": 6,
+  "dat": true
+ },
+ {
+  "sql": "with r as (select row_number() over (order by posted_at, id) n, labels, sensitive from social_mentions) select bool_and(case n when 1 then 'khen' = any(labels) when 2 then 'hoi_suc_khoe' = any(labels) and sensitive when 3 then 'hoi_gia' = any(labels) when 4 then 'hoi_ruou' = any(labels) when 5 then 'khieu_nai' = any(labels) when 6 then 'nghi_hang_gia' = any(labels) end) from r",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from social_mentions where excerpt is not null",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from social_mentions s where row_to_json(s)::text ~ '0900000|Khách Thử IT|uid-it'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from intel_imports where kind = 'social'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select detail from plot_logs where id = (select min(id) from plot_logs where source = 'zalo:garden')",
+  "expect": "30 phút thử IT",
+  "actual": "30 phút thử IT",
+  "dat": true
+ }
+]

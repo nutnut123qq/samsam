@@ -1,0 +1,18 @@
+{
+ "ca": "g502_d_login_sales_go_db",
+ "argv": [
+  "python",
+  "-c",
+  "import psycopg,os,sys; c=psycopg.connect(os.environ['DATABASE_URL']);print(c.execute('select unlink_lot_origin(%s,%s,%s)',('IT-R12-QR1',int(sys.argv[1]),'Bán Hàng Thử R12')).fetchone()); c.commit()",
+  "8"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "bat_dau": "2026-10-23T16:06:58+07:00",
+ "ket_thuc": "2026-10-23T16:06:59+07:00",
+ "exit": 1,
+ "llm_calls": null,
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "0a00e0e7f7b08a6a9076419cac111c63a3cae708799c409eacf6ef260eb24773"
+}

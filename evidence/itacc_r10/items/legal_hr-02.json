@@ -1,0 +1,110 @@
+{
+ "id": "legal_hr-02",
+ "ten": "Hồ sơ xác nhận quảng cáo",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Hồ sơ xác nhận quảng cáo: 'Soạn hồ sơ xác nhận nội dung quảng cáo TPBVSK, theo dõi kết quả'",
+ "tieu_chi": [
+  "T1 `python -m agents.xnqc --draft --sku K --loai L --ten T [--maket F] --submit` exit 0",
+  "T2 1 mục approval_queue legal_hr/xnqc_dossier pending, payload nháp hồ sơ theo SKU TPBVSK (claim đã duyệt, danh mục giấy tờ), không tự nộp",
+  "T3 SKU không phải TPBVSK/SKU lạ → từ chối 0 dòng; không --submit → 0 dòng; nộp lại → không nhân bản",
+  "T4 agent không nộp cơ quan nhà nước"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_legal; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/maket_xnqc.txt",
+   "sha256": "0948ff2b72a53175f1a14cffd14f66458cd43580e4e984f173fcaed5f0f6fcc1",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "data/golden_skus.json",
+   "sha256": "4d221d9c03e832ea11f3931263dc8bcad6e10eda5179ba906ecbc3bc6993b5ff",
+   "provenance": "file repo (đọc, không sửa)"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "02-C1",
+   "mo_ta": "nháp hồ sơ saphraton-20v",
+   "lenh": "python -m agents.xnqc --draft --sku saphraton-20v --loai maket --ten maket fanpage Thử IT --maket evidence/itacc_r10/g3/harness/fixtures/maket_xnqc.txt --submit",
+   "expected": "xnqc_dossier pending T2",
+   "actual": "mục #1 legal_hr/xnqc_dossier pending risk high agent:xnqc: số ĐKSP golden, claims đã công bố, danh mục giấy tờ (CHƯA Pháp chế duyệt), maket + 'Guardrail maket: thieu_khuyen_cao, thieu_nhan_ai'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02-C2",
+   "mo_ta": "SKU thực phẩm/rượu",
+   "lenh": "python -m agents.xnqc --draft --sku mat-ong-sam-300ml --loai maket --ten maket Thử IT --submit",
+   "expected": "exit 1, 0 dòng",
+   "actual": "exit 1 'không phải TPBVSK' (cả 2 SKU), 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02-C3",
+   "mo_ta": "không --submit",
+   "lenh": "python -m agents.xnqc --draft --sku saphraton-20v --loai kich_ban_video --ten kịch bản Thử IT",
+   "expected": "0 dòng",
+   "actual": "exit 0 in nháp, tổng vẫn 1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02-C4",
+   "mo_ta": "nộp lại",
+   "lenh": "python -m agents.xnqc --draft --sku saphraton-20v --loai maket --ten maket fanpage Thử IT --maket evidence/itacc_r10/g3/harness/fixtures/maket_xnqc.txt --submit",
+   "expected": "không trùng",
+   "actual": "tổng vẫn 1 (không trùng) — nhưng exit 2 '[err] lỗi DB: duplicate key … pending_uq' (D4)",
+   "exit": 2,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "Danh mục thành phần hồ sơ data/xnqc_draft.json chưa Pháp chế duyệt; agent không nộp.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/L-02-C1.txt",
+   "sha256": "c4839a50fc69d7302dc3ea004d3cf5024d0ce70e601237369f3427ce437134f1"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-02-C1.db.json",
+   "sha256": "fd0d0b7dfbeb946a348952278ac27b97d38a337ae8ceba14a95c52697a0592f0"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-02-C2.txt",
+   "sha256": "0b10db3f6cec7cea55d7194a029e62c00a5a8d79a9945a983003758bf827d2c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-02-C2b.txt",
+   "sha256": "22e1f3d4de5a34857a9e8581ce5c83f51e98d91354cf721b302381ba794d8a39"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-02-C3.txt",
+   "sha256": "a84f72909ac22043438cea298c5c3f5ba807eefbf364e6cc1e75a3020c8ae5ed"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-02-C4.txt",
+   "sha256": "c7d7be8b285080ebfc31c0341668a8c938fde2662c35d095f134baf5a2ce04d6"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "D4",
+   "muc_do": "thấp",
+   "mo_ta": "xnqc --draft --submit lặp cùng nội dung → '[err] lỗi DB: duplicate key ... approval_queue_pending_uq' exit 2 thay vì bỏ qua idempotent (không tạo trùng — dữ liệu đúng).",
+   "tai_hien": "python -m agents.xnqc --draft --sku saphraton-20v --loai maket --ten 'maket fanpage Thử IT' --maket maket_xnqc.txt --submit (2 lần)",
+   "expected": "[skip] đã có, exit 0",
+   "actual": "exit 2 lỗi DB UniqueViolation",
+   "evidence": [
+    "evidence/itacc_r10/g3/out/L-02-C4.txt"
+   ]
+  }
+ ]
+}

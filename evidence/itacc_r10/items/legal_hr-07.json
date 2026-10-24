@@ -1,0 +1,150 @@
+{
+ "id": "legal_hr-07",
+ "ten": "Cập nhật văn bản pháp luật mới",
+ "khoi": "legal_hr",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Nhân sự: 'cập nhật văn bản pháp luật mới (P2)'",
+ "tieu_chi": [
+  "T1 `python -m crawler.intel --run --source chinhphu-van-ban --sources <fixture>` (RSS server giả 127.0.0.1) → `python -m pipelines.intel_alert --run` → `python -m pipelines.legal_updates --submit` exit đúng",
+  "T2 intel_items có tin văn bản; red_alerts source_agent='intel_red_alert' rules chứa 'legal_doc'; approval_queue legal_hr/legal_doc_review pending, payload template (nguồn, link, sha256 tiêu đề), không diễn giải",
+  "T3 thiếu người nhận cảnh báo → exit 1 fail-closed (dòng vẫn ghi); legal_updates chạy lại → skip; tin không thuộc chủ đề → không khớp; tắt → không sinh mục/cảnh báo legal_doc",
+  "T4 không mạng ngoài (chỉ 127.0.0.1), không gửi"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_legal; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); RSS GIẢ phục vụ bằng http.server 127.0.0.1:18793 (đã dừng); --sources FIXTURE (nguồn chinhphu-van-ban trỏ localhost)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/sources_it.json",
+   "sha256": "b7e3fcfc8d5c24958c0c1f33e6773b52c147dd0fb1600ca19db680ca66a768f9",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/sources_it2.json",
+   "sha256": "c0caa808a9e316e2254fad528fef24edc6721d72616f0a152d54306be1d949ab",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/rss_it.xml",
+   "sha256": "59c37b746597fb661c13b1b9885f78dd48e43ddbec4b24ee78672f6f588593a6",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/rss_it2.xml",
+   "sha256": "2e76230cf17208cfd47bfb7f495d66cabeda7250954e1633be1400c2426ac634",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/robots.txt",
+   "sha256": "16ceb5ee3e0dc13aa9adf31a3ebbe45a1d965b8c2b9f72eaf84e5911e140ed95",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "07-C1",
+   "mo_ta": "thu RSS giả",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py -m crawler.intel --run --source chinhphu-van-ban --sources evidence/itacc_r10/g3/harness/fixtures/sources_it.json --max-requests 5",
+   "expected": "intel_items có tin văn bản (tiêu chí ghi '2 dòng')",
+   "actual": "1 dòng tin nghị định (topics phap_ly/quang_cao/tpbvsk); tin lạc chủ đề KHÔNG lưu, đếm off_topic=1 (thiết kế lọc trước khi lưu) — lệch chi tiết '2 dòng' của tiêu chí, không phải lỗi; robots + gap 1,0s; tầng C chặn cứng (L-07-C1x, exit 2)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07-C2",
+   "mo_ta": "quét cảnh báo",
+   "lenh": "python -m pipelines.intel_alert --run",
+   "expected": "red_alerts legal_doc, exit 1",
+   "actual": "red_alerts #2 intel_red_alert rules [regulation, legal_doc]; exit 1 fail-closed (thiếu người nhận)",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07-C3",
+   "mo_ta": "đẩy hàng Pháp chế",
+   "lenh": "python -m pipelines.legal_updates --submit",
+   "expected": "legal_doc_review T2",
+   "actual": "mục #11 legal_hr/legal_doc_review agent:legal_updates pending; payload nguồn, link, sha256 tiêu đề, không diễn giải",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07-C4",
+   "mo_ta": "chạy lại",
+   "lenh": "python -m pipelines.legal_updates --submit",
+   "expected": "0 mục mới",
+   "actual": "0 khớp chưa vào hàng",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07-C5",
+   "mo_ta": "tắt",
+   "lenh": "python -m pipelines.legal_updates --submit",
+   "expected": "không legal_doc mới, không mục",
+   "actual": "cảnh báo #3 chỉ rules [regulation] (legal_doc bị bỏ khi tắt); legal_updates exit 1 '[err] … legal_hr-07 đang tắt', tổng mục 1",
+   "exit": 1,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "URL nguồn văn bản tầng A chưa xác minh; từ khóa legal_doc GIẢ ĐỊNH; gửi cảnh báo thật (SMTP/routing) không kiểm — chỉ nhánh fail-closed; ca 07-C1 PASS theo ý định T2, chi tiết số dòng trong tiêu chí lệch thiết kế (ghi rõ để điều phối viên quyết).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C1x_tierC_chan.txt",
+   "sha256": "7316d28393028ff7c1e0197882542c0f0400020c1ea814aa3d657c2daa373db3"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C1.txt",
+   "sha256": "c74a79ea8579dc534e73f88168bc0836b7b2b0557a13efc5cb6c73cf05437830"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C1.db.json",
+   "sha256": "8cdca1e519a173aab305f0f00904791b1e3f8c39181951e94cfdfeb14cd585dd"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C2.txt",
+   "sha256": "4c946cfc3311f02ebf4b41aaf8bfefdc7376fe2fcb7593954f4bffa47e504dbe"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C2.db.json",
+   "sha256": "2ef712475758509e38273d9d488683ec5474d56e31840716aaf2853e965595b1"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C3.txt",
+   "sha256": "ee0f13c28f616c6cae5efd7e14dd0551e9f0ceea99ee2fb3b73648fdcd8dfd38"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C3.db.json",
+   "sha256": "22cc600f13c405ff7ea1fa9f7f6e7810b4db18ef933328682c6dc9e5f6a16e06"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C4.txt",
+   "sha256": "04c4e0a23645abf37b5a569b42bf7fe0d176294a8f55403c13d0758c8562c0e8"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C5a.txt",
+   "sha256": "269bb81a3eb7fca69ebc4c8e1bcd4ec65db99ce1a50795820c86eec86793caa8"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C5b.txt",
+   "sha256": "45cdda794d47f92780ac4f67327b76c6fbb452a82b3ea70fa8f8618d1e0c4457"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C5c.txt",
+   "sha256": "ea5b2dc2615d9f6388b987f90214c61e7ac5d8d7ec19171c02c7d2e9a0ecda60"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C5.txt",
+   "sha256": "c0545314f5e81cc2834d0b1e81017d1205c3083cb95152ffeae036caa93d24bc"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-07-C5d.txt",
+   "sha256": "392812542144df4ceb869bdc380f4179a5f60d3cbdbcec91072d412439d77e2e"
+  }
+ ],
+ "loi_san_pham": []
+}

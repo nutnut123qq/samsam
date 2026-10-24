@@ -464,10 +464,12 @@ def handoff_payload(inb: Inbound, reason: str, msg_id: str = "",
 def record_handoff(inb: Inbound, reason: str, msg_id: str = "",
                    conn=None) -> int | None:
     """Tạo mục `cskh_handoff` (khối sales) → id | None. Sàn / thiếu muối /
-    DB down / đã có mục chờ cùng khách → None + log, không raise."""
+    DB down / tính năng TẮT → None + log, không raise. Đã có mục chờ cùng
+    khách → id mục đó (người vẫn nhận việc). r12 L3: caller chỉ được hứa
+    "nhân viên sẽ phản hồi" khi kết quả khác None."""
     import psycopg
 
-    from pipelines import director
+    from pipelines import director, rollout
     if reason not in HANDOFF_REASONS:
         raise ValueError(f"lý do '{reason}' không hợp lệ —"
                          f" {sorted(HANDOFF_REASONS)}")
@@ -498,6 +500,18 @@ def record_handoff(inb: Inbound, reason: str, msg_id: str = "",
     except psycopg.errors.UniqueViolation:
         print(f"[handoff] {inb.channel}: đã có mục chờ cho khách"
               f" (uh={inb.user_hash[:12]}) — không nhân đôi", flush=True)
+        try:
+            row = conn.execute(
+                "select id from approval_queue where object_type = %s and "
+                "object_id = %s and status = 'pending'",
+                (HANDOFF_TYPE, f"{inb.channel}:{inb.user_hash}")).fetchone()
+        except psycopg.Error:
+            return None
+        return row[0] if row else None
+    except rollout.RolloutBlocked as e:
+        # r12 L3: chatbot TẮT → không có người nhận việc; trước đây lọt ra
+        # thành traceback ở thread trả lời.
+        _warn(f"không tạo mục handoff ({reason}): {e}")
         return None
     except psycopg.Error as e:
         _warn(f"tạo mục handoff lỗi {type(e).__name__}")

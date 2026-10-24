@@ -1,0 +1,1800 @@
+{
+ "id": "farming-01",
+ "ten": "Nhật ký vườn qua Zalo",
+ "khoi": "farming",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Vùng trồng / Nhật ký vườn qua Zalo: 'Nhân viên gửi chữ, giọng nói, ảnh; AI ghi thành nhật ký chuẩn, không sửa lén được'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/farming-01.json",
+  "sha256": "3b024345b0ee44e6aeb8ad354672bfb6cfebad7dfe661d0e46e0b1a6cba63dec"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/garden.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_farming.json",
+ "tieu_chi_sha256": "d38a4243821f9e69da1ee52edea59634829156102cd284605766abec4d65660d",
+ "tieu_chi_khoa": "r12_farming.json d38a4243821f9e69da1ee52edea59634829156102cd284605766abec4d65660d 2026-10-24T08:57:50+07:00",
+ "tieu_chi": [
+  "T1 Webhook Zalo THẬT (`connectors.zalo.Handler` 127.0.0.1, harness r10 zalo_webhook.py.txt, DEPLOY tắt, state/kho media NGOÀI repo) nhận tin nhân viên allowlist FIXTURE: chữ '<khoảnh> <hoạt động> <chi tiết>' → đúng 1 dòng plot_logs source zalo:garden author zalo:IT-NV01 activity chuẩn hóa + row_hash; ảnh GPS / video vị trí → garden_media zalo:garden, tệp kho sạch EXIF/GPS/vị trí (check_media RESULT PASS); ghi âm → garden_voice_drafts cho_chep_loi",
+  "T2 STT registry none: `--pending` in [blocked] STT, `--transcribe 1` exit 2 [blocked] (không gửi audio) — phần giọng nói vẫn BI_CHAN MISSING_ADAPTER",
+  "T3 Ca âm: chữ ký sai → HTTP 403, 0 ghi; khoảnh KV-ZZ99 → 0 ghi + hướng dẫn; trùng msg_id → 1 dòng; ép tắt (FIXTURE _FORCE_MODE='tat', vì farming-01 mot_phan không vào sổ) → 0 ghi chữ/ảnh; UPDATE/DELETE plot_logs bằng owner bị trigger chặn; `garden_director --verify` OK",
+  "T4 UI-01 (r12 vá) phần DB: login thật in role svc_ui đọc được cột tab Nhật ký vườn (active_plots/recent_logs/anomaly_check) nhưng KHÔNG INSERT plot_logs và KHÔNG SELECT * plots; login người khối farming ghi qua `add_log_human` → `plot_log_add_human` (author = người của login, source manual, hash chain); login khối sales / ghi tên người khác → bị chặn 0 dòng; login tạm DROP hết. Phần trình duyệt = NOT_RUN ở đây (điều phối viên ghép). Không gửi/đăng ra ngoài, không mạng thật"
+ ],
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451; mỗi mục 1 DB samsam_itacc_r12_farm<mã> dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống), DEPLOY tắt (bước Zalo đặt DEPLOY rỗng), OPENROUTER_API_KEY rỗng; CDN Zalo = FakeClient của harness r10 (không mạng); ffmpeg imageio-ffmpeg; vt_thuhoach qua wrap.py.txt (chặn mạng ngoài, PROBE_CALL_MAIN=1). DB samsam_itacc_r12_farm01.",
+ "run_id": "20261024T112629-5275",
+ "ca": [
+  {
+   "ma": "farming-01__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai (tính năng co_code = chạy thử) — như r10 F01-09a",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:29+07:00",
+      "ket_thuc": "2026-10-24T11:26:32+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S01"
+  },
+  {
+   "ma": "farming-01__S02",
+   "nguon_r10": "MOI",
+   "mo_ta": "khoảnh FIXTURE IT-K01..K04 (owner, đúng giá trị evidence/itacc_r10/g5/seed_farm_plots.txt) — DB r12 riêng mục",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+      "expect": 4
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:26:32+07:00",
+      "ket_thuc": "2026-10-24T11:26:34+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S02"
+  },
+  {
+   "ma": "farming-01__C01",
+   "nguon_r10": "F01-01",
+   "mo_ta": "Chữ nhân viên qua webhook → plot_logs",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "POST#1 HTTP 200[\\s\\S]*Đã ghi nhật ký #\\d+: KV-A01 — tưới\\.[\\s\\S]*N_HANDLED 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden' and author = 'zalo:IT-NV01' and plot_id = 'KV-A01' and activity = 'tưới' and row_hash is not null",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt --state C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/zstate --staff evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json --fixtures evidence\\itacc_r12\\fixtures/items/farming-01 --event text --text KV-A01 tưới 30 phút thử IT --msgid it-g5-f0101",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "POST#1 HTTP 200[\\s\\S]*Đã ghi nhật ký #\\d+: KV-A01 — tưới\\.[\\s\\S]*N_HANDLED 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:35+07:00",
+      "ket_thuc": "2026-10-24T11:26:38+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden' and author = 'zalo:IT-NV01' and plot_id = 'KV-A01' and activity = 'tưới' and row_hash is not null",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C01"
+  },
+  {
+   "ma": "farming-01__C02",
+   "nguon_r10": "F01-02",
+   "mo_ta": "Ảnh có GPS qua webhook",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "Đã lưu 1/1 ảnh cho khoảnh IT-K01"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where source = 'zalo:garden' and ext = 'jpg' and plot_id = 'IT-K01'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt --state C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/zstate --staff evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json --fixtures evidence\\itacc_r12\\fixtures/items/farming-01 --event image --file anh_gps.jpg --text IT-K01",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "Đã lưu 1/1 ảnh cho khoảnh IT-K01",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:38+07:00",
+      "ket_thuc": "2026-10-24T11:26:42+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where source = 'zalo:garden' and ext = 'jpg' and plot_id = 'IT-K01'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C02"
+  },
+  {
+   "ma": "farming-01__C04",
+   "nguon_r10": "F01-03",
+   "mo_ta": "Video có metadata vị trí qua webhook (chạy TRƯỚC F01-02b vì F01-02b kiểm cả mp4)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "Đã lưu 1/1 video cho khoảnh IT-K01"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where source = 'zalo:garden' and ext = 'mp4' and plot_id = 'IT-K01'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt --state C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/zstate --staff evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json --fixtures evidence\\itacc_r12\\fixtures/items/farming-01 --event video --file video_vitri.mp4 --text IT-K01",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "Đã lưu 1/1 video cho khoảnh IT-K01",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:42+07:00",
+      "ket_thuc": "2026-10-24T11:26:46+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C04/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where source = 'zalo:garden' and ext = 'mp4' and plot_id = 'IT-K01'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C04"
+  },
+  {
+   "ma": "farming-01__C03",
+   "nguon_r10": "F01-02b",
+   "mo_ta": "Assert tệp kho ảnh/video sạch (sha khớp, không EXIF/GPS/vị trí) — sha lấy từ garden_media thay hằng r10",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\.jpg sha_ok=True exif_tags=0 gps=False[\\s\\S]*\\.mp4 sha_ok=True video_has_gps=False has_xyz=False has_location_str=False[\\s\\S]*RESULT PASS"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/check_media.py.txt C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/media ab5af5891da402c6ce709a0664bd2ee82ffa2dbd10e5b09bd68f67ba55a417cc 669b2e5f122c4551f2a851bf2db50f5b9e967a0fe79621fcc38c39e398fa9ca2",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\.jpg sha_ok=True exif_tags=0 gps=False[\\s\\S]*\\.mp4 sha_ok=True video_has_gps=False has_xyz=False has_location_str=False[\\s\\S]*RESULT PASS",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:46+07:00",
+      "ket_thuc": "2026-10-24T11:26:47+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C03"
+  },
+  {
+   "ma": "farming-01__C05",
+   "nguon_r10": "F01-04a",
+   "mo_ta": "Ghi âm qua webhook → nháp",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "Đã nhận 1 ghi âm \\(khoảnh IT-K01\\)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_voice_drafts where status = 'cho_chep_loi' and staff_code = 'IT-NV01' and plot_id = 'IT-K01'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt --state C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/zstate --staff evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json --fixtures evidence\\itacc_r12\\fixtures/items/farming-01 --event audio --file ghi_am.wav --text IT-K01",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "Đã nhận 1 ghi âm \\(khoảnh IT-K01\\)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:47+07:00",
+      "ket_thuc": "2026-10-24T11:26:49+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C05/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_voice_drafts where status = 'cho_chep_loi' and staff_code = 'IT-NV01' and plot_id = 'IT-K01'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C05"
+  },
+  {
+   "ma": "farming-01__C06",
+   "nguon_r10": "F01-04b",
+   "mo_ta": "--pending liệt kê + [blocked] STT",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[pending\\] 1 ghi âm chờ chép lời[\\s\\S]*\\[blocked\\] STT chưa cấu hình"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m connectors.zalo_garden --pending",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[pending\\] 1 ghi âm chờ chép lời[\\s\\S]*\\[blocked\\] STT chưa cấu hình",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:49+07:00",
+      "ket_thuc": "2026-10-24T11:26:50+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C06/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C06/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C06"
+  },
+  {
+   "ma": "farming-01__C07",
+   "nguon_r10": "F01-05",
+   "mo_ta": "STT none chặn an toàn",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "out_re": "\\[blocked\\] chưa cấu hình STT"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_voice_drafts where status = 'cho_chep_loi'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m connectors.zalo_garden --transcribe 1",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "out_re": "\\[blocked\\] chưa cấu hình STT",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:50+07:00",
+      "ket_thuc": "2026-10-24T11:26:51+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C07/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C07/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_voice_drafts where status = 'cho_chep_loi'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C07"
+  },
+  {
+   "ma": "farming-01__C08",
+   "nguon_r10": "F01-06",
+   "mo_ta": "Âm: chữ ký sai (OA secret GIẢ đặt trong harness) → 403, 0 ghi (bỏ tiền tố `timeout 60` của r10 — runner có timeout 900s)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "POST#1 HTTP 403[\\s\\S]*N_HANDLED 0"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from plot_logs where detail like '%chữ ký sai%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt --state C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/zstate --staff evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json --fixtures evidence\\itacc_r12\\fixtures/items/farming-01 --event text --text KV-A01 tưới chữ ký sai --bad-sig",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "POST#1 HTTP 403[\\s\\S]*N_HANDLED 0",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:26:51+07:00",
+      "ket_thuc": "2026-10-24T11:27:13+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C08/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C08/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from plot_logs where detail like '%chữ ký sai%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C08"
+  },
+  {
+   "ma": "farming-01__C09",
+   "nguon_r10": "F01-07",
+   "mo_ta": "Âm: khoảnh không tồn tại → 0 dòng + hướng dẫn",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "Không tìm thấy khoảnh 'KV-ZZ99' — CHƯA ghi\\. Cú pháp nhật ký vườn"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from plot_logs where plot_id = 'KV-ZZ99'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt --state C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/zstate --staff evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json --fixtures evidence\\itacc_r12\\fixtures/items/farming-01 --event text --text KV-ZZ99 tưới 10 phút",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "Không tìm thấy khoảnh 'KV-ZZ99' — CHƯA ghi\\. Cú pháp nhật ký vườn",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:13+07:00",
+      "ket_thuc": "2026-10-24T11:27:16+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C09/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C09/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from plot_logs where plot_id = 'KV-ZZ99'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C09"
+  },
+  {
+   "ma": "farming-01__C10",
+   "nguon_r10": "F01-08",
+   "mo_ta": "Âm: trùng msg_id → đúng 1 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "POST#1 HTTP 200[\\s\\S]*POST#2 HTTP 200[\\s\\S]*N_HANDLED 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden' and detail like '%dedup%'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt --state C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/zstate --staff evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json --fixtures evidence\\itacc_r12\\fixtures/items/farming-01 --event text --text IT-K01 bón phân thử IT dedup --msgid it-g5-dedup-1 --repeat 2",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "POST#1 HTTP 200[\\s\\S]*POST#2 HTTP 200[\\s\\S]*N_HANDLED 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:16+07:00",
+      "ket_thuc": "2026-10-24T11:27:38+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C10/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C10/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden' and detail like '%dedup%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C10"
+  },
+  {
+   "ma": "farming-01__C11",
+   "nguon_r10": "F01-09",
+   "mo_ta": "Âm: tắt qua sổ triển khai (rollout --disable farming-01) → FEATURE_OFF 0 ghi",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [],
+   "ket_qua": "NOT_RUN",
+   "ly_do_not_run": "Tiền đề không dựng được (như r10): farming-01 vẫn code_status mot_phan trong data/contract_features.json → `rollout --seed` không đưa vào sổ, `--disable farming-01` từ chối; nhánh tắt kiểm bằng FIXTURE _FORCE_MODE='tat' ở F01-09x/F01-09y",
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C11"
+  },
+  {
+   "ma": "farming-01__C12",
+   "nguon_r10": "F01-09x",
+   "mo_ta": "FIXTURE _FORCE_MODE='tat' — chữ → FEATURE_OFF, 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[FIXTURE\\] rollout\\._FORCE_MODE=tat[\\s\\S]*Tính năng này đang TẮT"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where detail like '%ép tắt%'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt --state C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/zstate --staff evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json --fixtures evidence\\itacc_r12\\fixtures/items/farming-01 --event text --text IT-K01 tưới khi ép tắt --force-mode tat",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[FIXTURE\\] rollout\\._FORCE_MODE=tat[\\s\\S]*Tính năng này đang TẮT",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:38+07:00",
+      "ket_thuc": "2026-10-24T11:27:43+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C12/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C12/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where detail like '%ép tắt%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C12"
+  },
+  {
+   "ma": "farming-01__C13",
+   "nguon_r10": "F01-09y",
+   "mo_ta": "FIXTURE _FORCE_MODE='tat' — ảnh → FEATURE_OFF, 0 garden_media mới",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "Tính năng này đang TẮT"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where source = 'zalo:garden'",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt --state C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r12/ext_farming/farming-01-8adae6830d65ebd6f22f84fc27456410/zstate --staff evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json --fixtures evidence\\itacc_r12\\fixtures/items/farming-01 --event image --file anh_gps2.jpg --text IT-K01 --force-mode tat",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "Tính năng này đang TẮT",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:44+07:00",
+      "ket_thuc": "2026-10-24T11:27:48+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C13/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C13/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from garden_media where source = 'zalo:garden'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C13"
+  },
+  {
+   "ma": "farming-01__C14",
+   "nguon_r10": "F01-10a",
+   "mo_ta": "Không sửa lén: owner UPDATE/DELETE dòng zalo đã chain → trigger chặn (harness r10 tamper.py.txt)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "^(?![\\s\\S]*NOT_BLOCKED)[\\s\\S]*BLOCKED update[\\s\\S]*BLOCKED delete"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select detail from plot_logs where id = (select min(id) from plot_logs where source = 'zalo:garden')",
+      "expect": "30 phút thử IT"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/tamper.py.txt 8",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "^(?![\\s\\S]*NOT_BLOCKED)[\\s\\S]*BLOCKED update[\\s\\S]*BLOCKED delete",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:48+07:00",
+      "ket_thuc": "2026-10-24T11:27:49+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C14/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C14/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select detail from plot_logs where id = (select min(id) from plot_logs where source = 'zalo:garden')",
+      "expect": "30 phút thử IT",
+      "actual": "30 phút thử IT",
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C14"
+  },
+  {
+   "ma": "farming-01__C15",
+   "nguon_r10": "F01-10b",
+   "mo_ta": "garden_director --verify",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[verify\\] OK"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.garden_director --verify",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[verify\\] OK",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:49+07:00",
+      "ket_thuc": "2026-10-24T11:27:51+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C15/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C15/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C15"
+  },
+  {
+   "ma": "farming-01__M01",
+   "nguon_r10": "MOI",
+   "mo_ta": "UI-01a: login in role svc_ui đọc cột tab Nhật ký vườn (active_plots/recent_logs/anomaly_check) — không 42501",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "SVC_READ \\d+ \\d+ \\d+[\\s\\S]*DROPPED 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    svc=mk('svc_ui')\n    from agents import garden as g\n    with psycopg.connect(svc,connect_timeout=5) as c:\n        print('SVC_READ', len(g.active_plots(c)), len(g.recent_logs(c)), len(g.anomaly_check(c)))\nfinally:\n    drop()\n",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "SVC_READ \\d+ \\d+ \\d+[\\s\\S]*DROPPED 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:51+07:00",
+      "ket_thuc": "2026-10-24T11:27:53+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M01"
+  },
+  {
+   "ma": "farming-01__M02",
+   "nguon_r10": "MOI",
+   "mo_ta": "UI-01b: svc_ui KHÔNG INSERT thẳng plot_logs (42501)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "SVC_INSERT ERR 42501[\\s\\S]*DROPPED 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where author = 'svc thử R12'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    svc=mk('svc_ui')\n    print('SVC_INSERT', *tryq(svc, \"insert into plot_logs (plot_id, ts, activity, author, source) values ('IT-K01', '2026-10-22 09:00+07', 'tưới', 'svc thử R12', 'manual')\"))\nfinally:\n    drop()\n",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "SVC_INSERT ERR 42501[\\s\\S]*DROPPED 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:53+07:00",
+      "ket_thuc": "2026-10-24T11:27:54+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where author = 'svc thử R12'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M02"
+  },
+  {
+   "ma": "farming-01__M03",
+   "nguon_r10": "MOI",
+   "mo_ta": "UI-01c: svc_ui không SELECT mọi cột plots (chỉ cột tab cần)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "SVC_SELECT_ALL ERR 42501[\\s\\S]*DROPPED 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    svc=mk('svc_ui')\n    print('SVC_SELECT_ALL', *tryq(svc, 'select * from plots limit 1'))\nfinally:\n    drop()\n",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "SVC_SELECT_ALL ERR 42501[\\s\\S]*DROPPED 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:54+07:00",
+      "ket_thuc": "2026-10-24T11:27:56+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M03"
+  },
+  {
+   "ma": "farming-01__M04",
+   "nguon_r10": "MOI",
+   "mo_ta": "UI-01d: login người khối farming ghi qua add_log_human → plot_log_add_human (author = người của login, source manual, có hash)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "FAR_WRITE \\d+ [\\s\\S]*DROPPED 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where detail = 'tưới thử R12 UI-01' and author = 'Nông Dân Thử R12' and source = 'manual' and row_hash is not null",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    far=mk('app_human','Nông Dân Thử R12',['farming'])\n    from datetime import datetime, timezone\n    from agents import garden as g\n    with psycopg.connect(far,connect_timeout=5) as c:\n        lid,w=g.add_log_human(c,'IT-K01',datetime(2026,10,22,2,0,tzinfo=timezone.utc),'tưới nước','tưới thử R12 UI-01','Nông Dân Thử R12')\n    print('FAR_WRITE', lid, w)\nfinally:\n    drop()\n",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "FAR_WRITE \\d+ [\\s\\S]*DROPPED 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:56+07:00",
+      "ket_thuc": "2026-10-24T11:27:57+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M04/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where detail = 'tưới thử R12 UI-01' and author = 'Nông Dân Thử R12' and source = 'manual' and row_hash is not null",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M04"
+  },
+  {
+   "ma": "farming-01__M05",
+   "nguon_r10": "MOI",
+   "mo_ta": "UI-01e: login người khối sales ghi nhật ký vườn → bị chặn, 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "SAL_WRITE ERR 42501[\\s\\S]*DROPPED 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where author = 'Bán Hàng Thử R12'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    sal=mk('app_human','Bán Hàng Thử R12',['sales'])\n    print('SAL_WRITE', *tryq(sal, 'select plot_log_add_human(%s,%s,%s,%s,%s)', ('IT-K01','2026-10-22 10:00+07','tưới','sales thử R12','Bán Hàng Thử R12')))\nfinally:\n    drop()\n",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "SAL_WRITE ERR 42501[\\s\\S]*DROPPED 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:57+07:00",
+      "ket_thuc": "2026-10-24T11:27:59+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M05/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where author = 'Bán Hàng Thử R12'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M05"
+  },
+  {
+   "ma": "farming-01__M06",
+   "nguon_r10": "MOI",
+   "mo_ta": "UI-01f: login farming ghi thay tên người khác → bị chặn, 0 dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "FAR_OTHER ERR 42501[\\s\\S]*DROPPED 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where author = 'Người Khác Thử R12'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,sys,secrets,psycopg\nfrom psycopg import conninfo\nA=os.environ['DATABASE_URL']; MK=[]\ndef mk(role,person=None,blocks=()):\n    n='r12f_'+secrets.token_hex(4); pw=secrets.token_urlsafe(18)\n    with psycopg.connect(A,autocommit=True) as c:\n        c.execute(f\"create role {n} login password '{pw}' nosuperuser nocreatedb nocreaterole in role {role}\")\n        MK.append(n)\n        if person: c.execute(\"insert into human_logins (db_login, person, blocks, granted_by) values (%s,%s,%s,'itacc-r12-farming')\",(n,person,list(blocks)))\n    d=conninfo.conninfo_to_dict(A); d.update(user=n,password=pw); return conninfo.make_conninfo(**d)\ndef drop():\n    with psycopg.connect(A,autocommit=True) as c:\n        for n in MK:\n            c.execute(f'reassign owned by {n} to current_user'); c.execute(f'drop owned by {n}'); c.execute(f'drop role {n}')\n    print('DROPPED',len(MK))\ndef tryq(dsn,sql,args=()):\n    try:\n        with psycopg.connect(dsn,connect_timeout=5) as c:\n            r=c.execute(sql,args); out=r.fetchall() if r.description else None; c.commit(); return 'OK',out\n    except psycopg.Error as e:\n        return 'ERR '+str(getattr(e,'sqlstate','')),(str(e).splitlines() or [''])[0][:160]\ntry:\n    far=mk('app_human','Nông Dân Thử R12',['farming'])\n    print('FAR_OTHER', *tryq(far, 'select plot_log_add_human(%s,%s,%s,%s,%s)', ('IT-K01','2026-10-22 11:00+07','tưới','ghi thay thử R12','Người Khác Thử R12')))\nfinally:\n    drop()\n",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "FAR_OTHER ERR 42501[\\s\\S]*DROPPED 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:27:59+07:00",
+      "ket_thuc": "2026-10-24T11:28:00+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M06/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M06/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plot_logs where author = 'Người Khác Thử R12'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M06"
+  },
+  {
+   "ma": "farming-01__M07",
+   "nguon_r10": "MOI",
+   "mo_ta": "UI-01 phần trình duyệt: tab Nhật ký vườn chế độ thực đọc được DB + ghi nhật ký bằng login người khối farming",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": [],
+    "ui": [
+     {
+      "step": "UI01_tab_vuon_doc_duoc_db_bang_svc_ui",
+      "verdict": "PASS",
+      "run": "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553",
+      "shot": "25_UI01_tab_vuon_doc_duoc_db_bang_svc_ui.png"
+     },
+     {
+      "step": "UI01_chua_mo_quyen_khong_ghi",
+      "verdict": "PASS",
+      "run": "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553",
+      "shot": "26_UI01_chua_mo_quyen_khong_ghi.png"
+     },
+     {
+      "step": "UI01_ghi_bang_login_nguoi_farming",
+      "verdict": "PASS",
+      "run": "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553",
+      "shot": "27_UI01_ghi_bang_login_nguoi_farming.png"
+     },
+     {
+      "step": "UI01_login_nguoi_khac_bi_chan",
+      "verdict": "PASS",
+      "run": "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553",
+      "shot": "28_UI01_login_nguoi_khac_bi_chan.png"
+     }
+    ]
+   },
+   "exit": [],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M07"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "MISSING_ADAPTER · ca chạy được r12: PASS=23, NOT_RUN=1",
+ "can_de_go": "MISSING_ADAPTER",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Phần UI ghép từ lượt UI thật evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553; C11 không dựng được (farming-01 mot_phan, không vào sổ triển khai). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C01/asserts.json",
+   "sha256": "2a7b97bf9b41be929e9e672af241e7204e4cd0c90070c4af9935fe626a53a256"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C01/case.json",
+   "sha256": "839095b7c36c5b6edf9bc46606f97a598a94ad528f51afbc756ba7c194227343"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C01/step01.cmd.json",
+   "sha256": "e24a95d6861baa80557aee33fe59b7e23427732997514f9e53ee4772a30f5220"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C01/step01.stdout.txt",
+   "sha256": "16fe1c4be2926c15c975610480bf94cdc71c969a551adf985dd11d6ac20c5779"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C02/asserts.json",
+   "sha256": "ed74ddf7cd9626ceaec469bcb68d32e3356a1fc094d9160e1413074e133439c4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C02/case.json",
+   "sha256": "5a58b152cc6eb4a7aef3b7683390fe041e32b159980cfa0bf630c5c84ed313ad"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C02/step01.cmd.json",
+   "sha256": "cd60c9d3ffc8be9942f8d78e305f37d0d7e898e71f59a186156796bb5f7e2f98"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C02/step01.stdout.txt",
+   "sha256": "d77b7b7f20e97b3deae622622849ee285b3b7b45dfddf736b742b4e841ebf16d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C03/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C03/case.json",
+   "sha256": "e15dfc7fb12a8a101cad3848dffe3cffd168da9dca4bf3e468cf73c8e6caf950"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C03/step01.cmd.json",
+   "sha256": "7db6fb6e0769e9263b26955126bd54583385ca76fc2575bdb1b2a0125fffc2ec"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C03/step01.stdout.txt",
+   "sha256": "f16e6010dd2e2ad9cedfafcd30a89b43eb6f76987dd209588241dff3bcf5d3b9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C04/asserts.json",
+   "sha256": "5af0bb42d6da701108b95f3019647be1f87b4c284dff67f80c1dc5649845eeed"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C04/case.json",
+   "sha256": "4737b18da5d954aab46a35a3b22099da8d0753f0f29602f0536a4ea24dc00696"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C04/step01.cmd.json",
+   "sha256": "4d73293a98417af358731c62552bee19500a3d7d17aebb8b4e76f88dcebe8570"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C04/step01.stdout.txt",
+   "sha256": "7b2efeb2b6a684604a963e964ddee6d4f8af5cd5201a840a35c72fc54dc91736"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C05/asserts.json",
+   "sha256": "3dadd6591450514a76c7b520a948792c8496570a7eea8bc5d13a3d3bff4ea4d3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C05/case.json",
+   "sha256": "f33eedc799225be4618e365576fe44ff353b0b5367b4e7a6fa7fb47a22257f40"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C05/step01.cmd.json",
+   "sha256": "c0b31c433b303155292892e7ba59ae6a67090506efe24ce22c8ab7e71a5746cb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C05/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C05/step01.stdout.txt",
+   "sha256": "dba1c73a3928c3813e4616c3d02aa638351b5bc014e2e305887bf2e956887987"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C06/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C06/case.json",
+   "sha256": "0fa9ce4d3f2ebe3c566aa182a2d531a1b7cd4d5a4b3ed28df5456fb73a9007e9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C06/step01.cmd.json",
+   "sha256": "a93b6d21a963aecdb78885ee28a66eed33cc33f0ff4d59cbd07dc99bf479b53c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C06/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C06/step01.stdout.txt",
+   "sha256": "e80dd5542db45dfefb5e978429856eb8bcd80b686925ae55ae0fb837953096c5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C07/asserts.json",
+   "sha256": "ba4bfac29b3d8c3872407e1ca4a7a8b3eada2aa16a649a9edb49d57ed5defb38"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C07/case.json",
+   "sha256": "2b44a27e4189d35b09c42b30314012589b3aae89206fdb5e6f79abea84b77447"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C07/step01.cmd.json",
+   "sha256": "f11cdb17aeb87e612757e41f29047769c438ad5bbafb8682f508c37d092833f0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C07/step01.stderr.txt",
+   "sha256": "cf5730939b15eca7afa70d904dbea5a657ad6a4e543a3bcade224a814c605dd2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C07/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C08/asserts.json",
+   "sha256": "e29d971b0f475abe307dc1897689747c8750c5afae082f996c115e58d199caa3"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C08/case.json",
+   "sha256": "30a65365f1812ece7b28c7a710085ee877c9a47e1b6bc6e5899fa78fa27db5a2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C08/step01.cmd.json",
+   "sha256": "27623c9064795644e334a744588f8178e6d6f7742599012a981e39d91c7f9819"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C08/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C08/step01.stdout.txt",
+   "sha256": "00cad5a9ce6341fca40f1e601ef77eb457e68da50a6d48ad9abdab9c5b1eec19"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C09/asserts.json",
+   "sha256": "93142823ae889c814bf00c5b40827f66e2e7e2bd8394c2abd28f566354edf97c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C09/case.json",
+   "sha256": "a0653bbee80e1ed4a79fa935dfbc77de5b0312577f84fac22e77ced334946f6a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C09/step01.cmd.json",
+   "sha256": "a2c3339dca3bc848fb9f14b20ed678dd59035eff64c9b284a4f7c7ac46792c9f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C09/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C09/step01.stdout.txt",
+   "sha256": "f4de3a0fe75cc4c3d1119176f8b01a04e34df4784ee75ba625ddd60bb7dcc75b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C10/asserts.json",
+   "sha256": "b44b8cac6054193c16ff6d820f3b54be660a1df51d16e2cb7fbfb3a30489c1eb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C10/case.json",
+   "sha256": "1ad254d71b301cc9c70b085c3f247b6dfbee26b9cec796f37a7a0e550f7b7204"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C10/step01.cmd.json",
+   "sha256": "63aac071dc121ce5b8ee52f684442bf3ba564d398a38ce2be17f5d7139ceffb5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C10/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C10/step01.stdout.txt",
+   "sha256": "117d4c355b3c1afbdc944acc6355caf0e39d18d0e12ff4e67ac09199d7935484"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C11/case.json",
+   "sha256": "053a3391870a2e8e6e29886d307da311234eadd679865bba36a7970797bfe7db"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C12/asserts.json",
+   "sha256": "1ed28dec1a3916a93e2018fffc13c2af9a6414a7e24de9556305f01bee20d1fd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C12/case.json",
+   "sha256": "a7adfb32551a60b8fbbf1f768923457a87f1e207a14b1411ce38909c230a37c2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C12/step01.cmd.json",
+   "sha256": "691aa3b4a0b41494066a5e5c8ba45ae4147376942a0a59452bfea9004ec05017"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C12/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C12/step01.stdout.txt",
+   "sha256": "b888c96956ae95220aecd36b030f7e9479a87f055e58fa232fc007ba21ca8936"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C13/asserts.json",
+   "sha256": "c135e20bab8c81de8be12da870fcc34e733cb50d6496b8db894a01de19d17e72"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C13/case.json",
+   "sha256": "fd5ccaa9d93e75e9a43ba24392b4e94e74fa5219566250552e9bd1f6d343bfdb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C13/step01.cmd.json",
+   "sha256": "8980dfdfd87ade69d0cd1dd560616de8754a34437b6009a9ab15e2a1a4988c71"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C13/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C13/step01.stdout.txt",
+   "sha256": "31b48423bdcbe57fe2cc62bca92022faa63a1a3e951ccb6bb5466d39794442c7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C14/asserts.json",
+   "sha256": "b87495d434a3e7c7ed303890940c42487b8a87058af42122cbc115c61748b685"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C14/case.json",
+   "sha256": "3476bccdea744c5291f52f7eecee971d896daec35180545cc626245bd7c4f98f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C14/step01.cmd.json",
+   "sha256": "385d76dd3e23e96be1b5842131018a74289a119380f929c26ef96d8b76a7b1d6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C14/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C14/step01.stdout.txt",
+   "sha256": "e9161580910863b1cfd15fa69720d6425d99c5346629ed5fd31a7b3c3de2ca27"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C15/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C15/case.json",
+   "sha256": "156e057a6720382d6584df0a4a8ff6fe01d0d5a790a6cbd8d1a5e2a037b7c959"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C15/step01.cmd.json",
+   "sha256": "1a387cbc9d515e10d8c81ae82b344ca9aaccba94baf480a4564fc965aec85f2a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C15/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__C15/step01.stdout.txt",
+   "sha256": "1d718d00bdca7b5213d82058148dfbebd35fa286809aafa2d2b3214d0bf97bb4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M01/asserts.json",
+   "sha256": "031520bb79fad6242b9f5ca7b40617c1dc50ef7ae2135c335d7e1a003e4c9046"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M01/case.json",
+   "sha256": "1cea5b39e324603d29a860da275ead143fb4230c34b234234e762f1698664fe5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M01/step01.cmd.json",
+   "sha256": "224f8632e2a81562985718b663014a7f033f20d9cf45516c5c2198f0615fb814"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M01/step01.stdout.txt",
+   "sha256": "7274f05a08a648a12f696aee2784e00af122a3664b6167d909d172d0672d3569"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M02/asserts.json",
+   "sha256": "c10f8ed43586b317a8e73a7c0b407f676c3571789a8611b46614641c9daea541"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M02/case.json",
+   "sha256": "93b7ce980c3bd19cbf3067cfb1393d33d5ed6dcb651ebc7d65ac9d24bcc6f673"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M02/step01.cmd.json",
+   "sha256": "e754f3877478668968e339e21a3df636c53a913a7b7251793e40d57aa6aea1d0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M02/step01.stdout.txt",
+   "sha256": "4e5fb429efa88c3e596161fc882e70ea58c6a5c7a50b461f7cb782c6253a1f50"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M03/asserts.json",
+   "sha256": "031520bb79fad6242b9f5ca7b40617c1dc50ef7ae2135c335d7e1a003e4c9046"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M03/case.json",
+   "sha256": "cf0c4085f0dd78deb7affa75ef125270f8f9b441ea2aa9351a500a633ccf6264"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M03/step01.cmd.json",
+   "sha256": "71fe2fb04d4c31c89c3e33aaa679c4dc905305f15372922cb3652af8d68021cc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M03/step01.stdout.txt",
+   "sha256": "175f517ea690a61f8b10523a8c8b980d093fb6353e884046b60791f020683091"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M04/asserts.json",
+   "sha256": "77f5f6af9aeaa1d241098b83986617593a5d6da3e82c9d6b670b0ea870a0c5a7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M04/case.json",
+   "sha256": "d4fe5b7b34a4746bfa507115155f6dbf0e63b06b759980fb36bbb72ae2500871"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M04/step01.cmd.json",
+   "sha256": "f9517ff9cdb9f49eb62e95373b28fa084189bf77ad7e5cce74aaadf4c82cd9df"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M04/step01.stdout.txt",
+   "sha256": "225e725e0d0791ae1565b24462ea931c7d5743649815991b4139c06a1bba9812"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M05/asserts.json",
+   "sha256": "1ecbd75b3d051369f7468f03b3d900c9b58376ac1bb71be0de62e2610d6358c9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M05/case.json",
+   "sha256": "df603fe0d1afd5556c7ef9ce5576418e76f3662cd73816ab4e4e5c6a535a020c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M05/step01.cmd.json",
+   "sha256": "156cf8fa81838eb98ad778c6d425df1ce33b26f4c4e132c9575bb55427489bdb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M05/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M05/step01.stdout.txt",
+   "sha256": "b49cad92e60aebd326aafb11e8cea894ba804651089c086d814d696c050b19fc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M06/asserts.json",
+   "sha256": "f792d600609bf733d88ebf2702ac7aef09707981ff6a52a60689afa08114360f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M06/case.json",
+   "sha256": "4d1e187672a732c75b9a874355ab4ee2b828a0fef9412cc60fdadd4163da6c4d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M06/step01.cmd.json",
+   "sha256": "e91f94c0480dcae2209d8a7a9c735c264070cff887eefb7c6e1d7990c1984acd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M06/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M06/step01.stdout.txt",
+   "sha256": "dd75677ee2f4ef53fe2a8d548f3577d4c2462141aceb7c77eb1d4f765ff58532"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__M07/case.json",
+   "sha256": "83eeb0591ff3029cdef29c907fcbb5359627d4fad17666c476e521c34d81a0df"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S01/case.json",
+   "sha256": "4d62803ef53b8f8f37fa4f553544c9fc059bece1040727e98ba46143d1fb2751"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S01/step01.cmd.json",
+   "sha256": "06b22976cb0fce993f7826f6c2e91208d6d9293a35f334bb114dddd2321e57d1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S02/asserts.json",
+   "sha256": "4cf636e88930608faa9dd24f96c53220b83a1283ca0d9aa122875d2034d89f9c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S02/case.json",
+   "sha256": "0c73580e04463944c269fc0ba5b075df424b19f2598dc63ddbd3066896bf8d85"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S02/step01.cmd.json",
+   "sha256": "db899a3066d9c4d4300357d5f3d1d5b401412e5b7719f9db55a90a43a57a5498"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/farming-01__S02/step01.stdout.txt",
+   "sha256": "6f8aa80ad50cc17c10952ec5d93ac2addd4a2ba2eeac0003c34212bddb2e33b2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-01/20261024T112629-5275/ket_qua.json",
+   "sha256": "15af16194c58b185649ef1fea5afa8bc98559ad3a0218888e9664d2398688ac4"
+  }
+ ],
+ "loi_san_pham": []
+}

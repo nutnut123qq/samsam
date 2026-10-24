@@ -1,0 +1,38 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.mkt_ads",
+  "--propose",
+  "--month",
+  "2026-10"
+ ],
+ "env_doi": [
+  "PROBE_CALL_MAIN",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:14:24+07:00",
+ "ket_thuc": "2026-10-24T11:14:29+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*marketing-03\\.1",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "2622d8330a02e82ee61b66777c97090ab6af6a08d3fd73ea6d231fb8a12413fc",
+ "stderr_sha256": "4cda45cec3c89d71584a555886c2057517fec609073f6750dfe6a0087dd6fcbc"
+}

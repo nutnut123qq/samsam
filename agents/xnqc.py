@@ -438,9 +438,21 @@ def draft(conn, sku_key: str, loai: str, ten: str, maket: str | None,
         return payload, None
     oid = (f"{sku_key}:{loai}:"
            f"{hashlib.sha256(payload.encode('utf-8')).hexdigest()[:12]}")
-    qid = director.submit(conn, "legal_hr", "xnqc_dossier", oid,
-                          f"Nháp hồ sơ XNQC {sku_key} ({loai})", payload,
-                          DRAFT_AGENT)
+    try:
+        qid = director.submit(conn, "legal_hr", "xnqc_dossier", oid,
+                              f"Nháp hồ sơ XNQC {sku_key} ({loai})", payload,
+                              DRAFT_AGENT)
+    except psycopg.errors.UniqueViolation:
+        # r12 D4: chạy lại cùng nội dung = đã có mục chờ (unique pending) —
+        # bỏ qua, trả mục cũ; không báo lỗi DB.
+        conn.rollback()
+        row = conn.execute("select id from approval_queue where object_type"
+                           " = 'xnqc_dossier' and object_id = %s and status ="
+                           " 'pending'", (oid,)).fetchone()
+        conn.commit()
+        qid = row[0] if row else None
+        print(f"[skip] nháp hồ sơ cùng nội dung đã có mục chờ"
+              f"{f' #{qid}' if qid else ''} — không ghi thêm")
     return payload, qid
 
 

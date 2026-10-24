@@ -1,0 +1,531 @@
+{
+ "_doc": "Tiêu chí r11 v2 CHỈ cho marketing-03.2 — sửa LỖI FIXTURE của lượt r11 v1 (runs/marketing-03.2/20261023T143204-6665): plan_ok_r11.json đổi creative_draft_ids [4]→[1] nhưng ads_result_ok.csv/ads_result_badcol.csv vẫn ghi bien_the=4 (id creative của DB r10) → sản phẩm từ chối ĐÚNG 'không thuộc creative_draft_ids của phiếu' ở C1/C4 (C3 bị lỗi cột như kỳ vọng nhưng assertion đếm phụ thuộc C1). Sửa harness: fixture *_r11.csv chỉ đổi bien_the 4→1; mọi expected/assertion GIỮ NGUYÊN như r11 v1; chạy lại TOÀN BỘ mục trên DB mới samsam_itacc_r11_m032b. Không đổi yêu cầu sản phẩm. Các mục khác dùng r11.json v1 (đã khóa 601f16a1…).",
+ "fingerprint_code": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r11 (postgres:17-alpine) chỉ bind 127.0.0.1:55441; mỗi mục 1 DB samsam_itacc_r11_<mã> dựng mới (apply_schema --roles ×2 + core_store + golden_store); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; DEPLOY/RED_ALERT_NOTIFY tắt; INTEL_HASH_SALT + CONTACT_VAULT_KEY giá trị thử sinh ngẫu nhiên (không lưu repo); mạng ngoài localhost bị chặn trong harness run.py.txt; RSS giả http.server 127.0.0.1:18793.",
+ "thay_the_v1": {
+  "file": "criteria/r11.json",
+  "sha256": "601f16a149d825ea76f94ccc3a805cad5f8ac23f10f1aaa3f96eb2a3f7c6cd34"
+ },
+ "items": [
+  {
+   "id": "marketing-03.2",
+   "db": "samsam_itacc_r11_m032b",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_ads --results F.csv --plan-id N --by <người>` exit 0 trên phiếu đã duyệt đủ 2 mục",
+    "T2 đúng 1 mục approval_queue marketing/ad_result pending; đề xuất = dat_muc_tieu khớp phép tính độc lập từ ads_result_ok_r11.csv (hiển thị 9000, click 190, chi 100.000đ ≤ ngân sách 150.000đ, 1 đơn → CTR 2,11% ≥ 2% đạt; CPC 526đ < 5.000; CPA 100.000đ < 150.000 → không chạm điều kiện dừng); đề xuất ∈ {dung, dat_muc_tieu, tiep, chua_du_lieu} (không có nhánh tăng ngân sách)",
+    "T3 phiếu chưa duyệt đủ 2 mục → ADS_PLAN_NOT_APPROVED exit 1, 0 ad_result; CSV sai cột → exit 1, 0 dòng mới; nạp lại cùng file → skip, 0 dòng mới",
+    "T4 không chi tiền / không gọi API quảng cáo (không có lệnh/lời gọi mạng; socket ngoài bị chặn không áp dụng vì CLI không mở mạng)"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-03.2__S01",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (tính năng = chạy thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S02",
+     "tien_quyet": true,
+     "mo_ta": "golden FIXTURE (mat-ong-sam-300ml giả lập đã tự công bố) — như r10 mkt-fx-golden",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX}/golden_fixture_food.json"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S03",
+     "tien_quyet": true,
+     "mo_ta": "packshot MẪU + ảnh creative shopee qua image_studio (provider none, không AI) — draft #1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/mk_packshot.py.txt",
+        "{SCR}/packshots",
+        "mat-ong-sam-300ml"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/run.py.txt",
+        "-m",
+        "pipelines.image_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "shopee",
+        "--headline",
+        "Quà quê Quảng Nam Thử IT"
+       ],
+       "env": {
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/image_assets"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where id = 1 and content_type = 'image' and sku = 'mat-ong-sam-300ml' and status = 'pending'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S04",
+     "tien_quyet": true,
+     "mo_ta": "duyệt ảnh creative #1 (dev, người duyệt thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "1",
+        "--by",
+        "Duyệt MKT Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select status from content_drafts where id = 1",
+       "expect": "approved"
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S05",
+     "tien_quyet": true,
+     "mo_ta": "dữ liệu P&L MẪU để có trần FP&A (đơn + quyết toán + giá vốn duyệt) — như r10 03.1-C0",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX}/order_shopee_MAU.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX}/order_shopee_multi_MAU.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX}/settlement_shopee_MAU.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX}/settlement_shopee_multi_MAU.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "savina-12v",
+        "--cost",
+        "50000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "1",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "saphraton-20v",
+        "--cost",
+        "90000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "2",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "savigout-30v",
+        "--cost",
+        "130000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "3",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-120ml-1hu",
+        "--cost",
+        "70000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "4",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--cost",
+        "180000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "5",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "sapentol-30v",
+        "--cost",
+        "110000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "6",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__S06",
+     "tien_quyet": true,
+     "mo_ta": "lập phiếu thử nghiệm #1 (plan_ok_r11.json, creative #1) — 2 mục chờ duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--plan",
+        "{FX}/plan_ok_r11.json",
+        "--by",
+        "Người Thử IT",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans where id = 1",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ad_campaign' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'finance' and object_type = 'budget_change' and status = 'pending'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__C2",
+     "khac_r10": "r10 dùng phiếu #2 do --propose (03.1) sinh; r11 dùng chính phiếu #1 TRƯỚC khi duyệt (cùng trạng thái 'chưa duyệt đủ 2 mục', không phụ thuộc luồng 03.1 propose) — chạy trước C1",
+     "mo_ta": "phiếu chưa duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX}/ads_result_ok_r11.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "ADS_PLAN_NOT_APPROVED"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__C1",
+     "mo_ta": "duyệt đủ 2 mục phiếu #1 (dev) rồi nạp kết quả",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where block = 'marketing' and object_type = 'ad_campaign'}",
+        "--by",
+        "Duyệt MKT Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where block = 'finance' and object_type = 'budget_change'}",
+        "--by",
+        "Duyệt TC Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX}/ads_result_ok_r11.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ad_result' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result' and payload like '%Đề xuất: **dat_muc_tieu**%' and payload like '%hiển thị 9000, click 190%' and payload like '%đơn 1%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result' and title like '%dat_muc_tieu%'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__C3",
+     "mo_ta": "CSV sai cột",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX}/ads_result_badcol_r11.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.2__C4",
+     "mo_ta": "nạp lại file của C1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX}/ads_result_ok_r11.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?i)skip"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

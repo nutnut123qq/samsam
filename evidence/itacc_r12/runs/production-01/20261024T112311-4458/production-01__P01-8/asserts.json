@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from allocation_proposals where cutoff_id = 'ke_hoach_tet'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(distinct run_id) from allocation_proposals",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select stage from feature_rollout where feature_id = 'production-01'",
+  "expect": "tat",
+  "actual": "tat",
+  "dat": true
+ }
+]

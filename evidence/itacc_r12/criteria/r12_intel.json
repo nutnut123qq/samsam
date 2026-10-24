@@ -1,0 +1,1874 @@
+{
+ "_doc": "Tiêu chí r12 nhóm intel (24/10/2026) — kiểm lại 6 mục intel-01.1, intel-01.2, intel-03, intel-04.1, intel-04.2, intel-05.2 theo bản ghi hiện hành evidence/itacc_r10/items/<id>.json (nguồn: evidence/itacc_r11/source_map.json). Mỗi ca r10 ↔ đúng 1 ca r12 (nguon_r10); thêm S01 seed/fixture (MOI) + ca MOI: intel-01.1 C08 (cảnh báo mở trong bản tin), intel-01.2 C04 (G1-L1 chiều ngược), intel-05.2 C06 (đối chứng dương G1-L6). Fixture CHÉP vào fixtures/items/<id>/ (SHA256SUMS.txt; sha trùng dau_vao r10). CHỖ KHÁC r10 (có chủ đích, không nới kỳ vọng): (1) harness patch_run.py (vá REPORTS_DIR/COMPETITORS_FILE rồi gọi main(argv)) → wrap.py.txt PROBE_SET+PROBE_CALL_MAIN (cùng cơ chế, thêm chặn socket ngoài localhost); crawler.intel/intel_alert cũng qua wrap để chứng minh T4. (2) bản tin `--date 2026-10-23` r10 = ngày VN của lượt thu (intel_bulletin lọc tin theo fetched_at) → placeholder {sql:...} ngày VN max(fetched_at) để tái lập khi chạy ngày khác. (3) feed/feed.xml r10 bị feed_round R1–R3 ghi đè (chỉ còn bản R3) → dựng lại TẤT ĐỊNH bằng mk_feed.py.txt bộ '1', pubDate cố định Fri, 23 Oct 2026 03:47:45 +0000 (= pubDate feed_b.xml r10); 2533 byte = log r10 C01. (4) DB riêng từng mục → intel-01.2 thu lại feed ở S01 (nguồn it_g1_sources_p18742.json = it_g1_sources.json CHỈ đổi cổng 18741→18742 để chạy song song được); intel-04.2 nạp related ở S01; id DB (import #3/#6, price_list #5/#23/#24/#29/#30) → placeholder {sql:...}. (5) intel-03: golden_store ghi valid_from = ngày dựng DB; r10 dựng 23/10 nên quan sát 23/10 có golden. S01 chạy fixtures/items/intel-03/lui_golden_2026-10-23.py.txt dời valid_from các dòng giá MỞ về 2026-10-23 (tắt trigger append-only trong 1 giao dịch trên DB thử, không đổi giá/không duyệt) để C04 cùng đầu vào. (6) Ca tắt tính năng: lỗi đã vá r12 RB/G1-L1 → kỳ vọng exit 2 + '[rollout] … <mã>' + KHÔNG traceback (intel_bulletin/intel_weekly in stdout; combo_price in stderr → out_re), đầu ra tính năng còn bật VẪN sinh; G1-L6 → it-c thieu_du_lieu. (7) Cổng localhost: 18741 (intel-01.1), 18742 (intel-01.2); 18799 PHẢI không ai nghe (nguồn chết intel-01.1 C04). (8) Người thao tác 'Người Thử R12', người duyệt giá 'Người Duyệt Giá Thử R12' (dev mode, chỉ dựng fixture — không chứng minh luồng quyền). Ngày cố định: tuần 2026-10-19/2026-10-12 (fixture), combo_price không --as-of như r10 (golden hiệu lực từ ngày dựng DB).",
+ "fingerprint_code": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451, mỗi mục 1 DB samsam_itacc_r12_<mã> dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; DEPLOY/RED_ALERT_NOTIFY tắt; INTEL_HASH_SALT/CONTACT_VAULT_KEY thử; RSS giả http.server 127.0.0.1 (bg_start/bg_stop); runner_r12.py.txt",
+ "items": [
+  {
+   "id": "intel-01.1",
+   "db": "samsam_itacc_r12_i011",
+   "tieu_chi_cu_the": [
+    "T1 `crawler.intel --run --sources <fixture it_g1_sources.json>` (RSS giả http.server 127.0.0.1:18741) exit 0 + `scripts.intel_bulletin --period day --date <ngày VN của lượt thu>` (REPORTS_DIR → {OUT}, qua wrap.py.txt) exit 0",
+    "T2 intel_items đúng 7 dòng, tất cả nguồn it-a (status duyet), 0 dòng nguồn cho_duyet; SĐT 0900000123 không còn (snippet che '***'); tin 'Giá vàng' (0 chủ đề) không lưu; snippet ≤300. Bản tin intel-bulletin-day-<ngày>.md: đủ 7 link <https://tin-thu-it.example.com/bai-1-N>, không link tin lạc chủ đề, mỗi dòng trích có '· <link>', có mục chủ đề và mục 'Cảnh báo đỏ đang mở', nhãn CHẠY THỬ intel-01.1, 1 dòng report_outputs",
+    "T3 chạy lại → new=0, vẫn 7; nguồn tầng C → exit 2 [blocked] 0 [req]; nguồn chết → exit 1 không traceback; intel-01.1 tắt → exit 2 + '[rollout] … intel-01.1', không traceback, 0 bản tin; CHỈ intel-01.2 tắt + --suggest → bản tin intel-01.1 VẪN sinh (G1-L1), 0 intel_topic, exit 2 + '[rollout] … intel-01.2'",
+    "T4 mọi [req] chỉ host 127.0.0.1 (wrap chặn socket ngoài localhost); không gửi bản tin"
+   ],
+   "ca": [
+    {
+     "ma": "intel-01.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout + bật RSS giả 127.0.0.1:18741 (r10: intel_seed_rollout + http.server 18741)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "bg_start": "rss",
+       "argv": [
+        "python",
+        "-m",
+        "http.server",
+        "18741",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "{FX12}/items/intel-01.1/feed"
+       ]
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.1__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Thu tin nguồn đã duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "crawler.intel",
+        "--run",
+        "--sources",
+        "{FX12}/items/intel-01.1/it_g1_sources.json"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}"
+       },
+       "expect_exit": 0,
+       "out_re": "\\A(?=[\\s\\S]*\\[src\\] it-a: 8 tin, 7 đúng chủ đề, mới 7)(?=[\\s\\S]*off_topic=1)(?=[\\s\\S]*\\[req\\] \\{[^\\n]*\"host\": \"127\\.0\\.0\\.1\")(?![\\s\\S]*\\[req\\] \\{[^\\n]*\"host\": \"(?!127\\.0\\.0\\.1\")[^\"]*\")(?![\\s\\S]*it-b)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from intel_items",
+       "expect": 7
+      },
+      {
+       "sql": "select count(*) from intel_items where source = 'it-a'",
+       "expect": 7
+      },
+      {
+       "sql": "select count(*) from intel_items where source <> 'it-a'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from intel_items where title || ' ' || coalesce(snippet, '') like '%0900000123%'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from intel_items where snippet like '%***%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from intel_items where title like 'Giá vàng%'",
+       "expect": 0
+      },
+      {
+       "sql": "select coalesce(max(char_length(snippet)), 0) <= 300 from intel_items",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.1__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Thu lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "crawler.intel",
+        "--run",
+        "--sources",
+        "{FX12}/items/intel-01.1/it_g1_sources.json"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}"
+       },
+       "expect_exit": 0,
+       "out_re": "\\A(?=[\\s\\S]*mới 0)(?=[\\s\\S]*new=0 dup_url=7)(?![\\s\\S]*\\[req\\] \\{[^\\n]*\"host\": \"(?!127\\.0\\.0\\.1\")[^\"]*\")"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from intel_items",
+       "expect": 7
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.1__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Nguồn tầng C",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "crawler.intel",
+        "--run",
+        "--source",
+        "it-tier-c",
+        "--sources",
+        "{FX12}/items/intel-01.1/it_g1_sources.json"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}"
+       },
+       "expect_exit": 2,
+       "out_re": "\\A(?=[\\s\\S]*\\[blocked\\] \\{[^\\n]*\"source\": \"it-tier-c\"[^\\n]*\"reason\": \"tier_c\")(?![\\s\\S]*\\[req\\])"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from intel_items",
+       "expect": 7
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.1__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Nguồn chết (127.0.0.1:18799 không ai nghe)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "crawler.intel",
+        "--run",
+        "--source",
+        "it-dead",
+        "--sources",
+        "{FX12}/items/intel-01.1/it_g1_sources.json"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}"
+       },
+       "expect_exit": 1,
+       "out_re": "\\A(?=[\\s\\S]*ok=0)(?![\\s\\S]*Traceback)(?![\\s\\S]*\\[req\\] \\{[^\\n]*\"host\": \"(?!127\\.0\\.0\\.1\")[^\"]*\")"
+      },
+      {
+       "bg_stop": "rss"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from intel_items",
+       "expect": 7
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.1__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Bản tin ngày",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "scripts.intel_bulletin",
+        "--period",
+        "day",
+        "--date",
+        "{sql:select to_char(max(fetched_at) at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') from intel_items}"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "scripts.intel_bulletin:REPORTS_DIR={OUT}/repi",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] [^\\n]*intel-bulletin-day-\\d{4}-\\d{2}-\\d{2}\\.md items=7 "
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/repi/intel-bulletin-day-*.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/repi/intel-bulletin-day-*.md",
+       "re": "CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng intel-01\\.1",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repi/intel-bulletin-day-*.md",
+       "re": "\\A(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-1>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-2>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-3>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-4>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-6>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-7>)(?=[\\s\\S]*<https://tin-thu-it\\.example\\.com/bai-1-8>)",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repi/intel-bulletin-day-*.md",
+       "re": "bai-1-5\\b",
+       "expect": false
+      },
+      {
+       "file_re": "{OUT}/repi/intel-bulletin-day-*.md",
+       "re": "(?m)^> - (?!\\(\\+)(?![^\\n]*· <https?://[^>\\n]+>$)",
+       "expect": false
+      },
+      {
+       "file_re": "{OUT}/repi/intel-bulletin-day-*.md",
+       "re": "\\A(?=[\\s\\S]*## Cảnh báo đỏ đang mở)(?=[\\s\\S]*## Tin theo chủ đề)(?=[\\s\\S]*### 1\\. Sâm & thị trường sâm — \\d+ tin)(?=[\\s\\S]*### 6\\. Văn bản pháp luật — \\d+ tin)",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'intel-01.1' and name like 'intel-bulletin-day-%' and not is_sample",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.1__C06",
+     "nguon_r10": "C06",
+     "mo_ta": "Tắt intel-01.1 (RB: exit 2 + [rollout], không traceback); bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-01.1",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "scripts.intel_bulletin",
+        "--period",
+        "week",
+        "--date",
+        "{sql:select to_char(max(fetched_at) at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') from intel_items}"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "scripts.intel_bulletin:REPORTS_DIR={OUT}/repiw",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*intel-01\\.1",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-01.1",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/repiw/intel-bulletin-week-*.md",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from report_outputs where name like 'intel-bulletin-week-%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.1__C07",
+     "nguon_r10": "C07",
+     "mo_ta": "CHỈ intel-01.2 tắt, lệnh job 7h (--period week --suggest): bản tin intel-01.1 VẪN sinh (G1-L1); bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-01.2",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "scripts.intel_bulletin",
+        "--period",
+        "week",
+        "--date",
+        "{sql:select to_char(max(fetched_at) at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') from intel_items}",
+        "--suggest"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "scripts.intel_bulletin:REPORTS_DIR={OUT}/repiw",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*intel-01\\.2",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-01.2",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/repiw/intel-bulletin-week-*.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/repiw/intel-bulletin-week-*.md",
+       "re": "CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng intel-01\\.1",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'intel_topic'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'intel-01.1' and name like 'intel-bulletin-week-%'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.1__C08",
+     "nguon_r10": "MOI",
+     "mo_ta": "T2 'có cảnh báo mở' (r10 có nhờ DB chung với intel-02.x): quét cảnh báo intel rồi bản tin ngày liệt kê cảnh báo",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.intel_alert",
+        "--run"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}"
+       },
+       "expect_exit": [
+        0,
+        1
+       ]
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "scripts.intel_bulletin",
+        "--period",
+        "day",
+        "--date",
+        "{sql:select to_char(max(fetched_at) at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') from intel_items}"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "scripts.intel_bulletin:REPORTS_DIR={OUT}/repa",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 0,
+       "stdout_re": "open_alerts=[1-9]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) >= 1 from red_alerts where source_agent = 'intel_red_alert'",
+       "expect": true
+      },
+      {
+       "file_glob": "{OUT}/repa/intel-bulletin-day-*.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/repa/intel-bulletin-day-*.md",
+       "re": "## Cảnh báo đỏ đang mở \\(chưa xác nhận\\)\\n\\n- #\\d+ — ",
+       "expect": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-01.2",
+   "db": "samsam_itacc_r12_i012",
+   "tieu_chi_cu_the": [
+    "T1 `scripts.intel_bulletin --period day --date <ngày VN của lượt thu> --suggest` (wrap, REPORTS_DIR → {OUT}) exit 0",
+    "T2 mục intel/intel_topic pending created_by agent:intel_bulletin cho ĐÚNG các chủ đề nội dung có ≥2 tin (= sam, tpbvsk với feed fixture); payload/title không URL, không tiêu đề tin ('Thử IT'); không mục phap_ly",
+    "T3 chạy lại → suggested_new=0, vẫn 2 mục; intel-01.2 tắt → 0 mục mới, exit 2 + '[rollout] … intel-01.2', không traceback, bản tin intel-01.1 VẪN sinh (G1-L1); ngược lại intel-01.1 tắt → gợi ý intel-01.2 VẪN sinh, 0 bản tin",
+    "T4 mục pending (không tự duyệt), không gửi/đăng; dữ liệu fixture thử IT"
+   ],
+   "ca": [
+    {
+     "ma": "intel-01.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed + thu feed fixture (DB riêng nên phải thu lại như intel-01.1 C01; RSS giả 127.0.0.1:18742, nguồn = it_g1_sources.json chỉ đổi cổng)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "bg_start": "rss",
+       "argv": [
+        "python",
+        "-m",
+        "http.server",
+        "18742",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "{FX12}/items/intel-01.2/feed"
+       ]
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "crawler.intel",
+        "--run",
+        "--sources",
+        "{FX12}/items/intel-01.2/it_g1_sources_p18742.json"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}"
+       },
+       "expect_exit": 0,
+       "out_re": "\\A(?=[\\s\\S]*mới 7)(?![\\s\\S]*\\[req\\] \\{[^\\n]*\"host\": \"(?!127\\.0\\.0\\.1\")[^\"]*\")"
+      },
+      {
+       "bg_stop": "rss"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from intel_items",
+       "expect": 7
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.2__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Gợi ý chủ đề",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "scripts.intel_bulletin",
+        "--period",
+        "day",
+        "--date",
+        "{sql:select to_char(max(fetched_at) at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') from intel_items}",
+        "--suggest"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "scripts.intel_bulletin:REPORTS_DIR={OUT}/repi",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] [^\\n]*suggested_new=2 suggested_total=2"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and block = 'intel' and status = 'pending' and created_by = 'agent:intel_bulletin'",
+       "expect": 2
+      },
+      {
+       "sql": "select (select count(*) from approval_queue where object_type = 'intel_topic') = (select count(*) from (select t from intel_items, unnest(topics) t where t in ('sam', 'tpbvsk', 'gioi_tre', 'quang_cao', 'doi_thu') group by t having count(*) >= 2) x)",
+       "expect": true
+      },
+      {
+       "sql": "select string_agg(regexp_replace(object_id, '^day-[0-9]{8}-', ''), ',' order by object_id) from approval_queue where object_type = 'intel_topic'",
+       "expect": "sam,tpbvsk"
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and (payload || ' ' || title) ~* 'https?://|www\\.|tin-thu-it|Thử IT'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like '%phap_ly'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.2__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Chạy lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "scripts.intel_bulletin",
+        "--period",
+        "day",
+        "--date",
+        "{sql:select to_char(max(fetched_at) at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') from intel_items}",
+        "--suggest"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "scripts.intel_bulletin:REPORTS_DIR={OUT}/repi",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 0,
+       "stdout_re": "suggested_new=0 suggested_total=2"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'intel_topic'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.2__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Tắt intel-01.2: 0 mục mới, kết thúc có kiểm soát (exit 2 [rollout], không traceback), bản tin intel-01.1 vẫn sinh; bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-01.2",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "scripts.intel_bulletin",
+        "--period",
+        "week",
+        "--date",
+        "{sql:select to_char(max(fetched_at) at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') from intel_items}",
+        "--suggest"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "scripts.intel_bulletin:REPORTS_DIR={OUT}/repiw",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*intel-01\\.2",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-01.2",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'intel_topic'",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like 'week-%'",
+       "expect": 0
+      },
+      {
+       "file_glob": "{OUT}/repiw/intel-bulletin-week-*.md",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-01.2__C04",
+     "nguon_r10": "MOI",
+     "mo_ta": "G1-L1 chiều ngược: CHỈ intel-01.1 tắt + --suggest → gợi ý intel-01.2 VẪN sinh, không bản tin; bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-01.1",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "scripts.intel_bulletin",
+        "--period",
+        "week",
+        "--date",
+        "{sql:select to_char(max(fetched_at) at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') from intel_items}",
+        "--suggest"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "scripts.intel_bulletin:REPORTS_DIR={OUT}/repiw",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\A(?=[\\s\\S]*suggested_new=2)(?=[\\s\\S]*\\[rollout\\][^\\n]*intel-01\\.1)",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-01.1",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like 'week-%' and status = 'pending'",
+       "expect": 2
+      },
+      {
+       "file_glob": "{OUT}/repiw/intel-bulletin-week-*.md",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from report_outputs where name like 'intel-bulletin-week-%'",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-03",
+   "db": "samsam_itacc_r12_i03",
+   "tieu_chi_cu_the": [
+    "T1 `python -m ingest.intel_import --competitor F` (it_g1_competitor.csv + _2) + `python scripts/intel_weekly.py --week 2026-10-19 --out-dir {OUT}` exit 0",
+    "T2 intel-doithu-2026-10-19.md (nhãn CHẠY THỬ intel-03): độ phủ K5 2/2 KM, TRIMICO 2/0, KGC 2/1; bảng lệch: K5 23/10 175.000/KM 150.000 vs 159.000 (price_list# shopee, CHƯA duyệt) -5.7%, TRIMICO 23/10 330.000 vs 299.000 (price_list# shopee, đã duyệt) +10.4%, mỗi số kèm obs#/nguồn; quan sát trước ngày hiệu lực golden → 'chưa có giá golden'; mục sản phẩm lần đầu ghi nhận có 'Nước hồng sâm KGC mới Thử IT'",
+    "T3 nạp lại → [skip] 0 dòng; file lỗi → exit 1, 0 dòng; tuần chỉ có K5 → TRIMICO/KGC 'THIẾU dữ liệu tuần này'; intel-03 tắt → 0 doithu, intel-trend (intel-04.1) VẪN sinh, exit 2 + '[rollout] … intel-03', không traceback",
+    "T4 chỉ đọc golden, không gửi/không đề xuất giá; dữ liệu fixture thử IT"
+   ],
+   "ca": [
+    {
+     "ma": "intel-03__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed + tái lập golden r10 (valid_from 2026-10-23, script fixture lui_golden) + duyệt giá list saphraton-20v shopee (r10: intel03_fx_appr --approve-price 5)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-I",
+        "{FX12}/items/intel-03/lui_golden_2026-10-23.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[fixture\\] price_list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'list' and program_id is null and valid_to is null}",
+        "--by",
+        "Người Duyệt Giá Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from price_list where valid_to is null and valid_from > date '2026-10-23'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'list' and valid_to is null and approved_by = 'Người Duyệt Giá Thử R12'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from price_list where sku_key = 'savina-12v' and channel = 'shopee' and kind = 'list' and valid_to is null and approved_by is null",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-03__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Nạp file đối thủ (+ lượt bổ sung _2 như r10 C01b)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--competitor",
+        "{FX12}/items/intel-03/it_g1_competitor.csv"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "competitor #\\d+ it_g1_competitor\\.csv: 4 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--competitor",
+        "{FX12}/items/intel-03/it_g1_competitor_2.csv"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "it_g1_competitor_2\\.csv: 2 dòng"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from competitor_observations",
+       "expect": 6
+      },
+      {
+       "sql": "select string_agg(row_count::text, ',' order by id) from intel_imports where kind = 'competitor'",
+       "expect": "4,2"
+      }
+     ]
+    },
+    {
+     "ma": "intel-03__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Nạp lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--competitor",
+        "{FX12}/items/intel-03/it_g1_competitor.csv"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[skip\\]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from competitor_observations",
+       "expect": 6
+      },
+      {
+       "sql": "select count(*) from intel_imports",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "intel-03__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "File lỗi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--competitor",
+        "{FX12}/items/intel-03/it_g1_competitor_loi.csv"
+       ],
+       "expect_exit": 1,
+       "out_re": "gia_vnd"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from competitor_observations",
+       "expect": 6
+      },
+      {
+       "sql": "select count(*) from intel_imports",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "intel-03__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Báo cáo tuần",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--week",
+        "2026-10-19",
+        "--out-dir",
+        "{OUT}/repw"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/repw/intel-doithu-2026-10-19.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/repw/intel-doithu-2026-10-19.md",
+       "re": "CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng intel-03",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-doithu-2026-10-19.md",
+       "re": "\\A(?=[\\s\\S]*- K5: 2 quan sát giá, 2 có giá KM)(?=[\\s\\S]*- TRIMICO: 2 quan sát giá, 0 có giá KM)(?=[\\s\\S]*- KGC: 2 quan sát giá, 1 có giá KM)",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-doithu-2026-10-19.md",
+       "re": "\\| 2026-10-23 \\| Sâm K5 \\| shopee \\| [^|\\n]+ \\| savina-12v \\| 175\\.000 \\(obs#\\d+: https://shopee\\.vn/product/thu-it-k5/1001\\) \\| 150\\.000 \\| 159\\.000 \\(price_list#\\d+ shopee, CHƯA duyệt\\) \\| -5\\.7% \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-doithu-2026-10-19.md",
+       "re": "\\| 2026-10-23 \\| TRIMICO \\| shopee \\| [^|\\n]+ \\| saphraton-20v \\| 330\\.000 \\(obs#\\d+: https://shopee\\.vn/product/thu-it-trimico/2002\\) \\| — \\| 299\\.000 \\(price_list#\\d+ shopee, đã duyệt\\) \\| \\+10\\.4% \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-doithu-2026-10-19.md",
+       "re": "\\| 2026-10-19 \\| Sâm K5 \\| shopee \\|[^\\n]*\\| chưa có giá golden \\| — \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-doithu-2026-10-19.md",
+       "re": "### Sản phẩm đối thủ lần đầu ghi nhận trong tuần[\\s\\S]*Nước hồng sâm KGC mới Thử IT",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'intel-03' and name = 'intel-doithu-2026-10-19.md'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-03__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Tuần thiếu đối thủ (nạp it_g1_competitor_tuan42.csv như r10 C05a)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--competitor",
+        "{FX12}/items/intel-03/it_g1_competitor_tuan42.csv"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--week",
+        "2026-10-12",
+        "--out-dir",
+        "{OUT}/repw12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/repw12/intel-doithu-2026-10-12.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/repw12/intel-doithu-2026-10-12.md",
+       "re": "\\A(?=[\\s\\S]*- K5: 1 quan sát giá, 0 có giá KM)(?=[\\s\\S]*- TRIMICO: \\*\\*THIẾU dữ liệu tuần này\\*\\*)(?=[\\s\\S]*- KGC: \\*\\*THIẾU dữ liệu tuần này\\*\\*)",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "intel-03__C06",
+     "nguon_r10": "C06",
+     "mo_ta": "Tắt intel-03: không doithu, intel-trend (intel-04.1) VẪN sinh (G1-L1); bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-03",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--week",
+        "2026-10-19",
+        "--out-dir",
+        "{OUT}/repw_off3"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*intel-03",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-03",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/repw_off3/intel-doithu-*.md",
+       "count": 0
+      },
+      {
+       "file_glob": "{OUT}/repw_off3/intel-trend-2026-10-19.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/repw_off3/intel-trend-2026-10-19.md",
+       "re": "CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng intel-04\\.1",
+       "expect": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-04.1",
+   "db": "samsam_itacc_r12_i041",
+   "tieu_chi_cu_the": [
+    "T1 `intel_import --trend it_g1_multiTimeline.csv` + `--trend it_g1_relatedQueries.csv --seed 'sâm ngọc linh'` + `intel_weekly --week 2026-10-19 --out-dir {OUT}` exit 0",
+    "T2 intel-trend-2026-10-19.md (nhãn CHẠY THỬ intel-04.1): giá trị mới nhất 3 từ khóa kèm [query_id 16 hex] (sâm ngọc linh 58 tuần 2026-10-19), dòng 'TĂNG ĐỘT BIẾN sâm ngọc linh', mục RISING file related mới nhất, rượu ghi chú riêng; SĐT trong query đã che khi nạp; dòng rượu có cờ ruou",
+    "T3 file thiếu neo / chuỗi theo ngày → exit 1, 0 dòng, 0 import; intel-04.1 tắt → 0 trend, doithu VẪN sinh; intel-03 tắt → trend VẪN sinh (G1-L1); tắt → exit 2 + '[rollout] … <mã>', không traceback",
+    "T4 chỉ báo cáo, không gửi; dữ liệu fixture thử IT"
+   ],
+   "ca": [
+    {
+     "ma": "intel-04.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.1__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Nạp Trends tuần",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--trend",
+        "{FX12}/items/intel-04.1/it_g1_multiTimeline.csv"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "trend_timeline #\\d+ it_g1_multiTimeline\\.csv: 14 dòng"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(distinct week) from trends_weekly",
+       "expect": 14
+      },
+      {
+       "sql": "select count(distinct keyword) from trends_weekly",
+       "expect": 3
+      },
+      {
+       "sql": "select count(*) from intel_imports where kind = 'trend_timeline'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.1__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Nạp related",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--trend",
+        "{FX12}/items/intel-04.1/it_g1_relatedQueries.csv",
+        "--seed",
+        "sâm ngọc linh"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from trends_related",
+       "expect": 10
+      },
+      {
+       "sql": "select count(*) from trends_related where query = 'rượu sâm ngọc linh' and 'ruou' = any(flags)",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from trends_related where query like '%0900000456%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.1__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "File không neo / theo ngày (r10 C03 + C03b)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--trend",
+        "{FX12}/items/intel-04.1/it_g1_multiTimeline_khong_neo.csv"
+       ],
+       "expect_exit": 1,
+       "out_re": "thiếu neo"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--trend",
+        "{FX12}/items/intel-04.1/it_g1_multiTimeline_theo_ngay.csv"
+       ],
+       "expect_exit": 1,
+       "out_re": "chỉ nhận chuỗi tuần"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from intel_imports",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from trends_weekly where import_id <> (select min(id) from intel_imports)",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.1__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Báo cáo trend",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--week",
+        "2026-10-19",
+        "--out-dir",
+        "{OUT}/repw"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/repw/intel-trend-2026-10-19.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/repw/intel-trend-2026-10-19.md",
+       "re": "CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng intel-04\\.1",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-trend-2026-10-19.md",
+       "re": "- sâm ngọc linh \\(Việt Nam\\): 58 — tuần 2026-10-19 \\[query_id [0-9a-f]{16}\\]",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-trend-2026-10-19.md",
+       "re": "\\A(?=[\\s\\S]*- nhân sâm \\(Việt Nam\\): \\d+ — tuần [0-9-]{10} \\[query_id [0-9a-f]{16}\\])(?=[\\s\\S]*- quà tết \\(Việt Nam\\): \\d+ — tuần [0-9-]{10} \\[query_id [0-9a-f]{16}\\])",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-trend-2026-10-19.md",
+       "re": "TĂNG ĐỘT BIẾN sâm ngọc linh",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-trend-2026-10-19.md",
+       "re": "RISING[\\s\\S]*rượu sâm ngọc linh: \\+120% \\(rượu — không dùng cho nhóm giới trẻ\\)",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/repw/intel-trend-2026-10-19.md",
+       "re": "0900000456",
+       "expect": false
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'intel-04.1'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.1__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Tắt intel-04.1: không trend, doithu VẪN sinh; bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-04.1",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--week",
+        "2026-10-19",
+        "--out-dir",
+        "{OUT}/repw_off41"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*intel-04\\.1",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-04.1",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/repw_off41/intel-trend-*.md",
+       "count": 0
+      },
+      {
+       "file_glob": "{OUT}/repw_off41/intel-doithu-2026-10-19.md",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.1__C06",
+     "nguon_r10": "C06",
+     "mo_ta": "CHỈ intel-03 tắt: trend intel-04.1 VẪN sinh (G1-L1); bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-03",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--week",
+        "2026-10-19",
+        "--out-dir",
+        "{OUT}/repw_off3"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*intel-03",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-03",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/repw_off3/intel-trend-2026-10-19.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/repw_off3/intel-trend-2026-10-19.md",
+       "re": "CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng intel-04\\.1",
+       "expect": true
+      },
+      {
+       "file_glob": "{OUT}/repw_off3/intel-doithu-*.md",
+       "count": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-04.2",
+   "db": "samsam_itacc_r12_i042",
+   "tieu_chi_cu_the": [
+    "T1 `python scripts/intel_weekly.py --suggest-keywords [--dry-run]` exit đúng (0 / 1 cấu hình hỏng / 2 tắt)",
+    "T2 đúng 1 mục intel/keyword_suggest pending created_by agent:intel_keywords, object_id kw:<id file related>; danh sách đề xuất KHÔNG chứa chữa/tiểu đường/rượu/ngọc linh/KGC/hàn quốc/Cheong; mục loại chỉ ghi trends_related #id + lý do (không chép 'sâm chữa tiểu đường'/'rượu sâm ngọc linh'/'sâm ngọc linh giá bao nhiêu'); 'nhân sâm hàn quốc' + 'hồng sâm KGC chính hãng' ở nhóm CHỜ QUYẾT; không SĐT thô",
+    "T3 dry-run không ghi; chạy lại → [skip], vẫn 1; cấu hình đối thủ hỏng (da_duyet thiếu duyet_boi/can_cu/xu_ly) → exit 1 fail-closed, 0 mục; tắt → exit 2 '[rollout] … intel-04.2', 0 mục cho file mới",
+    "T4 mục pending, không tự duyệt, không chạy quảng cáo/SEO; dữ liệu fixture thử IT"
+   ],
+   "ca": [
+    {
+     "ma": "intel-04.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed + nạp it_g1_relatedQueries.csv --seed 'sâm ngọc linh' (r10 nạp ở intel-04.1 C02, DB chung)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--trend",
+        "{FX12}/items/intel-04.2/it_g1_relatedQueries.csv",
+        "--seed",
+        "sâm ngọc linh"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from trends_related",
+       "expect": 10
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.2__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Dry-run",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--suggest-keywords",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[dry-run\\] kw:\\d+ — KHÔNG ghi DB"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'intel'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.2__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Gợi ý",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--suggest-keywords"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[ok\\] mục hàng duyệt #\\d+ \\(keyword_suggest"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and block = 'intel' and status = 'pending' and created_by = 'agent:intel_keywords'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and object_id = 'kw:' || (select max(id) from intel_imports where kind = 'trend_related')::text",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'Từ khóa đề xuất(.*)Lý do loại') is not null and substring(payload from 'Từ khóa đề xuất(.*)Lý do loại') !~* 'chữa|tiểu đường|rượu|ngọc linh|kgc|hàn quốc|cheong'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'Lý do loại(.*)CHỜ QUYẾT') ~ 'trends_related #[0-9]+' and substring(payload from 'Lý do loại(.*)CHỜ QUYẾT') !~* 'chữa|tiểu đường|rượu|ngọc linh'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'CHỜ QUYẾT(.*)$') like '%nhân sâm hàn quốc%' and substring(payload from 'CHỜ QUYẾT(.*)$') like '%hồng sâm KGC chính hãng%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and payload ~* 'sâm chữa tiểu đường|rượu sâm ngọc linh|sâm ngọc linh giá bao nhiêu|0900000456'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.2__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Chạy lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--suggest-keywords"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[skip\\] kw:\\d+ đã có mục #\\d+"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.2__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Cấu hình đối thủ hỏng (COMPETITORS_FILE → keyword_competitors_hong.json, qua wrap như patch_run r10)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "scripts.intel_weekly",
+        "--suggest-keywords",
+        "--import",
+        "{sql:select max(id) from intel_imports where kind = 'trend_related'}"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "scripts.intel_weekly:COMPETITORS_FILE={FX12}/items/intel-04.2/keyword_competitors_hong.json",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\[err\\][^\\n]*fail-closed"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-04.2__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Tắt (nạp it_g1_relatedQueries_2.csv --seed 'quà tết' trước như r10 C05x); bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.intel_import",
+        "--trend",
+        "{FX12}/items/intel-04.2/it_g1_relatedQueries_2.csv",
+        "--seed",
+        "quà tết"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-04.2",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/intel_weekly.py",
+        "--suggest-keywords",
+        "--import",
+        "{sql:select max(id) from intel_imports where kind = 'trend_related'}"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*intel-04\\.2",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-04.2",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_id like 'kw:' || (select max(id) from intel_imports where kind = 'trend_related')::text || '%'",
+       "expect": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-05.2",
+   "db": "samsam_itacc_r12_i052",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.combo_price [--dry-run]` exit 0 (golden fixture it_g1_golden_skus.json + duyệt floor/list mat-ong 120ml-1hu & 300ml shopee + bom it_g1_bom.json)",
+    "T2 đúng 1 mục intel/combo_price_option pending created_by agent:combo_price cho it-a: Σlist 3.725.000, Σsàn 2.500.000; 5%→3.538.000, 10%→3.352.000, 15%→3.166.000 (= ⌊Σlist×(1−p)⌋ làm tròn xuống 1.000), khong_tinh_duoc (thiếu giá vốn); it-b (kèm savina TPBVSK chưa XNQC) → nhom_han_che, không mục; it-c (thực phẩm tự công bố, CHỈ thiếu giá list đã duyệt) → thieu_du_lieu ('thiếu giá list ĐÃ DUYỆT của mat-ong-sam-120ml-2hu'), không mục (G1-L6)",
+    "T3 dry-run không ghi; chạy lại → 0 mục mới; tắt → exit 2 '[rollout] … intel-05.2', không traceback, 0 mục mới",
+    "T4 mục pending, agent không áp giá; dữ liệu fixture thử IT"
+   ],
+   "ca": [
+    {
+     "ma": "intel-05.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.2__C01",
+     "nguon_r10": "C01",
+     "tien_quyet": true,
+     "mo_ta": "Fixture golden + duyệt 4 giá (r10 --approve-price 23,24,29,30) + BOM",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/intel-05.2/it_g1_golden_skus.json"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "sku_changed=3"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-120ml-1hu' and channel = 'shopee' and kind = 'floor' and program_id is null and valid_to is null}",
+        "--by",
+        "Người Duyệt Giá Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-120ml-1hu' and channel = 'shopee' and kind = 'list' and program_id is null and valid_to is null}",
+        "--by",
+        "Người Duyệt Giá Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'floor' and program_id is null and valid_to is null}",
+        "--by",
+        "Người Duyệt Giá Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and program_id is null and valid_to is null}",
+        "--by",
+        "Người Duyệt Giá Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.production",
+        "bom",
+        "--load",
+        "{FX12}/items/intel-05.2/it_g1_bom.json"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "3 combo"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from bom_combos where combo_key like 'it-%'",
+       "expect": 3
+      },
+      {
+       "sql": "select count(*) from price_list where approved_by = 'Người Duyệt Giá Thử R12' and channel = 'shopee' and valid_to is null and sku_key in ('mat-ong-sam-120ml-1hu', 'mat-ong-sam-300ml') and kind in ('floor', 'list')",
+       "expect": 4
+      },
+      {
+       "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-120ml-2hu' and approved_by is not null",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.2__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Dry-run (G1-L6: it-c thieu_du_lieu)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.combo_price",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?m)\\A(?=[\\s\\S]*^- it-a-mat-ong-doi × shopee: de_xuat\\r?$)(?=[\\s\\S]*^- it-b-mat-ong-savina × shopee: nhom_han_che\\r?$)(?=[\\s\\S]*^- it-c-mat-ong-2hu × shopee: thieu_du_lieu \\(thiếu giá list ĐÃ DUYỆT của mat-ong-sam-120ml-2hu\\)\\r?$)(?=[\\s\\S]*\\[dry-run\\] không ghi DB)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'combo_price_option'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.2__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Chạy",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.combo_price"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?m)\\A(?=[\\s\\S]*^- it-a-mat-ong-doi × shopee: de_xuat\\r?$)(?=[\\s\\S]*^- it-b-mat-ong-savina × shopee: nhom_han_che\\r?$)(?=[\\s\\S]*^- it-c-mat-ong-2hu × shopee: thieu_du_lieu \\(thiếu giá list ĐÃ DUYỆT của mat-ong-sam-120ml-2hu\\)\\r?$)(?=[\\s\\S]*\\[done\\] 1 mục combo_price_option mới)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'combo_price_option'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'combo_price_option' and block = 'intel' and status = 'pending' and created_by = 'agent:combo_price' and object_id like 'cb:it-a-mat-ong-doi:shopee:%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'combo_price_option' and strpos(payload, 'Tổng giá list ĐÃ DUYỆT các thành phần: 3.725.000 đ; tổng giá sàn: 2.500.000 đ; thiếu giá vốn đã duyệt') > 0 and strpos(payload, '- Chiết khấu 5% → 3.538.000 đ: khong_tinh_duoc') > 0 and strpos(payload, '- Chiết khấu 10% → 3.352.000 đ: khong_tinh_duoc') > 0 and strpos(payload, '- Chiết khấu 15% → 3.166.000 đ: khong_tinh_duoc') > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'combo_price_option' and (object_id like 'cb:it-b%' or object_id like 'cb:it-c%')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.2__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Chạy lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.combo_price"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] 0 mục combo_price_option mới"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'combo_price_option'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.2__C05",
+     "nguon_r10": "C05",
+     "mo_ta": "Tắt; bật lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-05.2",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.combo_price"
+       ],
+       "expect_exit": 2,
+       "out_re": "\\A(?=[\\s\\S]*\\[rollout\\][^\\n]*intel-05\\.2)(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-05.2",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'combo_price_option'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.2__C06",
+     "nguon_r10": "MOI",
+     "mo_ta": "Đối chứng dương G1-L6: duyệt giá list 120ml-2hu shopee → it-c de_xuat (dry-run, không ghi)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-120ml-2hu' and channel = 'shopee' and kind = 'list' and program_id is null and valid_to is null}",
+        "--by",
+        "Người Duyệt Giá Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.combo_price",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?m)\\A(?=[\\s\\S]*^- it-c-mat-ong-2hu × shopee: de_xuat\\r?$)(?=[\\s\\S]*^- it-b-mat-ong-savina × shopee: nhom_han_che\\r?$)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'combo_price_option'",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

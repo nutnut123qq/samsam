@@ -1,0 +1,41 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "pipelines.content",
+  "--listing",
+  "--sku",
+  "mat-ong-sam-300ml",
+  "--channel",
+  "tiktok",
+  "--no-llm"
+ ],
+ "env_doi": [
+  "PROBE_LLM_LOG",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T14:34:58+07:00",
+ "ket_thuc": "2026-10-24T14:35:01+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*sales-03",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "f30fcd1f87620cce52f4c69432a0f449c59cb16aa14fa614eea14a06a2205bc4",
+ "stderr_sha256": "a01d468e55ac68e40d83790eb18de488dd4e07febd1d00fcecfc88e996d0813d"
+}

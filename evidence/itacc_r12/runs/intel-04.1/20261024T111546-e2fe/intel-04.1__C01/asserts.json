@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(distinct week) from trends_weekly",
+  "expect": 14,
+  "actual": 14,
+  "dat": true
+ },
+ {
+  "sql": "select count(distinct keyword) from trends_weekly",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from intel_imports where kind = 'trend_timeline'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

@@ -1,0 +1,130 @@
+{
+ "id": "marketing-06.1",
+ "ten": "Chuẩn hóa trang sản phẩm trên web",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / SEO và báo cáo kênh: 'Chuẩn hóa trang sản phẩm trên web'",
+ "tieu_chi": [
+  "T1 `python -m agents.seo_web --from-crawl --submit --out-dir <thử>` exit 0, 0 request mạng",
+  "T2 báo cáo seo-web-<ngày>.md + 1 mục marketing/seo_web_fix created_by 'agent:MKT-10' pending, payload chỉ URL/mã vấn đề/đề xuất, URL trong own_hosts",
+  "T3 chạy lại → skipped; tắt → không submit",
+  "T4 không ghi website; --fetch (mạng thật) không chạy"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); --out-dir evidence/itacc_r10/g3/reports",
+ "dau_vao": [
+  {
+   "ten": "data/products.jsonl",
+   "sha256": "8e6c02a3a339f2ee60bc4c9092099dc37692711aa2ee1d3c51e2bba339dcada4",
+   "provenance": "file repo (đọc, không sửa)"
+  },
+  {
+   "ten": "data/articles.jsonl",
+   "sha256": "8ae64f04c53006dcd40847add473cebcd35591b9fb93e7d3654df2c9c75e1062",
+   "provenance": "file repo (đọc, không sửa)"
+  },
+  {
+   "ten": "data/news.jsonl",
+   "sha256": "539635864e69fe59efa32de03181b9278845f34e192a09d773f506a67eca4201",
+   "provenance": "file repo (đọc, không sửa)"
+  },
+  {
+   "ten": "data/about.jsonl",
+   "sha256": "f7efaf4a294361fb662b59d0c6aa056f973987244e9be95a72c69af4b9543a8e",
+   "provenance": "file repo (đọc, không sửa)"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "06.1-C1",
+   "mo_ta": "rà từ crawl có sẵn",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py -m agents.seo_web --from-crawl --submit --out-dir evidence/itacc_r10/g3/reports",
+   "expected": "báo cáo + seo_web_fix T2, 0 request",
+   "actual": "exit 0 requests=0, 197 vấn đề; reports/seo-web-2026-10-23.md; mục #22 marketing/seo_web_fix agent:MKT-10 pending; payload chỉ URL/mã/đề xuất; host samsamngoclinh.com 121, samsam.net.vn 49, URL băm 27 (slug vi phạm) — không host ngoài",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.1-C2",
+   "mo_ta": "chạy lại",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py -m agents.seo_web --from-crawl --submit --out-dir evidence/itacc_r10/g3/reports",
+   "expected": "skipped",
+   "actual": "[submit] skipped, tổng 1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.1-C3",
+   "mo_ta": "tắt",
+   "lenh": "python -m agents.seo_web --from-crawl --submit --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/seo_off",
+   "expected": "không sinh mục",
+   "actual": "exit 1, tổng vẫn 1 — traceback RolloutBlocked chưa bắt (D3); báo cáo file vẫn ghi (tiền tố không thuộc danh mục)",
+   "exit": 1,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "--fetch (mạng thật) không chạy — chỉ dữ liệu crawl có sẵn; out/06.1-C1..C3.txt TÁI TẠO (trùng mã ca), snapshot DB lấy lại sau.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/06.1-C1.txt",
+   "sha256": "b9613d9808e5a9d6f71aae7279b2f532ee85dd1c63d5385abd83cc64cb3b8846"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.1-C1.snapshot.json",
+   "sha256": "6aefe7882a713b3936c26ab4f11791294bf985506bd9244320bdb7cf167049b8"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.1-C1.hosts.txt",
+   "sha256": "c1cdef387466f2c3c0c138abfbdbe9d827915fed0b2b1be032de72e3f59083a4"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/reports/seo-web-2026-10-23.md",
+   "sha256": "548e8d1d8777cb3def0d03ed493d609604871941e06ebf10743c51feacc0aa43"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.1-C2.txt",
+   "sha256": "8892dca3daecd665c223be6d2115196017c8f6169085d00c511a9cac86c79bd3"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.1-C3a.txt",
+   "sha256": "6ca4ae2782eb612eecea1b6602496073aae7cfe3879cd2e3087c39f3e76fbaba"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.1-C3.txt",
+   "sha256": "b268decaef8dfa60841bfaf84604cbc18b60dac209339656194c2d540d814203"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.1-C3.LUOT_THAY_THE_set_thua.txt",
+   "sha256": "efcb43cc5bf04888b122b194655acfd28214137e28914413ab36de24f4592826"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.1-C3b.txt",
+   "sha256": "c28d7555574560fb06f1fa5b334527a3cbd463ecaa38a0c8285e6b60a63a2e88"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/reconstruct_mkt.py",
+   "sha256": "08030f099938a7ba32b76467e474bb577a94c128e20681c85e1a5d68c93c785f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "D3",
+   "muc_do": "thấp",
+   "mo_ta": "RolloutBlocked (tính năng tắt) không được bắt ở CLI → traceback exit 1 (mkt_director --briefs, seo_web --submit, pc_hr --jd); mkt_ads --propose in '[error] RolloutBlocked: RolloutBlocked' exit 1 — mất lý do, lệch quy ước exit 2 của các CLI khác. Hành vi cốt lõi (không sinh đầu ra) vẫn đúng.",
+   "tai_hien": "rollout --disable <tính năng>; chạy CLI tương ứng",
+   "expected": "[blocked] <lý do> exit 2",
+   "actual": "traceback / thông báo mất lý do, exit 1",
+   "evidence": [
+    "evidence/itacc_r10/g3/out/01.2-C4.txt",
+    "evidence/itacc_r10/g3/out/06.1-C3.txt",
+    "evidence/itacc_r10/g3/out/L-06.1-C4.txt",
+    "evidence/itacc_r10/g3/out/03.1-C7.txt"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,27 @@
+# db samsam_itacc_r10_fin
+> select id, channel, status, total_vnd, source from orders where source like 'market:%' order by id
+["shopee:14d2abfe181ce2bf", "shopee", "Hoàn thành", 300000, "market:shopee"]
+["shopee:6a9bc9cb1b0f4bf9", "shopee", "Hoàn thành", 700000, "market:shopee"]
+["shopee:8ef66229d79ea68c", "shopee", "Trả hàng/Hoàn tiền", 400000, "market:shopee"]
+["shopee:c55ce12914e078f3", "shopee", "cancelled", 200000, "market:shopee"]
+["shopee:ed1bc36f577c9b04", "shopee", "Hoàn thành", 1000000, "market:shopee"]
+["tiktok:4b3f19c2a502f6d4", "tiktok", "Completed", 500000, "market:tiktok"]
+> select count(*) filter (where raw::text ilike '%0900000%' or raw::text ilike '%Người Nhận%') as pii_rows, count(*) from market_rows
+[0, 6]
+> select column_name from information_schema.columns where table_name='market_rows' order by ordinal_position
+["id"]
+["snapshot_id"]
+["row_no"]
+["channel"]
+["export_kind"]
+["item_id"]
+["seller_sku"]
+["sku_key"]
+["title"]
+["price_vnd"]
+["stock"]
+["status"]
+["ads_spend_vnd"]
+["qty"]
+["order_id_hash"]
+["raw"]

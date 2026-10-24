@@ -1,0 +1,12 @@
+"""FIXTURE: feed vòng R (kiểm tắt từng tính năng intel-02.x)."""
+import sys
+sys.path.insert(0, r"D:\code\samsam\evidence\itacc_r10\g1\harness")
+import mk_feed
+r = sys.argv[1]
+rows = [
+ (f"Cảnh báo lô sâm giả mới trên chợ mạng Thử IT {r}", "Phát hiện thêm lô sâm giả bán qua mạng."),
+ (f"Dự thảo nghị định mới về thực phẩm chức năng Thử IT {r}", "Dự thảo nghị định quy định quảng cáo thực phẩm chức năng."),
+ (f"KGC bị phạt vì quảng cáo vượt công bố Thử IT {r}", "Nhà phân phối KGC bị phạt do quảng cáo vượt nội dung công bố."),
+ (f"Sâm Sâm bị giả mạo nhãn hiệu sản phẩm nhân sâm Thử IT {r}", "Tài khoản giả mạo Sâm Sâm rao bán nhân sâm."),
+]
+mk_feed.main(r"D:\code\samsam\evidence\itacc_r10\g1\harness\feed\feed.xml", r, extra=rows)

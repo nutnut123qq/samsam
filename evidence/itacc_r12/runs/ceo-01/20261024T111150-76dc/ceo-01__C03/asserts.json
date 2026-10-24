@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ },
+ {
+  "sql": "select value::bigint from channel_snapshots where channel = 'shopee' and metric_id = 'sales.gmv_vnd' and period_kind = 'week' and period_start = '2026-10-12' and source = 'manual_export'",
+  "expect": 12500000,
+  "actual": 12500000,
+  "dat": true
+ }
+]

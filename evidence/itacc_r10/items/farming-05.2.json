@@ -1,0 +1,197 @@
+{
+ "id": "farming-05.2",
+ "ten": "Dự báo sản lượng thu hoạch",
+ "khoi": "farming",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Vùng trồng / Cảnh báo, dự báo (P2): 'dự báo sản lượng thu hoạch'",
+ "tieu_chi": [
+  "`agents.vt_thuhoach --date --submit` (REPORTS_DIR → scratchpad qua harness) → mục approval_queue farming/harvest_forecast pending, payload khoảng thấp-cơ sở-cao + giả định + thiếu dữ liệu, sha giả định",
+  "Ca âm: chạy lại không nhân mục pending; khoảnh thiếu tree_count → 'thiếu dữ liệu' không coi =0; tắt → không sinh",
+  "T4: không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:58:33+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_farm; dev mode (AUTH_MODE trống, DEPLOY tắt); harness đổi REPORTS_DIR → scratchpad",
+ "dau_vao": [],
+ "ca": [
+  {
+   "ma": "F052-01",
+   "mo_ta": "Dự báo + submit",
+   "lenh": "python evidence/itacc_r10/g5/harness/mod_run.py agents.vt_thuhoach --patch REPORTS_DIR=<scratch>/reports -- --date 2026-10-23 --submit",
+   "expected": "harvest_forecast pending agent:VT",
+   "actual": "approval_queue #4 harvest_forecast pending agent:VT is_sample=False; IT-K03..06 2027-Q1 6–13–23 kg; sha 2 file giả định trong metadata",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F052-02",
+   "mo_ta": "Idempotent",
+   "lenh": "python evidence/itacc_r10/g5/harness/mod_run.py agents.vt_thuhoach --patch REPORTS_DIR=<scratch>/reports -- --date 2026-10-23 --submit",
+   "expected": "không thêm",
+   "actual": "[submit] skipped #4",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F052-03",
+   "mo_ta": "Thiếu dữ liệu",
+   "lenh": "python evidence/itacc_r10/g5/harness/mod_run.py agents.vt_thuhoach --patch REPORTS_DIR=<scratch>/reports -- --date 2026-10-23 --submit",
+   "expected": "IT-K02 'thiếu'",
+   "actual": "'IT-K02: thiếu dữ liệu (tree_count, planted_year) — không ước lượng'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F052-04a",
+   "mo_ta": "disable",
+   "lenh": "python -m pipelines.rollout --disable farming-05.2 --by Người Thử IT",
+   "expected": "tắt",
+   "actual": "chạy thử → tắt",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F052-04b",
+   "mo_ta": "Âm: tắt",
+   "lenh": "python evidence/itacc_r10/g5/harness/mod_run.py agents.vt_thuhoach --patch REPORTS_DIR=<scratch>/reports -- --date 2026-10-24 --submit",
+   "expected": "không mục mới",
+   "actual": "exit 1 RolloutBlocked (traceback — OBS-G5-03); harvest_forecast giữ 1 mục",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F052-04c",
+   "mo_ta": "promote",
+   "lenh": "python -m pipelines.rollout --promote farming-05.2 --by Người Thử IT",
+   "expected": "chạy thử",
+   "actual": "tắt → chạy thử",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "GĐ vùng trồng chốt giả định năng suất (data/harvest_assumptions.json)",
+ "gioi_han": "Giả định năng suất/giá GIẢ ĐỊNH; khoảnh mẫu gắn nhãn (MẪU). Quan sát OBS-G5-03 (traceback + file báo cáo vẫn ghi khi tắt) — ca chặn vẫn đạt (0 mục mới). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g5/runs/F052-01.txt",
+   "sha256": "25f4ea0fe24aebc396edded8ad23dd8a8bcbab124f91697483159802fdf037ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F052-02.txt",
+   "sha256": "6b22cb8521dcaec6f3b6467a613c5f2761839e259eda4ecc34ead9bc408bc0c7"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F052-04a.txt",
+   "sha256": "4a0397fefb615e7826c3a851fdba401890cdd456fd578282a099ee8447e10a3c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F052-04b.txt",
+   "sha256": "4fecac7f70ccf39b948c6850beada66cf7e062ba02a2cf2875a843612ccdcb32"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F052-04c.txt",
+   "sha256": "b666aae0656fa9e83c514ae9e54a987ee540eea5643b98c05cfdb0a194283a2d"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/outputs/vt-thu-hoach-2026-10-23.md",
+   "sha256": "efd8ee92dc4bf7807e8a7841bd718ea3c61c104a45cf6c0239c339ae79308b63"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/check_media.py",
+   "sha256": "9dc52b8eefb2b5ddb13334435174e3083f32f7006c60a6ce8271c7fd20fe4c23"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_llm_run.py",
+   "sha256": "df4672d90c7d9faa51a83ed42a6e1d159bf8eda0bb5aa95860cf15bef3c6fe3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_shopee.py",
+   "sha256": "9402db0719ea6f325d9d75b29af4ce22574dbae49dc2cfc7c24ad459534329cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gd_run.py",
+   "sha256": "84c646e3dd2019f6bc417e9071b5a422d8d37d7f10c0de077db3f303b1f21eaa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gw_probe.py",
+   "sha256": "8038c6f83facb83baab8eb2bb0fbb8b8cb1ab328082e7b6af0b718734f6cf981"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/hold_lock.py",
+   "sha256": "2a511640b93c4a5d3e2529f711f9b3ca07085bbb08b7be3f88383ffc230d1cab"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_criteria_g5.py",
+   "sha256": "6e64178e75ce85a9b8c265c33862e0395c7cdcfcc943ac19b4915e3b53e21dcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_fixtures.py",
+   "sha256": "d5117a5728c04a988c7d151150fa7e7153a45d59f3752eb470c16ed86aabb241"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_items_g5.py",
+   "sha256": "879a76de3bfb1285557de44386e17428ebf513bf1368f5a554b534fad9edfb82"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_pdf.py",
+   "sha256": "f68506f1c8158b51a4a4048c894df8bfbc88d4a14071cb6c3d2393464add3867"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/mod_run.py",
+   "sha256": "0ba336024389f8ea885b2d63bb2056bdee2c03b814a74eb12343daff901a31d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/probe_run.py",
+   "sha256": "c0f2386d31984f5e279392c44c55209837e13b5f93ded55d5c80709c6b3e5105"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/q.py",
+   "sha256": "6b1c569d67e265d3ad9593331334d286cdbc525eb304ca55128eb686e57d97ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/qr_run.py",
+   "sha256": "8dbe083a6119eee0d80849374b7b053ef5bb44cac67abd85bae74a94562571c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/role_probe.py",
+   "sha256": "c1364ecad746feaeddbb98de7853e542a757cc4ddbbaaa6cae8aada075375a07"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture.py",
+   "sha256": "3b5ae3fad7dac20dc7fab16d1d704833bbb85ba6554c4fd41717f5441bed497b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "sha256": "c530ef5bce990aaa8e0393e582192b93687501195dfcbfa32520a3c28be1c90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/tamper.py",
+   "sha256": "0c27a266124476bb3369ed975395dd2d27ec8e30207e31647a817eda7540a186"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/zalo_webhook.py",
+   "sha256": "de7da44a52a26cb27510f89ffc5659c59c22e53f4fd01d7db142760bf371866c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/lib.sh",
+   "sha256": "c3d88bf45e775e5246126bb82b28042b0d4e6bc5e69a80b70e9d4d263c308a3d"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "OBS-G5-03",
+   "muc_do": "MINOR (quan sát, không làm FAIL ca)",
+   "mo_ta": "agents.vt_thuhoach --submit khi farming-05.2 TẮT: RolloutBlocked (ValueError) không được bắt trong main → traceback, exit 1 (kết quả chặn đúng, 0 mục mới) nhưng báo cáo vt-thu-hoach-<ngày>.md vẫn được ghi ra thư mục báo cáo TRƯỚC bước bị chặn (write_report không gắn tính năng cho tên báo cáo này).",
+   "tai_hien": "rollout --disable farming-05.2 --by <người>; python -m agents.vt_thuhoach --date 2026-10-24 --submit",
+   "expected": "thông báo chặn sạch (exit 1/2), không sinh đầu ra khi tính năng tắt",
+   "actual": "Traceback RolloutBlocked exit 1; file vt-thu-hoach-2026-10-24.md có trong thư mục báo cáo (scratchpad)",
+   "evidence": [
+    "evidence/itacc_r10/g5/runs/F052-04b.txt"
+   ]
+  }
+ ]
+}

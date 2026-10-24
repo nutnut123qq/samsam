@@ -1,0 +1,128 @@
+{
+ "id": "marketing-02.1",
+ "ten": "Ảnh bối cảnh AI quanh ảnh sản phẩm thật",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Ảnh và video AI: 'Ảnh bối cảnh quanh ảnh sản phẩm thật'",
+ "tieu_chi": [
+  "T1 `python -m pipelines.image_studio` chạy được; nhánh nền AI (--scene / provider khác none) bị chặn exit 2 trước mọi provider",
+  "T2 (phần con, provider none) nháp ảnh: content_drafts content_type='image' created_by='agent:mkt03' pending + image_assets sha256 = sha file PNG; nhãn 'Nội dung có sử dụng AI' trong text_layer/sidecar; pixel packshot alpha 255 khớp tuyệt đối; PNG không EXIF/text chunk; ai_generated=false",
+  "T3 SKU TPBVSK → maket_xnqc, rượu → ruou, 0 file/0 dòng; chạy lại → skipped",
+  "T4 không gọi mạng; đầu ra AI thật CHƯA có (registry none) → mục tổng BI_CHAN MISSING_ADAPTER"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); FIXTURE: golden bản sao (mat-ong-sam-300ml self_declaration_ok=true) nạp qua ingest.golden_store --file; packshot MẪU make_sample_packshot; PACKSHOT_DIR/IMAGE_OUT_DIR = scratchpad",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/golden_fixture_food.json",
+   "sha256": "1f54d03c2617d31d5246dece8107eb7629bb1df802ab13e73851df9c0699554c",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "out/fixture_packshots.sha256.txt",
+   "sha256": "41bc13d666d81d90cbc484990b0bf0cb89cdcdcea7059fa307b162008064b61a",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "02.1-C1",
+   "mo_ta": "--scene khi IMAGE_PROVIDER none",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --headline Quà quê Quảng Nam Thử IT --scene vườn sâm trong sương sớm",
+   "expected": "exit 2 blocked, 0 file/dòng",
+   "actual": "exit 2 [blocked] cần nền AI — BLOCKED vendor+DPA+key; 0 file, 0 dòng (chặn an toàn — KHÔNG phải đầu ra ảnh AI)",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02.1-C2",
+   "mo_ta": "IMAGE_PROVIDER=dalle",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --headline Quà quê Quảng Nam Thử IT",
+   "expected": "exit 2",
+   "actual": "exit 2 'chưa cắm… hỗ trợ: none'; 0 dòng",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02.1-C3",
+   "mo_ta": "phần con: ghép packshot MẪU + nền gradient",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --channel shopee --channel tiktok --channel web --headline Quà quê Quảng Nam Thử IT",
+   "expected": "T2 phần con đạt",
+   "actual": "exit 0; 4 nháp image (#3-#6, facebook/shopee/tiktok/web) created_by agent:mkt03 pending + 4 image_assets cùng sha 14a735…=sha file; label 'Nội dung có sử dụng AI\\nQuảng cáo'; ai_generated=false, provider none; kiểm độc lập: 182538 pixel alpha255 lệch 0, PNG chỉ IHDR/IDAT/IEND, exif 0",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02.1-C4",
+   "mo_ta": "SKU TPBVSK / rượu",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py -m pipelines.image_studio --sku saphraton-20v --sku ruou-sam-chai-thuy-tinh-500ml --channel shopee --headline Quà quê Quảng Nam Thử IT",
+   "expected": "maket_xnqc / ruou, 0 dòng",
+   "actual": "refused maket_xnqc (saphraton-20v), ruou (rượu); 0 dòng mới",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "02.1-C5",
+   "mo_ta": "chạy lại",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --headline Quà quê Quảng Nam Thử IT",
+   "expected": "skipped",
+   "actual": "skipped, 0 dòng mới (4/4)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "MISSING_ADAPTER",
+ "can_de_go": "Cắm provider sinh nền ảnh AI vào pipelines.image_studio.PROVIDERS (vendor + hợp đồng/DPA + key + trần chi phí agent image) rồi kiểm lại nhánh --scene; ảnh packshot THẬT do công ty cấp.",
+ "gioi_han": "Đầu ra thiết yếu 'ảnh bối cảnh AI' chưa thực hiện được (registry chỉ none); nền gradient/ghép packshot MẪU KHÔNG thay đầu ra ảnh AI. Tính năng mot_phan nên không vào sổ rollout → không kiểm được nhánh tắt.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/mkt-fx-golden.txt",
+   "sha256": "e750602417dd196cc4db5fecc8905c3a59f510bb05d926310fd8eb43d28a12ff"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.1-C1.txt",
+   "sha256": "3a4701b888a829b38e4231cd6a7330944e11ab1b58d8b1e90fc9cebda2bcde10"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.1-C2.txt",
+   "sha256": "bde08af82bb8cb524c389ee2edc979e51140ebc549d6e3ca6550bd2be14d4343"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.1-C3.txt",
+   "sha256": "bc9f2d7e0379c8a7e4cfaa3aba916213326f3a013f5fd8cd2ff5922952b116ee"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.1-C3.db.json",
+   "sha256": "9f232dd4c1bcf2f7c0f14313fd554c014a2e19a7952534574e8e81ca1405e08a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.1-C3.verify.txt",
+   "sha256": "187369378fd5976a4638cc4e0f82dbb7edb682660b86ac53a440066a823d2fb6"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.1-C4.txt",
+   "sha256": "94b303bf59305cee0c82d91258219520d86b33f6434fe4d4e66c52543eb9f73d"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/02.1-C5.txt",
+   "sha256": "02fc048998596503b96dee35c1a67045689a88804ec273e037827bc3b0cc9a62"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/verify_image.py",
+   "sha256": "dd1e7e51cdd7bb3fd240228d3f851c2ac4bafa678376d2bc8e83ddb9eb75c32e"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/media/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.png",
+   "sha256": "14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/media/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.json",
+   "sha256": "fa9df9db322fbd20c6104bde6d819ad2cf7ee9f64354d873df76a8c9fc498a56"
+  }
+ ],
+ "loi_san_pham": []
+}

@@ -1,0 +1,192 @@
+{
+ "id": "finance-03.1",
+ "ten": "Bảng tuổi nợ đại lý",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Công nợ, hoa hồng: 'Bảng tuổi nợ đại lý'",
+ "tieu_chi": [
+  "C1 acc_ar --load nạp sổ công nợ fixture → dealer_ar; file lỗi → exit 1, 0 dòng; nạp lại → skip",
+  "C2 --aging tính tuổi nợ FIFO đúng 4 nhóm 0-30/31-60/61-90/>90 + quá hạn khớp tính tay",
+  "C3 --bulletin ghi director-finance-<ngày>.md (REPORTS_DIR vá) có mục công nợ quá hạn với tuổi nợ ĐỦ 4 nhóm 0-30/31-60/61-90/>90 + quá hạn (theo đầu ra danh mục), nguồn dealer_ar; nhãn CHẠY THỬ; không gửi",
+  "C4 tắt tính năng → không ghi bản tin"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/ar_ok.csv",
+   "sha256": "8031bc6d146face1ee952d2384cbab3dcc1177977c5e51b88f36dd937ffdca12",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/ar_bad.csv",
+   "sha256": "f2105fd0f50673141f88425f52b2bb989825882f8a643632959872fd94a61efd",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F031-1",
+   "mo_ta": "ÂM file công nợ lỗi",
+   "lenh": "[F031-1] python -m agents.acc_ar --load evidence/itacc_r10/g4/fixtures/ar_bad.csv",
+   "expected": "exit 1, 0 dòng",
+   "actual": "exit 1 (dealer_code sai mẫu, amount ≤0 với phat_sinh); dealer_ar 0",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F031-2",
+   "mo_ta": "nạp sổ công nợ",
+   "lenh": "[F031-2] python -m agents.acc_ar --load evidence/itacc_r10/g4/fixtures/ar_ok.csv",
+   "expected": "exit 0, 7 dòng",
+   "actual": "exit 0 '[load] 7 dòng'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F031-3",
+   "mo_ta": "ÂM nạp lại",
+   "lenh": "[F031-3] python -m agents.acc_ar --load evidence/itacc_r10/g4/fixtures/ar_ok.csv",
+   "expected": "[skip]",
+   "actual": "exit 0 '[skip]'; dealer_ar 7",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F031-4",
+   "mo_ta": "aging FIFO",
+   "lenh": "[F031-4] python -m agents.acc_ar --aging --as-of 2026-10-23",
+   "expected": "IT-DL01 14tr (0-30 2tr, 31-60 5tr, >90 7tr) quá hạn 12tr; IT-DL02 61-90 4tr; IT-DL03 0-30 1tr quá hạn 1tr",
+   "actual": "khớp đúng từng số (cả IT-DL04 0-30 800.000 không quá hạn)",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F031-5",
+   "mo_ta": "bản tin GĐ tài chính",
+   "lenh": "[F031-5] python evidence/itacc_r10/g4/harness/run.py --reports-dir evidence/itacc_r10/g4/out/rep_f031 -- agents.acc_ar --bulletin --as-of 2026-10-23",
+   "expected": "director-finance-*.md bảng quá hạn 3 đại lý, tổng 17tr, nhãn CHẠY THỬ, report_outputs finance-03.1",
+   "actual": "exit 0; file có nhãn CHẠY THỬ, bảng IT-DL01/02/03, 'Tổng quá hạn: 17.000.000đ — nguồn dealer_ar'; report_outputs finance-03.1 is_sample=false",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F031-6",
+   "mo_ta": "bản tin thể hiện đủ 4 nhóm tuổi (0-30 của khoản quá hạn IT-DL03)",
+   "lenh": "[F031-5] python evidence/itacc_r10/g4/harness/run.py --reports-dir evidence/itacc_r10/g4/out/rep_f031 -- agents.acc_ar --bulletin --as-of 2026-10-23",
+   "expected": "có cột/giá trị nhóm 0-30 trong bản tin",
+   "actual": "bảng bản tin chỉ có cột Quá hạn | 31-60 | 61-90 | >90 — KHÔNG có 0-30: IT-DL03 quá hạn 1.000.000đ hiện 0/0/0; 0-30 của IT-DL01 (2tr) và đại lý chưa quá hạn (IT-DL04) không xuất hiện. Tuổi nợ đủ 4 nhóm chỉ có ở stdout --aging",
+   "exit": 0,
+   "ket_qua": "FAIL",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F031-7",
+   "mo_ta": "ÂM tắt finance-03.1 (chạy cuối)",
+   "lenh": "[TAT-finance-03.1] python -m pipelines.rollout --disable finance-03.1 --by Người Thử IT --note kiem nhanh tat IT r10 || [F031-7] python evidence/itacc_r10/g4/harness/run.py --reports-dir evidence/itacc_r10/g4/out/rep_tat -- agents.acc_ar --bulletin --as-of 2026-10-23",
+   "expected": "exit 2, không ghi file",
+   "actual": "exit 2 '[blocked] báo cáo director-finance-…: finance-03.1 đang tắt'; thư mục rep_tat rỗng",
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Thêm nhóm 0-30 (tuổi nợ đủ 4 nhóm) vào mục công nợ của bản tin — sửa sản phẩm, ngoài phạm vi kiểm nghiệm.",
+ "gioi_han": "Sổ công nợ thật do Bên B nạp tay; term_days/chính sách hoa hồng MẪU.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F031-1.txt",
+   "sha256": "e52a43401c669bf85ea7b0f5085aedbf3d614d6a624f054ae93098547047f61c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F031-2.txt",
+   "sha256": "e8031edb11f2ea7accbac3bd7a209e95b25904626b9e2bc583b8559393eea927"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F031-3.txt",
+   "sha256": "54ad7628557126d2c46869b2aa6209cf1aada7caa26e3f530dffd0c904201f6e"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F031-4.txt",
+   "sha256": "960c194445608fd7ffd5e1b2b3b194f838e2055379a2e3b9f420ef0d57686fc3"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F031-5.txt",
+   "sha256": "9786d9b2e5b7caae00cad895b688738857b83195b8d30851a98f5ca31d631d5c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F031-7.txt",
+   "sha256": "07c2db26c35d4ae368cf6ecd22fdc7fec631bebea9863e9b1164ee5a38ffae4b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-finance-03.1.txt",
+   "sha256": "41489f7e58eed1dd4a2ed10645d4b1f239c063f161fd11ee6a650449042a7458"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_f031/director-finance-2026-10-23.md",
+   "sha256": "94d13277d76c6588c6d3a4b5d9b99ef554008af888bb5d44d78bbcb9288153a5"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "muc_do": "thấp",
+   "mo_ta": "Bản tin GĐ tài chính (director-finance, mục 'Công nợ đại lý quá hạn' do agents.acc_ar.overdue_section dựng) thiếu nhóm tuổi 0-30 — đầu ra danh mục ghi 'Tuổi nợ 0-30/31-60/61-90/>90 + quá hạn trong bản tin'. Khoản quá hạn nằm ở nhóm 0-30 làm hàng không cộng khớp (Quá hạn 1.000.000đ, các cột 0đ); đại lý chưa quá hạn không có tuổi nợ trong bản tin.",
+   "tai_hien": "acc_ar --load fixtures/ar_ok.csv; harness run.py --reports-dir D -- agents.acc_ar --bulletin --as-of 2026-10-23",
+   "expected": "bảng có nhóm 0-30 (và tuổi nợ 4 nhóm)",
+   "actual": "chỉ Quá hạn/31-60/61-90/>90",
+   "evidence": [
+    "evidence/itacc_r10/g4/out/rep_f031/director-finance-2026-10-23.md",
+    "evidence/itacc_r10/g4/out/F031-4.txt"
+   ]
+  }
+ ]
+}

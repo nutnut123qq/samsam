@@ -1,0 +1,122 @@
+"""[r11] Bản sao render r10 — đọc tổng hợp HIỆN HÀNH evidence/itacc_r11/tong_hop.json + source_map.json, thêm mục 0
+(checkpoint r11), cột Lượt; phần mô tả 5–10 lấy từ evidence/itacc_r10/gates.json (KẾ THỪA r10, không sửa file đó),
+chỉ chú thích trong bộ nhớ mục 9 các điểm r11 đã xử lý. Gốc: Sinh docs/handover/nghiem-thu-ky-thuat-noi-bo.md từ evidence/itacc_r10/tong_hop.json (bảng
+96 mục, số tổng/phân bố do code đếm) + phần mô tả cố định (lỗi, xuyên suốt, gate, phụ thuộc).
+Chạy sau aggregate.py: python -I render_hoso.py"""
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = Path(__file__).resolve().parents[3]
+EV = ROOT / "evidence" / "itacc_r10"
+T = json.loads((ROOT / "evidence" / "itacc_r11" / "tong_hop.json").read_text(encoding="utf-8"))
+R11 = json.loads((ROOT / "evidence" / "itacc_r11" / "tong_hop_r11_6muc.json").read_text(encoding="utf-8"))
+G = json.loads((EV / "gates.json").read_text(encoding="utf-8"))
+s = T["tom_tat"]
+KH = ["ceo", "sales", "marketing", "intel", "finance", "production", "farming", "legal_hr", "data_platform"]
+LBL = {"DAT": "ĐẠT", "CHUA_KIEM": "CHƯA KIỂM", "BI_CHAN": "BỊ CHẶN"}
+
+
+def n(d, k):
+    return d.get(k, 0)
+
+
+def cell(t):
+    return " ".join(str(t).split()).replace("|", "\\|")
+
+
+L = []
+A = L.append
+A("# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r11 (kế thừa r10, 23/10/2026)")
+A("")
+A("> **Đây KHÔNG phải nghiệm thu hợp đồng.** Kiểm hành vi phần mềm trên máy dev, DB Postgres thử cô lập, dữ liệu "
+  "fixture giả. Không xác nhận thay hai bên, không đổi `acceptance_status` (vẫn 0/96 `da_nghiem_thu`), không coi máy này là "
+  "server Bên B, không dùng số ĐẠT nội bộ thay số nghiệm thu hợp đồng. Ma trận nghiệm thu hợp đồng (`ma-tran-nghiem-thu.md`) "
+  "giữ vai trò riêng (0/96 sẵn sàng chạy thử).")
+A("")
+L.extend(R11["muc0"])
+A("")
+A("## 1. Baseline và môi trường (r10 — kế thừa)")
+A("")
+A(f"- Nhánh `codex/safety-acceptance`, HEAD `16b33fc9b4f0e0ff45dbeab78972100909ec0340`, working tree chưa commit, index sạch.")
+A(f"- Fingerprint code kiểm (alternate index, 9 file mới đợt safety/acceptance, trừ DONE.md + v13-board.md, so HEAD): "
+  f"`{G['fingerprint']}` — khớp baseline controller, không đổi trong suốt đợt (kiểm lại trước full và sau cùng).")
+A("- Postgres: container Docker `samsam-itacc-r10` (`postgres:17-alpine`, cùng major 17 với cluster local), chỉ bind "
+  "`127.0.0.1:55432`, mật khẩu superuser sinh ngẫu nhiên (file scratchpad, không vào repo). DB thử tiền tố `samsam_itacc_r10*` "
+  "(chung, 9 DB theo khối, `…ui`, `…restore`, `…mk11`, `…full`). Mỗi DB: `apply_schema --roles` ×2 (kiểm áp lặp) + `core_store` "
+  "+ `golden_store`. KHÔNG truy cập DB `samsam`.")
+A("- Biến môi trường mỗi lệnh: `DATABASE_URL` tường minh tới DB thử, xóa PG*/…DATABASE_URL khác, `OPENROUTER_API_KEY` rỗng "
+  "(dotenv không lấp key thật), `DEPLOY`/`AUTH_MODE`/`RED_ALERT_NOTIFY` tắt trừ phép thử chế độ thực; `tests/_db_guard.py` không bị tắt.")
+A("- Fake chỉ ở biên: client AI (`llm_gateway._client`) giả; SMTP giả cục bộ có STARTTLS (chứng chỉ tự ký, tin trong tiến trình thử); "
+  "server HTTP giả 127.0.0.1 (RSS, CDN Zalo, Shopee API); chặn socket ra ngoài localhost trong harness. Không gọi dịch vụ có phí.")
+A("- Người thực hiện: Claude (điều phối viên) + 5 agent kiểm theo khối (g1 ceo+intel, g2 sales, g3 marketing+legal_hr, "
+  "g4 finance+production, g5 farming+data_platform), cùng brief `evidence/itacc_r10/harness_dieu_phoi/BRIEF.md.txt`.")
+A("")
+A("## 2. Phương pháp")
+A("")
+A("- **Tiêu chí viết TRƯỚC khi chạy:** khung 96 mục sinh từ danh mục `evidence/itacc_r10/criteria/khung.json` "
+  "(sha256 `20df60cc…3d3b1`, 10:03 +07:00); tiêu chí cụ thể + ca dự kiến theo nhóm `criteria/g1..g5.json`, khóa sha256 trong "
+  "`*.lock.txt` (10:15–10:21 +07:00) — hash hiện tại khớp khóa (không sửa sau khóa). Ca thêm sau khóa ghi rõ \"bổ sung sau khóa\" + lý do.")
+A("- **Mỗi ca:** entry point THỰC (CLI/module/job/webhook/UI) trên DB thử, đầu vào fixture có hash/provenance, exit code bắt ngay, "
+  "expected/actual, PASS/FAIL/NOT_RUN; evidence `evidence/itacc_r10/<nhóm>/`, bản ghi từng mục `evidence/itacc_r10/items/<id>.json`.")
+A("- **Phân loại:** ĐẠT = mọi tiêu chí bắt buộc đã chạy, có đầu ra thực + assertion + evidence, 0 FAIL/NOT_RUN; CHƯA KIỂM = thiếu "
+  "phép thử (ghi ca nào, vì sao); BỊ CHẶN = thiếu adapter/repo/vendor/dữ liệu/quyền/môi trường hoặc lỗi sản phẩm đã tái hiện "
+  "(CODE_FAIL). Ca FAIL ⇒ mục không thể ĐẠT. \"Chặn đúng vì thiếu provider\" chỉ là ca con PASS, không làm OCR/STT/ảnh AI thành ĐẠT.")
+A("- **Kiểm nhất quán bằng code** (`harness_dieu_phoi/aggregate.py.txt` → `evidence/itacc_r10/tong_hop.json`): đủ đúng 96 id, "
+  "không trùng/thiếu, đúng 1 trạng thái, ĐẠT không có FAIL/NOT_RUN, BỊ CHẶN có nguyên nhân + việc gỡ, CHƯA KIỂM có NOT_RUN kèm lý do, "
+  f"hash evidence khớp file. Kết quả: **{len(s['loi_nhat_quan'])} vi phạm**.")
+A("- FIXTURE dùng để dựng điều kiện (golden giả lập SKU đủ điều kiện, ép giai đoạn `van_hanh` trong wrapper, convlog `live` "
+  "giờ hôm qua, ...) ghi rõ trong từng bản ghi; KHÔNG là bằng chứng ngày chạy thử hợp đồng, không đếm đầu ra mẫu thành vận hành.")
+A("")
+A(f"## 3. Kết quả tổng HIỆN HÀNH (r11: {s['nguon_r10']} bản ghi r10 + {s['nguon_r11']} bản ghi r11) — mẫu số {s['mau_so']} (89 tính năng AI + 7 hạng mục)")
+A("")
+tot = s["tong"]
+A("| Nhóm | Số mục |")
+A("|---|---|")
+for k in ("DAT", "CHUA_KIEM", "BI_CHAN"):
+    A(f"| {LBL[k]} | {n(tot, k)} |")
+A(f"| **Tổng** | **{sum(tot.values())}** |")
+A("")
+A("Nguyên nhân BỊ CHẶN: " + ", ".join(f"{k} {v}" for k, v in sorted(s["nguyen_nhan_bi_chan"].items(), key=lambda x: -x[1])) + ".")
+A("")
+A("**Theo khối**")
+A("")
+A("| Khối | ĐẠT | CHƯA KIỂM | BỊ CHẶN | Tổng |")
+A("|---|---|---|---|---|")
+for k in KH:
+    d = s["theo_khoi"].get(k, {})
+    A(f"| {k} | {n(d,'DAT')} | {n(d,'CHUA_KIEM')} | {n(d,'BI_CHAN')} | {sum(d.values())} |")
+A("")
+A("**Theo phạm vi**")
+A("")
+A("| Phạm vi | ĐẠT | CHƯA KIỂM | BỊ CHẶN | Tổng |")
+A("|---|---|---|---|---|")
+for k in ("AI P1", "AI P2", "7 hạng mục khác"):
+    d = s["theo_pham_vi"].get(k, {})
+    A(f"| {k} | {n(d,'DAT')} | {n(d,'CHUA_KIEM')} | {n(d,'BI_CHAN')} | {sum(d.values())} |")
+A("")
+A("## 4. Bảng 96 mục")
+A("")
+A("Mức: LOCAL = entry point thật + DB thử, không dịch vụ ngoài; MOCK = có fake ở biên (AI/transport). Không mục nào ở mức SANDBOX/production. "
+  "Chi tiết ca, lệnh, expected/actual, giới hạn: `evidence/itacc_r10/items/<id>.json`.")
+A("")
+A("| ID | Khối | GĐ | Tên | Lượt | Trạng thái | Mức | Ca P/F/N | Nguyên nhân / ghi chú |")
+A("|---|---|---|---|---|---|---|---|---|")
+for r in T["items"]:
+    c = r["ca"]
+    note = r["nguyen_nhan_day_du"] if r["trang_thai"] == "BI_CHAN" else ""
+    if r["loi"]:
+        codes = sorted({(b.get("ma") or b.get("muc_do") or "lỗi") for b in r["loi"] if isinstance(b, dict)})
+        note = (note + " · lỗi ghi nhận: " + ", ".join(codes)).strip(" ·")
+    A(f"| {r['id']} | {r['khoi']} | {r['giai_doan']} | {cell(r['ten'])} | {r['luot']} | **{LBL[r['trang_thai']]}** | {r['muc_kiem']} | "
+      f"{c.get('PASS',0)}/{c.get('FAIL',0)}/{c.get('NOT_RUN',0)} | {cell(note)[:260]} |")
+A("")
+for sec in G["sections"]:
+    A(f"## {sec['title']} — kế thừa r10" if not sec["title"].startswith("9.") else f"## {sec['title']} (r10, kèm chú thích r11)")
+    A("")
+    L.extend(R11["chu_thich_muc9"] if sec["title"].startswith("9.") else [])
+    L.extend(sec["lines"])
+    A("")
+(ROOT / "docs" / "handover" / "nghiem-thu-ky-thuat-noi-bo.md").write_text("\n".join(L) + "\n", encoding="utf-8")
+print("ok", len(L))

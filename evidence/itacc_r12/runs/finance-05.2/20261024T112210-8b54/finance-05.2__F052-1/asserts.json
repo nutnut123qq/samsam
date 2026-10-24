@@ -1,0 +1,28 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-1\\out/dong-tien-2026-10-26.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/finance-05.2/20261024T112210-8b54/finance-05.2__F052-1/out/dong-tien-2026-10-26.md",
+    "sha256": "b16c88a98517cc1bd03f3415eb8aa6ab73518a3a8d28798f2b0c334d3d57490d"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\finance-05.2\\20261024T112210-8b54\\finance-05.2__F052-1\\out/dong-tien-2026-10-26.md",
+  "re": "(?s)\\A(?=.*\\A> \\*\\*CHẠY THỬ)(?=.*chưa có số dư đầu kỳ thật)(?=.*shopee: tỷ lệ thực nhận [0-9.]+ — đo từ settlement)(?=.*offline: tỷ lệ thực nhận 1\\.0000 — mặc định cấu hình — chưa xác minh)",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2' and not is_sample",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from lot_origins",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from lot_origins where linked_by like 'agent:%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from agent_action_log where action = 'qr_lot_link' and actor like 'agent:%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

@@ -1,0 +1,67 @@
+"""[r12-fix] Ghi checkpoint r12-fix vào DONE.md + docs/handover/v13-board.md (số đọc từ evidence/itacc_r12_fix_d2_l3 —
+tong_hop.json, probes, gate). Chạy 1 lần.  python -I patch_done_board_r12fix.py.txt"""
+import json
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+EV = ROOT / "evidence" / "itacc_r12_fix_d2_l3"
+T = json.loads((EV / "tong_hop.json").read_text(encoding="utf-8"))["tom_tat"]
+t = T["tong"]
+tot = f"{t.get('DAT', 0)} ĐẠT / {t.get('CHUA_KIEM', 0)} CHƯA KIỂM / {t.get('BI_CHAN', 0)} BỊ CHẶN"
+full = (EV / "gate" / "full_chot_f1.txt").read_text(encoding="utf-8")
+fr = re.search(r"(\d+ (?:passed|failed)[^\n=]*)", full).group(1).strip()
+fex = re.findall(r"(?m)^EXIT (\d+)", full)[-1]
+fpc = re.search(r"# fp code = (\w+)", full).group(1)
+P = {k: json.loads((EV / "probes" / k / "ban_ghi.json").read_text(encoding="utf-8"))
+     for k in ("d2_truoc", "d2_sau", "l3_truoc", "l3_sau")}
+
+
+def pt(k):
+    return f"{P[k]['tong']['PASS']}/{P[k]['tong']['FAIL']}"
+
+
+gates = {n: re.findall(r"(?m)^EXIT (\d+)", (EV / "gate" / f"{n}.txt").read_text(encoding="utf-8"))[-1]
+         for n in ("ruff_v2", "eval", "dpia", "redteam", "secret_scan")}
+gx = ", ".join(f"{k} EXIT {v}" for k, v in gates.items())
+
+b = ROOT / "docs" / "handover" / "v13-board.md"
+s = b.read_bytes().decode("utf-8")
+anchor = "## Checkpoint mới — Vòng r12 (24/10/2026)"
+assert s.count(anchor) == 1 and "r12-fix" not in s
+board = f"""## Checkpoint mới — Vòng r12-fix (24/10/2026): vá ĐÚNG D2 + L3 (controller bác "20/20 FIXED" của r12) — CHƯA commit/merge/push/deploy
+
+Không dùng DB `samsam`; không đổi `acceptance_status` (0/96 nghiệm thu hợp đồng); không mở việc ngoài hai lỗi. Postgres Docker riêng `samsam-itacc-r12fix` (127.0.0.1:55452). Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Kết luận "20/20 FIXED" của r12 bên dưới là LỊCH SỬ — sai ở D2/L3.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| D2 SĐT dạng ngoặc lọt guardrail đăng bài | vá: luật `pii_ca_nhan` quét bản phẳng `pii._flatten_paren` (chống nối, ngân sách tuyến tính, cạn → chặn); probe cùng sha: baseline {pt('d2_truoc')} P/F → bản sửa {pt('d2_sau')}; luật VẪN chờ Pháp chế | `evidence/itacc_r12_fix_d2_l3/probes/d2_*` |
+| L3 quá 30 giây vẫn hứa nhân viên | vá: gửi ngay câu hotline không hứa, ghi handoff 1 lần SAU gửi (Zalo + Messenger); probe cùng sha: baseline {pt('l3_truoc')} → bản sửa {pt('l3_sau')} | `probes/l3_*`, `tests/test_r12fix_d2_l3.py` |
+| Kiểm lại 5 mục (legal_hr-01, sales-01, marketing-01.1, sales-03, sales-07.1) | 5/5 ĐẠT theo tiêu chí mới khóa trước `criteria/r12fix_v1.json` (sales-01 C07 siết + C07M Messenger) | `items/`, `runs/` |
+| Tổng 96 (5 r12-fix + 91 kế thừa) | **{tot}** (r12: 84/0/12 — tổng không đổi); {len(T['loi_nhat_quan'])} vi phạm nhất quán | `tong_hop.json`, `source_map.json` |
+| Gate chốt (fp mã `{fpc[:12]}…`) | full {fr} EXIT {fex}; {gx} | `evidence/itacc_r12_fix_d2_l3/gate/` |
+
+"""
+b.write_bytes(s.replace(anchor, board + anchor).encode("utf-8"))
+
+d = ROOT / "DONE.md"
+s = d.read_bytes().decode("utf-8")
+h = "## Vòng r12 (24/10/2026)"
+assert s.count(h) == 1 and "r12-fix" not in s
+done = f"""## Vòng r12-fix (24/10/2026) — vá ĐÚNG hai lỗi D2/L3 controller bác ở r12 — CHƯA commit/merge/push/deploy
+
+Không truy cập DB `samsam`, không đổi `acceptance_status`, không mở việc ngoài D2/L3. Postgres Docker riêng
+`samsam-itacc-r12fix`. Fingerprint mã bản cuối (loại *.md) `{fpc}`. Kết luận r12 "20/20 FIXED" = lịch sử, bị bác ở D2/L3.
+
+1. D2: `pipelines/pii.py` tách `_flatten_paren` (đầu ra `_mask_pii` không đổi); `pipelines/guardrail.py` luật 8 quét thêm
+   bản phẳng, cạn ngân sách → chặn, khóa pii_allow chuẩn hóa 84→0. Luật `pii_ca_nhan` vẫn chờ Pháp chế.
+2. L3: `connectors/zalo.py` nhánh quá 30 giây gửi `NO_HANDOFF_TEXT` (không hứa), ghi handoff 1 lần SAU gửi; Messenger chung.
+3. Probe trước/sau cùng sha: D2 {pt('d2_truoc')} → {pt('d2_sau')}, L3 {pt('l3_truoc')} → {pt('l3_sau')} (PASS/FAIL);
+   test `tests/test_r12fix_d2_l3.py` + 2 test hạn chót `test_v13_c07_ops.py` đổi kỳ vọng sang câu không hứa.
+4. Kiểm lại 5 mục bằng tiêu chí khóa trước (`evidence/itacc_r12_fix_d2_l3/criteria/r12fix_v1.json`): 5/5 ĐẠT. Tổng 96:
+   **{tot}** (r12 84/0/12).
+5. Gate: full {fr}, EXIT {fex}; {gx}. Evidence `evidence/itacc_r12_fix_d2_l3/`.
+
+"""
+d.write_bytes(s.replace(h, done + h).encode("utf-8"))
+print("ok")

@@ -1,0 +1,1445 @@
+# fp_code=8f9188ade140c8aea64162400a772ae3f41c2780f788edb40fc9b254ae82aed3
+## ruff check .
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-cfo\unit_economics.py:49:12
+   |
+47 | def _money(v):
+48 |     sign = "-" if v < 0 else ""
+49 |     return "%s$%s" % (sign, "{:,.2f}".format(abs(v)))
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+  --> .agents\skills\founder-cfo\unit_economics.py:49:29
+   |
+47 | def _money(v):
+48 |     sign = "-" if v < 0 else ""
+49 |     return "%s$%s" % (sign, "{:,.2f}".format(abs(v)))
+   |                             ^^^^^^^^^^^^^^^^^^^^^^^^
+help: Convert to f-string
+   |
+48 |     sign = "-" if v < 0 else ""
+   -     return "%s$%s" % (sign, "{:,.2f}".format(abs(v)))
+49 +     return "%s$%s" % (sign, f"{abs(v):,.2f}")
+50 |
+   |
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-cfo\unit_economics.py:54:12
+   |
+52 | def _whole(v):
+53 |     sign = "-" if v < 0 else ""
+54 |     return "%s$%s" % (sign, "{:,.0f}".format(abs(round(v))))
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+  --> .agents\skills\founder-cfo\unit_economics.py:54:29
+   |
+52 | def _whole(v):
+53 |     sign = "-" if v < 0 else ""
+54 |     return "%s$%s" % (sign, "{:,.0f}".format(abs(round(v))))
+   |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: Convert to f-string
+   |
+53 |     sign = "-" if v < 0 else ""
+   -     return "%s$%s" % (sign, "{:,.0f}".format(abs(round(v))))
+54 +     return "%s$%s" % (sign, f"{abs(round(v)):,.0f}")
+55 |
+   |
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-cfo\unit_economics.py:61:32
+   |
+59 |     for i, it in enumerate(items or []):
+60 |         if not isinstance(it, dict) or "cost" not in it:
+61 |             raise NumbersError("%s[%d] needs a 'cost'" % (field, i))
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^
+62 |         try:
+63 |             total += float(it["cost"])
+   |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-cfo\unit_economics.py:65:32
+   |
+63 |             total += float(it["cost"])
+64 |         except (TypeError, ValueError):
+65 |             raise NumbersError("%s[%d].cost is not a number: %r" % (field, i, it["cost"]))
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+66 |     return total
+   |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-cfo\unit_economics.py:74:28
+   |
+72 |             return json.load(fh)
+73 |     except FileNotFoundError:
+74 |         raise NumbersError("no such file: %s" % path)
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+75 |     except json.JSONDecodeError as e:
+76 |         raise NumbersError("%s is not valid JSON: %s" % (path, e))
+   |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-cfo\unit_economics.py:76:28
+   |
+74 |         raise NumbersError("no such file: %s" % path)
+75 |     except json.JSONDecodeError as e:
+76 |         raise NumbersError("%s is not valid JSON: %s" % (path, e))
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:99:32
+    |
+ 97 |     else:
+ 98 |         if len(ramp) != 12:
+ 99 |             raise NumbersError("'ramp_per_day' needs 12 numbers, one per month (got %d)" % len(ramp))
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+100 |         ramp = [float(v) * volume for v in ramp]
+101 |     if not plan:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:135:22
+    |
+133 |         flags.append("Each unit loses money before rent and salaries: the price is below the variable cost.")
+134 |     if capacity is not None and breakeven_day > float(capacity):
+135 |         flags.append("Break-even needs %.0f %ss a day but capacity is %s." % (breakeven_day, spec.get("unit", "unit"), capacity))
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+136 |     if capacity is not None and plan > float(capacity):
+137 |         flags.append("The plan (%.0f a day) is above capacity (%s)." % (plan, capacity))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:137:22
+    |
+135 |         flags.append("Break-even needs %.0f %ss a day but capacity is %s." % (breakeven_day, spec.get("unit", "unit"), capacity))
+136 |     if capacity is not None and plan > float(capacity):
+137 |         flags.append("The plan (%.0f a day) is above capacity (%s)." % (plan, capacity))
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+138 |     if year_profit < 0:
+139 |         flags.append("Year 1 loses money on operations (%s)." % _whole(year_profit))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:139:22
+    |
+137 |         flags.append("The plan (%.0f a day) is above capacity (%s)." % (plan, capacity))
+138 |     if year_profit < 0:
+139 |         flags.append("Year 1 loses money on operations (%s)." % _whole(year_profit))
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+140 |     if payback_month is None:
+141 |         flags.append("The startup spend is not earned back within year 1.")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:176:14
+    |
+174 |     L.append("Every number below comes from the input file. Nothing is looked up or guessed.")
+175 |     L.append("")
+176 |     L.append("## One %s" % u)
+    |              ^^^^^^^^^^^^^^^
+177 |     L.append("")
+178 |     L.append("| line | per %s |" % u)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:178:14
+    |
+176 |     L.append("## One %s" % u)
+177 |     L.append("")
+178 |     L.append("| line | per %s |" % u)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^
+179 |     L.append("| --- | ---: |")
+180 |     L.append("| Price | %s |" % _money(a["price"]))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:180:14
+    |
+178 |     L.append("| line | per %s |" % u)
+179 |     L.append("| --- | ---: |")
+180 |     L.append("| Price | %s |" % _money(a["price"]))
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+181 |     for it in a["variable_items"]:
+182 |         L.append("| %s | -%s |" % (it.get("label", "cost"), _money(float(it["cost"]))))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:182:18
+    |
+180 |     L.append("| Price | %s |" % _money(a["price"]))
+181 |     for it in a["variable_items"]:
+182 |         L.append("| %s | -%s |" % (it.get("label", "cost"), _money(float(it["cost"]))))
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+183 |     L.append("| **Contribution** (what each %s leaves to pay the fixed costs) | **%s** (%.0f%%) |"
+184 |              % (u, _money(a["contribution"]), a["contribution_pct"] * 100))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:183:14
+    |
+181 |       for it in a["variable_items"]:
+182 |           L.append("| %s | -%s |" % (it.get("label", "cost"), _money(float(it["cost"]))))
+183 |       L.append("| **Contribution** (what each %s leaves to pay the fixed costs) | **%s** (%.0f%%) |"
+    |  ______________^
+184 | |              % (u, _money(a["contribution"]), a["contribution_pct"] * 100))
+    | |__________________________________________________________________________^
+185 |       L.append("")
+186 |       L.append("## The margin that matters")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:188:14
+    |
+186 |       L.append("## The margin that matters")
+187 |       L.append("")
+188 |       L.append("Fixed costs: %s a month (%s)." % (_whole(a["fixed_monthly"]), ", ".join(
+    |  ______________^
+189 | |         "%s %s" % (it.get("label", "cost"), _whole(float(it["cost"]))) for it in a["fixed_items"]) or "none given"))
+    | |___________________________________________________________________________________________________________________^
+190 |       L.append("")
+191 |       be = a["breakeven_per_day"]
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:189:9
+    |
+187 |     L.append("")
+188 |     L.append("Fixed costs: %s a month (%s)." % (_whole(a["fixed_monthly"]), ", ".join(
+189 |         "%s %s" % (it.get("label", "cost"), _whole(float(it["cost"]))) for it in a["fixed_items"]) or "none given"))
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+190 |     L.append("")
+191 |     be = a["breakeven_per_day"]
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:192:14
+    |
+190 |       L.append("")
+191 |       be = a["breakeven_per_day"]
+192 |       L.append("- **Break-even: %s %ss a day.** Below that you lose money every month." % (
+    |  ______________^
+193 | |         "never (each unit loses money)" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), u))
+    | |__________________________________________________________________________________________________^
+194 |       L.append("- **Profit margin at your plan** (%s a day): **%.0f%%** of every sale, after every cost." % (
+195 |           "{:,.0f}".format(a["plan_per_day"]), a["margin_at_plan"] * 100))
+    |
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+   --> .agents\skills\founder-cfo\unit_economics.py:193:64
+    |
+191 |     be = a["breakeven_per_day"]
+192 |     L.append("- **Break-even: %s %ss a day.** Below that you lose money every month." % (
+193 |         "never (each unit loses money)" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), u))
+    |                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+194 |     L.append("- **Profit margin at your plan** (%s a day): **%.0f%%** of every sale, after every cost." % (
+195 |         "{:,.0f}".format(a["plan_per_day"]), a["margin_at_plan"] * 100))
+    |
+help: Convert to f-string
+    |
+192 |     L.append("- **Break-even: %s %ss a day.** Below that you lose money every month." % (
+    -         "never (each unit loses money)" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), u))
+193 +         "never (each unit loses money)" if math.isinf(be) else f"{math.ceil(be):,.0f}", u))
+194 |     L.append("- **Profit margin at your plan** (%s a day): **%.0f%%** of every sale, after every cost." % (
+    |
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:194:14
+    |
+192 |       L.append("- **Break-even: %s %ss a day.** Below that you lose money every month." % (
+193 |           "never (each unit loses money)" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), u))
+194 |       L.append("- **Profit margin at your plan** (%s a day): **%.0f%%** of every sale, after every cost." % (
+    |  ______________^
+195 | |         "{:,.0f}".format(a["plan_per_day"]), a["margin_at_plan"] * 100))
+    | |_______________________________________________________________________^
+196 |       if a["capacity_per_day"] is not None:
+197 |           L.append("- Capacity: %s a day." % a["capacity_per_day"])
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:197:18
+    |
+195 |         "{:,.0f}".format(a["plan_per_day"]), a["margin_at_plan"] * 100))
+196 |     if a["capacity_per_day"] is not None:
+197 |         L.append("- Capacity: %s a day." % a["capacity_per_day"])
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+198 |     L.append("")
+199 |     L.append("## Year 1, month by month")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:201:14
+    |
+199 |     L.append("## Year 1, month by month")
+200 |     L.append("")
+201 |     L.append("| month | %ss a day | revenue | profit | cumulative (after %s startup) |" % (u, _whole(a["startup"])))
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+202 |     L.append("| ---: | ---: | ---: | ---: | ---: |")
+203 |     for m in a["months"]:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:204:18
+    |
+202 |     L.append("| ---: | ---: | ---: | ---: | ---: |")
+203 |     for m in a["months"]:
+204 |         L.append("| %d | %s | %s | %s | %s |" % (m["month"], "{:,.0f}".format(m["per_day"]), _whole(m["revenue"]),
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+205 |                                              _whole(m["profit"]), _whole(m["cumulative"])))
+206 |     L.append("")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:207:14
+    |
+205 |                                              _whole(m["profit"]), _whole(m["cumulative"])))
+206 |     L.append("")
+207 |     L.append("- **Year 1 operating profit: %s** on %s of revenue." % (_whole(a["year1_profit"]), _whole(a["year1_revenue"])))
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+208 |     L.append("- After the %s startup spend: %s." % (_whole(a["startup"]), _whole(a["year1_after_startup"])))
+209 |     L.append("- Startup money earned back: %s." % ("month %d" % a["payback_month"] if a["payback_month"] else "not within year 1"))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:208:14
+    |
+206 |     L.append("")
+207 |     L.append("- **Year 1 operating profit: %s** on %s of revenue." % (_whole(a["year1_profit"]), _whole(a["year1_revenue"])))
+208 |     L.append("- After the %s startup spend: %s." % (_whole(a["startup"]), _whole(a["year1_after_startup"])))
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+209 |     L.append("- Startup money earned back: %s." % ("month %d" % a["payback_month"] if a["payback_month"] else "not within year 1"))
+210 |     L.append("- Cash you need before it pays for itself: **%s**." % _whole(a["cash_needed"]))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:209:52
+    |
+207 |     L.append("- **Year 1 operating profit: %s** on %s of revenue." % (_whole(a["year1_profit"]), _whole(a["year1_revenue"])))
+208 |     L.append("- After the %s startup spend: %s." % (_whole(a["startup"]), _whole(a["year1_after_startup"])))
+209 |     L.append("- Startup money earned back: %s." % ("month %d" % a["payback_month"] if a["payback_month"] else "not within year 1"))
+    |                                                    ^^^^^^^^^^
+210 |     L.append("- Cash you need before it pays for itself: **%s**." % _whole(a["cash_needed"]))
+211 |     L.append("")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:210:14
+    |
+208 |     L.append("- After the %s startup spend: %s." % (_whole(a["startup"]), _whole(a["year1_after_startup"])))
+209 |     L.append("- Startup money earned back: %s." % ("month %d" % a["payback_month"] if a["payback_month"] else "not within year 1"))
+210 |     L.append("- Cash you need before it pays for itself: **%s**." % _whole(a["cash_needed"]))
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+211 |     L.append("")
+212 |     L.append("## What if")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:218:18
+    |
+216 |       for name, s in sensitivity(spec):
+217 |           be = s["breakeven_per_day"]
+218 |           L.append("| %s | %.0f%% | %s | %s |" % (name, s["margin_at_plan"] * 100,
+    |  __________________^
+219 | |                                               "never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)),
+220 | |                                               _whole(s["year1_profit"])))
+    | |________________________________________________________________________^
+221 |       L.append("")
+222 |       if a["flags"]:
+    |
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+   --> .agents\skills\founder-cfo\unit_economics.py:219:78
+    |
+217 |         be = s["breakeven_per_day"]
+218 |         L.append("| %s | %.0f%% | %s | %s |" % (name, s["margin_at_plan"] * 100,
+219 |                                               "never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)),
+    |                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+220 |                                               _whole(s["year1_profit"])))
+221 |     L.append("")
+    |
+help: Convert to f-string
+    |
+218 |         L.append("| %s | %.0f%% | %s | %s |" % (name, s["margin_at_plan"] * 100,
+    -                                               "never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)),
+219 +                                               "never" if math.isinf(be) else f"{math.ceil(be):,.0f}",
+220 |                                               _whole(s["year1_profit"])))
+    |
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:226:22
+    |
+224 |         L.append("")
+225 |         for f in a["flags"]:
+226 |             L.append("- %s" % f)
+    |                      ^^^^^^^^^^
+227 |     else:
+228 |         L.append("No red flags in these numbers. They are only as good as the inputs: check every cost against a real quote.")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:252:15
+    |
+250 |         a = analyse(spec)
+251 |     except NumbersError as e:
+252 |         print("error: %s" % e, file=sys.stderr)
+    |               ^^^^^^^^^^^^^^^
+253 |         return 2
+254 |     if args.json:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-cfo\unit_economics.py:263:15
+    |
+261 |         with open(args.out, "w", encoding="utf-8") as fh:
+262 |             fh.write(text)
+263 |         print("wrote %s" % args.out)
+    |               ^^^^^^^^^^^^^^^^^^^^^
+264 |     else:
+265 |         sys.stdout.write(text)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-consumer\panel.py:67:30
+   |
+65 |     for k in ("business", "target", "segments", "behaviours", "objections"):
+66 |         if k not in c or c[k] in ("", [], None):
+67 |             raise PanelError("customer.json needs '%s'" % k)
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+68 |     for s in c["segments"]:
+69 |         if "name" not in s or "income" not in s or len(s["income"]) != 2:
+   |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-consumer\panel.py:94:19
+   |
+92 |     rng.shuffle(names)
+93 |     while len(names) < n:
+94 |         names += ["%s %d" % (x, len(names) // len(FIRST_NAMES) + 1) for x in FIRST_NAMES]
+   |                   ^^^^^^^
+95 |     objections = customer["objections"]
+96 |     habits = customer.get("habits") or []
+   |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:102:19
+    |
+100 |         lo, hi = float(s["income"][0]), float(s["income"][1])
+101 |         cards.append({
+102 |             "id": "P%03d" % (i + 1),
+    |                   ^^^^^^^
+103 |             "name": names[i],
+104 |             "age": rng.randint(int(age[0]), int(age[1])),
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:136:26
+    |
+134 |         customer = _read_json(customer_path)
+135 |     except FileNotFoundError:
+136 |         raise PanelError("no such file: %s" % customer_path)
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+137 |     try:
+138 |         with open(pitch_path, encoding="utf-8") as fh:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:141:26
+    |
+139 |             pitch = fh.read().strip()
+140 |     except FileNotFoundError:
+141 |         raise PanelError("no such file: %s (write the pitch first: what you sell, the price, where)" % pitch_path)
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+142 |     if not pitch:
+143 |         raise PanelError("the pitch is empty")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:158:26
+    |
+156 |         return _read_json(_path(d, "panel.json")), _read_json(_path(d, "personas.json"))
+157 |     except FileNotFoundError:
+158 |         raise PanelError("no panel in %s: run init first" % d)
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:202:42
+    |
+200 |             continue
+201 |         brief = BRIEF.format(pitch=state["pitch"], target=target, out=os.path.abspath(out),
+202 |                              habit_line=("Your day: %s.\n" % c["habit"]) if c.get("habit") else "",
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+203 |                              reasons=" / ".join(REASONS), **c)
+204 |         bp = _path(d, "briefs", c["id"] + ".md")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:224:16
+    |
+222 |         return "missing " + ", ".join(sorted(missing))
+223 |     if a.get("id") != pid:
+224 |         return "id is %r, expected %s" % (a.get("id"), pid)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+225 |     if not isinstance(a.get("buys"), bool):
+226 |         return "'buys' must be true or false"
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:228:16
+    |
+226 |         return "'buys' must be true or false"
+227 |     if a.get("reason_code") not in REASONS:
+228 |         return "reason_code %r is not one of %s" % (a.get("reason_code"), ", ".join(REASONS))
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+229 |     return None
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:236:26
+    |
+234 |     _, cards = load_state(d)
+235 |     if pid not in {c["id"] for c in cards}:
+236 |         raise PanelError("no buyer %s on this panel" % pid)
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+237 |     start = text.find("{")
+238 |     if start < 0:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:243:26
+    |
+241 |         obj, _ = json.JSONDecoder().raw_decode(text[start:])
+242 |     except json.JSONDecodeError as e:
+243 |         raise PanelError("the reply's JSON does not parse: %s" % e)
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+244 |     path = _path(d, "answers", pid + ".json")
+245 |     _write_json(path, obj)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:249:26
+    |
+247 |     if prob:
+248 |         os.remove(path)
+249 |         raise PanelError("%s's answer is not valid (%s); re-run its brief instead" % (pid, prob))
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+250 |     return path
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:300:29
+    |
+298 |     cut1, cut2 = incomes[len(incomes) // 3], incomes[2 * len(incomes) // 3]
+299 |     for r in rows:
+300 |         r["income_band"] = ("under $%s" % "{:,}".format(cut1)) if r["income"] < cut1 else (
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+301 |             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)…
+    |
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+   --> .agents\skills\founder-consumer\panel.py:300:43
+    |
+298 |     cut1, cut2 = incomes[len(incomes) // 3], incomes[2 * len(incomes) // 3]
+299 |     for r in rows:
+300 |         r["income_band"] = ("under $%s" % "{:,}".format(cut1)) if r["income"] < cut1 else (
+    |                                           ^^^^^^^^^^^^^^^^^^^
+301 |             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)…
+    |
+help: Convert to f-string
+    |
+299 |     for r in rows:
+    -         r["income_band"] = ("under $%s" % "{:,}".format(cut1)) if r["income"] < cut1 else (
+300 +         r["income_band"] = ("under $%s" % f"{cut1:,}") if r["income"] < cut1 else (
+301 |             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)))
+    |
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:301:14
+    |
+299 |     for r in rows:
+300 |         r["income_band"] = ("under $%s" % "{:,}".format(cut1)) if r["income"] < cut1 else (
+301 |             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)…
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+302 |
+303 |     no = [r for r in rows if not r["buys"]]
+    |
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+   --> .agents\skills\founder-consumer\panel.py:301:29
+    |
+299 |     for r in rows:
+300 |         r["income_band"] = ("under $%s" % "{:,}".format(cut1)) if r["income"] < cut1 else (
+301 |             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)…
+    |                             ^^^^^^^^^^^^^^^^^^^
+302 |
+303 |     no = [r for r in rows if not r["buys"]]
+    |
+help: Convert to f-string
+    |
+300 |         r["income_band"] = ("under $%s" % "{:,}".format(cut1)) if r["income"] < cut1 else (
+    -             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)))
+301 +             ("$%s and up" % f"{cut2:,}") if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)))
+302 |
+    |
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:301:78
+    |
+299 | …
+300 | …% "{:,}".format(cut1)) if r["income"] < cut1 else (
+301 | …t(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)))
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+302 | …
+303 | …"]]
+    |
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+   --> .agents\skills\founder-consumer\panel.py:301:94
+    |
+299 |     for r in rows:
+300 |         r["income_band"] = ("under $%s" % "{:,}".format(cut1)) if r["income"] < cut1 else (
+301 |             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)…
+    |                                                                                              ^^^^^^^^^^^^^^^^^^^
+302 |
+303 |     no = [r for r in rows if not r["buys"]]
+    |
+help: Convert to f-string
+    |
+300 |         r["income_band"] = ("under $%s" % "{:,}".format(cut1)) if r["income"] < cut1 else (
+    -             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)))
+301 +             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % (f"{cut1:,}", "{:,}".format(cut2)))
+302 |
+    |
+
+UP032 [*] Use f-string instead of `format` call
+   --> .agents\skills\founder-consumer\panel.py:301:115
+    |
+299 | …
+300 | …t1)) if r["income"] < cut1 else (
+301 | …ome"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)))
+    |                                                          ^^^^^^^^^^^^^^^^^^^
+302 | …
+303 | …
+    |
+help: Convert to f-string
+    |
+300 |         r["income_band"] = ("under $%s" % "{:,}".format(cut1)) if r["income"] < cut1 else (
+    -             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), "{:,}".format(cut2)))
+301 +             ("$%s and up" % "{:,}".format(cut2)) if r["income"] >= cut2 else "$%s to $%s" % ("{:,}".format(cut1), f"{cut2:,}"))
+302 |
+    |
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:333:10
+    |
+331 | def results_md(res):
+332 |     pct = lambda v: "%.0f%%" % (v * 100)
+333 |     L = ["# Buyer panel: %s" % res["business"], ""]
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+334 |     L.append("**%d buy · %d pass** (%s buy) out of %d simulated buyers. Seed %s, so the same cards can be dealt again."
+335 |              % (res["buys"], res["passes"], pct(res["buy_rate"]), res["answered"], res["seed"]))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:334:14
+    |
+332 |     pct = lambda v: "%.0f%%" % (v * 100)
+333 |     L = ["# Buyer panel: %s" % res["business"], ""]
+334 |     L.append("**%d buy · %d pass** (%s buy) out of %d simulated buyers. Seed %s, so the same cards can be dealt again."
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+335 |              % (res["buys"], res["passes"], pct(res["buy_rate"]), res["answered"], res["seed"]))
+336 |     if res["skipped"]:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:338:18
+    |
+336 |     if res["skipped"]:
+337 |         L.append("")
+338 |         L.append("%d of %d buyers have no valid answer and are left out: %s." % (
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+339 |             len(res["skipped"]), res["dealt"], ", ".join("%s (%s)" % s for s in res["skipped"][:10])))
+340 |     L.append("")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:339:58
+    |
+337 |         L.append("")
+338 |         L.append("%d of %d buyers have no valid answer and are left out: %s." % (
+339 |             len(res["skipped"]), res["dealt"], ", ".join("%s (%s)" % s for s in res["skipped"][:10])))
+    |                                                          ^^^^^^^^^^^^^
+340 |     L.append("")
+341 |     L.append("These are simulated buyers, not customers. Use this to find objections and weak spots, then confirm the"
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:344:19
+    |
+342 |              " big ones with real people before you spend.")
+343 |     for title, key in (("By segment", "by_segment"), ("By buying behaviour", "by_behaviour"), ("By income", "by_income")):
+344 |         L += ["", "## %s" % title, "", "| group | buyers | buy rate |", "| --- | ---: | ---: |"]
+    |                   ^^^^^^^^^^^^^^^
+345 |         for k, n, r in res[key]:
+346 |             L.append("| %s | %d | %s%s |" % (k, n, pct(r), "  (thin)" if n < 8 else ""))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:346:22
+    |
+344 |         L += ["", "## %s" % title, "", "| group | buyers | buy rate |", "| --- | ---: | ---: |"]
+345 |         for k, n, r in res[key]:
+346 |             L.append("| %s | %d | %s%s |" % (k, n, pct(r), "  (thin)" if n < 8 else ""))
+    |                      ^^^^^^^^^^^^^^^^^^^^
+347 |     L += ["", "## Why they pass", "", "| reason | buyers | in their words |", "| --- | ---: | --- |"]
+348 |     for k, n, quotes, ids in res["why_not"]:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:349:18
+    |
+347 |     L += ["", "## Why they pass", "", "| reason | buyers | in their words |", "| --- | ---: | --- |"]
+348 |     for k, n, quotes, ids in res["why_not"]:
+349 |         L.append("| %s | %d | %s |" % (k, n, " · ".join('"%s" (%s)' % (q.replace("|", "/"), i) for q, i in zip(quotes, ids))))
+    |                  ^^^^^^^^^^^^^^^^^^
+350 |     L += ["", "## Why they buy", "", "| reason | buyers | in their words |", "| --- | ---: | --- |"]
+351 |     for k, n, quotes, ids in res["why_yes"]:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:349:57
+    |
+347 |     L += ["", "## Why they pass", "", "| reason | buyers | in their words |", "| --- | ---: | --- |"]
+348 |     for k, n, quotes, ids in res["why_not"]:
+349 |         L.append("| %s | %d | %s |" % (k, n, " · ".join('"%s" (%s)' % (q.replace("|", "/"), i) for q, i in zip(quotes, ids))))
+    |                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+350 |     L += ["", "## Why they buy", "", "| reason | buyers | in their words |", "| --- | ---: | --- |"]
+351 |     for k, n, quotes, ids in res["why_yes"]:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:352:18
+    |
+350 |     L += ["", "## Why they buy", "", "| reason | buyers | in their words |", "| --- | ---: | --- |"]
+351 |     for k, n, quotes, ids in res["why_yes"]:
+352 |         L.append("| %s | %d | %s |" % (k, n, " · ".join('"%s" (%s)' % (q.replace("|", "/"), i) for q, i in zip(quotes, ids))))
+    |                  ^^^^^^^^^^^^^^^^^^
+353 |     if res["flip"]:
+354 |         L += ["", "## What would flip a no", ""]
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:352:57
+    |
+350 |     L += ["", "## Why they buy", "", "| reason | buyers | in their words |", "| --- | ---: | --- |"]
+351 |     for k, n, quotes, ids in res["why_yes"]:
+352 |         L.append("| %s | %d | %s |" % (k, n, " · ".join('"%s" (%s)' % (q.replace("|", "/"), i) for q, i in zip(quotes, ids))))
+    |                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+353 |     if res["flip"]:
+354 |         L += ["", "## What would flip a no", ""]
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:356:22
+    |
+354 |         L += ["", "## What would flip a no", ""]
+355 |         for f in res["flip"][:12]:
+356 |             L.append("- %s" % f)
+    |                      ^^^^^^^^^^
+357 |     if res["purchases_first_month_per_buyer"] is not None:
+358 |         L += ["", "Buyers say they would buy **%.1f times** in the first month on average." % res["purchases_first_month_per_buyer"]]
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:358:19
+    |
+356 | …   L.append("- %s" % f)
+357 | …s["purchases_first_month_per_buyer"] is not None:
+358 | … += ["", "Buyers say they would buy **%.1f times** in the first month on average." % res["purchases_first_month_per_buyer"]]
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+359 | …s["price_answers"]:
+360 | … += ["", "%d buyers gave all four price answers. Run founder-pricing's van_westendorp.py on the answers folder." % res["price_answer…
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:360:19
+    |
+358 |         L += ["", "Buyers say they would buy **%.1f times** in the first month on average." % res["purchases_first_month_per_buyer"]]
+359 |     if res["price_answers"]:
+360 |         L += ["", "%d buyers gave all four price answers. Run founder-pricing's van_westendorp.py on the answers folder." % res["pric…
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+361 |     return "\n".join(L) + "\n"
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:386:19
+    |
+384 |             cards = init(a.dir, a.customer, a.pitch, a.n, a.seed)
+385 |             st, _ = load_state(a.dir)
+386 |             print("dealt %d buyers (seed %s) into %s. Next: panel.py prompts" % (len(cards), st["seed"], a.dir))
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+387 |         elif a.cmd == "prompts":
+388 |             waves = write_briefs(a.dir, a.wave)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:393:23
+    |
+391 |                 print("every buyer has a valid answer. Next: panel.py tally")
+392 |             else:
+393 |                 print("%d briefs in %d waves of up to %d. Launch one wave at a time:" % (n, len(waves), a.wave))
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+394 |                 for k, w in enumerate(waves, 1):
+395 |                     print("wave %d: %s" % (k, " ".join("%s=%s" % job for job in w)))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:395:27
+    |
+393 |                 print("%d briefs in %d waves of up to %d. Launch one wave at a time:" % (n, len(waves), a.wave))
+394 |                 for k, w in enumerate(waves, 1):
+395 |                     print("wave %d: %s" % (k, " ".join("%s=%s" % job for job in w)))
+    |                           ^^^^^^^^^^^^^
+396 |         elif a.cmd == "check":
+397 |             probs = check(a.dir)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:395:56
+    |
+393 |                 print("%d briefs in %d waves of up to %d. Launch one wave at a time:" % (n, len(waves), a.wave))
+394 |                 for k, w in enumerate(waves, 1):
+395 |                     print("wave %d: %s" % (k, " ".join("%s=%s" % job for job in w)))
+    |                                                        ^^^^^^^^^^^^^
+396 |         elif a.cmd == "check":
+397 |             probs = check(a.dir)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:401:23
+    |
+399 |                 print("all answers present and valid")
+400 |             for pid, prob in probs:
+401 |                 print("%s: %s" % (pid, prob))
+    |                       ^^^^^^^^^^^^^^^^^^^^^^
+402 |             return 1 if probs else 0
+403 |         elif a.cmd == "save":
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:404:19
+    |
+402 |             return 1 if probs else 0
+403 |         elif a.cmd == "save":
+404 |             print("saved %s" % save(a.dir, a.id, sys.stdin.read()))
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+405 |         elif a.cmd == "tally":
+406 |             res = tally(a.dir)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:412:19
+    |
+410 |                 fh.write(text)
+411 |             _write_json(_path(a.dir, "results.json"), res)
+412 |             print("%d buy · %d pass (%.0f%%). Wrote %s" % (res["buys"], res["passes"], res["buy_rate"] * 100, out))
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+413 |         elif a.cmd == "status":
+414 |             st, cards = load_state(a.dir)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:416:19
+    |
+414 |             st, cards = load_state(a.dir)
+415 |             probs = check(a.dir)
+416 |             print("%d buyers dealt (seed %s), %d answered, %d to go" % (len(cards), st["seed"], len(cards) - len(probs), len(probs)))
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+417 |     except PanelError as e:
+418 |         print("error: %s" % e, file=sys.stderr)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-consumer\panel.py:418:15
+    |
+416 |             print("%d buyers dealt (seed %s), %d answered, %d to go" % (len(cards), st["seed"], len(cards) - len(probs), len(probs)))
+417 |     except PanelError as e:
+418 |         print("error: %s" % e, file=sys.stderr)
+    |               ^^^^^^^^^^^^^^^
+419 |         return 2
+420 |     return 0
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-plan\compile.py:80:31
+   |
+78 | …rs["unit"]
+79 | …rs["contribution"]
+80 | …pend((c > 0, "Each %s earns $%.2f before fixed costs (%.0f%% contribution)." % (u, c, numbers["contribution_pct"] * 100)
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+81 | …      if c > 0 else "Each %s LOSES $%.2f before fixed costs." % (u, -c)))
+82 | …rs["year1_profit"]
+   |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-plan\compile.py:81:38
+   |
+79 | …     c = numbers["contribution"]
+80 | …     checks.append((c > 0, "Each %s earns $%.2f before fixed costs (%.0f%% contribution)." % (u, c, numbers["contribution_pct"] * 100)
+81 | …                    if c > 0 else "Each %s LOSES $%.2f before fixed costs." % (u, -c)))
+   |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+82 | …     y = numbers["year1_profit"]
+83 | …     checks.append((y > 0, "Year 1 operating profit: $%s." % "{:,.0f}".format(y) if y > 0
+   |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-plan\compile.py:83:31
+   |
+81 |                        if c > 0 else "Each %s LOSES $%.2f before fixed costs." % (u, -c)))
+82 |         y = numbers["year1_profit"]
+83 |         checks.append((y > 0, "Year 1 operating profit: $%s." % "{:,.0f}".format(y) if y > 0
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+84 |                        else "Year 1 operating LOSS: $%s." % "{:,.0f}".format(-y)))
+85 |         be, cap = numbers["breakeven_per_day"], numbers["capacity_per_day"]
+   |
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+  --> .agents\skills\founder-plan\compile.py:83:65
+   |
+81 |                        if c > 0 else "Each %s LOSES $%.2f before fixed costs." % (u, -c)))
+82 |         y = numbers["year1_profit"]
+83 |         checks.append((y > 0, "Year 1 operating profit: $%s." % "{:,.0f}".format(y) if y > 0
+   |                                                                 ^^^^^^^^^^^^^^^^^^^
+84 |                        else "Year 1 operating LOSS: $%s." % "{:,.0f}".format(-y)))
+85 |         be, cap = numbers["breakeven_per_day"], numbers["capacity_per_day"]
+   |
+help: Convert to f-string
+   |
+82 |         y = numbers["year1_profit"]
+   -         checks.append((y > 0, "Year 1 operating profit: $%s." % "{:,.0f}".format(y) if y > 0
+83 +         checks.append((y > 0, "Year 1 operating profit: $%s." % f"{y:,.0f}" if y > 0
+84 |                        else "Year 1 operating LOSS: $%s." % "{:,.0f}".format(-y)))
+   |
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-plan\compile.py:84:29
+   |
+82 |         y = numbers["year1_profit"]
+83 |         checks.append((y > 0, "Year 1 operating profit: $%s." % "{:,.0f}".format(y) if y > 0
+84 |                        else "Year 1 operating LOSS: $%s." % "{:,.0f}".format(-y)))
+   |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+85 |         be, cap = numbers["breakeven_per_day"], numbers["capacity_per_day"]
+86 |         if cap is not None:
+   |
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+  --> .agents\skills\founder-plan\compile.py:84:61
+   |
+82 |         y = numbers["year1_profit"]
+83 |         checks.append((y > 0, "Year 1 operating profit: $%s." % "{:,.0f}".format(y) if y > 0
+84 |                        else "Year 1 operating LOSS: $%s." % "{:,.0f}".format(-y)))
+   |                                                             ^^^^^^^^^^^^^^^^^^^^
+85 |         be, cap = numbers["breakeven_per_day"], numbers["capacity_per_day"]
+86 |         if cap is not None:
+   |
+help: Convert to f-string
+   |
+83 |         checks.append((y > 0, "Year 1 operating profit: $%s." % "{:,.0f}".format(y) if y > 0
+   -                        else "Year 1 operating LOSS: $%s." % "{:,.0f}".format(-y)))
+84 +                        else "Year 1 operating LOSS: $%s." % f"{-y:,.0f}"))
+85 |         be, cap = numbers["breakeven_per_day"], numbers["capacity_per_day"]
+   |
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-plan\compile.py:88:34
+   |
+86 |           if cap is not None:
+87 |               fits = not math.isinf(be) and be <= float(cap)
+88 |               checks.append((fits, "Break-even is %s %ss a day against a capacity of %s." % (
+   |  __________________________________^
+89 | |                 "never reached" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), u, cap)))
+   | |_______________________________________________________________________________________________^
+90 |       raw = _read(os.path.join(d, "panel", "results.json"))
+91 |       if raw:
+   |
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+  --> .agents\skills\founder-plan\compile.py:89:56
+   |
+87 |             fits = not math.isinf(be) and be <= float(cap)
+88 |             checks.append((fits, "Break-even is %s %ss a day against a capacity of %s." % (
+89 |                 "never reached" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), u, cap)))
+   |                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+90 |     raw = _read(os.path.join(d, "panel", "results.json"))
+91 |     if raw:
+   |
+help: Convert to f-string
+   |
+88 |             checks.append((fits, "Break-even is %s %ss a day against a capacity of %s." % (
+   -                 "never reached" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), u, cap)))
+89 +                 "never reached" if math.isinf(be) else f"{math.ceil(be):,.0f}", u, cap)))
+90 |     raw = _read(os.path.join(d, "panel", "results.json"))
+   |
+
+UP031 Use format specifiers instead of percent format
+  --> .agents\skills\founder-plan\compile.py:94:43
+   |
+92 |         panel = json.loads(raw)
+93 |         r = panel["buy_rate"]
+94 |         checks.append((r >= min_buy_rate, "%d of %d simulated buyers buy (%.0f%%, the bar is %.0f%%)." % (
+   |                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+95 |             panel["buys"], panel["answered"], r * 100, min_buy_rate * 100)))
+96 |     if numbers is None:
+   |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:113:10
+    |
+111 |     v, checks, numbers, panel = verdict(d, min_buy_rate)
+112 |     title = name or (numbers["business"] if numbers and numbers.get("business") else "Your business")
+113 |     L = ["# %s · Business plan" % title, ""]
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+114 |     L.append("**Verdict: %s**" % v)
+115 |     L.append("")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:114:14
+    |
+112 |     title = name or (numbers["business"] if numbers and numbers.get("business") else "Your business")
+113 |     L = ["# %s · Business plan" % title, ""]
+114 |     L.append("**Verdict: %s**" % v)
+    |              ^^^^^^^^^^^^^^^^^^^^^
+115 |     L.append("")
+116 |     for ok, text in checks:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:117:18
+    |
+115 |     L.append("")
+116 |     for ok, text in checks:
+117 |         L.append("- %s %s" % ("✓" if ok else "✗", text))
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+118 |     if v == "Incomplete":
+119 |         L.append("- No numbers yet. Run /founder-cfo, then compile again.")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:124:15
+    |
+122 |         be = numbers["breakeven_per_day"]
+123 |         L += ["| key number | |", "| --- | ---: |",
+124 |               "| Price | $%.2f a %s |" % (numbers["price"], numbers["unit"]),
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+125 |               "| Profit margin at plan | %.0f%% per %s |" % (numbers["margin_at_plan"] * 100, numbers["unit"]),
+126 |               "| Break-even | %s %ss a day |" % ("never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), numbers["unit"]),
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:125:15
+    |
+123 |         L += ["| key number | |", "| --- | ---: |",
+124 |               "| Price | $%.2f a %s |" % (numbers["price"], numbers["unit"]),
+125 |               "| Profit margin at plan | %.0f%% per %s |" % (numbers["margin_at_plan"] * 100, numbers["unit"]),
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+126 |               "| Break-even | %s %ss a day |" % ("never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), numbers["unit"]),
+127 |               "| Year 1 operating profit | $%s |" % "{:,.0f}".format(numbers["year1_profit"]),
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:126:15
+    |
+124 |               "| Price | $%.2f a %s |" % (numbers["price"], numbers["unit"]),
+125 |               "| Profit margin at plan | %.0f%% per %s |" % (numbers["margin_at_plan"] * 100, numbers["unit"]),
+126 |               "| Break-even | %s %ss a day |" % ("never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), numbers["unit"]),
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+127 |               "| Year 1 operating profit | $%s |" % "{:,.0f}".format(numbers["year1_profit"]),
+128 |               "| Startup spend | $%s |" % "{:,.0f}".format(numbers["startup"]),
+    |
+help: Replace with format specifiers
+
+UP032 [*] Use f-string instead of `format` call
+   --> .agents\skills\founder-plan\compile.py:126:81
+    |
+124 |               "| Price | $%.2f a %s |" % (numbers["price"], numbers["unit"]),
+125 |               "| Profit margin at plan | %.0f%% per %s |" % (numbers["margin_at_plan"] * 100, numbers["unit"]),
+126 |               "| Break-even | %s %ss a day |" % ("never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), numbers["unit"]),
+    |                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+127 |               "| Year 1 operating profit | $%s |" % "{:,.0f}".format(numbers["year1_profit"]),
+128 |               "| Startup spend | $%s |" % "{:,.0f}".format(numbers["startup"]),
+    |
+help: Convert to f-string
+    |
+125 |               "| Profit margin at plan | %.0f%% per %s |" % (numbers["margin_at_plan"] * 100, numbers["unit"]),
+    -               "| Break-even | %s %ss a day |" % ("never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), numbers["unit"]),
+126 +               "| Break-even | %s %ss a day |" % ("never" if math.isinf(be) else f"{math.ceil(be):,.0f}", numbers["unit"]),
+127 |               "| Year 1 operating profit | $%s |" % "{:,.0f}".format(numbers["year1_profit"]),
+    |
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:127:15
+    |
+125 |               "| Profit margin at plan | %.0f%% per %s |" % (numbers["margin_at_plan"] * 100, numbers["unit"]),
+126 |               "| Break-even | %s %ss a day |" % ("never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), numbers["unit"]),
+127 |               "| Year 1 operating profit | $%s |" % "{:,.0f}".format(numbers["year1_profit"]),
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+128 |               "| Startup spend | $%s |" % "{:,.0f}".format(numbers["startup"]),
+129 |               "| Cash needed before it pays for itself | $%s |" % "{:,.0f}".format(numbers["cash_needed"]),
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:128:15
+    |
+126 | …     "| Break-even | %s %ss a day |" % ("never" if math.isinf(be) else "{:,.0f}".format(math.ceil(be)), numbers["unit"]),
+127 | …     "| Year 1 operating profit | $%s |" % "{:,.0f}".format(numbers["year1_profit"]),
+128 | …     "| Startup spend | $%s |" % "{:,.0f}".format(numbers["startup"]),
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+129 | …     "| Cash needed before it pays for itself | $%s |" % "{:,.0f}".format(numbers["cash_needed"]),
+130 | …     "| Startup money earned back | %s |" % ("month %d" % numbers["payback_month"] if numbers["payback_month"] else "not in year 1")]
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:129:15
+    |
+127 | …           "| Year 1 operating profit | $%s |" % "{:,.0f}".format(numbers["year1_profit"]),
+128 | …           "| Startup spend | $%s |" % "{:,.0f}".format(numbers["startup"]),
+129 | …           "| Cash needed before it pays for itself | $%s |" % "{:,.0f}".format(numbers["cash_needed"]),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+130 | …           "| Startup money earned back | %s |" % ("month %d" % numbers["payback_month"] if numbers["payback_month"] else "not in ye…
+131 | …     if panel:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:130:55
+    |
+128 | …           "| Startup spend | $%s |" % "{:,.0f}".format(numbers["startup"]),
+129 | …           "| Cash needed before it pays for itself | $%s |" % "{:,.0f}".format(numbers["cash_needed"]),
+130 | …           "| Startup money earned back | %s |" % ("month %d" % numbers["payback_month"] if numbers["payback_month"] else "not in ye…
+    |                                                     ^^^^^^^^^^
+131 | …     if panel:
+132 | …         L.append("| Buyer panel | %d buy · %d pass |" % (panel["buys"], panel["passes"]))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:132:22
+    |
+130 |               "| Startup money earned back | %s |" % ("month %d" % numbers["payback_month"] if numbers["payback_month"] else "not in …
+131 |         if panel:
+132 |             L.append("| Buyer panel | %d buy · %d pass |" % (panel["buys"], panel["passes"]))
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+133 |         L.append("")
+134 |     if idea:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:140:19
+    |
+138 |         text = _read(os.path.join(d, fname))
+139 |         if text:
+140 |             L += ["## %s" % heading, "", _strip_h1(text), ""]
+    |                   ^^^^^^^^^^^^^^^^^
+141 |         else:
+142 |             missing.append((heading, skill))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:146:22
+    |
+144 |         L += ["## Not done yet", ""]
+145 |         for heading, skill in missing:
+146 |             L.append("- %s: run /%s" % (heading, skill))
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+147 |         L.append("")
+148 |     L.append("_The panel is simulated buyers and the numbers are projections from your inputs. Confirm demand with real"
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:161:15
+    |
+159 |     a = ap.parse_args(argv)
+160 |     if not os.path.isdir(a.dir):
+161 |         print("error: no %s/ folder here. Run the other founder skills first." % a.dir, file=sys.stderr)
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+162 |         return 2
+163 |     v, text = compile_plan(a.dir, a.min_buy_rate)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:166:15
+    |
+164 |     if a.check:
+165 |         _, checks, _, _ = verdict(a.dir, a.min_buy_rate)
+166 |         print("Verdict: %s" % v)
+    |               ^^^^^^^^^^^^^^^^^
+167 |         for ok, t in checks:
+168 |             print("  %s %s" % ("✓" if ok else "✗", t))
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:168:19
+    |
+166 |         print("Verdict: %s" % v)
+167 |         for ok, t in checks:
+168 |             print("  %s %s" % ("✓" if ok else "✗", t))
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+169 |         return 0 if v == "Profitable" else 1
+170 |     out = a.out or os.path.join(a.dir, "business-plan.md")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-plan\compile.py:173:11
+    |
+171 |     with open(out, "w", encoding="utf-8") as fh:
+172 |         fh.write(text)
+173 |     print("Verdict: %s. Wrote %s" % (v, out))
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+174 |     return 0
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:103:28
+    |
+101 | def analyse(rows, step=None):
+102 |     if len(rows) < 5:
+103 |         raise PricingError("need at least 5 complete answers (got %d)" % len(rows))
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+104 |     lo = min(r[0] for r in rows)
+105 |     hi = max(r[3] for r in rows)
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:125:43
+    |
+124 | def report(res, dropped, price=None):
+125 |     m = lambda v: "n/a" if v is None else "$%.2f" % v
+    |                                           ^^^^^^^^^^^
+126 |     p = res["points"]
+127 |     L = ["# Price sensitivity", "",
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:128:10
+    |
+126 |     p = res["points"]
+127 |     L = ["# Price sensitivity", "",
+128 |          "%d complete answers%s. Simulated buyers: use this to pick what to test, not as the final word." % (
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+129 |              res["n"], (", %d dropped (incomplete or out of order)" % dropped) if dropped else ""), "",
+130 |          "| point | price | what it means |", "| --- | ---: | --- |",
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:129:25
+    |
+127 |     L = ["# Price sensitivity", "",
+128 |          "%d complete answers%s. Simulated buyers: use this to pick what to test, not as the final word." % (
+129 |              res["n"], (", %d dropped (incomplete or out of order)" % dropped) if dropped else ""), "",
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+130 |          "| point | price | what it means |", "| --- | ---: | --- |",
+131 |          "| PMC | %s | below this, too many think it is too cheap to be good |" % m(p["PMC"]),
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:131:10
+    |
+129 |              res["n"], (", %d dropped (incomplete or out of order)" % dropped) if dropped else ""), "",
+130 |          "| point | price | what it means |", "| --- | ---: | --- |",
+131 |          "| PMC | %s | below this, too many think it is too cheap to be good |" % m(p["PMC"]),
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+132 |          "| OPP | %s | as many say too cheap as too expensive: the least resistance |" % m(p["OPP"]),
+133 |          "| IPP | %s | as many call it a bargain as call it expensive |" % m(p["IPP"]),
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:132:10
+    |
+130 |          "| point | price | what it means |", "| --- | ---: | --- |",
+131 |          "| PMC | %s | below this, too many think it is too cheap to be good |" % m(p["PMC"]),
+132 |          "| OPP | %s | as many say too cheap as too expensive: the least resistance |" % m(p["OPP"]),
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+133 |          "| IPP | %s | as many call it a bargain as call it expensive |" % m(p["IPP"]),
+134 |          "| PME | %s | above this, too many say it is too expensive to buy |" % m(p["PME"]), "",
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:133:10
+    |
+131 |          "| PMC | %s | below this, too many think it is too cheap to be good |" % m(p["PMC"]),
+132 |          "| OPP | %s | as many say too cheap as too expensive: the least resistance |" % m(p["OPP"]),
+133 |          "| IPP | %s | as many call it a bargain as call it expensive |" % m(p["IPP"]),
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+134 |          "| PME | %s | above this, too many say it is too expensive to buy |" % m(p["PME"]), "",
+135 |          "**Acceptable range: %s to %s.**" % (m(p["PMC"]), m(p["PME"])), ""]
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:134:10
+    |
+132 |          "| OPP | %s | as many say too cheap as too expensive: the least resistance |" % m(p["OPP"]),
+133 |          "| IPP | %s | as many call it a bargain as call it expensive |" % m(p["IPP"]),
+134 |          "| PME | %s | above this, too many say it is too expensive to buy |" % m(p["PME"]), "",
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+135 |          "**Acceptable range: %s to %s.**" % (m(p["PMC"]), m(p["PME"])), ""]
+136 |     md = res["median"]
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:135:10
+    |
+133 |          "| IPP | %s | as many call it a bargain as call it expensive |" % m(p["IPP"]),
+134 |          "| PME | %s | above this, too many say it is too expensive to buy |" % m(p["PME"]), "",
+135 |          "**Acceptable range: %s to %s.**" % (m(p["PMC"]), m(p["PME"])), ""]
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+136 |     md = res["median"]
+137 |     L.append("Median answers: too cheap %s, a bargain %s, getting expensive %s, too expensive %s." % (
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:137:14
+    |
+135 |            "**Acceptable range: %s to %s.**" % (m(p["PMC"]), m(p["PME"])), ""]
+136 |       md = res["median"]
+137 |       L.append("Median answers: too cheap %s, a bargain %s, getting expensive %s, too expensive %s." % (
+    |  ______________^
+138 | |         m(md["too_cheap"]), m(md["cheap"]), m(md["expensive"]), m(md["too_expensive"])))
+    | |_______________________________________________________________________________________^
+139 |       if price is not None and p["PMC"] is not None and p["PME"] is not None:
+140 |           where = "inside" if p["PMC"] <= price <= p["PME"] else ("below" if price < p["PMC"] else "above")
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:141:19
+    |
+139 |     if price is not None and p["PMC"] is not None and p["PME"] is not None:
+140 |         where = "inside" if p["PMC"] <= price <= p["PME"] else ("below" if price < p["PMC"] else "above")
+141 |         L += ["", "Your current price, %s, is **%s** the acceptable range." % (m(price), where)]
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+142 |     return "\n".join(L) + "\n"
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:156:15
+    |
+154 |         res = analyse(rows)
+155 |     except (PricingError, FileNotFoundError) as e:
+156 |         print("error: %s" % e, file=sys.stderr)
+    |               ^^^^^^^^^^^^^^^
+157 |         return 2
+158 |     if a.json:
+    |
+help: Replace with format specifiers
+
+UP031 Use format specifiers instead of percent format
+   --> .agents\skills\founder-pricing\van_westendorp.py:165:15
+    |
+163 |         with open(a.out, "w", encoding="utf-8") as fh:
+164 |             fh.write(text)
+165 |         print("wrote %s" % a.out)
+    |               ^^^^^^^^^^^^^^^^^^
+166 |     else:
+167 |         sys.stdout.write(text)
+    |
+help: Replace with format specifiers
+
+Found 115 errors.
+[*] 12 fixable with the `--fix` option (79 hidden fixes can be enabled with the `--unsafe-fixes` option).
+EXIT 1

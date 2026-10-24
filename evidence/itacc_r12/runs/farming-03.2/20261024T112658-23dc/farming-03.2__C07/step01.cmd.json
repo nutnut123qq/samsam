@@ -1,0 +1,34 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r10/g5/harness/qr_run.py.txt",
+  "--signers",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/farming-03.2/qr_signers.json",
+  "sign",
+  "--lot",
+  "IT-LOT-G5-02",
+  "--role",
+  "phap_che_qa",
+  "--by",
+  "GĐ SX Thử IT"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:27:38+07:00",
+ "ket_thuc": "2026-10-24T11:27:42+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "out_re": "--by không thuộc danh sách người ký vai Pháp chế/QA",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "47341127d06d6ea999935fe112ec161ce46562ac57c71984ecf9046155e538e1",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

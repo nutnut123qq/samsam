@@ -1,0 +1,496 @@
+"""HARNESS g4 — pha 3: dựng evidence/itacc_r10/items/<id>.json cho 16 mục nhóm g4
+từ criteria/g4.json + out/*.txt (lệnh, exit đọc từ file ca) + sha256 evidence."""
+import hashlib
+import json
+import re
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+G4 = Path(__file__).resolve().parents[1]
+EV = G4.parent
+REPO = EV.parents[1]
+OUT = G4 / "out"
+FP = "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001"
+NOW = datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+CRIT = {i["id"]: i for i in json.loads((EV / "criteria" / "g4.json")
+                                        .read_text(encoding="utf-8"))["items"]}
+KHUNG = {i["id"]: i for i in json.loads((EV / "criteria" / "khung.json")
+                                         .read_text(encoding="utf-8"))["items"]}
+FX = {}
+for line in (G4 / "fixtures_sha256.txt").read_text(encoding="utf-8").splitlines():
+    sha, name = line.split(maxsplit=1)
+    FX[Path(name.lstrip("*")).name] = sha
+
+
+def sha(p: Path) -> str:
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def rel(p: Path) -> str:
+    return p.relative_to(REPO).as_posix()
+
+
+def run_info(ma):
+    """(lệnh, exit) từ out/<ma>.txt; ca chỉ truy vấn → lệnh q.py."""
+    p = OUT / f"{ma}.txt"
+    if not p.exists():
+        return None, None
+    t = p.read_text(encoding="utf-8")
+    m1 = re.search(r"^# lenh (.*)$", t, re.M)
+    m2 = re.search(r"^# exit (-?\d+)$", t, re.M)
+    if m1:
+        return m1.group(1), int(m2.group(1))
+    m3 = re.findall(r"^> (.*)$", t, re.M)
+    if not m3:
+        return f"(script kiểm python inline — kết quả trong out/{ma}.txt)", 0
+    return "python evidence/itacc_r10/g4/harness/q.py " + " ; ".join(
+        s[:160] for s in m3), 0
+
+
+def C(ma, mo_ta, expected, actual, kq="PASS", runs=None, note=None):
+    runs = runs or [ma]
+    cmds, exits = [], []
+    for r in runs:
+        c, e = run_info(r)
+        if c:
+            cmds.append(f"[{r}] {c}")
+            exits.append(e)
+    d = {"ma": ma, "mo_ta": mo_ta, "lenh": " || ".join(cmds) or "(đọc file)",
+         "expected": expected, "actual": actual,
+         "exit": exits[0] if len(exits) == 1 else exits, "ket_qua": kq,
+         "ly_do_not_run": None}
+    if note:
+        d["ghi_chu"] = note
+    return d
+
+
+ENV_FIN = ("Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev "
+           "mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không"
+           " (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → "
+           "evidence/scratchpad")
+ENV_PROD = ENV_FIN.replace("_fin", "_prod")
+ENV_PROD_LLM = ENV_PROD.replace(
+    "fake ở biên: không (thuần tất định, 0 LLM)",
+    "fake ở biên: llm_gateway._client = client giả cục bộ (embedding băm "
+    "bag-of-words; chat câu cố định) — cổng gateway/kill/llm_usage chạy thật,"
+    " 0 gọi OpenRouter")
+HARN = [G4 / "harness" / n for n in ("runcase.py", "run.py", "q.py",
+                                      "gen_fixtures.py", "make_items.py")]
+SEED = {"fin": OUT / "SETUP-seed-fin.txt", "prod": OUT / "SETUP-seed-prod.txt"}
+
+L1 = ("lỗi harness đã sửa: lượt 1 ca tắt tính năng chạy khi không còn dữ "
+      "liệu mới để sinh (lô rỗng / cùng trạng thái nợ) nên không chạm cổng — "
+      "giữ log *-luot1-harness-hong.txt, lượt 2 nạp thêm dữ liệu fixture rồi "
+      "chạy lại")
+
+ITEMS = {}
+
+ITEMS["finance-01"] = dict(
+    db="fin", inputs=["orders_shopee.csv", "orders_tiktok.csv",
+                      "qt_shopee_s1.csv", "qt_shopee_s2.csv", "qt_tiktok.csv",
+                      "qt_shopee_bad.csv", "qt_shopee_bad2.csv"],
+    ca=[C("F01-1", "nạp file đơn sàn + kd_orders --sync",
+          "exit 0; 5 đơn shopee + 1 tiktok vào orders source market:%; cột PII bị bỏ",
+          "exit 0 cả 3 lệnh; orders 6 dòng market:shopee/tiktok, đơn hủy → status cancelled; market_rows 0 dòng chứa SĐT/tên người nhận",
+          runs=["F01-1a", "F01-1b", "F01-1c", "F01-1-q"]),
+        C("F01-2", "nạp quyết toán shopee S1",
+          "khop=2 lech=1 (B -14000) hoan=2 thieu_chung_tu=1",
+          "exit 0; khop=2 (A,F), lech=1 (B thuc_nhan expected 264000 actual 250000), hoan=2 (C,D), thieu_chung_tu=1 (E); recon_results có reasons expected/actual",
+          runs=["F01-2", "F01-2-q"]),
+        C("F01-3", "nạp quyết toán tiktok", "exit 0 khop=1", "exit 0; khop=1"),
+        C("F01-4", "CSV cho kế toán (kd_orders --recon)",
+          "1 dòng/đơn, nhãn khớp, E=thieu_don, dòng TONG đúng, order_ref 8 ký tự",
+          "exit 0; doi-soat-2026-10-01-2026-10-31.csv: 7 dòng (6 đơn + E thieu_don), TONG shopee total 2.600.000/order_amount 2.750.000/payout 1.830.000 = tổng cột (kiểm tay), order_ref 8 ký tự, không PII"),
+        C("F01-5", "ÂM file lỗi (cột lạ) + bổ sung F01-5b (số sai/ngày sai/mã đơn trùng)",
+          "exit 1, không connect, settlement_rows không đổi",
+          "F01-5 exit 1 '[err] cột lạ'; F01-5b exit 1 nêu 3 lỗi dòng (order_amount, settled_on, mã đơn trùng); settlement_rows vẫn 7",
+          runs=["F01-5", "F01-5b"],
+          note="F01-5b bổ sung sau khóa: file F01-5 dừng ở lỗi header nên chưa chạm kiểm số/ngày/trùng mã"),
+        C("F01-6", "ÂM nạp lại S1", "[skip], không nhân dòng",
+          "exit 0 '[skip] file quyết toán đã nạp'; settlement_rows 7"),
+        C("F01-7", "file xuất lại S2 (A nguyên văn, B số khác)",
+          "[warn] trùng 1 lệch 1; tổng tính A 1 lần, B giữ cả hai",
+          "exit 0 [warn] chồng kỳ trùng 1, lệch 1; v_settlement_khoan shopee 7 khoản (thô 8 dòng): order_amount 3.050.000 vs thô 4.050.000 → A không cộng lần 2; --report in 'trùng 1, lệch 1 … lệch giữ cả hai'",
+          runs=["F01-7", "F01-7r", "F01-7-q"]),
+        C("F01-8", "ÂM tắt finance-01 (chạy cuối)", "exit 2 [blocked]; recon_results không đổi",
+          "exit 2 '[blocked] … finance-01 đang tắt … không đối soát'; recon_results 9 dòng, max(reconciled_at) không đổi",
+          runs=["TAT-finance-01", "F01-8", "TAT-fin-q2"])],
+    trang_thai="DAT", muc="LOCAL",
+    ev=["F01-1a", "F01-1b", "F01-1c", "F01-1-q", "F01-2", "F01-2-q", "F01-3",
+        "F01-4", "F01-5", "F01-5b", "F01-6", "F01-7", "F01-7r", "F01-7-q",
+        "F01-8", "TAT-finance-01", "TAT-fin-q2",
+        "doi-soat-2026-10-01-2026-10-31.csv"],
+    gioi_han=("Mapping cột Seller Center + biểu phí là GIẢ ĐỊNH (data/settlement_map.json, settlement_fees.json) — chưa xác minh với file thật; kiểm trên fixture giả. Quan sát: file CSV của kd_orders --recon tên doi-soat-<since>-<until>.csv trùng tiền tố báo cáo finance-06 (doi-soat-) — không qua write_report nên không đếm, nhưng dễ nhầm tên."),
+    can_de_go="")
+
+ITEMS["finance-02"] = dict(
+    db="fin", inputs=["orders_shopee.csv", "orders_tiktok.csv", "yeucau_ok.csv",
+                      "yeucau_bad.csv", "orders_shopee_g.csv"],
+    ca=[C("F02-1", "ÂM MST sai trong file yêu cầu", "exit 1, không connect, 0 invoice_lines",
+          "exit 1 '[err] dòng 2: tax_code không phải MST'; invoice_lines 0"),
+        C("F02-2", "lập lô 2026-10-23 kèm yêu cầu MST",
+          "thường A,F,T1; can_mst B; loại hủy 1, chưa đạt mốc 1; 1 mục invoice_batch pending agent:acc_invoice; payload không tên người mua/MST",
+          "exit 0; lô 2026-10-23-f74707095916: thường 3, cần MST 1, hủy 1, chưa đạt mốc 1 → approval_queue #1 finance/invoice_batch pending agent:acc_invoice is_sample=false; payload chỉ mã 8 ký tự + số tiền + csv_sha256 (không tên/MST); file nháp (scratchpad) sha = csv_sha256",
+          runs=["F02-2", "F02-2-q"]),
+        C("F02-3", "ÂM chạy lại khi lô pending", "[skip]", "exit 0 '[skip] … đã có lô chờ duyệt #1'"),
+        C("F02-4", "verify-draft mục pending", "exit 1 chưa duyệt", "exit 1 '[fail] mục #1 đang pending — chưa được duyệt'"),
+        C("F02-5", "người duyệt (dev) rồi verify-draft khi chạy thử", "approve 0; verify 1 (chạy thử chặn dùng)",
+          "approve exit 0 (cảnh báo CHẾ ĐỘ DEV); verify exit 1, stderr '[rollout] TỪ CHỐI DÙNG … finance-02 đang chạy thử'",
+          runs=["F02-5a", "F02-5b"],
+          note="stdout của verify ghi 'payload lệch bản đã duyệt' (thông điệp gây hiểu nhầm; lý do thật ở stderr rollout)"),
+        C("F02-6", "ép van_hanh (FIXTURE _FORCE_MODE) — file đúng / file sửa", "đúng 0; sửa 1",
+          "file đúng exit 0 '[ok] … khớp csv_sha256'; file thêm 1 byte exit 1 'sha256 lệch — không nhập'",
+          runs=["F02-6a", "F02-6b"]),
+        C("F02-7", "ÂM tắt finance-02 (chạy cuối)", "exit !=0; không thêm invoice_batch",
+          "lượt 2 (sau khi nạp đơn G mới): exit 1 'RolloutBlocked … finance-02 đang tắt'; invoice_batch vẫn 1, invoice_lines vẫn 4 (rollback)",
+          runs=["TAT-finance-02", "F02-7-tienDe", "F02-7", "TAT-fin-q3"], note=L1)],
+    trang_thai="DAT", muc="LOCAL",
+    ev=["F02-1", "F02-2", "F02-2-q", "F02-3", "F02-4", "F02-5a", "F02-5b",
+        "F02-6a", "F02-6b", "F02-7-luot1-harness-hong", "F02-7-tienDe", "F02-7",
+        "TAT-finance-02", "TAT-fin-q3"],
+    gioi_han="Phát hành HĐĐT trên phần mềm nhà cung cấp do kế toán làm tay (external-dep, ngoài phần mềm); mốc lập hóa đơn + format CSV GIẢ ĐỊNH (invoice_config.json confirmed_by null). Nhánh dùng (verify-draft) chỉ kiểm được bằng FIXTURE _FORCE_MODE=van_hanh.",
+    can_de_go="")
+
+ITEMS["finance-03.1"] = dict(
+    db="fin", inputs=["ar_ok.csv", "ar_bad.csv"],
+    ca=[C("F031-1", "ÂM file công nợ lỗi", "exit 1, 0 dòng", "exit 1 (dealer_code sai mẫu, amount ≤0 với phat_sinh); dealer_ar 0"),
+        C("F031-2", "nạp sổ công nợ", "exit 0, 7 dòng", "exit 0 '[load] 7 dòng'"),
+        C("F031-3", "ÂM nạp lại", "[skip]", "exit 0 '[skip]'; dealer_ar 7"),
+        C("F031-4", "aging FIFO", "IT-DL01 14tr (0-30 2tr, 31-60 5tr, >90 7tr) quá hạn 12tr; IT-DL02 61-90 4tr; IT-DL03 0-30 1tr quá hạn 1tr",
+          "khớp đúng từng số (cả IT-DL04 0-30 800.000 không quá hạn)"),
+        C("F031-5", "bản tin GĐ tài chính", "director-finance-*.md bảng quá hạn 3 đại lý, tổng 17tr, nhãn CHẠY THỬ, report_outputs finance-03.1",
+          "exit 0; file có nhãn CHẠY THỬ, bảng IT-DL01/02/03, 'Tổng quá hạn: 17.000.000đ — nguồn dealer_ar'; report_outputs finance-03.1 is_sample=false"),
+        C("F031-6", "bản tin thể hiện đủ 4 nhóm tuổi (0-30 của khoản quá hạn IT-DL03)",
+          "có cột/giá trị nhóm 0-30 trong bản tin",
+          "bảng bản tin chỉ có cột Quá hạn | 31-60 | 61-90 | >90 — KHÔNG có 0-30: IT-DL03 quá hạn 1.000.000đ hiện 0/0/0; 0-30 của IT-DL01 (2tr) và đại lý chưa quá hạn (IT-DL04) không xuất hiện. Tuổi nợ đủ 4 nhóm chỉ có ở stdout --aging",
+          kq="FAIL", runs=["F031-5"]),
+        C("F031-7", "ÂM tắt finance-03.1 (chạy cuối)", "exit 2, không ghi file", "exit 2 '[blocked] báo cáo director-finance-…: finance-03.1 đang tắt'; thư mục rep_tat rỗng",
+          runs=["TAT-finance-03.1", "F031-7"])],
+    trang_thai="BI_CHAN", muc="LOCAL", nn="CODE_FAIL",
+    ev=["F031-1", "F031-2", "F031-3", "F031-4", "F031-5", "F031-7",
+        "TAT-finance-03.1", "rep_f031/director-finance-2026-10-23.md"],
+    loi=[{"muc_do": "thấp", "mo_ta": "Bản tin GĐ tài chính (director-finance, mục 'Công nợ đại lý quá hạn' do agents.acc_ar.overdue_section dựng) thiếu nhóm tuổi 0-30 — đầu ra danh mục ghi 'Tuổi nợ 0-30/31-60/61-90/>90 + quá hạn trong bản tin'. Khoản quá hạn nằm ở nhóm 0-30 làm hàng không cộng khớp (Quá hạn 1.000.000đ, các cột 0đ); đại lý chưa quá hạn không có tuổi nợ trong bản tin.",
+           "tai_hien": "acc_ar --load fixtures/ar_ok.csv; harness run.py --reports-dir D -- agents.acc_ar --bulletin --as-of 2026-10-23",
+           "expected": "bảng có nhóm 0-30 (và tuổi nợ 4 nhóm)", "actual": "chỉ Quá hạn/31-60/61-90/>90",
+           "evidence": ["evidence/itacc_r10/g4/out/rep_f031/director-finance-2026-10-23.md", "evidence/itacc_r10/g4/out/F031-4.txt"]}],
+    gioi_han="Sổ công nợ thật do Bên B nạp tay; term_days/chính sách hoa hồng MẪU.",
+    can_de_go="Thêm nhóm 0-30 (tuổi nợ đủ 4 nhóm) vào mục công nợ của bản tin — sửa sản phẩm, ngoài phạm vi kiểm nghiệm.")
+
+ITEMS["finance-03.2"] = dict(
+    db="fin", inputs=["orders_shopee.csv", "qt_shopee_s1.csv"],
+    ca=[C("F032-1", "fixture đại lý + mã affiliate active (SQL owner, FIXTURE)", "insert ok",
+          "dealers IT-DL01 (10%), IT-DL03; affiliate_codes SSQATEST2345 active", note="mã fixture đổi từ SSITTESTAAAA (ghi trong criteria) sang SSQATEST2345 vì bảng mã không có chữ I — sửa dữ liệu mồi"),
+        C("F032-2", "ghi nhận đơn qua mã", "mới 2 (A tinh, C huy), unknown 1; A 1.000.000×10%; C 0",
+          "exit 0 mới 2, mã không khớp 1; A sapentol amount 1.000.000 rate 10.00 hoa hồng 100.000 status tinh settled=true; C savigout 200.000 hoa hồng 0 status huy cờ huy",
+          runs=["F032-2", "F032-q"]),
+        C("F032-3", "ÂM idempotent", "mới 0, không đổi 2", "exit 0 'mới 0 · không đổi 2'"),
+        C("F032-4", "báo cáo hoa hồng", "BẢN NHÁP — không phải lệnh chi", "exit 0; 'BẢN NHÁP — không phải lệnh chi'; IT-DL01 shopee 2 dòng, doanh số 1.000.000, hoa hồng 100.000, cờ huy×1"),
+        C("F032-5", "ÂM tắt finance-03.2 (chạy cuối)", "exit 1 RolloutBlocked; số dòng không đổi",
+          "exit 1 '[error] RolloutBlocked … finance-03.2 đang tắt'; affiliate_attributions 2",
+          runs=["TAT-finance-03.2", "F032-5", "TAT-fin-q2"])],
+    trang_thai="DAT", muc="LOCAL",
+    ev=["F032-1", "F032-2", "F032-3", "F032-q", "F032-4", "F032-5", "TAT-finance-03.2"],
+    gioi_han="Tỷ lệ hoa hồng MẪU (dealers.commission_default fixture); mã affiliate/đại lý chèn bằng SQL owner làm dữ liệu mồi (luồng --issue cần nội dung marketing đã duyệt — không kiểm ở mục này). Mã voucher trên file sàn GIẢ ĐỊNH cột.",
+    can_de_go="")
+
+ITEMS["finance-03.3"] = dict(
+    db="fin", inputs=["ar_ok.csv"],
+    ca=[C("F033-1", "dry-run", "in 2 nháp, 0 ghi", "exit 0; 2 nháp IT-DL01, IT-DL03; IT-DL02 skip ngoài sổ; ar_reminder 0"),
+        C("F033-2", "đẩy hàng duyệt", "2 mục ar_reminder pending agent:acc_ar; IT-DL02 skip",
+          "exit 0; #2 IT-DL01 12.000.000 (HD-IT-001 7tr quá 84 ngày, HD-IT-002 5tr quá 13 ngày), #3 IT-DL03 1.000.000; created_by agent:acc_ar; placeholder {{TEN_DAI_LY}}/{{NGUOI_KY}}; căn cứ file ar_ok.csv sha256 8031bc6d",
+          runs=["F033-2", "F033-q"]),
+        C("F033-3", "ÂM idempotent", "0 mới, skip", "exit 0; 0 nháp mới, 3 bỏ qua"),
+        C("F033-4", "ÂM tắt finance-03.3 (chạy cuối)", "exit 2 blocked",
+          "lượt 2 (--as-of 2026-11-20 → trạng thái nợ mới): exit 2 '[blocked] … finance-03.3 đang tắt'; ar_reminder vẫn 2",
+          runs=["TAT-finance-03.3", "F033-4", "TAT-fin-q3"], note=L1)],
+    trang_thai="DAT", muc="LOCAL",
+    ev=["F033-1", "F033-2", "F033-3", "F033-q", "F033-4-luot1-harness-hong", "F033-4", "TAT-finance-03.3", "TAT-fin-q3"],
+    gioi_han="Sổ dealers/dealer_ar là fixture; approvers GĐ tài chính rỗng (C04 — chế độ thực do điều phối viên kiểm); kế toán gửi thư tay. Payload ghi 'thay nháp cũ nếu còn chờ duyệt' nhưng code không thay — chỉ bỏ qua cùng trạng thái.",
+    can_de_go="")
+
+ITEMS["finance-04.1"] = dict(
+    db="fin", inputs=["qt_shopee_s1.csv", "qt_shopee_s2.csv", "qt_tiktok.csv", "orders_shopee.csv"],
+    ca=[C("F041-1", "lập giá vốn 4 SKU", "exit 0 chờ duyệt", "exit 0 ×4 (#1..#4 chờ duyệt)",
+          runs=["F041-1.1", "F041-1.2", "F041-1.3", "F041-1.4"]),
+        C("F041-2", "ÂM người lập tự duyệt", "exit 1 DB từ chối", "exit 1 'người duyệt trùng người lập'"),
+        C("F041-3", "người khác duyệt", "exit 0", "exit 0 ×4; cogs_versions approved_by 'GĐ Tài chính Thử IT'",
+          runs=["F041-3.1", "F041-3.2", "F041-3.3", "F041-3.4", "F041-q"]),
+        C("F041-4", "P&L 09/2026", "sapentol shopee thực nhận 880.000 giá vốn 400.000; savigout/saphraton 'chưa có giá vốn duyệt'; nhãn CHẠY THỬ",
+          "exit 0; pnl-2026-09.md: sapentol shopee 1.000.000/120.000/880.000/giá vốn 400.000/lãi 480.000/48%; saphraton-20v & savigout-30v 'chưa có giá vốn duyệt' (không 0); nêu BẤT THƯỜNG chồng kỳ; nhãn CHẠY THỬ; report_outputs finance-04.1"),
+        C("F041-5", "lọc kênh tiktok", "file riêng; bản toàn kênh không đổi", "exit 0; pnl-2026-09-tiktok.md riêng (1 ô sapentol tiktok); sha pnl-2026-09.md giữ 13b0b591…"),
+        C("F041-6", "ÂM tắt finance-04.1 (chạy cuối)", "exit !=0, không ghi file", "exit 1 (traceback RolloutBlocked không bắt) — không ghi file pnl-2026-08.md",
+          runs=["TAT-finance-04.1", "F041-6"], note="chặn đúng nhưng ném traceback thô thay vì thông báo — xem lỗi thấp chung")],
+    trang_thai="DAT", muc="LOCAL",
+    ev=["F041-1.1", "F041-2", "F041-3.1", "F041-q", "F041-4", "F041-5", "F041-6", "TAT-finance-04.1",
+        "rep_f041/pnl-2026-09.md", "rep_f041/pnl-2026-09-tiktok.md"],
+    gioi_han="Giá vốn là fixture (người lập ≠ người duyệt ở chế độ dev); P&L chỉ kênh sàn (doanh thu đại lý/B2B chưa có nguồn — external). Dòng lệch chồng kỳ (B) được giữ cả hai trong ô savina-12v + gắn BẤT THƯỜNG theo thiết kế.",
+    can_de_go="")
+
+ITEMS["finance-04.2"] = dict(
+    db="fin", inputs=["golden_fin.json", "km_ok.csv", "km_bad.csv"],
+    ca=[C("F042-1", "golden fixture + duyệt giá + giá vốn", "v_promotable có 2 SKU mật ong shopee",
+          "golden_store exit 0 (sku_changed=2); --approve-price 24/30/23/29 exit 0; v_promotable = mat-ong-sam-120ml-1hu, mat-ong-sam-300ml (TP_THUONG)",
+          runs=["F042-1a", "F042-1b.24", "F042-1b.30", "F042-1-q"]),
+        C("F042-2", "ÂM file kế hoạch lỗi", "exit 1, không connect", "exit 1 'cột kenh, giam_pct không hợp lệ … không connect'"),
+        C("F042-3", "dry-run", "S1 biên âm + S2 chồng + promo_banned; 0 ghi", "exit 0; S1 3 (promo_banned KM-IT-03, biên âm KM-IT-01 và KM-IT-01+02), S2 1 (chồng); 0 mục agent:kd_price"),
+        C("F042-4", "đẩy hàng duyệt", "promo_loss finance ≥1; promo_change sales ≥1",
+          "exit 0; sales: 3 market_alert_s1 + 1 promo_change (#7, chồng KM); finance: 2 promo_loss (#8 biên -73.600, #9 -174.920 — khớp tính tay 2.384.000×0,85−2.100.000); created_by agent:kd_price, risk high",
+          runs=["F042-4", "F042-4-q"]),
+        C("F042-5", "ÂM idempotent", "0 mục mới", "exit 0 'đẩy 0 … 0 mục KM lỗ'"),
+        C("F042-6", "đề xuất ngân sách ads", "1 budget_change agent:fp_ads; 120ml DE_XUAT; TPBVSK CHAN_XNQC; rerun skip",
+          "exit 0 #10 budget_change agent:fp_ads: mat-ong-sam-120ml-1hu DE_XUAT 83.200 (416.000×0,2), TPBVSK CHAN_XNQC, mat-ong-300ml CHO_DU_LIEU, 17 cặp CAM không nêu tên; lần 2 exit 0 [skip]",
+          runs=["F042-6a", "F042-6b", "F042-6-q"]),
+        C("F042-7", "ÂM tắt finance-04.2 (chạy cuối)", "không sinh mục mới", "exit 1 '[error] RolloutBlocked'; budget_change vẫn 1",
+          runs=["TAT-finance-04.2", "F042-7", "TAT-fin-q4"])],
+    trang_thai="DAT", muc="LOCAL",
+    ev=["F042-1a", "F042-1b.24", "F042-1b.30", "F042-1-q", "F042-2", "F042-3", "F042-4", "F042-4-q",
+        "F042-5", "F042-6a", "F042-6b", "F042-6-q", "F042-7", "TAT-finance-04.2"],
+    gioi_han="SKU mật ong được đặt self_declaration_ok=true trong golden FIXTURE (không phải dữ liệu thật) để có SKU quảng bá được; ngưỡng price_watch/fpa_config GIẢ ĐỊNH; mục KM biên âm là S1 → sales/market_alert_s1 (promo_change chỉ cho phát hiện S2).",
+    can_de_go="")
+
+ITEMS["finance-05.1"] = dict(
+    db="fin", inputs=["opex_ok.csv", "opex_bad.csv"],
+    ca=[C("F051-1", "ÂM file chi phí lỗi", "exit 1, 0 dòng", "exit 1 (category, amount_vnd); opex_entries 0"),
+        C("F051-2", "nạp chi phí + llm_usage fixture", "exit 0, 3 dòng", "exit 0 3 dòng (12.000.000); llm_usage fixture 168 USD (chatbot 100, content 68)",
+          runs=["F051-2", "F051-2-q"]),
+        C("F051-3", "báo cáo trần", "cloud 87,5% cảnh báo 80%; saas 107% vượt; ai 4.200.000 84%",
+          "exit 0; ai 4.200.000đ 84,0% [CẢNH BÁO 80%]; cloud 87,5% [CẢNH BÁO 80%]; saas 107,1% [VƯỢT TRẦN 100%]; khoản > X: 1 chờ TGĐ"),
+        C("F051-4", "đẩy khoản > X", "1 opex_over_x pending agent:fp_opscost", "exit 0; #11 finance/opex_over_x pending agent:fp_opscost risk high (saas 7.500.000)",
+          runs=["F051-4", "F051-4-q"]),
+        C("F051-5", "ÂM idempotent", "0 mới", "exit 0 '0 mục mới'"),
+        C("F051-6", "ÂM người không phải TGĐ duyệt", "status cho_tgd_ky", "approve exit 0 (dev); --status: 'cho_tgd_ky — đã duyệt bởi vai trò khác — cần TGĐ'",
+          runs=["F051-6a", "F051-6b"]),
+        C("F051-7", "bản tin tuần GĐ tài chính", "các mục công nợ/P&L/chi phí/dòng tiền/ads",
+          "exit 0; director-finance-2026-10-23.md có đủ 5 mục; mục chi phí nêu 3 cảnh báo + 1 khoản chờ TGĐ ký")],
+    trang_thai="DAT", muc="LOCAL",
+    ev=["F051-1", "F051-2", "F051-2-q", "F051-3", "F051-4", "F051-4-q", "F051-5", "F051-6a", "F051-6b", "F051-7",
+        "rep_f051/director-finance-2026-10-23.md"],
+    gioi_han="Trần ngân sách/ngưỡng X GIẢ ĐỊNH; chi phí AI lấy từ llm_usage fixture. Nhánh 'được chi' (TGĐ có vai trò tgd ký đúng mục) chưa chạy — cần users.json vai trò tgd (danh tính chế độ thực do điều phối viên kiểm); chỉ kiểm nhánh fail-closed.",
+    can_de_go="")
+
+ITEMS["finance-05.2"] = dict(
+    db="fin", inputs=["qt_shopee_s1.csv", "qt_tiktok.csv"],
+    ca=[C("F052-1", "dự báo không số dư đầu kỳ", "13 tuần; 'chưa có số dư đầu kỳ thật'; report_outputs",
+          "exit 0; dong-tien-2026-10-26.md 13 tuần × thấp/cơ sở/cao, chi cố định + nhập hàng Tết 300tr tuần 14/12; 'chưa có số dư đầu kỳ thật'; tỷ lệ thực nhận shopee đo 0,6866 (7 khoản), offline mặc định 'chưa xác minh'; report_outputs finance-05.2"),
+        C("F052-2", "có số dư đầu kỳ, json", "opening 500000000; low≤base≤high",
+          "exit 0; 13 tuần, opening 500000000, low≤base≤high mọi tuần (kiểm bằng script)", runs=["F052-2", "F052-2-check"]),
+        C("F052-2b", "bổ sung sau khóa: nhánh cảnh báo tuần âm (fixture không có tuần âm)", "liệt kê tuần âm",
+          "exit 0; --opening=-400000000 → 'Cảnh báo — tuần âm ở kịch bản thấp: 26/10 … 18/01', tuần âm gắn ⚠"),
+        C("F052-3", "ÂM tham số sai", "exit 2", "exit 2 '--opening phải là số nguyên VND'"),
+        C("F052-4", "ÂM DB down", "exit 0 + warn; không đếm", "exit 0; [warn] không kết nối Postgres — mặc định 'chưa xác minh'; [warn] không ghi sổ đầu ra; report_outputs finance-05.2 vẫn 1"),
+        C("F052-5", "ÂM tắt finance-05.2 (chạy cuối)", "exit 2, không ghi file", "exit 2 '[rollout] … finance-05.2 đang tắt'; không ghi file (stdout vẫn in dự báo — xem lỗi thấp chung)",
+          runs=["TAT-finance-05.2", "F052-5"])],
+    trang_thai="DAT", muc="LOCAL",
+    ev=["F052-1", "F052-2", "F052-2-check", "F052-2b", "F052-3", "F052-4", "F052-5", "TAT-finance-05.2",
+        "rep_f052/dong-tien-2026-10-26.md", "rep_f052_dbdown/dong-tien-2026-10-26.md"],
+    gioi_han="Số dư đầu kỳ thật + giả định fpa_config/scenario GIẢ ĐỊNH; tỷ lệ thực nhận đo trên fixture (gồm dòng hoàn + bản lệch chồng kỳ).",
+    can_de_go="")
+
+ITEMS["finance-06"] = dict(
+    db="fin", inputs=["qt_shopee_s1.csv", "qt_shopee_s2.csv", "qt_tiktok.csv", "orders_shopee.csv",
+                      "orders_tiktok.csv", "rev_share_fixture.json"],
+    ca=[C("F06-1", "đối soát Q3 trước file xuất lại", "shopee 2.600.000/288.000/200.000/400.000/1.712.000; tiktok 440.000; tổng 2.152.000; phí chưa chốt; 1 dòng sổ",
+          "exit 0; khớp đúng từng số (hoàn của đơn hủy C không trừ lần 2); 'Tỷ lệ phí vận hành: chưa chốt', ngày ký/vận hành 'chưa chốt'; ô ký 2 bên trống; revenue_quarters #1 recorded_by agent:rev_share",
+          runs=["F06-1", "F06-1-q"]),
+        C("F06-2", "ÂM quý không dữ liệu", "'chưa có dữ liệu' 2 kênh + tổng", "exit 0; mọi ô 'chưa có dữ liệu', ghi chú từng kênh"),
+        C("F06-3", "ÂM quý chưa đóng", "exit 2", "exit 2 'quý 2026-Q4 chưa đóng'"),
+        C("F06-4", "ÂM --year chưa chốt ngày ký", "exit 1", "exit 1 'chưa chốt ngay_ky_hop_dong'"),
+        C("F06-5", "sau file xuất lại", "A không cộng lần 2; B lệch → BẤT THƯỜNG; không phí; dòng sổ thứ 2",
+          "exit 0; shopee gộp 2.900.000 (+300.000 chỉ do bản B khác số; A không cộng lại); ghi chú BẤT THƯỜNG chồng kỳ trùng 1 lệch 1 + tên 2 file; revenue_quarters #2, #1 giữ nguyên",
+          runs=["F06-5", "F06-5-q"]),
+        C("F06-5b", "bổ sung sau khóa: cấu hình FIXTURE có tỷ lệ 5% + ngày → phí vẫn không tính khi bất thường", "phí '—' lý do bất thường",
+          "exit 0; 'Tỷ lệ phí vận hành 5%' nhưng 'Phí vận hành — (có kênh bất thường — 2 bên giải trình)'",
+          note="thêm vì F06-5 không tách được lý do (tỷ lệ null che nhánh bất thường); config bản sao scratchpad qua --set CONFIG_FILE"),
+        C("F06-6", "report_sha256 ↔ file", "khớp",
+          "KHÔNG khớp: revenue_quarters.report_sha256 = 34ec42db… (nội dung chưa có nhãn) ≠ sha file doi-soat-2026-Q3.md đã ghi db49e15f… (= report_outputs.sha256) — file có nhãn 'CHẠY THỬ' chèn đầu",
+          kq="FAIL", runs=["F06-1-q", "F06-6-sha"]),
+        C("F06-7", "ÂM tắt finance-06 (chạy cuối)", "exit 2, không thêm sổ", "exit 2 '[blocked] … finance-06 đang tắt'; revenue_quarters vẫn 2",
+          runs=["TAT-finance-06", "F06-7", "TAT-fin-q4"])],
+    trang_thai="BI_CHAN", muc="LOCAL", nn="CODE_FAIL",
+    ev=["F06-1", "F06-1-q", "F06-2", "F06-3", "F06-4", "F06-5", "F06-5-q", "F06-5b", "F06-6-sha", "F06-7",
+        "TAT-finance-06", "f06_run1/doi-soat-2026-Q3.md", "f06_run2/doi-soat-2026-Q3.md"],
+    loi=[{"muc_do": "thấp–trung bình", "mo_ta": "agents.rev_share.record ghi revenue_quarters.report_sha256 = sha256(text) TRƯỚC khi write_report chèn nhãn giai đoạn ('CHẠY THỬ — KHÔNG GỬI'/'CHỜ NGƯỜI DUYỆT') → sổ đối soát quý (append-only, căn cứ Điều 7.3) không truy được tới file biên bản thực có trên đĩa/report_outputs ở giai đoạn chạy thử/có người duyệt.",
+           "tai_hien": "python -m agents.rev_share --quarter 2026-Q3 --record --out-dir D; so sha256(D/doi-soat-2026-Q3.md) với revenue_quarters.report_sha256",
+           "expected": "bằng nhau", "actual": "db49e15f… (file) ≠ 34ec42db… (sổ) — sổ = sha bản bỏ dòng nhãn",
+           "evidence": ["evidence/itacc_r10/g4/out/F06-1-q.txt", "evidence/itacc_r10/g4/out/F06-6-sha.txt", "evidence/itacc_r10/g4/out/f06_run1/doi-soat-2026-Q3.md"]}],
+    gioi_han="Tỷ lệ phí/mức thưởng/ngày ký/ngày vận hành null = chưa chốt (giữ nguyên, không điền thay; nhánh có tỷ lệ chỉ chạy bằng bản sao FIXTURE ở F06-5b). Số chỉ là ĐỀ XUẤT (Điều 7.6).",
+    can_de_go="Ghi report_sha256 theo đúng nội dung file đã ghi (sau nhãn) hoặc lưu cả hai — sửa sản phẩm.")
+
+ITEMS["production-01"] = dict(
+    db="prod", inputs=["inv_ok.csv", "inv_bad.csv", "lots_ok.json"],
+    ca=[C("P01-1", "ÂM file tồn lỗi", "exit 1, 0 dòng", "exit 1 (qty âm, sku lạ, ngày sai); inventory_snapshots 0"),
+        C("P01-2", "nạp tồn", "exit 0", "exit 0 4 dòng manual_export"),
+        C("P01-3", "đề xuất phân bổ", "allocation_proposals pending; rượu online 0",
+          "exit 0 run 0401169a5ab8: 91 dòng pending (13 SKU × 7 kênh) có tồn/nhu cầu thấp-cơ sở-cao/đề xuất/ghi chú; rượu × shopee/tiktok/web… proposed 0 'rượu: chỉ kênh offline'; SKU chưa có tồn ghi 'chưa có số tồn — không kết luận thiếu'",
+          runs=["P01-3", "P01-3-q"]),
+        C("P01-4", "ÂM idempotent", "không thêm dòng", "exit 0 '[skip] run đã có (91 dòng)'"),
+        C("P01-5", "ÂM agent duyệt", "exit !=0", "exit 1 \"'agent:sx' không phải người\""),
+        C("P01-6", "người duyệt run", "approved, approvals ghi", "exit 0; 91 dòng approved decided_by 'GĐ Sản xuất Thử IT'; approvals #1 allocation_run",
+          runs=["P01-6", "P01-6-q"]),
+        C("P01-7", "kế hoạch SX + bản tin", "sx-bantin-tuan-*.md có tồn/lô/tiến độ; report_outputs production-01",
+          "plan-add/plan-link exit 0; bulletin --date 2026-10-23 --out-dir: exit 1 CRASH 'TypeError: argument of type int is not iterable' (production.py collect, dòng 861) — KHÔNG ghi sx-bantin/sx-canhan; chạy lại tái hiện y hệt; chẩn đoán: --date 2028-12-01 (không lô cận hạn) chạy được và ra file có đủ mục tồn-thiếu/lô/tiến độ/phiếu",
+          kq="FAIL", runs=["P01-7a", "P01-7b", "P01-7c", "P01-7c-lap", "P01-7d-chandoan"]),
+        C("P01-8", "ÂM tắt production-01 (chạy cuối)", "exit !=0 không ghi", "exit 1 '… production-01 đang tắt … không ghi'; allocation_proposals vẫn 91",
+          runs=["TAT-production-01", "P01-8", "TAT-prod-q"])],
+    trang_thai="BI_CHAN", muc="LOCAL", nn="CODE_FAIL",
+    ev=["P01-1", "P01-2", "P01-3", "P01-3-q", "P01-4", "P01-5", "P01-6", "P01-6-q", "P01-7a", "P01-7b",
+        "P01-7c", "P01-7c-lap", "P01-7d-chandoan", "P01-8", "TAT-production-01", "TAT-prod-q",
+        "rep_prod_diag/sx-bantin-tuan-2028-12-01.md"],
+    loi="BULLETIN",
+    gioi_han="Mốc production_config + kịch bản GIẢ ĐỊNH; tồn kho fixture.",
+    can_de_go="Sửa lỗi đè biến `stock` trong pipelines/production.collect (vòng allocation_proposals) — sửa sản phẩm.")
+
+BULLETIN = {"muc_do": "cao", "mo_ta": "pipelines.production.collect: vòng đọc allocation_proposals dùng tên biến `stock` cho cột min(stock_total) (production.py ~dòng 820) đè dict tồn kho `stock` (inventory_csv.current_stock); mục cận hạn sau đó `sku in stock` (dòng 861) → TypeError. Hễ DB có ≥1 run phân bổ VÀ có lô passed trong cửa sổ cận hạn thì `production bulletin` crash: không ra bản tin sx-bantin-* (production-01) lẫn mục 'Hàng cận hạn (FEFO)' sx-canhan-* (production-04.3) — đúng lúc cần cảnh báo.",
+            "tai_hien": "inventory_csv --file inv_ok.csv; production allocate --cutoff chot_11_11 --start 2026-10-26; lots --load lots_ok.json; intake IT-LOT-001/002 passed; production bulletin --date 2026-10-23 --out-dir D",
+            "expected": "exit 0, ghi sx-bantin-tuan-2026-10-23.md + sx-canhan-2026-10-23.md có IT-LOT-002 (HSD 01/10/2026) và IT-LOT-001 (01/12/2026)",
+            "actual": "exit 1 traceback TypeError: argument of type 'int' is not iterable; không ghi file. Đối chứng --date 2028-12-01 (không lô cận hạn) chạy được",
+            "evidence": ["evidence/itacc_r10/g4/out/P01-7c.txt", "evidence/itacc_r10/g4/out/P01-7c-lap.txt", "evidence/itacc_r10/g4/out/P01-7d-chandoan.txt"]}
+ITEMS["production-01"]["loi"] = [BULLETIN]
+
+ITEMS["production-02"] = dict(
+    db="prod", inputs=["golden_prod.json", "golden_bad.json", "golden_empty.json", "dossier_full.json", "dossier_lech.json"],
+    ca=[C("P02-1", "nạp golden fixture (savina-12v quy cách 12→10 viên)", "phiếu spec_mismatch; detail theo nguồn",
+          "exit 0 sku_changed=1 (version 2); golden_discrepancies +2 spec_mismatch pending, detail {web: 12 viên, golden: 10 viên} — không có trường đề xuất; price_list giữ 34 dòng chờ duyệt",
+          runs=["P02-0-q", "P02-1", "P02-1-q"]),
+        C("P02-2", "ÂM idempotent", "price_list không thêm", "exit 0 sku_changed=0 price_same=34; tổng không đổi"),
+        C("P02-3", "ÂM golden vi phạm R1 / rỗng", "exit 1, 0 ghi", "bad: exit 1 R1+R2 'không nạp gì'; empty: exit 1 'không connect, không ghi/xóa'; price_list 34, discrepancies 41, version max 2 không đổi",
+          runs=["P02-3a", "P02-3b"]),
+        C("P02-4", "report phiếu lệch", "liệt kê pending", "exit 0 '41 phiếu lệch pending (giá trị theo nguồn, agent không chọn)'"),
+        C("P02-5", "ÂM agent duyệt giá", "exit !=0", "exit 1 \"'agent:x' không phải người\"; price_list #2 approved_by vẫn null"),
+        C("P02-6", "hồ sơ gốc thật", "exit 2 BLOCKED 0/14 + SKU chưa gắn", "exit 2 '[blocked] danh mục hồ sơ gốc: 0/14', '[blocked] SKU golden đã gắn hồ sơ gốc: 0/13'"),
+        C("P02-7", "bộ kiểm trên fixture đủ / lệch", "đủ 0; lệch 1", "dossier_full exit 0 (13/13 — fixture GIẢ, chỉ để chạy bộ kiểm); dossier_lech exit 1 'số công bố lệch golden của savina-12v'",
+          runs=["P02-7a", "P02-7b"])],
+    trang_thai="BI_CHAN", muc="LOCAL", nn="EXTERNAL_INPUT",
+    ev=["P02-0-q", "P02-1", "P02-1-q", "P02-2", "P02-3a", "P02-3b", "P02-4", "P02-5", "P02-6", "P02-7a", "P02-7b"],
+    gioi_han="Phần con golden master + phiếu lệch + bộ kiểm hồ sơ chạy đúng trên fixture; đầu ra thiết yếu 'hồ sơ gốc 14 sản phẩm' chưa có dữ liệu. Chính sách cổng tắt loader chưa cấu hình (data/loader_gate.json chinh_sach null — loader in 'CHƯA CẤU HÌNH').",
+    can_de_go="Bên B cung cấp danh_muc_ho_so_goc 14 hồ sơ (tên, thành phần, quy cách, số công bố, xác nhận + căn cứ) và gắn mọi SKU golden vào data/product_dossiers.json → product_dossiers --check exit 0.")
+
+ITEMS["production-03"] = dict(
+    db="prod", inputs=["nhan_savina.txt", "nhan_ruou.txt", "nhan_empty.txt", "nhan.png", "listing_shopee.csv"],
+    ca=[C("P03-1", "nhãn savina-12v có lỗi (+ listing fixture nạp trước)", "ĐKSP lệch, thiếu khuyến cáo, lô không hồ sơ",
+          "exit 0 [dry] 6 điểm lệch: thiếu khuyến cáo phần 1+2, ĐKSP 1234 vs golden 8014, quy cách 12 vs golden 10 viên, lô IT-LOT-777 không hồ sơ, listing shopee 8 viên vs nhãn 12",
+          runs=["P03-0", "P03-1"]),
+        C("P03-2", "--submit", "1 label_check production agent:sx_label pending", "exit 0 #1 production/label_check pending agent:sx_label; payload chỉ field trích + sha nhãn, không nguyên văn",
+          runs=["P03-2", "P03-q"]),
+        C("P03-3", "ÂM idempotent", "[skip]", "exit 0 '[skip] đợt này đã có'"),
+        C("P03-4", "nhãn rượu → mã tra cứu", "chỉ H-xxxxxxxx", "exit 0 #2 title/payload 'SKU H-0e8929fd', không sku_key/tên rượu"),
+        C("P03-5", "đọc ẢNH nhãn (OCR none) — chặn an toàn", "exit 2 chưa cấu hình OCR",
+          "exit 2 'chưa cấu hình OCR … (external-dep, cần hợp đồng + DPA)' — PASS là nhánh CHẶN an toàn; đọc ảnh nhãn KHÔNG thực hiện được (MISSING_ADAPTER)"),
+        C("P03-6", "ÂM file rỗng / SKU lạ", "exit 1", "rỗng exit 1; SKU lạ exit 1; label_check vẫn 2", runs=["P03-6a", "P03-6b"])],
+    trang_thai="BI_CHAN", muc="LOCAL", nn="MISSING_ADAPTER",
+    ev=["P03-0", "P03-1", "P03-2", "P03-3", "P03-4", "P03-q", "P03-5", "P03-6a", "P03-6b"],
+    gioi_han="Phần con đối soát từ CHỮ nhãn (.txt) đạt trên fixture; luật nhãn GIẢ ĐỊNH (label_rules.json chờ pháp chế). Đầu ra thiết yếu 'đọc ảnh nhãn thật' chưa có adapter.",
+    can_de_go="Cắm provider OCR trong nước vào ingest.doc_intake.PROVIDERS (vendor + hợp đồng/DPA + key), đặt OCR_PROVIDER.")
+
+ITEMS["production-04.3"] = dict(
+    db="prod", inputs=["lots_ok.json", "lots_bad.json", "cert_a.pdf", "cert_b.pdf", "not_pdf.txt"],
+    ca=[C("P043-1", "ÂM lô HSD trước NSX", "exit 1, 0 dòng", "exit 1 'hạn dùng phải SAU ngày sản xuất … không connect'"),
+        C("P043-2", "nạp 4 lô", "4 pending", "exit 0 '4 lô mới (pending)'"),
+        C("P043-3", "intake", "3 passed 1 failed; intake lại từ chối", "exit 0 ×4 (approvals #2–#5); intake lại IT-LOT-001 exit 1 'đã kiểm (passed)'",
+          runs=["P043-3.IT-LOT-001", "P043-3.IT-LOT-004", "P043-3.again", "P043-3-q"]),
+        C("P043-4", "phiếu kiểm nghiệm v1, v2", "v1 rồi v2", "exit 0: IT-LOT-001 v1 PKN-IT-001 rồi v2 PKN-IT-001-R1 (v1 giữ); IT-LOT-002 v1; tệp lưu theo sha256 ở LOT_CERT_DIR ngoài repo",
+          runs=["P043-4a", "P043-4b", "P043-4c", "P043-4-q"]),
+        C("P043-5", "ÂM phiếu sai loại / trùng tệp / kho trong repo", "exit !=0 cả 3", "not_pdf exit 1 (magic bytes); trùng tệp cùng lô exit 1; LOT_CERT_DIR trong repo exit 1",
+          runs=["P043-5a", "P043-5b", "P043-5c"]),
+        C("P043-6", "cert-verify", "ok / thieu_phieu; exit 1", "exit 1: IT-LOT-001 ok, 002 ok, 003 thieu_phieu; sau khi sửa tệp trong kho → IT-LOT-001 lech_hash",
+          runs=["P043-6a", "P043-6b"]),
+        C("P043-7", "bản tin cận hạn", "sx-canhan-2026-10-23.md có lô HSD 01/12/2026 và lô hết hạn 01/10/2026",
+          "exit 1 CRASH TypeError trong production.collect (cùng lỗi P01-7) — KHÔNG ghi sx-canhan-2026-10-23.md; mục FEFO chỉ ra được khi KHÔNG có lô cận hạn (đối chứng --date 2028-12-01: 'không có')",
+          kq="FAIL", runs=["P01-7c", "P01-7c-lap", "P01-7d-chandoan"]),
+        C("P043-8", "ÂM tắt production-04.3 (chạy cuối)", "exit !=0; không ghi sx-canhan mới",
+          "exit 1 '[err] báo cáo sx-canhan-2028-12-01.md: production-04.3 đang tắt'; chỉ sx-bantin (production-01 còn chạy thử) được ghi",
+          runs=["TAT-production-04.3", "P043-8"])],
+    trang_thai="BI_CHAN", muc="LOCAL", nn="CODE_FAIL",
+    ev=["P043-1", "P043-2", "P043-3-q", "P043-3.again", "P043-4a", "P043-4b", "P043-4c", "P043-4-q", "P043-5a",
+        "P043-5b", "P043-5c", "P043-6a", "P043-6b", "P01-7c", "P01-7c-lap", "P01-7d-chandoan", "P043-8",
+        "TAT-production-04.3", "rep_prod_diag/sx-canhan-2028-12-01.md"],
+    loi=[BULLETIN],
+    gioi_han="near_expiry_days GIẢ ĐỊNH 90; phiếu kiểm nghiệm là PDF giả. Quan sát: intake 'passed' cho lô đã quá HSD không cảnh báo; cùng một tệp phiếu được chấp nhận cho 2 lô khác nhau.",
+    can_de_go="Sửa lỗi đè biến `stock` trong production.collect (cùng lỗi production-01).")
+
+ITEMS["production-05.1"] = dict(
+    db="prod", llm=True, inputs=["rd_baoquan.md"],
+    ca=[C("P051-1", "nạp tài liệu nội bộ (fake embed)", "chunks_internal ≥1 internal:sx", "exit 0; chunks_internal internal:sx/rd-baoquan-thu-it 1 chunk approved_by 'GĐ Sản xuất Thử IT'; llm_usage ingest data_platform-03 (fake)",
+          runs=["P051-1", "P051-1-q"]),
+        C("P051-2", "tra cứu có kết quả", "sx-tracuu-*.md nhãn NỘI BỘ, trích nguyên văn, nguồn DOI",
+          "exit 0; sx-tracuu-2026-10-23-c4a63127.md: nhãn CHẠY THỬ + 'NỘI BỘ – không dùng cho truyền thông', Chế độ extract, đoạn [1] là chuỗi con nguyên văn của tài liệu (kiểm script), nguồn 'DOI: 10.1234/thu-it.2026.001'; report_outputs production-05.1",
+          runs=["P051-2", "P05-check"]),
+        C("P051-3", "ÂM câu về rượu", "NO_DATA, 0 embed", "exit 0 no_data 'không tra cứu đồ uống có cồn'; llm_usage không thêm dòng"),
+        C("P051-4", "ÂM câu không liên quan", "NO_DATA", "exit 0 no_data 'không có tài liệu đủ liên quan'"),
+        C("P051-5", "ÂM tắt production-05.1 (chạy cuối)", "không ghi file", "exit 1 traceback RolloutBlocked — rep_rd_tat rỗng (stdout vẫn in trích đoạn — xem lỗi thấp chung)",
+          runs=["TAT-production-05.1", "P051-5"])],
+    trang_thai="DAT", muc="MOCK",
+    ev=["P051-1", "P051-1-q", "P051-2", "P05-check", "P051-3", "P051-4", "P051-5", "TAT-production-05.1",
+        "rep_rd/sx-tracuu-2026-10-23-c4a63127.md"],
+    gioi_han="Embedding qua client giả cục bộ (MOCK) — chất lượng truy hồi với model thật chưa kiểm; tài liệu R&D thật do GĐ SX duyệt nạp chưa có (dữ liệu vận hành).",
+    can_de_go="")
+
+ITEMS["production-05.2"] = dict(
+    db="prod", llm=True, inputs=["rd_baoquan.md"],
+    ca=[C("P052-1", "tóm tắt sạch (fake LLM)", "sx-tomtat, mode llm, guardrail ok",
+          "exit 0; sx-tomtat-2026-10-23-c4a63127.md Chế độ llm, nhãn NỘI BỘ, guardrail.check ok=True (kiểm script); llm_usage sx_tracuu production-05.2",
+          runs=["P052-1", "P05-check", "P052-q"]),
+        C("P052-2", "ÂM LLM vi phạm guardrail", "sx-tracuu, extract, lý do guardrail",
+          "exit 0; file sx-tracuu-… (không sx-tomtat), Chế độ extract, 'LLM bị loại: guardrail: banned_word,unverified_claim'"),
+        C("P052-3", "ÂM nút tắt LLM (LLM_KILL_FEATURES)", "extract, lý do gateway", "exit 0; Chế độ extract, 'LLM bị loại: gateway: GatewayBlocked'; không có dòng llm_usage mới cho lần này"),
+        C("P052-4", "ÂM tắt production-05.2 (chạy cuối)", "không ghi sx-tomtat mới", "exit 1 traceback RolloutBlocked; không ghi file (rep_rd_tat rỗng)",
+          runs=["TAT-production-05.2", "P052-4"]),
+        C("P052-5", "bổ sung sau khóa: tắt production-05.2 → không gọi LLM / không sinh tóm tắt",
+          "không có lời gọi LLM production-05.2 mới, không in tóm tắt",
+          "VẪN gọi LLM: llm_usage thêm dòng sx_tracuu/production-05.2 ok=true (chi phí ghi nhận) và stdout in nguyên bản tóm tắt 'Chế độ: llm' — chỉ bước ghi file bị chặn",
+          kq="FAIL", runs=["P052-4", "TAT-prod-q2"],
+          note="thêm sau khi quan sát P052-4: cổng giai đoạn chỉ đặt ở write_report, không ở biên sinh (rollout.check_generate) trước llm_gateway.chat")],
+    trang_thai="BI_CHAN", muc="MOCK", nn="CODE_FAIL",
+    ev=["P052-1", "P052-2", "P052-3", "P052-4", "P052-q", "P05-check", "TAT-production-05.2", "TAT-prod-q2",
+        "rep_rd52/sx-tomtat-2026-10-23-c4a63127.md", "rep_rd52b/sx-tracuu-2026-10-23-c4a63127.md"],
+    loi=[{"muc_do": "trung bình", "mo_ta": "agents.sx_tracuu --llm khi tính năng production-05.2 đang TẮT (rollout) vẫn gọi llm_gateway.chat (phát sinh chi phí, gửi ngữ cảnh R&D nội bộ ra dịch vụ AI ở môi trường thật) và in tóm tắt ra stdout; chỉ write_report chặn ghi file và ném traceback RolloutBlocked không bắt.",
+           "tai_hien": "rollout --disable production-05.2; harness run.py --fake-llm ok -- agents.sx_tracuu --ask '…' --llm --out",
+           "expected": "không gọi LLM, không sinh tóm tắt, thông báo bị chặn", "actual": "llm_usage +1 dòng production-05.2 ok; stdout 'Chế độ: llm' + tóm tắt; exit 1 traceback",
+           "evidence": ["evidence/itacc_r10/g4/out/P052-4.txt", "evidence/itacc_r10/g4/out/TAT-prod-q2.txt"]}],
+    gioi_han="LLM qua client giả (MOCK) — không gọi OpenRouter; chất lượng tóm tắt thật chưa kiểm; gửi dữ liệu R&D ra AI nước ngoài cần Bên B chấp thuận.",
+    can_de_go="Đặt rollout.check_generate(production-05.2) trước lời gọi LLM trong sx_tracuu (và bắt RolloutBlocked) — sửa sản phẩm.")
+
+COMMON_LOW = {"muc_do": "thấp", "mo_ta": "Cổng tắt tính năng chỉ ở biên ghi file (write_report): fp_cash --forecast, sx_tracuu, production bulletin vẫn tính và IN toàn bộ nội dung ra stdout khi tính năng tắt (không nhãn giai đoạn); fp_pnl/sx_tracuu không bắt RolloutBlocked → traceback thô, exit 1.",
+              "tai_hien": "rollout --disable <id>; chạy CLI tương ứng với --out-dir/--out", "expected": "không sinh nội dung, thông báo chặn gọn",
+              "actual": "stdout in nội dung / traceback", "evidence": ["evidence/itacc_r10/g4/out/F052-5.txt", "evidence/itacc_r10/g4/out/P051-5.txt", "evidence/itacc_r10/g4/out/F041-6.txt"]}
+for k in ("finance-04.1", "finance-05.2", "production-05.1"):
+    ITEMS[k]["loi"] = [COMMON_LOW]
+
+
+def main():
+    out_dir = EV / "items"
+    out_dir.mkdir(exist_ok=True)
+    for iid, d in ITEMS.items():
+        k = KHUNG[iid]
+        evs = []
+        for e in d["ev"]:
+            p = OUT / e if (OUT / e).is_file() else OUT / (e + ".txt")
+            evs.append({"path": rel(p), "sha256": sha(p)})
+        evs.append({"path": rel(SEED[d["db"]]), "sha256": sha(SEED[d["db"]])})
+        for h in HARN:
+            evs.append({"path": rel(h), "sha256": sha(h)})
+        for c in (EV / "criteria" / "g4.json", EV / "criteria" / "g4.lock.txt",
+                  G4 / "fixtures_sha256.txt"):
+            evs.append({"path": rel(c), "sha256": sha(c)})
+        env = ENV_PROD_LLM if d.get("llm") else (ENV_FIN if d["db"] == "fin" else ENV_PROD)
+        rec = {"id": iid, "ten": k["ten"], "khoi": k["khoi"],
+               "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"],
+               "can_cu": k["can_cu"], "tieu_chi": CRIT[iid]["tieu_chi_cu_the"],
+               "fingerprint": FP, "thoi_gian": NOW, "moi_truong": env,
+               "dau_vao": [{"ten": f"evidence/itacc_r10/g4/fixtures/{n}",
+                            "sha256": FX[n], "provenance": "fixture thử IT"}
+                           for n in d["inputs"]],
+               "ca": d["ca"], "trang_thai": d["trang_thai"],
+               "muc_kiem": d["muc"], "nguyen_nhan": d.get("nn"),
+               "can_de_go": d.get("can_de_go", ""),
+               "gioi_han": d.get("gioi_han", ""), "evidence": evs,
+               "loi_san_pham": d.get("loi", [])}
+        fails = [c["ma"] for c in d["ca"] if c["ket_qua"] == "FAIL"]
+        assert (rec["trang_thai"] == "DAT") == (not fails and rec["nguyen_nhan"] is None), iid
+        (out_dir / f"{iid}.json").write_bytes(
+            json.dumps(rec, ensure_ascii=False, indent=1).encode("utf-8"))
+        print(iid, rec["trang_thai"], rec["muc_kiem"], rec["nguyen_nhan"], "fail:", fails)
+
+
+if __name__ == "__main__":
+    main()

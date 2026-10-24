@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "<string>", line 12, in <module>
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\connectors\zalo.py", line 983, in _reply_turn
+    return _reply_fixed(user_id, question, msg_id, inb, route.kind,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\connectors\zalo.py", line 1152, in _reply_fixed
+    channels.record_handoff(inb, reason, msg_id)
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\connectors\channels.py", line 492, in record_handoff
+    return director.submit(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\director.py", line 172, in submit
+    return aq.enqueue(conn, object_type=object_type, object_id=object_id,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\approval_queue.py", line 88, in enqueue
+    _rollout().check_generate(conn, _feature_of((block, object_type, by)),
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\rollout.py", line 671, in check_generate
+    raise RolloutBlocked(_why(fid, "tat", what) + " — không sinh đầu ra")
+pipelines.rollout.RolloutBlocked: hàng duyệt sales/cskh_handoff: tính năng sales-01 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra

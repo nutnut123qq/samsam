@@ -1,0 +1,38 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.fp_pnl",
+  "--pnl",
+  "--month",
+  "2026-08"
+ ],
+ "env_doi": [
+  "PROBE_CALL_MAIN",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:22:52+07:00",
+ "ket_thuc": "2026-10-24T11:22:59+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "(?s)\\A(?=.*\\[rollout\\][^\\n]*finance-04\\.1)(?![\\s\\S]*\\| SKU \\|)",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "c37e03404f72310d2b529552761af624395bb0101f071b657dfc7a191bd81f09",
+ "stderr_sha256": "a50a533abfb66c083479ee18c0dfe3aafd40cc43b2305a15d590850d6c624f2b"
+}

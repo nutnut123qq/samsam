@@ -619,9 +619,10 @@ def test_red_alert_ack_needs_own_login(live, cfg, enforce):
 
 def test_deny_log_does_not_commit_caller_work(live, enforce):
     with _login(live, "app_human") as c:
-        c.execute("insert into content_drafts (brief, channel, text,"
-                  " guardrail, source, created_by) values ('p2-dang-do',"
-                  " 'facebook', 'x', '{}'::jsonb, 'cli', 'Lan')")
+        # việc dở của caller: login người không ánh xạ không tạo được draft
+        # (đợt an toàn S04b) → dùng 1 dòng red_alerts (không giữ khóa chuỗi)
+        c.execute("insert into red_alerts (source_agent, title) values"
+                  " ('agent:p2', 'p2-dang-do')")
         auth.deny_log(c, ANY, "sales", "approve", "p2_probe", "dang-do",
                       "lý do thử")
         c.rollback()
@@ -629,7 +630,7 @@ def test_deny_log_does_not_commit_caller_work(live, enforce):
         auth.deny_log(c, ANY, "sales", "approve", "p2_probe", "ranh",
                       "lý do thử")
         assert c.info.transaction_status == psycopg.pq.TransactionStatus.IDLE
-    assert _admin_q(live, "select count(*) from content_drafts where brief"
+    assert _admin_q(live, "select count(*) from red_alerts where title"
                     " = 'p2-dang-do'") == [(0,)]
     assert _denied(live, "p2_probe", "dang-do") == 1
     assert _denied(live, "p2_probe", "ranh") == 1

@@ -1,0 +1,15 @@
+[
+ {
+  "sql": "select case when (select stage from feature_rollout where feature_id = 'production-05.2') = 'tat' then (select count(*) from llm_usage where feature_id = 'production-05.2' and ts >= (select stage_since from feature_rollout where feature_id = 'production-05.2')) else -1 end",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\production-05.2\\20261024T112415-bf5b\\production-05.2__P052-5\\out/sx-*",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ }
+]

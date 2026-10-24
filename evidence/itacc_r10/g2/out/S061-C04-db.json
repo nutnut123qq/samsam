@@ -1,0 +1,17 @@
+[
+ {
+  "sql": "select id, object_type, object_id, created_by, status, risk, title, payload from approval_queue where created_by='agent:kd_price' and object_type<>'dealer_price_alert' order by id",
+  "rows": [
+   {
+    "id": 55,
+    "object_type": "market_alert_s1",
+    "object_id": "a5:below_floor:shopee:24825885894:7782a8996b52",
+    "created_by": "agent:kd_price",
+    "status": "pending",
+    "risk": "high",
+    "title": "Xử lý cảnh báo sàn S1 — giá bán thực trên sàn dưới giá sàn golden — kênh shopee, mã sản phẩm sàn 24825885894, SKU saphraton-20v",
+    "payload": "Cảnh báo sàn S1 (A5 giá & khuyến mãi): giá bán thực trên sàn dưới giá sàn golden — kênh shopee, mã sản phẩm sàn 24825885894, SKU saphraton-20v. Số liệu: giá niêm yết 200.000 đ, giá bán thực 200.000 đ, giá sàn golden 236.000 đ. Đề xuất NHÁP: đưa giá bán về ≥ giá sàn 236.000 đ. Agent KHÔNG tự đổi giá/khuyến mãi — GĐ bán hàng duyệt, MXH sửa tay trên Seller Center."
+   }
+  ]
+ }
+]

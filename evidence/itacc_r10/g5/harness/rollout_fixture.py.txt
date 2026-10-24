@@ -1,0 +1,37 @@
+"""FIXTURE data_platform-08 (KHÔNG phải bằng chứng ngày chạy thử hợp đồng): dựng điều kiện
+'đủ cổng chạy thử' cho farming-05.4 trên DB thử dp để kiểm NHÁNH ĐỦ ĐIỀU KIỆN của cổng PL02:
+  1) mốc chạy thử lùi về T0 qua CHÍNH hàm sản phẩm (rollout.disable/promote với tham số now —
+     đi qua function DB rollout_transition_human; owner mới truyền được mốc) — không UPDATE tay sổ;
+  2) 50 đầu ra approval_queue farming/pest_alert GIẢ (object_id it-g5-fixture:*, guardrail ok,
+     không mẫu) rải 8 ngày làm việc trong [T0, nay].
+Việc NÂNG giai đoạn sau đó chạy bằng CLI thật `rollout --promote` (DB tự đếm lại)."""
+import hashlib, json, os, sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+import psycopg
+from pipelines import rollout
+VN = timezone(timedelta(hours=7)); FID = "farming-05.4"; BY = "Người Thử IT"
+T0 = datetime(2026, 10, 12, 8, 0, tzinfo=VN)
+feats, shift = rollout.load_features(), rollout.load_shift()
+conn = psycopg.connect(os.environ["DATABASE_URL"])
+print("disable@T0:", rollout.disable(conn, FID, BY, note="FIXTURE thử IT g5 — lùi mốc", now=T0))
+print("promote tat->chay_thu@T0+1m:", {k: v for k, v in rollout.promote(conn, feats, FID, BY, shift, now=T0 + timedelta(minutes=1)).items() if k != "facts"})
+days = [T0.date() + timedelta(days=i) for i in range(1, 12)]
+days = [d for d in days if d.weekday() < 5][:8]
+n = 0
+for i in range(50):
+    d = days[i % len(days)]
+    ts = datetime(d.year, d.month, d.day, 9, i % 50, tzinfo=VN)
+    payload = f"Cảnh báo sâu bệnh FIXTURE thử IT g5 #{i}"
+    conn.execute("insert into approval_queue (object_type, object_id, block, title, payload, content_sha256, risk, guardrail,"
+                 " created_by, created_at, due_at, status) values ('pest_alert', %s, 'farming', %s, %s, %s, 'low',"
+                 " %s::jsonb, 'agent:VT', %s, %s, 'pending')",
+                 (f"it-g5-fixture:{i:03d}", f"Cảnh báo sâu bệnh FIXTURE {i}", payload,
+                  hashlib.sha256(payload.encode()).hexdigest(), json.dumps({"ok": True}), ts, ts + timedelta(days=2)))
+    n += 1
+conn.commit()
+print("inserted fixture outputs:", n, "days:", [d.isoformat() for d in days])
+print("stage now:", conn.execute("select stage, stage_since from feature_rollout where feature_id=%s", (FID,)).fetchone())
+print("db recount:", conn.execute("select rollout_recount_human(%s)", (FID,)).fetchone()[0])

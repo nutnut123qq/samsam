@@ -1,0 +1,28 @@
+"""HARNESS chung — gọi <module>.main(argv) THẬT sau khi đổi hằng đường dẫn của
+module sang scratchpad (vd REPORTS_DIR — báo cáo không rơi vào data/reports).
+  python mod_run.py <module> [--patch ATTR=PATH ...] [--force-mode M] -- <args>
+--force-mode = FIXTURE pipelines.rollout._FORCE_MODE (ghi rõ trong evidence)."""
+import importlib
+import sys
+from pathlib import Path
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+mod_name, rest = sys.argv[1], sys.argv[2:]
+sep = rest.index("--") if "--" in rest else len(rest)
+opts, argv = rest[:sep], rest[sep + 1:]
+mod = importlib.import_module(mod_name)
+i = 0
+while i < len(opts):
+    if opts[i] == "--patch":
+        k, v = opts[i + 1].split("=", 1)
+        setattr(mod, k, Path(v)); print(f"[HARNESS] {mod_name}.{k} -> scratchpad {Path(v).name}")
+        i += 2
+    elif opts[i] == "--force-mode":
+        from pipelines import rollout
+        rollout._FORCE_MODE = opts[i + 1]; print(f"[FIXTURE] rollout._FORCE_MODE={opts[i + 1]}")
+        i += 2
+    else:
+        raise SystemExit(f"opt lạ {opts[i]}")
+import inspect
+raise SystemExit(mod.main(argv) if inspect.signature(mod.main).parameters else (sys.argv.__setitem__(slice(1, None), argv) or mod.main()))

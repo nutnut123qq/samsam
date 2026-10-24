@@ -1,0 +1,206 @@
+{
+ "id": "intel-04.1",
+ "ten": "Xu hướng Google Trends theo tuần",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Xu hướng và từ khóa: 'Google Trends theo tuần'",
+ "tieu_chi": [
+  "T1 `intel_import --trend` + `intel_weekly --out-dir` exit 0",
+  "T2 intel-trend-<thứ Hai>.md: giá trị mới nhất từng từ khóa kèm query_id, dòng TĂNG ĐỘT BIẾN trong tuần, RISING file related mới nhất (rượu ghi chú riêng)",
+  "T3 ca âm: file không neo / chuỗi ngày → exit 1; tắt intel-04.1 không chặn doithu (intel-03)",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+  "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_intel; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [
+  {
+   "ten": "it_g1_multiTimeline.csv",
+   "sha256": "3178cbcc1a280a162990f58b044947eb49fed184ce4628322b4dbf334c378338",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_relatedQueries.csv",
+   "sha256": "3c82d782e895829c780182f163bba05a348297aeb3a361a6b4cfe2feb4d7471a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_multiTimeline_khong_neo.csv",
+   "sha256": "44d6a43fdf0c71c0db26f7c8dc8ac4b548d4e68e217f3a87491cf765425aec7f",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_multiTimeline_theo_ngay.csv",
+   "sha256": "21dbe1e5236f7f2c45657abc59eaa805923b6bca40e6042aaf08b9b8e537b542",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Nạp Trends tuần",
+   "lenh": "python -m ingest.intel_import --trend evidence/itacc_r10/g1/harness/it_g1_multiTimeline.csv",
+   "expected": "exit 0",
+   "actual": "nạp multiTimeline 14 tuần (neo quà tết); loader in [spike] sâm ngọc linh tuần 2026-10-19: 58 (trung vị 20.5)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Nạp related",
+   "lenh": "python -m ingest.intel_import --trend evidence/itacc_r10/g1/harness/it_g1_relatedQueries.csv --seed sâm ngọc linh",
+   "expected": "exit 0; dòng rượu có cờ ruou",
+   "actual": "trend_related #3 10 dòng; 'rượu sâm ngọc linh' cờ ruou; SĐT trong query đã che '***' khi nạp",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "File không neo / theo ngày",
+   "lenh": "python -m ingest.intel_import --trend evidence/itacc_r10/g1/harness/it_g1_multiTimeline_khong_neo.csv",
+   "expected": "exit 1 cả hai, 0 dòng",
+   "actual": "không neo: 'thiếu neo quà tết' exit 1; theo ngày: 'chỉ nhận chuỗi tuần' exit 1 (intel041_C03b); 0 dòng, không connect",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Báo cáo trend",
+   "lenh": "python scripts/intel_weekly.py --week 2026-10-19 --out-dir <scratch>/repw",
+   "expected": "file có 'TĂNG ĐỘT BIẾN sâm ngọc linh', RISING, ghi chú rượu",
+   "actual": "intel-trend-2026-10-19.md (nhãn CHẠY THỬ intel-04.1): giá trị mới nhất 3 từ khóa kèm query_id; 'TĂNG ĐỘT BIẾN sâm ngọc linh tuần 2026-10-19: 58 so trung vị 20.5 của 8 tuần trước'; RISING 7 dòng, rượu ghi chú riêng",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Tắt intel-04.1",
+   "lenh": "python scripts/intel_weekly.py --week 2026-10-19 --out-dir <scratch>/repw_off41",
+   "expected": "không trend; doithu VẪN sinh; bật lại",
+   "actual": "tắt intel-04.1 → không trend; intel-doithu VẪN sinh (exit 2 do RolloutBlocked được bắt)",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C06",
+   "mo_ta": "bổ sung sau khóa",
+   "lenh": "python scripts/intel_weekly.py --week 2026-10-19 --out-dir <scratch>/repw_off3",
+   "expected": "(bổ sung sau khóa — xem actual)",
+   "actual": "BỔ SUNG SAU KHÓA (lý do: lỗi phát hiện ở intel-03 C06 chặn trực tiếp đầu ra intel-04.1): khi CHỈ intel-03 tắt, báo cáo intel-trend của intel-04.1 không được sinh",
+   "exit": "2",
+   "ket_qua": "FAIL",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Cùng sửa g1-L1. Ngoài code: file Google Trends xuất tay thật",
+ "gioi_han": "Ngày tuần trong fixture là thứ Hai (Google xuất Chủ nhật) — import không chặn",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_multiTimeline.csv",
+   "sha256": "3178cbcc1a280a162990f58b044947eb49fed184ce4628322b4dbf334c378338"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_multiTimeline_khong_neo.csv",
+   "sha256": "44d6a43fdf0c71c0db26f7c8dc8ac4b548d4e68e217f3a87491cf765425aec7f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_multiTimeline_theo_ngay.csv",
+   "sha256": "21dbe1e5236f7f2c45657abc59eaa805923b6bca40e6042aaf08b9b8e537b542"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_relatedQueries.csv",
+   "sha256": "3c82d782e895829c780182f163bba05a348297aeb3a361a6b4cfe2feb4d7471a"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C04.txt",
+   "sha256": "6df2a950ac79318b24852a329065f5f9d97cfd4391da449483af98e89e7a7fe3"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C04_luot1_golden_chua_hieu_luc.txt",
+   "sha256": "705c90b20215d1a2285d85e84410e5e6dd31bcf070b643095a04df2540621938"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C06.txt",
+   "sha256": "a2e175349f81716bd2a55cea26e10498877b1f744fd0cb6a4c2f7ce2ffaa2a0b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C06a.txt",
+   "sha256": "c87deec94f9977f6edf67863eabd3216c79cd88f6d5f0b02349e0070ef911503"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel03_C06b.txt",
+   "sha256": "965d0c3facc4bbff845421f5e98817b78e7f0938d54f4d47442b572fa192310b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel041_C01.txt",
+   "sha256": "13ab81d3d902fcbc2b9afc7045b217bddf5e89f8c6f75772b78fbbaa1d83e778"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel041_C02.txt",
+   "sha256": "ee924e4176332da92423eddb709c9d94c7b34d709995a647728a338848653bf7"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel041_C03a.txt",
+   "sha256": "a6e3c34e64cbbe0ecd664414c1d0400093483de9c1badf27c54eb86d1aa4e415"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel041_C05.txt",
+   "sha256": "04845468e7e336c9b566066d6dee441339d992f266e2566bd0febb2ce6ca24d2"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel041_C05a.txt",
+   "sha256": "19eb41cd50589ae29fc9d0a572f1677650ad2658179dd8d0e95fa84d369731b1"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel041_C05b.txt",
+   "sha256": "00f32573d4cf523b4a2ba69c9656f60ca3db3da5a9a35a23bae9fd2180f6be0a"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/intel-doithu-2026-10-19_khi_tat_intel-04.1.md",
+   "sha256": "e4c52b89b0fc5d8f764a4ec752853f6a1161c581411018842476e75fca96d37e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/intel-trend-2026-10-19.md",
+   "sha256": "882216dd25c090bf269f7a99846e76cae772f3a21075d59480d6343688b514f2"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "g1-L1",
+   "muc_do": "TRUNG BÌNH",
+   "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+   "tai_hien": [
+    "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+    "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+    "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+   ],
+   "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+   "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+   "evidence": [
+    "out/ceo043_C04.txt",
+    "out/intel03_C06.txt",
+    "out/intel012_C03.txt"
+   ]
+  }
+ ],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

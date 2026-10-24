@@ -1,0 +1,210 @@
+{
+ "id": "data_platform-03",
+ "ten": "Kho tri thức cho chatbot",
+ "khoi": "data_platform",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Hạ tầng dữ liệu và AI / Kho tri thức cho chatbot: 'Tài liệu đã duyệt cho chatbot; tách hẳn tài liệu nội bộ'",
+ "tieu_chi": [
+  "embed_store đồng bộ data/*.jsonl công khai → chunks (embedding qua gateway, transport FAKE ở biên); lọc rượu",
+  "kb_internal --approved-by người → chunks_internal (bảng riêng, approved_by, collection internal:*); chạy lại không đổi → 0 embed",
+  "Ca âm: tài liệu confidential → exit 2; approved-by agent: → exit 2; kb_gaps chạy",
+  "T4: không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:58:33+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_dp; dev mode (AUTH_MODE trống, DEPLOY tắt); fake ở biên: llm_gateway._client = FakeClient embeddings tất định 16 chiều (không mạng); OPENROUTER_API_KEY giả CHỈ trong tiến trình harness để qua load_env",
+ "dau_vao": [
+  {
+   "ten": "quy_trinh_thu_it.md",
+   "sha256": "(xem evidence/itacc_r10/g5/fixtures_sha256.txt)",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "mat_thu_it.md",
+   "sha256": "(xem evidence/itacc_r10/g5/fixtures_sha256.txt)",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "DP03-01",
+   "mo_ta": "Embed công khai",
+   "lenh": "python evidence/itacc_r10/g5/harness/fake_llm_run.py ingest.embed_store --log <scratch>/emb_calls.jsonl",
+   "expected": "chunks > 0, lọc rượu",
+   "actual": "868 chunk/167 doc, 14 lời gọi embed qua gateway (llm_usage ingest/data_platform-03); bỏ 9 record + 30 chunk rượu; 0 chunk chứa 'rượu'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP03-02",
+   "mo_ta": "KB nội bộ",
+   "lenh": "python evidence/itacc_r10/g5/harness/fake_llm_run.py ingest.kb_internal --log <scratch>/kb_calls.jsonl -- --file <scratch>/kb/quy_trinh_thu_it.md --collection internal:it_g5 --approved-by Trưởng Phòng Thử IT",
+   "expected": "chunks_internal approved_by",
+   "actual": "internal:it_g5/quy-trinh-thu-it 1 chunk v1 approved_by 'Trưởng Phòng Thử IT'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP03-03",
+   "mo_ta": "Không đổi",
+   "lenh": "python evidence/itacc_r10/g5/harness/fake_llm_run.py ingest.kb_internal --log <scratch>/kb_calls.jsonl -- --file <scratch>/kb/quy_trinh_thu_it.md --collection internal:it_g5 --approved-by Trưởng Phòng Thử IT",
+   "expected": "0 embed",
+   "actual": "không đổi (0 embed), 0 lời gọi transport",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP03-04",
+   "mo_ta": "Âm: mật",
+   "lenh": "python evidence/itacc_r10/g5/harness/fake_llm_run.py ingest.kb_internal --log <scratch>/kb_calls.jsonl -- --file <scratch>/kb/mat_thu_it.md --collection internal:it_g5 --approved-by Trưởng Phòng Thử IT",
+   "expected": "exit 2",
+   "actual": "exit 2 tài liệu MẬT — 0 lời gọi",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP03-05",
+   "mo_ta": "Âm: agent duyệt",
+   "lenh": "python evidence/itacc_r10/g5/harness/fake_llm_run.py ingest.kb_internal --log <scratch>/kb_calls.jsonl -- --file <scratch>/kb/quy_trinh_thu_it.md --collection internal:it_g5 --approved-by agent:kb",
+   "expected": "exit 2",
+   "actual": "exit 2 --approved-by phải là NGƯỜI",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP03-06",
+   "mo_ta": "kb_gaps",
+   "lenh": "python scripts/kb_gaps.py --out <scratch>/reports/kb_gaps.md",
+   "expected": "exit 0",
+   "actual": "exit 0 ghi kb_gaps.md (scratchpad)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP03-07",
+   "mo_ta": "Bổ sung sau khóa: tách kho (tĩnh)",
+   "lenh": "grep api/rag.py",
+   "expected": "answer() không đọc chunks_internal",
+   "actual": "retrieve mặc định 'public' → chunks; chunks_internal chỉ khi collection internal:* tường minh",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": null,
+ "can_de_go": "Người duyệt tài liệu nội bộ được Bên B ủy quyền + login riêng; embedding thật qua OpenRouter (chi phí)",
+ "gioi_han": "Vector embedding là giả (không đánh giá chất lượng truy hồi); corpus công khai = data/*.jsonl repo. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP03-01.txt",
+   "sha256": "0c1d82aaf1785ac1e6b1ae4b7c5fd1d09b60c2688baa18d817cfff225694fc21"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP03-02.txt",
+   "sha256": "7963472d9c1cde99da8748af582ada1c239cb0920bc4fae02ecccb6ac599537a"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP03-03.txt",
+   "sha256": "bec40109bbf2840fc097196f023ea9804cf7cba3ca0d9254c8f089d47330c9a8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP03-04.txt",
+   "sha256": "962f1dba8ad0a8be39e44619e62c169c8c2b8580cebe7a53539fa6032f1fc4e3"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP03-05.txt",
+   "sha256": "37474009bb7eb55f914f35876bbc4b51d0c8018171af5ad9819968ba82bb99e8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP03-06.txt",
+   "sha256": "b867a478d3ce574f4bfa36c0773eddccea2a63fd21c14dd74e76d29ca1862895"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP03-07.txt",
+   "sha256": "e756821a9fc31e10843f2bde936ba82117b797d7b6d8f7f643ffeb67d3f50a05"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/check_media.py",
+   "sha256": "9dc52b8eefb2b5ddb13334435174e3083f32f7006c60a6ce8271c7fd20fe4c23"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_llm_run.py",
+   "sha256": "df4672d90c7d9faa51a83ed42a6e1d159bf8eda0bb5aa95860cf15bef3c6fe3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_shopee.py",
+   "sha256": "9402db0719ea6f325d9d75b29af4ce22574dbae49dc2cfc7c24ad459534329cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gd_run.py",
+   "sha256": "84c646e3dd2019f6bc417e9071b5a422d8d37d7f10c0de077db3f303b1f21eaa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gw_probe.py",
+   "sha256": "8038c6f83facb83baab8eb2bb0fbb8b8cb1ab328082e7b6af0b718734f6cf981"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/hold_lock.py",
+   "sha256": "2a511640b93c4a5d3e2529f711f9b3ca07085bbb08b7be3f88383ffc230d1cab"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_criteria_g5.py",
+   "sha256": "6e64178e75ce85a9b8c265c33862e0395c7cdcfcc943ac19b4915e3b53e21dcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_fixtures.py",
+   "sha256": "d5117a5728c04a988c7d151150fa7e7153a45d59f3752eb470c16ed86aabb241"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_items_g5.py",
+   "sha256": "879a76de3bfb1285557de44386e17428ebf513bf1368f5a554b534fad9edfb82"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_pdf.py",
+   "sha256": "f68506f1c8158b51a4a4048c894df8bfbc88d4a14071cb6c3d2393464add3867"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/mod_run.py",
+   "sha256": "0ba336024389f8ea885b2d63bb2056bdee2c03b814a74eb12343daff901a31d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/probe_run.py",
+   "sha256": "c0f2386d31984f5e279392c44c55209837e13b5f93ded55d5c80709c6b3e5105"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/q.py",
+   "sha256": "6b1c569d67e265d3ad9593331334d286cdbc525eb304ca55128eb686e57d97ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/qr_run.py",
+   "sha256": "8dbe083a6119eee0d80849374b7b053ef5bb44cac67abd85bae74a94562571c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/role_probe.py",
+   "sha256": "c1364ecad746feaeddbb98de7853e542a757cc4ddbbaaa6cae8aada075375a07"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture.py",
+   "sha256": "3b5ae3fad7dac20dc7fab16d1d704833bbb85ba6554c4fd41717f5441bed497b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "sha256": "c530ef5bce990aaa8e0393e582192b93687501195dfcbfa32520a3c28be1c90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/tamper.py",
+   "sha256": "0c27a266124476bb3369ed975395dd2d27ec8e30207e31647a817eda7540a186"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/zalo_webhook.py",
+   "sha256": "de7da44a52a26cb27510f89ffc5659c59c22e53f4fd01d7db142760bf371866c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/lib.sh",
+   "sha256": "c3d88bf45e775e5246126bb82b28042b0d4e6bc5e69a80b70e9d4d263c308a3d"
+  }
+ ],
+ "loi_san_pham": []
+}

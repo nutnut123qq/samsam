@@ -1,0 +1,40 @@
+# Bản tin Sản xuất tuần — 2026-10-23
+
+Cấu hình mốc/SLA: GIẢ ĐỊNH — chờ GĐ sản xuất chốt
+KHÔNG phải doanh số cam kết — agent chỉ đề xuất; không chuyển kho, không đặt mua, không lệnh sản xuất.
+
+## Thiếu hàng theo mốc chốt
+Nguồn: `allocation_proposals` (run mới nhất mỗi mốc).
+không có
+
+## Lô chờ kiểm nhập
+Nguồn: `production_lots` (pending).
+- IT-LOT-004 · sapentol-30v · SX 2025-11-01 · HSD 2026-11-20 · 30
+
+## BOM lỗi
+Nguồn: `bom_combos` + `bom_items` × golden file hiện tại.
+không có
+
+## Mục chờ duyệt & SLA
+Nguồn: `allocation_proposals` + `production_lots` (nhắc ≥ 24h, SLA 48h — chỉ là chữ trong bản tin, không tự chuyển/duyệt thay).
+- lô IT-LOT-004 — chờ 0h — trong hạn
+
+## Hàng cận hạn (FEFO)
+Nguồn: `production_lots` (passed, HSD ≤ 90 ngày tới, gồm lô đã quá hạn) × `inventory_snapshots` (tồn theo SKU — chưa theo lô; tồn 0 → bỏ).
+- IT-LOT-002 · sapentol-30v · HSD 2026-10-01 (ĐÃ QUÁ HẠN 22 ngày) · lô 50 · tồn SKU 60
+- IT-R12-X01 · saphraton-20v · HSD 2026-11-30 (còn 38 ngày) · lô 40 · chưa có số tồn
+- IT-LOT-001 · savina-12v · HSD 2026-12-01 (còn 39 ngày) · lô 100 · tồn SKU 120
+
+## Tiến độ sản xuất
+Nguồn: `production_plans` (NGƯỜI khối sản xuất ghi) × `production_plan_lots` (lô gắn tường minh) × `production_lots`. % = số lượng lô ĐẠT kiểm nhập / kế hoạch.
+THIẾU DỮ LIỆU — chưa có kế hoạch sản xuất được ghi (`production plan-add`)
+
+## Phiếu kiểm nghiệm lô
+Nguồn: `lot_test_certificates` (phiên bản mới nhất) × `production_lots` chờ/đạt. Lô chưa có dòng phiếu = THIẾU phiếu — kiểm tệp/hash: `production cert-verify`.
+- IT-LOT-001 (passed) · THIẾU phiếu
+- IT-LOT-002 (passed) · THIẾU phiếu
+- IT-LOT-003 (passed) · THIẾU phiếu
+- IT-LOT-004 (pending) · THIẾU phiếu
+- IT-R12-X01 (passed) · THIẾU phiếu
+[done] D:\code\samsam\evidence\itacc_r12\probes\dot1_sau\20261023T161403-4c61\scratch\p01a\sx-bantin-tuan-2026-10-23.md
+[done] D:\code\samsam\evidence\itacc_r12\probes\dot1_sau\20261023T161403-4c61\scratch\p01a\sx-canhan-2026-10-23.md

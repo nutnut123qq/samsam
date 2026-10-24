@@ -1,0 +1,10 @@
+"""HARNESS g2 — FIXTURE S062-C04: dời orders.ts của 12 đơn fixture shopee
+(source market:shopee, nạp từ s062_orders_shopee.csv) lùi 7 ngày = giả lập
+file xuất được nạp TUẦN TRƯỚC (file Seller Center chưa có cột ngày đặt nên
+ts = lúc nạp). Chỉ để kiểm luật tuần ĐÃ ĐÓNG của kd_orders --watch; KHÔNG là
+bằng chứng ngày chạy thử. Ghi số dòng đổi."""
+import os, psycopg
+c = psycopg.connect(os.environ["DATABASE_URL"])
+n = c.execute("update orders set ts = ts - interval '7 days' where source = 'market:shopee'").rowcount
+c.commit(); print("rows_shifted", n)
+print(c.execute("select min(ts), max(ts) from orders where source='market:shopee'").fetchone())

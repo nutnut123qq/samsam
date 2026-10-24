@@ -1,0 +1,51 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tracuu-*.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/production-05.1/20261024T112406-3893/production-05.1__P051-2/out/sx-tracuu-2026-10-24-c4a63127.md",
+    "sha256": "462af83d78221d9464820c1a900626d6f7cbac4bb61ca7b68b089e0f14158301"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tomtat-*",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tracuu-*.md",
+  "re": "NỘI BỘ – không dùng cho truyền thông",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tracuu-*.md",
+  "re": "DOI: 10\\.1234/thu-it\\.2026\\.001",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-2\\out/sx-tracuu-*.md",
+  "re": "(?m)^\\[1\\] \\\"",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from report_outputs where feature_id = 'production-05.1'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

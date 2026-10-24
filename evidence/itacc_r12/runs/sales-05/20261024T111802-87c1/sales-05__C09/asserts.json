@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'b2b_followup' and created_by = 'agent:kd_quote'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from b2b_quote_events where kind = 'chot'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

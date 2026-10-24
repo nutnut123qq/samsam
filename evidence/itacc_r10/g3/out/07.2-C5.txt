@@ -1,0 +1,68 @@
+[harness] FAKE LLM ở biên llm_gateway._client (1 phản hồi kịch bản)
+Tiêu đề: Vùng quê Quảng Nam và người làm vườn Thử IT
+
+Mô tả:
+Video kể chuyện vùng quê và người làm vườn Thử IT.
+
+Chương:
+00:00 Bình minh trên đồi
+01:30 Chăm vườn
+03:00 Đóng gói
+04:30 Quà gửi gia đình
+
+Nội dung có sử dụng AI
+Quảng cáo
+
+Kịch bản theo chương:
+[00:00] Bình minh trên đồi
+Sương sớm phủ những triền đồi. Người làm vườn bắt đầu ngày mới.
+[01:30] Chăm vườn
+Từng gốc cây được chăm sóc kỹ.
+[03:00] Đóng gói
+Sản phẩm được đóng gói cẩn thận trong xưởng.
+[04:30] Quà gửi gia đình
+Món quà quê gửi người thân dịp cuối năm.
+
+Shorts (bản xem trước dựng từ B-roll):
+- Bình minh vùng quê
+
+Chế độ hiển thị khi đưa lên kênh: private (người phụ trách kênh đổi sau khi duyệt)
+
+Phụ đề SRT:
+1
+00:00:00,000 --> 00:01:30,000
+Sương sớm phủ những triền đồi. Người làm vườn bắt đầu ngày mới.
+
+2
+00:01:30,000 --> 00:03:00,000
+Từng gốc cây được chăm sóc kỹ.
+
+3
+00:03:00,000 --> 00:04:30,000
+Sản phẩm được đóng gói cẩn thận trong xưởng.
+
+4
+00:04:30,000 --> 00:06:00,000
+Món quà quê gửi người thân dịp cuối năm.
+
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r10\g3\harness\run.py", line 94, in <module>
+    runpy.run_module(mod, run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\code\samsam\agents\mkt_youtube.py", line 494, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "D:\code\samsam\agents\mkt_youtube.py", line 472, in main
+    did = save_package(conn, pkg, args.brief)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\agents\mkt_youtube.py", line 308, in save_package
+    return store.save_draft(
+           ^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\store.py", line 308, in save_draft
+    _rollout().check_generate(conn, _draft_feature(by, content_type),
+  File "D:\code\samsam\pipelines\rollout.py", line 671, in check_generate
+    raise RolloutBlocked(_why(fid, "tat", what) + " — không sinh đầu ra")
+pipelines.rollout.RolloutBlocked: nháp video: tính năng marketing-07.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+[exit=1]

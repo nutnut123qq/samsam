@@ -1,0 +1,142 @@
+"""HARNESS g4 — wrapper chạy module repo như `python -m <module>` với vá BIÊN
+(ghi rõ là FIXTURE/HARNESS trong evidence):
+
+  python run.py [--reports-dir D] [--fake-llm ok|banned|error]
+                [--force-mode chay_thu|co_nguoi_duyet|van_hanh|tat] -- <module> [args...]
+
+  --reports-dir : vá `agents.report.REPORTS_DIR` TRƯỚC khi module chạy (module
+                  chạy lại như __main__ nên `from agents.report import
+                  REPORTS_DIR` / DRAFT_DIR / default arg đều nhận thư mục này)
+                  → báo cáo không rơi vào data/reports/.
+  --fake-llm    : vá `pipelines.llm_gateway._client` (điểm DUY NHẤT tạo client
+                  OpenRouter) bằng client giả cục bộ: embeddings = vector băm
+                  từ (bag-of-words, tất định); chat = câu tóm tắt cố định
+                  (ok) / câu chứa từ cấm (banned) / ném lỗi (error). Cổng
+                  gateway (kill/cap/llm_usage) vẫn chạy thật. 0 gọi mạng.
+  --force-mode  : vá `pipelines.rollout._FORCE_MODE` (FIXTURE — chỉ để kiểm
+                  nhánh chỉ có ở giai đoạn đó, brief luật 7).
+  --set MOD:ATTR=PATH : (thêm sau khóa) vá hằng đường dẫn của module bằng bản
+                  sao cấu hình FIXTURE trong scratchpad; dùng kèm
+                  --call-main (import module rồi gọi main(argv) — không chạy
+                  lại module nên vá giữ nguyên; bỏ qua khối job_run của
+                  __main__).
+"""
+import hashlib
+import math
+import re
+import runpy
+import sys
+import unicodedata
+from pathlib import Path
+from types import SimpleNamespace
+
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+
+DIM = 256
+OK_SUMMARY = ("Tài liệu [1] nêu sâm khô cần bảo quản nơi khô ráo, độ ẩm dưới "
+              "12%, tránh ánh nắng trực tiếp; đóng gói kín sau khi sấy [1].")
+BANNED_SUMMARY = "Sâm Ngọc Linh giúp chữa bệnh ung thư và thay thế thuốc [1]."
+
+
+def _tokens(s: str):
+    s = unicodedata.normalize("NFD", s.lower())
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    return re.findall(r"[a-z0-9]+", s)
+
+
+def _vec(text: str):
+    v = [0.0] * DIM
+    for t in _tokens(text):
+        h = int(hashlib.sha256(t.encode()).hexdigest(), 16)
+        v[h % DIM] += 1.0
+    n = math.sqrt(sum(x * x for x in v)) or 1.0
+    return [x / n for x in v]
+
+
+class _Emb:
+    def create(self, model, input, **kw):
+        items = input if isinstance(input, list) else [input]
+        return SimpleNamespace(
+            data=[SimpleNamespace(embedding=_vec(t)) for t in items],
+            usage=SimpleNamespace(prompt_tokens=sum(len(t) for t in items) // 4,
+                                  completion_tokens=0))
+
+
+class _Chat:
+    def __init__(self, mode):
+        self.mode = mode
+
+    def create(self, model, messages, **kw):
+        if self.mode == "error":
+            raise RuntimeError("fake provider down")
+        text = OK_SUMMARY if self.mode == "ok" else BANNED_SUMMARY
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content=text))],
+            usage=SimpleNamespace(prompt_tokens=100, completion_tokens=40))
+
+
+def fake_client(mode):
+    return SimpleNamespace(embeddings=_Emb(),
+                           chat=SimpleNamespace(completions=_Chat(mode)))
+
+
+def main() -> int:
+    a = sys.argv[1:]
+    reports = fake = force = None
+    sets, call_main = [], False
+    while a and a[0] != "--":
+        k = a.pop(0)
+        v = a.pop(0)
+        if k == "--reports-dir":
+            reports = Path(v).resolve()
+        elif k == "--fake-llm":
+            fake = v
+        elif k == "--force-mode":
+            force = v
+        elif k == "--set":
+            sets.append(v)
+        elif k == "--call-main":
+            call_main = v == "1"
+        else:
+            raise SystemExit(f"cờ lạ {k}")
+    a.pop(0)
+    module, argv = a[0], a[1:]
+    if reports is not None:
+        import agents.report as rep
+        rep.REPORTS_DIR = reports
+        print(f"[harness] REPORTS_DIR -> {reports.name}/ (vá biên)", flush=True)
+    if fake is not None:
+        from pipelines import llm_gateway
+        llm_gateway._client = lambda: fake_client(fake)
+        print(f"[harness] llm_gateway._client = FAKE({fake}) — 0 gọi mạng",
+              flush=True)
+    if force is not None:
+        from pipelines import rollout
+        rollout._FORCE_MODE = force
+        print(f"[harness] rollout._FORCE_MODE = {force} (FIXTURE)", flush=True)
+    if call_main:
+        import importlib
+        mod = importlib.import_module(module)
+        for spec in sets:
+            ma, _, val = spec.partition("=")
+            mname, _, attr = ma.partition(":")
+            m = importlib.import_module(mname)
+            setattr(m, attr, Path(val).resolve())
+            print(f"[harness] {mname}.{attr} -> FIXTURE {Path(val).name}",
+                  flush=True)
+        try:
+            rc = mod.main(argv)
+        except SystemExit as e:
+            return e.code if isinstance(e.code, int) else 1
+        return rc or 0
+    sys.argv = [module, *argv]
+    try:
+        runpy.run_module(module, run_name="__main__", alter_sys=True)
+    except SystemExit as e:
+        return e.code if isinstance(e.code, int) else (0 if e.code is None else 1)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

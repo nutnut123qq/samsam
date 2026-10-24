@@ -1,0 +1,18 @@
+{
+ "ca": "g502_e_login_farming_go_db",
+ "argv": [
+  "python",
+  "-c",
+  "import psycopg,os,sys; c=psycopg.connect(os.environ['DATABASE_URL']);print(c.execute('select unlink_lot_origin(%s,%s,%s)',('IT-R12-QR1',int(sys.argv[1]),'Nông Dân Thử R12')).fetchone()); c.commit()",
+  "8"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "bat_dau": "2026-10-23T16:16:08+07:00",
+ "ket_thuc": "2026-10-23T16:16:08+07:00",
+ "exit": 0,
+ "llm_calls": null,
+ "stdout_sha256": "0330c24cfdcea1b00853f65af453ff184be3c01e60d6a78d3263a8e1c45f1cb9",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

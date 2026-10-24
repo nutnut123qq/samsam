@@ -104,6 +104,7 @@ bảng nào thì dừng, không bật app.
 | `chunks` | A (embed lại) hoặc B | B tránh phí embed |
 | `products` | A | crawl web, `core_store` sở hữu — v15.5 dòng `retired_at` (biến mất khỏi nguồn, còn đơn thật trỏ) KHÔNG dựng lại được từ file: đơn thật trỏ tới thì dùng B |
 | `human_logins` | B | (v15.4) ánh xạ login ↔ người ↔ khối do Bên B điền (không có trong repo); dựng lại login trên cloud thì cập nhật `db_login` theo login mới |
+| `human_login_checks` | B | (vòng r8) bằng chứng đăng nhập thật của người duyệt (append-only, không mật khẩu); dựng lại login trên cloud → người duyệt mở phiên lại để có bằng chứng mới |
 | `output_reviews` | B | (v15.2) append-only — quyết định người duyệt từng đầu ra (bằng chứng cổng PL02); không dựng lại được từ nguồn |
 | `file_output_evidence` | B | (v15 fix P8.7c) append-only — bằng chứng lần backup thành công do chính tiến trình backup (login svc_backup) ghi; mất bảng = backup cũ không còn đếm/duyệt được cho nghiệm thu (nhật ký jsonl không thay được) |
 | `human_qr_roles` | B | (docx vòng 2) vai ký QR của login do Bên B điền (không có trong repo); dựng lại login trên cloud thì cập nhật `db_login` |

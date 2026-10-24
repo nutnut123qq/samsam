@@ -1,0 +1,45 @@
+"""HARNESS r12 (prod_legal, MỚI — máy hoá bước 'P05-check' r10, evidence/itacc_r10/g4/out/P05-check.txt).
+
+python p05_check.py.txt tracuu|tomtat "<glob 1 báo cáo>" <tài liệu gốc .md>
+  chung : đúng 1 tệp khớp glob; dòng 1 có nhãn giai đoạn 'CHẠY THỬ'; có nhãn 'NỘI BỘ – không dùng cho truyền thông';
+          có nguồn 'DOI: 10.1234/thu-it.2026.001'.
+  tracuu: 'Chế độ: extract'; có ≥1 đoạn `[n] "…"`; MỌI đoạn trích là chuỗi con của tài liệu gốc (đã gộp khoảng trắng).
+  tomtat: 'Chế độ: llm'; phần câu trả lời (giữa 'Chế độ: llm' và 'Nguồn:') qua `pipelines.guardrail.check` ok=True.
+In từng điều kiện; exit 0 nếu đạt hết, 1 nếu không. Cần cwd = gốc repo (runner chạy ở REPO)."""
+import glob
+import os
+import re
+import sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+mode, pat, doc = sys.argv[1], sys.argv[2], sys.argv[3]
+assert mode in ("tracuu", "tomtat"), mode
+files = sorted(glob.glob(pat))
+res = {"dung_1_tep": len(files) == 1}
+if len(files) == 1:
+    t = open(files[0], encoding="utf-8").read()
+    d = " ".join(open(doc, encoding="utf-8").read().split())
+    lines = t.splitlines()
+    res["dong1_CHAY_THU"] = bool(lines) and "CHẠY THỬ" in lines[0]
+    res["nhan_NOI_BO"] = "NỘI BỘ – không dùng cho truyền thông" in t
+    res["nguon_DOI"] = "DOI: 10.1234/thu-it.2026.001" in t
+    if mode == "tracuu":
+        ex = re.findall(r'^\[\d+\] "(.*)"$', t, re.M)
+        res["che_do_extract"] = "Chế độ: extract" in t
+        res["co_doan_trich"] = bool(ex)
+        res["trich_nguyen_van_la_chuoi_con_tai_lieu"] = bool(ex) and all(e in d for e in ex)
+    else:
+        m = re.search(r"Chế độ: llm\n\n(.*?)\n\nNguồn:", t, re.S)
+        res["che_do_llm"] = m is not None
+        ok = False
+        if m:
+            sys.path.insert(0, os.getcwd())
+            from pipelines import guardrail
+            ok = guardrail.check(m.group(1)).get("ok") is True
+        res["guardrail_tom_tat_ok"] = ok
+print("tep:", [os.path.basename(f) for f in files])
+for k, v in res.items():
+    print(f"  {k}: {v}")
+bad = [k for k, v in res.items() if not v]
+print("[p05_check]", "DAT" if not bad else f"KHONG_DAT {bad}")
+sys.exit(1 if bad else 0)

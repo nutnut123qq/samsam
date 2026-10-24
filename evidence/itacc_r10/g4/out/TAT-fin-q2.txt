@@ -1,0 +1,15 @@
+# db samsam_itacc_r10_fin
+> select count(*), max(reconciled_at) from recon_results
+[9, "2026-10-23 03:23:16.221544+00:00"]
+> select object_type, count(*) from approval_queue group by 1 order by 1
+["ar_reminder", 2]
+["budget_change", 1]
+["invoice_batch", 1]
+["market_alert_s1", 3]
+["opex_over_x", 1]
+["promo_change", 1]
+["promo_loss", 2]
+> select count(*) from affiliate_attributions
+[2]
+> select count(*) from invoice_lines
+[4]

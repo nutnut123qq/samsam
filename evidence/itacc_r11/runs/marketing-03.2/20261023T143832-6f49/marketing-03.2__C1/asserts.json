@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ad_result' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ad_result' and payload like '%Đề xuất: **dat_muc_tieu**%' and payload like '%hiển thị 9000, click 190%' and payload like '%đơn 1%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ad_result' and title like '%dat_muc_tieu%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

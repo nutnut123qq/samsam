@@ -1,0 +1,346 @@
+{
+ "id": "farming-01",
+ "ten": "Nhật ký vườn qua Zalo",
+ "khoi": "farming",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Vùng trồng / Nhật ký vườn qua Zalo: 'Nhân viên gửi chữ, giọng nói, ảnh; AI ghi thành nhật ký chuẩn, không sửa lén được'",
+ "tieu_chi": [
+  "Webhook Zalo thật (`connectors.zalo` Handler trên 127.0.0.1, DEPLOY tắt, state/convlog/seen-db/media → scratchpad) nhận tin của nhân viên allowlist (file staff FIXTURE) → `zalo_garden.handle`",
+  "Chữ '<khoảnh> <hoạt động> <chi tiết>' → 1 dòng plot_logs source='zalo:garden', author='zalo:<ma_nv>', activity chuẩn hóa, row_hash/prev_hash do trigger tính; verify chuỗi OK",
+  "Ảnh có GPS → garden_media (source zalo:garden) + tệp trong kho scratchpad KHÔNG còn EXIF/GPS; video có metadata vị trí → remux, không còn hộp vị trí (CDN Zalo = fake ở biên, chỉ trả bytes fixture)",
+  "Ghi âm → garden_voice_drafts cho_chep_loi; STT registry none → `--transcribe` exit 2 [blocked] (không gửi audio) — phần giọng nói BI_CHAN MISSING_ADAPTER",
+  "Ca âm: chữ ký sai (OA secret đặt) → 403 0 ghi; khoảnh không tồn tại → 0 ghi + hướng dẫn; trùng msg_id → 1 dòng; tính năng tắt → FEATURE_OFF 0 ghi; UPDATE plot_logs bị trigger chặn",
+  "T4: không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:58:33+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_farm; dev mode (AUTH_MODE trống, DEPLOY tắt); fake ở biên: CDN Zalo (FakeClient trả bytes fixture, _fetch gốc vẫn kiểm https/host/trần byte), state webhook + kho media → scratchpad, send_text dry-run",
+ "dau_vao": [
+  {
+   "ten": "anh_gps.jpg",
+   "sha256": "66ac5286cc95149f81ed980caa77087bb679e669fed200229ba5652b77c129fc",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "video_vitri.mp4",
+   "sha256": "ffaa9ee4dfadc76d8cd3061eb9f1d775fc421fc7e2ae9345b542d00e802fa0b9",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "ghi_am.wav",
+   "sha256": "2a6760710365a0aca8aac887aa523cab71117056ee6f3096aa31ce531ea07418",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "garden_staff.json",
+   "sha256": "5c4fae73731772f80c2801190e5484cba3357f917cb24055ebd02528a88e642c",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F01-01",
+   "mo_ta": "Chữ nhân viên qua webhook → plot_logs",
+   "lenh": "python evidence/itacc_r10/g5/harness/zalo_webhook.py --state <scratch>/zstate --staff <scratch>/fixtures/garden_staff.json --fixtures <scratch>/fixtures --event text --text KV-A01 tưới 30 phút thử IT --msgid it-g5-f0101",
+   "expected": "HTTP 200; +1 plot_logs zalo:garden author zalo:IT-NV01 activity tưới, row_hash",
+   "actual": "HTTP 200; plot_logs #8 KV-A01 'tưới' detail '30 phút thử IT' author zalo:IT-NV01 source zalo:garden row_hash/prev_hash có; reply dry-run (không gửi)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-02",
+   "mo_ta": "Ảnh có GPS qua webhook",
+   "lenh": "python evidence/itacc_r10/g5/harness/zalo_webhook.py --state <scratch>/zstate --staff <scratch>/fixtures/garden_staff.json --fixtures <scratch>/fixtures --event image --file anh_gps.jpg --text IT-K01",
+   "expected": "+1 garden_media jpg; tệp kho không EXIF/GPS",
+   "actual": "garden_media #1 jpg IT-K01 zalo:garden; F01-02b: sha khớp, exif_tags=0 gps=False",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-02b",
+   "mo_ta": "Assert tệp kho ảnh/video sạch",
+   "lenh": "python evidence/itacc_r10/g5/harness/check_media.py <scratch>/media ab5af5891da402c6ce709a0664bd2ee82ffa2dbd10e5b09bd68f67ba55a417cc 669b2e5f122c4551f2a851bf2db50f5b9e967a0fe79621fcc38c39e398fa9ca2",
+   "expected": "sha khớp, không EXIF/GPS/vị trí",
+   "actual": "RESULT PASS (jpg exif 0, mp4 không ©xyz/không chuỗi tọa độ)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-03",
+   "mo_ta": "Video có metadata vị trí qua webhook",
+   "lenh": "python evidence/itacc_r10/g5/harness/zalo_webhook.py --state <scratch>/zstate --staff <scratch>/fixtures/garden_staff.json --fixtures <scratch>/fixtures --event video --file video_vitri.mp4 --text IT-K01",
+   "expected": "+1 garden_media mp4 không hộp vị trí",
+   "actual": "garden_media #2 mp4; video_has_gps=False (F01-02b)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-04a",
+   "mo_ta": "Ghi âm qua webhook → nháp",
+   "lenh": "python evidence/itacc_r10/g5/harness/zalo_webhook.py --state <scratch>/zstate --staff <scratch>/fixtures/garden_staff.json --fixtures <scratch>/fixtures --event audio --file ghi_am.wav --text IT-K01",
+   "expected": "+1 garden_voice_drafts cho_chep_loi",
+   "actual": "draft #1 wav IT-NV01 IT-K01 cho_chep_loi zalo:garden",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-04b",
+   "mo_ta": "--pending",
+   "lenh": "python -m connectors.zalo_garden --pending",
+   "expected": "liệt kê + [blocked] STT",
+   "actual": "1 ghi âm chờ + [blocked] STT chưa cấu hình",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-05",
+   "mo_ta": "STT none chặn an toàn",
+   "lenh": "python -m connectors.zalo_garden --transcribe 1",
+   "expected": "exit 2 [blocked], không gửi audio",
+   "actual": "exit 2 [blocked] chưa cấu hình STT (kiểm trước connect)",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-06",
+   "mo_ta": "Âm: chữ ký sai",
+   "lenh": "timeout 60 python evidence/itacc_r10/g5/harness/zalo_webhook.py --state <scratch>/zstate --staff <scratch>/fixtures/garden_staff.json --fixtures <scratch>/fixtures --event text --text KV-A01 tưới chữ ký sai --bad-sig",
+   "expected": "HTTP 403, 0 ghi",
+   "actual": "HTTP 403 bad signature, handled=False, plot_logs giữ 7",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-07",
+   "mo_ta": "Âm: khoảnh không tồn tại",
+   "lenh": "python evidence/itacc_r10/g5/harness/zalo_webhook.py --state <scratch>/zstate --staff <scratch>/fixtures/garden_staff.json --fixtures <scratch>/fixtures --event text --text KV-ZZ99 tưới 10 phút",
+   "expected": "0 dòng; hướng dẫn",
+   "actual": "reply 'Không tìm thấy khoảnh KV-ZZ99 — CHƯA ghi', plot_logs giữ 7",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-08",
+   "mo_ta": "Âm: trùng msg_id",
+   "lenh": "python evidence/itacc_r10/g5/harness/zalo_webhook.py --state <scratch>/zstate --staff <scratch>/fixtures/garden_staff.json --fixtures <scratch>/fixtures --event text --text IT-K01 bón phân thử IT dedup --msgid it-g5-dedup-1 --repeat 2",
+   "expected": "đúng 1 dòng",
+   "actual": "POST#2 200 nhưng handled=False (dedup); 1 dòng 'dedup'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-09",
+   "mo_ta": "Âm: tắt qua sổ triển khai",
+   "lenh": "python -m pipelines.rollout --disable farming-01 --by Người Thử IT --note ca âm thử IT g5",
+   "expected": "FEATURE_OFF 0 ghi",
+   "actual": "rollout --disable farming-01 → [TỪ CHỐI] chưa vào sổ (mot_phan không seed được)",
+   "exit": 1,
+   "ket_qua": "NOT_RUN",
+   "ly_do_not_run": "Tiền đề không dựng được: farming-01 code_status mot_phan không vào sổ (seed chỉ co_code) → không tắt được qua CLI; thay bằng F01-09x/y (bổ sung sau khóa)"
+  },
+  {
+   "ma": "F01-09x",
+   "mo_ta": "Bổ sung sau khóa: FIXTURE _FORCE_MODE='tat' — chữ",
+   "lenh": "python evidence/itacc_r10/g5/harness/zalo_webhook.py --state <scratch>/zstate --staff <scratch>/fixtures/garden_staff.json --fixtures <scratch>/fixtures --event text --text IT-K01 tưới khi ép tắt --force-mode tat",
+   "expected": "FEATURE_OFF, 0 dòng",
+   "actual": "reply 'Tính năng này đang TẮT...', plot_logs giữ 9",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-09y",
+   "mo_ta": "Bổ sung sau khóa: FIXTURE _FORCE_MODE='tat' — ảnh",
+   "lenh": "python evidence/itacc_r10/g5/harness/zalo_webhook.py --state <scratch>/zstate --staff <scratch>/fixtures/garden_staff.json --fixtures <scratch>/fixtures --event image --file anh_gps2.jpg --text IT-K01 --force-mode tat",
+   "expected": "FEATURE_OFF, 0 garden_media",
+   "actual": "reply TẮT, garden_media giữ 2",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-10a",
+   "mo_ta": "Không sửa lén (owner UPDATE/DELETE)",
+   "lenh": "python evidence/itacc_r10/g5/harness/tamper.py 8",
+   "expected": "trigger chặn",
+   "actual": "BLOCKED update + delete: 'nhật ký đã chain — ... bị chặn'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F01-10b",
+   "mo_ta": "garden_director --verify",
+   "lenh": "python -m agents.garden_director --verify",
+   "expected": "exit 0 OK",
+   "actual": "[verify] OK — chuỗi nhật ký nguyên vẹn",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "MISSING_ADAPTER",
+ "can_de_go": "Vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS; đối chiếu event Zalo OA thật (ảnh/video/ghi âm, host CDN GIẢ ĐỊNH)",
+ "gioi_han": "Chữ/ảnh/video/ghi âm qua webhook THẬT trên 127.0.0.1 với payload giả theo tài liệu OA; CDN Zalo giả; chưa đối chiếu event OA thật. farming-01 code_status mot_phan → KHÔNG vào sổ triển khai (seed chỉ co_code) nên không tắt được qua `rollout --disable` (luôn = chạy thử); nhánh FEATURE_OFF chỉ kiểm bằng FIXTURE _FORCE_MODE='tat'. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-01.txt",
+   "sha256": "16168a30a8f49a121c0630c3fa7bfc45d08307d191c0109428d1ecfe0f0acb5b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-02.txt",
+   "sha256": "731d32fdbd201d0c64d450095c6b4f00efe6a87db00c39539545397d75752bb0"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-02b.txt",
+   "sha256": "38e8f8dfed0108c93308d44e5754668f243e55abf7d17830e511c37e9810bcd6"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-03.txt",
+   "sha256": "c1bdfc5aae4b97549b78333402078d30b16bdb0f4fb225025ebfc0b09071256a"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-04a.txt",
+   "sha256": "edde36e0f07be010f95ea51d8a85720a39360b5914f53652506e38dec2c019ff"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-04b.txt",
+   "sha256": "367104d07e634f318335f71dbfc4eb7f08cd3f9840cbb758b57ba95b0349d8fa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-05.txt",
+   "sha256": "e21f54ce7923bfe8139349f1d9bdd979d2c6dade0e8d31edaa87795710d86477"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-06.txt",
+   "sha256": "0a55210bdbb7389e56c365602bd038dc9f7b4a6ceadab411f4f860f37462e0fa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-07.txt",
+   "sha256": "c52734891039996bcad7a95d21d33f4c525b15b69d21ab0468a9d6309399ae00"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-08.txt",
+   "sha256": "a5210086b87ff19b7d0ab88d6d3d5c9ccb5967b2d2bd62ae8576ffdd6c92d792"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-09b.txt",
+   "sha256": "e127fabfc84cb7c8586216cb449cd4ff97f0ba1c1474a8e9f728ed5d0876aa28"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-09x.txt",
+   "sha256": "a486b6a38a268505dd8afe367342f4c26d5642bd2ad45eb681539eebd5bb1cb2"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-09y.txt",
+   "sha256": "e7cb9339c7221cd9083aa81ddcbf2abe1d84547b8aeba504f044248049e8849c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-10a.txt",
+   "sha256": "8f0951d5b8025eb29843d5eeb7be01c99839cd35f800314962f7b5ec16f74508"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F01-10b.txt",
+   "sha256": "09d8a5c6ceaf885cfe7359c3bf39eb23442c0d70069b94c9771bc72e54c86cbb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/check_media.py",
+   "sha256": "9dc52b8eefb2b5ddb13334435174e3083f32f7006c60a6ce8271c7fd20fe4c23"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_llm_run.py",
+   "sha256": "df4672d90c7d9faa51a83ed42a6e1d159bf8eda0bb5aa95860cf15bef3c6fe3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_shopee.py",
+   "sha256": "9402db0719ea6f325d9d75b29af4ce22574dbae49dc2cfc7c24ad459534329cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gd_run.py",
+   "sha256": "84c646e3dd2019f6bc417e9071b5a422d8d37d7f10c0de077db3f303b1f21eaa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gw_probe.py",
+   "sha256": "8038c6f83facb83baab8eb2bb0fbb8b8cb1ab328082e7b6af0b718734f6cf981"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/hold_lock.py",
+   "sha256": "2a511640b93c4a5d3e2529f711f9b3ca07085bbb08b7be3f88383ffc230d1cab"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_criteria_g5.py",
+   "sha256": "6e64178e75ce85a9b8c265c33862e0395c7cdcfcc943ac19b4915e3b53e21dcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_fixtures.py",
+   "sha256": "d5117a5728c04a988c7d151150fa7e7153a45d59f3752eb470c16ed86aabb241"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_items_g5.py",
+   "sha256": "879a76de3bfb1285557de44386e17428ebf513bf1368f5a554b534fad9edfb82"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_pdf.py",
+   "sha256": "f68506f1c8158b51a4a4048c894df8bfbc88d4a14071cb6c3d2393464add3867"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/mod_run.py",
+   "sha256": "0ba336024389f8ea885b2d63bb2056bdee2c03b814a74eb12343daff901a31d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/probe_run.py",
+   "sha256": "c0f2386d31984f5e279392c44c55209837e13b5f93ded55d5c80709c6b3e5105"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/q.py",
+   "sha256": "6b1c569d67e265d3ad9593331334d286cdbc525eb304ca55128eb686e57d97ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/qr_run.py",
+   "sha256": "8dbe083a6119eee0d80849374b7b053ef5bb44cac67abd85bae74a94562571c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/role_probe.py",
+   "sha256": "c1364ecad746feaeddbb98de7853e542a757cc4ddbbaaa6cae8aada075375a07"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture.py",
+   "sha256": "3b5ae3fad7dac20dc7fab16d1d704833bbb85ba6554c4fd41717f5441bed497b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "sha256": "c530ef5bce990aaa8e0393e582192b93687501195dfcbfa32520a3c28be1c90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/tamper.py",
+   "sha256": "0c27a266124476bb3369ed975395dd2d27ec8e30207e31647a817eda7540a186"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/zalo_webhook.py",
+   "sha256": "de7da44a52a26cb27510f89ffc5659c59c22e53f4fd01d7db142760bf371866c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/lib.sh",
+   "sha256": "c3d88bf45e775e5246126bb82b28042b0d4e6bc5e69a80b70e9d4d263c308a3d"
+  },
+  {
+   "path": "evidence/itacc_r10/ui/shots/24_tab_nhat_ky_vuon_doc_duoc_db.png",
+   "sha256": "2de1fc30a6cb7ae3b1ff6d0b65906c0bcb22d745a54b8cae1f77e01edef35fee"
+  },
+  {
+   "path": "evidence/itacc_r10/xuyen_suot/ui01_garden_svc_ui_repro.txt",
+   "sha256": "bb60a1ee10c3bcf1d5d21164e68cd64fc69217935a3b43cf7c477c4023a3ed2e"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "UI-01",
+   "muc_do": "TRUNG BÌNH",
+   "nguon": "điều phối viên — UI thật r10 (bổ sung, không đổi kết luận nhóm)",
+   "tom_tat": "Tab 'Nhật ký vườn' ở chế độ thực (login svc_ui) báo 'Lỗi đọc DB — thử tải lại trang': svc_ui không có SELECT trên plots/plot_logs (42501) → không ghi được nhật ký vườn nhập tay qua UI.",
+   "evidence": [
+    "evidence/itacc_r10/ui/shots/24_tab_nhat_ky_vuon_doc_duoc_db.png",
+    "evidence/itacc_r10/xuyen_suot/ui01_garden_svc_ui_repro.txt"
+   ]
+  }
+ ]
+}

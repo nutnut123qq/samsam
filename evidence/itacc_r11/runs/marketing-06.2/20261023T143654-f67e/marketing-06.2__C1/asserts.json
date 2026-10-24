@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+  "expect": 12,
+  "actual": 12,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from channel_snapshots where source = 'manual_export' and source_ref like 'sample:%' and captured_by = 'Người Thử IT'",
+  "expect": 12,
+  "actual": 12,
+  "dat": true
+ }
+]

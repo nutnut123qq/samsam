@@ -1,0 +1,211 @@
+"""Kiểm xuyên suốt vận hành r10 (máy dev, DB thử Docker): khóa job chống chạy chồng + ghi
+job_runs; cảnh báo đỏ gửi qua SMTP GIẢ cục bộ có STARTTLS (chứng chỉ tự ký, tin qua
+SSL_CERT_FILE chỉ trong tiến trình thử) — kiểm GIAO THỨC, KHÔNG phải gửi tới người nhận thật.
+Chạy: python -I xc_ops.py <ROOT> <OUT.json>  (DATABASE_URL đã trỏ DB thử)."""
+import asyncio
+import datetime as dt
+import json
+import os
+import ssl
+import subprocess
+import sys
+import tempfile
+import threading
+from pathlib import Path
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(ROOT))
+os.chdir(ROOT)
+from psycopg import conninfo  # noqa: E402
+
+assert conninfo.conninfo_to_dict(os.environ["DATABASE_URL"])["dbname"].startswith("samsam_itacc_")
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+import psycopg  # noqa: E402
+from cryptography import x509  # noqa: E402
+from cryptography.hazmat.primitives import hashes, serialization  # noqa: E402
+from cryptography.hazmat.primitives.asymmetric import ec  # noqa: E402
+from cryptography.x509.oid import NameOID  # noqa: E402
+
+from pipelines import job_runs, red_alert  # noqa: E402
+
+TMP = Path(tempfile.mkdtemp(prefix="xc_ops_"))
+R = []
+
+
+def rec(ma, ok, expected, actual, **kw):
+    R.append({"ma": ma, "ket_qua": "PASS" if ok else "FAIL", "expected": expected,
+              "actual": actual, **kw})
+    print("PASS" if ok else "FAIL", ma, json.dumps(actual, ensure_ascii=False, default=str)[:240])
+
+
+def q(sql, args=()):
+    with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5) as c:
+        return c.execute(sql, args).fetchall()
+
+
+# ---------------------------------------------------------------- A. job lock
+env = dict(os.environ, JOB_LOCK_DIR=str(TMP / "locks"))
+(TMP / "locks").mkdir()
+JOB = "red_alert_escalate"
+
+
+def run_job():
+    p = subprocess.run([sys.executable, "-m", "pipelines.job_runs", "--run", JOB], cwd=ROOT,
+                       env=env, capture_output=True, text=True, encoding="utf-8")
+    return p.returncode, (p.stderr or "")[-300:]
+
+
+n0 = q("select count(*) from job_runs where job = %s", (f"job:{JOB}",))[0][0]
+rc1, err1 = run_job()
+row1 = q("select ok, detail from job_runs where job = %s order by id desc limit 1", (f"job:{JOB}",))
+rec("A1_job_chay_ghi_job_runs", rc1 != job_runs.EXIT_LOCKED and len(row1) == 1
+    and q("select count(*) from job_runs where job = %s", (f"job:{JOB}",))[0][0] == n0 + 1,
+    "job chạy (không 75), +1 dòng job_runs job:red_alert_escalate", {"rc": rc1, "row": row1})
+with job_runs._file_lock(TMP / "locks" / f"{JOB}.lock") as got:
+    assert got
+    rc2, err2 = run_job()
+row2 = q("select ok, detail from job_runs where job = %s order by id desc limit 1", (f"job:{JOB}",))
+rec("A2_chay_chong_bi_khoa_exit75", rc2 == job_runs.EXIT_LOCKED and row2[0][0] is False
+    and "chạy chồng" in (row2[0][1] or ""), "exit 75 + dòng ok=false 'chạy chồng', không chạy bước",
+    {"rc": rc2, "row": row2})
+rc3, _ = run_job()
+rec("A3_nha_khoa_chay_lai_duoc", rc3 != job_runs.EXIT_LOCKED, "sau khi nhả khóa chạy lại được",
+    {"rc": rc3})
+
+# ---------------------------------------------------------- B. SMTP giả STARTTLS
+key = ec.generate_private_key(ec.SECP256R1())
+name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "localhost")])
+now = dt.datetime.now(dt.timezone.utc)
+cert = (x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(key.public_key())
+        .serial_number(x509.random_serial_number()).not_valid_before(now - dt.timedelta(minutes=5))
+        .not_valid_after(now + dt.timedelta(hours=2))
+        .add_extension(x509.SubjectAlternativeName([x509.DNSName("localhost")]), False)
+        .add_extension(x509.BasicConstraints(ca=True, path_length=None), True)
+        .sign(key, hashes.SHA256()))
+CERT, KEY = TMP / "cert.pem", TMP / "key.pem"
+CERT.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+KEY.write_bytes(key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+                                  serialization.NoEncryption()))
+GOT = []
+
+
+async def handle(reader, writer):
+    sctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    sctx.load_cert_chain(CERT, KEY)
+    tls = False
+    writer.write(b"220 localhost fake-smtp\r\n")
+    await writer.drain()
+    msg = {"rcpt": [], "tls": False}
+    while True:
+        line = (await reader.readline()).decode(errors="replace").strip()
+        if not line:
+            break
+        cmd = line.upper()
+        if cmd.startswith("EHLO") or cmd.startswith("HELO"):
+            writer.write(b"250 localhost\r\n" if tls else b"250-localhost\r\n250 STARTTLS\r\n")
+        elif cmd == "STARTTLS":
+            writer.write(b"220 go\r\n")
+            await writer.drain()
+            await writer.start_tls(sctx)
+            tls = msg["tls"] = True
+            continue
+        elif cmd.startswith("MAIL FROM"):
+            writer.write(b"250 ok\r\n")
+        elif cmd.startswith("RCPT TO"):
+            msg["rcpt"].append(line.split(":", 1)[1].strip(" <>"))
+            writer.write(b"250 ok\r\n")
+        elif cmd == "DATA":
+            writer.write(b"354 end with .\r\n")
+            await writer.drain()
+            data = []
+            while (ln := await reader.readline()) not in (b".\r\n", b""):
+                data.append(ln)
+            msg["data"] = b"".join(data).decode(errors="replace")
+            GOT.append(dict(msg))
+            writer.write(b"250 queued\r\n")
+        elif cmd == "QUIT":
+            writer.write(b"221 bye\r\n")
+            await writer.drain()
+            break
+        else:
+            writer.write(b"250 ok\r\n")
+        await writer.drain()
+    writer.close()
+
+
+class Srv:
+    def __init__(self):
+        self.loop = asyncio.new_event_loop()
+        self.started = threading.Event()
+        threading.Thread(target=self._run, daemon=True).start()
+        self.started.wait(10)
+
+    def _run(self):
+        asyncio.set_event_loop(self.loop)
+        self.server = self.loop.run_until_complete(asyncio.start_server(handle, "127.0.0.1", 0))
+        self.port = self.server.sockets[0].getsockname()[1]
+        self.started.set()
+        self.loop.run_forever()
+
+    def stop(self):
+        self.loop.call_soon_threadsafe(self.server.close)
+
+
+srv = Srv()
+routing_file = TMP / "routing.json"
+routing_file.write_text(json.dumps({"recipients": [
+    {"name": "Pháp chế Thử IT", "role": "phap_che", "channel": "email:it-phapche@example.com"},
+    {"name": "TGĐ Thử IT", "role": "tgd", "channel": "email:it-tgd@example.com"}],
+    "excluded_roles": ["tgd", "ha_tang"]}, ensure_ascii=False), encoding="utf-8")
+red_alert.ROUTING = routing_file           # HARNESS: routing thử, không sửa data/
+os.environ.update(RED_ALERT_NOTIFY="email", SMTP_HOST="localhost", SMTP_PORT=str(srv.port),
+                  SSL_CERT_FILE=str(CERT))
+conn = psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5)
+ok, m = red_alert.raise_alert(conn, "it_xc_ops", "Cảnh báo thử IT gọi 0900000123 ngay")
+d1 = q("select recipient, role, channel, ok, error from red_alert_deliveries d join red_alerts r"
+       " on r.id = d.alert_id where r.source_agent = 'it_xc_ops' order by d.id")
+rcpts = [g["rcpt"] for g in GOT]
+rec("B1_gui_smtp_starttls_dung_nguoi_doc_lap", ok and len(GOT) == 1 and GOT[0]["tls"]
+    and rcpts == [["it-phapche@example.com"]] and "0900000123" not in GOT[0]["data"]
+    and d1 == [("Pháp chế Thử IT", "phap_che", "email", True, None)],
+    "True; 1 thư qua STARTTLS chỉ tới pháp chế (TGĐ bị loại), SĐT trong tiêu đề bị che, 1 dòng deliveries ok không lưu địa chỉ",
+    {"raise": [ok, m], "rcpt": rcpts, "tls": GOT[0]["tls"] if GOT else None, "deliveries": d1})
+srv.stop()
+ok2, m2 = red_alert.raise_alert(conn, "it_xc_ops", "Cảnh báo thử IT khi SMTP sập")
+d2 = q("select d.ok, d.error from red_alert_deliveries d join red_alerts r on r.id = d.alert_id"
+       " where r.title like '%%SMTP sập' order by d.id")
+rec("B2_smtp_sap_khong_bao_da_gui", ok2 is False and d2 and d2[-1][0] is False
+    and (d2[-1][1] or "").startswith("gửi lỗi"), "False + deliveries ok=false 'gửi lỗi: …'",
+    {"raise": [ok2, m2], "deliveries": d2})
+srv2 = Srv()
+os.environ["SMTP_PORT"] = str(srv2.port)
+n_before = len(GOT)
+p = subprocess.run([sys.executable, "-c",
+                    "import sys; from pathlib import Path; import pipelines.red_alert as r;"
+                    f" r.ROUTING = Path(r'{routing_file}'); sys.exit(r.main(['--deliver']))"],
+                   cwd=ROOT, env=dict(os.environ), capture_output=True, text=True, encoding="utf-8")
+d3 = q("select d.ok from red_alert_deliveries d join red_alerts r on r.id = d.alert_id"
+       " where r.title like '%%SMTP sập' order by d.id")
+rec("B3_deliver_gui_lai_khi_smtp_song_lai", p.returncode == 0 and len(GOT) == n_before + 1
+    and d3[-1] == (True,), "CLI --deliver exit 0, gửi lại đúng cảnh báo chưa gửi được",
+    {"rc": p.returncode, "moi": len(GOT) - n_before, "deliveries": d3, "stdout": p.stdout[-200:]})
+os.environ.pop("SSL_CERT_FILE")
+ok4, m4 = red_alert.raise_alert(conn, "it_xc_ops", "Cảnh báo thử IT chứng chỉ không tin")
+rec("B4_chung_chi_khong_tin_bi_tu_choi", ok4 is False, "STARTTLS kiểm chứng chỉ: tự ký không tin → không gửi",
+    {"raise": [ok4, m4]})
+red_alert.ROUTING = TMP / "empty.json"
+(TMP / "empty.json").write_text('{"recipients": [], "excluded_roles": ["tgd","ha_tang"]}', encoding="utf-8")
+ok5, m5 = red_alert.raise_alert(conn, "it_xc_ops", "Cảnh báo thử IT thiếu người nhận")
+r5 = q("select route_error from red_alerts where title like '%%thiếu người nhận' order by id desc limit 1")
+rec("B5_thieu_nguoi_nhan_fail_closed", ok5 is False and r5 and r5[0][0],
+    "False, cảnh báo vẫn ghi với route_error", {"raise": [ok5, m5], "route_error": r5})
+conn.close()
+srv2.stop()
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+n = sum(r["ket_qua"] != "PASS" for r in R)
+print(f"TỔNG {len(R)} ca, FAIL {n}")
+sys.exit(1 if n else 0)

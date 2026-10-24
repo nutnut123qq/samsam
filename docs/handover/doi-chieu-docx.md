@@ -196,9 +196,9 @@ sử: `evidence/contract_g4_upgrade.log`.
 
 | Tích hợp | Hiện trạng code | Thiếu gì · ai cung cấp | Mức bằng chứng |
 |---|---|---|---|
-| OCR (số hóa giấy tờ, đọc nhãn) | registry `none` → exit 2 BLOCKED | vendor trong nước + DPA + key · Bên B/Pháp chế | chỉ fail-closed |
-| STT (ghi âm nhật ký vườn) | registry `none` → exit 2 | vendor + DPA + key · Bên B | chỉ fail-closed |
-| Ảnh AI (bối cảnh) | `IMAGE_PROVIDER=none` → exit 2 | vendor + hợp đồng · Bên B | chỉ fail-closed |
+| OCR (số hóa giấy tờ, đọc nhãn) | registry `none` → exit 2 BLOCKED; adapter nhà cung cấp CHƯA viết (đính chính r9) | chọn vendor trong nước + đặc tả API + DPA + key, rồi dev viết adapter · Bên B/Pháp chế | chỉ fail-closed |
+| STT (ghi âm nhật ký vườn) | registry `none` → exit 2; adapter nhà cung cấp CHƯA viết (đính chính r9) | chọn vendor + đặc tả API + DPA + key, rồi dev viết adapter · Bên B | chỉ fail-closed |
+| Ảnh AI (bối cảnh) | `IMAGE_PROVIDER=none` → exit 2; adapter nhà cung cấp CHƯA viết (đính chính r9) | chọn vendor + đặc tả API + hợp đồng + key, rồi dev viết adapter · Bên B | chỉ fail-closed |
 | API Shopee/TikTok (P2) | adapter chỉ đọc theo tài liệu công khai, chưa sandbox | app key + sandbox · Bên B | unit giả lập (KHÔNG phải sandbox) |
 | Fanpage Graph API (quét kênh) | không có adapter | page token + quyền · Bên B | — |
 | Blockchain neo | provider `none` → CHƯA NEO; `--verify` chỉ đối chiếu NỘI BỘ | chọn chuỗi/phí/tài khoản · hai bên | không có biên nhận neo |
@@ -250,6 +250,90 @@ Không mục nào `da_nghiem_thu` (96/96 `chua_nghiem_thu`); 0 mục có sổ ro
 trên server Bên B; không có chạy thử/người duyệt thật. Docker dev, DB test và
 probe không thay server Bên B, thời gian chạy thử, người duyệt hay biên bản.
 Bảng trạng thái từng mục: mục 4 (sinh lại từ danh mục đợt này).
+
+### A9. Đợt an toàn + chuẩn bị nghiệm thu (22/10/2026, nhánh `codex/safety-acceptance` từ `16b33fc`, CHƯA commit)
+
+Đính chính claim cũ: (1) "giá xuất sàn từ golden" (C04) là LỖI an toàn nghiệp
+vụ — từ S03 tệp xuất shopee/tiktok chỉ dùng giá `list` ĐÃ duyệt còn hiệu lực
+trong `price_list` (manifest + `--verify` mang id giá); (2) "`svc_ui` được tin
+tên người do UI truyền" (P0c/R1–R2) là đường giả danh — từ S04 DB không còn
+miễn trừ `svc_ui`, quyết định ở UI chế độ thực đi bằng login người; khối của
+draft nội dung kiểm ở DB.
+
+**S05 — điều kiện an toàn trước chạy thử ↔ cơ chế hiện có**
+
+| Điều kiện (PL02 mục 2 / lỗi nghiêm trọng / PL01 mục 8) | Cơ chế | Kiểm (test/lệnh) | Trạng thái |
+|---|---|---|---|
+| 100% lời gọi AI qua cổng; che PII | `pipelines/llm_gateway.py` (mask PII mọi message/embed; `feature=` bắt buộc — test AST); F1: chat sàn tính sales-02 | `tests/test_llm_gateway.py`, `tests/test_fix_san_feature.py`, red-team 50 ca | CODE_VERIFIED (client giả) |
+| Câu sức khỏe → chuyển người, không gọi AI | `is_health_question` trước LLM | `tests/test_contract_finalize.py` | CODE_VERIFIED; danh sách từ chờ Pháp chế (D-PC-03) |
+| Không gửi tới provider chưa phép | `provider_only` allowlist, `allow_fallbacks=false`, `data_collection=deny`, rỗng = fail-closed | `tests/test_llm_gateway.py` | CODE_VERIFIED; chưa có key vận hành |
+| Nội dung công khai: kiểm tự động + NGƯỜI duyệt đúng phiên bản | guardrail `check_publish`; `approve_draft` ký sha; `verify_publish`; S04: danh tính + khối gắn login | `tests/test_store.py`, `tests/test_safety_s04_identity.py` | CODE_VERIFIED (DB test, login thật) |
+| Rượu, TPBVSK thiếu XNQC, nhãn AI, câu khuyến cáo, số liệu thiếu nguồn | guardrail codes + readiness SKU + `_unverified_number` | `tests/test_guardrail*.py`, eval guardrail 130/132 | CODE_VERIFIED; danh mục từ/claim chờ Pháp chế |
+| Tính năng tắt/chưa đủ bước không lách cổng | `rollout.mode()` ở biên sinh/duyệt/dùng; DB đếm lại khi nâng | `tests/test_rollout_enforce.py`, `tests/test_docx_p0_rollout_gate.py` | CODE_VERIFIED |
+| 1 lỗi nghiêm trọng ở giai đoạn có người duyệt → dừng, về chạy thử | `rollout --severe` (đếm lại từ đầu) | `tests/test_rollout.py::test_severe_rolls_back_to_trial_and_resets_clock` | CODE_VERIFIED; phát hiện lỗi là việc của người duyệt (không tự động) |
+| Backup hằng ngày / offsite / mã hóa / người giữ khóa / phục hồi — trạng thái RIÊNG | `scripts/db_backup.py` (`BACKUP_OFFSITE`, `BACKUP_PASSPHRASE_FILE`), `db_restore_drill.py`, `dr_drill.py` | DR Docker dev 3/3 | CODE_VERIFIED dev; offsite/mã hóa/khóa CHƯA cấu hình; diễn tập server Bên B chưa — BLOCKED_INFRA (D-HT-01/06/08) |
+| Giám sát ngoài máy phát hiện server chính ngừng | `scripts/webhook_probe.py` chạy từ máy NGOÀI (runbook 10.6) | `tests/test_contract_c01_webhook.py` | CODE_VERIFIED; máy giám sát chưa có — BLOCKED_INFRA (D-HT-07) |
+| Credential lộ | `scripts/db_rotate_password.py` (S01) | `tests/test_safety_s01_rotation.py` (Docker tạm) | công cụ CODE_VERIFIED; rotation thật CHƯA ĐÓNG ở môi trường nào |
+
+**A03 — PL02 mục 1 (nguyên văn đọc 22/10) ↔ test cơ chế (DB test, dữ liệu giả)**
+
+| Điều khoản | Test | Ghi chú |
+|---|---|---|
+| 1a ≥5 ngày làm việc + 50 đầu ra, chỉ ghi nội bộ | `test_docx_p0_rollout_gate.py::test_p0a_human_cli_promotes_when_db_count_passes`, `::test_p0a_human_cli_blocked_with_db_reason` (49/50, 4/5, mẫu không tính), `test_rollout_enforce.py` (chạy thử chặn gửi/dùng) | DB tự đếm DISTINCT, bỏ `is_sample` |
+| 1b ≥10 ngày có người duyệt, kiểm TỪNG mục trước khi dùng | `test_rollout.py::test_review_stage_needs_10_days_and_no_severe`, `test_v15_p8_outputs.py::test_p8_7_*`, `test_docx_p0_rollout_gate.py::test_p0a_report_review_then_promote_to_operation` | duyệt đúng sha phiên bản |
+| 1b lỗi nghiêm trọng → tắt, về chạy thử | `test_rollout.py::test_severe_rolls_back_to_trial_and_resets_clock`, `test_p0a_blocked_wrong_block_forged_by_severe_and_no_counter` | |
+| 1c đạt hai bước → vận hành trong phạm vi duyệt | `test_p0a_report_review_then_promote_to_operation` | |
+| Gọi thẳng DB/function không vượt cổng | `test_p0a_direct_sql_inflated_evidence_blocked`, `test_p0b_*`, `test_safety_s04_identity.py` | |
+| Dữ liệu mẫu/không rõ nguồn không tính | `test_v14_p3_rollout_edges.py::test_approval_queue_sample_flag_not_counted`, `test_v15_p8_outputs.py::test_p8_1_*` | dữ liệu thử nằm ở DB test — không vào hồ sơ server Bên B |
+
+**A05 — chỉ số ↔ nguồn, kỳ đo, mẫu số, múi giờ, xử lý thiếu** (`scripts/ops_monthly.py`; kỳ = tháng lịch giờ VN Asia/Ho_Chi_Minh +07; không sự kiện → "— (0/0) không có mục tới hạn"; thiếu nguồn → "chưa có dữ liệu" — KHÔNG thành 100%; kiểm 22/10 trên DB test rỗng)
+
+| Chỉ số | Nguồn | Mẫu số |
+|---|---|---|
+| Câu hỏi xử lý ≤2 giờ làm việc ≥90% | convlog live + `approval_queue` `cskh_handoff`, ca `directors/sales.json` | câu hỏi tới hạn trong tháng |
+| Báo động đỏ xác nhận ≤2 giờ 100% (kể cả T7/CN/Tết) | `red_alerts` (bỏ bản leo thang) + `red_alert_acks` | cảnh báo gốc tới hạn |
+| Gỡ bài ≤24 giờ 100% | `channel_posts` đợt vi phạm | đợt vi phạm tới hạn |
+| 0 bài chưa duyệt; 0 quảng cáo rượu/TPBVSK thiếu giấy | `channel_posts` rà kênh sở hữu | lần rà trong tháng (không rà → chưa có dữ liệu; quảng cáo/KOC ngoài kênh sở hữu: chưa có dữ liệu) |
+| Báo cáo gửi trước ngày 05 | `ops_monthly --mark-sent` (người gửi) | 1/tháng |
+| 0 lỗi nghiêm trọng giai đoạn có người duyệt | `feature_rollout_events` severe | lần vào giai đoạn |
+| 100% nội dung đăng qua kiểm tự động + người | `bks_audit --report`, `store --verify-log` | bài đăng |
+| 100% lời gọi AI qua cổng | test AST + `llm_usage` | lời gọi |
+| Backup 100% số ngày | `backup_runs.jsonl` | ngày trong kỳ |
+| Diễn tập 30/11, 18/12, mỗi quý | `drill_runs.jsonl`, `dr_runs.jsonl` | mốc |
+| Phát hiện ≤15 phút; phản hồi ≤3 giờ / ≤3 ngày LV; sửa ≤7 ngày | `ops_incidents` + `ops_incident_events` | sự cố trong kỳ (sổ trống ≠ không có sự cố) |
+| Chatbot ≤30 giây | convlog `reply_ms` (live) | lượt trả lời |
+| Hạ tầng PL01 mục 8 | `data/tai_san_hop_tac.json` (8 cột) | hạng mục |
+
+Ma trận 96 mục + điều kiện READY_FOR_TRIAL: `docs/handover/ma-tran-nghiem-thu.md`
+(0/96 sẵn sàng, 0/96 nghiệm thu). Hồ sơ sẵn sàng: `ho-so-san-sang-chay-thu.md`.
+Mẫu DỰ THẢO: `mau-ho-so-nghiem-thu.md`. Sự cố DB: `su-co-db-samsam.md`.
+
+### A10. Bảng việc còn lại (vòng r8, 22/10/2026) — phân loại theo bằng chứng thực
+
+Loại: (1) thiếu code — tự làm; (2) có code, chưa kiểm tích hợp; (3) chờ đầu vào/quyết định; (4) chờ hạ tầng/nhà cung cấp; (5) chờ thời gian chạy thử/người thật. Rà 14 mục không `co_code` hoặc ngoài 89 AI.
+
+**Đính chính vòng r9 (23/10/2026):** bản r8 ghi "không mục nào loại (1) — mỗi mục có code/adapter + preflight, phần thiếu nằm ngoài repo" là **SAI**. OCR (`ingest/doc_intake.py` `PROVIDERS = {"none": …}`), STT (`connectors/zalo_garden.py` `STT_PROVIDERS = {"none": …}`) và ảnh AI (`pipelines/image_studio.py` `PROVIDERS = {"none": …}`) mới có registry/chỗ cắm + đường từ chối an toàn — **CHƯA có adapter nhà cung cấp thật**. Bốn mục marketing-02.1, production-03, farming-01, data_platform-02.1 vì vậy là **loại (1) sau quyết định vendor** + loại (4) đồng thời: adapter chỉ viết được khi đã chọn vendor (không đoán endpoint). Phân biệt giữ nguyên: có adapter thật nhưng chưa sandbox = loại (2) (data_platform-06 `market_api`, farming-06 `anchor` OpenTimestamps); mới có registry `none` = chưa có adapter; repo website chưa được giao = chưa kiểm được code ở repo riêng; feed dữ liệu KHÔNG thay website/chatbot hoàn chỉnh. Không đổi `code_status`/`acceptance_status` (4 mục vẫn `mot_phan`, `chua_nghiem_thu`).
+
+82 mục `co_code` còn lại: loại (5) + phụ thuộc chung (3)/(4) ở ma trận (`docs/handover/ma-tran-nghiem-thu.md`, E1–E3/B1–B3).
+
+| ID | Căn cứ | Có trong repo | Thiếu chính xác | Loại | Chủ xử lý | Điều kiện đóng |
+|---|---|---|---|---|---|---|
+| sales-09 | PL01 mục 3d | — (repo riêng) | Đường dẫn repo + owner chatbot website; giao tiếp KB/guardrail | 3 | Bên B / owner website | Repo được giao + kiểm xuyên repo trên môi trường thật |
+| sales-08 | PL01 mục 3a/3c | `listing_export --website-feed` (giá DB đã duyệt, rượu ẩn) | Repo website, định dạng xuất ĐƠN web (D-DL-10) | 3 | Bên B / owner website | Website đọc feed + nhập đơn về `orders` kiểm trên staging |
+| marketing-02.1 | PL01 mục 2 Marketing | `image_studio`: dựng ảnh nháp ghép packshot thật, kiểm toàn vẹn pixel packshot, nhãn AI/QC, guardrail chữ, precheck + từ chối trước provider, lưu nháp; registry `PROVIDERS = {"none": _bg_none}` (nền gradient tất định); `--scene` khi provider none → exit 2 | **Code còn thiếu: adapter ảnh AI nhà cung cấp** (chưa viết). Phụ thuộc trước khi viết: chọn vendor, đặc tả API, điều khoản bản quyền/DPA, credential, trần chi phí | 1 (sau quyết định vendor) + 4 | QL AI Bên B chọn/cấp đầu vào; dev viết adapter | Adapter viết xong + contract test (lỗi/timeout/mapping, bọc kill/cap/usage như `llm_gateway`) → evidence sandbox/tích hợp thật với dữ liệu được phép |
+| production-02 | PL01 mục 2 SX; PL04 | `product_dossiers --check` (exit 2) | 14 hồ sơ gốc + căn cứ | 3 | GĐ sản xuất | `--check` exit 0 |
+| production-03 | PL01 mục 2 SX | `sx_label`: `--text` trích tất định + so golden/lô/listing + `--submit` hàng duyệt; `--image` kiểm định dạng, gọi registry OCR dùng chung của `doc_intake` (chỉ `none`) → exit 2 | **Code còn thiếu: adapter OCR dùng chung** (chưa viết; cùng adapter với data_platform-02.1). Phụ thuộc: chọn vendor OCR trong nước, đặc tả API, hợp đồng/DPA, credential | 1 (sau quyết định vendor) + 4 | QL AI + Pháp chế chọn/cấp đầu vào; dev viết adapter | Adapter OCR viết xong + contract test (lỗi/timeout/mapping) → evidence sandbox với ảnh nhãn được phép rồi tích hợp thật |
+| farming-01 | PL01 mục 2 Vùng trồng | `zalo_garden`: chữ → `plot_logs` hash chain, ảnh/video → `garden_media` gỡ metadata; ghi âm kiểm magic bytes → `garden_voice_drafts` chờ người chép; registry `STT_PROVIDERS = {"none": (None, True)}`, `--transcribe` → exit 2 BLOCKED | **Code còn thiếu: adapter STT nhà cung cấp** (chưa viết). Phụ thuộc: chọn vendor STT trong nước, đặc tả API, DPA (giọng nói nhân viên), credential | 1 (sau quyết định vendor) + 4 | QL AI + Pháp chế chọn/cấp đầu vào; dev viết adapter | Adapter STT viết xong + contract test (lỗi/timeout/mapping) → evidence sandbox với ghi âm được phép rồi `--transcribe` tích hợp thật |
+| data_platform-02.1 | PL01 mục 2 Hạ tầng | `doc_intake`: intake + sha256, lớp chữ có sẵn đọc được, scan/ảnh → `cho_ocr`, `--verify/--reject` người, `--reprocess-pending`; registry `PROVIDERS = {"none": (_ocr_none, True)}` (chặn provider nước ngoài) → exit 2 `[blocked]` | **Code còn thiếu: adapter OCR dùng chung** (chưa viết; cùng adapter với production-03). Phụ thuộc: chọn vendor OCR trong nước, đặc tả API, hợp đồng/DPA, credential; thêm chính sách `loader_gate` | 1 (sau quyết định vendor) + 4 + 3 | QL AI + Pháp chế chọn vendor, chủ khối chọn chính sách loader; dev viết adapter | Adapter OCR viết xong + contract test → evidence sandbox với tài liệu được phép; chính sách `loader_gate` điền |
+| data_platform-07.1 | PL01 mục 2; PL02 mục 2 (≤15 phút) | `health_bulletin`, `webhook_probe` | Máy giám sát NGOÀI server + kênh báo | 4 | Bên B | Thử tắt webhook → máy ngoài báo ≤15 phút |
+| data_platform-06 | PL01 mục 3b, 7 (P2) | `ingest/market_api.py`: adapter CHỈ ĐỌC Shopee/TikTok viết theo tài liệu công khai (ký request, allowlist endpoint) — mới chạy với server giả, chữ ký/endpoint CHƯA xác minh sandbox | App key/sandbox Shopee/TikTok (Bên B đứng tên app) | 2 + 4 | Bên B cấp; dev chỉnh adapter theo sandbox | Gọi sandbox thật, đối chiếu file xuất |
+| farming-06 | PL01 mục 4b, 7 (P2) | `anchor`: adapter OpenTimestamps có code, mới kiểm với calendar giả; provider mặc định `none` | Chọn chuỗi/provider/phí, tháng neo (provider khác OpenTimestamps → phải viết adapter) | 2 + 3 | Hai bên | Biên nhận neo thật + `ots verify` bên thứ ba |
+| finance-06 | PL02 mục 4–5 | `rev_share` | Phí/thưởng/ngày ký/ngày vận hành | 3 | Hai bên | Biên bản đối soát quý ký |
+| data_platform-08 | PL02 mục 1 | `rollout`, `ops_monthly`, `acceptance` | Lịch nghỉ; server; người duyệt | 3 + 4 | Bên B | Sổ rollout chạy trên server Bên B |
+| ceo-90 | HĐ + PL03/04 | sổ nghĩa vụ N01–N22 | PL05, ngày ký, xác nhận hai bên | 3 | Hai bên | Biên bản từng nghĩa vụ |
+| data_platform-90 | PL01 mục 8 | runbook, `deploy/onprem`, DR dev | Server/UPS/offsite/monitor/tài khoản cao nhất | 4 | Bên B | Bàn giao hạ tầng + diễn tập khôi phục trên server |
+
+Website: tìm trên máy dev (`D:\code`) không thấy repo website/chatbot Sâm Sâm — chưa có đường dẫn/quyền; KHÔNG xây vào repo lõi, KHÔNG đóng bằng `website-feed`.
 
 ## 0. Baseline và tiêu chí xong (G0)
 
@@ -667,4 +751,4 @@ ngày làm việc).
 
 Đếm nhãn (một mục có thể nhiều nhãn): BLOCKED_DECISION 43, BLOCKED_INFRA_OR_DATA 45, BLOCKED_VENDOR 8, CODE_PARTIAL 8, CODE_VERIFIED 84, UNVERIFIED_LIVE 94. acceptance_status: chua_nghiem_thu 96.
 
-Nhãn `CODE_PARTIAL` (đợt hoàn thiện; trước gọi MISSING_CODE) = mục `code_status: mot_phan` — adapter OCR/STT/ảnh AI/API sàn/neo chưa viết vì CHƯA chọn nhà cung cấp (không viết adapter đoán), kiểm hồ sơ gốc chờ dữ liệu Bên B, giám sát ngoài máy chờ máy giám sát (hạ tầng).
+Nhãn `CODE_PARTIAL` (đợt hoàn thiện; trước gọi MISSING_CODE) = mục `code_status: mot_phan` — adapter OCR/STT/ảnh AI chưa viết vì CHƯA chọn nhà cung cấp (không viết adapter đoán) [đính chính r9: adapter API sàn `market_api` và neo OpenTimestamps CÓ code, mới kiểm giả lập, chưa sandbox], kiểm hồ sơ gốc chờ dữ liệu Bên B, giám sát ngoài máy chờ máy giám sát (hạ tầng).

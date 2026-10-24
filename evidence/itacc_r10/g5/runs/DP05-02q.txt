@@ -1,0 +1,17 @@
+# ca: DP05-02q
+# env: DB thử khối dp (DSN che)
+# cmd: python /d/code/samsam/evidence/itacc_r10/g5/harness/q.py select id,channel,export_kind,left(file_sha256,12),file_name,row_count from market_snapshots order by id select snapshot_id,raw::text from market_rows where snapshot_id=2 select * from market_alerts order by id select count(*) from market_rows where raw::text ~ '0900000|Người Nhận|Đường Thử|ITG5ORD'
+# exit: 0
+# thoi_gian: 2026-10-23T10:48:17+0700
+-- select id,channel,export_kind,left(file_sha256,12),file_name,row_count from market_snapshots order by id
+(1, 'shopee', 'listing', '0ba66307e22e', 'listing_thu_it.csv', 4)
+(2, 'shopee', 'order', '6e0bff775df2', 'order_thu_it.csv', 2)
+-- select snapshot_id,raw::text from market_rows where snapshot_id=2
+(2, '{"qty": 2, "price": 159000, "stock": null, "title": "Savina 12v thử IT", "status": "Hoàn thành", "item_id": null, "ads_spend": null, "sale_price": null, "seller_sku": "savina-12v", "voucher_code": null, "order_id_hash": "6e5f7cf28c00cda6"}')
+(2, '{"qty": 1, "price": 439000, "stock": null, "title": "Savigout thử IT", "status": "Đã hủy", "item_id": null, "ads_spend": null, "sale_price": null, "seller_sku": "savigout-30v", "voucher_code": null, "order_id_hash": "6801c4e9e646d395"}')
+-- select * from market_alerts order by id
+(1, 'price_mismatch', 'S2', 'shopee', 'listing', '24325987926', 'savigout-30v', 'savigout-30v', {'row_no': 3, 'sku_key': 'savigout-30v', 'price_id': 15, 'price_san': 449000, 'approved_by': None, 'golden_note': 'giá golden CHƯA duyệt', 'price_golden': 439000, 'golden_approved': False}, 'open', 1, datetime.datetime(2026, 10, 23, 3, 48, 4, 296734, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 10, 23, 3, 48, 4, 296734, tzinfo=datetime.timezone.utc), None)
+(2, 'alcohol_listed', 'S1', 'shopee', 'listing', '26975028961', 'ruou-sam-binh-su-do-500ml', 'ruou-sam-binh-su-do-500ml', {'title': 'Rượu sâm thử IT', 'row_no': 4, 'sku_key': 'ruou-sam-binh-su-do-500ml', 'price_san': 500000, 'status_san': 'Đang hoạt động'}, 'open', 1, datetime.datetime(2026, 10, 23, 3, 48, 4, 296734, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 10, 23, 3, 48, 4, 296734, tzinfo=datetime.timezone.utc), None)
+(3, 'item_unmapped', 'S2', 'shopee', 'listing', '99999999999', None, None, {'title': 'Item lạ thử IT', 'row_no': 5, 'item_id': '99999999999', 'candidates': [], 'seller_sku': None}, 'open', 1, datetime.datetime(2026, 10, 23, 3, 48, 4, 296734, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 10, 23, 3, 48, 4, 296734, tzinfo=datetime.timezone.utc), None)
+-- select count(*) from market_rows where raw::text ~ '0900000|Người Nhận|Đường Thử|ITG5ORD'
+(0,)

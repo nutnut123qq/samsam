@@ -45,7 +45,7 @@ from agents.garden import ACTIVITY_VOCAB
 from agents.report import REPORTS_DIR, write_report
 from ingest import golden_store
 from ingest.lead_store import connect
-from pipelines import director, guardrail, scenario
+from pipelines import director, guardrail, rollout, scenario
 from pipelines.job_runs import job_run
 from pipelines.production import TZ_VN
 
@@ -446,6 +446,12 @@ def main(argv=None, now: dt.datetime | None = None,
         print("[warn] không kết nối được Postgres (DATABASE_URL thiếu hoặc "
               "host chết)", file=sys.stderr)
         return 2
+    # r12 RB: tắt → chặn trước khi ghi báo cáo/submit.
+    why = rollout.blocked(conn, "dự báo thu hoạch", fid="farming-05.2")
+    if why:
+        with suppress(Exception):
+            conn.close()
+        return rollout.say_blocked(why)
     try:
         plots, logs, lots = load_db(conn)
         conn.commit()
@@ -488,6 +494,9 @@ def main(argv=None, now: dt.datetime | None = None,
         with suppress(Exception):
             conn.close()
     return 0
+
+
+main = rollout.cli_entry(main)
 
 
 if __name__ == "__main__":

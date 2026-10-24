@@ -1,0 +1,72 @@
+"""HARNESS r12 — preflight TRƯỚC khi chạy tiêu chí 48 mục (chỉ đọc, không DB):
+- bản tiêu chí dùng cho mỗi nhóm (ceo v2, sales_a v3, còn lại v1): sha256 = khóa;
+- đúng 48 id = tap_muc_kiem_lai.json (24 code_fail + 24 ảnh hưởng), mỗi id đúng 1 lần, DB `samsam_itacc_r12_*` không trùng;
+- mọi tệp fixture trong evidence/itacc_r12/fixtures/items/<id>/ khớp SHA256SUMS.txt; mọi chuỗi {FX12}/{FX10}/{FX11}/{H}
+  trong bước tồn tại (trừ chuỗi có placeholder động).
+python -I preflight_items_r12.py.txt → in kế hoạch (nhóm, tiêu chí, id, db), exit 1 nếu vi phạm."""
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r12"
+USE = {"ceo": "r12_ceo_v2.json", "intel": "r12_intel.json", "sales_a": "r12_sales_a_v3.json",
+       "sales_b": "r12_sales_b.json", "marketing_b": "r12_marketing_b.json", "finance": "r12_finance.json",
+       "prod_legal": "r12_prod_legal.json", "farming": "r12_farming.json"}
+SUB = {"{FX12}": EV / "fixtures", "{FX10}": REPO / "evidence/itacc_r10", "{FX11}": REPO / "evidence/itacc_r11",
+       "{H}": EV / "harness", "{REPO}": REPO}
+errs, plan, seen, dbs = [], [], {}, {}
+tap = json.loads((EV / "tap_muc_kiem_lai.json").read_text(encoding="utf-8"))
+want = set(tap["code_fail_24"]) | {a["id"] for a in tap["anh_huong_truc_tiep"]}
+if len(tap["code_fail_24"]) != 24 or len(tap["anh_huong_truc_tiep"]) != 24 or len(want) != 48:
+    errs.append("tập kiểm lại không đúng 24 + 24 = 48 id duy nhất")
+for grp, fn in USE.items():
+    p = EV / "criteria" / fn
+    lock = (EV / "criteria" / fn.replace(".json", ".lock.txt")).read_text(encoding="utf-8").split()
+    if hashlib.sha256(p.read_bytes()).hexdigest() != lock[1]:
+        errs.append(f"{fn}: sha ≠ khóa")
+    for it in json.loads(p.read_text(encoding="utf-8"))["items"]:
+        fid, db = it["id"], it["db"]
+        if fid in seen:
+            errs.append(f"{fid}: có ở {seen[fid]} và {fn}")
+        seen[fid] = fn
+        if not db.startswith("samsam_itacc_r12_") or db in dbs:
+            errs.append(f"{fid}: DB {db} sai tiền tố hoặc trùng {dbs.get(db)}")
+        dbs[db] = fid
+        plan.append((grp, fn, fid, db, len(it["ca"])))
+        for ca in it["ca"]:
+            for b in ca.get("buoc", []):
+                for a in list(b.get("argv", [])) + [b.get("stdin") or ""] + list((b.get("env") or {}).values()):
+                    if not isinstance(a, str):
+                        continue
+                    for m in re.finditer(r"\{(FX12|FX10|FX11|H|REPO)\}[^\s'\"|;,]*", a):
+                        s = m.group(0)
+                        if "{" in s[len(m.group(1)) + 2:] or "*" in s:
+                            continue
+                        path = Path(str(SUB["{" + m.group(1) + "}"]) + s[len(m.group(1)) + 2:])
+                        if not path.exists():
+                            errs.append(f"{fid} {ca['ma']}: thiếu {s}")
+missing, extra = want - set(seen), set(seen) - want
+if missing or extra:
+    errs.append(f"lệch tập 48: thiếu {sorted(missing)} thừa {sorted(extra)}")
+for d in sorted((EV / "fixtures" / "items").iterdir()):
+    sums = d / "SHA256SUMS.txt"
+    if not sums.exists():
+        errs.append(f"{d.name}: thiếu SHA256SUMS.txt")
+        continue
+    for ln in sums.read_text(encoding="utf-8").splitlines():
+        if not ln.strip():
+            continue
+        h, name = ln.split(None, 1)
+        f = d / name.lstrip("*")
+        if not f.exists() or hashlib.sha256(f.read_bytes()).hexdigest() != h:
+            errs.append(f"{d.name}/{name}: sha lệch hoặc thiếu")
+for row in plan:
+    print(*row)
+print(f"{len(plan)} mục, {sum(r[4] for r in plan)} ca")
+for e in errs:
+    print("LOI", e)
+sys.exit(1 if errs else 0)

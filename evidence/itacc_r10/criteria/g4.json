@@ -1,0 +1,286 @@
+{
+  "_doc": "Tiêu chí cụ thể nhóm g4 (finance + production) — viết TRƯỚC khi chạy ca, khóa sha256 ở g4.lock.txt. DB thử: samsam_itacc_r10_fin (finance) / samsam_itacc_r10_prod (production), dev mode (AUTH_MODE trống). Fixture GIẢ (… Thử IT, mã IT-*, ngày 2026). LLM chỉ qua fake ở biên (`llm_gateway._client`). Báo cáo file → --out-dir/REPORTS_DIR vá sang thư mục evidence/scratchpad, không vào data/reports. Ca tắt tính năng (tat) chạy CUỐI (rollout --disable không đảo ngược trên DB thử).",
+  "nhom": "g4",
+  "items": [
+    {
+      "id": "finance-01",
+      "tieu_chi_cu_the": [
+        "C1 settlement_csv --file nạp file quyết toán fixture → settlement_rows + recon_results, mỗi dòng đúng 1 nhãn (khop/lech/hoan/thieu_chung_tu) khớp tính tay; lý do lệch có expected/actual",
+        "C2 kd_orders --recon xuất CSV cho kế toán 1 dòng/đơn + dòng TONG theo kênh, cột tiền đúng, không mã đơn đầy đủ/PII",
+        "C3 khoản xuất lại ở file thứ 2: trùng nguyên văn tính 1 lần trong tổng (view v_settlement_khoan), số khác → báo lệch, giữ cả hai, không tự chọn",
+        "C4 file lỗi (cột lạ/số sai/mã đơn trùng) → exit 1, 0 dòng; nạp lại cùng file → [skip], không nhân dòng",
+        "C5 tính năng tắt → không sinh recon_results (exit 2 với --reconcile); không gửi/bút toán"
+      ],
+      "ca": [
+        {"ma": "F01-1", "mo_ta": "nạp file đơn sàn shopee+tiktok + kd_orders --sync (tiền đề)", "entry_point": "python -m ingest.market_csv --kind order; python -m agents.kd_orders --sync", "dau_vao": "fixtures/orders_shopee.csv, orders_tiktok.csv", "expected": "exit 0; orders source market:% có 5 đơn shopee+1 tiktok; cột PII bị bỏ"},
+        {"ma": "F01-2", "mo_ta": "nạp quyết toán shopee S1", "entry_point": "python -m ingest.settlement_csv --file S1 --channel shopee", "dau_vao": "fixtures/qt_shopee_s1.csv", "expected": "exit 0; khop=2 (A,F) lech=1 (B, thuc_nhan chênh -14000) hoan=2 (C,D) thieu_chung_tu=1 (E)"},
+        {"ma": "F01-3", "mo_ta": "nạp quyết toán tiktok", "entry_point": "settlement_csv --channel tiktok", "dau_vao": "fixtures/qt_tiktok.csv", "expected": "exit 0; khop=1"},
+        {"ma": "F01-4", "mo_ta": "CSV cho kế toán", "entry_point": "python -m agents.kd_orders --recon --since 2026-10-01 --until 2026-10-31 --out-dir <g4/out>", "dau_vao": "DB sau F01-2/3", "expected": "exit 0; file doi-soat-*.csv: 1 dòng/đơn, nhãn khớp recon_results, E = thieu_don, dòng TONG = tổng cột; order_ref 8 ký tự"},
+        {"ma": "F01-5", "mo_ta": "ÂM: file có cột lạ + số sai + mã đơn trùng", "entry_point": "settlement_csv --file bad", "dau_vao": "fixtures/qt_shopee_bad.csv", "expected": "exit 1, không connect, settlement_rows không đổi"},
+        {"ma": "F01-6", "mo_ta": "ÂM idempotent: nạp lại S1", "entry_point": "settlement_csv --file S1", "dau_vao": "qt_shopee_s1.csv", "expected": "exit 0 [skip]; số dòng không đổi"},
+        {"ma": "F01-7", "mo_ta": "file xuất lại S2 (A nguyên văn, B số khác)", "entry_point": "settlement_csv --file S2 --channel shopee; --report", "dau_vao": "fixtures/qt_shopee_s2.csv", "expected": "exit 0; [warn] chồng kỳ trùng 1 lệch 1; --report tổng thực nhận tính A 1 lần (view), B giữ cả hai"},
+        {"ma": "F01-8", "mo_ta": "ÂM tắt tính năng finance-01 (chạy cuối)", "entry_point": "rollout --disable finance-01; settlement_csv --reconcile", "dau_vao": "-", "expected": "exit 2 [blocked]; recon_results không đổi"}
+      ]
+    },
+    {
+      "id": "finance-02",
+      "tieu_chi_cu_the": [
+        "C1 acc_invoice --batch gom đơn đạt mốc (Hoàn thành/Completed), loại hủy + chưa đạt mốc → 1 mục approval_queue finance/invoice_batch created_by agent:acc_invoice, pending, payload có csv_sha256 + số tiền, KHÔNG thông tin người mua",
+        "C2 file yêu cầu có MST hợp lệ → dòng can_mst; MST sai → exit 1 trước connect, 0 ghi",
+        "C3 chạy lại cùng ngày khi lô pending → [skip], không thêm mục",
+        "C4 verify-draft: mục chưa duyệt → fail exit 1; đã duyệt nhưng tính năng chạy thử → bị chặn (không cho dùng); ép van_hanh (FIXTURE) + file đúng → ok; file sửa → fail",
+        "C5 agent không phát hành/gửi; tắt tính năng → không sinh lô"
+      ],
+      "ca": [
+        {"ma": "F02-1", "mo_ta": "MST sai trong file yêu cầu", "entry_point": "acc_invoice --batch --yeu-cau bad --channel shopee", "dau_vao": "fixtures/yeucau_bad.csv", "expected": "exit 1; không connect; 0 invoice_lines"},
+        {"ma": "F02-2", "mo_ta": "lập lô ngày 2026-10-23 kèm yêu cầu MST", "entry_point": "acc_invoice --batch --day 2026-10-23 --yeu-cau ok --channel shopee (REPORTS_DIR vá)", "dau_vao": "fixtures/yeucau_ok.csv", "expected": "exit 0; thường gồm A,F,T1; can_mst B; loại hủy 1 (C); D chưa đạt mốc; 1 mục invoice_batch pending agent:acc_invoice; payload không chứa tên người mua/MST"},
+        {"ma": "F02-3", "mo_ta": "ÂM idempotent chạy lại", "entry_point": "acc_invoice --batch --day 2026-10-23", "dau_vao": "-", "expected": "exit 0 [skip]; số mục invoice_batch không đổi"},
+        {"ma": "F02-4", "mo_ta": "verify-draft mục pending", "entry_point": "acc_invoice --verify-draft QID --file <nháp>", "dau_vao": "file nháp vừa sinh", "expected": "exit 1 fail 'chưa được duyệt'"},
+        {"ma": "F02-5", "mo_ta": "người duyệt (dev) rồi verify-draft khi chạy thử", "entry_point": "approval_queue --approve QID --by 'Kế toán Thử IT'; acc_invoice --verify-draft", "dau_vao": "-", "expected": "approve exit 0; verify exit 1 (chạy thử chặn dùng)"},
+        {"ma": "F02-6", "mo_ta": "ép van_hanh (FIXTURE _FORCE_MODE) verify file đúng + file bị sửa", "entry_point": "harness run.py --force-mode van_hanh acc_invoice --verify-draft", "dau_vao": "nháp gốc / nháp sửa 1 byte", "expected": "file đúng exit 0 ok; file sửa exit 1 sha lệch"},
+        {"ma": "F02-7", "mo_ta": "ÂM tắt finance-02 (chạy cuối)", "entry_point": "rollout --disable finance-02; acc_invoice --batch --day 2026-10-24", "dau_vao": "-", "expected": "exit !=0; không thêm invoice_batch"}
+      ]
+    },
+    {
+      "id": "finance-03.1",
+      "tieu_chi_cu_the": [
+        "C1 acc_ar --load nạp sổ công nợ fixture → dealer_ar; file lỗi → exit 1, 0 dòng; nạp lại → skip",
+        "C2 --aging tính tuổi nợ FIFO đúng 4 nhóm 0-30/31-60/61-90/>90 + quá hạn khớp tính tay",
+        "C3 --bulletin ghi director-finance-<ngày>.md (REPORTS_DIR vá) có mục công nợ quá hạn với tuổi nợ ĐỦ 4 nhóm 0-30/31-60/61-90/>90 + quá hạn (theo đầu ra danh mục), nguồn dealer_ar; nhãn CHẠY THỬ; không gửi",
+        "C4 tắt tính năng → không ghi bản tin"
+      ],
+      "ca": [
+        {"ma": "F031-1", "mo_ta": "ÂM file công nợ lỗi", "entry_point": "acc_ar --load bad", "dau_vao": "fixtures/ar_bad.csv", "expected": "exit 1, 0 dòng dealer_ar"},
+        {"ma": "F031-2", "mo_ta": "nạp sổ công nợ", "entry_point": "acc_ar --load ok", "dau_vao": "fixtures/ar_ok.csv", "expected": "exit 0, 7 dòng"},
+        {"ma": "F031-3", "mo_ta": "ÂM nạp lại", "entry_point": "acc_ar --load ok", "dau_vao": "ar_ok.csv", "expected": "exit 0 [skip], vẫn 7 dòng"},
+        {"ma": "F031-4", "mo_ta": "aging as-of 2026-10-23", "entry_point": "acc_ar --aging --as-of 2026-10-23", "dau_vao": "-", "expected": "IT-DL01 còn nợ 14.000.000 (0-30 2tr, 31-60 5tr, >90 7tr) quá hạn 12tr; IT-DL02 61-90 4tr quá hạn 4tr; IT-DL03 0-30 1tr quá hạn 1tr"},
+        {"ma": "F031-5", "mo_ta": "bản tin GĐ tài chính", "entry_point": "harness --reports-dir acc_ar --bulletin --as-of 2026-10-23", "dau_vao": "-", "expected": "exit 0; file director-finance-*.md có bảng quá hạn 3 đại lý, tổng 17.000.000, nhãn CHẠY THỬ; report_outputs finance-03.1"},
+        {"ma": "F031-6", "mo_ta": "bản tin thể hiện đủ 4 nhóm tuổi (0-30 của khoản quá hạn IT-DL03)", "entry_point": "đọc file F031-5", "dau_vao": "-", "expected": "có cột/giá trị nhóm 0-30 trong bản tin"},
+        {"ma": "F031-7", "mo_ta": "ÂM tắt finance-03.1 (chạy cuối)", "entry_point": "rollout --disable finance-03.1; acc_ar --bulletin", "dau_vao": "-", "expected": "exit 2 blocked, không ghi file"}
+      ]
+    },
+    {
+      "id": "finance-03.2",
+      "tieu_chi_cu_the": [
+        "C1 kd_affiliate --attribute ghi affiliate_attributions cho dòng đơn mang mã affiliate active khớp kênh: amount = giá×SL, tỷ lệ theo crm.commission_rate, hoa hồng tạm tính đúng; đơn hủy → 0 + cờ huy",
+        "C2 mã không khớp → không ghi (đếm unknown_code); chạy lại → không đổi (idempotent)",
+        "C3 --report in bảng hoa hồng BẢN NHÁP, không phải lệnh chi",
+        "C4 tắt → không ghi; agent không gửi/liên hệ đại lý"
+      ],
+      "ca": [
+        {"ma": "F032-1", "mo_ta": "fixture đại lý + mã affiliate active (SQL owner, FIXTURE)", "entry_point": "harness/q.py insert dealers/affiliate_codes", "dau_vao": "IT-DL01, mã SSITTESTAAAA", "expected": "insert ok"},
+        {"ma": "F032-2", "mo_ta": "ghi nhận đơn qua mã", "entry_point": "python -m agents.kd_affiliate --attribute", "dau_vao": "orders_shopee.csv voucher A,C hợp lệ; B mã lạ", "expected": "exit 0; mới 2 (A tinh, C huy), unknown 1; A amount 1.000.000 × tỷ lệ = hoa hồng; C hoa hồng 0"},
+        {"ma": "F032-3", "mo_ta": "ÂM idempotent", "entry_point": "kd_affiliate --attribute", "dau_vao": "-", "expected": "mới 0, không đổi 2"},
+        {"ma": "F032-4", "mo_ta": "báo cáo hoa hồng", "entry_point": "kd_affiliate --report --from 2026-10-01 --to 2026-10-31", "dau_vao": "-", "expected": "exit 0; BẢN NHÁP — không phải lệnh chi; dòng IT-DL01 shopee"},
+        {"ma": "F032-5", "mo_ta": "ÂM tắt finance-03.2 (chạy cuối)", "entry_point": "rollout --disable; kd_affiliate --attribute", "dau_vao": "-", "expected": "exit 1 error RolloutBlocked; số dòng không đổi"}
+      ]
+    },
+    {
+      "id": "finance-03.3",
+      "tieu_chi_cu_the": [
+        "C1 acc_ar --reminders đẩy 1 mục finance/ar_reminder created_by agent:acc_ar cho MỖI đại lý có khoản quá hạn VÀ có trong sổ dealers; payload có chứng từ, hạn, số ngày quá hạn, số tiền, file nguồn + sha256; placeholder thay tên/người nhận; không PII",
+        "C2 đại lý ngoài sổ dealers → bỏ qua, không soạn",
+        "C3 chạy lại cùng trạng thái nợ → skip; --dry-run không ghi",
+        "C4 agent không gửi; tắt → exit 2 không ghi"
+      ],
+      "ca": [
+        {"ma": "F033-1", "mo_ta": "dry-run", "entry_point": "acc_ar --reminders --as-of 2026-10-23 --dry-run", "dau_vao": "dealer_ar F031-2 + dealers (IT-DL01, IT-DL03)", "expected": "exit 0; in 2 nháp; 0 mục ar_reminder"},
+        {"ma": "F033-2", "mo_ta": "đẩy hàng duyệt", "entry_point": "acc_ar --reminders --as-of 2026-10-23", "dau_vao": "-", "expected": "2 mục ar_reminder pending agent:acc_ar (IT-DL01 12.000.000, IT-DL03 1.000.000); IT-DL02 skip ngoài sổ"},
+        {"ma": "F033-3", "mo_ta": "ÂM idempotent", "entry_point": "acc_ar --reminders --as-of 2026-10-23", "dau_vao": "-", "expected": "0 mới, skip 'đã có nháp cùng trạng thái'"},
+        {"ma": "F033-4", "mo_ta": "ÂM tắt finance-03.3 (chạy cuối)", "entry_point": "rollout --disable; acc_ar --reminders", "dau_vao": "-", "expected": "exit 2 blocked"}
+      ]
+    },
+    {
+      "id": "finance-04.1",
+      "tieu_chi_cu_the": [
+        "C1 fp_pnl --pnl --month 2026-09 ghi pnl-2026-09.md (REPORTS_DIR vá): ô SKU × kênh với doanh thu, khấu trừ sàn, hoàn, thực nhận từ quyết toán; giá vốn từ cogs ĐÃ duyệt; lãi gộp/biên đúng tính tay",
+        "C2 SKU chưa có giá vốn duyệt → ghi 'chưa có giá vốn duyệt', không 0",
+        "C3 người lập tự duyệt giá vốn → DB từ chối; --channel → file riêng không đè bản toàn kênh",
+        "C4 chồng kỳ (file xuất lại) được nêu; BẢN NHÁP, không gửi; tắt → không ghi"
+      ],
+      "ca": [
+        {"ma": "F041-1", "mo_ta": "lập giá vốn 3 SKU", "entry_point": "fp_pnl --cogs-add --by 'Kế toán Thử IT'", "dau_vao": "sapentol-30v 200000, savina-12v 100000, mat-ong-sam-120ml-1hu 200000 từ 2026-09-01", "expected": "exit 0 chờ duyệt"},
+        {"ma": "F041-2", "mo_ta": "ÂM người lập tự duyệt", "entry_point": "fp_pnl --cogs-approve ID --by 'Kế toán Thử IT'", "dau_vao": "-", "expected": "exit 1, DB từ chối"},
+        {"ma": "F041-3", "mo_ta": "người khác duyệt", "entry_point": "fp_pnl --cogs-approve ID --by 'GĐ Tài chính Thử IT'", "dau_vao": "-", "expected": "exit 0"},
+        {"ma": "F041-4", "mo_ta": "P&L tháng 9/2026", "entry_point": "harness --reports-dir fp_pnl --pnl --month 2026-09", "dau_vao": "DB sau F01", "expected": "exit 0; sapentol shopee thực nhận 880.000 giá vốn 400.000; savigout/saphraton 'chưa có giá vốn duyệt'; nhãn CHẠY THỬ"},
+        {"ma": "F041-5", "mo_ta": "lọc kênh tiktok", "entry_point": "fp_pnl --pnl --month 2026-09 --channel tiktok", "dau_vao": "-", "expected": "file pnl-2026-09-tiktok.md riêng; pnl-2026-09.md không đổi"},
+        {"ma": "F041-6", "mo_ta": "ÂM tắt finance-04.1 (chạy cuối)", "entry_point": "rollout --disable; fp_pnl --pnl", "dau_vao": "-", "expected": "exit !=0, không ghi file mới"}
+      ]
+    },
+    {
+      "id": "finance-04.2",
+      "tieu_chi_cu_the": [
+        "C1 kd_price --run với kế hoạch KM phá biên (giá vốn ĐÃ duyệt) → mục finance/promo_loss created_by agent:kd_price + S1 khối sales; KM chồng → sales/promo_change agent:kd_price",
+        "C2 fp_ads --propose → finance/budget_change created_by agent:fp_ads với mã CHAN_XNQC/CHO_DU_LIEU/DE_XUAT theo biên gộp; payload không nêu SKU rượu",
+        "C3 chạy lại → không nhân mục; SKU không được quảng bá → promo_banned (không promo_change); file kế hoạch lỗi → exit 1 trước connect",
+        "C4 agent không đổi giá/KM/không chi tiền; tắt → không sinh"
+      ],
+      "ca": [
+        {"ma": "F042-1", "mo_ta": "golden fixture (2 SKU mật ong self_declaration_ok=true) + duyệt giá list + giá vốn đã duyệt", "entry_point": "golden_store --file fixture; --approve-price; fp_pnl --cogs-add/--cogs-approve", "dau_vao": "fixtures/golden_fin.json", "expected": "v_promotable có mat-ong-sam-300ml & 120ml-1hu shopee"},
+        {"ma": "F042-2", "mo_ta": "ÂM file kế hoạch lỗi", "entry_point": "kd_price --run --plan bad", "dau_vao": "fixtures/km_bad.csv", "expected": "exit 1, không connect"},
+        {"ma": "F042-3", "mo_ta": "dry-run", "entry_point": "kd_price --run --dry-run --plan ok --as-of 2026-10-23", "dau_vao": "fixtures/km_ok.csv", "expected": "exit 0, in S1 biên âm + S2 chồng + promo_banned; 0 ghi"},
+        {"ma": "F042-4", "mo_ta": "đẩy hàng duyệt", "entry_point": "kd_price --run --plan ok", "dau_vao": "km_ok.csv", "expected": "promo_loss (finance, agent:kd_price) ≥1; promo_change (sales, agent:kd_price) ≥1"},
+        {"ma": "F042-5", "mo_ta": "ÂM idempotent", "entry_point": "kd_price --run --plan ok", "dau_vao": "-", "expected": "0 mục mới"},
+        {"ma": "F042-6", "mo_ta": "đề xuất ngân sách ads", "entry_point": "fp_ads --propose --month 2026-09", "dau_vao": "P&L 2026-09", "expected": "1 mục budget_change agent:fp_ads; mat-ong-sam-120ml-1hu DE_XUAT; TPBVSK CHAN_XNQC; rerun → skip"},
+        {"ma": "F042-7", "mo_ta": "ÂM tắt finance-04.2 (chạy cuối)", "entry_point": "rollout --disable; fp_ads --propose --month 2026-08", "dau_vao": "-", "expected": "không sinh mục mới"}
+      ]
+    },
+    {
+      "id": "finance-05.1",
+      "tieu_chi_cu_the": [
+        "C1 fp_opscost --load file chi phí → opex_entries; --report: cảnh báo ≥80% (warn) và ≥100% (stop) mỗi scope, AI quy đổi USD→VND từ llm_usage",
+        "C2 --submit-over-x: khoản > X → 1 mục finance/opex_over_x created_by agent:fp_opscost, pending; chạy lại không nhân",
+        "C3 khoản đã 'duyệt' bởi người KHÔNG có vai trò TGĐ → vẫn 'cho_tgd_ky' (fail-closed)",
+        "C4 file lỗi → exit 1 0 dòng; fin_director --weekly gộp mục chi phí vào director-finance; không chi tiền"
+      ],
+      "ca": [
+        {"ma": "F051-1", "mo_ta": "ÂM file chi phí lỗi", "entry_point": "fp_opscost --load bad", "dau_vao": "fixtures/opex_bad.csv", "expected": "exit 1, 0 dòng"},
+        {"ma": "F051-2", "mo_ta": "nạp chi phí + llm_usage fixture", "entry_point": "fp_opscost --load ok; SQL insert llm_usage 168 USD agent chatbot tháng 10", "dau_vao": "fixtures/opex_ok.csv", "expected": "exit 0, 3 dòng"},
+        {"ma": "F051-3", "mo_ta": "báo cáo trần", "entry_point": "fp_opscost --report --month 2026-10", "dau_vao": "-", "expected": "cloud 87,5% cảnh báo 80%; saas 107% vượt 100%; ai 4.200.000 84% cảnh báo"},
+        {"ma": "F051-4", "mo_ta": "đẩy khoản > X", "entry_point": "fp_opscost --submit-over-x --month 2026-10", "dau_vao": "-", "expected": "1 mục opex_over_x pending agent:fp_opscost (saas 7.500.000)"},
+        {"ma": "F051-5", "mo_ta": "ÂM idempotent", "entry_point": "fp_opscost --submit-over-x", "dau_vao": "-", "expected": "0 mục mới"},
+        {"ma": "F051-6", "mo_ta": "ÂM người không phải TGĐ duyệt", "entry_point": "approval_queue --approve QID --by 'Kế toán Thử IT'; fp_opscost --status", "dau_vao": "users.json không có (không ai vai trò tgd)", "expected": "status cho_tgd_ky"},
+        {"ma": "F051-7", "mo_ta": "bản tin tuần GĐ tài chính", "entry_point": "harness --reports-dir fin_director --weekly --as-of 2026-10-23", "dau_vao": "-", "expected": "exit 0; file có các mục công nợ/P&L/chi phí/dòng tiền/ads; mục thiếu dữ liệu ghi '(chưa có dữ liệu: …)'"}
+      ]
+    },
+    {
+      "id": "finance-05.2",
+      "tieu_chi_cu_the": [
+        "C1 fp_cash --forecast --out-dir ghi dong-tien-<ngày>.md: 13 tuần × thấp/cơ sở/cao, low ≤ base ≤ high, chi cố định theo cấu hình, cảnh báo tuần âm",
+        "C2 số dư đầu kỳ null → ghi 'chưa có số dư đầu kỳ thật', không bịa; tỷ lệ thực nhận đo từ quyết toán (8 tuần) hoặc mặc định + 'chưa xác minh'",
+        "C3 tham số sai → exit 2; DB down → vẫn chạy với mặc định + warn, báo cáo cờ mẫu (không đếm)",
+        "C4 tắt → không ghi file (exit 2)"
+      ],
+      "ca": [
+        {"ma": "F052-1", "mo_ta": "dự báo không số dư đầu kỳ", "entry_point": "fp_cash --forecast --start 2026-10-26 --out-dir <g4/out>", "dau_vao": "DB fin", "expected": "exit 0; 13 tuần; 'chưa có số dư đầu kỳ thật'; low≤base≤high mọi tuần; report_outputs finance-05.2"},
+        {"ma": "F052-2", "mo_ta": "có số dư đầu kỳ, json", "entry_point": "fp_cash --forecast --start 2026-10-26 --opening 500000000 --json", "dau_vao": "-", "expected": "exit 0; opening 500000000; tuần âm nếu có được liệt kê"},
+        {"ma": "F052-3", "mo_ta": "ÂM tham số sai", "entry_point": "fp_cash --forecast --opening abc", "dau_vao": "-", "expected": "exit 2"},
+        {"ma": "F052-4", "mo_ta": "ÂM DB down", "entry_point": "DATABASE_URL host chết; fp_cash --forecast --out-dir", "dau_vao": "-", "expected": "exit 0 + [warn] chưa xác minh; không ghi được sổ (không đếm)"},
+        {"ma": "F052-5", "mo_ta": "ÂM tắt finance-05.2 (chạy cuối)", "entry_point": "rollout --disable; fp_cash --forecast --out-dir", "dau_vao": "-", "expected": "exit 2, không ghi file"}
+      ]
+    },
+    {
+      "id": "finance-06",
+      "tieu_chi_cu_the": [
+        "C1 rev_share --quarter 2026-Q3 --record ghi doi-soat-2026-Q3.md + 1 dòng revenue_quarters: gộp − phí sàn − hủy − hoàn = thuần khớp tính tay; hoàn của đơn hủy không trừ 2 lần; ô ký hai bên trống",
+        "C2 tham số chưa chốt (rev_share.json null) → phí 'chưa chốt', không điền thay; quý không dữ liệu → 'chưa có dữ liệu', không 0",
+        "C3 khoản xuất lại ở ≥2 file: không cộng trùng khoản nguyên văn; lệch → BẤT THƯỜNG, không tính phí",
+        "C4 quý chưa đóng → exit 2; --year khi chưa chốt ngày ký → exit 1; append-only (record lần 2 = dòng mới); tắt → không ghi",
+        "C5 report_sha256 trong sổ truy được tới file báo cáo đã ghi"
+      ],
+      "ca": [
+        {"ma": "F06-1", "mo_ta": "đối soát Q3 trước khi có file xuất lại", "entry_point": "rev_share --quarter 2026-Q3 --record --out-dir <g4/out>", "dau_vao": "DB sau F01-2/3 (trước F01-7)", "expected": "exit 0; shopee gộp 2.600.000 phí 288.000 hủy 200.000 hoàn 400.000 thuần 1.712.000; tiktok thuần 440.000; tổng 2.152.000; phí 'chưa chốt'; revenue_quarters 1 dòng"},
+        {"ma": "F06-2", "mo_ta": "ÂM quý không dữ liệu", "entry_point": "rev_share --quarter 2026-Q2 --dry-run", "dau_vao": "-", "expected": "exit 0; 'chưa có dữ liệu' cho cả 2 kênh + tổng"},
+        {"ma": "F06-3", "mo_ta": "ÂM quý chưa đóng", "entry_point": "rev_share --quarter 2026-Q4", "dau_vao": "-", "expected": "exit 2"},
+        {"ma": "F06-4", "mo_ta": "ÂM --year chưa chốt ngày ký", "entry_point": "rev_share --year 1", "dau_vao": "-", "expected": "exit 1"},
+        {"ma": "F06-5", "mo_ta": "sau file xuất lại (F01-7)", "entry_point": "rev_share --quarter 2026-Q3 --record", "dau_vao": "-", "expected": "A không cộng lần 2; B lệch → BẤT THƯỜNG chồng kỳ trùng 1 lệch 1; phí không tính; revenue_quarters thêm dòng thứ 2 (dòng 1 giữ)"},
+        {"ma": "F06-6", "mo_ta": "report_sha256 ↔ file", "entry_point": "so sha256 file doi-soat-2026-Q3.md với revenue_quarters.report_sha256", "dau_vao": "-", "expected": "khớp"},
+        {"ma": "F06-7", "mo_ta": "ÂM tắt finance-06 (chạy cuối)", "entry_point": "rollout --disable; rev_share --quarter 2026-Q3 --record", "dau_vao": "-", "expected": "exit 2, revenue_quarters không thêm"}
+      ]
+    },
+    {
+      "id": "production-01",
+      "tieu_chi_cu_the": [
+        "C1 inventory_csv nạp tồn fixture → allocate --cutoff ghi allocation_proposals pending (run_id, SKU×kênh, tồn, nhu cầu thấp/cơ sở/cao, đề xuất); rượu online = 0",
+        "C2 NGƯỜI approve run qua function DB (approvals); agent:… bị từ chối",
+        "C3 bulletin --out-dir ghi sx-bantin-tuan-<ngày>.md có tồn/lô/tiến độ kế hoạch; nhãn CHẠY THỬ",
+        "C4 file tồn lỗi → exit 1 0 dòng; allocate lại → không nhân dòng; tắt → không ghi; không chuyển kho/lệnh SX"
+      ],
+      "ca": [
+        {"ma": "P01-1", "mo_ta": "ÂM file tồn lỗi", "entry_point": "ingest.inventory_csv --file bad", "dau_vao": "fixtures/inv_bad.csv", "expected": "exit 1, 0 dòng"},
+        {"ma": "P01-2", "mo_ta": "nạp tồn", "entry_point": "ingest.inventory_csv --file ok", "dau_vao": "fixtures/inv_ok.csv", "expected": "exit 0"},
+        {"ma": "P01-3", "mo_ta": "đề xuất phân bổ", "entry_point": "pipelines.production allocate --cutoff chot_11_11 --start 2026-10-26", "dau_vao": "-", "expected": "exit 0; allocation_proposals pending; rượu × shopee/tiktok proposed 0"},
+        {"ma": "P01-4", "mo_ta": "ÂM idempotent", "entry_point": "allocate lặp lại", "dau_vao": "-", "expected": "không thêm dòng"},
+        {"ma": "P01-5", "mo_ta": "ÂM agent duyệt", "entry_point": "production approve --run RID --by 'agent:sx'", "dau_vao": "-", "expected": "exit !=0, không đổi trạng thái"},
+        {"ma": "P01-6", "mo_ta": "người duyệt run", "entry_point": "production approve --run RID --by 'GĐ Sản xuất Thử IT'", "dau_vao": "-", "expected": "exit 0; status approved decided_by người; approvals ghi"},
+        {"ma": "P01-7", "mo_ta": "kế hoạch SX + bản tin", "entry_point": "production plan-add/plan-link; bulletin --out-dir", "dau_vao": "-", "expected": "file sx-bantin-tuan-*.md có tồn, lô, tiến độ; report_outputs production-01"},
+        {"ma": "P01-8", "mo_ta": "ÂM tắt production-01 (chạy cuối)", "entry_point": "rollout --disable; allocate --cutoff ke_hoach_tet", "dau_vao": "-", "expected": "exit !=0 không ghi"}
+      ]
+    },
+    {
+      "id": "production-02",
+      "tieu_chi_cu_the": [
+        "C1 golden_store --file nạp golden → sku_master/price_list (chờ duyệt) + golden_discrepancies có detail theo từng nguồn (không 'đề xuất')",
+        "C2 golden lỗi (vi phạm R1/file rỗng) → exit 1, 0 ghi; nạp lại → không nhân dòng price_list",
+        "C3 product_dossiers --check trên sổ thật → exit 2 BLOCKED nêu đúng phần thiếu (0/14 hồ sơ, SKU chưa gắn); bộ kiểm hoạt động trên fixture (đủ → 0, lệch số công bố → 1)",
+        "C4 duyệt giá chỉ người (agent: bị chặn)"
+      ],
+      "ca": [
+        {"ma": "P02-1", "mo_ta": "nạp golden fixture (đổi quy cách 1 SKU)", "entry_point": "ingest.golden_store --file fixtures/golden_prod.json", "dau_vao": "golden_prod.json", "expected": "exit 0; phiếu spec_mismatch/price… cho SKU đổi; price_list dòng mới chờ duyệt"},
+        {"ma": "P02-2", "mo_ta": "ÂM idempotent", "entry_point": "golden_store --file (lặp)", "dau_vao": "-", "expected": "price_list không thêm"},
+        {"ma": "P02-3", "mo_ta": "ÂM golden vi phạm R1 / rỗng", "entry_point": "golden_store --file bad / empty", "dau_vao": "golden_bad.json, golden_empty.json", "expected": "exit 1, 0 ghi"},
+        {"ma": "P02-4", "mo_ta": "report phiếu lệch", "entry_point": "golden_store --report", "dau_vao": "-", "expected": "exit 0, liệt kê phiếu pending"},
+        {"ma": "P02-5", "mo_ta": "ÂM agent duyệt giá", "entry_point": "golden_store --approve-price ID --by 'agent:x'", "dau_vao": "-", "expected": "exit !=0"},
+        {"ma": "P02-6", "mo_ta": "hồ sơ gốc thật", "entry_point": "ingest.product_dossiers --check", "dau_vao": "data/product_dossiers.json", "expected": "exit 2 [blocked] 0/14 + SKU chưa gắn"},
+        {"ma": "P02-7", "mo_ta": "bộ kiểm trên fixture đủ / lệch", "entry_point": "product_dossiers --check --file fixture", "dau_vao": "dossier_full.json, dossier_lech.json", "expected": "đủ → exit 0; lệch số công bố → exit 1"}
+      ]
+    },
+    {
+      "id": "production-03",
+      "tieu_chi_cu_the": [
+        "C1 sx_label --text trích ĐKSP/quy cách/NSX-HSD/mã lô/cụm bắt buộc, so golden + hồ sơ lô + listing → danh sách lệch đúng; --submit → 1 mục production/label_check agent:sx_label",
+        "C2 chạy lại cùng nhãn → skip; SKU nhóm hạn chế → payload chỉ mã H-<sha8>",
+        "C3 --image với OCR none → exit 2 hướng dẫn (chặn an toàn, KHÔNG làm đọc ảnh thành đạt); file rỗng / SKU lạ → exit 1",
+        "C4 không sửa nhãn/golden/listing"
+      ],
+      "ca": [
+        {"ma": "P03-1", "mo_ta": "nhãn savina-12v có lỗi (ĐKSP sai, thiếu câu khuyến cáo, lô không hồ sơ)", "entry_point": "agents.sx_label --sku savina-12v --text fixtures/nhan_savina.txt", "dau_vao": "nhan_savina.txt", "expected": "exit 0 [dry]; findings gồm số ĐKSP lệch, thiếu khuyến cáo, lô không hồ sơ"},
+        {"ma": "P03-2", "mo_ta": "--submit", "entry_point": "sx_label ... --submit", "dau_vao": "-", "expected": "1 mục label_check production agent:sx_label pending; payload không nguyên văn nhãn"},
+        {"ma": "P03-3", "mo_ta": "ÂM idempotent", "entry_point": "sx_label ... --submit (lặp)", "dau_vao": "-", "expected": "[skip]"},
+        {"ma": "P03-4", "mo_ta": "nhãn rượu → mã tra cứu", "entry_point": "sx_label --sku ruou-sam-chai-thuy-tinh-500ml --text nhan_ruou.txt --submit", "dau_vao": "nhan_ruou.txt", "expected": "payload/title chỉ H-xxxxxxxx, không sku_key/tên rượu"},
+        {"ma": "P03-5", "mo_ta": "đọc ẢNH nhãn (OCR none)", "entry_point": "sx_label --sku savina-12v --image nhan.png", "dau_vao": "nhan.png", "expected": "exit 2 'chưa cấu hình OCR' (chặn an toàn) — phần đọc ảnh MISSING_ADAPTER"},
+        {"ma": "P03-6", "mo_ta": "ÂM file rỗng / SKU lạ", "entry_point": "sx_label --text empty.txt / --sku khong-co", "dau_vao": "-", "expected": "exit 1"}
+      ]
+    },
+    {
+      "id": "production-04.3",
+      "tieu_chi_cu_the": [
+        "C1 production lots --load → production_lots pending (mã lô, NSX/HSD, SL); HSD ≤ NSX → exit 1",
+        "C2 NGƯỜI intake passed/failed qua function; intake lại → từ chối",
+        "C3 cert --file PDF (LOT_CERT_DIR ngoài repo) → lot_test_certificates phiên bản 1, phiếu 2 → v2 (bản cũ giữ); file không PDF/JPG/PNG → từ chối; cùng tệp 2 lần → từ chối; LOT_CERT_DIR trong repo → từ chối; cert-verify phát hiện thiếu phiếu/lệch hash",
+        "C4 bulletin --out-dir ghi sx-canhan-<ngày>.md mục 'Hàng cận hạn (FEFO)' liệt kê lô passed HSD ≤ 90 ngày (cả đã quá hạn), không liệt kê lô failed/xa hạn; tắt production-04.3 → không ghi"
+      ],
+      "ca": [
+        {"ma": "P043-1", "mo_ta": "ÂM lô HSD trước NSX", "entry_point": "production lots --load bad", "dau_vao": "fixtures/lots_bad.json", "expected": "exit 1, 0 dòng"},
+        {"ma": "P043-2", "mo_ta": "nạp 4 lô", "entry_point": "production lots --load ok", "dau_vao": "fixtures/lots_ok.json", "expected": "exit 0, 4 lô pending"},
+        {"ma": "P043-3", "mo_ta": "intake", "entry_point": "production intake --lot X --result passed|failed --by 'QA Thử IT'", "dau_vao": "-", "expected": "3 passed, 1 failed; intake lại → exit !=0"},
+        {"ma": "P043-4", "mo_ta": "phiếu kiểm nghiệm v1, v2", "entry_point": "LOT_CERT_DIR=<scratch> production cert --lot X --file a.pdf/b.pdf --cert-no", "dau_vao": "cert_a.pdf, cert_b.pdf", "expected": "v1 rồi v2; lot_test_certificates 2 dòng"},
+        {"ma": "P043-5", "mo_ta": "ÂM phiếu sai loại / trùng tệp / kho trong repo", "entry_point": "production cert ...", "dau_vao": "not_pdf.txt, cert_a.pdf lặp", "expected": "exit !=0 cả 3"},
+        {"ma": "P043-6", "mo_ta": "cert-verify", "entry_point": "production cert-verify", "dau_vao": "-", "expected": "lô có phiếu ok; lô không phiếu thieu_phieu; exit 1 khi có lô thiếu"},
+        {"ma": "P043-7", "mo_ta": "bản tin cận hạn", "entry_point": "production bulletin --date 2026-10-23 --out-dir", "dau_vao": "-", "expected": "sx-canhan-2026-10-23.md có lô passed HSD 2026-12-01 và lô đã hết hạn 2026-10-01; không có lô failed/lô HSD 2028"},
+        {"ma": "P043-8", "mo_ta": "ÂM tắt production-04.3 (chạy cuối)", "entry_point": "rollout --disable; bulletin --out-dir", "dau_vao": "-", "expected": "exit !=0; không ghi sx-canhan mới"}
+      ]
+    },
+    {
+      "id": "production-05.1",
+      "tieu_chi_cu_the": [
+        "C1 kb_internal nạp tài liệu R&D fixture vào chunks_internal internal:sx (embed qua fake ở biên)",
+        "C2 sx_tracuu --ask --out ghi sx-tracuu-<ngày>-<sha8>.md: nhãn NỘI BỘ, trích NGUYÊN VĂN có [n] + nguồn DOI/URL",
+        "C3 câu rượu / câu không liên quan → NO_DATA, không bịa; tắt → không ghi file",
+        "C4 không ghi bảng nào ngoài report_outputs; không gửi"
+      ],
+      "ca": [
+        {"ma": "P051-1", "mo_ta": "nạp tài liệu nội bộ (fake embed)", "entry_point": "harness --fake-llm ok ingest.kb_internal --file rd_baoquan.md --collection internal:sx --approved-by 'GĐ Sản xuất Thử IT'", "dau_vao": "fixtures/rd_baoquan.md", "expected": "exit 0; chunks_internal ≥1 dòng internal:sx"},
+        {"ma": "P051-2", "mo_ta": "tra cứu có kết quả", "entry_point": "harness --fake-llm ok --reports-dir sx_tracuu --ask 'bảo quản sâm khô độ ẩm' --out", "dau_vao": "-", "expected": "exit 0; file sx-tracuu-*.md có nhãn NỘI BỘ, trích nguyên văn có trong tài liệu, nguồn DOI"},
+        {"ma": "P051-3", "mo_ta": "ÂM câu về rượu", "entry_point": "sx_tracuu --ask 'rượu sâm ngâm bao lâu'", "dau_vao": "-", "expected": "NO_DATA, 0 embed"},
+        {"ma": "P051-4", "mo_ta": "ÂM câu không liên quan", "entry_point": "sx_tracuu --ask 'giá vé máy bay tết'", "dau_vao": "-", "expected": "NO_DATA"},
+        {"ma": "P051-5", "mo_ta": "ÂM tắt production-05.1 (chạy cuối)", "entry_point": "rollout --disable; sx_tracuu --ask --out", "dau_vao": "-", "expected": "không ghi file sx-tracuu mới"}
+      ]
+    },
+    {
+      "id": "production-05.2",
+      "tieu_chi_cu_the": [
+        "C1 sx_tracuu --llm (fake LLM ở biên trả tóm tắt sạch) → sx-tomtat-…md mode llm, qua guardrail, nhãn NỘI BỘ",
+        "C2 LLM trả nội dung vi phạm guardrail → rơi về trích đoạn (file sx-tracuu-, không sx-tomtat-) + lý do",
+        "C3 nút tắt tính năng LLM (LLM_KILL_FEATURES) / LLM lỗi → rơi về trích đoạn",
+        "C4 tắt production-05.2 → không ghi sx-tomtat; MOCK — không gọi OpenRouter thật"
+      ],
+      "ca": [
+        {"ma": "P052-1", "mo_ta": "tóm tắt sạch", "entry_point": "harness --fake-llm ok --reports-dir sx_tracuu --ask … --llm --out", "dau_vao": "-", "expected": "exit 0; sx-tomtat-*.md, Chế độ: llm; llm_usage có dòng feature production-05.2"},
+        {"ma": "P052-2", "mo_ta": "ÂM LLM vi phạm guardrail", "entry_point": "harness --fake-llm banned … --llm --out", "dau_vao": "-", "expected": "file sx-tracuu-*.md, Chế độ: extract, 'LLM bị loại: guardrail'"},
+        {"ma": "P052-3", "mo_ta": "ÂM nút tắt LLM", "entry_point": "LLM_KILL_FEATURES=production-05.2 … --llm --out", "dau_vao": "-", "expected": "Chế độ: extract, 'LLM bị loại: gateway'"},
+        {"ma": "P052-4", "mo_ta": "ÂM tắt production-05.2 (chạy cuối)", "entry_point": "rollout --disable production-05.2; … --llm --out", "dau_vao": "-", "expected": "không ghi sx-tomtat mới"}
+      ]
+    }
+  ]
+}

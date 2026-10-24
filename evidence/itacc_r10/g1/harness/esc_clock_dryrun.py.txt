@@ -1,0 +1,11 @@
+"""HARNESS FIXTURE đồng hồ: xem trước leo thang (dry_run=True, KHÔNG ghi/gửi) với now = giờ thật + 2h05
+— chỉ để biết trước tập cảnh báo sẽ leo thang; bằng chứng leo thang thật chạy CLI khi đủ 2 giờ đồng hồ."""
+import json, sys
+from datetime import datetime, timedelta, timezone
+sys.path.insert(0, r"D:\code\samsam")
+from ingest.lead_store import connect
+from pipelines import red_alert
+conn = connect()
+now = datetime.now(timezone.utc) + timedelta(hours=2, minutes=5)
+st = red_alert.escalate(conn, now, dry_run=True)
+print(json.dumps({"now_tiem": now.isoformat(), "ids_se_leo_thang": st["ids"], "backlog": st["backlog"]["total"]}, default=str))

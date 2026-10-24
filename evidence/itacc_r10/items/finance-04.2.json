@@ -1,0 +1,222 @@
+{
+ "id": "finance-04.2",
+ "ten": "Chặn khuyến mãi bị lỗ",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Lãi lỗ theo kênh: 'chặn khuyến mãi bị lỗ'",
+ "tieu_chi": [
+  "C1 kd_price --run với kế hoạch KM phá biên (giá vốn ĐÃ duyệt) → mục finance/promo_loss created_by agent:kd_price + S1 khối sales; KM chồng → sales/promo_change agent:kd_price",
+  "C2 fp_ads --propose → finance/budget_change created_by agent:fp_ads với mã CHAN_XNQC/CHO_DU_LIEU/DE_XUAT theo biên gộp; payload không nêu SKU rượu",
+  "C3 chạy lại → không nhân mục; SKU không được quảng bá → promo_banned (không promo_change); file kế hoạch lỗi → exit 1 trước connect",
+  "C4 agent không đổi giá/KM/không chi tiền; tắt → không sinh"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/golden_fin.json",
+   "sha256": "996fa0790bcca33f367c62b5935f84803057a1e9ee3787e0ff8bc9927e323216",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/km_ok.csv",
+   "sha256": "d4da064b3e3aa0424455952684856c67c03f3b1abd96693eadbf7bd259d49ef7",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/km_bad.csv",
+   "sha256": "3b8abe90b90a223ceffc00d81ac2f57b22b4a89be970fd8e2912ebb08da2e3d2",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F042-1",
+   "mo_ta": "golden fixture + duyệt giá + giá vốn",
+   "lenh": "[F042-1a] python -m ingest.golden_store --file evidence/itacc_r10/g4/fixtures/golden_fin.json || [F042-1b.24] python -m ingest.golden_store --approve-price 24 --by GĐ Bán hàng Thử IT || [F042-1b.30] python -m ingest.golden_store --approve-price 30 --by GĐ Bán hàng Thử IT || [F042-1-q] python evidence/itacc_r10/g4/harness/q.py select * from v_promotable ; select sku_key, channel, readiness from sku_readiness where sku_key like 'mat-ong%' and channel='shopee'",
+   "expected": "v_promotable có 2 SKU mật ong shopee",
+   "actual": "golden_store exit 0 (sku_changed=2); --approve-price 24/30/23/29 exit 0; v_promotable = mat-ong-sam-120ml-1hu, mat-ong-sam-300ml (TP_THUONG)",
+   "exit": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F042-2",
+   "mo_ta": "ÂM file kế hoạch lỗi",
+   "lenh": "[F042-2] python -m agents.kd_price --run --plan evidence/itacc_r10/g4/fixtures/km_bad.csv",
+   "expected": "exit 1, không connect",
+   "actual": "exit 1 'cột kenh, giam_pct không hợp lệ … không connect'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F042-3",
+   "mo_ta": "dry-run",
+   "lenh": "[F042-3] python -m agents.kd_price --run --dry-run --plan evidence/itacc_r10/g4/fixtures/km_ok.csv --as-of 2026-10-23",
+   "expected": "S1 biên âm + S2 chồng + promo_banned; 0 ghi",
+   "actual": "exit 0; S1 3 (promo_banned KM-IT-03, biên âm KM-IT-01 và KM-IT-01+02), S2 1 (chồng); 0 mục agent:kd_price",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F042-4",
+   "mo_ta": "đẩy hàng duyệt",
+   "lenh": "[F042-4] python -m agents.kd_price --run --plan evidence/itacc_r10/g4/fixtures/km_ok.csv || [F042-4-q] python evidence/itacc_r10/g4/harness/q.py select id, block, object_type, object_id, status, created_by, risk, title, left(payload, 600) from approval_queue where created_by='agent:kd_price' order by id",
+   "expected": "promo_loss finance ≥1; promo_change sales ≥1",
+   "actual": "exit 0; sales: 3 market_alert_s1 + 1 promo_change (#7, chồng KM); finance: 2 promo_loss (#8 biên -73.600, #9 -174.920 — khớp tính tay 2.384.000×0,85−2.100.000); created_by agent:kd_price, risk high",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F042-5",
+   "mo_ta": "ÂM idempotent",
+   "lenh": "[F042-5] python -m agents.kd_price --run --plan evidence/itacc_r10/g4/fixtures/km_ok.csv",
+   "expected": "0 mục mới",
+   "actual": "exit 0 'đẩy 0 … 0 mục KM lỗ'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F042-6",
+   "mo_ta": "đề xuất ngân sách ads",
+   "lenh": "[F042-6a] python -m agents.fp_ads --propose --month 2026-09 || [F042-6b] python -m agents.fp_ads --propose --month 2026-09 || [F042-6-q] python evidence/itacc_r10/g4/harness/q.py select id, block, object_type, object_id, status, created_by, title, payload from approval_queue where object_type='budget_change'",
+   "expected": "1 budget_change agent:fp_ads; 120ml DE_XUAT; TPBVSK CHAN_XNQC; rerun skip",
+   "actual": "exit 0 #10 budget_change agent:fp_ads: mat-ong-sam-120ml-1hu DE_XUAT 83.200 (416.000×0,2), TPBVSK CHAN_XNQC, mat-ong-300ml CHO_DU_LIEU, 17 cặp CAM không nêu tên; lần 2 exit 0 [skip]",
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F042-7",
+   "mo_ta": "ÂM tắt finance-04.2 (chạy cuối)",
+   "lenh": "[TAT-finance-04.2] python -m pipelines.rollout --disable finance-04.2 --by Người Thử IT --note kiem nhanh tat IT r10 || [F042-7] python -m agents.fp_ads --propose --month 2026-08 || [TAT-fin-q4] python evidence/itacc_r10/g4/harness/q.py select object_type, count(*) from approval_queue group by 1 order by 1 ; select count(*) from revenue_quarters ; select feature_id, count(*) from report_outputs group by 1 order by 1",
+   "expected": "không sinh mục mới",
+   "actual": "exit 1 '[error] RolloutBlocked'; budget_change vẫn 1",
+   "exit": [
+    0,
+    1,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "SKU mật ong được đặt self_declaration_ok=true trong golden FIXTURE (không phải dữ liệu thật) để có SKU quảng bá được; ngưỡng price_watch/fpa_config GIẢ ĐỊNH; mục KM biên âm là S1 → sales/market_alert_s1 (promo_change chỉ cho phát hiện S2).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-1a.txt",
+   "sha256": "c08b915c9b3e795c77d6674b66a51d91cf3f992f93ea1221494dc26366156892"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-1b.24.txt",
+   "sha256": "fd06e1116f5aaab5f56bf99827b3dca280f0ec4a58f052d0e7426e3770f892bc"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-1b.30.txt",
+   "sha256": "8a75feff483ec7045e850c6b0a0e01ca0d702c4db17dbcace7157e8e0cb536fa"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-1-q.txt",
+   "sha256": "0d05f5ae4ce2099f1e2794fd6f04c48d9ed42932c639b0144e62e7071e692b6d"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-2.txt",
+   "sha256": "17270c0a42fa4b8f98aba26ccbaf9a62f74ff95c72cf33442465a335a638f9ca"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-3.txt",
+   "sha256": "e141f0dbbb9485b0752086c17f36e344f1283748b85723666445d1151b74b000"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-4.txt",
+   "sha256": "e644929f35a4a07c33128c0ae45328cf412b971d00446654094204938679c096"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-4-q.txt",
+   "sha256": "112bba3f265ba59ea59106368e363a7a2e95cf96f6bf45bf8b844a71bd412791"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-5.txt",
+   "sha256": "5210fa8b862cd7fde31b4f1b0377d17af30c9746977d5b1c901588e73a47f7dc"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-6a.txt",
+   "sha256": "3cb371955a9f66f3ba131c1f1265bc5efa39647533460a5abdedd9c99845d2bc"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-6b.txt",
+   "sha256": "bf268fb9513956a1eea8a4dbae090826ef9b5998d31b8f069635e96e19854524"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-6-q.txt",
+   "sha256": "039687ea237b7d08fa15f5802c0f8bad65f2dcf0ed79d70ed064cbe9af35a37b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F042-7.txt",
+   "sha256": "4cf0ce28995a75f03a1b34bba1de611820a5c9998b21e04656921966dc16e0a7"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-finance-04.2.txt",
+   "sha256": "8ed3fbcd1cc77a87ea7756829e73ac1d6e196f112467b1145f87647166587416"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": []
+}

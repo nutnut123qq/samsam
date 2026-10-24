@@ -1,0 +1,490 @@
+{
+ "_doc": "HARNESS r12 — sinh evidence/itacc_r12/items_cfg.json cho build_items_r12: id → tiêu chí + run hiện hành (đọc từ log lô\nruns/batch/lo3_thu, lo3, lo4 — lượt SAU CÙNG của mỗi id là hiện hành), mức kiểm (kế thừa bản ghi nguồn), lý do chạy lại\n(mã lỗi r11 của mục / module đổi), lượt bị thay thế + lý do, ánh xạ ca UI (khai TRƯỚC khi dựng), giới hạn.\npython -I mk_items_cfg_r12.py.txt",
+ "items": {
+  "ceo-01": {
+   "criteria": "criteria/r12_ceo_v2.json",
+   "run_id": "20261024T111150-76dc",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L4) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. C07 phụ thuộc ngày (tuần 2026-10-21 chưa đóng).",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "ceo-02.2": {
+   "criteria": "criteria/r12_ceo_v2.json",
+   "run_id": "20261024T111149-ede2",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L5) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "ceo-04.3": {
+   "criteria": "criteria/r12_ceo_v2.json",
+   "run_id": "20261024T111226-2c2c",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L1, g1-L2) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Tiền đề đặt sequence content_drafts trong DB thử để khớp draft_id của fixture r10.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "ceo-04.4": {
+   "criteria": "criteria/r12_ceo_v2.json",
+   "run_id": "20261024T111232-4e30",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L1) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "ceo-05": {
+   "criteria": "criteria/r12_ceo_v2.json",
+   "run_id": "20261024T111257-a0a1",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L3, g1-L4) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "farming-03.1": {
+   "criteria": "criteria/r12_farming.json",
+   "run_id": "20261024T112648-1603",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (BUG-G5-02) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "farming-04": {
+   "criteria": "criteria/r12_farming_v3.json",
+   "run_id": "20261024T113353-7115",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (BUG-G5-01) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [
+    {
+     "lot": "lo3",
+     "criteria": "r12_farming.json",
+     "run_id": "20261024T112800-228b",
+     "thu_muc": "evidence/itacc_r12/runs/farming-04/20261024T112800-228b",
+     "ly_do": "lượt lo3 dùng tiêu chí v1: C08 regex `$` không khớp CRLF stdout Windows; C09 runner lỗi relative_to với tệp ngoài repo — LỖI HARNESS (mk_farming_v3.py.txt + runner _rel)"
+    }
+   ],
+   "loi_san_pham": []
+  },
+  "finance-03.1": {
+   "criteria": "criteria/r12_finance.json",
+   "run_id": "20261024T112125-8269",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (?) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "finance-06": {
+   "criteria": "criteria/r12_finance.json",
+   "run_id": "20261024T112307-bd29",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (?) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "intel-01.1": {
+   "criteria": "criteria/r12_intel.json",
+   "run_id": "20261024T111452-5196",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L1, g1-L2) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "intel-01.2": {
+   "criteria": "criteria/r12_intel.json",
+   "run_id": "20261024T111458-692e",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L1, g1-L2) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "intel-03": {
+   "criteria": "criteria/r12_intel.json",
+   "run_id": "20261024T111533-a4d9",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L1) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Tiền đề S01 tạm tắt trigger append-only trong DB thử để lùi ngày hiệu lực giá về 23/10 — chỉ dựng tình huống, không phải bằng chứng append-only.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "intel-04.1": {
+   "criteria": "criteria/r12_intel.json",
+   "run_id": "20261024T111546-e2fe",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L1) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "intel-05.2": {
+   "criteria": "criteria/r12_intel.json",
+   "run_id": "20261024T111631-29f9",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (g1-L6) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "legal_hr-01": {
+   "criteria": "criteria/r12_prod_legal.json",
+   "run_id": "20261024T112446-28db",
+   "muc_kiem": "MOCK",
+   "ly_do": "r10/r11 CODE_FAIL (D2) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "marketing-02.2": {
+   "criteria": "criteria/r12_marketing_b.json",
+   "run_id": "20261024T111303-1305",
+   "muc_kiem": "MOCK",
+   "ly_do": "r10/r11 CODE_FAIL (D1) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "marketing-03.1": {
+   "criteria": "criteria/r12_marketing_b.json",
+   "run_id": "20261024T111309-2930",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (D3) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Tiền đề đặt sequence content_drafts trong DB thử để giữ id creative của fixture r10; phụ thuộc ngày (start 26/10/2026).",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "marketing-07.2": {
+   "criteria": "criteria/r12_marketing_b.json",
+   "run_id": "20261024T111441-1a02",
+   "muc_kiem": "MOCK",
+   "ly_do": "r10/r11 CODE_FAIL (D1) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "production-01": {
+   "criteria": "criteria/r12_prod_legal.json",
+   "run_id": "20261024T112311-4458",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (?) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "production-04.3": {
+   "criteria": "criteria/r12_prod_legal.json",
+   "run_id": "20261024T112319-0301",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (?) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "production-05.2": {
+   "criteria": "criteria/r12_prod_legal.json",
+   "run_id": "20261024T112415-bf5b",
+   "muc_kiem": "MOCK",
+   "ly_do": "r10/r11 CODE_FAIL (?) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "sales-01": {
+   "criteria": "criteria/r12_sales_a_v4.json",
+   "run_id": "20261024T113324-d959",
+   "muc_kiem": "MOCK",
+   "ly_do": "r10/r11 CODE_FAIL (L3, UI-02) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Phần UI ghép từ lượt UI thật evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553 theo ánh xạ khai trước; C07 (v4) bọc send_text nên provenance lượt đó không 'live' (C07 không kiểm provenance).",
+   "luot_bi_thay_the": [
+    {
+     "lot": "lo3",
+     "criteria": "r12_sales_a_v3.json",
+     "run_id": "20261024T111640-6be3",
+     "thu_muc": "evidence/itacc_r12/runs/sales-01/20261024T111640-6be3",
+     "ly_do": "lượt lo3 dùng tiêu chí v3: assertion C07 đo câu khách nhận bằng trường answer của convlog — nhánh quá 30 giây ghi answer rỗng (có từ trước r12) → LỖI HARNESS; v4 đo ở biên send_text (mk_sales_a_v4.py.txt)"
+    }
+   ],
+   "loi_san_pham": [],
+   "ui_runs": [
+    "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553"
+   ],
+   "ui_map": {
+    "sales-01__UI02": [
+     "chat_cau_thuong_co_tra_loi",
+     "chat_cau_suc_khoe_chuyen_nguoi_che_pii",
+     "UI02_loi_doc_kb_khong_lo_traceback"
+    ]
+   }
+  },
+  "sales-04.2": {
+   "criteria": "criteria/r12_sales_a_v3.json",
+   "run_id": "20261024T111722-b352",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (L1) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Tiêu chí v3 đính chính C04/C07 (chuyển yêu cầu không PII ≠ bàn giao PII; chỉ bàn giao có đồng ý được tính) — căn cứ ở mk_sales_a_v3.py.txt.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "sales-05": {
+   "criteria": "criteria/r12_sales_a_v3.json",
+   "run_id": "20261024T111802-87c1",
+   "muc_kiem": "LOCAL",
+   "ly_do": "r10/r11 CODE_FAIL (L2, L4) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "ceo-02.1": {
+   "criteria": "criteria/r12_ceo_v2.json",
+   "run_id": "20261024T111149-7755",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/ceo_decisions.py, agents/da_pmo.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "ceo-03": {
+   "criteria": "criteria/r12_ceo_v2.json",
+   "run_id": "20261024T111111-1f1f",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/ceo_risk.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "sales-02": {
+   "criteria": "criteria/r12_sales_a_v3.json",
+   "run_id": "20261024T111659-4e14",
+   "muc_kiem": "MOCK",
+   "ly_do": "module của mục đổi ở r12 (connectors/channels.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "sales-03": {
+   "criteria": "criteria/r12_sales_b.json",
+   "run_id": "20261024T111907-9c3c",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (pipelines/content.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "sales-07.1": {
+   "criteria": "criteria/r12_sales_b.json",
+   "run_id": "20261024T111922-6163",
+   "muc_kiem": "MOCK",
+   "ly_do": "module của mục đổi ở r12 (agents/kd_live.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "sales-07.3": {
+   "criteria": "criteria/r12_sales_b.json",
+   "run_id": "20261024T112032-a05b",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/kd_forecast.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "marketing-01.1": {
+   "criteria": "criteria/r12_sales_b.json",
+   "run_id": "20261024T112050-dba2",
+   "muc_kiem": "MOCK",
+   "ly_do": "module của mục đổi ở r12 (pipelines/content.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "marketing-01.2": {
+   "criteria": "criteria/r12_sales_b.json",
+   "run_id": "20261024T112055-8724",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/mkt_director.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "marketing-03.2": {
+   "criteria": "criteria/r12_marketing_b.json",
+   "run_id": "20261024T111339-9f99",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/mkt_ads.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Phụ thuộc ngày fixture (start 26/10/2026).",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "marketing-06.1": {
+   "criteria": "criteria/r12_marketing_b.json",
+   "run_id": "20261024T111404-0a09",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/seo_web.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "intel-04.2": {
+   "criteria": "criteria/r12_intel.json",
+   "run_id": "20261024T111608-a2c8",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (scripts/intel_weekly.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "finance-03.3": {
+   "criteria": "criteria/r12_finance.json",
+   "run_id": "20261024T112131-20f8",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/acc_ar.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "finance-04.1": {
+   "criteria": "criteria/r12_finance.json",
+   "run_id": "20261024T112157-ff95",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/fp_pnl.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "finance-05.1": {
+   "criteria": "criteria/r12_finance.json",
+   "run_id": "20261024T112203-dae9",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/fp_opscost.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "finance-05.2": {
+   "criteria": "criteria/r12_finance.json",
+   "run_id": "20261024T112210-8b54",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/fp_cash.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "production-05.1": {
+   "criteria": "criteria/r12_prod_legal.json",
+   "run_id": "20261024T112406-3893",
+   "muc_kiem": "MOCK",
+   "ly_do": "module của mục đổi ở r12 (agents/sx_tracuu.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "farming-01": {
+   "criteria": "criteria/r12_farming.json",
+   "run_id": "20261024T112629-5275",
+   "muc_kiem": "MOCK",
+   "ly_do": "module của mục đổi ở r12 (agents/garden.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Phần UI ghép từ lượt UI thật evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553; C11 không dựng được (farming-01 mot_phan, không vào sổ triển khai).",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": [],
+   "ui_runs": [
+    "evidence/itacc_r12/ui/ui_sau_full_v3_20261024T110553"
+   ],
+   "ui_map": {
+    "farming-01__M07": [
+     "UI01_tab_vuon_doc_duoc_db_bang_svc_ui",
+     "UI01_chua_mo_quyen_khong_ghi",
+     "UI01_ghi_bang_login_nguoi_farming",
+     "UI01_login_nguoi_khac_bi_chan"
+    ]
+   }
+  },
+  "farming-03.2": {
+   "criteria": "criteria/r12_farming_v3.json",
+   "run_id": "20261024T113325-a911",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (pipelines/qr_trace.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [
+    {
+     "lot": "lo3",
+     "criteria": "r12_farming.json",
+     "run_id": "20261024T112658-23dc",
+     "thu_muc": "evidence/itacc_r12/runs/farming-03.2/20261024T112658-23dc",
+     "ly_do": "lượt lo3 dùng tiêu chí v1: runner chỉ glob `*` ở thành phần cuối → mẫu `qr_site_*/*/index.html` luôn 0 tệp (C12/C14 FAIL giả, C11 có thể PASS giả) — LỖI HARNESS (mk_farming_v2/v3.py.txt)"
+    }
+   ],
+   "loi_san_pham": []
+  },
+  "farming-05.2": {
+   "criteria": "criteria/r12_farming.json",
+   "run_id": "20261024T112815-1971",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/vt_thuhoach.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "legal_hr-02": {
+   "criteria": "criteria/r12_prod_legal.json",
+   "run_id": "20261024T112522-1afd",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/xnqc.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "legal_hr-03.2": {
+   "criteria": "criteria/r12_prod_legal.json",
+   "run_id": "20261024T112535-194b",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/xnqc.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "legal_hr-06.1": {
+   "criteria": "criteria/r12_prod_legal.json",
+   "run_id": "20261024T112540-eab3",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/pc_hr.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  },
+  "legal_hr-06.2": {
+   "criteria": "criteria/r12_prod_legal_v2.json",
+   "run_id": "20261024T113324-4810",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/pc_hr.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [
+    {
+     "lot": "lo3",
+     "criteria": "r12_prod_legal.json",
+     "run_id": "20261024T112556-b430",
+     "thu_muc": "evidence/itacc_r12/runs/legal_hr-06.2/20261024T112556-b430",
+     "ly_do": "lượt lo3 dùng tiêu chí v1: regex PII không phân biệt hoa thường khớp nhãn cột 'Mã ứng viên' — LỖI TIÊU CHÍ, không có PII thật trong payload (mk_prod_legal_v2.py.txt)"
+    }
+   ],
+   "loi_san_pham": []
+  },
+  "legal_hr-06.3": {
+   "criteria": "criteria/r12_prod_legal.json",
+   "run_id": "20261024T112623-7a6f",
+   "muc_kiem": "LOCAL",
+   "ly_do": "module của mục đổi ở r12 (agents/pc_hr.py) — kiểm lại ảnh hưởng trực tiếp",
+   "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài.",
+   "luot_bi_thay_the": [],
+   "loi_san_pham": []
+  }
+ }
+}

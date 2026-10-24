@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select count(*) = (select count(distinct metric_id) from channel_snapshots where channel = 'noi_bo' and period_start = '2026-10-12') from channel_snapshots where channel = 'noi_bo' and period_start = '2026-10-12'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

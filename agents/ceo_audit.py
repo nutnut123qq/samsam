@@ -50,7 +50,7 @@ from agents.ra_kenh import parse_now, safe
 from agents.report import REPORTS_DIR, write_report
 from ingest.lead_store import connect
 from ingest.market_csv import CHANNELS as MARKET_CHANNELS
-from pipelines import store
+from pipelines import rollout, store
 from pipelines.job_runs import job_run
 from pipelines.period import VN_TZ
 from pipelines.pii import _mask_pii
@@ -368,6 +368,16 @@ def main(argv=None) -> int:
     except ValueError as e:
         print(f"[error] cấu hình phap_che.json: {e}", file=sys.stderr)
         return 2
+    # r12 G1-L1/RB: 2 đầu ra của 2 tính năng (ceo-audit- = ceo-04.3,
+    # ceo-gia- = ceo-04.4) kiểm cổng RIÊNG, TRƯỚC khi đọc/ghi — tắt 1 tính
+    # năng không làm mất đầu ra của tính năng kia; tắt cả hai → không làm gì.
+    vn0 = now.astimezone(VN_TZ)
+    blk = {n: rollout.blocked(None, "báo cáo", report=n) for n in (
+        f"ceo-audit-{vn0:%Y-%m-%d}.md", f"{PRICE_PREFIX}{vn0:%Y-%m-%d}.md")}
+    if all(blk.values()):
+        for why in blk.values():
+            rollout.say_blocked(why)
+        return rollout.EXIT_BLOCKED
     conn = connect()
     if conn is None:
         print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
@@ -397,7 +407,8 @@ def main(argv=None) -> int:
         + ["", "---", "*BẢN NHÁP — agent chỉ đọc, không tự gửi.*", ""])
     # P8.4: listing sàn + bài đã đăng (file xuất tay) + nháp đã duyệt — các
     # bảng nguồn không có đường ghi mẫu.
-    path = write_report(text, a.out_dir, name, sample=False)
+    path = None if blk[name] else write_report(text, a.out_dir, name,
+                                               sample=False)
     # Đợt hoàn thiện 22/10 (ceo-04.4, PL01 "so ... giá ... đang chạy với bản
     # đã duyệt"): kiểm giá (C06) là ĐẦU RA RIÊNG — người duyệt xem riêng với
     # bài đăng → báo cáo `ceo-gia-<ngày>.md`, cùng nguồn đọc, cùng lần chạy.
@@ -408,11 +419,17 @@ def main(argv=None) -> int:
              " giá chưa duyệt/hết hiệu lực hoặc thiếu cột mô tả → không so "
              "được. Agent chỉ báo — không đổi giá/listing.*"), "", "---",
         "*BẢN NHÁP — agent chỉ đọc, không tự gửi.*", ""])
-    ppath = write_report(ptext, a.out_dir, pname, sample=False)
+    ppath = None if blk[pname] else write_report(ptext, a.out_dir, pname,
+                                                 sample=False)
     fs = findings(data["items"])
-    print(f"[done] {path} — {len(data['items'])} mục trong mẫu số,"
-          f" {len(fs)} phát hiện · giá: {ppath}")
-    return 0
+    if path:
+        print(f"[done] {path} — {len(data['items'])} mục trong mẫu số,"
+              f" {len(fs)} phát hiện")
+    if ppath:
+        print(f"[done] giá: {ppath}")
+    for why in filter(None, blk.values()):
+        rollout.say_blocked(why)
+    return rollout.EXIT_BLOCKED if any(blk.values()) else 0
 
 
 if __name__ == "__main__":

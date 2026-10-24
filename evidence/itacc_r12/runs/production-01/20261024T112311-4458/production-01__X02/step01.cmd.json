@@ -1,0 +1,35 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "pipelines.production",
+  "bulletin",
+  "--date",
+  "2026-10-23",
+  "--out-dir",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\production-01\\20261024T112311-4458\\production-01__X02\\out"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:23:54+07:00",
+ "ket_thuc": "2026-10-24T11:23:59+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*production-01",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*(Traceback|## Thiếu hàng))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "120bd9dd8d91a4990f00d80c4c567e131c275fd2f05c7ec93005203f38454abc",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

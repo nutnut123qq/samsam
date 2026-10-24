@@ -1,0 +1,163 @@
+{
+ "label": "dot3_truoc",
+ "run_id": "20261023T172727-1785",
+ "root": "C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\before",
+ "db": "samsam_itacc_r12_d3b1",
+ "fingerprint": null,
+ "probe_sha256": "1dcaa597045b00e2654be9c703cae254fa16b2c87065fd8c2ddf58dcb5b2d6ce",
+ "ket_thuc": "2026-10-23T17:28:38+07:00",
+ "ket_qua": [
+  {
+   "loi": "L2",
+   "ca": "quote_khong_dung_gia_chua_duyet",
+   "ket_qua": "FAIL",
+   "expected": "giá list shopee chưa duyệt → không có đơn giá suy từ JSON (745.000 → 685.000), lý do thieu_gia_niem_yet",
+   "actual": {
+    "exit": 0,
+    "stdout": "[quote] YC-1 (1 dòng hợp lệ):\r\n  mat-ong-sam-120ml-1hu ×50 · CK 8% · đơn giá 685.000đ · thành tiền 34.250.000đ\r\n  tổng 34.250.000đ · giá vốn duyệt — · biên chưa tính được\r\n  phân loại: per_item · reasons: ma_tran_chua_xac_nhan, thieu_gia_von_duyet · problems: (không)\r\n[dry-run] BG-20261023-1-3fa2e304 — không ghi file, không vào hàng duyệt"
+   }
+  },
+  {
+   "loi": "L2",
+   "ca": "setup",
+   "ket_qua": "LOI_HARNESS",
+   "loi_harness": "AssertionError: "
+  },
+  {
+   "loi": "L1",
+   "ca": "setup",
+   "ket_qua": "LOI_HARNESS",
+   "loi_harness": "OSError: [Errno 22] Invalid argument: '{\"phone\":\"0900000101\",\"name\":\"Khách Thử IT\",\"email\":\"khach.thu.it@example.com\",\"address\":\"Số 1 Đường Thử IT\",\"province\":\"Đà Nẵng\",\"source\":\"zalo\"}'"
+  },
+  {
+   "loi": "F06-6",
+   "ca": "report_sha256_khop_file_tren_dia",
+   "ket_qua": "FAIL",
+   "expected": "sha trong sổ = sha byte file đã ghi (bản có nhãn)",
+   "actual": {
+    "exit": 0,
+    "file": "e7b304f2fd1ff6d3758c4d792e06a2528544ca9129707df5944abc10eea02f0f",
+    "so": "270b74a4031ecc82c53884e17ec956ce6c33f0c5ef0aa05be17837e25cc7733a",
+    "co_nhan": true,
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "F031-6",
+   "ca": "co_cot_0_30_va_cong_khop",
+   "ket_qua": "FAIL",
+   "expected": "có cột 0-30; mỗi dòng tổng cột tuổi = Quá hạn",
+   "actual": {
+    "exit": 0,
+    "cot": [
+     "Đại lý",
+     "Quá hạn",
+     "31-60",
+     "61-90",
+     ">90"
+    ],
+    "so_dong": 3,
+    "dong_lech": [
+     "| `IT-DL03` | 1.000.000đ | 0đ | 0đ | 0đ |"
+    ]
+   }
+  },
+  {
+   "loi": "G1-L3",
+   "ca": "khong_nguon_khong_in_so_0",
+   "ket_qua": "FAIL",
+   "expected": "0 dòng opex + 0 llm_usage → [chưa có dữ liệu], không '0đ'/'0.0%'",
+   "actual": {
+    "exit": 0,
+    "dong": [
+     "| 2026-09 | `ads` | 0đ | 20.000.000đ | 0.0% |",
+     "| 2026-09 | `ai` | 0đ | 5.000.000đ | 0.0% |",
+     "| 2026-09 | `cloud` | 0đ | 4.000.000đ | 0.0% |",
+     "| 2026-09 | `khac` | 0đ | 2.000.000đ | 0.0% |",
+     "| 2026-09 | `saas` | 0đ | 7.000.000đ | 0.0% |",
+     "| 2026-09 | `tong` | 0đ | 35.000.000đ | 0.0% |"
+    ]
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "hdtv_co_nhan_chay_thu",
+   "ket_qua": "FAIL",
+   "expected": "hdtv-<kỳ>.md mang nhãn CHẠY THỬ của ceo-05",
+   "actual": {
+    "dong_dau": "# Gói báo cáo HĐTV — tháng 2026-09"
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "hdtv_vao_report_outputs",
+   "ket_qua": "FAIL",
+   "expected": "1 dòng report_outputs ceo-05",
+   "actual": {
+    "report_outputs": 0
+   }
+  },
+  {
+   "loi": "G1-L3",
+   "ca": "co_nguon_in_so_that (positive control)",
+   "ket_qua": "PASS",
+   "expected": "opex cloud 3.500.000 → in đúng số",
+   "actual": {
+    "exit": 0,
+    "cloud": "| 2026-09 | `cloud` | 3.500.000đ | 4.000.000đ | 87.5% |"
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "hdtv_tat_exit2_khong_file",
+   "ket_qua": "FAIL",
+   "expected": "exit 2 + [rollout] ceo-05, 0 file",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": false,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": "[blocked] gói báo cáo HĐTV: tính năng ceo-05 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra"
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "ceo_report_co_nhan_chay_thu",
+   "ket_qua": "FAIL",
+   "expected": "ceo-<kỳ>.md mang nhãn CHẠY THỬ của ceo-01",
+   "actual": {
+    "exit": 0,
+    "files": [
+     "ceo-2026-W42.md"
+    ],
+    "dong_dau": "# Báo cáo tuần 2026-W42 — TGĐ"
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "ceo_report_vao_report_outputs",
+   "ket_qua": "FAIL",
+   "expected": "≥1 dòng report_outputs ceo-01",
+   "actual": {
+    "report_outputs": 0
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "ceo_report_tat_exit2_khong_file",
+   "ket_qua": "FAIL",
+   "expected": "exit 2 + [rollout] ceo-01, 0 file",
+   "actual": {
+    "exit_2": false,
+    "rollout_msg": false,
+    "khong_traceback": true,
+    "exit": 0,
+    "files": [
+     "ceo-2026-W41.md"
+    ],
+    "stderr_cuoi": ""
+   }
+  }
+ ]
+}

@@ -1,0 +1,32 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.intel_import",
+  "--social",
+  "D:\\code\\samsam\\evidence\\itacc_r11\\fixtures/social_new.csv",
+  "--channel",
+  "fanpage"
+ ],
+ "env_doi": [
+  "INTEL_HASH_SALT"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-23T14:31:33+07:00",
+ "ket_thuc": "2026-10-23T14:31:39+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "out_re": "INTEL_HASH_SALT",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "59d0c547c46d2a68f6d5215785d0de321ffa67c09c0ee687a1085076a25da719",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

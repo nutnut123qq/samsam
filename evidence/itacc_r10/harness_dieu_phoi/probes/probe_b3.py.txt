@@ -1,0 +1,237 @@
+"""Probe vòng r9 — B3 ma trận: bằng chứng đăng nhập thật phải thuộc ĐÚNG login VÀ
+ĐÚNG người của ánh xạ hiện hành (người B không thừa hưởng lần đăng nhập của A).
+Chạy: python -I probe_b3.py <ROOT> <OUT.json> <dsn_file>
+Fixture `live` của tests/test_safety_s04_identity.py (schema tạm ĐÃ COMMIT, dọn cuối).
+Mỗi ca dùng login Postgres THẬT tạm RIÊNG (app_human, không owner/superuser) → ca
+độc lập, không thừa trạng thái. Owner chỉ dựng role/ánh xạ và thay ánh xạ; bằng
+chứng đăng nhập CHỈ do `auth.person_connect` ghi. Feature thật ceo-02.2, người
+duyệt tạm trong thư mục data tạm, E1–E3 cho đạt — KHÔNG phải bằng chứng triển khai.
+Ca lỗi setup/import = ERROR (không phải FAIL bất biến)."""
+import json
+import os
+import secrets
+import sys
+import tempfile
+import traceback
+import unicodedata
+import uuid
+from pathlib import Path
+from unittest.mock import patch
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG"):
+        os.environ[k] = ""
+os.environ.update(DATABASE_URL=Path(sys.argv[3]).read_text().split("'")[1],
+                  OPENROUTER_API_KEY="", DEPLOY="0")
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+import psycopg  # noqa: E402
+from psycopg import conninfo  # noqa: E402
+
+from pipelines import acceptance as a  # noqa: E402
+from pipelines import auth  # noqa: E402
+from tests import test_safety_s04_identity as t  # noqa: E402
+
+R = []
+OK_ENV = {"E1": None, "E2": None, "E3": None}
+FEAT = next(f for f in a.catalog() if f["id"] == "ceo-02.2")
+TMP = Path(tempfile.mkdtemp(prefix="probe_b3_"))
+TAG = uuid.uuid4().hex[:8]
+ROLES = []
+
+
+def rec(case, ok, **kw):
+    R.append({"case": case, "verdict": "PASS" if ok else "FAIL", **kw})
+    print(("PASS" if ok else "FAIL"), case,
+          json.dumps(kw, ensure_ascii=False, default=str)[:300])
+
+
+def mk_login(live, key, person, blocks=("ceo",)):
+    name, pw = f"t_b3_{key}_{TAG}", secrets.token_urlsafe(18)
+    live["admin"].execute(f"create role {name} login password '{pw}' nosuperuser"
+                          " nocreatedb nocreaterole in role app_human")
+    ROLES.append(name)
+    t._q(live, "insert into human_logins (db_login, person, blocks, granted_by)"
+         " values (%s, %s, %s, 'probe-b3')", (name, person, list(blocks)))
+    return name, pw
+
+
+def login_real(live, name, pw):
+    """Đăng nhập THẬT qua auth.person_connect (ghi human_login_checks)."""
+    c, person, blocks = auth.person_connect(live["base"], name, pw)
+    c.close()
+    return person
+
+
+def row(live, approvers, conn=None, use_conn=True):
+    d = TMP / uuid.uuid4().hex[:6] / "directors"
+    d.mkdir(parents=True)
+    (d / "ceo.json").write_text(json.dumps({"approvers": approvers},
+                                           ensure_ascii=False), encoding="utf-8")
+    with patch.object(a, "env_state", return_value=OK_ENV):
+        if not use_conn:
+            return a.rows([FEAT], data=d.parent, conn=None)[0]
+        if conn is not None:
+            return a.rows([FEAT], data=d.parent, conn=conn)[0]
+        with psycopg.connect(live["base"], connect_timeout=5) as c:
+            return a.rows([FEAT], data=d.parent, conn=c)[0]
+
+
+def checks(live, name):
+    return [p for p, in t._q(live, "select person from human_login_checks where"
+                             " db_login = %s order by id", (name,))]
+
+
+def b3(r):
+    return any("bằng chứng đăng nhập thật" in m for m in r["thieu"])
+
+
+def case(fn):
+    def run(live):
+        try:
+            fn(live)
+        except Exception as e:     # lỗi setup ≠ vi phạm bất biến
+            R.append({"case": fn.__name__, "verdict": "ERROR",
+                      "error": f"{type(e).__name__}: {str(e)[:200]}",
+                      "tb": traceback.format_exc()[-600:]})
+            print("ERROR", fn.__name__, type(e).__name__, str(e)[:200])
+    return run
+
+
+@case
+def c1_A_dang_nhap_that_ready(live):
+    A = f"Người A1 {TAG}"
+    n, pw = mk_login(live, "c1", A)
+    who = login_real(live, n, pw)
+    r = row(live, [A])
+    rec("c1_A_dang_nhap_that_ready", r["status"] == a.READY and r["thieu"] == [],
+        status=r["status"], thieu=r["thieu"], person_connect=who, evidence=checks(live, n))
+
+
+@case
+def c2_c3_doi_anh_xa_sang_B(live):
+    A, B = f"Người A2 {TAG}", f"Người B2 {TAG}"
+    n, pw = mk_login(live, "c2", A)
+    login_real(live, n, pw)
+    pre = row(live, [A])
+    t._q(live, "update human_logins set person = %s where db_login = %s", (B, n))
+    ev = checks(live, n)
+    r = row(live, [B])
+    rec("c2_B_khong_thua_huong_bang_chung_cua_A",
+        pre["status"] == a.READY and r["status"] == a.NOT_READY and b3(r)
+        and any(B in m for m in r["thieu"]),
+        status_truoc_doi=pre["status"], status=r["status"], thieu=r["thieu"],
+        evidence_persons=ev, current_person=B)
+    who = login_real(live, n, pw)
+    r = row(live, [B])
+    ev = checks(live, n)
+    rec("c3_B_dang_nhap_that_roi_ready",
+        r["status"] == a.READY and r["thieu"] == [] and ev[-1] == B,
+        status=r["status"], thieu=r["thieu"], person_connect=who,
+        evidence_persons=ev)
+
+
+@case
+def c4_chuan_hoa_ten_cung_danh_tinh(live):
+    canon = f"Người C4 {TAG}"
+    variant = f"  nGƯỜI   c4 {TAG} "
+    n, pw = mk_login(live, "c4", variant)
+    login_real(live, n, pw)
+    r1 = row(live, [canon])
+    # quản trị sửa ánh xạ sang dạng chuẩn NFD — CÙNG danh tính theo p10_norm
+    t._q(live, "update human_logins set person = %s where db_login = %s",
+         (unicodedata.normalize("NFD", canon), n))
+    r2 = row(live, [canon])
+    rec("c4_chuan_hoa_ten_cung_danh_tinh",
+        r1["status"] == a.READY and r2["status"] == a.READY,
+        status_bien_the=r1["status"], status_sau_sua_NFD=r2["status"],
+        thieu=r1["thieu"] + r2["thieu"], evidence_persons=checks(live, n))
+
+
+@case
+def c5_bang_chung_login_khac_khong_tinh(live):
+    D = f"Người D5 {TAG}"
+    n1, pw1 = mk_login(live, "c5a", D, blocks=("marketing",))
+    n2, _ = mk_login(live, "c5b", D)          # login khối ceo, CHƯA đăng nhập
+    login_real(live, n1, pw1)
+    r = row(live, [D])
+    rec("c5_bang_chung_login_khac_khong_tinh",
+        r["status"] == a.NOT_READY and b3(r),
+        status=r["status"], thieu=r["thieu"], evidence_login_khac=checks(live, n1),
+        evidence_login_xet=checks(live, n2))
+
+
+@case
+def c6_chua_dang_nhap_offline_loi(live):
+    E = f"Người E6 {TAG}"
+    n, pw = mk_login(live, "c6", E)
+    r0 = row(live, [E])
+    login_real(live, n, pw)     # có bằng chứng ĐÚNG → offline/lỗi vẫn phải chặn
+    r1 = row(live, [E], use_conn=False)
+    d = conninfo.conninfo_to_dict(live["base"])
+    d.update(user=n, password=***        # login người không đọc được pg/human_logins
+    with psycopg.connect(conninfo.make_conninfo(**d), connect_timeout=5) as c:
+        r2 = row(live, [E], conn=c)
+    rec("c6_chua_dang_nhap_offline_loi",
+        r0["status"] == a.NOT_READY and b3(r0)
+        and r1["status"] == a.NOT_READY and any("CHƯA KIỂM" in m for m in r1["thieu"])
+        and r2["status"] == a.NOT_READY
+        and any("không kiểm được" in m for m in r2["thieu"]),
+        chua_dang_nhap=r0["thieu"], offline=r1["thieu"], loi_truy_van=r2["thieu"])
+
+
+@case
+def c7_login_khong_dung_duoc_sau_bang_chung(live):
+    F = f"Người F7 {TAG}"
+    n, pw = mk_login(live, "c7", F)
+    login_real(live, n, pw)
+    out = {"truoc": row(live, [F])["status"]}
+    adm = live["admin"]
+    for key, bad, undo in (("het_han", f"alter role {n} valid until '2000-01-01'",
+                            f"alter role {n} valid until 'infinity'"),
+                           ("nologin", f"alter role {n} nologin", f"alter role {n} login"),
+                           ("connlimit0", f"alter role {n} connection limit 0",
+                            f"alter role {n} connection limit -1"),
+                           ("khong_app_human", f"revoke app_human from {n}",
+                            f"grant app_human to {n}")):
+        adm.execute(bad)
+        out[key] = row(live, [F])["status"]
+        adm.execute(undo)
+    t._q(live, "update human_logins set blocks = '{marketing}' where db_login = %s", (n,))
+    out["sai_khoi"] = row(live, [F])["status"]
+    t._q(live, "update human_logins set blocks = '{ceo}' where db_login = %s", (n,))
+    out["khoi_phuc"] = row(live, [F])["status"]
+    rec("c7_login_khong_dung_duoc_sau_bang_chung",
+        out["truoc"] == a.READY and out["khoi_phuc"] == a.READY
+        and all(out[k] == a.NOT_READY for k in
+                ("het_han", "nologin", "connlimit0", "khong_app_human", "sai_khoi")),
+        **out)
+
+
+g = t.live.__wrapped__()
+live = next(g)
+try:
+    for fn in (c1_A_dang_nhap_that_ready, c2_c3_doi_anh_xa_sang_B,
+               c4_chuan_hoa_ten_cung_danh_tinh, c5_bang_chung_login_khac_khong_tinh,
+               c6_chua_dang_nhap_offline_loi, c7_login_khong_dung_duoc_sau_bang_chung):
+        fn(live)
+finally:
+    try:
+        next(g)                     # fixture drop schema (gồm human_logins/checks)
+    except StopIteration:
+        pass
+    with psycopg.connect(os.environ["DATABASE_URL"], autocommit=True,
+                         connect_timeout=5) as c:
+        for n in ROLES:
+            c.execute(f"drop role if exists {n}")
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+n_fail = sum(r["verdict"] == "FAIL" for r in R)
+n_err = sum(r["verdict"] == "ERROR" for r in R)
+print(f"TỔNG {len(R)} ca · PASS {len(R) - n_fail - n_err} · FAIL {n_fail} · ERROR {n_err}")
+sys.exit(2 if n_err else (1 if n_fail else 0))

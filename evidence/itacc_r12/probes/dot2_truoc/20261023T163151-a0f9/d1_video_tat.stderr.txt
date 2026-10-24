@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r12\harness\wrap.py.txt", line 86, in <module>
+    runpy.run_module(argv[1], run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\video_studio.py", line 987, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\video_studio.py", line 974, in main
+    it = _one(conn, sku, ch, fmt, args, readiness)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\video_studio.py", line 907, in _one
+    r = save_video(conn, res, by=args.by.strip())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\video_studio.py", line 861, in save_video
+    did = store.save_draft(
+          ^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\store.py", line 308, in save_draft
+    _rollout().check_generate(conn, _draft_feature(by, content_type),
+  File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\before\pipelines\rollout.py", line 671, in check_generate
+    raise RolloutBlocked(_why(fid, "tat", what) + " — không sinh đầu ra")
+pipelines.rollout.RolloutBlocked: nháp video: tính năng marketing-02.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra

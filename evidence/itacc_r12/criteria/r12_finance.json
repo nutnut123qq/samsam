@@ -1,0 +1,1947 @@
+{
+ "_doc": "Tiêu chí kiểm lại r12 nhóm finance (6 mục: finance-03.1, 03.3, 04.1, 05.1, 05.2, 06) — viết và KHÓA (r12_finance.lock.txt) TRƯỚC mọi lần chạy. Nguồn: bản ghi hiện hành evidence/itacc_r10/items/<id>.json (theo evidence/itacc_r11/source_map.json) + tiêu chí khóa r10 evidence/itacc_r10/criteria/g4.json + lệnh gốc evidence/itacc_r10/g4/out/*.txt. Mỗi ca r10 ↔ đúng 1 ca r12 (nguon_r10); ca thêm = MOI (tiền đề DB hoặc kiểm bổ sung). r10 chạy 6 mục trên 1 DB chung samsam_itacc_r10_fin: r12 mỗi mục 1 DB riêng nên trạng thái DB r10 lúc chạy ca được dựng lại bằng ca tiền đề (cùng lệnh r10 F01-1a/1b/1c, F01-2, F01-3, F01-7, F031-2, F032-1 phần dealers). Fixture chép nguyên văn sang evidence/itacc_r12/fixtures/items/<id>/ (SHA256SUMS.txt, sha = r10). SQL fixture owner (dealers, llm_usage) = cùng câu insert r10, chạy bằng python -c (kiểm tên DB samsam_itacc_r12_*). Kiểm số liệu bảng (tổng cột tuổi, 13 tuần low≤base≤high, sha file↔sổ) bằng python -c inline đọc tệp trong {OUT}. Báo cáo ghi qua wrap.py.txt PROBE_SET agents.report:REPORTS_DIR={OUT} + PROBE_CALL_MAIN=1 (không ghi data/reports). Ca lỗi đã vá r12 (F031-6, F06-6, RB F041-6, GATE-OUT F052-5) kỳ vọng hành vi ĐÚNG. Ca tắt tính năng chạy cuối mỗi mục. Người lập/duyệt giá vốn và người duyệt mục: tên người thử r10, chế độ dev (không điền approver thật).",
+ "fingerprint_code": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451; mỗi mục 1 DB samsam_itacc_r12_<f031|f033|f041|f051|f052|f06> dựng bằng harness/mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; 0 LLM (6 mục thuần tất định); ngày cố định qua --as-of/--start/--month/--now.",
+ "items": [
+  {
+   "id": "finance-03.1",
+   "db": "samsam_itacc_r12_f031",
+   "tieu_chi_cu_the": [
+    "T1 (C1) `acc_ar --load` ar_ok.csv → exit 0, dealer_ar 7 dòng; ar_bad.csv → exit 1 '[err]' trước connect, 0 dòng; nạp lại → '[skip]', vẫn 7",
+    "T2 (C2) `--aging --as-of 2026-10-23` FIFO đúng tính tay: IT-DL01 còn 14tr (0-30 2tr/31-60 5tr/61-90 0/>90 7tr) quá hạn 12tr; IT-DL02 61-90 4tr quá hạn 4tr; IT-DL03 0-30 1tr quá hạn 1tr; IT-DL04 800.000 quá hạn 0",
+    "T3 (C3, lỗi F031-6 đã vá r12) `--bulletin` ghi đúng 1 director-finance-*.md (REPORTS_DIR → {OUT}) nhãn CHẠY THỬ, bảng quá hạn IT-DL01/02/03 (không IT-DL04), 'Tổng quá hạn: 17.000.000đ — nguồn … dealer_ar', report_outputs finance-03.1 1 dòng không mẫu; bảng có ĐỦ cột 0-30/31-60/61-90/>90 và MỖI dòng tổng cột tuổi = cột Quá hạn (IT-DL03: 1.000.000đ nằm ở 0-30)",
+    "T4 (C4) tắt finance-03.1 → `--bulletin` exit 2 (thông báo có mã finance-03.1), 0 file"
+   ],
+   "ca": [
+    {
+     "ma": "finance-03.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề (r10 SETUP-seed-fin): seed sổ rollout → tính năng chạy thử",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.1__F031-1",
+     "nguon_r10": "F031-1",
+     "mo_ta": "ÂM file công nợ lỗi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.acc_ar",
+        "--load",
+        "{FX12}/items/finance-03.1/ar_bad.csv"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "\\[err\\] 2 lỗi — không connect"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from dealer_ar",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.1__F031-2",
+     "nguon_r10": "F031-2",
+     "mo_ta": "nạp sổ công nợ",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.acc_ar",
+        "--load",
+        "{FX12}/items/finance-03.1/ar_ok.csv"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[load\\] 7 dòng"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from dealer_ar",
+       "expect": 7
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.1__F031-3",
+     "nguon_r10": "F031-3",
+     "mo_ta": "ÂM nạp lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.acc_ar",
+        "--load",
+        "{FX12}/items/finance-03.1/ar_ok.csv"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[skip\\]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from dealer_ar",
+       "expect": 7
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.1__F031-4",
+     "nguon_r10": "F031-4",
+     "mo_ta": "aging FIFO as-of 2026-10-23",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.acc_ar",
+        "--aging",
+        "--as-of",
+        "2026-10-23"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)\\A(?=.*IT-DL01: còn nợ 14\\.000\\.000đ \\(0-30 2\\.000\\.000đ, 31-60 5\\.000\\.000đ, 61-90 0đ, >90 7\\.000\\.000đ\\); quá hạn 12\\.000\\.000đ)(?=.*IT-DL02: còn nợ 4\\.000\\.000đ \\(0-30 0đ, 31-60 0đ, 61-90 4\\.000\\.000đ, >90 0đ\\); quá hạn 4\\.000\\.000đ)(?=.*IT-DL03: còn nợ 1\\.000\\.000đ \\(0-30 1\\.000\\.000đ, 31-60 0đ, 61-90 0đ, >90 0đ\\); quá hạn 1\\.000\\.000đ)(?=.*IT-DL04: còn nợ 800\\.000đ \\(0-30 800\\.000đ, 31-60 0đ, 61-90 0đ, >90 0đ\\); quá hạn 0đ)"
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.1__F031-5",
+     "nguon_r10": "F031-5",
+     "mo_ta": "bản tin GĐ tài chính (REPORTS_DIR → {OUT})",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.acc_ar",
+        "--bulletin",
+        "--as-of",
+        "2026-10-23"
+       ],
+       "expect_exit": 0,
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.report:REPORTS_DIR={OUT}",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "stdout_re": "\\[bulletin\\] 3 đại lý quá hạn"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/director-finance-*.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/director-finance-*.md",
+       "re": "(?s)\\A(?=.*\\A> \\*\\*CHẠY THỬ)(?=.*\\| `IT-DL01` \\| 12\\.000\\.000đ \\|)(?=.*\\| `IT-DL02` \\| 4\\.000\\.000đ \\|)(?=.*\\| `IT-DL03` \\| 1\\.000\\.000đ \\|)(?=.*Tổng quá hạn: 17\\.000\\.000đ — nguồn: sổ công nợ nạp tay \\(`dealer_ar`\\))",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/director-finance-*.md",
+       "re": "`IT-DL04`",
+       "expect": false
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'finance-03.1' and not is_sample",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.1__F031-6",
+     "nguon_r10": "F031-6",
+     "mo_ta": "bản tin thể hiện đủ 4 nhóm tuổi (0-30 của khoản quá hạn IT-DL03) — lỗi F031-6 đã vá: có cột 0-30, mỗi dòng tổng cột tuổi = Quá hạn. Lệnh r10 của ca này = lệnh F031-5 → chạy lại bản tin vào {OUT} của ca rồi kiểm",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.acc_ar",
+        "--bulletin",
+        "--as-of",
+        "2026-10-23"
+       ],
+       "expect_exit": 0,
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.report:REPORTS_DIR={OUT}",
+        "PROBE_CALL_MAIN": "1"
+       }
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,sys\nfs=glob.glob(sys.argv[1]+'/director-finance-*.md')\nassert len(fs)==1,fs\nt=open(fs[0],encoding='utf-8').read()\nsec=t.split('## Công nợ đại lý quá hạn',1)[1].split('\\n## ',1)[0]\nhead=[c.strip() for c in next(l for l in sec.splitlines() if l.startswith('| Đại lý')).strip('|').split('|')]\nrows=[l for l in sec.splitlines() if l.startswith('| `')]\nn=lambda s:int(s.strip().replace('.','').replace('đ','') or 0)\nbad=[]\nfor l in rows:\n    r=dict(zip(head,[c.strip() for c in l.strip('|').split('|')]))\n    if sum(n(r[k]) for k in ('0-30','31-60','61-90','>90'))!=n(r['Quá hạn']): bad.append(l)\nprint('cot',head,'so_dong',len(rows),'lech',bad)\nsys.exit(0 if '0-30' in head and len(rows)==3 and not bad else 1)",
+        "{OUT}"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/director-finance-*.md",
+       "re": "\\| Đại lý \\| Quá hạn \\| 0-30 \\| 31-60 \\| 61-90 \\| >90 \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/director-finance-*.md",
+       "re": "\\| `IT-DL03` \\| 1\\.000\\.000đ \\| 1\\.000\\.000đ \\| 0đ \\| 0đ \\| 0đ \\|",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.1__F031-7",
+     "nguon_r10": "F031-7",
+     "mo_ta": "ÂM tắt finance-03.1 (chạy cuối)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "finance-03.1",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiem nhanh tat IT r12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.acc_ar",
+        "--bulletin",
+        "--as-of",
+        "2026-10-23"
+       ],
+       "expect_exit": 2,
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.report:REPORTS_DIR={OUT}",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "out_re": "finance-03\\.1"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/director-finance-*.md",
+       "count": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "finance-03.3",
+   "db": "samsam_itacc_r12_f033",
+   "tieu_chi_cu_the": [
+    "T1 (C1) `acc_ar --reminders --as-of 2026-10-23` → đúng 2 mục approval_queue finance/ar_reminder pending created_by agent:acc_ar (IT-DL01 quá hạn 12.000.000đ: HD-IT-001 hạn 31/07/2026 quá 84 ngày + HD-IT-002 quá 13 ngày; IT-DL03 1.000.000đ); payload có file nguồn ar_ok.csv + sha256 8031bc6d, placeholder {{TEN_DAI_LY}}/{{NGUOI_KY}}, KHÔNG tên đại lý trong sổ",
+    "T2 (C2) IT-DL02 (ngoài sổ dealers) → [skip], 0 mục",
+    "T3 (C3) `--dry-run` in 2 nháp, 0 ghi; chạy lại cùng trạng thái nợ → 0 mới, vẫn 2",
+    "T4 (C4) agent không gửi; tắt finance-03.3 → exit 2 (mã finance-03.3), ar_reminder vẫn 2"
+   ],
+   "ca": [
+    {
+     "ma": "finance-03.3__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề (r10 SETUP-seed-fin): seed sổ rollout → tính năng chạy thử",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.3__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề = trạng thái DB r10: sổ công nợ (r10 F031-2) + sổ dealers IT-DL01, IT-DL03 (r10 F032-1, SQL fixture owner — cùng câu insert dealers)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.acc_ar",
+        "--load",
+        "{FX12}/items/finance-03.3/ar_ok.csv"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[load\\] 7 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,psycopg\nc=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5)\ndb=c.execute('select current_database()').fetchone()[0]\nassert db.startswith('samsam_itacc_r12_'),db\nfor s in sys.argv[1:]:\n    c.execute(s)\nc.commit()\nprint('[fixture-sql] ok',db,len(sys.argv)-1)",
+        "insert into dealers (code, name, region, status, commission_default, source) values ('IT-DL01','Đại lý Thử IT 01','mien-trung','active',10,'fixture-thu-it'),('IT-DL03','Đại lý Thử IT 03','mien-trung','active',8,'fixture-thu-it')"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[fixture-sql\\] ok samsam_itacc_r12_f033 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from dealer_ar",
+       "expect": 7
+      },
+      {
+       "sql": "select string_agg(code, ',' order by code) from dealers",
+       "expect": "IT-DL01,IT-DL03"
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.3__F033-1",
+     "nguon_r10": "F033-1",
+     "mo_ta": "dry-run",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.acc_ar",
+        "--reminders",
+        "--as-of",
+        "2026-10-23",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)\\A(?=.*--- \\[dry-run\\] ar_reminder ar:IT-DL01:)(?=.*--- \\[dry-run\\] ar_reminder ar:IT-DL03:)(?=.*\\[skip\\] IT-DL02)(?=.*2 nháp \\(dry-run, không ghi\\))"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ar_reminder'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.3__F033-2",
+     "nguon_r10": "F033-2",
+     "mo_ta": "đẩy hàng duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.acc_ar",
+        "--reminders",
+        "--as-of",
+        "2026-10-23"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)\\A(?=.*\\[reminder\\] IT-DL01 quá hạn 12\\.000\\.000đ)(?=.*\\[reminder\\] IT-DL03 quá hạn 1\\.000\\.000đ)(?=.*\\[skip\\] IT-DL02)(?=.*2 nháp mới)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and block = 'finance' and status = 'pending' and created_by = 'agent:acc_ar'",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL01:%' and payload like '%HD-IT-001%' and payload like '%31/07/2026%' and payload like '%84 ngày%' and payload like '%HD-IT-002%' and payload like '%13 ngày%' and payload like '%12.000.000%' and payload like '%ar_ok.csv%' and payload like '%8031bc6d%' and payload like '%{{TEN_DAI_LY}}%' and payload like '%{{NGUOI_KY}}%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL03:%' and payload like '%1.000.000%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL02:%'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and (payload like '%Đại lý Thử IT%' or title like '%Đại lý Thử IT%')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.3__F033-3",
+     "nguon_r10": "F033-3",
+     "mo_ta": "ÂM idempotent",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.acc_ar",
+        "--reminders",
+        "--as-of",
+        "2026-10-23"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "0 nháp mới"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ar_reminder'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "finance-03.3__F033-4",
+     "nguon_r10": "F033-4",
+     "mo_ta": "ÂM tắt finance-03.3 (chạy cuối) — như lượt 2 r10: --as-of 2026-11-20 (trạng thái nợ mới) để chạm cổng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "finance-03.3",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiem nhanh tat IT r12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.acc_ar",
+        "--reminders",
+        "--as-of",
+        "2026-11-20"
+       ],
+       "expect_exit": 2,
+       "out_re": "finance-03\\.3"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ar_reminder'",
+       "expect": 2
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "finance-04.1",
+   "db": "samsam_itacc_r12_f041",
+   "tieu_chi_cu_the": [
+    "T1 (C1) `fp_pnl --pnl --month 2026-09` (REPORTS_DIR → {OUT}) ghi pnl-2026-09.md nhãn CHẠY THỬ + BẢN NHÁP: ô sapentol-30v × shopee doanh thu 1.000.000 / khấu trừ 120.000 / hoàn 0 / thực nhận 880.000 / giá vốn duyệt 400.000 / lãi gộp 480.000 (đúng tính tay); report_outputs finance-04.1",
+    "T2 (C2) saphraton-20v, savigout-30v (chưa có giá vốn duyệt) → 'chưa có giá vốn duyệt', không 0",
+    "T3 (C3) người lập tự duyệt giá vốn → exit 1 'người duyệt trùng người lập', không duyệt; người khác duyệt (dev) → exit 0; `--channel tiktok` → pnl-2026-09-tiktok.md riêng, sha pnl-2026-09.md không đổi",
+    "T4 (C4, lỗi RB đã vá r12) chồng kỳ được nêu BẤT THƯỜNG; tắt finance-04.1 → `--pnl` exit 2, thông báo '[rollout] … finance-04.1', không traceback, không in bảng P&L, 0 file"
+   ],
+   "ca": [
+    {
+     "ma": "finance-04.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề (r10 SETUP-seed-fin): seed sổ rollout → tính năng chạy thử",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "finance-04.1__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề = trạng thái DB r10 lúc chạy ca (r10 F01-1a/1b/1c, F01-2, F01-3, F01-7 file xuất lại S2 — cùng lệnh, fixture chép nguyên văn)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/finance-04.1/orders_shopee.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "shopee/order orders_shopee\\.csv: 5 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/finance-04.1/orders_tiktok.csv",
+        "--channel",
+        "tiktok",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "tiktok/order orders_tiktok\\.csv: 1 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_orders",
+        "--sync"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "thêm 6"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/finance-04.1/qt_shopee_s1.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "6 dòng; đối chiếu: khop=2, lech=1, thieu_chung_tu=1, hoan=2"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/finance-04.1/qt_tiktok.csv",
+        "--channel",
+        "tiktok"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "1 dòng; đối chiếu: khop=1"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/finance-04.1/qt_shopee_s2.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "chồng kỳ\\): trùng 1, lệch 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from settlement_rows",
+       "expect": 9
+      }
+     ]
+    },
+    {
+     "ma": "finance-04.1__F041-1",
+     "nguon_r10": "F041-1",
+     "mo_ta": "lập giá vốn 4 SKU",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "sapentol-30v",
+        "--cost",
+        "200000",
+        "--from",
+        "2026-09-01",
+        "--by",
+        "Kế toán Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "CHỜ DUYỆT"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "savina-12v",
+        "--cost",
+        "100000",
+        "--from",
+        "2026-09-01",
+        "--by",
+        "Kế toán Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "CHỜ DUYỆT"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-120ml-1hu",
+        "--cost",
+        "200000",
+        "--from",
+        "2026-09-01",
+        "--by",
+        "Kế toán Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "CHỜ DUYỆT"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--cost",
+        "2100000",
+        "--from",
+        "2026-09-01",
+        "--by",
+        "Kế toán Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "CHỜ DUYỆT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from cogs_versions where approved_by is null and created_by = 'Kế toán Thử IT'",
+       "expect": 4
+      }
+     ]
+    },
+    {
+     "ma": "finance-04.1__F041-2",
+     "nguon_r10": "F041-2",
+     "mo_ta": "ÂM người lập tự duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "1",
+        "--by",
+        "Kế toán Thử IT"
+       ],
+       "expect_exit": 1,
+       "out_re": "người duyệt trùng người lập"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from cogs_versions where approved_by is not null",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "finance-04.1__F041-3",
+     "nguon_r10": "F041-3",
+     "mo_ta": "người khác duyệt (dev, người duyệt thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "1",
+        "--by",
+        "GĐ Tài chính Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã duyệt"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "2",
+        "--by",
+        "GĐ Tài chính Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã duyệt"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "3",
+        "--by",
+        "GĐ Tài chính Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã duyệt"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "4",
+        "--by",
+        "GĐ Tài chính Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã duyệt"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from cogs_versions where approved_by = 'GĐ Tài chính Thử IT'",
+       "expect": 4
+      }
+     ]
+    },
+    {
+     "ma": "finance-04.1__F041-4",
+     "nguon_r10": "F041-4",
+     "mo_ta": "P&L 09/2026",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.fp_pnl",
+        "--pnl",
+        "--month",
+        "2026-09"
+       ],
+       "expect_exit": 0,
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.report:REPORTS_DIR={OUT}",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "stdout_re": "\\[pnl\\] → pnl-2026-09\\.md"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/pnl-2026-09.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/pnl-2026-09.md",
+       "re": "(?s)\\A(?=.*\\A> \\*\\*CHẠY THỬ)(?=.*BẢN NHÁP)(?=.*\\| `sapentol-30v` \\| shopee \\| 1\\.000\\.000đ \\| 120\\.000đ \\| 0đ \\| 880\\.000đ \\| 400\\.000đ \\| 480\\.000đ \\|)(?=.*\\| `saphraton-20v` \\| shopee \\|[^\\n]*\\| chưa có giá vốn duyệt \\|)(?=.*\\| `savigout-30v` \\| shopee \\|[^\\n]*\\| chưa có giá vốn duyệt \\|)(?=.*BẤT THƯỜNG\\*\\* shopee)",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'finance-04.1' and name = 'pnl-2026-09.md'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "finance-04.1__F041-5",
+     "nguon_r10": "F041-5",
+     "mo_ta": "lọc kênh tiktok — ghi vào CÙNG thư mục báo cáo của F041-4 để kiểm 'không đè' bản toàn kênh",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import hashlib,sys\na=hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest()\nopen(sys.argv[2],'w').write(a)\nprint('sha_truoc',a)",
+        "{OUT}/../../finance-04.1__F041-4/out/pnl-2026-09.md",
+        "{OUT}/sha_truoc.txt"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.fp_pnl",
+        "--pnl",
+        "--month",
+        "2026-09",
+        "--channel",
+        "tiktok"
+       ],
+       "expect_exit": 0,
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.report:REPORTS_DIR={OUT}/../../finance-04.1__F041-4/out",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "stdout_re": "\\[pnl\\] → pnl-2026-09-tiktok\\.md"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import hashlib,sys\na=hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest()\nb=open(sys.argv[2]).read().strip()\nprint('truoc',b,'sau',a)\nsys.exit(0 if a==b else 1)",
+        "{OUT}/../../finance-04.1__F041-4/out/pnl-2026-09.md",
+        "{OUT}/sha_truoc.txt"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/../../finance-04.1__F041-4/out/pnl-2026-09*.md",
+       "count": 2
+      },
+      {
+       "file_re": "{OUT}/../../finance-04.1__F041-4/out/pnl-2026-09-tiktok.md",
+       "re": "\\| `sapentol-30v` \\| tiktok \\| 500\\.000đ \\| 60\\.000đ \\| 0đ \\| 440\\.000đ \\|",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/../../finance-04.1__F041-4/out/pnl-2026-09-tiktok.md",
+       "re": "\\| shopee \\|",
+       "expect": false
+      }
+     ]
+    },
+    {
+     "ma": "finance-04.1__F041-6",
+     "nguon_r10": "F041-6",
+     "mo_ta": "ÂM tắt finance-04.1 (chạy cuối) — RB đã vá: exit 2 gọn",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "finance-04.1",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiem nhanh tat IT r12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.fp_pnl",
+        "--pnl",
+        "--month",
+        "2026-08"
+       ],
+       "expect_exit": 2,
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.report:REPORTS_DIR={OUT}",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "stdout_re": "(?s)\\A(?=.*\\[rollout\\][^\\n]*finance-04\\.1)(?![\\s\\S]*\\| SKU \\|)",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/pnl-*.md",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'finance-04.1' and name like 'pnl-2026-08%'",
+       "expect": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "finance-05.1",
+   "db": "samsam_itacc_r12_f051",
+   "tieu_chi_cu_the": [
+    "T1 (C1) `fp_opscost --load` opex_ok.csv → 3 dòng 12.000.000đ; llm_usage fixture 168 USD; `--report --month 2026-10`: ai 4.200.000đ 84,0% [CẢNH BÁO 80%], cloud 3.500.000đ 87,5% [CẢNH BÁO 80%], saas 107,1% [VƯỢT TRẦN 100%]",
+    "T2 (C2) `--submit-over-x` → đúng 1 mục finance/opex_over_x pending created_by agent:fp_opscost (saas 7.500.000đ); chạy lại → 0 mục mới",
+    "T3 (C3) mục được 'duyệt' (dev) bởi người KHÔNG có vai trò TGĐ → `--status` vẫn cho_tgd_ky (fail-closed)",
+    "T4 (C4) opex_bad.csv → exit 1, 0 dòng; `fin_director --weekly` (REPORTS_DIR → {OUT}) ghi director-finance có 5 mục công nợ/P&L/chi phí/dòng tiền/ads, mục chi phí nêu 3 cảnh báo + 1 khoản chờ TGĐ ký; không chi tiền"
+   ],
+   "ca": [
+    {
+     "ma": "finance-05.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề (r10 SETUP-seed-fin): seed sổ rollout → tính năng chạy thử",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.1__F051-1",
+     "nguon_r10": "F051-1",
+     "mo_ta": "ÂM file chi phí lỗi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_opscost",
+        "--load",
+        "{FX12}/items/finance-05.1/opex_bad.csv"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "\\[err\\] 2 lỗi — không connect"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from opex_entries",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.1__F051-2",
+     "nguon_r10": "F051-2",
+     "mo_ta": "nạp chi phí + llm_usage fixture (SQL fixture owner — cùng câu insert r10)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_opscost",
+        "--load",
+        "{FX12}/items/finance-05.1/opex_ok.csv"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[load\\] 3 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,sys,psycopg\nc=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5)\ndb=c.execute('select current_database()').fetchone()[0]\nassert db.startswith('samsam_itacc_r12_'),db\nfor s in sys.argv[1:]:\n    c.execute(s)\nc.commit()\nprint('[fixture-sql] ok',db,len(sys.argv)-1)",
+        "insert into llm_usage (ts, agent_id, model, tokens_in, tokens_out, cost_usd, ok, error, feature_id) values ('2026-10-10 10:00+07','chatbot','fixture/thu-it',1000,500,100,true,'FIXTURE thu IT',null),('2026-10-12 10:00+07','content','fixture/thu-it',1000,500,68,true,'FIXTURE thu IT',null)"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[fixture-sql\\] ok samsam_itacc_r12_f051 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from opex_entries",
+       "expect": 3
+      },
+      {
+       "sql": "select sum(amount_vnd)::bigint from opex_entries",
+       "expect": 12000000
+      },
+      {
+       "sql": "select sum(cost_usd)::int from llm_usage",
+       "expect": 168
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.1__F051-3",
+     "nguon_r10": "F051-3",
+     "mo_ta": "báo cáo trần",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_opscost",
+        "--report",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)\\A(?=.*\\| `ai` \\| 4\\.200\\.000đ \\| 5\\.000\\.000đ \\| 84\\.0% \\|)(?=.*\\[CẢNH BÁO 80%\\] `ai`)(?=.*\\| `cloud` \\| 3\\.500\\.000đ \\| 4\\.000\\.000đ \\| 87\\.5% \\|)(?=.*\\[CẢNH BÁO 80%\\] `cloud`)(?=.*\\| `saas` \\| 7\\.500\\.000đ \\| 7\\.000\\.000đ \\| 107\\.1% \\|)(?=.*\\[VƯỢT TRẦN 100%\\] `saas`)"
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.1__F051-4",
+     "nguon_r10": "F051-4",
+     "mo_ta": "đẩy khoản > X",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_opscost",
+        "--submit-over-x",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[submit\\] 1 mục mới"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'opex_over_x' and block = 'finance' and status = 'pending' and created_by = 'agent:fp_opscost' and payload like '%7.500.000%' and payload like '%saas%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'opex_over_x'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.1__F051-5",
+     "nguon_r10": "F051-5",
+     "mo_ta": "ÂM idempotent",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_opscost",
+        "--submit-over-x",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[submit\\] 0 mục mới"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'opex_over_x'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.1__F051-6",
+     "nguon_r10": "F051-6",
+     "mo_ta": "ÂM người không phải TGĐ duyệt (dev, users.json không có vai trò tgd) — id mục lấy từ DB (r10 là #11)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where object_type = 'opex_over_x' order by id limit 1}",
+        "--by",
+        "Kế toán Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_opscost",
+        "--status",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "saas/tool-it 7\\.500\\.000đ: cho_tgd_ky"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'opex_over_x' and status = 'approved'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.1__F051-7",
+     "nguon_r10": "F051-7",
+     "mo_ta": "bản tin tuần GĐ tài chính (REPORTS_DIR → {OUT})",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.fin_director",
+        "--weekly",
+        "--as-of",
+        "2026-10-23"
+       ],
+       "expect_exit": 0,
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.report:REPORTS_DIR={OUT}",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "stdout_re": "\\[weekly\\]"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/director-finance-*.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/director-finance-*.md",
+       "re": "(?s)\\A(?=.*## Công nợ đại lý quá hạn)(?=.*## P&L tháng)(?=.*## Chi phí vận hành tháng 10/2026)(?=.*## Dòng tiền 13 tuần)(?=.*## Đề xuất ngân sách ads)",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/director-finance-*.md",
+       "re": "## Chi phí vận hành tháng 10/2026(?:(?!\\n## )[\\s\\S])*\\[CẢNH BÁO 80%\\] `ai`(?:(?!\\n## )[\\s\\S])*\\[CẢNH BÁO 80%\\] `cloud`(?:(?!\\n## )[\\s\\S])*\\[VƯỢT TRẦN 100%\\] `saas`(?:(?!\\n## )[\\s\\S])*chờ TGĐ ký: 1",
+       "expect": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "finance-05.2",
+   "db": "samsam_itacc_r12_f052",
+   "tieu_chi_cu_the": [
+    "T1 (C1) `fp_cash --forecast --start 2026-10-26 --out-dir {OUT}` ghi dong-tien-2026-10-26.md nhãn CHẠY THỬ: đúng 13 tuần × thấp/cơ sở/cao, mỗi tuần thu và số dư thấp ≤ cơ sở ≤ cao; --opening=-400000000 → liệt kê tuần âm (⚠)",
+    "T2 (C2) không --opening → 'chưa có số dư đầu kỳ thật'; tỷ lệ thực nhận shopee 'đo từ settlement', offline mặc định 'chưa xác minh'; --opening 500000000 --json → opening 500000000, 13 tuần low ≤ base ≤ high",
+    "T3 (C3) --opening abc → exit 2; DB down → exit 0 + [warn] mặc định chưa xác minh + không ghi sổ đầu ra (report_outputs finance-05.2 vẫn 1)",
+    "T4 (C4, lỗi GATE-OUT đã vá r12) tắt finance-05.2 → exit 2 '[rollout] … finance-05.2', KHÔNG in dự báo ra stdout, 0 file"
+   ],
+   "ca": [
+    {
+     "ma": "finance-05.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề (r10 SETUP-seed-fin): seed sổ rollout → tính năng chạy thử",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.2__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề = trạng thái DB r10 lúc chạy ca (r10 F01-1a/1b/1c, F01-2, F01-3, F01-7 file xuất lại S2 — cùng lệnh, fixture chép nguyên văn)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/finance-05.2/orders_shopee.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "shopee/order orders_shopee\\.csv: 5 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/finance-05.2/orders_tiktok.csv",
+        "--channel",
+        "tiktok",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "tiktok/order orders_tiktok\\.csv: 1 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_orders",
+        "--sync"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "thêm 6"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/finance-05.2/qt_shopee_s1.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "6 dòng; đối chiếu: khop=2, lech=1, thieu_chung_tu=1, hoan=2"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/finance-05.2/qt_tiktok.csv",
+        "--channel",
+        "tiktok"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "1 dòng; đối chiếu: khop=1"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/finance-05.2/qt_shopee_s2.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "chồng kỳ\\): trùng 1, lệch 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from settlement_rows",
+       "expect": 9
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.2__F052-1",
+     "nguon_r10": "F052-1",
+     "mo_ta": "dự báo không số dư đầu kỳ",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_cash",
+        "--forecast",
+        "--start",
+        "2026-10-26",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\][^\\n]*dong-tien-2026-10-26\\.md"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import re,sys\nt=open(sys.argv[1],encoding='utf-8').read()\nrows=[l for l in t.splitlines() if re.match(r'\\| \\d\\d/\\d\\d',l)]\nn=lambda s:int(s.strip().replace('.','').replace('đ',''))\nbad=[]\nfor l in rows:\n    c=[x.strip() for x in l.strip('|').split('|')]\n    lo,ba,hi,o,sl,sb,sh=[n(x) for x in c[1:8]]\n    if not (lo<=ba<=hi and sl<=sb<=sh): bad.append(l)\nprint('so_tuan',len(rows),'lech',bad)\nsys.exit(0 if len(rows)==13 and not bad else 1)",
+        "{OUT}/dong-tien-2026-10-26.md"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/dong-tien-2026-10-26.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/dong-tien-2026-10-26.md",
+       "re": "(?s)\\A(?=.*\\A> \\*\\*CHẠY THỬ)(?=.*chưa có số dư đầu kỳ thật)(?=.*shopee: tỷ lệ thực nhận [0-9.]+ — đo từ settlement)(?=.*offline: tỷ lệ thực nhận 1\\.0000 — mặc định cấu hình — chưa xác minh)",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2' and not is_sample",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.2__F052-2",
+     "nguon_r10": "F052-2",
+     "mo_ta": "có số dư đầu kỳ, json (kiểm bằng script như r10 F052-2-check)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_cash",
+        "--forecast",
+        "--start",
+        "2026-10-26",
+        "--opening",
+        "500000000",
+        "--json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import json,sys\nd=json.load(open(sys.argv[1],encoding='utf-8'))\nw=d['weeks']\nok=len(w)==13 and d['opening']==500000000 and all(x['in']['low']<=x['in']['base']<=x['in']['high'] and x['close']['low']<=x['close']['base']<=x['close']['high'] for x in w)\nprint('so_tuan',len(w),'opening',d['opening'],'ok',ok)\nsys.exit(0 if ok else 1)",
+        "{OUT}/../step01.stdout.txt"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.2__F052-2b",
+     "nguon_r10": "F052-2b",
+     "mo_ta": "nhánh cảnh báo tuần âm",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_cash",
+        "--forecast",
+        "--start",
+        "2026-10-26",
+        "--opening=-400000000"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)\\A(?=.*Cảnh báo — tuần âm ở kịch bản thấp \\(số dư < 0đ\\): 26/10)(?=.*\\| 26/10 ⚠)"
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.2__F052-3",
+     "nguon_r10": "F052-3",
+     "mo_ta": "ÂM tham số sai",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_cash",
+        "--forecast",
+        "--opening",
+        "abc"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "--opening phải là số nguyên VND"
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.2__F052-4",
+     "nguon_r10": "F052-4",
+     "mo_ta": "ÂM DB down (DATABASE_URL → cổng đóng trên localhost)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_cash",
+        "--forecast",
+        "--start",
+        "2026-10-26",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "env": {
+        "DATABASE_URL": "postgresql://itacc_dbdown@127.0.0.1:1/samsam_itacc_r12_f052?connect_timeout=3"
+       },
+       "stderr_re": "(?s)\\A(?=.*\\[warn\\] không kết nối được Postgres[^\\n]*chưa xác minh)(?=.*không ghi sổ đầu ra)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/dong-tien-2026-10-26.md",
+       "count": 1
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "finance-05.2__F052-5",
+     "nguon_r10": "F052-5",
+     "mo_ta": "ÂM tắt finance-05.2 (chạy cuối) — GATE-OUT đã vá",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "finance-05.2",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiem nhanh tat IT r12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_cash",
+        "--forecast",
+        "--start",
+        "2026-10-26",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "out_re": "\\[rollout\\][^\\n]*finance-05\\.2",
+       "stdout_re": "\\A(?![\\s\\S]*(Thu thấp|Số dư cơ sở|\\| 26/10))",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/*.md",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from report_outputs where feature_id = 'finance-05.2'",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "finance-06",
+   "db": "samsam_itacc_r12_f06",
+   "tieu_chi_cu_the": [
+    "T1 (C1) `rev_share --quarter 2026-Q3 --record --out-dir {OUT}` ghi doi-soat-2026-Q3.md + 1 dòng revenue_quarters (agent:rev_share): shopee gộp 2.600.000 − phí 288.000 − hủy 200.000 − hoàn 400.000 = thuần 1.712.000; tiktok thuần 440.000; tổng thuần 2.152.000 (hoàn của đơn hủy không trừ 2 lần); ô ký 2 bên trống",
+    "T2 (C2) rev_share.json null → 'Tỷ lệ phí vận hành | chưa chốt'; quý 2026-Q2 → 'chưa có dữ liệu' shopee/tiktok/Tổng",
+    "T3 (C3) sau file xuất lại S2: shopee gộp 2.900.000 (khoản nguyên văn không cộng lần 2), BẤT THƯỜNG trùng 1 lệch 1, phí không tính (cả khi cấu hình FIXTURE có tỷ lệ 5%)",
+    "T4 (C4) Q4 chưa đóng → exit 2; --year 1 khi chưa chốt ngày ký → exit 1; record lần 2 = dòng mới, dòng 1 giữ; tắt finance-06 → exit 2, không thêm sổ, 0 file",
+    "T5 (C5, lỗi F06-6 đã vá r12) revenue_quarters.report_sha256 = sha256 đúng byte file doi-soat-2026-Q3.md trên đĩa (bản có nhãn CHẠY THỬ) = report_outputs.sha256"
+   ],
+   "ca": [
+    {
+     "ma": "finance-06__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề (r10 SETUP-seed-fin): seed sổ rollout → tính năng chạy thử",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề = trạng thái DB r10 lúc chạy ca (r10 F01-1a/1b/1c, F01-2, F01-3 — cùng lệnh, fixture chép nguyên văn)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/finance-06/orders_shopee.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "shopee/order orders_shopee\\.csv: 5 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/finance-06/orders_tiktok.csv",
+        "--channel",
+        "tiktok",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "tiktok/order orders_tiktok\\.csv: 1 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_orders",
+        "--sync"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "thêm 6"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/finance-06/qt_shopee_s1.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "6 dòng; đối chiếu: khop=2, lech=1, thieu_chung_tu=1, hoan=2"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/finance-06/qt_tiktok.csv",
+        "--channel",
+        "tiktok"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "1 dòng; đối chiếu: khop=1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from settlement_rows",
+       "expect": 7
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__F06-1",
+     "nguon_r10": "F06-1",
+     "mo_ta": "đối soát Q3 trước file xuất lại",
+     "khac_r10": "thêm --now 2026-10-23T10:30:00+07:00 (ngày giờ cố định, cùng ngày lượt r10)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.rev_share",
+        "--now",
+        "2026-10-23T10:30:00+07:00",
+        "--quarter",
+        "2026-Q3",
+        "--record",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "2026-Q3: thuần 2\\.152\\.000đ[^\\n]*revenue_quarters #1"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/doi-soat-2026-Q3.md",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/doi-soat-2026-Q3.md",
+       "re": "(?s)\\A(?=.*\\| shopee \\| 2\\.600\\.000đ \\| 288\\.000đ \\| 200\\.000đ \\| 400\\.000đ \\| \\*\\*1\\.712\\.000đ\\*\\* \\|)(?=.*\\| tiktok \\|[^\\n]*\\| \\*\\*440\\.000đ\\*\\* \\|)(?=.*\\| \\*\\*Tổng\\*\\* \\|[^\\n]*\\| \\*\\*2\\.152\\.000đ\\*\\* \\|)(?=.*\\| Tỷ lệ phí vận hành \\| chưa chốt \\|)(?=.*\\| \\(ký, ghi rõ họ tên\\) \\| \\(ký, ghi rõ họ tên\\) \\|\\n\\| \\| \\|)",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from revenue_quarters",
+       "expect": 1
+      },
+      {
+       "sql": "select net_vnd from revenue_quarters order by id limit 1",
+       "expect": 2152000
+      },
+      {
+       "sql": "select recorded_by from revenue_quarters order by id limit 1",
+       "expect": "agent:rev_share"
+      },
+      {
+       "sql": "select ops_fee_vnd is null from revenue_quarters order by id limit 1",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__F06-2",
+     "nguon_r10": "F06-2",
+     "mo_ta": "ÂM quý không dữ liệu",
+     "khac_r10": "thêm --now (cố định)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.rev_share",
+        "--now",
+        "2026-10-23T10:30:00+07:00",
+        "--quarter",
+        "2026-Q2",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)\\A(?=.*\\| shopee \\| chưa có dữ liệu \\|)(?=.*\\| tiktok \\| chưa có dữ liệu \\|)(?=.*\\| \\*\\*Tổng\\*\\* \\| chưa có dữ liệu \\|)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from revenue_quarters",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__F06-3",
+     "nguon_r10": "F06-3",
+     "mo_ta": "ÂM quý chưa đóng",
+     "khac_r10": "thêm --now (cố định)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.rev_share",
+        "--now",
+        "2026-10-23T10:30:00+07:00",
+        "--quarter",
+        "2026-Q4",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "quý 2026-Q4 chưa đóng"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/*.md",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from revenue_quarters",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__F06-4",
+     "nguon_r10": "F06-4",
+     "mo_ta": "ÂM --year chưa chốt ngày ký",
+     "khac_r10": "thêm --now (cố định)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.rev_share",
+        "--now",
+        "2026-10-23T10:30:00+07:00",
+        "--year",
+        "1",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 1,
+       "stderr_re": "chưa chốt ngay_ky_hop_dong"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/*.md",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__S03",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề F06-5 (r10 F01-7): nạp file xuất lại qt_shopee_s2.csv (A nguyên văn, B số khác)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/finance-06/qt_shopee_s2.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "chồng kỳ\\): trùng 1, lệch 1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from settlement_rows",
+       "expect": 9
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__F06-5",
+     "nguon_r10": "F06-5",
+     "mo_ta": "sau file xuất lại",
+     "khac_r10": "thêm --now (cố định)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.rev_share",
+        "--now",
+        "2026-10-23T10:30:00+07:00",
+        "--quarter",
+        "2026-Q3",
+        "--record",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "revenue_quarters #2"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/doi-soat-2026-Q3.md",
+       "re": "(?s)\\A(?=.*\\| shopee \\| 2\\.900\\.000đ \\|)(?=.*shopee: BẤT THƯỜNG[^\\n]*trùng nguyên văn 1[^\\n]*lệch số 1[^\\n]*qt_shopee_s1\\.csv, qt_shopee_s2\\.csv)(?=.*\\| Phí vận hành \\(quy đổi sản phẩm\\) \\| — )",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from revenue_quarters",
+       "expect": 2
+      },
+      {
+       "sql": "select net_vnd from revenue_quarters order by id limit 1",
+       "expect": 2152000
+      },
+      {
+       "sql": "select count(*) from revenue_quarters where ops_fee_vnd is not null",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__F06-5b",
+     "nguon_r10": "F06-5b",
+     "mo_ta": "cấu hình FIXTURE (bản chép rev_share_fixture.json: tỷ lệ 5% + ngày) → phí vẫn không tính khi bất thường",
+     "khac_r10": "harness r10 run.py --call-main --set → wrap.py.txt PROBE_SET/PROBE_CALL_MAIN (cùng cơ chế); thêm --now",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.rev_share",
+        "--now",
+        "2026-10-23T10:30:00+07:00",
+        "--quarter",
+        "2026-Q3",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.rev_share:CONFIG_FILE={FX12}/items/finance-06/rev_share_fixture.json",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "stdout_re": "(?s)\\A(?=.*\\| Tỷ lệ phí vận hành \\| 5% \\|)(?=.*\\| Phí vận hành \\(quy đổi sản phẩm\\) \\| — \\(có kênh bất thường)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from revenue_quarters",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__F06-6",
+     "nguon_r10": "F06-6",
+     "mo_ta": "report_sha256 ↔ file (lỗi F06-6 đã vá): sha byte file doi-soat-2026-Q3.md của F06-1 (bản có nhãn) = revenue_quarters dòng 1 = report_outputs",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import hashlib,sys\na=hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest()\nprint('file',a,'so',sys.argv[2])\nsys.exit(0 if a==sys.argv[2] else 1)",
+        "{OUT}/../../finance-06__F06-1/out/doi-soat-2026-Q3.md",
+        "{sql:select report_sha256 from revenue_quarters order by id limit 1}"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/../../finance-06__F06-1/out/doi-soat-2026-Q3.md",
+       "re": "\\A> \\*\\*CHẠY THỬ",
+       "expect": true
+      },
+      {
+       "sql": "select (select report_sha256 from revenue_quarters order by id limit 1) = (select sha256 from report_outputs where feature_id = 'finance-06' and name = 'doi-soat-2026-Q3.md' order by id limit 1)",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__F06-6b",
+     "nguon_r10": "MOI",
+     "mo_ta": "như F06-6 cho lần record thứ 2 (F06-5): sha byte file = revenue_quarters dòng 2 = report_outputs thứ 2",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import hashlib,sys\na=hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest()\nprint('file',a,'so',sys.argv[2])\nsys.exit(0 if a==sys.argv[2] else 1)",
+        "{OUT}/../../finance-06__F06-5/out/doi-soat-2026-Q3.md",
+        "{sql:select report_sha256 from revenue_quarters order by id desc limit 1}"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select (select report_sha256 from revenue_quarters order by id desc limit 1) = (select sha256 from report_outputs where feature_id = 'finance-06' and name = 'doi-soat-2026-Q3.md' order by id desc limit 1)",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "finance-06__F06-7",
+     "nguon_r10": "F06-7",
+     "mo_ta": "ÂM tắt finance-06 (chạy cuối)",
+     "khac_r10": "thêm --now (cố định)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "finance-06",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiem nhanh tat IT r12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.rev_share",
+        "--now",
+        "2026-10-23T10:30:00+07:00",
+        "--quarter",
+        "2026-Q3",
+        "--record",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "out_re": "finance-06"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/*.md",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from revenue_quarters",
+       "expect": 2
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

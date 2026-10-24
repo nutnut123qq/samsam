@@ -569,17 +569,23 @@ def test_render_dossier_sections():
     for h in ("# Hồ sơ đề nghị nghiệm thu P1",
               "## 1. Danh sách tính năng (4 mục)",
               "## 2. Kết quả chạy thử", "## 3. Nhật ký lỗi",
-              "## 4. Tiêu chí kỹ thuật", "## 5. Ký nhận", "20/10/2026"):
+              "## 4. Tiêu chí kỹ thuật", "## 8. Ký nhận", "20/10/2026",
+              "DỰ THẢO", "## 3b. Nhật ký sự cố vận hành",
+              "## 6. Phiên bản bàn giao", "## 7. Ngoại lệ"):
         assert h in md, h
     assert re.search(r"\| ceo-01 \|.*chưa vào sổ", md)
     assert "không đếm được" in md and "A / B" in md
     assert "`ceo-02` chạy thử: đủ điều kiện nâng lên có người duyệt" in md
     assert "`ceo-03` chạy thử: CHƯA đủ" in md and "`sales-01` vận hành" in md
     assert "Lộ dữ liệu cá nhân" in md and "0905123456" not in md
-    sec4 = md.split("## 4.", 1)[1].split("## 5.", 1)[0]
+    sec4 = md.split("## 4.", 1)[1].split("## 6.", 1)[0]
     assert sec4.count("\n| ") == len(ro.CRITERIA) + 1
     assert "1 lỗi ghi nhận (1 lần vào giai đoạn có người duyệt)" in sec4
-    assert sec4.count("chưa có bằng chứng") >= 3
+    # đợt an toàn A06: 3 chỉ tiêu phản hồi/sửa lỗi trỏ sổ sự cố thật (trước
+    # đây "—"/chưa có bằng chứng dù sổ ops_incidents đã có từ v13.7)
+    assert sec4.count("pipelines.ops_incidents --list") == 3
+    # không đọc được sổ sự cố → CHƯA CÓ DỮ LIỆU (không suy 0 sự cố)
+    assert "CHƯA CÓ DỮ LIỆU" in md.split("## 3b.", 1)[1].split("## 4.")[0]
 
 
 def test_render_dossier_empty():

@@ -1,0 +1,195 @@
+{
+ "id": "production-03",
+ "ten": "Đối soát nhãn",
+ "khoi": "production",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Sản xuất, R&D / Đối soát nhãn: 'Đọc ảnh nhãn thật, so với hồ sơ và listing, báo chỗ sai'",
+ "tieu_chi": [
+  "C1 sx_label --text trích ĐKSP/quy cách/NSX-HSD/mã lô/cụm bắt buộc, so golden + hồ sơ lô + listing → danh sách lệch đúng; --submit → 1 mục production/label_check agent:sx_label",
+  "C2 chạy lại cùng nhãn → skip; SKU nhóm hạn chế → payload chỉ mã H-<sha8>",
+  "C3 --image với OCR none → exit 2 hướng dẫn (chặn an toàn, KHÔNG làm đọc ảnh thành đạt); file rỗng / SKU lạ → exit 1",
+  "C4 không sửa nhãn/golden/listing"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_prod; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/nhan_savina.txt",
+   "sha256": "b5ade2c4c6fd939c459b258534f0864b384274d535cbb34b2254b1ce7e73df74",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/nhan_ruou.txt",
+   "sha256": "5b561aeaed70f75007487c0f33ea6fa7d2b8c7371e82ba9a5b2f8da7f802c4cf",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/nhan_empty.txt",
+   "sha256": "2106c36011520fe73876d45bfb9ef8bf7b2e9f4362096a320376d8ee9b27ef12",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/nhan.png",
+   "sha256": "18bb3115c818dcdf372baab195641545f920e6f6fcb2b61a13fec6d9183a6fad",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/listing_shopee.csv",
+   "sha256": "1a6f0e83a637b404802cba96d8d1d44192c4e721b160e4bae299e89339d8fa97",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "P03-1",
+   "mo_ta": "nhãn savina-12v có lỗi (+ listing fixture nạp trước)",
+   "lenh": "[P03-0] python -m ingest.market_csv --file evidence/itacc_r10/g4/fixtures/listing_shopee.csv --channel shopee --kind listing || [P03-1] python -m agents.sx_label --sku savina-12v --text evidence/itacc_r10/g4/fixtures/nhan_savina.txt",
+   "expected": "ĐKSP lệch, thiếu khuyến cáo, lô không hồ sơ",
+   "actual": "exit 0 [dry] 6 điểm lệch: thiếu khuyến cáo phần 1+2, ĐKSP 1234 vs golden 8014, quy cách 12 vs golden 10 viên, lô IT-LOT-777 không hồ sơ, listing shopee 8 viên vs nhãn 12",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P03-2",
+   "mo_ta": "--submit",
+   "lenh": "[P03-2] python -m agents.sx_label --sku savina-12v --text evidence/itacc_r10/g4/fixtures/nhan_savina.txt --submit || [P03-q] python evidence/itacc_r10/g4/harness/q.py select id, block, object_type, object_id, status, created_by, title, payload from approval_queue where object_type='label_check' order by id",
+   "expected": "1 label_check production agent:sx_label pending",
+   "actual": "exit 0 #1 production/label_check pending agent:sx_label; payload chỉ field trích + sha nhãn, không nguyên văn",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P03-3",
+   "mo_ta": "ÂM idempotent",
+   "lenh": "[P03-3] python -m agents.sx_label --sku savina-12v --text evidence/itacc_r10/g4/fixtures/nhan_savina.txt --submit",
+   "expected": "[skip]",
+   "actual": "exit 0 '[skip] đợt này đã có'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P03-4",
+   "mo_ta": "nhãn rượu → mã tra cứu",
+   "lenh": "[P03-4] python -m agents.sx_label --sku ruou-sam-chai-thuy-tinh-500ml --text evidence/itacc_r10/g4/fixtures/nhan_ruou.txt --submit",
+   "expected": "chỉ H-xxxxxxxx",
+   "actual": "exit 0 #2 title/payload 'SKU H-0e8929fd', không sku_key/tên rượu",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P03-5",
+   "mo_ta": "đọc ẢNH nhãn (OCR none) — chặn an toàn",
+   "lenh": "[P03-5] python -m agents.sx_label --sku savina-12v --image evidence/itacc_r10/g4/fixtures/nhan.png",
+   "expected": "exit 2 chưa cấu hình OCR",
+   "actual": "exit 2 'chưa cấu hình OCR … (external-dep, cần hợp đồng + DPA)' — PASS là nhánh CHẶN an toàn; đọc ảnh nhãn KHÔNG thực hiện được (MISSING_ADAPTER)",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P03-6",
+   "mo_ta": "ÂM file rỗng / SKU lạ",
+   "lenh": "[P03-6a] python -m agents.sx_label --sku savina-12v --text evidence/itacc_r10/g4/fixtures/nhan_empty.txt || [P03-6b] python -m agents.sx_label --sku khong-co --text evidence/itacc_r10/g4/fixtures/nhan_savina.txt",
+   "expected": "exit 1",
+   "actual": "rỗng exit 1; SKU lạ exit 1; label_check vẫn 2",
+   "exit": [
+    1,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "MISSING_ADAPTER",
+ "can_de_go": "Cắm provider OCR trong nước vào ingest.doc_intake.PROVIDERS (vendor + hợp đồng/DPA + key), đặt OCR_PROVIDER.",
+ "gioi_han": "Phần con đối soát từ CHỮ nhãn (.txt) đạt trên fixture; luật nhãn GIẢ ĐỊNH (label_rules.json chờ pháp chế). Đầu ra thiết yếu 'đọc ảnh nhãn thật' chưa có adapter.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/P03-0.txt",
+   "sha256": "b5ae1bed3f3c4246ba511e54746bae40a2c1beee3b3b31253601881da32387fc"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P03-1.txt",
+   "sha256": "de02630b0595e2e3afc336ca37a6d0b0a8da9610b7c2843a74e438bf1c2604be"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P03-2.txt",
+   "sha256": "835f5f3a9e6ba453fca83b7d3b8c6095a40ac07827e9ed5034106834c26b4ab5"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P03-3.txt",
+   "sha256": "c1eaceb1512561090f50b74543976c0b13e7884d4c7e0bab85c0b0e1d8c0c63d"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P03-4.txt",
+   "sha256": "40afa4dee179b64b34b427781b99b7c881cc42f0f023c70c8dc9bd161543b4f7"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P03-q.txt",
+   "sha256": "06f08e5e446d6a038471633541341ec477e91bc5c3bc7a7182db8f67c2c787f8"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P03-5.txt",
+   "sha256": "98a4e001632f44d3c09ad4a4d9b0e731cb0b2d697f63f196ff01079bcc15bc65"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P03-6a.txt",
+   "sha256": "bcd61a4734e1a21d779c3917ba879fb0db710f151199906184e0c7a00e1150e3"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P03-6b.txt",
+   "sha256": "01177d7b6c7226195affdb0b4f7b441cd7754080b19ed3b64c3c549c4cdbdd75"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-prod.txt",
+   "sha256": "602c88845811a35b82861c29168029e190441247d92c4c6f4f60caf7340c5824"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": []
+}

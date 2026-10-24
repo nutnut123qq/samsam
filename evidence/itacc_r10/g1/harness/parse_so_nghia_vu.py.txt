@@ -1,0 +1,22 @@
+"""Kiểm cấu trúc sổ nghĩa vụ (chỉ đọc): mỗi dòng N.. có 8 cột, căn cứ HĐ/PL, trạng thái.
+Lượt 2: lượt 1 tách cột cả ở '\\|' (pipe đã thoát trong ô N10) → đếm sai số cột (lỗi harness)."""
+import collections
+import re
+import sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+SPLIT = re.compile(r"(?<!\\)\|")
+rows = []
+for ln in open(r"D:\code\samsam\docs\handover\so-nghia-vu-hop-dong.md", encoding="utf-8"):
+    if re.match(r"^\|\s*N\d{2}\s*\|", ln):
+        cells = [c.strip().replace("\\|", "|") for c in SPLIT.split(ln.strip().strip("|"))]
+        rows.append(cells)
+ids = [r[0] for r in rows]
+print("số dòng:", len(rows), "| id:", ids)
+need = [f"N{i:02d}" for i in range(1, 21)]
+print("đủ N01..N20:", all(n in ids for n in need), "| thiếu:", [n for n in need if n not in ids])
+print("mỗi dòng 8 cột:", all(len(r) == 8 for r in rows), [(r[0], len(r)) for r in rows if len(r) != 8])
+print("căn cứ có HĐ/PL hoặc ghi rõ không có điều khoản:",
+      all(re.search(r"HĐ|PL0|Không thấy điều khoản", r[2]) for r in rows))
+print("owner + hạn + bằng chứng không rỗng:", all(r[3] and r[4] and r[5] for r in rows))
+print("trạng thái:", dict(collections.Counter(r[7] for r in rows)))

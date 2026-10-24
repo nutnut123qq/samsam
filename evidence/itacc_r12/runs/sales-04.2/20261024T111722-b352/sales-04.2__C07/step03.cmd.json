@@ -1,0 +1,36 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.crm",
+  "--handoff",
+  "2",
+  "--dealer",
+  "DLTHU01",
+  "--by",
+  "GĐ Bán Hàng Thử IT"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:18:13+07:00",
+ "ket_thuc": "2026-10-24T11:18:18+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?=[\\s\\S]*\"lead_id\")(?=[\\s\\S]*\"dealer\": \"DLTHU01\")(?=[\\s\\S]*\"province\")(?=[\\s\\S]*\"intent\")[\\s\\S]*\"question\"",
+   "khop": true
+  },
+  {
+   "out_re": "^(?![\\s\\S]*\"(phone|name|email|address)\"\\s*:)(?![\\s\\S]*(0900000101|Khách Thử IT|khach\\.thu\\.it@example\\.com|Đường Thử IT))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "2155d08a3cd1ddd4422f88247beaad42add880fb070e16e457457741054c9100",
+ "stderr_sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+}

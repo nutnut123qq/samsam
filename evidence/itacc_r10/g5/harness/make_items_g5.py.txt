@@ -1,0 +1,398 @@
+"""Pha 3 — sinh evidence/itacc_r10/items/<id>.json cho 22 mục nhóm g5 từ bản ghi
+ca (runs/<ma>.txt: lệnh + exit đọc tự động) + kết luận viết tay. Chỉ đọc evidence."""
+import hashlib
+import json
+import re
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[4]
+EVD = ROOT / "evidence" / "itacc_r10"
+RUNS = EVD / "g5" / "runs"
+OUT = EVD / "items"
+SCR = "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g5"
+FP = "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001"
+NOW = datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+KHUNG = {x["id"]: x for x in json.loads((EVD / "criteria" / "khung.json").read_text(encoding="utf-8"))["items"]}
+CRIT = {x["id"]: x for x in json.loads((EVD / "criteria" / "g5.json").read_text(encoding="utf-8"))["items"]}
+FX = {}
+for line in (EVD / "g5" / "fixtures_sha256.txt").read_text(encoding="utf-8").splitlines():
+    m = re.match(r"([0-9a-f]{64})\s+\*?(?:fixtures/)?(\S+)$", line.strip())
+    if m:
+        FX[m.group(2)] = m.group(1)
+
+
+def sha(p: Path) -> str:
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def run_meta(ma):
+    p = RUNS / f"{ma}.txt"
+    if not p.exists():
+        return None, None, None
+    t = p.read_text(encoding="utf-8", errors="replace")
+    cmd = re.search(r"^# cmd: (.*)$", t, re.M)
+    ex = re.search(r"^# exit: (-?\d+)", t, re.M)
+    c = cmd.group(1).replace(SCR, "<scratch>").replace("/d/code/samsam/", "") if cmd else None
+    return c, int(ex.group(1)) if ex else None, p
+
+
+ENV_FARM = "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_farm; dev mode (AUTH_MODE trống, DEPLOY tắt)"
+ENV_DP = "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_dp; dev mode (AUTH_MODE trống, DEPLOY tắt)"
+
+
+def C(ma, mo_ta, expected, actual, kq="PASS", ev=None, lenh=None, ly=None, exit_=None):
+    cmd, ex, p = run_meta(ev or ma)
+    d = {"ma": ma, "mo_ta": mo_ta, "lenh": lenh or cmd, "expected": expected, "actual": actual,
+         "exit": exit_ if exit_ is not None else ex, "ket_qua": kq}
+    if ly:
+        d["ly_do_not_run"] = ly
+    d["_ev"] = [p] if p else []
+    return d
+
+
+BUG1 = {"ma": "BUG-G5-01", "muc_do": "MAJOR",
+        "mo_ta": "scripts/garden_media_mkt.py --release/--revoke LUÔN bị từ chối ở MỌI chế độ: decide() gọi auth.cli_gate(..., action=f'media_{action}') với 'media_cap'/'media_thu_hoi' nhưng pipelines/auth.py ACTIONS không có 2 hành động này → authorize() trả 'hành động ... không hợp lệ'. Luồng cấp/thu hồi tư liệu vườn cho Marketing (nguồn đầu ra garden_media_releases của farming-04) không dùng được qua CLI.",
+        "tai_hien": "source env DB thử; python scripts/garden_media_mkt.py --release <sha garden_media> --by \"GĐ Vùng Trồng Thử IT\"",
+        "expected": "exit 0, 1 dòng garden_media_releases action 'cap' by_name = người",
+        "actual": "exit 1 '[từ chối] hành động 'media_cap' không hợp lệ — (...ACTIONS...)'; 0 dòng. --revoke tương tự 'media_thu_hoi'. Chẩn đoán: gọi thẳng function DB garden_media_release_human (F04-DIAG1/4) ghi được + --get trả tệp sạch → lỗi nằm ở danh sách ACTIONS phía Python.",
+        "evidence": ["evidence/itacc_r10/g5/runs/F04-05a.txt", "evidence/itacc_r10/g5/runs/F04-07.txt", "evidence/itacc_r10/g5/runs/F04-DIAG1.txt", "evidence/itacc_r10/g5/runs/F04-DIAG2.txt"]}
+BUG2 = {"ma": "BUG-G5-02", "muc_do": "MINOR",
+        "mo_ta": "pipelines.qr_trace link/unlink không qua auth.cli_gate và function link_lot_origin không kiểm tiền tố agent:/system: → trên đường login owner (dev) ghi được lot_origins.created_by='agent:qr' + agent_action_log qr_lot_link actor 'agent:qr'. Các CLI quyết định người khác (sign/issue/revoke, intake...) chặn agent:* ở MỌI chế độ; trigger person_login_guard chỉ chặn login không-owner nên chế độ thực có lớp chặn DB.",
+        "tai_hien": "source env DB thử farm; python -m pipelines.qr_trace link --lot IT-LOT-G5-02 --log <id thu hoạch> --by \"agent:qr\"",
+        "expected": "exit 1, không ghi (agent không ánh xạ thay người)",
+        "actual": "exit 0 '[done] ... người thực hiện: agent:qr'; lot_origins id=1 created_by='agent:qr' (đã gỡ bằng unlink bởi người ở F031-04b)",
+        "evidence": ["evidence/itacc_r10/g5/runs/F031-04.txt", "evidence/itacc_r10/g5/runs/F031-04b.txt"]}
+OBS1 = {"ma": "OBS-G5-03", "muc_do": "MINOR (quan sát, không làm FAIL ca)",
+        "mo_ta": "agents.vt_thuhoach --submit khi farming-05.2 TẮT: RolloutBlocked (ValueError) không được bắt trong main → traceback, exit 1 (kết quả chặn đúng, 0 mục mới) nhưng báo cáo vt-thu-hoach-<ngày>.md vẫn được ghi ra thư mục báo cáo TRƯỚC bước bị chặn (write_report không gắn tính năng cho tên báo cáo này).",
+        "tai_hien": "rollout --disable farming-05.2 --by <người>; python -m agents.vt_thuhoach --date 2026-10-24 --submit",
+        "expected": "thông báo chặn sạch (exit 1/2), không sinh đầu ra khi tính năng tắt",
+        "actual": "Traceback RolloutBlocked exit 1; file vt-thu-hoach-2026-10-24.md có trong thư mục báo cáo (scratchpad)",
+        "evidence": ["evidence/itacc_r10/g5/runs/F052-04b.txt"]}
+
+I = {}  # id -> dict
+
+I["farming-01"] = dict(env=ENV_FARM + "; fake ở biên: CDN Zalo (FakeClient trả bytes fixture, _fetch gốc vẫn kiểm https/host/trần byte), state webhook + kho media → scratchpad, send_text dry-run",
+  muc="MOCK", tt="BI_CHAN", nn="MISSING_ADAPTER",
+  can="Vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS; đối chiếu event Zalo OA thật (ảnh/video/ghi âm, host CDN GIẢ ĐỊNH)",
+  gh="Chữ/ảnh/video/ghi âm qua webhook THẬT trên 127.0.0.1 với payload giả theo tài liệu OA; CDN Zalo giả; chưa đối chiếu event OA thật. farming-01 code_status mot_phan → KHÔNG vào sổ triển khai (seed chỉ co_code) nên không tắt được qua `rollout --disable` (luôn = chạy thử); nhánh FEATURE_OFF chỉ kiểm bằng FIXTURE _FORCE_MODE='tat'.",
+  dv=["anh_gps.jpg", "video_vitri.mp4", "ghi_am.wav", "garden_staff.json"],
+  ca=[C("F01-01", "Chữ nhân viên qua webhook → plot_logs", "HTTP 200; +1 plot_logs zalo:garden author zalo:IT-NV01 activity tưới, row_hash", "HTTP 200; plot_logs #8 KV-A01 'tưới' detail '30 phút thử IT' author zalo:IT-NV01 source zalo:garden row_hash/prev_hash có; reply dry-run (không gửi)"),
+      C("F01-02", "Ảnh có GPS qua webhook", "+1 garden_media jpg; tệp kho không EXIF/GPS", "garden_media #1 jpg IT-K01 zalo:garden; F01-02b: sha khớp, exif_tags=0 gps=False"),
+      C("F01-02b", "Assert tệp kho ảnh/video sạch", "sha khớp, không EXIF/GPS/vị trí", "RESULT PASS (jpg exif 0, mp4 không ©xyz/không chuỗi tọa độ)"),
+      C("F01-03", "Video có metadata vị trí qua webhook", "+1 garden_media mp4 không hộp vị trí", "garden_media #2 mp4; video_has_gps=False (F01-02b)"),
+      C("F01-04a", "Ghi âm qua webhook → nháp", "+1 garden_voice_drafts cho_chep_loi", "draft #1 wav IT-NV01 IT-K01 cho_chep_loi zalo:garden"),
+      C("F01-04b", "--pending", "liệt kê + [blocked] STT", "1 ghi âm chờ + [blocked] STT chưa cấu hình"),
+      C("F01-05", "STT none chặn an toàn", "exit 2 [blocked], không gửi audio", "exit 2 [blocked] chưa cấu hình STT (kiểm trước connect)"),
+      C("F01-06", "Âm: chữ ký sai", "HTTP 403, 0 ghi", "HTTP 403 bad signature, handled=False, plot_logs giữ 7"),
+      C("F01-07", "Âm: khoảnh không tồn tại", "0 dòng; hướng dẫn", "reply 'Không tìm thấy khoảnh KV-ZZ99 — CHƯA ghi', plot_logs giữ 7"),
+      C("F01-08", "Âm: trùng msg_id", "đúng 1 dòng", "POST#2 200 nhưng handled=False (dedup); 1 dòng 'dedup'"),
+      C("F01-09", "Âm: tắt qua sổ triển khai", "FEATURE_OFF 0 ghi", "rollout --disable farming-01 → [TỪ CHỐI] chưa vào sổ (mot_phan không seed được)", kq="NOT_RUN", ev="F01-09b", ly="Tiền đề không dựng được: farming-01 code_status mot_phan không vào sổ (seed chỉ co_code) → không tắt được qua CLI; thay bằng F01-09x/y (bổ sung sau khóa)"),
+      C("F01-09x", "Bổ sung sau khóa: FIXTURE _FORCE_MODE='tat' — chữ", "FEATURE_OFF, 0 dòng", "reply 'Tính năng này đang TẮT...', plot_logs giữ 9"),
+      C("F01-09y", "Bổ sung sau khóa: FIXTURE _FORCE_MODE='tat' — ảnh", "FEATURE_OFF, 0 garden_media", "reply TẮT, garden_media giữ 2"),
+      C("F01-10a", "Không sửa lén (owner UPDATE/DELETE)", "trigger chặn", "BLOCKED update + delete: 'nhật ký đã chain — ... bị chặn'"),
+      C("F01-10b", "garden_director --verify", "exit 0 OK", "[verify] OK — chuỗi nhật ký nguyên vẹn")],
+  loi=[])
+
+GD = "python <harness>/gd_run.py --staff garden_staff_v2.json --remind-cfg garden_remind_thucong.json"
+I["farming-02.1"] = dict(env=ENV_FARM + "; FIXTURE: staff file (khoảnh phụ trách) + cấu hình kênh thu_cong bản sao scratchpad (harness gd_run.py)",
+  muc="LOCAL", tt="DAT", nn=None, can="Bên B chọn kênh nhắc (data/garden_remind.json kenh, D-KH-09) + điền khoảnh phụ trách trong garden_staff.json",
+  gh="Kênh thu_cong và người phụ trách là FIXTURE; với cấu hình repo (kenh=null) mọi khoảnh → cho_kenh + báo thẳng GĐ (F021-06). Dữ liệu mồi IT-K01 đã có nhật ký từ F01 nên ca 'có người' dùng IT-K03 (staff_v2) — ghi lệch so với tiêu chí.",
+  dv=["garden_staff_v2.json", "garden_staff_v3.json", "garden_remind_thucong.json"],
+  ca=[C("F021-01", "Sinh sổ nhắc", "1 dòng/khoảnh/đợt, ma_nv, status theo kênh, is_sample", "garden_reminders: IT-K03 ma_nv IT-NV01 cho_gui thu_cong; IT-K02/IT-K04 khong_nguoi_nhan; KV-A02 gap is_sample=True (dữ liệu mồi đổi IT-K01→IT-K03)"),
+      C("F021-02", "Idempotent", "0 dòng mới", "garden_reminders giữ 4; 0 mục mới"),
+      C("F021-03", "Người đánh dấu đã nhắc", "exit 0; reminded_at", "[ok] #3 đã nhắc; reminded_at set, reminded_by 'Người Thử IT'; agent_action_log garden_reminder_done"),
+      C("F021-03b", "--reminders", "liệt kê đợt mở", "4 đợt; #3 'đã nhắc'"),
+      C("F021-04", "Âm: agent ghi thay", "exit 1", "exit 1 'agent:garden_director' không phải người"),
+      C("F021-05", "Âm: đánh dấu lần 2", "exit 1", "exit 1 không ở trạng thái chờ"),
+      C("F021-06", "Kênh null (cấu hình repo)", "cho_kenh + [blocked]", "IT-K05 cho_kenh kenh null; in [blocked] chưa chọn kênh; báo GĐ 1 mục")],
+  loi=[])
+
+I["farming-02.2"] = dict(env=ENV_FARM + "; FIXTURE staff/kênh như farming-02.1; báo cáo → scratchpad (--out-dir)",
+  muc="LOCAL", tt="DAT", nn=None, can="—", gh="Ngưỡng/lịch data/garden_schedule.json GIẢ ĐỊNH; bản tin chỉ ghi file nội bộ (nhãn CHẠY THỬ — KHÔNG GỬI).",
+  dv=["garden_staff_v3.json"],
+  ca=[C("F022-01", "Leo thang GĐ", "plot_log_gap pending agent:garden_director", "approval_queue #1 gap:IT-K02:none, #2 gap:IT-K04:none pending created_by agent:garden_director, payload nêu lý do 'CHƯA gán người phụ trách'", ev="F021-01"),
+      C("F022-02", "Idempotent", "không thêm mục", "0 mục mới (2 mục giữ nguyên)", ev="F021-02"),
+      C("F022-03", "Bản tin tuần", "garden-week-2026-10-22.md, không tọa độ/người ghi", "exit 0; file 80 dòng, nhãn CHẠY THỬ; grep tọa độ/'zalo:IT-NV01'/area = 0"),
+      C("F022-04a", "rollout --disable farming-02.2", "tắt", "chạy thử → tắt"),
+      C("F022-04b", "Âm: tắt → không sinh", "exit 2 / 0 mục IT-K06", "exit 2 '[err] hàng duyệt farming/plot_log_gap: tính năng farming-02.2 đang tắt'; approval_queue giữ 3 mục"),
+      C("F022-04c", "promote tat→chay_thu", "chạy thử", "tắt → chạy thử")],
+  loi=[])
+
+QR = "python -m pipelines.qr_trace"
+I["farming-03.1"] = dict(env=ENV_FARM + "; lô SX FIXTURE nạp qua production lots/intake",
+  muc="LOCAL", tt="BI_CHAN", nn="CODE_FAIL", can="Sửa BUG-G5-02: link/unlink chặn --by agent:/system: ở Python (auth.cli_gate như sign/issue/revoke) hoặc trong function link_lot_origin",
+  gh="Lượt 1 (lô IT-LOT-G5-01 mfg 20/10) hỏng do dữ liệu mồi: nhật ký thu hoạch 23/10 sau ngày SX → function từ chối đúng; thay bằng lô IT-LOT-G5-02 (mfg 23/10). Lỗi chỉ trên đường login owner/dev; chế độ thực có trigger person_login_guard (không kiểm ở đây — điều phối viên kiểm quyền chế độ thực).",
+  dv=["lots.json", "lots2.json"],
+  ca=[C("F031-01a", "Nạp lô FIXTURE", "pending", "1 lô mới pending"),
+      C("F031-01b", "Kiểm nhập passed (người)", "passed", "lô IT-LOT-G5-01 → passed"),
+      C("F031-01c", "Nhật ký thu hoạch", "chain", "plot_logs #14 IT-K01 'thu hoạch' manual:garden row_hash"),
+      C("F031-01d", "Lô 2 (sửa dữ liệu mồi)", "pending", "1 lô mới"),
+      C("F031-01e", "Kiểm nhập lô 2", "passed", "IT-LOT-G5-02 → passed"),
+      C("F031-02", "Ánh xạ", "lot_origins có", "lot_origins #2 IT-LOT-G5-02 ↔ #14, media [ab5af589…], created_by 'GĐ SX Thử IT'"),
+      C("F031-03", "Âm: nhật ký không thu hoạch", "exit 1", "exit 1 'nhật ký #12 không phải thu hoạch'"),
+      C("F031-04", "Âm: agent", "exit 1", "exit 0 — ghi lot_origins created_by 'agent:qr' (BUG-G5-02)", kq="FAIL"),
+      C("F031-04b", "Dọn: người gỡ ánh xạ của agent", "exit 0", "gỡ ánh xạ #14 bởi GĐ SX Thử IT"),
+      C("F031-05", "Âm: log không tồn tại", "exit 1", "exit 1 'không có nhật ký #999999'"),
+      C("F031-06x", "Bổ sung sau khóa: sha video", "exit 1", "exit 1 'tư liệu 669b2e5f122c là video'")],
+  loi=[BUG2])
+
+QS = "python <harness>/qr_run.py --signers qr_signers.json(FIXTURE)"
+I["farming-03.2"] = dict(env=ENV_FARM + "; FIXTURE: allowlist 3 người ký (bản sao scratchpad); site --out scratchpad; ca site van_hanh = FIXTURE _FORCE_MODE",
+  muc="LOCAL", tt="DAT", nn=None, can="Bên B cấp người ký thật (qr_signers.json) + domain công khai + nhà in tạo ảnh QR",
+  gh="Trang chỉ xuất được khi ép van_hanh (FIXTURE) — ở chạy thử bị chặn đúng; chưa có domain công khai/ảnh QR in thật; danh tính người ký tự khai (dev).",
+  dv=["qr_signers.json", "qr_signers_dup.json"],
+  ca=[C("F032-01", "Preview guardrail", "exit 0 guardrail OK", "guardrail kênh qr OK, chưa vai nào ký"),
+      C("F032-02", "Âm: issue khi 0 chữ ký", "exit 1", "exit 1 chưa đủ 3 chữ ký (0 vai)"),
+      C("F032-02b", "Âm: issue khi 2 chữ ký", "exit 1", "exit 1 (2 vai, 2 người)"),
+      C("F032-03a", "Ký GĐ SX", "ký", "approvals #3"), C("F032-03b", "Ký GĐ vùng trồng", "ký", "approvals #4"),
+      C("F032-03c", "Ký Pháp chế/QA", "ký", "approvals #5; 3 qr_signatures cùng snapshot/text sha"),
+      C("F032-04", "Âm: người sai vai", "exit 1", "exit 1 --by không thuộc người ký vai Pháp chế/QA"),
+      C("F032-04b", "Âm: allowlist repo rỗng", "exit 1", "exit 1 chưa cấu hình người ký (không connect)"),
+      C("F032-04c", "Âm: 1 người 2 vai", "exit 1", "exit 1 '1 người không được nằm ở 2 vai'"),
+      C("F032-05", "Phát hành", "qr_codes + [chạy thử]", "exit 0; qr_codes code 22 ký tự ngẫu nhiên, issued_by người; in [chạy thử] chỉ ghi nội bộ"),
+      C("F032-06", "Site chạy thử bị chặn", "exit 1, 0 trang", "exit 1 [blocked] 1 mã KHÔNG xuất trang; 0 tệp"),
+      C("F032-07", "Site ép van_hanh (FIXTURE)", "index.html sạch", "1 trang + 1 ảnh; F032-07_assert: 0 'IT-K01'/'KV-'/tọa độ/tên người ký"),
+      C("F032-08a", "Thu hồi", "revoked_at", "thu hồi bởi GĐ SX Thử IT"),
+      C("F032-08b", "Trang đã thu hồi", "trang 'đã thu hồi'", "trang 'Mã truy xuất này đã thu hồi'; ảnh không còn trang dùng bị gỡ")],
+  loi=[])
+
+I["farming-04"] = dict(env=ENV_FARM + "; kho GARDEN_MEDIA_DIR/--store → scratchpad; ffmpeg của imageio-ffmpeg",
+  muc="LOCAL", tt="BI_CHAN", nn="CODE_FAIL", can="Sửa BUG-G5-01 (thêm media_cap/media_thu_hoi vào auth.ACTIONS hoặc đổi tên hành động); clip iPhone/Android thật + TTL garden_media",
+  gh="Gỡ GPS chỉ kiểm trên ảnh/video fixture sinh bằng Pillow/ffmpeg; luồng --get/sổ releases chỉ kiểm được bằng chẩn đoán gọi thẳng function DB (F04-DIAG*, không tính PASS cho cấp/thu hồi).",
+  dv=["anh_gps2.jpg", "video_vitri2.mp4", "khong_phai_anh.jpg"],
+  ca=[C("F04-01", "Nạp ảnh GPS", "exit 0; row; sạch", "a515b6f33d03 gỡ 6 thẻ EXIF có GPS; garden_media #3 cli:garden_media"),
+      C("F04-01b", "Assert kho sạch", "PASS", "jpg exif 0 gps False; mp4 không vị trí"),
+      C("F04-02", "Nạp video vị trí", "exit 0", "238d2b7965d7 mp4 đã gỡ metadata"),
+      C("F04-03", "Âm: kho trong repo", "exit 2 không tạo thư mục", "exit 2 'thư mục kho nằm TRONG repo'; thư mục không tồn tại"),
+      C("F04-04", "Âm: tệp không phải ảnh", "exit !=0, 0 dòng", "exit 1 UnidentifiedImageError; garden_media giữ 4"),
+      C("F04-06", "Âm: agent cấp", "exit 1 (chặn vì agent)", "exit 1 nhưng lý do là 'media_cap không hợp lệ' (BUG-G5-01) — không chứng minh được nhánh chặn agent", kq="NOT_RUN", ly="Bị che bởi BUG-G5-01: authorize() trả lỗi hành động trước khi kiểm người"),
+      C("F04-05a", "Cấp cho Marketing (người)", "exit 0; releases row", "exit 1 'hành động media_cap không hợp lệ' — BUG-G5-01", kq="FAIL"),
+      C("F04-05b", "--list", "có sha", "0 tư liệu đang được cấp (hệ quả F04-05a)", kq="FAIL"),
+      C("F04-05c", "--get", "tệp sạch", "exit 1 chưa được cấp (hệ quả F04-05a)", kq="FAIL"),
+      C("F04-07", "Thu hồi rồi get", "--get bị từ chối sau thu hồi", "--revoke exit 1 'media_thu_hoi không hợp lệ' — BUG-G5-01", kq="FAIL"),
+      C("F04-DIAG2", "Chẩn đoán: sau khi gọi thẳng function DB cấp, --get THẬT", "tệp sạch, sha khớp", "exit 0; sha_ok True; exif (0, False) — chỉ chẩn đoán"),
+      C("F04-DIAG5", "Chẩn đoán: sau thu hồi (function DB), --get", "từ chối", "exit 1 chưa được cấp/đã thu hồi — chỉ chẩn đoán")],
+  loi=[BUG1])
+
+VT = "python <harness>/mod_run.py agents.vt_thuhoach --patch REPORTS_DIR=<scratch>/reports --"
+I["farming-05.2"] = dict(env=ENV_FARM + "; harness đổi REPORTS_DIR → scratchpad",
+  muc="LOCAL", tt="DAT", nn=None, can="GĐ vùng trồng chốt giả định năng suất (data/harvest_assumptions.json)",
+  gh="Giả định năng suất/giá GIẢ ĐỊNH; khoảnh mẫu gắn nhãn (MẪU). Quan sát OBS-G5-03 (traceback + file báo cáo vẫn ghi khi tắt) — ca chặn vẫn đạt (0 mục mới).",
+  dv=[], ca=[C("F052-01", "Dự báo + submit", "harvest_forecast pending agent:VT", "approval_queue #4 harvest_forecast pending agent:VT is_sample=False; IT-K03..06 2027-Q1 6–13–23 kg; sha 2 file giả định trong metadata"),
+      C("F052-02", "Idempotent", "không thêm", "[submit] skipped #4"),
+      C("F052-03", "Thiếu dữ liệu", "IT-K02 'thiếu'", "'IT-K02: thiếu dữ liệu (tree_count, planted_year) — không ước lượng'", ev="F052-01"),
+      C("F052-04a", "disable", "tắt", "chạy thử → tắt"),
+      C("F052-04b", "Âm: tắt", "không mục mới", "exit 1 RolloutBlocked (traceback — OBS-G5-03); harvest_forecast giữ 1 mục"),
+      C("F052-04c", "promote", "chạy thử", "tắt → chạy thử")],
+  loi=[OBS1])
+
+VW = "python <harness>/mod_run.py agents.vt_thoitiet --patch REPORTS_DIR=<scratch>/reports --"
+I["farming-05.3"] = dict(env=ENV_FARM + "; CSV dự báo nhập tay FIXTURE; harness đổi REPORTS_DIR → scratchpad",
+  muc="LOCAL", tt="DAT", nn=None, can="Xác minh điều khoản nhà cung cấp dự báo rồi bật fetch.enabled (job lịch vt_weather dùng --fetch đang exit 2)",
+  gh="Đầu ra đạt qua CSV nhập tay; nguồn tự động (--fetch, job vt_weather) BLOCKED exit 2 cho tới khi bật; vùng/ngưỡng GIẢ ĐỊNH.",
+  dv=["weather.csv", "weather_bad.csv"],
+  ca=[C("F053-01", "Digest từ CSV + submit", "weather_digest pending, không tọa độ", "approval_queue #5 weather_digest pending agent:VT; mưa 80mm vùng A + rét 3°C vùng B; không tọa độ"),
+      C("F053-02", "--fetch chưa bật", "exit 2", "exit 2 '--fetch chưa bật'"),
+      C("F053-03", "Âm: CSV lỗi", "exit 1 không xử lý", "exit 1 'vùng không có trong cấu hình' — không xử lý"),
+      C("F053-04", "Idempotent", "skipped", "[skipped] đã có mục chờ duyệt; vẫn 1 mục")],
+  loi=[])
+
+I["farming-05.4"] = dict(env=ENV_FARM + "; nhật ký vườn FIXTURE qua agents.garden",
+  muc="LOCAL", tt="DAT", nn=None, can="Bật timer vt_pests trên server; nhật ký vườn thật",
+  gh="Từ khóa cờ = FLAG_KEYS hiện có (GĐ vùng trồng rà).", dv=[],
+  ca=[C("F054-00a", "Nhật ký có 'rệp' (FIXTURE)", "ghi", "plot_logs #16 IT-K01"),
+      C("F054-00b", "Nhật ký 'kiểm tra sâu bệnh' bình thường (không được cờ)", "ghi", "plot_logs #18 IT-K03"),
+      C("F054-01", "Cảnh báo sâu bệnh", "pest_alert pending; chỉ IT-K01", "approval_queue #7 pest_alert pending agent:VT; payload chỉ IT-K01 'rệp' — IT-K03 không bị cờ (không quét tên activity); không tên thuốc/chẩn đoán"),
+      C("F054-02", "Idempotent", "skipped", "[skipped]"),
+      C("F054-03", "Không cờ", "0 mục", "0 ghi nhận, không đẩy"),
+      C("F054-04a", "disable", "tắt", "chạy thử → tắt"),
+      C("F054-04b", "Âm: tắt", "exit 1 không mục", "exit 1 'không đẩy được hàng duyệt (RolloutBlocked)'; vẫn 1 mục"),
+      C("F054-04c", "promote", "chạy thử", "tắt → chạy thử")],
+  loi=[])
+
+I["farming-06"] = dict(env=ENV_FARM + "; provider anchor 'none' (không gọi calendar OpenTimestamps)",
+  muc="LOCAL", tt="BI_CHAN", nn="EXTERNAL_INPUT", can="Hai bên chọn chuỗi/provider/phí/tài khoản neo (data/anchor_config.json); chạy --submit thật + bên thứ ba ots verify",
+  gh="Chỉ đối chiếu NỘI BỘ; chưa có biên nhận neo thật; không gọi calendar.", dv=[],
+  ca=[C("F06-02", "Dry-run", "không ghi", "6 lá, gốc 27076997…; anchor_batches = 0"),
+      C("F06-01", "Build", "1 anchor_batches", "lần gom #1: 6 lá (plot_logs_head:14, qr_issue, qr_revoke, qr_sig×3), merkle_root 27076997…, manifest f6a96706…, created_by agent:anchor"),
+      C("F06-03", "Build lại không đổi", "không dòng mới", "(không đổi), vẫn 1 dòng"),
+      C("F06-04", "Verify", "exit 0", "khớp DB — chưa neo"),
+      C("F06-05", "Export", "sha = manifest_sha256", "anchor-1.json sha256 f6a96706… = manifest_sha256"),
+      C("F06-06", "Submit provider none", "exit 2, 0 receipt", "exit 2 CHƯA NEO; anchor_receipts 0"),
+      C("F06-07", "Status", "liệt kê", "provider none; #1 chưa neo")],
+  loi=[])
+
+I["data_platform-01"] = dict(env=ENV_DP, muc="LOCAL", tt="DAT", nn=None,
+  can="Server Bên B (data_platform-90); login thật in role svc_*/app_human/ben_a_reader; human_logins do Bên B điền; chính sách loader_gate",
+  gh="Một cluster Docker thử, không phải server vật lý Bên B; login dịch vụ/người chế độ thực do điều phối viên kiểm.",
+  dv=["golden_hong.json"],
+  ca=[C("DP01-01a", "apply_schema chạy lại", "exit 0, số bảng không đổi", "exit 0; 100 bảng trước/sau; 92 function"),
+      C("DP01-01b", "apply_schema --roles", "exit 0", "exit 0; roles applied"),
+      C("DP01-02", "Role tồn tại", "đủ role", "agent_writer, app_human, ben_a_reader, bks_reader, svc_backup/job/loader/ui/webhook (NOLOGIN)"),
+      C("DP01-03a", "golden_store", "exit 0", "price_same=34, totals sku_master=13 sku_map=15 price_list=34"),
+      C("DP01-03b", "golden_store lần 2", "counts không đổi; 0 trùng giá hiệu lực", "y hệt; truy vấn trùng (sku,channel,kind) valid_to null = 0 dòng"),
+      C("DP01-03c", "--report", "exit 0", "liệt kê giá chờ duyệt"),
+      C("DP01-04a", "core_store", "exit 0", "products=27 plots=3 plot_logs=6 orders=5 claims=22 assets=219"),
+      C("DP01-04b", "core_store lần 2", "counts ổn định", "không đổi"),
+      C("DP01-05a", "Âm: golden hỏng", "exit !=0, không xóa", "exit 1 'JSON hỏng — không connect, không ghi/xóa'; counts giữ"),
+      C("DP01-05b", "Âm: products.jsonl thiếu", "exit 1 không nạp", "exit 1 'thiếu products.jsonl'; counts giữ"),
+      C("DP01-06", "Âm: quyền role không cấp", "denied", "it_g5_noprv: DENIED price_list/sku_master/contacts/plot_logs; role đã DROP")],
+  loi=[])
+
+I["data_platform-02.1"] = dict(env=ENV_DP + "; DOC_INTAKE_DIR/DOC_ORIGINALS_DIR → scratchpad; OCR_PROVIDER không đặt (none)",
+  muc="LOCAL", tt="BI_CHAN", nn="MISSING_ADAPTER", can="Vendor OCR trong nước + hợp đồng/DPA + key cắm vào ingest.doc_intake.PROVIDERS; rồi --reprocess-pending",
+  gh="Chỉ PDF có lớp chữ (fixture ASCII) trích được trường; ảnh scan ở cho_ocr.", dv=["gtn_thu_it.pdf", "scan_thu_it.png"],
+  ca=[C("DP021-01", "Intake PDF chữ + ảnh scan", "PDF pending_review + fields; ảnh cho_ocr + exit 2", "exit 2 [blocked]; af03f443 pending_review fields=3; 472d705c cho_ocr"),
+      C("DP021-01q", "Assert DB", "document_fields verified=false", "so_giay 123/2026/DKSP, ngay_cap 2026-10-15, ten_san_pham — verified False; scan text_source none pii NULL"),
+      C("DP021-02", "Ảnh scan → cho_ocr", "exit 2 [blocked]", "như DP021-01 (cùng lượt chạy)", ev="DP021-01"),
+      C("DP021-03", "Reprocess none", "exit 2", "exit 2 [blocked] OCR chưa cấu hình")],
+  loi=[])
+
+I["data_platform-02.2"] = dict(env=ENV_DP + "; DOC_ORIGINALS_DIR → scratchpad", muc="LOCAL", tt="DAT", nn=None,
+  can="Chính sách loader_gate; Pháp chế thật được ủy quyền", gh="Kho bản gốc trên đĩa máy dev (scratchpad).",
+  dv=["gtn_thu_it.pdf", "scan_thu_it.png"],
+  ca=[C("DP022-01", "Bản gốc + sha", "tên tệp = sha256(nội dung) = documents.sha256", "2 tệp MATCH", lenh="sha256sum <scratch>/originals/*", exit_=0),
+      C("DP022-02", "Idempotent", "dup", "new=0 dup=2"),
+      C("DP022-03", "Verify (người)", "verified", "af03f443 → verified bởi Pháp Chế Thử IT; 3 field verified True"),
+      C("DP022-04", "Âm: verify cho_ocr", "exit 1", "exit 1 không ở pending_review"),
+      C("DP022-05", "Âm: agent", "exit 1", "exit 1 agent không được reject"),
+      C("DP022-06a", "disable 02.2", "tắt", "chạy thử → tắt"),
+      C("DP022-06b", "Âm: tắt → loader chặn", "exit 2", "exit 2 [rollout] tính năng TẮT → KHÔNG nạp"),
+      C("DP022-06c", "promote", "chạy thử", "tắt → chạy thử")],
+  loi=[])
+
+I["data_platform-03"] = dict(env=ENV_DP + "; fake ở biên: llm_gateway._client = FakeClient embeddings tất định 16 chiều (không mạng); OPENROUTER_API_KEY giả CHỈ trong tiến trình harness để qua load_env",
+  muc="MOCK", tt="DAT", nn=None, can="Người duyệt tài liệu nội bộ được Bên B ủy quyền + login riêng; embedding thật qua OpenRouter (chi phí)",
+  gh="Vector embedding là giả (không đánh giá chất lượng truy hồi); corpus công khai = data/*.jsonl repo.",
+  dv=["quy_trinh_thu_it.md", "mat_thu_it.md"],
+  ca=[C("DP03-01", "Embed công khai", "chunks > 0, lọc rượu", "868 chunk/167 doc, 14 lời gọi embed qua gateway (llm_usage ingest/data_platform-03); bỏ 9 record + 30 chunk rượu; 0 chunk chứa 'rượu'"),
+      C("DP03-02", "KB nội bộ", "chunks_internal approved_by", "internal:it_g5/quy-trinh-thu-it 1 chunk v1 approved_by 'Trưởng Phòng Thử IT'"),
+      C("DP03-03", "Không đổi", "0 embed", "không đổi (0 embed), 0 lời gọi transport"),
+      C("DP03-04", "Âm: mật", "exit 2", "exit 2 tài liệu MẬT — 0 lời gọi"),
+      C("DP03-05", "Âm: agent duyệt", "exit 2", "exit 2 --approved-by phải là NGƯỜI"),
+      C("DP03-06", "kb_gaps", "exit 0", "exit 0 ghi kb_gaps.md (scratchpad)"),
+      C("DP03-07", "Bổ sung sau khóa: tách kho (tĩnh)", "answer() không đọc chunks_internal", "retrieve mặc định 'public' → chunks; chunks_internal chỉ khi collection internal:* tường minh", lenh="grep api/rag.py", exit_=0)],
+  loi=[])
+
+I["data_platform-04"] = dict(env=ENV_DP + "; fake ở biên: llm_gateway._client = FakeClient ghi payload; CONFIG → bản sao scratchpad (FIXTURE trần/nút tắt); 1 dòng llm_usage chi tiêu FIXTURE",
+  muc="MOCK", tt="DAT", nn=None, can="Quản lý AI (Bên B) chốt trần từng tính năng (feature_caps_usd)",
+  gh="Transport giả; không kiểm hành vi provider thật (zdr/allow_fallbacks chỉ kiểm có trong payload).", dv=[],
+  ca=[C("DP04", "Kịch bản gateway (12 ca con DP04-01a..07b)", "che PII, giữ hotline; llm_usage feature_id; trần tính năng/agent, nút tắt config/env, feature sai → chặn 0 lời gọi", "TONG PASS: payload 'Tôi là ***, SĐT ***, email ***, nhà ***' giữ '0235 3699 899'; embed input che; llm_usage ('smoke','sales-01',ok); sales-02 vượt trần → BLOCKED 0 lời gọi; kill_features/LLM_KILL_FEATURES/BAD/cap 0 → chặn 0 lời gọi")],
+  loi=[])
+
+I["data_platform-05"] = dict(env=ENV_DP, muc="LOCAL", tt="DAT", nn=None,
+  can="Mapping cột data/market_csv_map.json đối chiếu file xuất thật; chính sách loader_gate",
+  gh="CSV fixture theo mapping GIẢ ĐỊNH; chưa đối chiếu file Seller Center thật.",
+  dv=["listing_thu_it.csv", "order_thu_it.csv", "listing_hong.csv", "listing_thu_it_2.csv"],
+  ca=[C("DP05-01", "Nạp listing", "snapshot sha = sha file; alerts", "snapshot #1 4 dòng map 3; alerts alcohol_listed S1, price_mismatch S2, item_unmapped S2"),
+      C("DP05-02", "Nạp order bỏ PII", "không SĐT/tên", "snapshot #2; raw chỉ allowlist + order_id_hash; DP05-02q: 0 dòng chứa SĐT/tên/địa chỉ/mã đơn gốc"),
+      C("DP05-02q", "Assert DB", "—", "file_sha256 0ba66307…/6e0bff77… khớp fixture"),
+      C("DP05-03", "Idempotent", "[skip]", "[skip] snapshot #1"),
+      C("DP05-04", "Âm: thiếu cột", "exit 1 0 snapshot", "exit 1 thiếu cột 'Giá' — không connect"),
+      C("DP05-05b", "Âm: tắt", "exit 2", "exit 2 [loader-gate] TẮT → KHÔNG nạp; snapshot giữ 2 (lượt 1 hỏng harness: truyền nhầm file)"),
+      C("DP05-06", "--report", "exit 0", "3 cảnh báo mở S1 trước S2, snapshot mới nhất, cảnh báo thiếu ads")],
+  loi=[])
+
+I["data_platform-06"] = dict(env=ENV_DP + "; fake ở biên: server Shopee GIẢ 127.0.0.1 (theo tài liệu công khai) + key GIẢ",
+  muc="MOCK", tt="BI_CHAN", nn="EXTERNAL_INPUT", can="Bên B cấp app key/sandbox Shopee Open Platform/TikTok Shop (quyền chỉ đọc); xác minh chữ ký/endpoint/field/phân trang/rate limit",
+  gh="Chỉ shopee listing với server giả; tiktok/order chưa chạy.", dv=[],
+  ca=[C("DP06-01", "Thiếu key", "exit 2 0 request", "exit 2 [external-dep] thiếu 4 biến — không connect"),
+      C("DP06-02", "Server giả", "snapshot api:shopee:listing", "snapshot #3 2 dòng map 2; request có sign/token/partner_id; đóng 1 cảnh báo giá"),
+      C("DP06-03", "Âm: base ngoài allowlist", "exit 2", "exit 2 SHOPEE_API_BASE không hợp lệ; 0 request"),
+      C("DP06-04", "Idempotent", "[skip]", "[skip] dữ liệu không đổi")],
+  loi=[])
+
+I["data_platform-07.1"] = dict(env=ENV_DP + "; JOB_LOCK_DIR + báo cáo → scratchpad; webhook Zalo thật trên 127.0.0.1 (state scratchpad)",
+  muc="LOCAL", tt="DAT", nn=None, can="Máy giám sát NGOÀI server Bên B chạy webhook_probe theo lịch + kênh báo (runbook 10.6)",
+  gh="Giám sát chạy cùng máy dev; máy giám sát độc lập ngoài server không chứng minh được; --notify không kiểm.", dv=[],
+  ca=[C("DP071-01", "Bản tin sức khỏe", "health-*.md đủ mục", "health-2026-10-23.md: DB, Job 24h, Chi phí AI theo agent, Lỗi LLM 24h, Hàng chờ (content_drafts), Hạn lưu; nhãn CHẠY THỬ"),
+      C("DP071-02", "Lịch job", "exit 0", "liệt kê 34 job từ deploy/onprem/jobs.json"),
+      C("DP071-03", "Chạy job vt_pests", "job_runs job:vt_pests", "exit 0; job_runs 'job:vt_pests' ok"),
+      C("DP071-04", "Âm: khóa chồng", "exit 75", "exit 75; job_runs ok=false 'chạy chồng — bỏ lượt'"),
+      C("DP071-05", "Probe sống/chết", "0 / !=0", "/readyz HTTP 200 exit 0; cổng chết URLError exit 1; --dry-run 0 red_alerts")],
+  loi=[])
+
+I["data_platform-07.2"] = dict(env=ENV_DP + "; BACKUP_DIR/offsite dir → scratchpad; PG_BIN PostgreSQL 17 máy dev",
+  muc="LOCAL", tt="DAT", nn=None, can="Offsite/NAS ngoài server + lịch timer trên server Bên B; khóa mã hóa công ty",
+  gh="Offsite 'dir:' cùng máy dev; backup chưa mã hóa; DR Docker do điều phối viên chạy riêng.", dv=[],
+  ca=[C("DP072-01", "Backup", "dump+manifest+jsonl+evidence", "dump 929784 B, manifest sha khớp, 100 bảng row_counts, không host/user; backup_runs ok; file_output_evidence bk:cfeac278…"),
+      C("DP072-01q", "Assert DB/manifest", "—", "file_output_evidence 1 dòng backup_runs; sha_match True"),
+      C("DP072-02", "Restore drill", "100/100 khớp, DB tạm xóa", "samsam_drill_… 100/100 bảng khớp RTO 4.2s; không còn DB samsam_drill%"),
+      C("DP072-03", "Âm: BACKUP_DIR trong repo", "exit 2", "exit 2 [usage]; thư mục không tạo"),
+      C("DP072-04", "Offsite dir", "chép + kiểm sha", "[offsite] đã chép + kiểm sha256; evidence #2")],
+  loi=[])
+
+I["data_platform-07.3"] = dict(env=ENV_DP + "; ca cho phép của cổng dùng FIXTURE: bản sao config (approvers giả) + 2 dòng eval_runs GIẢ cho SHA f1f1…",
+  muc="LOCAL", tt="DAT", nn=None, can="Bên B cử người duyệt deploy (approvers); frozen 22 suite",
+  gh="Tree bẩn → chỉ ghi '<sha>-dirty' (cổng không bao giờ khớp); nhánh cho phép chỉ bằng FIXTURE.", dv=["eval_config_fixture.json"],
+  ca=[C("DP073-02", "Âm: tree bẩn", "exit 1", "exit 1 working tree bẩn — không ghi"),
+      C("DP073-01", "Eval ghi --allow-dirty", "eval_runs -dirty", "guardrail v2 130/132 ≥0.95 PASS; eval_runs #1 16b33fc…-dirty"),
+      C("DP073-03", "Cổng từ chối", "exit 1", "deny: guardrail/chatbot chưa có eval cho SHA; approvers rỗng"),
+      C("DP073-04", "Cổng cho phép (FIXTURE)", "exit 0 in kế hoạch", "exit 0, in kế hoạch release/rollback — không chạy lệnh"),
+      C("DP073-05a", "Âm: đóng băng feature", "exit 1", "exit 1 đóng băng 21/12/2026–10/02/2027"),
+      C("DP073-05b", "Hotfix trong đóng băng", "exit 0", "exit 0 (cho qua kèm warn)"),
+      C("DP073-06", "Validate", "exit 0", "22/22 suite hợp lệ")],
+  loi=[])
+
+I["data_platform-08"] = dict(env=ENV_DP + "; báo cáo → scratchpad; ca 'đủ điều kiện' dùng FIXTURE (mốc lùi qua hàm rollout + 50 documents GIẢ)",
+  muc="LOCAL", tt="DAT", nn=None, can="Chốt lịch nghỉ (rollout_config.json holidays) + danh mục 89 mục",
+  gh="Nhánh đủ điều kiện CHỈ theo FIXTURE (không phải bằng chứng ngày chạy thử hợp đồng). Lượt 1 dựng fixture bằng approval_queue thất bại vì trigger approval_queue_guard ép created_at=now() (đúng thiết kế chống lùi giờ); lượt 2 dùng nguồn documents. Quan sát: login owner truyền được mốc 'now' lùi vào rollout_transition_human (p10_now — chỉ owner).",
+  dv=[], ca=[C("DP08-01", "Seed", "vào sổ", "84 vào sổ chay_thu, 12 bỏ qua (chưa co_code)"),
+      C("DP08-02", "Promote bị chặn", "exit 1", "data_platform-05: mới 0/5 ngày, 1/50 đầu ra, 1/5 ngày"),
+      C("DP08-02b", "Promote bị chặn (0 đầu ra)", "exit 1", "farming-05.4 0/50"),
+      C("DP08-03a", "Dựng FIXTURE lượt 2", "DB recount = Python", "DB rollout_recount_human: days 9, outputs 52, out_days 9; Python facts giống, target co_nguoi_duyet why []"),
+      C("DP08-03b", "Promote đủ điều kiện", "exit 0 co_nguoi_duyet + event", "chạy thử → có người duyệt; event promote evidence {days 9, outputs 52, out_days 9}"),
+      C("DP08-04", "Promote →van_hanh chặn", "exit 1", "mới 0/10 ngày; chưa có đầu ra giai đoạn"),
+      C("DP08-05", "Severe", "chay_thu", "ghi 'Từ cấm' → chạy thử"),
+      C("DP08-06", "Dossier", "DỰ THẢO", "tiêu đề '... — DỰ THẢO do hệ thống dựng (... không phải biên bản)'"),
+      C("DP08-07", "Báo cáo tháng", "van-hanh-2026-10.md", "KPI PL02 mục 3, tiêu chí mục 2, tài sản; nhãn CHẠY THỬ; 'chưa có dữ liệu' khi thiếu nguồn"),
+      C("DP08-08", "Âm: agent", "exit 2", "exit 2 --by phải là NGƯỜI thật")],
+  loi=[])
+
+I["data_platform-90"] = dict(env="Máy dev — kiểm tĩnh tài liệu/công cụ trong repo", muc="LOCAL", tt="BI_CHAN", nn="NON_SOFTWARE",
+  can="Bằng chứng server vật lý, UPS, mạng, NAS/offsite, máy giám sát độc lập, người giữ tài khoản quản trị cao nhất phía Bên B",
+  gh="Chỉ chứng minh tài liệu/công cụ có trong repo; hạ tầng vật lý ngoài phạm vi phần mềm.", dv=[],
+  ca=[C("DP90-01", "Tài liệu có", "README, jobs.json, systemd", "deploy/onprem/README.md (mục phân quyền, backup ngoài, diễn tập, giám sát, timer), jobs.json, systemd/*, runbook-ha-tang.md", exit_=0, lenh="ls/grep deploy/onprem + runbook"),
+      C("DP90-02", "jobs.json hợp lệ", "exit 0", "job_runs --list exit 0 (34 job)"),
+      C("DP90-03", "Bằng chứng vật lý", "—", "—", kq="NOT_RUN", lenh="—", ly="Ngoài phần mềm: không thể có trên máy dev")],
+  loi=[])
+
+OUT.mkdir(parents=True, exist_ok=True)
+for fid, d in I.items():
+    k, cr = KHUNG[fid], CRIT[fid]
+    ev, cas = [], []
+    for c in d["ca"]:
+        for p in c.pop("_ev"):
+            if p not in ev:
+                ev.append(p)
+        cas.append(c)
+    # evidence bổ sung theo tiền tố
+    extra = {"farming-03.2": ["runs/F032-07_assert.txt", "outputs/qr_index_van_hanh_fixture.html"],
+             "farming-02.2": ["outputs/garden-week-2026-10-22.md"], "farming-05.2": ["outputs/vt-thu-hoach-2026-10-23.md"],
+             "farming-05.3": ["outputs/vt-canh-bao-2026-10-23.md"], "farming-06": ["outputs/anchor-1.json"],
+             "data_platform-07.1": ["outputs/health-2026-10-23.md"],
+             "data_platform-08": ["outputs/nghiem-thu-P1-thu-it.md", "outputs/van-hanh-2026-10.md",
+                                  "runs/DP08-03a_luot1_fixture_aq_bi_trigger_chan.txt", "runs/DP08-03b_luot1_fixture_aq_bi_trigger_chan.txt"],
+             "data_platform-02.2": ["runs/DP022-01.txt"], "data_platform-90": ["runs/DP90-01.txt"],
+             "farming-03.1": ["runs/F031-02_luot1_hong_du_lieu_moi.txt", "runs/F031-04_luot1_hong_du_lieu_moi.txt"],
+             "farming-04": ["runs/F04-DIAG1.txt", "runs/F04-DIAG4.txt"]}
+    for rel in extra.get(fid, []):
+        p = EVD / "g5" / rel
+        if p.exists() and p not in ev:
+            ev.append(p)
+    harness = sorted((EVD / "g5" / "harness").glob("*.py")) + [EVD / "g5" / "harness" / "lib.sh"]
+    nfail = sum(c["ket_qua"] == "FAIL" for c in cas)
+    if d["tt"] == "DAT":
+        assert nfail == 0, fid
+    rec = {"id": fid, "ten": k["ten"], "khoi": k["khoi"], "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"],
+           "can_cu": k["can_cu"], "tieu_chi": cr["tieu_chi_cu_the"], "fingerprint": FP, "thoi_gian": NOW,
+           "moi_truong": d["env"],
+           "dau_vao": [{"ten": n, "sha256": FX.get(n, "(xem evidence/itacc_r10/g5/fixtures_sha256.txt)"), "provenance": "fixture thử IT"} for n in d["dv"]],
+           "ca": cas, "trang_thai": d["tt"], "muc_kiem": d["muc"], "nguyen_nhan": d["nn"],
+           "can_de_go": d["can"], "gioi_han": d["gh"] + " Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+           "evidence": [{"path": str(p.relative_to(ROOT)).replace("\\", "/"), "sha256": sha(p)} for p in ev]
+                       + [{"path": str(h.relative_to(ROOT)).replace("\\", "/"), "sha256": sha(h)} for h in harness if h.exists()],
+           "loi_san_pham": d["loi"]}
+    (OUT / f"{fid}.json").write_text(json.dumps(rec, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    print(fid, d["tt"], d["muc"], d["nn"] or "", f"ca={len(cas)} fail={nfail} ev={len(ev)}")

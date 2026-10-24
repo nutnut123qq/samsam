@@ -1,0 +1,11 @@
+# ca F01-7
+# gio 2026-10-23T10:23:14+07:00
+# lenh python -m ingest.settlement_csv --file evidence/itacc_r10/g4/fixtures/qt_shopee_s2.csv --channel shopee
+# exit 0
+--- stdout ---
+[load] quyết toán shopee qt_shopee_s2.csv: 2 dòng; đối chiếu: khop=2, lech=0, thieu_chung_tu=0, hoan=0
+[warn] khoản xuất lại ở ≥2 file (chồng kỳ): trùng 1, lệch 1 — qt_shopee_s1.csv, qt_shopee_s2.csv. Trùng nguyên văn tính 1 lần; lệch giữ cả hai → đối soát quý BẤT THƯỜNG, không tính phí tới khi người đối soát xử lý.
+[done]
+
+--- stderr ---
+

@@ -1,0 +1,129 @@
+{
+ "id": "marketing-04.2",
+ "ten": "Kiểm tra bài đăng của đối tác",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / KOC và đại lý affiliate: 'kiểm tra bài đăng của đối tác'",
+ "tieu_chi": [
+  "T1 `python -m agents.ra_kenh --partner-file F --by <người>` exit 0",
+  "T2 mục approval_queue marketing/partner_post_review created_by='agent:mkt_doi_tac' pending cho bài vi phạm; sổ partner_post_scans chỉ sha256 URL/text + tên miền (không text thô)",
+  "T3 mã đối tác lạ + chính sách chưa chọn → từ chối cả file 0 dòng; cột lạ → 0 dòng; nạp lại → không nhân bản; tắt → exit 2",
+  "T4 agent không liên hệ đối tác/không gỡ bài"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); đối chiếu kit koc_brief #7 đã duyệt (dev)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/partner_ok.csv",
+   "sha256": "9169ba72375ca073903ca73ba57efa4810a7dee50022a574711e4a87d5e1f915",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/partner_unknown.csv",
+   "sha256": "5cf5ffdb25fcee7574730399d98c8b1cfe9e5052e27ea2cc7f1ef1fe62071db2",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/partner_badcol.csv",
+   "sha256": "51265f0ecd9b52b9afc6a6565f899cdfc3092e20ab60917f9e66ec37395e02f3",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/partner_new.csv",
+   "sha256": "8836f1016449fd3e059faef8c3f8e2a8125f885f0b2898f780b6fca3296a9a08",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "04.2-C1",
+   "mo_ta": "file bài KOC-MAU-02 (1 vi phạm, 1 sạch)",
+   "lenh": "python -m agents.ra_kenh --partner-file evidence/itacc_r10/g3/harness/fixtures/partner_ok.csv --by Người Thử IT",
+   "expected": "partner_post_review agent:mkt_doi_tac; sổ chỉ sha",
+   "actual": "exit 0; mục #9 marketing/partner_post_review created_by agent:mkt_doi_tac pending S1 (tu_cam, claim…), đối chiếu koc_brief#7; partner_post_scans 2 dòng chỉ url_sha256/text_sha256/host facebook.com — không text/URL thô",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "04.2-C2",
+   "mo_ta": "mã đối tác lạ",
+   "lenh": "python -m agents.ra_kenh --partner-file evidence/itacc_r10/g3/harness/fixtures/partner_unknown.csv --by Người Thử IT",
+   "expected": "từ chối file",
+   "actual": "exit 1 'tu_choi_file' + cảnh báo chính sách chưa chọn; 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "04.2-C3",
+   "mo_ta": "cột lạ ten_koc",
+   "lenh": "python -m agents.ra_kenh --partner-file evidence/itacc_r10/g3/harness/fixtures/partner_badcol.csv --by Người Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 cột lạ, 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "04.2-C4",
+   "mo_ta": "nạp lại",
+   "lenh": "python -m agents.ra_kenh --partner-file evidence/itacc_r10/g3/harness/fixtures/partner_ok.csv --by Người Thử IT",
+   "expected": "không nhân bản",
+   "actual": "bỏ qua 2 (trùng), 0 mục mới",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "04.2-C5",
+   "mo_ta": "tắt",
+   "lenh": "python -m agents.ra_kenh --partner-file evidence/itacc_r10/g3/harness/fixtures/partner_new.csv --by Người Thử IT",
+   "expected": "exit 2",
+   "actual": "exit 2 [rollout] marketing-04.2 đang tắt; 0 dòng",
+   "exit": 2,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "File bài đối tác nhập tay (chưa có nguồn tự động); chính sách mã lạ chưa chọn → mặc định an toàn; danh tính người chạy (human_actor) chế độ thực do điều phối viên kiểm.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/04.2-C1.txt",
+   "sha256": "4ae3367b4f0440fe281bc755ca91d31260537e752ff979c0dd551ad6a2b7e7d4"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/04.2-C1.db.json",
+   "sha256": "c7485474a191cebdc773882bdbf710d375b476b0e9170e700e69253083630f80"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/04.2-C1.scans.json",
+   "sha256": "0fccaa13e946b9d11bbb99ec6fd9ea96be85343f3c326fbc005bb47fb1d9b428"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/04.2-C2.txt",
+   "sha256": "9b03c7ce900ad39ebc57396f095ae63962393430ab67ac7dd9bda00b0ff50453"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/04.2-C3.txt",
+   "sha256": "caf106908776b2f3e60bdccdcf3c71d85b17257dc23fca0d44e3ae263152ba89"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/04.2-C4.txt",
+   "sha256": "432cbe6899b58b2dcc8b07ce7ea88ba869cb846af74b72d59b6fb25cf95c34d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/04.2-C5a.txt",
+   "sha256": "84a855902c3990a68250724d6a1f6d3692261fe078d089141f60d439f68d9841"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/04.2-C5.txt",
+   "sha256": "47572c0dcb080144bbb04e0c735b804d336f714a8931ab34545f6324c24dae24"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/04.2-C5b.txt",
+   "sha256": "451f4a49725af28d791cd2be3378e7bad32997c67a2b6194a22dc12dd6344c1b"
+  }
+ ],
+ "loi_san_pham": []
+}

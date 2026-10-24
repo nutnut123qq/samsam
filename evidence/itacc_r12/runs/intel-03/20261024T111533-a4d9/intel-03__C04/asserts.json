@@ -1,0 +1,68 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\intel-03\\20261024T111533-a4d9\\intel-03__C04\\out/repw/intel-doithu-2026-10-19.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/intel-03/20261024T111533-a4d9/intel-03__C04/out/repw/intel-doithu-2026-10-19.md",
+    "sha256": "7c4f6302890a3e2a1aa2480f83911302c25c37ba0478b91170ebed6e4f58609e"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-03\\20261024T111533-a4d9\\intel-03__C04\\out/repw/intel-doithu-2026-10-19.md",
+  "re": "CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng intel-03",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-03\\20261024T111533-a4d9\\intel-03__C04\\out/repw/intel-doithu-2026-10-19.md",
+  "re": "\\A(?=[\\s\\S]*- K5: 2 quan sát giá, 2 có giá KM)(?=[\\s\\S]*- TRIMICO: 2 quan sát giá, 0 có giá KM)(?=[\\s\\S]*- KGC: 2 quan sát giá, 1 có giá KM)",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-03\\20261024T111533-a4d9\\intel-03__C04\\out/repw/intel-doithu-2026-10-19.md",
+  "re": "\\| 2026-10-23 \\| Sâm K5 \\| shopee \\| [^|\\n]+ \\| savina-12v \\| 175\\.000 \\(obs#\\d+: https://shopee\\.vn/product/thu-it-k5/1001\\) \\| 150\\.000 \\| 159\\.000 \\(price_list#\\d+ shopee, CHƯA duyệt\\) \\| -5\\.7% \\|",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-03\\20261024T111533-a4d9\\intel-03__C04\\out/repw/intel-doithu-2026-10-19.md",
+  "re": "\\| 2026-10-23 \\| TRIMICO \\| shopee \\| [^|\\n]+ \\| saphraton-20v \\| 330\\.000 \\(obs#\\d+: https://shopee\\.vn/product/thu-it-trimico/2002\\) \\| — \\| 299\\.000 \\(price_list#\\d+ shopee, đã duyệt\\) \\| \\+10\\.4% \\|",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-03\\20261024T111533-a4d9\\intel-03__C04\\out/repw/intel-doithu-2026-10-19.md",
+  "re": "\\| 2026-10-19 \\| Sâm K5 \\| shopee \\|[^\\n]*\\| chưa có giá golden \\| — \\|",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\intel-03\\20261024T111533-a4d9\\intel-03__C04\\out/repw/intel-doithu-2026-10-19.md",
+  "re": "### Sản phẩm đối thủ lần đầu ghi nhận trong tuần[\\s\\S]*Nước hồng sâm KGC mới Thử IT",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from report_outputs where feature_id = 'intel-03' and name = 'intel-doithu-2026-10-19.md'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

@@ -1,0 +1,27 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import os,sys,psycopg\nc=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5)\ndb=c.execute('select current_database()').fetchone()[0]\nassert db.startswith('samsam_itacc_r12_'),db\nfor s in sys.argv[1:]:\n    c.execute(s)\nc.commit()\nprint('[fixture-sql] ok',db,len(sys.argv)-1)",
+  "insert into llm_usage (ts, agent_id, model, tokens_in, tokens_out, cost_usd, ok, error, feature_id) values ('2026-10-10 10:00+07','chatbot','fixture/thu-it',1000,500,100,true,'FIXTURE thu IT',null),('2026-10-12 10:00+07','content','fixture/thu-it',1000,500,68,true,'FIXTURE thu IT',null)"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:22:11+07:00",
+ "ket_thuc": "2026-10-24T11:22:12+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\[fixture-sql\\] ok samsam_itacc_r12_f051 1",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "4a9063432465afa800cc19fe29247be904ccc0289002e5f89befd0105e644983",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

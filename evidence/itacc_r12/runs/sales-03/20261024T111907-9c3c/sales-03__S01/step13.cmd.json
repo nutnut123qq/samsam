@@ -1,0 +1,24 @@
+{
+ "buoc": 13,
+ "argv": [
+  "python",
+  "-c",
+  "import os,shutil,sys; s,d,g=sys.argv[1:4]; os.makedirs(d); [shutil.copyfile(os.path.join(s,n),os.path.join(d,n)) for n in ('banned_words.txt','claims_whitelist.json','guardrail_rules.json','llm_gateway.json')]; shutil.copyfile(g,os.path.join(d,'golden_skus.json')); print('gdata ok',sorted(os.listdir(d)))",
+  "D:\\code\\samsam/data",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\sales-03\\20261024T111907-9c3c\\scratch/gdata",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/sales-03/golden_fixture.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:19:24+07:00",
+ "ket_thuc": "2026-10-24T11:19:25+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "f3d0b8789523965d301d271e93654b2e5a4f8fa8ca6d3cbb647209e16991136d",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

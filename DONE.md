@@ -23,6 +23,198 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Vòng r12-fix (24/10/2026) — vá ĐÚNG hai lỗi D2/L3 controller bác ở r12 — CHƯA commit/merge/push/deploy
+
+Không truy cập DB `samsam`, không đổi `acceptance_status`, không mở việc ngoài D2/L3. Postgres Docker riêng
+`samsam-itacc-r12fix`. Fingerprint mã bản cuối (loại *.md) `8f9188ade140c8aea64162400a772ae3f41c2780f788edb40fc9b254ae82aed3`. Kết luận r12 "20/20 FIXED" = lịch sử, bị bác ở D2/L3.
+
+1. D2: `pipelines/pii.py` tách `_flatten_paren` (đầu ra `_mask_pii` không đổi); `pipelines/guardrail.py` luật 8 quét thêm
+   bản phẳng, cạn ngân sách → chặn, khóa pii_allow chuẩn hóa 84→0. Luật `pii_ca_nhan` vẫn chờ Pháp chế.
+2. L3: `connectors/zalo.py` nhánh quá 30 giây gửi `NO_HANDOFF_TEXT` (không hứa), ghi handoff 1 lần SAU gửi; Messenger chung.
+3. Probe trước/sau cùng sha: D2 16/4 → 20/0, L3 11/9 → 20/0 (PASS/FAIL);
+   test `tests/test_r12fix_d2_l3.py` + 2 test hạn chót `test_v13_c07_ops.py` đổi kỳ vọng sang câu không hứa.
+4. Kiểm lại 5 mục bằng tiêu chí khóa trước (`evidence/itacc_r12_fix_d2_l3/criteria/r12fix_v1.json`): 5/5 ĐẠT. Tổng 96:
+   **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (r12 84/0/12).
+5. Gate: full 6773 passed in 6570.33s (1:49:30), EXIT 0; ruff_v2 EXIT 0, eval EXIT 0, dpia EXIT 0, redteam EXIT 0, secret_scan EXIT 0. Evidence `evidence/itacc_r12_fix_d2_l3/`.
+
+## Vòng r12 (24/10/2026) — vá 20 lỗi nghiệm thu nội bộ r10 + kiểm lại 48 mục — CHƯA commit/merge/push/deploy
+
+Không truy cập DB `samsam`, không đổi `acceptance_status`, không mở adapter vendor/website/quan sát ngoài 20 lỗi.
+Postgres Docker riêng `samsam-itacc-r12`. Fingerprint mã bản cuối (loại *.md) `57538e8935d0ab71e7b1cd8d803aab397be27cd1ab47516b75a1d437c7435c18`.
+
+1. Vá 20 lỗi (P-01, UI-01, UI-02, G5-01, G1-L1, G1-L3, D1/P052/L5, L3, L1, L2, F06-6, D2, RB, G1-L4, F031-6, G1-L5,
+   G1-L6, D4, G5-02, GATE-OUT) — probe trước/sau cùng input, baseline tái hiện, bản cuối 78/78 PASS; regression
+   `tests/test_r12_dot2.py`, `test_r12_dot3.py`, `test_r12_dot4.py` + cập nhật test cũ theo hành vi mới (giữ assertion an toàn).
+2. Schema/roles: `plot_log_add_human` (SECURITY DEFINER, human_actor farming), svc_ui SELECT cột plots/plot_logs + chunks,
+   link/unlink_lot_origin dùng human_actor; luật guardrail `pii_ca_nhan` (chờ Pháp chế). Nâng cấp baseline → bản vá ×2 OK.
+3. Full sơ bộ 2 failed (giữ `evidence/itacc_r12/gate/full_so_bo_fs1.txt`): sửa test qr_trace (thêm ca âm), trả hdtv_report về
+   giao diện `[blocked]` đã cam kết.
+4. Kiểm lại 48 mục bằng tiêu chí khóa trước khi chạy (8 nhóm + phiên bản sửa lỗi harness/tiêu chí có lý do) → 47 ĐẠT,
+   farming-01 BỊ CHẶN (adapter STT). UI thật 28/28. Tổng 96: **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (r11 60/0/36).
+5. Gate chốt: full 6666 passed in 2994.46s (0:49:54), EXIT 0 (gồm DR Docker); ruff/eval/DPIA/red-team EXIT 0; quét secret 0 giá trị thật (đã che mật
+   khẩu cluster thử lọt vào 2 log full — `gate/GHI_CHU_CHE_SECRET.md`). Runbook mục 10.10.
+
+## Vòng r11 (23/10/2026) — kiểm lại 6 mục nghiệm thu kỹ thuật nội bộ bằng evidence gốc mới — CHƯA commit/merge/push/deploy
+
+Không sửa mã sản phẩm (fingerprint `97051e55…8001` không đổi), không vá 20 lỗi r10, không truy cập DB `samsam`,
+không đổi `acceptance_status` (0/96 nghiệm thu hợp đồng). Postgres Docker riêng `samsam-itacc-r11` (127.0.0.1:55441).
+
+1. Chạy lại marketing-03.2, 05.1, 05.2, 06.1, 06.2 (r10 dựa log tái tạo từ transcript) và legal_hr-07 (r10 PASS
+   "theo ý định") theo tiêu chí r11 KHÓA TRƯỚC khi chạy — marketing-03.2 ĐẠT LOCAL 10/0/0; marketing-05.1 ĐẠT LOCAL 6/0/0; marketing-05.2 ĐẠT LOCAL 8/0/0; marketing-06.1 ĐẠT LOCAL 4/0/0; marketing-06.2 ĐẠT LOCAL 6/0/0; legal_hr-07 ĐẠT MOCK 6/0/0. Log gốc:
+   `evidence/itacc_r11/runs/<id>/<run_id>/`; bản ghi `evidence/itacc_r11/items/` (supersedes = đường dẫn + hash bản ghi r10).
+2. Đính chính tiêu chí: legal_hr-07-C1 (bộ lọc chủ đề loại tin lạc trước khi lưu → chính xác 1 dòng, không phải 2);
+   marketing-06.2-C3 (tuần đã đóng 2026-10-12 thay tuần hiện tại). Tiêu chí khóa r10 + 6 bản ghi r10 + log tái tạo giữ nguyên.
+3. Lỗi harness của chính lượt r11: 03.2 lượt v1 fixture `bien_the=4` ≠ creative #1 → tiêu chí v2 (chỉ đổi fixture), chạy lại toàn bộ.
+4. Tổng hiện hành (code sinh, 90 r10 + 6 r11): **60 ĐẠT / 0 CHƯA KIỂM / 36 BỊ CHẶN** — `evidence/itacc_r11/tong_hop.json`, `source_map.json`;
+   0 vi phạm nhất quán. Hồ sơ `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Full pytest/UI/gate là evidence r10
+   kế thừa trên cùng fingerprint — r11 không chạy full.
+5. Đã dọn sau khi lưu evidence: `docker rm -f -v samsam-itacc-r11` (mọi DB `samsam_itacc_r11_*`), file credential/muối/khóa thử
+   trong scratchpad, RSS giả 127.0.0.1:18793 đã dừng; không đụng tài nguyên lượt khác.
+
+## Vòng r10 (23/10/2026) — nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — CHƯA commit/merge/push/deploy
+
+Không phải nghiệm thu hợp đồng: `acceptance_status` không đổi (0/96 đã nghiệm thu), máy dev không phải server Bên B,
+không nâng rollout. Fingerprint `97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001` (không đổi suốt đợt). DB Postgres Docker cô lập
+`samsam_itacc_r10*` — KHÔNG truy cập `samsam`. Không sửa code sản phẩm.
+
+1. Kết quả 96 mục: **60 ĐẠT / 0 CHƯA KIỂM / 36 BỊ CHẶN** trên 96 (BỊ CHẶN: CODE_FAIL 24, MISSING_ADAPTER 4, EXTERNAL_INPUT 4, SEPARATE_REPO 2, NON_SOFTWARE 2). Hồ sơ `docs/handover/nghiem-thu-ky-thuat-noi-bo.md`; bản ghi từng mục
+   `evidence/itacc_r10/items/<id>.json`; tiêu chí khóa trước khi chạy `evidence/itacc_r10/criteria/`.
+2. 20 lỗi sản phẩm tái hiện, CHƯA vá (hồ sơ mục 5) — cao nhất P-01 `production bulletin` crash; tiếp theo
+   UI-01/UI-02 (`svc_ui` thiếu SELECT plots/plot_logs/chunks → tab Nhật ký vườn/Chat lỗi ở chế độ thực),
+   G5-01 (`garden_media_mkt` hành động không có trong `auth.ACTIONS`), G1-L1 (tắt 1 tính năng chặn đầu ra
+   tính năng khác), D1 (tắt vẫn gọi LLM), L1/L2/L3 (sales), G1-L3 (HĐTV in 0đ khi không có nguồn).
+3. Xuyên suốt + UI thật + DR Docker + rotation tool (Docker tạm) tự chạy lượt này — `evidence/itacc_r10/xuyen_suot/`, `ui/`.
+4. Gate: Full pytest (tuần tự, 1 lượt, gồm 3 ca DR Docker thật): **6619 passed in 2392.64s (0:39:52)**, EXIT 0; FAILED: không; SKIPPED: 0. Evidence `evidence/itacc_r10/gate/full_pytest.txt`. ruff/eval/DPIA/red-team đạt — `evidence/itacc_r10/gate/`.
+5. Rotation thật VẪN MỞ; sự cố DB `samsam` VẪN UNVERIFIED; chưa triển khai/chạy thử/nghiệm thu hợp đồng.
+
+## Vòng r9 (23/10/2026) — B3 ma trận đúng người + đính chính A10 adapter — CHƯA commit/merge/push/deploy
+
+Nền `17a4db173e37255c6bea62e995e27f989fdea4601ef87cf9af182c5209115693` (= baseline controller) → cuối `97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001`. DB thử
+`samsam_contract_r9probe/r9full` — KHÔNG truy cập `samsam`. **CHƯA HOÀN THÀNH
+TOÀN BỘ hợp đồng**: 0/96 sẵn sàng chạy thử, 0/96 nghiệm thu.
+
+1. **B3** (`pipelines/acceptance.py` `person_logins`): bằng chứng đăng nhập chỉ
+   tính khi cùng login VÀ `p10_norm(person)` khớp người ánh xạ hiện hành — đổi
+   ánh xạ sang người khác thì người mới phải tự đăng nhập. Ma trận vẫn chỉ đọc;
+   lịch sử `human_login_checks` giữ nguyên. Không đổi schema/roles/auth/UI.
+2. Probe cùng hash: 6/7 (c2 FAIL) → 7/7; test hồi quy mới FAIL trên code cũ;
+   probe r8 13/13; full 6619/0/0 (DR 3 PASSED); gate đạt —
+   `evidence/safety4_*.log`.
+3. **Đính chính r8 (A10)**: claim "không mục nào thiếu code / mỗi mục có
+   adapter" SAI. Adapter OCR (dùng chung production-03 + data_platform-02.1),
+   STT (farming-01), ảnh AI (marketing-02.1) CHƯA viết — registry chỉ `none`;
+   viết sau khi bên có thẩm quyền chọn vendor + đặc tả API + DPA + credential,
+   đóng bằng contract test rồi evidence sandbox/tích hợp thật. `market_api`,
+   `anchor` OTS có adapter nhưng chưa sandbox. Không đổi code_status/
+   acceptance_status.
+
+## Vòng r8 (22–23/10/2026) — vá 2 lỗ controller + bảng việc còn lại — CHƯA commit/merge/push/deploy
+
+Nền `005a35d8e33d04bed98b82da05a0d228d930ca4eddc6360c778436eb6a0aea33` → cuối `17a4db173e37255c6bea62e995e27f989fdea4601ef87cf9af182c5209115693` (alternate index, 9 file mới, trừ DONE+board, so
+HEAD 16b33fc). DB thử `samsam_contract_r8probe/r8up/r8ui/r8full/r8full2` — KHÔNG
+truy cập `samsam`. **Đính chính:** checkpoint S04b dưới (17/17) CHƯA ĐỦ — controller
+tái hiện cùng người dùng login thứ hai tự quyết; S04 chỉ đóng với evidence vòng này.
+**CHƯA HOÀN THÀNH TOÀN BỘ hợp đồng**: 0/96 sẵn sàng chạy thử, 0/96 nghiệm thu.
+
+1. **D1** (`docs/schema.sql`): kiểm tự duyệt so NGƯỜI của login tạo và login hiện
+   tại theo `human_logins` (mọi trạng thái) ngoài login/tên; áp cho duyệt draft,
+   quyết + override QA hàng duyệt, duyệt giá vốn; `cogs_versions.created_login` +
+   login người không lập giá vốn nhãn agent. Không suy tác giả lịch sử.
+2. **D2** (`pipelines/acceptance.py`, `pipelines/auth.py`, schema): B2 login còn
+   dùng được lúc kiểm (LOGIN, VALID UNTIL, connlimit, CONNECT, app_human, không
+   superuser); B3 bằng chứng ĐĂNG NHẬP THẬT `human_login_checks` do
+   `person_connect` ghi (DB + thời điểm, không mật khẩu, append-only).
+3. Probe cùng hash: 5/13 FAIL → 13/13; UI thật 14/14; nâng cấp ×2 đạt; full lượt 2
+   6619/0/0 (lượt 1 FAIL 2 drift tài liệu — đã sửa `kien-truc.md`,
+   `deploy/cloud/README.md`); gate đạt — `evidence/safety3_*.log`.
+4. **Bảng việc còn lại** (doi-chieu A10): 14 mục không `co_code`/ngoài 89 — không
+   mục nào thiếu code [ĐÍNH CHÍNH r9: SAI — adapter OCR/STT/ảnh AI chưa viết, xem mục r9]; chờ vendor/dữ liệu/quyết định/hạ tầng/repo website (không
+   tìm thấy repo website trên máy dev). **Gói đầu vào theo ưu tiên**:
+   `ho-so-san-sang-chay-thu.md` mục 0.
+5. Không triển khai/chạy thử thật: chưa có server Bên B, người duyệt/login thật,
+   dữ liệu thật — không giả lập tiến độ.
+
+## Vá 2 lỗ controller đợt an toàn (22/10/2026) — CHƯA commit/merge/push/deploy
+
+Nền fingerprint `87092728a204152ca21e794e09b8040a3bb367670e48c53c75e3192ae260a3b5` (snapshot working tree ngoài repo, 9 file mới) → cuối
+`005a35d8e33d04bed98b82da05a0d228d930ca4eddc6360c778436eb6a0aea33` (cùng cách tính). DB thử `samsam_contract_r7probe`/`r7ui`/`r7up`/
+`r7full` — KHÔNG truy cập `samsam`. **Đính chính:** checkpoint S04 bên dưới
+("CODE_VERIFIED") CHƯA ĐỦ — controller tái hiện login người tạo draft nhãn
+`agent:` rồi tự duyệt; S04 chỉ đóng với evidence mới dưới đây.
+
+1. **S04b** (`docs/schema.sql` khối cuối, không đổi Python): `created_login` =
+   `session_user` do trigger ghi trên `content_drafts`/`approval_queue` (caller
+   không khai được); login người tạo draft BẮT BUỘC tên chính mình (`human_actor`
+   — nhãn agent/system/auto_policy/biến thể → 42501), khối draft của người =
+   `marketing` (cùng quy tắc `store._draft_block`; tự khai khối khác → 42501);
+   mục hàng duyệt nhãn agent do CLI người khởi chạy giữ nhãn, login phải ánh xạ
+   người; `person_login_guard` chặn duyệt/quyết/override khi login = login tạo
+   hoặc tên trùng tác giả theo `p10_norm`. Probe login thật 11/17 FAIL → 17/17.
+   Test cũ đổi việc-dở mồi (không yếu bất biến): `test_v15_p10_human_authz.py`
+   (draft tên chính login), `test_v14_p2_service_auth.py` (dòng red_alerts).
+2. **Ma trận** `pipelines/acceptance.py`: B2 LUÔN kiểm — không DB = CHƯA KIỂM,
+   lỗi DB = không kiểm được, có DB = MỖI người duyệt đã cấu hình phải có ánh xạ
+   active đúng khối tới role đăng nhập được (app_human, không superuser); người
+   khác cùng khối không tính thay. Probe 4/10 FAIL → 10/10; test cũ kỳ vọng READY
+   không DB đã lật; thêm test DB thật (positive control READY). Ma trận tái sinh
+   bằng code: 0/96 READY, 0/96 nghiệm thu.
+3. **UI thật**: Streamlit 1.66.1 (venv tạm ngoài repo) + Chromium (Playwright),
+   127.0.0.1, `AUTH_MODE=local`, login DB thật, AI provider giả: 14/14 bước —
+   sai mật khẩu UI/Postgres bị từ chối; login chung không quyết thay; mở quyền
+   đúng người; login DB của người khác bị từ chối; tạo nháp qua UI ghi đúng tác
+   giả/login/khối; người tạo không tự duyệt; người khác đúng khối duyệt; từ chối,
+   xếp lịch, hàng duyệt chung qua login người; đổi người không dùng lại kết nối
+   cũ; sai khối không duyệt được. Sự cố trong lượt: 2 lần khởi động đầu server có
+   DSN rỗng + bind 0.0.0.0 — dừng ngay trước khi có phiên trình duyệt (không
+   kết nối DB), thêm chốt fail-closed — `evidence/safety2_ui.log`.
+4. **Gate fingerprint cuối:** full 6617 passed/0 failed/0 skipped (DR 3 PASSED);
+   nâng cấp ×2 đạt; ruff, eval 22/22, DPIA, red-team 0/50; probe F1/F2/S03/S04 đạt.
+5. Phát hiện mới (KHÔNG vá): (a) UI ghi `reviewer`/`decided_by` bằng tên đăng
+   nhập users.json (đã casefold) thay vì tên chuẩn trong `human_logins` — DB
+   vẫn khớp theo chuẩn hóa; (b) thông báo UI khi login thuộc người khác diễn đạt
+   dễ hiểu nhầm; (c) mục hàng duyệt nhãn agent do người khởi chạy có thể vào khối
+   bất kỳ (tác giả thật ở `created_login`, UI chưa hiển thị cột này).
+
+## An toàn + chuẩn bị nghiệm thu (22/10/2026) — nhánh `codex/safety-acceptance` từ `main` = `16b33fc`, CHƯA commit/merge/push/deploy
+
+Revision cuối (index tạm, 9 file mới, trừ DONE.md + board, so `16b33fc`):
+`87092728a204152ca21e794e09b8040a3bb367670e48c53c75e3192ae260a3b5`. DB test riêng `samsam_contract_r6probe`/`r6up`/`r6full` — KHÔNG kết
+nối `samsam`. Không đổi `acceptance_status`; không tuyên bố hoàn thành hợp đồng.
+
+**⚠ Nói to:** mật khẩu DB `.env` dev (role `postgres`, SUPERUSER) VẪN trùng giá
+trị lộ trong lịch sử Git public và dùng được qua localhost TCP (kiểm boolean
+22/10) — rotation CHƯA đóng ở môi trường nào (agent không có quyền); gói công
+cụ sẵn ở runbook 10.8. Sự cố test chạm `samsam` 20/10 vẫn UNVERIFIED.
+
+1. **S03** xuất tệp sàn shopee/tiktok: giá = `price_list` list ĐÃ duyệt hiệu
+   lực (quy tắc `kd_listing.golden_prices`), không JSON/kênh khác/floor/promo;
+   lỗi đọc giá → không tệp; manifest `gia_id` + `gia_ngay_hieu_luc`, `--verify`
+   bắt giá đổi/hết hạn. Probe trước 12/14 FAIL → sau 14/14.
+2. **S04** `person_login()` bỏ miễn trừ `svc_ui` (login UI dùng chung không ghi
+   tên người — 42501); `content_drafts.block` (code ghi lúc tạo) → DB kiểm khối
+   khi duyệt/từ chối/xếp lịch draft (draft cũ → marketing; người tạo tự rút
+   không kiểm khối); `human_whoami()`; `auth.person_connect` + UI chế độ thực
+   quyết định bằng login Postgres riêng (không lưu mật khẩu). Probe login thật
+   trước 6/17 FAIL → sau 17/17; nâng cấp 16b33fc ×2: dữ liệu/chuỗi hash/sổ
+   rollout giữ nguyên, thêm đúng 2 grant. Lật test cũ
+   `test_p0c_ui_login_keeps_session_trust…` (chính là đường giả danh).
+3. **S01** `scripts/db_rotate_password.py` (check/rotate/verify/verify-consumers;
+   verifier SCRAM; không secret argv/log; trust → exit 3) — đạt trên Docker tạm.
+4. **S02** `docs/handover/su-co-db-samsam.md` — timeline có nguồn, trực tiếp vs
+   suy đoán, thiếu gì, gói kiểm chỉ đọc trên bản sao.
+5. **A01** `pipelines/acceptance.py` + `docs/handover/ma-tran-nghiem-thu.md`
+   (96 = 89 + 7; READY 0/96; đã nghiệm thu 0/96). **A02/A04**
+   `ho-so-san-sang-chay-thu.md`. **A06** `rollout --dossier` DỰ THẢO + mục 3b/6/7;
+   `mau-ho-so-nghiem-thu.md`. **A03/A05/S05** bảng ở doi-chieu A9.
+6. **Gate revision cuối:** full 6604 passed/0 failed/0 skipped (DR 3 PASSED);
+   ruff, eval 22/22, DPIA, red-team 0/50; F1/F2/S03/S04 probe đạt —
+   `evidence/safety_*.log`.
+7. Chưa kiểm: UI Streamlit thật (cần tải streamlit — chưa được phép); server
+   Bên B; rotation thật; đối soát `samsam`. Thấy ngoài phạm vi (không làm):
+   nhật ký vườn ở UI nhận tên "Người ghi" tự gõ (nhập liệu, không qua
+   `human_actor`); login người kế thừa INSERT `content_drafts` của agent_writer
+   (có thể tự tạo draft mang `created_by` agent).
+
 ## Vá 2 lỗi controller đợt hoàn thiện (22/10/2026) — F1 sales-02, F2 giá website — CHƯA commit/merge/push/deploy
 
 Nền: fingerprint trước sửa `da55b0acb2f89f119bc6920accc3d3e481efc8051a1f37053a3d516126e0750b` (snapshot ngoài repo).

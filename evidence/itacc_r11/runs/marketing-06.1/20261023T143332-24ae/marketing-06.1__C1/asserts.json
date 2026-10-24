@@ -1,0 +1,26 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r11\\runs\\marketing-06.1\\20261023T143332-24ae\\marketing-06.1__C1\\out/seo-web-*.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r11/runs/marketing-06.1/20261023T143332-24ae/marketing-06.1__C1/out/seo-web-2026-10-23.md",
+    "sha256": "548e8d1d8777cb3def0d03ed493d609604871941e06ebf10743c51feacc0aa43"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'seo_web_fix' and created_by = 'agent:MKT-10' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from (select lower((regexp_matches(payload, 'https?://([^/\\s)>\\]`''\"]+)', 'g'))[1]) h from approval_queue where object_type = 'seo_web_fix') x where h not in ('samsam.net.vn', 'samsamngoclinh.com') and h not like '%.samsam.net.vn' and h not like '%.samsamngoclinh.com'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

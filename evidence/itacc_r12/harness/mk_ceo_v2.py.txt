@@ -1,0 +1,27 @@
+"""HARNESS r12 — tạo criteria/r12_ceo_v2.json từ r12_ceo.json (đã khóa, KHÔNG sửa) + khóa mới.
+Đổi DUY NHẤT ca MOI ceo-05__X05: v1 khóa định dạng `[rollout]` trên stdout, nhưng hdtv_report không thuộc nhóm lỗi RB —
+giao diện v14.3 đã cam kết `[blocked] …` trên stderr (test_hdtv_off_no_pack). Bất biến giữ: exit 2, thông báo chặn có
+mã ceo-05, không traceback, 0 file, 0 mục hàng duyệt mới.  python -I mk_ceo_v2.py.txt <fingerprint_code>"""
+import datetime
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+C = Path(__file__).resolve().parents[1] / "criteria"
+d = json.loads((C / "r12_ceo.json").read_text(encoding="utf-8"))
+d["_doc"] = ("v2 (điều phối viên 24/10/2026, TRƯỚC mọi lượt chạy nhóm ceo): chỉ đổi ca MOI ceo-05__X05 — xem docstring "
+             "evidence/itacc_r12/harness/mk_ceo_v2.py.txt. Kỳ vọng v1 giữ ở trường 'ky_vong_v1'. | " + d["_doc"])
+d["fingerprint_code"] = sys.argv[1]
+it = next(i for i in d["items"] if i["id"] == "ceo-05")
+x = next(c for c in it["ca"] if c["ma"] == "ceo-05__X05")
+st = x["buoc"][0]
+x["ky_vong_v1"] = {"stdout_re": st.pop("stdout_re")}
+st["out_re"] = r"\[(rollout|blocked)\][^\n]*ceo-05\b"
+x["mo_ta"] = "ceo-05 tắt → exit 2 + thông báo chặn có ceo-05 (stdout|stderr), không traceback, không file/mục; bật lại"
+s = json.dumps(d, ensure_ascii=False, indent=1)
+(C / "r12_ceo_v2.json").write_text(s, encoding="utf-8", newline="\n")
+h = hashlib.sha256(s.encode("utf-8")).hexdigest()
+(C / "r12_ceo_v2.lock.txt").write_text(
+    f"r12_ceo_v2.json {h} {datetime.datetime.now().astimezone().isoformat(timespec='seconds')}\n", encoding="utf-8")
+print(h)

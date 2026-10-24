@@ -1,0 +1,48 @@
+"""HARNESS g4 — truy vấn DB THỬ để assert (đọc DATABASE_URL đã source; không .env).
+
+  python q.py [--save MA] "<sql>" ["<sql>" ...]
+In mỗi câu + các dòng (JSON). --save ghi thêm out/<MA>.txt. Câu ghi (insert
+fixture) tự commit.
+"""
+import json
+import os
+import sys
+from pathlib import Path
+
+import psycopg
+
+OUT = Path(__file__).resolve().parents[1] / "out"
+
+
+def main() -> int:
+    a = sys.argv[1:]
+    save = None
+    if a and a[0] == "--save":
+        a.pop(0)
+        save = a.pop(0)
+    dsn = os.environ["DATABASE_URL"]
+    lines = []
+    with psycopg.connect(dsn, connect_timeout=5) as c:
+        db = c.execute("select current_database()").fetchone()[0]
+        assert db.startswith("samsam_itacc_r10"), db   # chỉ DB thử
+        lines.append(f"# db {db}")
+        for sql in a:
+            cur = c.execute(sql)
+            lines.append(f"> {sql}")
+            if cur.description:
+                for r in cur.fetchall():
+                    lines.append(json.dumps(list(r), ensure_ascii=False,
+                                            default=str))
+            else:
+                lines.append(f"(rowcount {cur.rowcount})")
+        c.commit()
+    text = "\n".join(lines) + "\n"
+    sys.stdout.buffer.write(text.encode("utf-8"))
+    if save:
+        OUT.mkdir(parents=True, exist_ok=True)
+        (OUT / f"{save}.txt").write_bytes(text.encode("utf-8"))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

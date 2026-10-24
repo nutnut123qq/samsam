@@ -1,0 +1,146 @@
+{
+ "id": "marketing-07.2",
+ "ten": "YouTube dài",
+ "khoi": "marketing",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / SEO và báo cáo kênh: 'YouTube dài (P2)'",
+ "tieu_chi": [
+  "T1 `python -m agents.mkt_youtube --brief ...` exit 0 (LLM giả)",
+  "T2 content_drafts channel='youtube' content_type='video' created_by='agent:mkt12' pending; chương bắt đầu 00:00 cộng dồn đúng; SRT 1 cue/phần; mô tả có nhãn AI + QC; privacyStatus 'private'; câu chạm giá bị bỏ",
+  "T3 brief nhắc rượu → 0 LLM; tổng thời lượng ngoài [300,900] → thoi_luong 0 dòng; tắt → không sinh",
+  "T4 không đăng YouTube; --render shorts dùng B-roll có license, có nhãn"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: LLM qua llm_gateway._client giả (gate/trần/llm_usage thật) — harness/run.py --fake-llm (fake/yt.json, yt_short.json); B-roll MẪU license MẪU; ffmpeg imageio-ffmpeg",
+ "dau_vao": [
+  {
+   "ten": "harness/fake/yt.json",
+   "sha256": "ab7cd81e974da2bc420ba1f7eb99c6c08b78e1900573c1e6ce81acb78525f261",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fake/yt_short.json",
+   "sha256": "011298a1036d7657ee62f2a551769618d9ac58b69e58ce005f5efef34cdddfd6",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "07.2-C1",
+   "mo_ta": "gói YouTube (360s)",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/yt.json --llm-log evidence/itacc_r10/g3/out/07.2-C1.llmcalls.json -m agents.mkt_youtube --brief Video dài kể chuyện vùng quê Quảng Nam Thử IT",
+   "expected": "T2",
+   "actual": "nháp #16 youtube/video agent:mkt12 pending, youtube_long@1; chương 00:00/01:30/03:00/04:30; SRT 4 cue; nhãn AI+QC; private; câu giá bị bỏ (lượt đầu hỏng do tiêu đề fixture 'Một ngày…' — giữ log)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07.2-C2",
+   "mo_ta": "brief rượu",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/yt.json --llm-log evidence/itacc_r10/g3/out/07.2-C2.llmcalls.json -m agents.mkt_youtube --brief Video về rượu sâm biếu Tết Thử IT",
+   "expected": "0 LLM",
+   "actual": "refuse ruou, 0 lời gọi LLM",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07.2-C3",
+   "mo_ta": "tổng 100s",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/yt_short.json --llm-log evidence/itacc_r10/g3/out/07.2-C3.llmcalls.json -m agents.mkt_youtube --brief Video ngắn kể chuyện vùng quê Thử IT",
+   "expected": "thoi_luong",
+   "actual": "refuse thoi_luong, 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07.2-C4",
+   "mo_ta": "render shorts",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/yt.json --llm-log evidence/itacc_r10/g3/out/07.2-C4.llmcalls.json -m agents.mkt_youtube --brief Video dài kể chuyện vùng quê Quảng Nam Thử IT (bản có Shorts) --render --broll-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/broll --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/yt_out",
+   "expected": "mp4 15–45s + log",
+   "actual": "mp4 0c7f7f… 15,0s, 0 audio, không metadata, vùng nhãn ổn định; sidecar privacyStatus private; agent_action_log youtube_short_render draft 17",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "07.2-C5",
+   "mo_ta": "tắt",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --fake-llm evidence/itacc_r10/g3/harness/fake/yt.json --llm-log evidence/itacc_r10/g3/out/07.2-C5.llmcalls.json -m agents.mkt_youtube --brief Video dài khi tính năng tắt Thử IT",
+   "expected": "0 dòng, 0 LLM",
+   "actual": "0 dòng NHƯNG 1 lời gọi LLM + traceback exit 1 (D1)",
+   "exit": 1,
+   "ket_qua": "FAIL"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Như D1: chặn tính năng tắt trước LLM trong mkt_youtube.",
+ "gioi_han": "LLM giả; B-roll MẪU; không đăng YouTube (external-dep).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C1.LUOT_HONG_fixture_tieude.txt",
+   "sha256": "61c473ea80dffdf1886620b957aeb37b973378f54e4bacf4be8da252a19e74be"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C1.txt",
+   "sha256": "ba007f101dfcdec0a6e7133a668a850bffa1638e957120aa5b51fafc5f2db08f"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C1.db.json",
+   "sha256": "9f3b25ae803842d722a66b2664fba8ce734e486a5ba02f446eab29e493905b52"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C2.txt",
+   "sha256": "42d69daeb24b64caebeeaf96f6e667ff28dc085a581d5b059e691089d13cbeff"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C3.txt",
+   "sha256": "034a206610ffdd6627055ef89075e86e027cc0ed004594907a76bef7e3bd429d"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C4.txt",
+   "sha256": "b361eac3208f873faabe3ac9134488b11b77ce427422e2661874431648ac5848"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C4.verify.txt",
+   "sha256": "cae49002e080cc56ede5710a6545247f38627e4c592c20b7ed1c89d5864bc65e"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/media/0c7f7f950fa2c5812ae932140c0fe17e120f53bfad315568631715c7a9007e6e.json",
+   "sha256": "4b1af088a6eedce8f43c26b1896efd0786ce628f1878f29e1fd4aca34abd9f7f"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C5a.txt",
+   "sha256": "080a58770cad0a59b7eee1a2c1d9cfb5372ac9e987642f3422cee6d4ac66d710"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C5.txt",
+   "sha256": "9d849c19f3bfcec56a348e64780a2ffa4ca4af854a60976bedd3da946b0208e7"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C5.llmcalls.json",
+   "sha256": "68fc269541b6e33d7a917905aeee9201c98b2535d6d7dd9fcd6afc84feafdf05"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/07.2-C5b.txt",
+   "sha256": "c574b2e73c33dceac104a822534817f3ce7dd65edc2a789016298a05b3f2025d"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "D1",
+   "muc_do": "trung bình",
+   "mo_ta": "video_studio / mkt_youtube: khi tính năng TẮT vẫn gọi LLM gateway (phát sinh chi phí, ghi llm_usage) và dựng file trước khi bị chặn muộn ở store.save_draft → traceback RolloutBlocked, exit 1. Kỳ vọng (như content --daily): chặn TRƯỚC mọi lời gọi LLM, exit 2.",
+   "tai_hien": "python -m pipelines.rollout --disable marketing-02.2 --by X; python evidence/itacc_r10/g3/harness/run.py --fake-llm .../video.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief '...' (tương tự agents.mkt_youtube với marketing-07.2)",
+   "expected": "exit 2 [blocked], 0 lời gọi LLM, 0 dòng",
+   "actual": "exit 1 traceback RolloutBlocked; 1 lời gọi LLM (llm_usage id 10 feature marketing-02.2 lúc tắt); 0 dòng content_drafts",
+   "evidence": [
+    "evidence/itacc_r10/g3/out/02.2-C5.txt",
+    "evidence/itacc_r10/g3/out/02.2-C5.llm_usage.json",
+    "evidence/itacc_r10/g3/out/07.2-C5.txt"
+   ]
+  }
+ ]
+}

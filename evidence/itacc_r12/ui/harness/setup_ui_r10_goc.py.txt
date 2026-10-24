@@ -1,0 +1,67 @@
+"""Dựng môi trường UI thật (DB thử samsam_itacc_r10ui + login thật tạm + cấu hình
+tạm). Mật khẩu sinh ngẫu nhiên → secrets.json (scratchpad, KHÔNG vào evidence).
+Chạy: python -I setup_ui.py <dsn_file_admin>"""
+import json
+import secrets
+import shutil
+import sys
+from pathlib import Path
+
+import psycopg
+from psycopg import conninfo
+
+sys.path.insert(0, r"D:\code\samsam")
+from pipelines.auth import hash_password  # noqa: E402
+
+HERE = Path(__file__).parent
+ADMIN = Path(sys.argv[1]).read_text().split("'")[1]
+PEOPLE = {   # mã tài khoản giả → (người, khối, vai trò UI)
+    "mkt1": ("Marketing UI Một", "marketing", "gd_marketing"),
+    "mkt2": ("Marketing UI Hai", "marketing", "gd_marketing"),
+    "sales": ("Bán Hàng UI", "sales", "gd_ban_hang"),
+    "mismatch": ("Người Lệch UI", None, "gd_marketing"),   # db_login trỏ login mkt2
+    "tgd1": ("TGĐ UI", None, "tgd"),   # xem đủ 7 tab; không login DB (không quyết)
+}
+sec = {"ui_pw": {}, "db_pw": {}, "login": {}}
+with psycopg.connect(ADMIN, autocommit=True, connect_timeout=5) as c:
+    for k in ("svc", "mkt1", "mkt2", "sales"):
+        n = f"it_ui_{k}"
+        pw = secrets.token_urlsafe(16)
+        c.execute(f"drop role if exists {n}")
+        grp = "svc_ui" if k == "svc" else "app_human"
+        c.execute(f"create role {n} login password '{pw}' nosuperuser in role {grp}")
+        sec["db_pw"][k], sec["login"][k] = pw, n
+    c.execute("delete from human_logins")
+    for k in ("mkt1", "mkt2", "sales"):
+        person, block, _ = PEOPLE[k]
+        c.execute("insert into human_logins (db_login, person, blocks, granted_by)"
+                  " values (%s, %s, %s, 'ui-test-r10')", (sec["login"][k], person, [block]))
+    # dữ liệu mồi (owner): 2 draft agent khối marketing + 1 mục hàng duyệt khối sales
+    for i in range(2):
+        c.execute("insert into content_drafts (brief, channel, text, guardrail,"
+                  " source, created_by, content_type, block) values (%s, 'facebook',"
+                  " %s, '{\"ok\": true}', 'cli', 'agent:mkt02', 'post', 'marketing')",
+                  (f"nháp agent UI {i}", f"Nội dung agent thử UI số {i}. Nội dung có sử dụng AI."))
+    c.execute("select enqueue_item('price_review', 'ui-q1', 'sales', 'Mục giá thử UI',"
+              " 'payload thử', 'low', '{\"ok\": true}'::jsonb, 'none', 'agent:kd_price', 24)")
+d = conninfo.conninfo_to_dict(ADMIN)
+d.update(user=sec["login"]["svc"], password=sec["db_pw"]["svc"])
+sec["svc_dsn"] = conninfo.make_conninfo(**d)
+cfg = HERE / "cfg"
+shutil.rmtree(cfg, ignore_errors=True)
+shutil.copytree(Path(r"D:\code\samsam\data\directors"), cfg / "directors")
+for blk, names in (("marketing", ["Marketing UI Một", "Marketing UI Hai", "Người Lệch UI"]),
+                   ("sales", ["Bán Hàng UI"])):
+    p = cfg / "directors" / f"{blk}.json"
+    j = json.loads(p.read_text(encoding="utf-8"))
+    j["approvers"] = names
+    p.write_text(json.dumps(j, ensure_ascii=False), encoding="utf-8")
+users = {}
+for k, (person, _blk, role) in PEOPLE.items():
+    pw = secrets.token_urlsafe(14)
+    sec["ui_pw"][k] = pw
+    users[person.casefold()] = {"role": role, "password_hash": hash_password(pw),
+                                "db_login": sec["login"].get("mkt2" if k == "mismatch" else k)}
+(cfg / "users.json").write_text(json.dumps(users, ensure_ascii=False), encoding="utf-8")
+(HERE / "secrets.json").write_text(json.dumps(sec, ensure_ascii=False), encoding="utf-8")
+print("setup ok:", {k: v[0] for k, v in PEOPLE.items()})

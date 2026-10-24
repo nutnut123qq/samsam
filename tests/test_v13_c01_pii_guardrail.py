@@ -198,6 +198,9 @@ def test_zalo_pii_question_gets_handoff_no_ai(fake, monkeypatch):
     monkeypatch.setattr(zalo, "send_text",
                         lambda u, t: sent.update(t=t) or True)
     monkeypatch.setattr(zalo, "_histories", type(zalo._histories)())
+    # r12 L3: câu hứa nhân viên chỉ khi ĐÃ ghi được handoff — giả lập.
+    monkeypatch.setattr("connectors.channels.record_handoff",
+                        lambda *a, **k: 77)
     zalo.handle_text("u1", "ship ve 123 nguyen trai q1 nhe")
     assert sent["t"] == zalo.HANDOFF_TEXT
     assert fake.calls == []
@@ -308,6 +311,9 @@ def test_spend_unreadable_blocks_and_chatbot_handoff(fake, monkeypatch):
     monkeypatch.setattr(zalo, "send_text",
                         lambda u, t: sent.update(t=t) or True)
     monkeypatch.setattr(zalo, "_histories", type(zalo._histories)())
+    # r12 L3: câu hứa nhân viên chỉ khi ĐÃ ghi được handoff — giả lập.
+    monkeypatch.setattr("connectors.channels.record_handoff",
+                        lambda *a, **k: 77)
     zalo.handle_text("u1", "Sâm Sâm có showroom ở đâu?")
     assert sent["t"] == zalo.HANDOFF_TEXT       # chuyển người, không lỗi
     assert fake.calls == []

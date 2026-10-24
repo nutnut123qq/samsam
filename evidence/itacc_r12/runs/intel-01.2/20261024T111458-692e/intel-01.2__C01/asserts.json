@@ -1,0 +1,32 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and block = 'intel' and status = 'pending' and created_by = 'agent:intel_bulletin'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select (select count(*) from approval_queue where object_type = 'intel_topic') = (select count(*) from (select t from intel_items, unnest(topics) t where t in ('sam', 'tpbvsk', 'gioi_tre', 'quang_cao', 'doi_thu') group by t having count(*) >= 2) x)",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select string_agg(regexp_replace(object_id, '^day-[0-9]{8}-', ''), ',' order by object_id) from approval_queue where object_type = 'intel_topic'",
+  "expect": "sam,tpbvsk",
+  "actual": "sam,tpbvsk",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and (payload || ' ' || title) ~* 'https?://|www\\.|tin-thu-it|Thử IT'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like '%phap_ly'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

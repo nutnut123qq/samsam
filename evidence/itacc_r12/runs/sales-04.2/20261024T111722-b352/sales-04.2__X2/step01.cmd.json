@@ -1,0 +1,21 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import os,psycopg,sys;from psycopg import conninfo as ci;u=os.environ['DATABASE_URL'];assert ci.conninfo_to_dict(u)['dbname'].startswith('samsam_itacc_r12_');c=psycopg.connect(u,autocommit=True);c.execute(\"insert into leads (dedup_key, ts, channel, user_hash, question, intent, source) values ('manual:r12-x2', now(), 'zalo', 'uh-r12-x2', 'Tôi là Nguyễn Văn Mẫu, giao cho chị Bích số 12 đường Ví Dụ Đà Nẵng, sđt 0905 123 456', 'order', 'manual')\");print('ok')"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:18:41+07:00",
+ "ket_thuc": "2026-10-24T11:18:42+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "78cc7cf0ed365ba88157db0c8a9a001916a4c3626067abcc27f342ec742e1dcd",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

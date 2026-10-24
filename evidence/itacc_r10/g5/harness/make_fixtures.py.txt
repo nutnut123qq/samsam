@@ -1,0 +1,93 @@
+"""Sinh fixture GIẢ cho g5 vào scratchpad (ảnh GPS, video vị trí, WAV, staff
+file, remind cfg, signers, CSV...) + in sha256. Không chạm DB/mạng."""
+import hashlib
+import io
+import json
+import subprocess
+import sys
+import wave
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+G5 = Path(sys.argv[1])
+FX = G5 / "fixtures"
+FX.mkdir(parents=True, exist_ok=True)
+UID = "it_g5_zalo_uid_001"          # user_id Zalo GIẢ
+UID2 = "it_g5_zalo_uid_999"         # không thuộc allowlist
+
+
+def uh(u):
+    return hashlib.sha256(u.encode()).hexdigest()[:16]
+
+
+def w(name, data: bytes):
+    (FX / name).write_bytes(data)
+
+
+# 1) ảnh JPEG có EXIF GPS
+from PIL import Image  # noqa: E402
+
+img = Image.new("RGB", (64, 48), (40, 120, 60))
+exif = Image.Exif()
+exif[0x010F] = "PhoneThuIT"          # Make
+gps = {1: "N", 2: (15.0, 7.0, 25.0), 3: "E", 4: (107.0, 55.0, 12.0)}
+exif[0x8825] = gps
+buf = io.BytesIO()
+img.save(buf, "JPEG", exif=exif.tobytes())
+w("anh_gps.jpg", buf.getvalue())
+img2 = Image.new("RGB", (64, 48), (200, 160, 60))
+buf = io.BytesIO()
+img2.save(buf, "JPEG", exif=exif.tobytes())
+w("anh_gps2.jpg", buf.getvalue())
+w("khong_phai_anh.jpg", b"day khong phai anh - fixture thu IT\n")
+
+# 2) video MP4 có metadata vị trí (ffmpeg của imageio-ffmpeg)
+import imageio_ffmpeg  # noqa: E402
+
+ff = imageio_ffmpeg.get_ffmpeg_exe()
+for name, color in (("video_vitri.mp4", "green"), ("video_vitri2.mp4", "blue")):
+    subprocess.run([ff, "-y", "-loglevel", "error", "-f", "lavfi", "-i",
+                    f"color=c={color}:s=64x64:d=1:r=10", "-c:v", "mpeg4",
+                    "-metadata", "location=+15.1234+107.9876/",
+                    "-metadata", "title=Video Thu IT",
+                    "-movflags", "use_metadata_tags", str(FX / name)],
+                   check=True, timeout=60)
+
+# 3) ghi âm WAV
+buf = io.BytesIO()
+with wave.open(buf, "wb") as wv:
+    wv.setnchannels(1)
+    wv.setsampwidth(2)
+    wv.setframerate(8000)
+    wv.writeframes(b"\x00\x01" * 4000)
+w("ghi_am.wav", buf.getvalue())
+
+# 4) staff allowlist + remind cfg + qr signers
+(FX / "garden_staff.json").write_text(json.dumps({"staff": [
+    {"user_hash": uh(UID), "ma_nv": "IT-NV01", "khoanh": ["IT-K01", "KV-A01"]}]},
+    ensure_ascii=False), encoding="utf-8")
+(FX / "garden_remind_thucong.json").write_text(json.dumps(
+    {"kenh": "thu_cong", "leo_thang_sau_ngay": None}), encoding="utf-8")
+(FX / "qr_signers.json").write_text(json.dumps({
+    "status": "FIXTURE thử IT g5 — không phải danh sách thật",
+    "roles": {"gd_san_xuat": ["GĐ SX Thử IT"],
+              "gd_vung_trong": ["GĐ Vùng Trồng Thử IT"],
+              "phap_che_qa": ["Pháp Chế Thử IT"]}}, ensure_ascii=False),
+    encoding="utf-8")
+(FX / "lots.json").write_text(json.dumps({"lots": [
+    {"lot_code": "IT-LOT-G5-01", "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-10-20", "exp_date": "2028-10-20", "qty": 100,
+     "note": "Lô thử IT g5"}]}, ensure_ascii=False), encoding="utf-8")
+
+# 5) CSV thời tiết
+(FX / "weather.csv").write_text(
+    "area_code,day,rain_mm,tmin_c,tmax_c\n"
+    "vung-a,2026-10-24,80,14,22\nvung-a,2026-10-25,10,12,21\n"
+    "vung-b,2026-10-24,5,3,18\n", encoding="utf-8")
+(FX / "weather_bad.csv").write_text(
+    "area_code,day,rain_mm,tmin_c,tmax_c\nvung-zz,2026-10-24,abc,14,22\n",
+    encoding="utf-8")
+
+print("UID_HASH", uh(UID), "UID2_HASH", uh(UID2))
+for p in sorted(FX.iterdir()):
+    print(hashlib.sha256(p.read_bytes()).hexdigest(), p.name)

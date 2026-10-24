@@ -1,0 +1,29 @@
+[
+ {
+  "sql": "select id, brief, channel, content_type, status, created_by, is_ai, prompt_version, guardrail->>'ok' g_ok from content_drafts where content_type='livestream_script' order by id",
+  "rows": [
+   {
+    "id": 3,
+    "brief": "phien: 2026-10-27 kenh: tiktok\nPhiên live thử IT giới thiệu mật ong sâm",
+    "channel": "tiktok",
+    "content_type": "livestream_script",
+    "status": "pending",
+    "created_by": "agent:kd_a9",
+    "is_ai": true,
+    "prompt_version": "livestream_script@1",
+    "g_ok": "true"
+   },
+   {
+    "id": 4,
+    "brief": "phien: 2026-10-28 kenh: tiktok\nPhiên live thử IT lần 2",
+    "channel": "tiktok",
+    "content_type": "livestream_script",
+    "status": "pending",
+    "created_by": "agent:kd_a9",
+    "is_ai": true,
+    "prompt_version": "livestream_script@1",
+    "g_ok": "true"
+   }
+  ]
+ }
+]

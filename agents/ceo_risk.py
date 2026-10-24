@@ -400,6 +400,11 @@ def main(argv=None) -> int:
     except ValueError as e:
         print(f"[error] cấu hình: {e}", file=sys.stderr)
         return 2
+    # r12 RB: ceo-03 tắt → chặn TRƯỚC khi đọc/ghi (không traceback).
+    from pipelines import rollout
+    vn0 = now.astimezone(VN_TZ)
+    if why := rollout.blocked(None, "sổ rủi ro", report=f"ceo-risk-{vn0:%Y-%m-%d}.md"):
+        return rollout.say_blocked(why)
     conn = connect()
     if conn is None:
         print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
@@ -429,6 +434,12 @@ def main(argv=None) -> int:
     print(f"[done] {path} — đỏ {cnt['do']}, vàng {cnt['vang']}, xanh"
           f" {cnt['xanh']}")
     return 0
+
+
+# r12 RB: RolloutBlocked lọt tới đỉnh → '[rollout] lý do', exit 2 (không traceback).
+from pipelines.rollout import cli_entry as _cli_entry
+
+main = _cli_entry(main)
 
 
 if __name__ == "__main__":

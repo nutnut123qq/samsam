@@ -1,0 +1,282 @@
+{
+ "id": "farming-03.1",
+ "ten": "Nối lô thu hoạch với lô sản xuất",
+ "khoi": "farming",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Vùng trồng / Truy xuất QR: 'Nối lô thu hoạch với lô sản xuất'",
+ "tieu_chi": [
+  "`qr_trace link --lot --log --by` ghi lot_origins ánh xạ lô SX (đã kiểm nhập passed) ↔ nhật ký 'thu hoạch' đã chain, qua function DB",
+  "Ca âm: nhật ký không phải thu hoạch / không tồn tại → từ chối; --by agent: → từ chối; sha video → từ chối",
+  "T4: không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:58:33+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_farm; dev mode (AUTH_MODE trống, DEPLOY tắt); lô SX FIXTURE nạp qua production lots/intake",
+ "dau_vao": [
+  {
+   "ten": "lots.json",
+   "sha256": "9bfd35663fd55e4120b87b25d8cef7e3312aa5d1108925b936274fc74874cb0a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "lots2.json",
+   "sha256": "2a534050b80f5a3fbab957c4974b7b07a0139b13a6425f3ca70c180e39a73a1d",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F031-01a",
+   "mo_ta": "Nạp lô FIXTURE",
+   "lenh": "python -m pipelines.production lots --load <scratch>/fixtures/lots.json --source manual",
+   "expected": "pending",
+   "actual": "1 lô mới pending",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F031-01b",
+   "mo_ta": "Kiểm nhập passed (người)",
+   "lenh": "python -m pipelines.production intake --lot IT-LOT-G5-01 --result passed --by GĐ SX Thử IT",
+   "expected": "passed",
+   "actual": "lô IT-LOT-G5-01 → passed",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F031-01c",
+   "mo_ta": "Nhật ký thu hoạch",
+   "lenh": "python -m agents.garden --plot IT-K01 --activity thu hoạch --detail Thu hoạch thử IT 5kg --author Người Thử IT",
+   "expected": "chain",
+   "actual": "plot_logs #14 IT-K01 'thu hoạch' manual:garden row_hash",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F031-01d",
+   "mo_ta": "Lô 2 (sửa dữ liệu mồi)",
+   "lenh": "python -m pipelines.production lots --load <scratch>/fixtures/lots2.json --source manual",
+   "expected": "pending",
+   "actual": "1 lô mới",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F031-01e",
+   "mo_ta": "Kiểm nhập lô 2",
+   "lenh": "python -m pipelines.production intake --lot IT-LOT-G5-02 --result passed --by GĐ SX Thử IT",
+   "expected": "passed",
+   "actual": "IT-LOT-G5-02 → passed",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F031-02",
+   "mo_ta": "Ánh xạ",
+   "lenh": "python -m pipelines.qr_trace link --lot IT-LOT-G5-02 --log 14 --media ab5af5891da402c6ce709a0664bd2ee82ffa2dbd10e5b09bd68f67ba55a417cc --by GĐ SX Thử IT",
+   "expected": "lot_origins có",
+   "actual": "lot_origins #2 IT-LOT-G5-02 ↔ #14, media [ab5af589…], created_by 'GĐ SX Thử IT'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F031-03",
+   "mo_ta": "Âm: nhật ký không thu hoạch",
+   "lenh": "python -m pipelines.qr_trace link --lot IT-LOT-G5-01 --log 12 --by GĐ SX Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 'nhật ký #12 không phải thu hoạch'",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F031-04",
+   "mo_ta": "Âm: agent",
+   "lenh": "python -m pipelines.qr_trace link --lot IT-LOT-G5-02 --log 14 --by agent:qr",
+   "expected": "exit 1",
+   "actual": "exit 0 — ghi lot_origins created_by 'agent:qr' (BUG-G5-02)",
+   "exit": 0,
+   "ket_qua": "FAIL"
+  },
+  {
+   "ma": "F031-04b",
+   "mo_ta": "Dọn: người gỡ ánh xạ của agent",
+   "lenh": "python -m pipelines.qr_trace unlink --lot IT-LOT-G5-02 --log 14 --by GĐ SX Thử IT",
+   "expected": "exit 0",
+   "actual": "gỡ ánh xạ #14 bởi GĐ SX Thử IT",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F031-05",
+   "mo_ta": "Âm: log không tồn tại",
+   "lenh": "python -m pipelines.qr_trace link --lot IT-LOT-G5-01 --log 999999 --by GĐ SX Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 'không có nhật ký #999999'",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F031-06x",
+   "mo_ta": "Bổ sung sau khóa: sha video",
+   "lenh": "python -m pipelines.qr_trace link --lot IT-LOT-G5-01 --log 14 --media 669b2e5f122c4551f2a851bf2db50f5b9e967a0fe79621fcc38c39e398fa9ca2 --by GĐ SX Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 'tư liệu 669b2e5f122c là video'",
+   "exit": 1,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Sửa BUG-G5-02: link/unlink chặn --by agent:/system: ở Python (auth.cli_gate như sign/issue/revoke) hoặc trong function link_lot_origin",
+ "gioi_han": "Lượt 1 (lô IT-LOT-G5-01 mfg 20/10) hỏng do dữ liệu mồi: nhật ký thu hoạch 23/10 sau ngày SX → function từ chối đúng; thay bằng lô IT-LOT-G5-02 (mfg 23/10). Lỗi chỉ trên đường login owner/dev; chế độ thực có trigger person_login_guard (không kiểm ở đây — điều phối viên kiểm quyền chế độ thực). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-01a.txt",
+   "sha256": "4986003f69aa5bdce8657038ede9c92c8a2874dafb2da3b44e5bd65953997b61"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-01b.txt",
+   "sha256": "db0a5114f98ad0003d51f8973b8b81f29907166e381f6fb297660ea8e99e2274"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-01c.txt",
+   "sha256": "70acbb92e7b3d6e450d210e8dd3a0f7754a0b5247640e919d3b20832cf51ad13"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-01d.txt",
+   "sha256": "c138d531f14a9596a6540ceadf6bfc3b546c4d68a32e64c79a98acfdf5104594"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-01e.txt",
+   "sha256": "7ee97ab742a272ffabd0de99693075aedbdbe2cf584cb5e5f2f2b336fb281492"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-02.txt",
+   "sha256": "d99eaefe20b01713e511bb30243db84523b609d605bc5ed5e7dcfa220a8e6de5"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-03.txt",
+   "sha256": "9fa9f1730cb2c6f175fbfd41c8c8ec3c1959163236de8d7e452b0b0c71702579"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-04.txt",
+   "sha256": "b0e373fa1bffb71f11b818c023f6d7c3d223a40f241d86e59b193469ac505337"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-04b.txt",
+   "sha256": "e968feabc34a7e6875377076357362d768d658da57521430c8cbd8a470db87f7"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-05.txt",
+   "sha256": "0fd9750785094ed447b272d6981d2c703a0defb1190afc9c4a7da4f87564467c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-06x.txt",
+   "sha256": "e9bd75389071364a3db89f7d9154462f850cf59099fd3031df3893eeafbc7761"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-02_luot1_hong_du_lieu_moi.txt",
+   "sha256": "ef7df71c46061f12524fe7f069ad460e5b8e4f041e384b9adce1d018ce27b36d"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F031-04_luot1_hong_du_lieu_moi.txt",
+   "sha256": "e0be0ec7720bd1616757ec2a552cb72757240f1d02bc9dd6e22b4297ce7ba4e1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/check_media.py",
+   "sha256": "9dc52b8eefb2b5ddb13334435174e3083f32f7006c60a6ce8271c7fd20fe4c23"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_llm_run.py",
+   "sha256": "df4672d90c7d9faa51a83ed42a6e1d159bf8eda0bb5aa95860cf15bef3c6fe3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_shopee.py",
+   "sha256": "9402db0719ea6f325d9d75b29af4ce22574dbae49dc2cfc7c24ad459534329cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gd_run.py",
+   "sha256": "84c646e3dd2019f6bc417e9071b5a422d8d37d7f10c0de077db3f303b1f21eaa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gw_probe.py",
+   "sha256": "8038c6f83facb83baab8eb2bb0fbb8b8cb1ab328082e7b6af0b718734f6cf981"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/hold_lock.py",
+   "sha256": "2a511640b93c4a5d3e2529f711f9b3ca07085bbb08b7be3f88383ffc230d1cab"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_criteria_g5.py",
+   "sha256": "6e64178e75ce85a9b8c265c33862e0395c7cdcfcc943ac19b4915e3b53e21dcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_fixtures.py",
+   "sha256": "d5117a5728c04a988c7d151150fa7e7153a45d59f3752eb470c16ed86aabb241"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_items_g5.py",
+   "sha256": "879a76de3bfb1285557de44386e17428ebf513bf1368f5a554b534fad9edfb82"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_pdf.py",
+   "sha256": "f68506f1c8158b51a4a4048c894df8bfbc88d4a14071cb6c3d2393464add3867"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/mod_run.py",
+   "sha256": "0ba336024389f8ea885b2d63bb2056bdee2c03b814a74eb12343daff901a31d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/probe_run.py",
+   "sha256": "c0f2386d31984f5e279392c44c55209837e13b5f93ded55d5c80709c6b3e5105"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/q.py",
+   "sha256": "6b1c569d67e265d3ad9593331334d286cdbc525eb304ca55128eb686e57d97ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/qr_run.py",
+   "sha256": "8dbe083a6119eee0d80849374b7b053ef5bb44cac67abd85bae74a94562571c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/role_probe.py",
+   "sha256": "c1364ecad746feaeddbb98de7853e542a757cc4ddbbaaa6cae8aada075375a07"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture.py",
+   "sha256": "3b5ae3fad7dac20dc7fab16d1d704833bbb85ba6554c4fd41717f5441bed497b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "sha256": "c530ef5bce990aaa8e0393e582192b93687501195dfcbfa32520a3c28be1c90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/tamper.py",
+   "sha256": "0c27a266124476bb3369ed975395dd2d27ec8e30207e31647a817eda7540a186"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/zalo_webhook.py",
+   "sha256": "de7da44a52a26cb27510f89ffc5659c59c22e53f4fd01d7db142760bf371866c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/lib.sh",
+   "sha256": "c3d88bf45e775e5246126bb82b28042b0d4e6bc5e69a80b70e9d4d263c308a3d"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "BUG-G5-02",
+   "muc_do": "MINOR",
+   "mo_ta": "pipelines.qr_trace link/unlink không qua auth.cli_gate và function link_lot_origin không kiểm tiền tố agent:/system: → trên đường login owner (dev) ghi được lot_origins.created_by='agent:qr' + agent_action_log qr_lot_link actor 'agent:qr'. Các CLI quyết định người khác (sign/issue/revoke, intake...) chặn agent:* ở MỌI chế độ; trigger person_login_guard chỉ chặn login không-owner nên chế độ thực có lớp chặn DB.",
+   "tai_hien": "source env DB thử farm; python -m pipelines.qr_trace link --lot IT-LOT-G5-02 --log <id thu hoạch> --by \"agent:qr\"",
+   "expected": "exit 1, không ghi (agent không ánh xạ thay người)",
+   "actual": "exit 0 '[done] ... người thực hiện: agent:qr'; lot_origins id=1 created_by='agent:qr' (đã gỡ bằng unlink bởi người ở F031-04b)",
+   "evidence": [
+    "evidence/itacc_r10/g5/runs/F031-04.txt",
+    "evidence/itacc_r10/g5/runs/F031-04b.txt"
+   ]
+  }
+ ]
+}

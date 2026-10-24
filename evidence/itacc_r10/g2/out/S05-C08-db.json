@@ -1,0 +1,36 @@
+[
+ {
+  "sql": "select id, org_name, org_type, region, status from org_prospects order by id",
+  "rows": [
+   {
+    "id": 1,
+    "org_name": "Khách sạn Thử IT Một",
+    "org_type": "khach_san",
+    "region": "Đà Nẵng",
+    "status": "cho_duyet"
+   },
+   {
+    "id": 2,
+    "org_name": "Hiệp hội Thử IT Hai",
+    "org_type": "hiep_hoi",
+    "region": "Huế",
+    "status": "cho_duyet"
+   }
+  ]
+ },
+ {
+  "sql": "select id, block, object_type, object_id, created_by, status, title, left(payload,600) payload from approval_queue where object_type='org_prospect_batch'",
+  "rows": [
+   {
+    "id": 53,
+    "block": "sales",
+    "object_type": "org_prospect_batch",
+    "object_id": "b2b-batch:a35e04e9d181",
+    "created_by": "NV KD Thử IT",
+    "status": "pending",
+    "title": "Lô 2 tổ chức tiềm năng mua quà Tết",
+    "payload": "# Lô tổ chức tiềm năng mua quà Tết — 2 tổ chức\n\nNguồn: thông tin TỔ CHỨC công khai do người nhập tay — không có thông tin cá nhân. Duyệt = đồng ý chuyển danh sách cho GĐ bán hàng/đại lý.\n\n| # | Tổ chức | Loại | Tỉnh/thành | Website | Nguồn công khai | Lý do phù hợp | Mã |\n|---|---|---|---|---|---|---|---|\n| 1 | Khách sạn Thử IT Một | khach_san | Đà Nẵng | https://ks1.example.com | https://example.com/it-g2/ks1 | Khách sạn thường đặt quà Tết cho đối tác (fixture) | 2e9c90006acb |\n| 2 | Hiệp hội Thử IT Hai | hiep_hoi | Huế | https://hh2.example.com | https://example.com/it-g2/hh2 | Hiệp hội tổ c"
+   }
+  ]
+ }
+]

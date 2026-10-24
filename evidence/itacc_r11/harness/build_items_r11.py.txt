@@ -1,0 +1,86 @@
+"""HARNESS r11 — dựng evidence/itacc_r11/items/<id>.json từ log GỐC của lần chạy hiện hành (runs/<id>/<run_id>/)
++ tiêu chí đã khóa. Trạng thái do quy tắc: mọi ca PASS → DAT; có FAIL → BI_CHAN (CODE_FAIL — phải có lỗi sản phẩm đã
+xác minh, nếu không thì CHUA_KIEM); có NOT_RUN/LOI_HARNESS → CHUA_KIEM.  python -I build_items_r11.py.txt"""
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r11"
+FP = "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001"
+KHUNG = {i["id"]: i for i in json.loads((REPO / "evidence/itacc_r10/criteria/khung.json").read_text(encoding="utf-8"))["items"]}
+
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def rel(p):
+    return str(p.relative_to(REPO)).replace("\\", "/")
+
+
+# id → (file tiêu chí, run hiện hành, mức, lượt bị thay thế (nếu có), giới hạn)
+CUR = {
+ "marketing-03.2": ("criteria/r11_v2_marketing-03.2.json", "20261023T143832-6f49", "LOCAL",
+                    [("20261023T143204-6665", "LƯỢT HỎNG HARNESS (tiêu chí r11 v1): fixture kết quả còn bien_the=4 trong khi creative phiếu r11 là #1 → sản phẩm từ chối đúng; C1/C3/C4 FAIL do fixture, KHÔNG tính. Đã mở tiêu chí v2 (chỉ đổi fixture *_r11.csv) và chạy lại toàn bộ trên DB mới m032b.")],
+                    "P&L/giá vốn/đơn sàn là FIXTURE MẪU (để có trần FP&A); người duyệt dev (AUTH_MODE trống, chưa đối chiếu ủy quyền); ảnh creative là packshot MẪU ghép bằng image_studio provider none (không phải ảnh AI)."),
+ "marketing-05.1": ("criteria/r11.json", "20261023T143116-fa63", "LOCAL", [], "File social nhập tay (fixture, SĐT/tên giả); DPIA chưa ký nên excerpt không lưu; tắt tính năng kiểm với loader_gate chưa cấu hình."),
+ "marketing-05.2": ("criteria/r11.json", "20261023T143241-897d", "LOCAL", [], "Review/mention fixture giả; consent ghi bằng CLI người thử (dev); C5 đặt DATABASE_URL host chết để chứng minh thoát trước khi kết nối."),
+ "marketing-06.1": ("criteria/r11.json", "20261023T143332-24ae", "LOCAL", [], "Chỉ dữ liệu crawl có sẵn data/*.jsonl (--from-crawl); KHÔNG kiểm --fetch mạng hay website thật; ca tắt trả exit 1 kèm traceback RolloutBlocked (lỗi thấp RB đã ghi ở r10) — tiêu chí khóa chấp nhận exit≠0 + không sinh mục."),
+ "marketing-06.2": ("criteria/r11.json", "20261023T143654-f67e", "LOCAL", [], "DB dựng mới, KHÔNG lùi timestamp → mọi số nội bộ của tuần đã đóng 2026-10-12 = 0: chứng minh chặn kỳ chưa đóng, đếm đúng nguồn/khung giờ VN, không bịa median/p90, insert-only — KHÔNG chứng minh phép đếm trên dữ liệu khác 0 của kỳ đã đóng (khóa trước khi chạy). File kênh là MẪU (source_ref sample:)."),
+ "legal_hr-07": ("criteria/r11.json", "20261023T144012-9ab4", "MOCK", [], "Nguồn RSS là server GIẢ http.server 127.0.0.1:18793 (fixture tin giả) — không phải nguồn văn bản thật; URL nguồn tầng A chưa Pháp chế xác minh; gửi cảnh báo thật không kiểm (chỉ nhánh fail-closed thiếu người nhận); không LLM (llm.enabled=false)."),
+}
+LYDO = {
+ "legal_hr-07": "r10 chấm PASS 'theo ý định' dù ca 07-C1 đã khóa yêu cầu 2 dòng intel_items (thực tế 1). Lượt r11: đính chính tiêu chí (bộ lọc chủ đề loại tin lạc TRƯỚC khi lưu → chính xác 1 dòng + 0 dòng tin lạc + bằng chứng off_topic=1), khóa trước khi chạy, chạy lại đủ flow.",
+}
+LYDO_MKT = "r10: 20 file output marketing bị ca legal_hr trùng mã ghi đè rồi TÁI TẠO từ transcript (không phải stdout/stderr gốc). Lượt r11 chạy lại TOÀN BỘ ca bắt buộc trên DB mới, log gốc mới (mã ca đầy đủ <id>__Cn, thư mục chạy riêng, file mở chế độ 'x')."
+out_map = {}
+for fid, (crit_rel, run_id, muc, superseded_runs, gh) in CUR.items():
+    crit_p = EV / crit_rel
+    lock_p = EV / crit_rel.replace(".json", ".lock.txt")
+    crit = json.loads(crit_p.read_text(encoding="utf-8"))
+    citem = next(i for i in crit["items"] if i["id"] == fid)
+    run = EV / "runs" / fid / run_id
+    kq = json.loads((run / "ket_qua.json").read_text(encoding="utf-8"))
+    assert kq["criteria_sha256"] == sha(crit_p) == lock_p.read_text(encoding="utf-8").split()[1]
+    cases = []
+    for c in citem["ca"]:
+        cdir = run / c["ma"]
+        cr = json.loads((cdir / "case.json").read_text(encoding="utf-8"))
+        asserts = json.loads((cdir / "asserts.json").read_text(encoding="utf-8")) if (cdir / "asserts.json").exists() else []
+        steps = []
+        for st in sorted(cdir.glob("step*.cmd.json")):
+            s = json.loads(st.read_text(encoding="utf-8"))
+            steps.append({"argv": " ".join(s["argv"]).replace(str(REPO) + "\\", ""), "exit": s["exit"], "expect_exit": s["expect_exit"],
+                          "regex": s["regex"], "bat_dau": s["bat_dau"], "ket_thuc": s["ket_thuc"],
+                          "stdout": rel(st.with_name(st.name.replace(".cmd.json", ".stdout.txt"))),
+                          "stderr": rel(st.with_name(st.name.replace(".cmd.json", ".stderr.txt")))})
+        cases.append({"ma": c["ma"], "mo_ta": c["mo_ta"], "tien_quyet": bool(c.get("tien_quyet")), "khac_r10": c.get("khac_r10"),
+                      "expected": {"buoc": [{k: b.get(k) for k in ("expect_exit", "stdout_re", "out_re") if k in b} for b in c.get("buoc", [])],
+                                   "kiem": c.get("kiem", [])},
+                      "actual": {"buoc": steps, "kiem": [{k: a.get(k) for k in ("sql", "file_glob", "actual", "dat")} for a in asserts]},
+                      "exit": [s["exit"] for s in steps], "ket_qua": cr["ket_qua"], "ly_do_not_run": cr.get("ly_do_not_run"),
+                      "thu_muc": rel(cdir)})
+    res = [x["ket_qua"] for x in cases]
+    st = "DAT" if all(r == "PASS" for r in res) else ("CHUA_KIEM" if any(r in ("NOT_RUN", "LOI_HARNESS") for r in res) and "FAIL" not in res else "BI_CHAN")
+    files = sorted(p for p in run.rglob("*") if p.is_file())
+    old = REPO / "evidence/itacc_r10/items" / f"{fid}.json"
+    k = KHUNG[fid]
+    rec = {"id": fid, "ten": k["ten"], "khoi": k["khoi"], "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"], "can_cu": k["can_cu"],
+           "luot": "r11", "supersedes": {"path": rel(old), "sha256": sha(old)},
+           "ly_do_chay_lai": LYDO.get(fid, LYDO_MKT), "fingerprint": FP,
+           "tieu_chi_file": rel(crit_p), "tieu_chi_sha256": sha(crit_p), "tieu_chi_khoa": lock_p.read_text(encoding="utf-8").strip(),
+           "tieu_chi": citem["tieu_chi_cu_the"], "dinh_chinh_r10": citem.get("dinh_chinh_r10"),
+           "moi_truong": crit["moi_truong"] + f" DB {citem['db']}.", "run_id": run_id,
+           "dau_vao": [{"ten": n, **v} for n, v in json.loads((EV / "fixtures/fixtures_manifest.json").read_text(encoding="utf-8")).items()
+                       if n in json.dumps(citem, ensure_ascii=False) or (fid == "legal_hr-07" and n.startswith("rss/"))],
+           "ca": cases, "trang_thai": st, "muc_kiem": muc, "nguyen_nhan": "" if st == "DAT" else "XEM_CA",
+           "can_de_go": "", "gioi_han": gh + " Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+           "luot_bi_thay_the": [{"run_id": r, "thu_muc": rel(EV / "runs" / fid / r), "ly_do": why} for r, why in superseded_runs],
+           "evidence": [{"path": rel(p), "sha256": sha(p)} for p in files], "loi_san_pham": []}
+    p = EV / "items" / f"{fid}.json"
+    p.open("w", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))
+    out_map[fid] = (st, len(cases), sum(r == "PASS" for r in res), len(files))
+    print(fid, st, muc, f"{sum(r == 'PASS' for r in res)}/{len(cases)} PASS", len(files), "file")

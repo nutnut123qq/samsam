@@ -1,0 +1,500 @@
+{
+ "probe": "d2_v1",
+ "root": "D:\\code\\samsam",
+ "ca": [
+  {
+   "nhom": "LOI",
+   "ca": "chan_ngoac_vung",
+   "ket_qua": "PASS",
+   "expected": "ok=False + pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "shopee": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "zalo": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "web": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ]
+   }
+  },
+  {
+   "nhom": "LOI",
+   "ca": "chan_ngoac_84",
+   "ket_qua": "PASS",
+   "expected": "ok=False + pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "shopee": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "zalo": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "web": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ]
+   }
+  },
+  {
+   "nhom": "LOI",
+   "ca": "chan_ngoac_ba_nhom",
+   "ket_qua": "PASS",
+   "expected": "ok=False + pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "shopee": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "zalo": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "web": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ]
+   }
+  },
+  {
+   "nhom": "LOI",
+   "ca": "chan_ngoac_benh_ly_nhanh",
+   "ket_qua": "PASS",
+   "expected": "chuỗi '(' bệnh lý trước SĐT ngoặc → chặn pii_ca_nhan, < 3 giây",
+   "actual": {
+    "ket_qua": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "giay": 0.033
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "chan_sdt_tran",
+   "ket_qua": "PASS",
+   "expected": "ok=False + pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "shopee": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "zalo": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "web": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "chan_sdt_cach",
+   "ket_qua": "PASS",
+   "expected": "ok=False + pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "shopee": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "zalo": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "web": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "chan_email_ca_nhan",
+   "ket_qua": "PASS",
+   "expected": "ok=False + pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "shopee": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "zalo": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ],
+    "web": [
+     false,
+     [
+      "pii_ca_nhan"
+     ]
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_hotline",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_hotline_cach",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_cong_ty",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_cong_ty_cham",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_cong_ty_ngoac_vung",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_gia",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_khoang_gia",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_gia_ngoac",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_ngay",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_ma_sp",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "giu_sach",
+   "ket_qua": "PASS",
+   "expected": "ok=True, không pii_ca_nhan trên mọi kênh",
+   "actual": {
+    "facebook": [
+     true,
+     []
+    ],
+    "shopee": [
+     true,
+     []
+    ],
+    "zalo": [
+     true,
+     []
+    ],
+    "web": [
+     true,
+     []
+    ]
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "chat_check_khong_doi_pham_vi",
+   "ket_qua": "PASS",
+   "expected": "check() chat không gắn pii_ca_nhan (SĐT do lớp PII kênh che riêng)",
+   "actual": {
+    "ok": true
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "internal_note_khong_doi_pham_vi",
+   "ket_qua": "PASS",
+   "expected": "internal_note không gắn pii_ca_nhan (không công khai)",
+   "actual": {
+    "ok": true,
+    "codes": []
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 20,
+  "FAIL": 0
+ }
+}

@@ -1,0 +1,16 @@
+# db samsam_itacc_r10_fin
+> select object_type, count(*) from approval_queue group by 1 order by 1
+["ar_reminder", 2]
+["budget_change", 1]
+["invoice_batch", 1]
+["market_alert_s1", 3]
+["opex_over_x", 1]
+["promo_change", 1]
+["promo_loss", 2]
+> select count(*) from revenue_quarters
+[2]
+> select feature_id, count(*) from report_outputs group by 1 order by 1
+["finance-03.1", 2]
+["finance-04.1", 2]
+["finance-05.2", 1]
+["finance-06", 2]

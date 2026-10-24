@@ -1,0 +1,17 @@
+{
+ "ca": "ui02_a_svc_ui_doc_chunks",
+ "argv": [
+  "python",
+  "-c",
+  "import psycopg,os; c=psycopg.connect(os.environ['DATABASE_URL']); print(c.execute('select count(*) from chunks').fetchone()[0])"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "bat_dau": "2026-10-23T16:07:36+07:00",
+ "ket_thuc": "2026-10-23T16:07:37+07:00",
+ "exit": 1,
+ "llm_calls": null,
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "7fb2eae2d2d1467e803b287db8e25f35697cd6fe2e71bb2f82abf5ea44d32f91"
+}

@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from lot_origins",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from lot_origins where linked_by like 'agent:%' or linked_by like 'system:%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

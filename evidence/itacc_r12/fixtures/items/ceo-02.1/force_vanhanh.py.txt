@@ -1,0 +1,8 @@
+"""HARNESS/FIXTURE: ép pipelines.rollout._FORCE_MODE='van_hanh' rồi gọi main()
+của module (argv sau tên module). CHỈ để kiểm nhánh van_hanh — brief luật 7."""
+import importlib, sys
+sys.path.insert(0, r"D:\code\samsam")
+from pipelines import rollout
+rollout._FORCE_MODE = "van_hanh"
+mod = importlib.import_module(sys.argv[1])
+raise SystemExit(mod.main(sys.argv[2:]))

@@ -1,0 +1,35 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/sales_a/run_sa.py.txt",
+  "--fake-llm",
+  "-m",
+  "connectors.channels",
+  "--suggest",
+  "shopee",
+  "--by",
+  "MXH Thử IT"
+ ],
+ "env_doi": [
+  "IT_FAKE_CHAT",
+  "IT_FAKE_LOG"
+ ],
+ "stdin_sha256": "492186da689ab49c6dd94e23afc53e6b086668cc60d9efb10c2803a9481b85a7",
+ "bat_dau": "2026-10-24T11:17:02+07:00",
+ "ket_thuc": "2026-10-24T11:17:07+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "^(?=[\\s\\S]*CHẠY THỬ)(?![\\s\\S]*--mark-sent)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "bb0531d254cc339bc98831c0f49c0e4f2262d39fb05d41899f827477c771938d",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

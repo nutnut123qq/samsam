@@ -1,0 +1,195 @@
+"""Probe S04b — người tạo không thoát quy tắc tự duyệt bằng nhãn agent/hệ thống,
+không tự chọn khối; luồng agent/dịch vụ và người khác hợp lệ vẫn chạy.
+
+Chạy: python -I probe_s04b.py <ROOT> <OUT.json> <dsn_file>
+Schema tạm ĐÃ COMMIT + login Postgres THẬT tạm (không owner/superuser) trên DB
+test riêng; dọn cuối (drop schema + role). Người/khối GIẢ. Mọi ca quyền chạy
+bằng ĐÚNG login tương ứng (không owner giả tên). Lỗi setup ≠ FAIL bất biến:
+ca lỗi setup ghi verdict ERROR.
+"""
+import json
+import os
+import secrets
+import sys
+import uuid
+from pathlib import Path
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG"):
+        os.environ[k] = ""
+BASE = Path(sys.argv[3]).read_text().split("'")[1]
+os.environ.update(DATABASE_URL=BASE, OPENROUTER_API_KEY="", DEPLOY="0")
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+import psycopg  # noqa: E402
+from psycopg import conninfo  # noqa: E402
+
+SCHEMA_SQL = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+ROLES_SQL = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
+P = {"mkt": "Marketing Giả B1", "mkt2": "Marketing Giả B2", "sales": "Bán Hàng Giả B1"}
+tag = uuid.uuid4().hex[:8]
+schema = f"t_s04b_{tag}"
+kinds = {"mkt": "app_human", "mkt2": "app_human", "sales": "app_human",
+         "agent": "agent_writer", "job": "svc_job"}
+logins = {k: (f"t_s04b_{k}_{tag}", secrets.token_urlsafe(18)) for k in kinds}
+admin = psycopg.connect(BASE, autocommit=True, connect_timeout=5)
+R = []
+
+
+def q(sql, args=()):
+    with admin.transaction():
+        admin.execute(f"set local search_path to {schema}")
+        cur = admin.execute(sql, args)
+        return cur.fetchall() if cur.description else []
+
+
+def as_(k, sql, args=()):
+    """→ ('ok', rows) | ('denied', sqlstate+msg)."""
+    d = conninfo.conninfo_to_dict(BASE)
+    d.update(user=logins[k][0], password=logins[k][1],
+             options=f"-c search_path={schema}")
+    try:
+        with psycopg.connect(conninfo.make_conninfo(**d), connect_timeout=5) as c:
+            cur = c.execute(sql, args)
+            rows = cur.fetchall() if cur.description else []
+            c.commit()
+            return "ok", rows
+    except psycopg.Error as e:
+        return "denied", f"{getattr(e, 'sqlstate', None)} {str(e).splitlines()[0][:110]}"
+
+
+def counts():
+    return q("select (select count(*) from approvals), (select count(*) from"
+             " decisions), (select count(*) from content_drafts where status"
+             " <> 'pending'), (select count(*) from approval_queue where status"
+             " <> 'pending')")[0]
+
+
+INS_D = ("insert into content_drafts (brief, channel, text, guardrail, source,"
+         " created_by, content_type, is_ai, block) values ('probe', 'facebook',"
+         " 'Noi dung thu an toan.', '{\"ok\":true}', 'cli', %s, 'post', false, %s)"
+         " returning id")
+INS_Q = ("insert into approval_queue (object_type, object_id, block, title,"
+         " payload, content_sha256, risk, guardrail, created_by, due_at) values"
+         " ('price_review', %s, %s, 'mục', 'p', %s, 'low', '{\"ok\": true}', %s,"
+         " now() + interval '1 day') returning id")
+ENQ = ("select enqueue_item('price_review', %s, %s, 'mục', 'p', 'low',"
+       " '{\"ok\": true}'::jsonb, 'none', %s, 24)")
+
+
+def record(case, ok, **kw):
+    R.append({"case": case, "verdict": "PASS" if ok else "FAIL", **kw})
+
+
+def self_approve_after_insert(who, created_by, block, fn="approve_draft"):
+    """Login `who` chèn draft nhãn `created_by`, rồi tự duyệt bằng tên mình."""
+    before = counts()
+    ins = as_(who, INS_D, (created_by, block))
+    appr = None
+    if ins[0] == "ok":
+        appr = as_(who, "select approve_draft(%s, %s, null)", (ins[1][0][0], P[who]))
+    blocked = ins[0] == "denied" or (appr and appr[0] == "denied")
+    return blocked and counts() == before, {"insert": ins, "approve": appr,
+                                            "ghi_do": counts() != before}
+
+
+try:
+    admin.execute("set lock_timeout = '60s'")
+    admin.execute(f"create schema {schema}")
+    with admin.transaction():
+        admin.execute(f"set local search_path to {schema}, pg_temp")
+        admin.execute(SCHEMA_SQL)
+        admin.execute(ROLES_SQL)
+    for k, (n, pw) in logins.items():
+        admin.execute(f"create role {n} login password '{pw}' nosuperuser"
+                      f" nocreatedb nocreaterole in role {kinds[k]}")
+    for k, blocks in (("mkt", "{marketing}"), ("mkt2", "{marketing}"),
+                      ("sales", "{sales}")):
+        q("insert into human_logins (db_login, person, blocks, granted_by)"
+          " values (%s, %s, %s, 'probe')", (logins[k][0], P[k], blocks))
+
+    # a/b) nhãn agent + tự duyệt
+    for who, blk in (("mkt", "marketing"), ("sales", "sales")):
+        ok, ev = self_approve_after_insert(who, "agent:controller", blk)
+        record(f"{'a' if who == 'mkt' else 'b'}) login {who} tạo draft nhãn agent:controller khối {blk} rồi tự duyệt → chặn, không ghi dở", ok, **ev)
+    # c) nhãn hệ thống/tự động + biến thể
+    for lab in ("system:auto", "auto_policy:x", "AGENT :x", "agent：x"):
+        ok, ev = self_approve_after_insert("mkt", lab, "marketing")
+        record(f"c) nhãn {lab!r} không tạo đường vòng", ok, **ev)
+    # d) tự khai khối để vượt quyền (người sales tạo nội dung post, gán khối sales)
+    ins = as_("sales", INS_D, (P["sales"], "sales"))
+    record("d) người tự khai block khác khối hệ thống xác định (post→marketing) → chặn",
+           ins[0] == "denied", insert=ins)
+    # e) người tạo đúng tên tự duyệt (+ biến thể khoảng trắng/hoa thường)
+    ins = as_("mkt", INS_D, (P["mkt"], "marketing"))
+    if ins[0] != "ok":
+        R.append({"case": "e) tạo draft bằng tên chính mình", "verdict": "ERROR", "insert": ins})
+    else:
+        did = ins[1][0][0]
+        for name in (P["mkt"], "  marketing   giả b1 "):
+            ap = as_("mkt", "select approve_draft(%s, %s, null)", (did, name))
+            record(f"e) người tạo tự duyệt bằng tên {name!r} → chặn", ap[0] == "denied", approve=ap)
+        # f) người khác đúng khối duyệt → được
+        ap = as_("mkt2", "select approve_draft(%s, %s, null)", (did, P["mkt2"]))
+        record("f) người khác đúng khối duyệt draft của người tạo → được", ap[0] == "ok", approve=ap)
+    # g) sai khối
+    did = q(INS_D, ("agent:mkt02", "marketing"))[0][0]
+    ap = as_("sales", "select approve_draft(%s, %s, null)", (did, P["sales"]))
+    record("g) người sai khối duyệt draft marketing → chặn", ap[0] == "denied", approve=ap)
+    # h) agent/dịch vụ tạo, người có quyền duyệt
+    for svc in ("agent", "job"):
+        ins = as_(svc, INS_D, ("agent:mkt02", "marketing"))
+        if ins[0] != "ok":
+            record(f"h) login {svc} tạo draft agent:mkt02", False, insert=ins)
+            continue
+        ap = as_("mkt", "select approve_draft(%s, %s, null)", (ins[1][0][0], P["mkt"]))
+        record(f"h) login {svc} tạo draft agent → người marketing duyệt → được", ap[0] == "ok", insert=ins, approve=ap)
+    # i) hàng duyệt chung: INSERT thẳng + function enqueue_item
+    for path in ("insert", "enqueue_item"):
+        before = counts()
+        oid = uuid.uuid4().hex[:8]
+        ins = (as_("sales", INS_Q, (oid, "sales", "a" * 64, "agent:controller"))
+               if path == "insert" else
+               as_("sales", ENQ, (oid, "sales", "agent:controller")))
+        dec = None
+        if ins[0] == "ok":
+            dec = as_("sales", "select decide_item(%s, %s, 'approved')", (ins[1][0][0], P["sales"]))
+        blocked = ins[0] == "denied" or (dec and dec[0] == "denied")
+        record(f"i) hàng duyệt ({path}): người nhãn agent rồi tự quyết → chặn",
+               blocked and counts() == before, insert=ins, decide=dec)
+    # i+) dịch vụ đẩy mục, người đúng khối quyết → được; người tự tạo tên mình → tự quyết chặn, người khác được
+    ins = as_("job", ENQ, (uuid.uuid4().hex[:8], "marketing", "agent:mkt02"))
+    dec = as_("mkt", "select decide_item(%s, %s, 'approved')", (ins[1][0][0], P["mkt"])) if ins[0] == "ok" else None
+    record("i) svc_job enqueue_item agent → người marketing quyết → được",
+           ins[0] == "ok" and dec and dec[0] == "ok", insert=ins, decide=dec)
+    ins = as_("mkt", ENQ, (uuid.uuid4().hex[:8], "marketing", P["mkt"]))
+    if ins[0] == "ok":
+        d1 = as_("mkt", "select decide_item(%s, %s, 'approved')", (ins[1][0][0], "MARKETING  GIẢ B1"))
+        d2 = as_("mkt2", "select decide_item(%s, %s, 'approved')", (ins[1][0][0], P["mkt2"]))
+        record("i) người tạo mục tên mình: tự quyết (biến thể tên) chặn, người khác đúng khối được",
+               d1[0] == "denied" and d2[0] == "ok", self=d1, other=d2)
+    else:
+        R.append({"case": "i) người tạo mục tên mình", "verdict": "ERROR", "insert": ins})
+finally:
+    admin.execute(f"drop schema if exists {schema} cascade")
+    for n, _ in logins.values():
+        admin.execute(f"drop role if exists {n}")
+    left = admin.execute("select count(*) from pg_roles where rolname like %s",
+                         (f"t_s04b_%_{tag}",)).fetchone()[0]
+    admin.close()
+
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+for r in R:
+    extra = {k: v for k, v in r.items() if k not in ("case", "verdict")}
+    print(f"{r['verdict']}  {r['case']}  | {json.dumps(extra, ensure_ascii=False, default=str)[:260]}")
+print(f"dọn: role tạm còn lại = {left}")
+n = sum(r["verdict"] != "PASS" for r in R)
+print(f"TỔNG {len(R)} ca, không PASS {n} (FAIL {sum(r['verdict'] == 'FAIL' for r in R)}, ERROR {sum(r['verdict'] == 'ERROR' for r in R)})")
+sys.exit(1 if n else 0)

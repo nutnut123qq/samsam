@@ -1,0 +1,55 @@
+{
+ "case": "C09_messenger",
+ "http": 200,
+ "http_bad": 403,
+ "convlog_new": [
+  {
+   "ts": "2026-10-24T04:34:41Z",
+   "msg_id": "it-g2-mm1",
+   "user_hash": "be2a2a596933abae",
+   "question": "Mật ong sâm 300ml đóng gói thế nào?",
+   "answer": "Chào Quý khách, Sâm Sâm dùng trợ lý tự động để trả lời tin nhắn. Chính sách xử lý dữ liệu cá nhân: https://samsamngoclinh.com/chinh-sach-bao-mat. Nếu Quý khách đồng ý để Sâm Sâm xử lý tin nhắn nhằm tư vấn sản phẩm, vui lòng nhắn \"Đồng ý\"; nhắn \"Không đồng ý\" nếu Quý khách muốn trợ lý tự động dừng xử lý tin nhắn.\n\nSâm Sâm đã nhận câu hỏi của Quý khách — nhân viên sẽ phản hồi sớm nhất. Quý khách cần gấp vui lòng gọi hotline 1800577732 để được hỗ trợ.",
+   "sources": [],
+   "guardrail_ok": true,
+   "latency_ms": 406,
+   "reply_ms": 406,
+   "answered": false,
+   "sent": false,
+   "rollout": "chay_thu",
+   "suggestion_id": 11,
+   "channel": "messenger",
+   "provenance": "live"
+  }
+ ],
+ "fake_calls_new": [
+  {
+   "kind": "embed"
+  },
+  {
+   "kind": "chat",
+   "slow": false
+  }
+ ],
+ "queue_new": [
+  {
+   "id": 10,
+   "block": "sales",
+   "object_type": "cskh_handoff",
+   "object_id": "messenger:d0b6c495e0970b12036ea5e8c6052915",
+   "created_by": "agent:kd_a1",
+   "status": "pending",
+   "title": "Handoff chua_van_hanh — messenger",
+   "payload": "kênh=messenger; lý do=chua_van_hanh; user_hash=d0b6c495e0970b12036ea5e8c6052915; msg_ref=5579e7abe57d9783; ts=2026-10-24T04:34:40Z; sla=72h"
+  },
+  {
+   "id": 11,
+   "block": "sales",
+   "object_type": "cskh_reply",
+   "object_id": "messenger:d0b6c495e0970b12036ea5e8c6052915:5579e7abe57d9783",
+   "created_by": "agent:kd_a1",
+   "status": "pending",
+   "title": "Gợi ý trả lời messenger — msg_ref 5579e7abe57d9783",
+   "payload": "Mật ong sâm 300ml là thực phẩm đóng hũ 300ml của Sâm Sâm [1].\nNguồn: https://example.com/it-g2/mat-ong-sam-300ml"
+  }
+ ]
+}

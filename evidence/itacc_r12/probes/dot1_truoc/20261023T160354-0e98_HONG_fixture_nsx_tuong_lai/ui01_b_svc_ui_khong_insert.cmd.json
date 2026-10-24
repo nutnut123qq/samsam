@@ -1,0 +1,17 @@
+{
+ "ca": "ui01_b_svc_ui_khong_insert",
+ "argv": [
+  "python",
+  "-c",
+  "import psycopg,os; c=psycopg.connect(os.environ['DATABASE_URL']);c.execute(\"insert into plot_logs (plot_id, ts, activity, author, source) values ('KV-A01', now(), 'x', 'y', 'manual')\"); c.commit()"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "bat_dau": "2026-10-23T16:04:04+07:00",
+ "ket_thuc": "2026-10-23T16:04:04+07:00",
+ "exit": 1,
+ "llm_calls": null,
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "41afab08c5f6751c46538bf9b7a2d658c085e00373d98f897ff1c3c7b517e8ef"
+}

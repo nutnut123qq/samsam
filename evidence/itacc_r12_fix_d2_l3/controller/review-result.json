@@ -1,0 +1,83 @@
+{
+  "counts": {
+    "DAT": 84,
+    "BI_CHAN": 12
+  },
+  "sources": {
+    "r12": 48,
+    "r10": 44,
+    "r11": 4
+  },
+  "evidence_refs": 4497,
+  "r12_cases": 456,
+  "commands_checked": 749,
+  "asserts_checked": 805,
+  "assert_types": {
+    "sql": 503,
+    "file_glob": 107,
+    "file_re": 190,
+    "file_glob_dq": 2,
+    "file_re_dq": 3
+  },
+  "not_run": [
+    [
+      "farming-01",
+      "farming-01__C11",
+      "Tiền đề không dựng được (như r10): farming-01 vẫn code_status mot_phan trong data/contract_features.json → `rollout --seed` không đưa vào sổ, `--disable farming-01` từ chối; nhánh tắt kiểm bằng FIXTURE _FORCE_MODE='tat' ở F01-09x/F01-09y"
+    ]
+  ],
+  "UI_steps": 28,
+  "fingerprint": "116fc4a9b4a9010664ee2dcee2d4d09ad96feabebe3e7e1704bd2a5f3a9f9838",
+  "code_fingerprint": "57538e8935d0ab71e7b1cd8d803aab397be27cd1ab47516b75a1d437c7435c18",
+  "verdict": "FIX: D2 parenthesized phone bypass; L3 timeout promises unrecorded human handoff",
+  "mutable_artifact_notes": [
+    [
+      "ceo-01",
+      "ceo-01__C06",
+      "output file",
+      "evidence/itacc_r12/runs/ceo-01/20261024T111150-76dc/scratch/rep/ceo-2026-W42.md"
+    ],
+    [
+      "ceo-05",
+      "ceo-05__C01",
+      "output file",
+      "evidence/itacc_r12/runs/ceo-05/20261024T111257-a0a1/scratch/rep05/hdtv-2026-09.md"
+    ],
+    [
+      "farming-03.2",
+      "farming-03.2__C12",
+      "output file",
+      "evidence/itacc_r12/runs/farming-03.2/20261024T113325-a911/scratch/qr_site_vh/j9LPLwEQzx0XBm7SIbcipA/index.html"
+    ],
+    [
+      "farming-03.2",
+      "farming-03.2__C12",
+      "output file",
+      "evidence/itacc_r12/runs/farming-03.2/20261024T113325-a911/scratch/qr_site_vh/media/ab5af5891da402c6ce709a0664bd2ee82ffa2dbd10e5b09bd68f67ba55a417cc.jpg"
+    ]
+  ],
+  "limits": [
+    "Full pytest and UI were checked from saved logs and screenshots, not independently rerun.",
+    "SQL results were checked from saved assertions, not rerun against DB.",
+    "Four assertion-time output hashes refer to files later overwritten or removed by subsequent cases; all 4497 manifest evidence references match current files.",
+    "Independent controller probes use fake provider/transport; DB connections explicitly forbidden."
+  ],
+  "findings": [
+    {
+      "id": "D2",
+      "file": "pipelines/guardrail.py",
+      "line": 980,
+      "case": "Gọi (0912) 345 678 để đặt quà. Nội dung có sử dụng AI.",
+      "actual": "check_publish ok=True; same digits without parentheses ok=False with pii_ca_nhan",
+      "expected": "block both personal phone formats"
+    },
+    {
+      "id": "L3",
+      "file": "connectors/zalo.py",
+      "line": 965,
+      "case": "answer raises DeadlineExceeded; record_handoff returns None; send succeeds",
+      "actual": "sent text promises nhân viên sẽ phản hồi sớm nhất",
+      "expected": "hotline fallback without human promise until queue success"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+"""HARNESS g3 — TÁI TẠO output console của các ca khối marketing bị GHI ĐÈ.
+
+Sự cố harness: mã ca của khối legal_hr (03.2-*, 05.1-*, 05.2-*, 06.1-*, 06.2-*) trùng mã ca khối
+marketing nên file out/<ma>.txt của lượt marketing bị lượt legal ghi đè. File legal đã đổi tên
+thành out/L-<ma>.txt. Nội dung dưới đây chép NGUYÊN VĂN từ kết quả công cụ trong transcript phiên
+(phần tail đã hiển thị lúc chạy; exit code lấy từ cases.tsv ghi NGAY sau lệnh). Không chạy lại ca.
+"""
+from pathlib import Path
+
+HDR = ("# TÁI TẠO từ transcript phiên — file gốc bị ghi đè do trùng mã ca với khối legal_hr "
+       "(lỗi đặt tên evidence của harness g3). Nội dung = output đã hiển thị lúc chạy; exit lấy "
+       "từ cases.tsv.\n")
+R = {
+"03.2-C1": "[results] mục hàng duyệt #6 — đề xuất dat_muc_tieu (CHỜ NGƯỜI QUYẾT).\n[exit=0]",
+"03.2-C2": "[từ chối] ADS_PLAN_NOT_APPROVED: phiếu #2 trạng thái cho_duyet — cần duyệt đủ 2 mục — không ghi gì.\n[exit=1]",
+"03.2-C3": ("[err] file kết quả lỗi (2) — chặn cả file, không ghi:\n  - dòng 1 cột 'chi_phi': cột lạ — chặn cả file\n"
+            "  - dòng 1 cột chi_phi_vnd: thiếu hoặc trùng cột\n[exit=1]"),
+"03.2-C4": "[skip] file kết quả này đã nạp cho phiếu #1 — không tạo thêm.\n[exit=0]",
+"05.1-C1": "[load] social #1 social_ok.csv: 6 dòng new=6 dup=0\n[done]\n[exit=0]",
+"05.1-C2": "[err] thiếu INTEL_HASH_SALT (≥16 ký tự) trong .env — không nạp social.\n[exit=1]",
+"05.1-C3": "[err] cột lạ 'dia_chi' (ngoài template)\n[err] 1 lỗi — không connect, không nạp gì.\n[exit=1]",
+"05.1-C5a": "[OK] marketing-05.1: chạy thử → tắt\n[exit=0]",
+"05.1-C5": ("[blocked] phân loại bình luận kênh sở hữu: tính năng marketing-05.1 đang tắt — HĐ 6.7/PL02 mục 1 — "
+            "không sinh đầu ra\n[exit=2]"),
+"05.1-C5b": "[OK] marketing-05.1: tắt → chạy thử\n[exit=0]",
+"05.2-C1": ("[reviews] lớp: ruou 1, claim_suc_khoe 1, che 1, khen 1, hoi_gia 1 · mục mới #10, #11, #12, #13, #14 · "
+            "skip 0 · không soạn 0 · chặn 0\nAgent không tự trả lời/đăng — người phụ trách đăng tay sau duyệt.\n[exit=0]"),
+"05.2-C2": ("[mentions] lớp: ruou 1, claim_suc_khoe 1, nghi_hang_gia 1, khieu_nai 1, khen 1, hoi_gia 1 · mục mới #15, "
+            "#16, #17, #18, #19, #20 · skip 0 · không soạn 0 · chặn 0\nAgent không tự trả lời/đăng — người phụ trách "
+            "đăng tay sau duyệt.\n[exit=0]"),
+"05.2-C3": ("[reviews] lớp: ruou 1, claim_suc_khoe 1, che 1, khen 1, hoi_gia 1 · mục mới (không) · skip 5 · không "
+            "soạn 0 · chặn 0\nAgent không tự trả lời/đăng — người phụ trách đăng tay sau duyệt.\n[exit=0]"),
+"05.2-C4": ("[chặn] UGC_NO_CONSENT: contact_id 1 không có consent marketing hiện hành (chưa có / đã rút) — không "
+            "ghi gì.\n[exit=1]"),
+"06.1-C1": ("[done] evidence\\itacc_r10\\g3\\reports\\seo-web-2026-10-23.md — from-crawl vấn đề=197 requests=0\n"
+            "[submit] created seo-web:2026-10-23:a4c0246b8bddb5a4 → mục #22\n[exit=0]"),
+"06.1-C2": ("[done] evidence\\itacc_r10\\g3\\reports\\seo-web-2026-10-23.md — from-crawl vấn đề=197 requests=0\n"
+            "[submit] skipped seo-web:2026-10-23:a4c0246b8bddb5a4\n[exit=0]"),
+"06.1-C3": ("  File \"D:\\code\\samsam\\pipelines\\rollout.py\", line 671, in check_generate\n"
+            "    raise RolloutBlocked(_why(fid, \"tat\", what) + \" — không sinh đầu ra\")\n"
+            "pipelines.rollout.RolloutBlocked: hàng duyệt marketing/seo_web_fix: tính năng marketing-06.1 đang tắt — "
+            "HĐ 6.7/PL02 mục 1 — không sinh đầu ra\n[exit=1]"),
+"06.2-C1": "[done] 12 dòng — inserted=12 unchanged=0 (MẪU)\n[exit=0]",
+"06.2-C2": ("[error] dòng 2, cột value: phải là số nguyên ≥ 0, không dấu nghìn\n[error] dòng 3, cột period_start: "
+            "không phải ngày đầu kỳ (tuần: thứ Hai; tháng: ngày 1)\n[error] dòng 4, cột channel: kênh không cho phép "
+            "với metric này\n[error] dòng 5, cột metric_id: metric nội bộ — không nạp từ CSV\n[fail] file lỗi — 0 "
+            "dòng được nạp, chưa kết nối DB\n[exit=1]"),
+"06.2-C3": ("[cockpit] kỳ week bắt đầu 2026-10-12 (giờ VN) — 13 số, 0 lỗi nguồn\n  leads.new 0 db:leads\n"
+            "  content.drafts_created 0 db:content_drafts\n  content.drafts_approved 0 db:approvals\n"
+            "  content.drafts_pending_end 0 db:content_drafts\n  market.alerts_open_end 0 db:market_alerts\n"
+            "  jobs.failed 0 db:job_runs\n  approvals.overdue 0 db:approval_queue\n  ai.cost_usd 0 db:llm_usage\n"
+            "  approvals.ceo_decided 0 db:approval_queue\n  approvals.ceo_expired 0 db:approval_queue\n"
+            "  content.drafts_rejected 0 db:content_drafts\n  chatbot.questions 0 file:conversations.jsonl\n"
+            "  chatbot.unanswered 0 file:conversations.jsonl\n[done] inserted=13 unchanged=0 conflict=0\n[exit=0]"),
+}
+out = Path(__file__).resolve().parents[1] / "out"
+for ma, txt in R.items():
+    p = out / f"{ma}.txt"
+    assert not p.exists(), p
+    p.write_text(HDR + txt + "\n", encoding="utf-8")
+print(len(R), "file tái tạo")

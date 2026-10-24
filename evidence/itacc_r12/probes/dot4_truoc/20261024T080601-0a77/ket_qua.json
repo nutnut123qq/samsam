@@ -1,0 +1,229 @@
+{
+ "label": "dot4_truoc",
+ "run_id": "20261024T080601-0a77",
+ "root": "C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\before",
+ "db": "samsam_itacc_r12_d4b2",
+ "fingerprint": null,
+ "probe_sha256": "1194cb81ae628dc7347ebe66b31dea65c075917785ae90da642c1f2e595405f1",
+ "ket_thuc": "2026-10-24T08:06:33+07:00",
+ "ket_qua": [
+  {
+   "loi": "G1-L5",
+   "ca": "list_in_cho_quyet_va_cho_ky",
+   "ket_qua": "FAIL",
+   "expected": "--list in mục chờ quyết (#id hàng duyệt ceo pending) + mục chờ ký",
+   "actual": {
+    "exit": 0,
+    "qid": 1,
+    "moc_can_ky": 5,
+    "stdout_cuoi": "[sổ quyết định] 0 mục — ngày 24/10/2026 (giờ VN)\r\n[mốc trễ] 0"
+   }
+  },
+  {
+   "loi": "G1-L6",
+   "ca": "thieu_gia_duyet_la_thieu_du_lieu",
+   "ket_qua": "FAIL",
+   "expected": "300ml TP_THUONG, giá list chưa duyệt → thieu_du_lieu",
+   "actual": {
+    "exit": 0,
+    "trang_thai": {
+     "r12-c1-mat-ong-300-doi": "nhom_han_che",
+     "r12-c2-mat-ong-savina": "nhom_han_che"
+    }
+   }
+  },
+  {
+   "loi": "G1-L6",
+   "ca": "tpbvsk_chua_xnqc_van_nhom_han_che (positive control)",
+   "ket_qua": "PASS",
+   "expected": "kèm savina (TPBVSK chưa XNQC) → nhom_han_che",
+   "actual": {
+    "trang_thai": {
+     "r12-c1-mat-ong-300-doi": "nhom_han_che",
+     "r12-c2-mat-ong-savina": "nhom_han_che"
+    }
+   }
+  },
+  {
+   "loi": "G1-L6",
+   "ca": "duyet_gia_thi_de_xuat (positive control)",
+   "ket_qua": "PASS",
+   "expected": "giá đã duyệt → de_xuat",
+   "actual": {
+    "exit": 0,
+    "trang_thai": {
+     "r12-c1-mat-ong-300-doi": "de_xuat",
+     "r12-c2-mat-ong-savina": "nhom_han_che"
+    }
+   }
+  },
+  {
+   "loi": "D4",
+   "ca": "submit_lap_bo_qua_khong_loi",
+   "ket_qua": "FAIL",
+   "expected": "lần 2 exit 0 + [skip], vẫn 1 mục",
+   "actual": {
+    "exit": [
+     0,
+     2
+    ],
+    "muc": [
+     1,
+     1
+    ],
+    "lan2_cuoi": "[err] lỗi DB: duplicate key value violates unique constraint \"approval_queue_pending_uq\""
+   }
+  },
+  {
+   "loi": "D2",
+   "ca": "chan_sdt_email_ca_nhan_moi_kenh",
+   "ket_qua": "FAIL",
+   "expected": "SĐT/email cá nhân → ok=False trên facebook/shopee/zalo/web",
+   "actual": {
+    "sdt_ca_nhan": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    },
+    "sdt_ca_nhan_84": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    },
+    "email_ca_nhan": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    }
+   }
+  },
+  {
+   "loi": "D2",
+   "ca": "khong_gan_co_lien_he_cong_ty_gia_ngay (positive control)",
+   "ket_qua": "PASS",
+   "expected": "hotline/số-email công khai/giá/ngày/quy cách → ok=True",
+   "actual": {
+    "hotline": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    },
+    "showroom": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    },
+    "gia_ngay_quy_cach": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    },
+    "gia_lon": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    }
+   }
+  },
+  {
+   "loi": "D2",
+   "ca": "che_do_chat_khong_doi (positive control)",
+   "ket_qua": "PASS",
+   "expected": "check() chat không đổi (SĐT do lớp PII kênh che riêng)",
+   "actual": {
+    "chat_check": true
+   }
+  }
+ ]
+}

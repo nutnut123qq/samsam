@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from lot_origins",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from agent_action_log where actor = 'Nông Dân Thử R12' and object_id = 'IT-LOT-G5-02'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

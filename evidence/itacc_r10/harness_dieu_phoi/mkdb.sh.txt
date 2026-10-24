@@ -1,0 +1,32 @@
+#!/bin/bash
+# Tạo DB thử MỚI samsam_itacc_* trên container samsam-itacc-r10 (127.0.0.1:55432), ghi file env (không in DSN).
+# Dựng: apply_schema --roles ×2 + core_store + golden_store. Exit code thật.
+DB="$1"; R="/c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10"
+case "$DB" in samsam_itacc_*) ;; *) echo "tên DB không hợp lệ"; exit 2;; esac
+source "$R/secret/admin.sh"
+cd /d/code/samsam
+python -I - "$DB" "$R/secret/env_$DB.sh" <<'PY'
+import os, sys
+from psycopg import conninfo
+import psycopg
+db, out = sys.argv[1], sys.argv[2]
+d = conninfo.conninfo_to_dict(os.environ["ITACC_ADMIN"])
+assert d["host"] == "127.0.0.1" and str(d["port"]) == "55432"
+with psycopg.connect(conninfo.make_conninfo(**d), autocommit=True, connect_timeout=5) as c:
+    c.execute(f"drop database if exists {db} with (force)")
+    c.execute(f"create database {db}")
+d["dbname"] = db
+dsn = conninfo.make_conninfo(**d)
+open(out, "w").write(
+    "for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done\n"
+    f"export DATABASE_URL='{dsn}'\n"
+    "export OPENROUTER_API_KEY='' PYTHONIOENCODING=utf-8\n"
+    "unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY B2B_FORM_ENABLED\n")
+PY
+source "$R/secret/env_$DB.sh"
+for s in "scripts/apply_schema.py --roles" "scripts/apply_schema.py --roles" "-m ingest.core_store" "-m ingest.golden_store"; do
+  python $s > "$R/mkdb_${DB}_$(echo $s | tr ' /.-' '____').out" 2>&1; rc=$?
+  echo "  $s rc=$rc"
+  [ $rc -ne 0 ] && exit $rc
+done
+exit 0

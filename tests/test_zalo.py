@@ -470,6 +470,10 @@ def test_conversation_log_no_data_answered_false(monkeypatch, tmp_path):
     monkeypatch.setattr("api.rag.answer",
                         lambda q: {"answer": NO_DATA, "sources": []})
     monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    # r12 L3: câu hứa nhân viên chỉ khi ĐÃ ghi được handoff — giả lập
+    # ghi được (unit test không có muối/DB).
+    monkeypatch.setattr("connectors.channels.record_handoff",
+                        lambda *a, **k: 77)
     monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
     # FLIP v5.1: câu cũ "Saphraton chữa được ung thư không?" là câu SỨC
     # KHỎE -> nay chặn ở channels.pre_route (template sức khỏe, 0 lời gọi
@@ -492,6 +496,10 @@ def test_no_data_sends_handoff_text(monkeypatch):
                         lambda q, history=None: calls.append((q, history))
                         or {"answer": NO_DATA, "sources": []})
     monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    # r12 L3: câu hứa nhân viên chỉ khi ĐÃ ghi được handoff — giả lập
+    # ghi được (unit test không có muối/DB).
+    monkeypatch.setattr("connectors.channels.record_handoff",
+                        lambda *a, **k: 77)
     monkeypatch.setattr(zalo, "send_text",
                         lambda u, t: sent.update(text=t) or True)
     # FLIP v5.1: câu cũ "Saphraton chữa ung thư không?" là câu SỨC KHỎE ->
@@ -1864,6 +1872,10 @@ def test_reply_alcohol_health_routes_without_answer(monkeypatch, tmp_path,
                                                      q, key):
     from connectors import channels
     calls, sent = [], []
+    # r12 L3: câu hứa nhân viên chỉ khi ĐÃ ghi được handoff — giả lập
+    # ghi được (unit test không có muối/DB).
+    monkeypatch.setattr("connectors.channels.record_handoff",
+                        lambda *a, **k: 77)
     monkeypatch.setattr("api.rag.answer", _counting_answer(calls))
     monkeypatch.setattr(zalo, "send_text",
                         lambda u, t: sent.append(t) or True)

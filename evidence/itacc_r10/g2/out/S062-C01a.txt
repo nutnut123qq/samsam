@@ -1,0 +1,13 @@
+# ma: S062-C01a
+# luc: 2026-10-23T10:47:16+07:00
+# lenh: python -m ingest.market_csv --file evidence/itacc_r10/g2/fixtures/s062_orders_shopee.csv --channel shopee --kind order
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+[loader-gate] market_csv: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-05 chay_thu, sales-06.2 chay_thu → nạp
+[load] snapshot #3 shopee/order s062_orders_shopee.csv: 12 dòng, map golden 12
+[alerts] export order — không đối chiếu ở P1
+[done]
+
+## stderr

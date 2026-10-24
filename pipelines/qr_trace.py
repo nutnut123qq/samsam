@@ -577,6 +577,14 @@ def cmd_link(args, unlink: bool = False) -> int:
 
     def run(conn):
         lot_state(conn, args.lot, cfg, golden)       # lô có + thuộc pilot
+        # r12 G5-02: ánh xạ/gỡ = quyết định người khối farming (cùng cổng
+        # danh tính với sign/issue/revoke); DB còn kiểm `human_actor`.
+        from pipelines import auth  # lười: auth → director → ...
+        if why := auth.cli_gate(conn, args.by, "farming",
+                                "unlink_origin" if unlink else "link_origin",
+                                "production_lot", args.lot):
+            conn.rollback()
+            return _err(f"{why} — không ghi.")
         if not unlink:
             _gen_gate(conn, FEATURE_LINK, f"ánh xạ lô {args.lot}")
             # v14.6: trang QR chỉ phát hành ẢNH — sha của video vườn bị từ

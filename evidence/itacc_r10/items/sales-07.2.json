@@ -1,0 +1,281 @@
+{
+ "id": "sales-07.2",
+ "ten": "Sau bán: xin đánh giá",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Livestream, sau bán, dự báo: 'xin đánh giá sau khi giao'",
+ "tieu_chi": [
+  "`kd_care --record --by` ghi lần mua kênh sở hữu (stdin, contact_id — không PII)",
+  "`kd_care --run` → care_review (đồng ý cskh) + care_rebuy (đồng ý marketing + SKU promotable zalo) khối sales; khách KHÔNG đồng ý → không mục; payload không SĐT/tên",
+  "Chạy lại không nhân đôi; --plan/--dry-run 0 ghi",
+  "--verify-send trước duyệt → exit 1; sau người duyệt + tệp khớp + đồng ý còn → ok; rút đồng ý → fail",
+  "Tắt → không sinh"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: không LLM; khóa vault Fernet THỬ",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s072_contactA.json",
+   "sha256": "9878dfc631abc7b10670a4aa34df560ccd4911d2d37b8d000a11e4946e73436a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s072_contactB.json",
+   "sha256": "8cccdea88d93f7e43a5f360a5cf1777456fe70269ad9b153fcedd234f109727a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s072_p1.json",
+   "sha256": "98311d8d73e23df5b1b234803dabcff95fbecda87cae1d9001091531a91991e0",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s072_p2.json",
+   "sha256": "9b4f3b4297611d037ecacab230d7bd9658cad034ab981d55bae6c04a028e5091",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s072_p3.json",
+   "sha256": "536d68e6dfba7ec7cdef8aa76af6603d32bdd77edcadd3842b1ab8028b2cf060",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s072_p4_san.json",
+   "sha256": "298667f8cb3eaae733fa9b84a4f5c1ec7040206a3ace402aa58b097227d7238b",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s072_p5.json",
+   "sha256": "186544bc3f489f02007f286478aaff1d4e7bcd12067c016386e2d5d5630c138b",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/golden_fixture.json",
+   "sha256": "2f33ddde4bec5f1d828a0b82fdadd5f00a05f3fbb3486580e06475be6106bc4e",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "S072-C01",
+   "mo_ta": "Ghi lần mua",
+   "lenh": "python -m ingest.crm --add-contact - --by CSKH Thử IT ;; python -m ingest.crm --add-contact - --by CSKH Thử IT ;; python -m ingest.crm --consent 4 --purpose cskh --grant --source zalo --evidence BB-THU-IT-cskh --policy-version nhap-2026-10 --by CSKH Thử IT ;; python -m ingest.crm --consent 4 --purpose marketing --grant --source zalo --evidence BB-THU-IT-marketing --policy-version nhap-2026-10 --by CSKH Thử IT ;; python -m agents.kd_care --record --by CSKH Thử IT ;; python -m agents.kd_care --record --by CSKH Thử IT ;; python -m agents.kd_care --record --by CSKH Thử IT ;; python -m agents.kd_care --record --by CSKH Thử IT",
+   "expected": "care_purchases",
+   "actual": "3 lần mua kênh zalo ghi #1–#3 (chỉ contact_id); kênh shopee → exit 1 'khách sàn chăm sóc bằng công cụ của sàn'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S072-C02",
+   "mo_ta": "Plan/dry-run",
+   "lenh": "python -m agents.kd_care --plan ;; python -m agents.kd_care --run --dry-run",
+   "expected": "0 ghi",
+   "actual": "plan/dry-run liệt kê 3 nháp, bỏ qua consent ×2 (khách #5); không ghi",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S072-C03",
+   "mo_ta": "Run",
+   "lenh": "python -m agents.kd_care --run ;; python -m agents.kd_care --run",
+   "expected": "chỉ khách có đồng ý; lần 2 0",
+   "actual": "#57 care_rebuy (marketing, mat-ong promotable zalo) + #58/#59 care_review (cskh) created_by agent:kd_a7, payload chỉ contact_id/mục đích/giờ gửi (không SĐT/tên), TPBVSK có câu khuyến cáo; khách #5 không đồng ý → 0 mục; lần 2 0",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S072-C04",
+   "mo_ta": "verify-send",
+   "lenh": "python -m agents.kd_care --verify-send 58 evidence/itacc_r10/g2/out/s072/care58.txt ;; python -m pipelines.approval_queue --approve 58 --by GĐ Bán Hàng Thử IT ;; python -m agents.kd_care --verify-send 58 evidence/itacc_r10/g2/out/s072/care58.txt ;; python evidence/itacc_r10/g2/harness/run_mod.py --force-mode van_hanh -m agents.kd_care --verify-send 58 evidence/itacc_r10/g2/out/s072/care58.txt ;; python evidence/itacc_r10/g2/harness/run_mod.py --force-mode van_hanh -m agents.kd_care --verify-send 58 C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/care58_tamper.txt ;; python -m ingest.crm --consent 4 --purpose cskh --withdraw --source zalo --by CSKH Thử IT ;; python evidence/itacc_r10/g2/harness/run_mod.py --force-mode van_hanh -m agents.kd_care --verify-send 58 evidence/itacc_r10/g2/out/s072/care58.txt",
+   "expected": "trước duyệt 1; sau duyệt khớp 0; sửa 1",
+   "actual": "trước duyệt exit 1 chua_duyet; sau duyệt khi chạy thử exit 1 (rollout từ chối); ép van_hanh (FIXTURE) exit 0 ok; tệp sửa exit 1 sha; rút đồng ý cskh → exit 1 consent",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S072-C05",
+   "mo_ta": "Tắt",
+   "lenh": "python -m pipelines.rollout --disable sales-07.2 --by Người Thử IT --note kiểm nhánh tắt r10 g2 ;; python -m agents.kd_care --run ;; python -m agents.kd_care --record --by CSKH Thử IT ;; python -m agents.kd_care --plan ;; python -m agents.kd_care --run",
+   "expected": "không sinh",
+   "actual": "có lần mua mới đủ điều kiện (plan 1 nháp) → --run exit 1 '[error] hàng duyệt sales/care_rebuy: ... đang tắt'; 0 mục",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Rebuy cần SKU promotable zalo → golden FIXTURE; verify-send dương tính chỉ ở van_hanh (FIXTURE); gửi Zalo OA/ZNS do người (external-dep); luật care_rules GIẢ ĐỊNH.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post.py",
+   "sha256": "09d71906afc3419051c2a7e3bfca166a96497b75be67087efc4640c102e6d9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post2.py",
+   "sha256": "1ab72f65b0881f3e20f7da54403a360f526728a95638f6dce6c6cf6ab872314e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/case.py",
+   "sha256": "0d5e5ea91967bf225c4ff3c733a5817c1ff87bb36095d808aa546fa8186b1340"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fake_llm.py",
+   "sha256": "adbc2f9799ed0ac98bf5ca1f83c7c11c2900579da8dc9bc2aa4ca3e91481cc81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fu_probe.py",
+   "sha256": "cd000fe41aa6172cf25198596a21d765938df14d3d1c2c9721812bc926b84953"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_golden_fixture.py",
+   "sha256": "82dcec52b25e0cb39b9111a0d2031d75c3d2b1c72ef60fcc71ebd747fdf0abb1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_items.py",
+   "sha256": "dfe2f77d4674e3134ba3fe9b26b320d6e1f8c54bebff43405b10cc98357b72c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/q.py",
+   "sha256": "1f522e8a212386aa99f6b6b44c4831b6aface0ecf34266af1c39eff527f274c1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/run_mod.py",
+   "sha256": "a5e9c3d3fdf5ad9706b50d5c01e7f1a66d8ab94ca05f8d449d57e6648519391b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/seed_chunk.py",
+   "sha256": "e2c8e72b3c8bd29336aa00af4138a19700aa0721aa993ef1286d2b235ad47b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/shift_orders.py",
+   "sha256": "b630f0394d2543a79471f4174f56d87461bb4c687718ff5d3da83a0d16791afe"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/zalo_e2e.py",
+   "sha256": "f6f1700f4569219eff9446fce3724d65f259fbddaba0930cc0ccc876ee416ae4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/s072/care58.txt",
+   "sha256": "bfaa1982304121232dd27de3ce493132f054da2577b3b3f435043b83e7044506"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C01-p1.txt",
+   "sha256": "b41cfd05faaeafb22eaf46aafbc5b2d29680c6876521e1dc2cc6603ca7e971f7"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C01-p2.txt",
+   "sha256": "5ffe3c1a92bf34b285c5f0142b23cab1824f19316cb7fc0ad76217aed774ab0f"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C01-p3.txt",
+   "sha256": "d58ba77aba4a0686bbf575640e2ff83f9b5efcfa536e80694038ad3c78bb52ce"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C01-san.txt",
+   "sha256": "48723bc8435dd066d7bd7041923238b422d1f7a226d69d72b0ead8a975d0d5f9"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C02a.txt",
+   "sha256": "97a33d75f8b3c639a5cb8e1711fc467e5eb4ee7a53e20aec0133c7ffabbec64e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C02b.txt",
+   "sha256": "64a3ea84cc1810e9f6f09674dc75d490a1ded97520c3ffaf7d701ee548d501e0"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C03a.txt",
+   "sha256": "ffe92326ac941e1660db1aab6d5349a0d05ea567d339111b326493243d0609ae"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C03b.txt",
+   "sha256": "c55510be6afea1eedc33b9abfd0751c38ab41c9c64eb1d9853d955cec565eaec"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C04-approve.txt",
+   "sha256": "c18080f14ae914c81611c74e7426ffe538d27c20b4a3696ad35a4107543b0d0d"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C04a.txt",
+   "sha256": "9af8275324472290dd8fff85a90acfab139cac9d6a812633c808e98947a44ffb"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C04b.txt",
+   "sha256": "e06f3e3038c3b929b736a90808efc913a47495651acb33a24e4d658a005be5b9"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C04c.txt",
+   "sha256": "4457157f3ab7d0dcde58e48a235f3ad6b37dd928a499c9f26cb091aaafbfc908"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C04d.txt",
+   "sha256": "7ffee9c1a9995d092211820077e398d0318baa5ef5d15dd5ea236062f8017615"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C04e-withdraw.txt",
+   "sha256": "3c3eea0cfe336b6de2f1753475e99cbaafbb1ae6d9bba33d84d59a9e0ec36fa5"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C04e.txt",
+   "sha256": "a2a43628ebc3418ea7321f26b0322d71f4568f767efa2a034b0d47176e79b674"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C05.txt",
+   "sha256": "14805cb240c1226a4f18d73c74e9a138204f51494b28296388e91893a587b082"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C05a.txt",
+   "sha256": "5d7c44d04587d7a5680a76377049344d1e4936ca64ef63513c4cc3c88a952070"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C05b.txt",
+   "sha256": "fe154b257a43db52562c01b6e818c054980826425d4b9e25b752f0e1f3a8dd3b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-C05c.txt",
+   "sha256": "a204c5a3d16c2fde9e25a73e1addaa861c5ee1574ffba81585cf0b0528fe1913"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-db.json",
+   "sha256": "7bf80f7b298567b949e9027aced0ae19bdae7e57ee299230a119c69e69573a55"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-SETUP-cA.txt",
+   "sha256": "afd050ebacbbbdad53d254ef8ba91842c08b0984a485c5d2f3e058cf22d50054"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-SETUP-cB.txt",
+   "sha256": "413ecd7efa2dfbb2a66fc4292fca37b1c840b45d927ebe58fd9a4aa4352b6fd5"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-SETUP-consent-cskh.txt",
+   "sha256": "9f4168a7699e96449182429b27e4f727c843a5a578cbbdb6582dc1559da443b5"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S072-SETUP-consent-marketing.txt",
+   "sha256": "63f080570a0ab411b5c1f4ac8899dc1eba6b8684e56eb223f2d519d72e021ca7"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt",
+   "sha256": "6318bbc062812637309bbc78e092657139921c2ff309792bd10b70bd6a306179"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt",
+   "sha256": "0627f43797cc5b00090dcdaddc96bf287ec3a0575fe234785a105ab05814f01c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/TAT-disable-sales-07.2.txt",
+   "sha256": "d977f76d82e31b14e295ccb3e8ac40080f7a87b188d2fcdc1161f17b674a9985"
+  }
+ ],
+ "loi_san_pham": [],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

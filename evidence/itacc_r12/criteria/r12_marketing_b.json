@@ -1,0 +1,2018 @@
+{
+ "_doc": "Tiêu chí r12 nhóm marketing_b (24/10/2026) — 5 mục: marketing-02.2, 03.1, 07.2 (bản ghi hiện hành r10: evidence/itacc_r10/items/<id>.json, ca khóa evidence/itacc_r10/criteria/g3.json) và marketing-03.2, 06.1 (bản ghi r11: evidence/itacc_r11/items/<id>.json; ca chuyển gần nguyên văn từ evidence/itacc_r11/criteria/r11_v2_marketing-03.2.json và r11.json). Mỗi ca cũ ↔ 1 ca r12 (`nguon_r10` = mã ca cũ; `MOI` = ca thêm). Fixture chép nguyên byte vào {FX12}/items/<id>/ (SHA256SUMS.txt định dạng sha256sum; nguồn từng tệp ở NGUON.txt); B-roll MẪU r10 lấy từ scratchpad r10 (sha khớp media sidecar r10 4930589c…). AI giả ở biên `_client` qua {H}/wrap.py.txt; PROBE_LLM_RESPONSES = đúng mảng `responses` của fake r10 (video.json, video_banned.json, yt.json, yt_short.json); đếm lời gọi AI bằng {OUT}/llm.json. Lời gọi AI = 0 kiểm bằng llm.json == []. Media (packshot, B-roll, mp4) ở {SCR} (ngoài repo cây mã: evidence/itacc_r12/runs/<id>/<run>/scratch). Kiểm độc lập mp4 = chạy NGUYÊN evidence/itacc_r10/g3/harness/verify_video.py.txt (chỉ đọc) qua một bước python -c glob 1 mp4 + đối chiếu sha file ↔ DB (in SHA_DB_KHOP); ngưỡng dịch từ r10: 15≤duration≤45, audio 0/video 1, metadata False, vùng nhãn mọi khung meandiff_vs_first < 10 (r10 thực tế ≤ 5,4) và stddev ≥ 20 (vùng có chữ; r10 ~43). Lỗi đã vá r12: D1 (02.2-C5, 07.2-C5 → exit 2 '[rollout]', 0 lời gọi AI), RB (03.1-C7 + X1, 03.2-X1, 06.1-C3 → exit 2 '[rollout] … <mã>', không traceback). marketing-03.1: GIỮ NGUYÊN plan_*.json r10 (creative_draft_ids [4]) — bước harness setval sequence content_drafts=3 trên DB thử để nháp ảnh shopee là #4 (không đổi fixture). PHỤ THUỘC NGÀY: plan_ok/plan_over (03.1) và plan_ok_r11 (03.2) có start_date 2026-10-26; mkt_ads từ chối start_date < hôm nay (giờ VN) → phải chạy trong khoảng 24–26/10/2026, sau đó C1/C2/C4 (03.1) và S06 (03.2) sẽ FAIL vì ADS_INPUT (giới hạn của fixture khóa, không phải lỗi sản phẩm). Không có ca UI. Không sửa mã sản phẩm/test; DB riêng từng mục.",
+ "fingerprint_code": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_m022/m031/m032/m061/m072 dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); rollout --seed trên DB thử (tính năng = chạy thử); AI giả ở biên (wrap.py.txt), socket ngoài localhost bị chặn; ffmpeg = imageio-ffmpeg (requirements).",
+ "items": [
+  {
+   "id": "marketing-02.2",
+   "db": "samsam_itacc_r12_m022",
+   "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.video_studio` chạy được với ffmpeg (FFMPEG_BIN/imageio-ffmpeg), exit 0",
+    "T2 mp4 15–45 giây, không track âm thanh, không metadata vị trí; content_drafts content_type='video' created_by='agent:mkt04' pending + video_assets sha256 = sha file; caption có nhãn AI + nhãn QC; câu chạm giá bị bỏ; nhãn AI hiện trên khung trích (đầu/giữa/cuối) kiểm độc lập (verify_video.py.txt r10)",
+    "T3 kịch bản LLM có từ cấm sau 1 lượt sửa → kich_ban, 2 lời gọi AI, 0 file/dòng; brief cấm → brief_cam 0 lời gọi AI; TTS lạ → exit 2, 0 lời gọi AI; tắt (r12 D1) → exit 2 '[rollout] … marketing-02.2', không traceback, 0 lời gọi AI (đếm ở biên _client), 0 mp4/nháp",
+    "T4 không có đường gửi/đăng ra ngoài; wrap chặn socket ngoài localhost; không lời gọi OpenRouter thật; B-roll chỉ dùng khi có license (B-roll MẪU có licenses.json MẪU)"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-02.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (r10 mkt-seed dùng chung DB; r12 DB riêng) + golden FIXTURE + packshot MẪU + B-roll MẪU có license (r10 FIXTURE, nay chép vào {FX12}/items, dùng bản sao ở {SCR})",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/marketing-02.2/golden_fixture_food.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/mk_packshot.py.txt",
+        "{SCR}/packshots",
+        "mat-ong-sam-300ml"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import shutil,sys; shutil.copytree(sys.argv[1], sys.argv[2])",
+        "{FX12}/items/marketing-02.2/broll",
+        "{SCR}/broll"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.2__C1",
+     "nguon_r10": "02.2-C1",
+     "mo_ta": "dựng video từ packshot/B-roll MẪU, LLM giả trả 4 cảnh (1 cảnh chứa giá)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.video_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "facebook",
+        "--brief",
+        "Video quà tặng mật ong sâm Thử IT cho gia đình"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"scenes\\\": [{\\\"text\\\": \\\"Buổi sáng ở vùng quê Quảng Nam Thử IT\\\", \\\"visual\\\": \\\"broll\\\"}, {\\\"text\\\": \\\"Hũ mật ong sâm đóng gói cẩn thận\\\", \\\"visual\\\": \\\"packshot\\\"}, {\\\"text\\\": \\\"Giá chỉ 150.000đ cho hũ 300ml\\\", \\\"visual\\\": \\\"packshot\\\"}, {\\\"text\\\": \\\"Món quà ấm áp gửi gia đình dịp cuối năm\\\", \\\"visual\\\": \\\"broll\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "BROLL_DIR": "{SCR}/broll",
+        "VIDEO_OUT_DIR": "{SCR}/video_c1",
+        "IMAGE_OUT_DIR": "{SCR}/img_c1",
+        "TTS_PROVIDER": null,
+        "IMAGE_PROVIDER": null
+       },
+       "expect_exit": 0,
+       "stdout_re": "mat-ong-sam-300ml × facebook × 9:16: created #\\d+ [0-9a-f]{64}\\.mp4"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,hashlib,os,runpy,sys,psycopg; d,sql,v=sys.argv[1:4]; f=glob.glob(d+'/*.mp4'); assert len(f)==1,f; h=hashlib.sha256(open(f[0],'rb').read()).hexdigest(); c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); n=c.execute(sql,(h,)).fetchone()[0]; c.close(); print('SHA_DB_KHOP' if n==1 else 'SHA_DB_LECH',h,n,flush=True); sys.argv=[v,f[0]]+sys.argv[4:]; runpy.run_path(v,run_name='__main__')",
+        "{SCR}/video_c1",
+        "select count(*) from video_assets where file_sha256 = %s and created_by = 'agent:mkt04' and draft_id = (select max(id) from content_drafts where content_type = 'video')",
+        "{FX10}/g3/harness/verify_video.py.txt",
+        "32",
+        "1670",
+        "1016",
+        "154",
+        "0.5",
+        "6",
+        "10",
+        "15.5"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*SHA_DB_KHOP )(?=.*duration_s (?:1[5-9]|[23]\\d|4[0-4])(?:\\.\\d+)?\\s|.*duration_s 45(?:\\.0+)?\\s)(?=.*audio_streams 0 video_streams 1\\b)(?=.*metadata_location_or_time False)(?=.*\\bt=0.5s label_region_meandiff_vs_first=)(?=.*\\bt=6s label_region_meandiff_vs_first=)(?=.*\\bt=10s label_region_meandiff_vs_first=)(?=.*\\bt=15.5s label_region_meandiff_vs_first=)(?!.*meandiff_vs_first=(?:\\d{2,}|nan|inf))(?!.*label_region_stddev=(?:\\d|1\\d)\\.\\d\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/video_c1/*.mp4",
+       "count": 1
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\"kind\": \"chat\"",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'video' and created_by = 'agent:mkt04' and status = 'pending' and channel = 'facebook'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'video' and text like '%Nội dung có sử dụng AI%' and text like '%Quảng cáo%' and text not like '%150.000%' and text not like '%Giá chỉ%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from video_assets",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.2__C2",
+     "nguon_r10": "02.2-C2",
+     "mo_ta": "LLM trả từ cấm cả 2 lượt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.video_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "tiktok",
+        "--brief",
+        "Video quà tặng Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"scenes\\\": [{\\\"text\\\": \\\"Bác sĩ khuyên dùng mỗi ngày\\\", \\\"visual\\\": \\\"packshot\\\"}, {\\\"text\\\": \\\"Chuyên gia kiểm chứng\\\", \\\"visual\\\": \\\"broll\\\"}, {\\\"text\\\": \\\"Quà tặng gia đình\\\", \\\"visual\\\": \\\"broll\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "BROLL_DIR": "{SCR}/broll",
+        "VIDEO_OUT_DIR": "{SCR}/video_c2",
+        "IMAGE_OUT_DIR": "{SCR}/img_c2",
+        "TTS_PROVIDER": null,
+        "IMAGE_PROVIDER": null
+       },
+       "expect_exit": 0,
+       "stdout_re": "refused kich_ban"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\{\"kind\": \"chat\"[^{}]*\\}, \\{\"kind\": \"chat\"[^{}]*\\}\\]\\s*\\Z",
+       "expect": true
+      },
+      {
+       "file_glob": "{SCR}/video_c2/*.mp4",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'video'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from video_assets",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.2__C3",
+     "nguon_r10": "02.2-C3",
+     "mo_ta": "brief 'chữa bệnh'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.video_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "tiktok",
+        "--brief",
+        "Mật ong sâm giúp chữa bệnh mất ngủ"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"scenes\\\": [{\\\"text\\\": \\\"Buổi sáng ở vùng quê Quảng Nam Thử IT\\\", \\\"visual\\\": \\\"broll\\\"}, {\\\"text\\\": \\\"Hũ mật ong sâm đóng gói cẩn thận\\\", \\\"visual\\\": \\\"packshot\\\"}, {\\\"text\\\": \\\"Giá chỉ 150.000đ cho hũ 300ml\\\", \\\"visual\\\": \\\"packshot\\\"}, {\\\"text\\\": \\\"Món quà ấm áp gửi gia đình dịp cuối năm\\\", \\\"visual\\\": \\\"broll\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "BROLL_DIR": "{SCR}/broll",
+        "VIDEO_OUT_DIR": "{SCR}/video_c3",
+        "IMAGE_OUT_DIR": "{SCR}/img_c3",
+        "TTS_PROVIDER": null,
+        "IMAGE_PROVIDER": null
+       },
+       "expect_exit": 0,
+       "stdout_re": "refused brief_cam"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\s*\\Z",
+       "expect": true
+      },
+      {
+       "file_glob": "{SCR}/video_c3/*.mp4",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'video'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from video_assets",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.2__C4",
+     "nguon_r10": "02.2-C4",
+     "mo_ta": "TTS_PROVIDER lạ (elevenlabs)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.video_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "tiktok",
+        "--brief",
+        "Video quà tặng Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"scenes\\\": [{\\\"text\\\": \\\"Buổi sáng ở vùng quê Quảng Nam Thử IT\\\", \\\"visual\\\": \\\"broll\\\"}, {\\\"text\\\": \\\"Hũ mật ong sâm đóng gói cẩn thận\\\", \\\"visual\\\": \\\"packshot\\\"}, {\\\"text\\\": \\\"Giá chỉ 150.000đ cho hũ 300ml\\\", \\\"visual\\\": \\\"packshot\\\"}, {\\\"text\\\": \\\"Món quà ấm áp gửi gia đình dịp cuối năm\\\", \\\"visual\\\": \\\"broll\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "BROLL_DIR": "{SCR}/broll",
+        "VIDEO_OUT_DIR": "{SCR}/video_c4",
+        "IMAGE_OUT_DIR": "{SCR}/img_c4",
+        "TTS_PROVIDER": "elevenlabs",
+        "IMAGE_PROVIDER": null
+       },
+       "expect_exit": 2,
+       "stderr_re": "TTS_PROVIDER='elevenlabs' chưa cắm"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\s*\\Z",
+       "expect": true
+      },
+      {
+       "file_glob": "{SCR}/video_c4/*.mp4",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'video'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.2__C5",
+     "nguon_r10": "02.2-C5",
+     "mo_ta": "tính năng tắt — r10 FAIL (D1: gọi LLM rồi traceback exit 1); r12 kỳ vọng hành vi đúng: exit 2 '[rollout] … marketing-02.2', không traceback, 0 lời gọi AI, 0 mp4/dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "marketing-02.2",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.video_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "tiktok",
+        "--brief",
+        "Video quà tặng Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"scenes\\\": [{\\\"text\\\": \\\"Buổi sáng ở vùng quê Quảng Nam Thử IT\\\", \\\"visual\\\": \\\"broll\\\"}, {\\\"text\\\": \\\"Hũ mật ong sâm đóng gói cẩn thận\\\", \\\"visual\\\": \\\"packshot\\\"}, {\\\"text\\\": \\\"Giá chỉ 150.000đ cho hũ 300ml\\\", \\\"visual\\\": \\\"packshot\\\"}, {\\\"text\\\": \\\"Món quà ấm áp gửi gia đình dịp cuối năm\\\", \\\"visual\\\": \\\"broll\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "BROLL_DIR": "{SCR}/broll",
+        "VIDEO_OUT_DIR": "{SCR}/video_c5",
+        "IMAGE_OUT_DIR": "{SCR}/img_c5",
+        "TTS_PROVIDER": null,
+        "IMAGE_PROVIDER": null
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*marketing-02\\.2",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\s*\\Z",
+       "expect": true
+      },
+      {
+       "file_glob": "{SCR}/video_c5/*",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'video'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from content_drafts where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-02.2' and kind = 'disable')",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from video_assets",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-03.1",
+   "db": "samsam_itacc_r12_m031",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_ads --plan F --by <người> --month 2026-10` và `--propose` chạy trên DB có P&L fixture",
+    "T2 1 dòng ad_test_plans + 2 mục approval_queue cùng object_id adtest-<id>: marketing/ad_campaign + finance/budget_change (created_by budget = 'agent:mkt05_budget'), pending, ngân sách ≤ trần FP&A; --propose (FIXTURE ads_proposal) sinh phiếu created_by 'agent:mkt05'",
+    "T3 ngân sách > trần / SKU rượu → mã từ chối, 0 dòng; phiếu trùng → skip; ads_proposal thật CHƯA CHỐT → exit 2 BLOCKED 0 dòng; tắt (r12 RB) → --propose và --plan exit 2 '[rollout] … marketing-03.1', không traceback, 0 dòng",
+    "T4 không chi tiền, không gọi API quảng cáo; chỉ nháp chờ người duyệt"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-03.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (r10 mkt-seed dùng chung DB)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.1__C0",
+     "nguon_r10": "03.1-C0",
+     "tien_quyet": true,
+     "mo_ta": "mồi: golden FIXTURE + nháp image shopee #4 đã duyệt (như r10: plan_ok/plan_over/plan_ruou ghi creative_draft_ids [4] — HARNESS đặt sequence content_drafts về 3 trên DB thử để nháp ảnh là #4, GIỮ NGUYÊN fixture r10) + P&L fixture (market_csv order + settlement_csv + fp_pnl cogs add/approve 2 người) → cap_for mat-ong×shopee DE_XUAT (cap_probe.py.txt r10, chỉ đọc)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/marketing-03.1/golden_fixture_food.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); print(c.execute(\"select setval(pg_get_serial_sequence('content_drafts','id'), 3)\").fetchone()[0]); c.commit(); c.close()"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A3\\s*\\Z"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/mk_packshot.py.txt",
+        "{SCR}/packshots",
+        "mat-ong-sam-300ml"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.image_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "shopee",
+        "--headline",
+        "Quà quê Quảng Nam Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/image_assets",
+        "IMAGE_PROVIDER": null
+       },
+       "expect_exit": 0,
+       "stdout_re": "created #4\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "4",
+        "--by",
+        "Duyệt MKT Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/marketing-03.1/order_shopee_MAU.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/marketing-03.1/order_shopee_multi_MAU.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/marketing-03.1/settlement_shopee_MAU.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/marketing-03.1/settlement_shopee_multi_MAU.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "savina-12v",
+        "--cost",
+        "50000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "1",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "saphraton-20v",
+        "--cost",
+        "90000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "2",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "savigout-30v",
+        "--cost",
+        "130000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "3",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-120ml-1hu",
+        "--cost",
+        "70000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "4",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--cost",
+        "180000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "5",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "sapentol-30v",
+        "--cost",
+        "110000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "6",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{FX10}/g3/harness/cap_probe.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "mat-ong-sam-300ml shopee \\{\"code\": \"DE_XUAT\""
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select status from content_drafts where id = 4 and content_type = 'image' and sku = 'mat-ong-sam-300ml' and channel = 'shopee'",
+       "expect": "approved"
+      },
+      {
+       "sql": "select count(*) from ad_test_plans",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.1__C1",
+     "nguon_r10": "03.1-C1",
+     "mo_ta": "phiếu người lập hợp lệ (plan_ok.json r10 nguyên văn)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--plan",
+        "{FX12}/items/marketing-03.1/plan_ok.json",
+        "--by",
+        "Người Thử IT",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[plan\\] phiếu #\\d+ \\(mới\\)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans where created_by = 'Người Thử IT' and budget_vnd = 150000 and budget_vnd <= cap_vnd",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where a.status = 'pending' and a.block = 'marketing' and a.object_type = 'ad_campaign'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where a.status = 'pending' and a.block = 'finance' and a.object_type = 'budget_change' and a.created_by = 'agent:mkt05_budget'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.1__C2",
+     "nguon_r10": "03.1-C2",
+     "mo_ta": "ngân sách vượt trần (plan_over.json)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--plan",
+        "{FX12}/items/marketing-03.1/plan_over.json",
+        "--by",
+        "Người Thử IT",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "\\[từ chối\\] ADS_OVER_CAP"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.1__C3",
+     "nguon_r10": "03.1-C3",
+     "mo_ta": "SKU rượu (plan_ruou.json)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--plan",
+        "{FX12}/items/marketing-03.1/plan_ruou.json",
+        "--by",
+        "Người Thử IT",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "\\[từ chối\\] ADS_OFFLINE_ONLY"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.1__C4",
+     "nguon_r10": "03.1-C4",
+     "mo_ta": "nộp lại phiếu C1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--plan",
+        "{FX12}/items/marketing-03.1/plan_ok.json",
+        "--by",
+        "Người Thử IT",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã có — chỉ bổ sung mục thiếu\\) · mục hàng duyệt mới: \\(không\\)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.1__C5",
+     "nguon_r10": "03.1-C5",
+     "mo_ta": "--propose với data/ads_proposal.json thật (chưa chốt)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--propose",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[BLOCKED\\]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.1__C6",
+     "nguon_r10": "03.1-C6",
+     "mo_ta": "--propose với ads_proposal FIXTURE (PROBE_SET PROPOSAL_FILE + gọi main — như bản vá harness r10). Kỳ vọng r10: exit 0; phiếu created_by agent:mkt05 + 2 mục, HOẶC DA_CO/THIEU_* có lý do",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.mkt_ads",
+        "--propose",
+        "--month",
+        "2026-10"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.mkt_ads:PROPOSAL_FILE={FX12}/items/marketing-03.1/ads_proposal_fixture.json",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[(?:DE_XUAT|DA_CO|THIEU_[A-Z_]*)\\] mat-ong-sam-300ml × shopee: \\S"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select case when exists (select 1 from ad_test_plans where created_by = 'agent:mkt05') then (select count(*) from ad_test_plans where created_by = 'agent:mkt05') = 1 and (select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where p.created_by = 'agent:mkt05' and a.status = 'pending' and ((a.block = 'marketing' and a.object_type = 'ad_campaign' and a.created_by = 'agent:mkt05') or (a.block = 'finance' and a.object_type = 'budget_change' and a.created_by = 'agent:mkt05_budget'))) = 2 else true end",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from ad_test_plans where budget_vnd > cap_vnd",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.1__C7",
+     "nguon_r10": "03.1-C7",
+     "mo_ta": "tính năng tắt (--propose fixture) — r10 FAIL (D3/RB: '[error] RolloutBlocked' exit 1); r12 kỳ vọng exit 2 '[rollout] … marketing-03.1', không traceback, 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "marketing-03.1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.mkt_ads",
+        "--propose",
+        "--month",
+        "2026-10"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "agents.mkt_ads:PROPOSAL_FILE={FX12}/items/marketing-03.1/ads_proposal_fixture.json",
+        "PROBE_CALL_MAIN": "1"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*marketing-03\\.1",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-03.1__X1",
+     "nguon_r10": "MOI",
+     "mo_ta": "tắt — --plan (tương ứng lượt phụ 03.1-C7c của r10, không phải ca khóa: --plan plan_ok.json --month 2026-11 khi tắt). r12 RB: exit 2 '[rollout] … marketing-03.1' trước mọi kiểm/ghi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--plan",
+        "{FX12}/items/marketing-03.1/plan_ok.json",
+        "--by",
+        "Người Thử IT",
+        "--month",
+        "2026-11"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*marketing-03\\.1",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.1' and kind = 'disable')",
+       "expect": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-03.2",
+   "db": "samsam_itacc_r12_m032",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_ads --results F.csv --plan-id N --by <người>` exit 0 trên phiếu đã duyệt đủ 2 mục",
+    "T2 đúng 1 mục approval_queue marketing/ad_result pending; đề xuất = dat_muc_tieu khớp phép tính độc lập từ ads_result_ok_r11.csv (hiển thị 9000, click 190, chi 100.000đ ≤ ngân sách 150.000đ, 1 đơn → CTR 2,11% ≥ 2% đạt; CPC 526đ < 5.000; CPA 100.000đ < 150.000 → không chạm điều kiện dừng); đề xuất ∈ {dung, dat_muc_tieu, tiep, chua_du_lieu} (không có nhánh tăng ngân sách)",
+    "T3 phiếu chưa duyệt đủ 2 mục → ADS_PLAN_NOT_APPROVED exit 1, 0 ad_result; CSV sai cột → exit 1, 0 dòng mới; nạp lại cùng file → skip, 0 dòng mới; tắt (r12 RB, ca MOI) → --results exit 2 '[rollout] … marketing-03.2', không traceback, 0 ad_result mới",
+    "T4 không chi tiền / không gọi API quảng cáo (không có lệnh/lời gọi mạng; socket ngoài bị chặn không áp dụng vì CLI không mở mạng)"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-03.2__S01",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (tính năng = chạy thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "nguon_r10": "S01"
+    },
+    {
+     "ma": "marketing-03.2__S02",
+     "tien_quyet": true,
+     "mo_ta": "golden FIXTURE (mat-ong-sam-300ml giả lập đã tự công bố) — như r10 mkt-fx-golden",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/marketing-03.2/golden_fixture_food.json"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "nguon_r10": "S02"
+    },
+    {
+     "ma": "marketing-03.2__S03",
+     "tien_quyet": true,
+     "mo_ta": "packshot MẪU + ảnh creative shopee qua image_studio (provider none, không AI) — draft #1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/mk_packshot.py.txt",
+        "{SCR}/packshots",
+        "mat-ong-sam-300ml"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "pipelines.image_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "shopee",
+        "--headline",
+        "Quà quê Quảng Nam Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/image_assets"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where id = 1 and content_type = 'image' and sku = 'mat-ong-sam-300ml' and status = 'pending'",
+       "expect": 1
+      }
+     ],
+     "nguon_r10": "S03"
+    },
+    {
+     "ma": "marketing-03.2__S04",
+     "tien_quyet": true,
+     "mo_ta": "duyệt ảnh creative #1 (dev, người duyệt thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "1",
+        "--by",
+        "Duyệt MKT Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select status from content_drafts where id = 1",
+       "expect": "approved"
+      }
+     ],
+     "nguon_r10": "S04"
+    },
+    {
+     "ma": "marketing-03.2__S05",
+     "tien_quyet": true,
+     "mo_ta": "dữ liệu P&L MẪU để có trần FP&A (đơn + quyết toán + giá vốn duyệt) — như r10 03.1-C0",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/marketing-03.2/order_shopee_MAU.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/marketing-03.2/order_shopee_multi_MAU.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "order"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/marketing-03.2/settlement_shopee_MAU.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.settlement_csv",
+        "--file",
+        "{FX12}/items/marketing-03.2/settlement_shopee_multi_MAU.csv",
+        "--channel",
+        "shopee"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "savina-12v",
+        "--cost",
+        "50000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "1",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "saphraton-20v",
+        "--cost",
+        "90000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "2",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "savigout-30v",
+        "--cost",
+        "130000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "3",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-120ml-1hu",
+        "--cost",
+        "70000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "4",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--cost",
+        "180000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "5",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-add",
+        "--sku",
+        "sapentol-30v",
+        "--cost",
+        "110000",
+        "--from",
+        "2026-10-01",
+        "--by",
+        "Lập Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.fp_pnl",
+        "--cogs-approve",
+        "6",
+        "--by",
+        "Duyệt Giá Vốn Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "nguon_r10": "S05"
+    },
+    {
+     "ma": "marketing-03.2__S06",
+     "tien_quyet": true,
+     "mo_ta": "lập phiếu thử nghiệm #1 (plan_ok_r11.json, creative #1) — 2 mục chờ duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--plan",
+        "{FX12}/items/marketing-03.2/plan_ok_r11.json",
+        "--by",
+        "Người Thử IT",
+        "--month",
+        "2026-10"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from ad_test_plans where id = 1",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ad_campaign' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'finance' and object_type = 'budget_change' and status = 'pending'",
+       "expect": 1
+      }
+     ],
+     "nguon_r10": "S06"
+    },
+    {
+     "ma": "marketing-03.2__C2",
+     "khac_r10": "r10 dùng phiếu #2 do --propose (03.1) sinh; r11 dùng chính phiếu #1 TRƯỚC khi duyệt (cùng trạng thái 'chưa duyệt đủ 2 mục', không phụ thuộc luồng 03.1 propose) — chạy trước C1",
+     "mo_ta": "phiếu chưa duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX12}/items/marketing-03.2/ads_result_ok_r11.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "ADS_PLAN_NOT_APPROVED"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 0
+      }
+     ],
+     "nguon_r10": "C2"
+    },
+    {
+     "ma": "marketing-03.2__C1",
+     "mo_ta": "duyệt đủ 2 mục phiếu #1 (dev) rồi nạp kết quả",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where block = 'marketing' and object_type = 'ad_campaign'}",
+        "--by",
+        "Duyệt MKT Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select id from approval_queue where block = 'finance' and object_type = 'budget_change'}",
+        "--by",
+        "Duyệt TC Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX12}/items/marketing-03.2/ads_result_ok_r11.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'ad_result' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result' and payload like '%Đề xuất: **dat_muc_tieu**%' and payload like '%hiển thị 9000, click 190%' and payload like '%đơn 1%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result' and title like '%dat_muc_tieu%'",
+       "expect": 1
+      }
+     ],
+     "nguon_r10": "C1"
+    },
+    {
+     "ma": "marketing-03.2__C3",
+     "mo_ta": "CSV sai cột",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX12}/items/marketing-03.2/ads_result_badcol_r11.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 1
+      }
+     ],
+     "nguon_r10": "C3"
+    },
+    {
+     "ma": "marketing-03.2__C4",
+     "mo_ta": "nạp lại file của C1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX12}/items/marketing-03.2/ads_result_ok_r11.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?i)skip"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 1
+      }
+     ],
+     "nguon_r10": "C4"
+    },
+    {
+     "ma": "marketing-03.2__X1",
+     "nguon_r10": "MOI",
+     "mo_ta": "tắt marketing-03.2 → --results (cùng file C1) exit 2 '[rollout] … marketing-03.2' trước mọi đọc/ghi (r12 RB: trước đây '[error] RolloutBlocked' exit 1), 0 ad_result mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "marketing-03.2",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.mkt_ads",
+        "--results",
+        "{FX12}/items/marketing-03.2/ads_result_ok_r11.csv",
+        "--plan-id",
+        "1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*marketing-03\\.2",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.2' and kind = 'disable')",
+       "expect": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "marketing-06.1",
+   "db": "samsam_itacc_r12_m061",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.seo_web --from-crawl --submit --out-dir <thử>` exit 0, requests=0 (chỉ dữ liệu crawl có sẵn data/*.jsonl — LOCAL, KHÔNG kiểm --fetch mạng/website thật)",
+    "T2 báo cáo seo-web-<ngày>.md trong out-dir + đúng 1 mục marketing/seo_web_fix created_by 'agent:MKT-10' pending; mọi URL trong payload thuộc own_hosts (samsam.net.vn, samsamngoclinh.com)",
+    "T3 chạy lại → skipped, 0 mục mới; tắt (r12 RB) → exit 2 '[rollout] … marketing-06.1', không traceback, 0 báo cáo seo-web-*.md, 0 mục mới",
+    "T4 không ghi website; socket ra ngoài localhost bị chặn (wrap.py.txt)"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-06.1__S01",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "nguon_r10": "S01"
+    },
+    {
+     "ma": "marketing-06.1__C1",
+     "mo_ta": "rà từ dữ liệu crawl có sẵn",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.seo_web",
+        "--from-crawl",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "requests=0",
+       "env": {
+        "PROBE_ROOT": "{REPO}"
+       }
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/seo-web-*.md",
+       "count": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'marketing' and object_type = 'seo_web_fix' and created_by = 'agent:MKT-10' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from (select lower((regexp_matches(payload, 'https?://([^/\\s)>\\]`''\"]+)', 'g'))[1]) h from approval_queue where object_type = 'seo_web_fix') x where h not in ('samsam.net.vn', 'samsamngoclinh.com') and h not like '%.samsam.net.vn' and h not like '%.samsamngoclinh.com'",
+       "expect": 0
+      }
+     ],
+     "nguon_r10": "C1"
+    },
+    {
+     "ma": "marketing-06.1__C2",
+     "mo_ta": "chạy lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.seo_web",
+        "--from-crawl",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "skipped",
+       "env": {
+        "PROBE_ROOT": "{REPO}"
+       }
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'seo_web_fix'",
+       "expect": 1
+      }
+     ],
+     "nguon_r10": "C2"
+    },
+    {
+     "ma": "marketing-06.1__C3",
+     "mo_ta": "tắt tính năng — r11 chấp nhận exit 1|2 (PASS với exit 1 traceback); r12 RB đã vá: kỳ vọng hành vi đúng exit 2 '[rollout] … marketing-06.1', không traceback, 0 báo cáo, 0 mục mới (chặt hơn r11, không nới)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "marketing-06.1",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.seo_web",
+        "--from-crawl",
+        "--submit",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 2,
+       "env": {
+        "PROBE_ROOT": "{REPO}"
+       },
+       "stdout_re": "\\[rollout\\][^\\n]*marketing-06\\.1",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'seo_web_fix'",
+       "expect": 1
+      },
+      {
+       "file_glob": "{OUT}/seo-web-*.md",
+       "count": 0
+      }
+     ],
+     "nguon_r10": "C3"
+    }
+   ]
+  },
+  {
+   "id": "marketing-07.2",
+   "db": "samsam_itacc_r12_m072",
+   "tieu_chi_cu_the": [
+    "T1 `python -m agents.mkt_youtube --brief ...` exit 0 (AI giả ở biên _client)",
+    "T2 content_drafts channel='youtube' content_type='video' created_by='agent:mkt12' pending; chương bắt đầu 00:00 cộng dồn đúng; SRT 1 cue/phần; mô tả có nhãn AI + QC; privacyStatus 'private'; câu chạm giá bị bỏ",
+    "T3 brief nhắc rượu → 0 lời gọi AI; tổng thời lượng ngoài [300,900] → thoi_luong 0 dòng; tắt (r12 D1) → exit 2 '[rollout] … marketing-07.2', không traceback, 0 lời gọi AI, 0 nháp (kể cả --dry-run — ca MOI)",
+    "T4 không đăng YouTube; --render shorts dùng B-roll có license, có nhãn (verify_video.py.txt r10: 15–45s, 0 audio, không metadata, vùng nhãn ổn định)"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-07.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout + B-roll MẪU có license (r10 FIXTURE ở scratchpad, nay chép vào {FX12}/items, dùng bản sao ở {SCR})",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import shutil,sys; shutil.copytree(sys.argv[1], sys.argv[2])",
+        "{FX12}/items/marketing-07.2/broll",
+        "{SCR}/broll"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-07.2__C1",
+     "nguon_r10": "07.2-C1",
+     "mo_ta": "gói YouTube (LLM giả 4 phần × 90s = 360s, phần 2 có câu giá)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.mkt_youtube",
+        "--brief",
+        "Video dài kể chuyện vùng quê Quảng Nam Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"title\\\": \\\"Vùng quê Quảng Nam và người làm vườn Thử IT\\\", \\\"description\\\": \\\"Video kể chuyện vùng quê và người làm vườn Thử IT.\\\", \\\"segments\\\": [{\\\"title\\\": \\\"Bình minh trên đồi\\\", \\\"text\\\": \\\"Sương sớm phủ những triền đồi. Người làm vườn bắt đầu ngày mới.\\\", \\\"visual\\\": \\\"cảnh đồi\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Chăm vườn\\\", \\\"text\\\": \\\"Từng gốc cây được chăm sóc kỹ. Giá chỉ 150.000đ một hũ.\\\", \\\"visual\\\": \\\"cận cảnh lá\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Đóng gói\\\", \\\"text\\\": \\\"Sản phẩm được đóng gói cẩn thận trong xưởng.\\\", \\\"visual\\\": \\\"xưởng\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Quà gửi gia đình\\\", \\\"text\\\": \\\"Món quà quê gửi người thân dịp cuối năm.\\\", \\\"visual\\\": \\\"hộp quà\\\", \\\"duration_s\\\": 90}], \\\"shorts\\\": [{\\\"segments\\\": [0], \\\"title\\\": \\\"Bình minh vùng quê\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*00:00 Bình minh trên đồi)(?=.*01:30 Chăm vườn)(?=.*03:00 Đóng gói)(?=.*04:30 Quà gửi gia đình)(?=.*Nội dung có sử dụng AI)(?=.*Quảng cáo)(?=.*\\bprivate\\b)(?=.*00:00:00,000 --> 00:01:30,000)(?=.*00:01:30,000 --> 00:03:00,000)(?=.*00:03:00,000 --> 00:04:30,000)(?=.*00:04:30,000 --> 00:06:00,000)(?!.*00:06:00,000 --> )(?!.*150\\.000)(?!.*Giá chỉ)(?=.*\\[ok\\] nháp #\\d+ pending)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\"kind\": \"chat\"",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from content_drafts where channel = 'youtube' and content_type = 'video' and created_by = 'agent:mkt12' and status = 'pending'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from content_drafts where channel = 'youtube' and text like '%Nội dung có sử dụng AI%' and text like '%Quảng cáo%' and text like '%private%' and text not like '%150.000%' and text like '%00:00 Bình minh trên đồi%'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-07.2__C2",
+     "nguon_r10": "07.2-C2",
+     "mo_ta": "brief rượu",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.mkt_youtube",
+        "--brief",
+        "Video về rượu sâm biếu Tết Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"title\\\": \\\"Vùng quê Quảng Nam và người làm vườn Thử IT\\\", \\\"description\\\": \\\"Video kể chuyện vùng quê và người làm vườn Thử IT.\\\", \\\"segments\\\": [{\\\"title\\\": \\\"Bình minh trên đồi\\\", \\\"text\\\": \\\"Sương sớm phủ những triền đồi. Người làm vườn bắt đầu ngày mới.\\\", \\\"visual\\\": \\\"cảnh đồi\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Chăm vườn\\\", \\\"text\\\": \\\"Từng gốc cây được chăm sóc kỹ. Giá chỉ 150.000đ một hũ.\\\", \\\"visual\\\": \\\"cận cảnh lá\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Đóng gói\\\", \\\"text\\\": \\\"Sản phẩm được đóng gói cẩn thận trong xưởng.\\\", \\\"visual\\\": \\\"xưởng\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Quà gửi gia đình\\\", \\\"text\\\": \\\"Món quà quê gửi người thân dịp cuối năm.\\\", \\\"visual\\\": \\\"hộp quà\\\", \\\"duration_s\\\": 90}], \\\"shorts\\\": [{\\\"segments\\\": [0], \\\"title\\\": \\\"Bình minh vùng quê\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\[refuse\\] ruou\\b"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\s*\\Z",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from content_drafts where channel = 'youtube'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-07.2__C3",
+     "nguon_r10": "07.2-C3",
+     "mo_ta": "tổng thời lượng 100s (yt_short.json)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.mkt_youtube",
+        "--brief",
+        "Video ngắn kể chuyện vùng quê Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"title\\\": \\\"Vùng quê Quảng Nam và người làm vườn Thử IT\\\", \\\"description\\\": \\\"Video kể chuyện vùng quê và người làm vườn Thử IT.\\\", \\\"segments\\\": [{\\\"title\\\": \\\"Bình minh trên đồi\\\", \\\"text\\\": \\\"Sương sớm phủ những triền đồi. Người làm vườn bắt đầu ngày mới.\\\", \\\"visual\\\": \\\"cảnh đồi\\\", \\\"duration_s\\\": 25}, {\\\"title\\\": \\\"Chăm vườn\\\", \\\"text\\\": \\\"Từng gốc cây được chăm sóc kỹ. Giá chỉ 150.000đ một hũ.\\\", \\\"visual\\\": \\\"cận cảnh lá\\\", \\\"duration_s\\\": 25}, {\\\"title\\\": \\\"Đóng gói\\\", \\\"text\\\": \\\"Sản phẩm được đóng gói cẩn thận trong xưởng.\\\", \\\"visual\\\": \\\"xưởng\\\", \\\"duration_s\\\": 25}, {\\\"title\\\": \\\"Quà gửi gia đình\\\", \\\"text\\\": \\\"Món quà quê gửi người thân dịp cuối năm.\\\", \\\"visual\\\": \\\"hộp quà\\\", \\\"duration_s\\\": 25}], \\\"shorts\\\": [{\\\"segments\\\": [0], \\\"title\\\": \\\"Bình minh vùng quê\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\[refuse\\] thoi_luong\\b"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where channel = 'youtube'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-07.2__C4",
+     "nguon_r10": "07.2-C4",
+     "mo_ta": "render shorts từ B-roll MẪU có license (thư mục media ở {SCR})",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.mkt_youtube",
+        "--brief",
+        "Video dài kể chuyện vùng quê Quảng Nam Thử IT (bản có Shorts)",
+        "--render",
+        "--broll-dir",
+        "{SCR}/broll",
+        "--out-dir",
+        "{SCR}/yt_out"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"title\\\": \\\"Vùng quê Quảng Nam và người làm vườn Thử IT\\\", \\\"description\\\": \\\"Video kể chuyện vùng quê và người làm vườn Thử IT.\\\", \\\"segments\\\": [{\\\"title\\\": \\\"Bình minh trên đồi\\\", \\\"text\\\": \\\"Sương sớm phủ những triền đồi. Người làm vườn bắt đầu ngày mới.\\\", \\\"visual\\\": \\\"cảnh đồi\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Chăm vườn\\\", \\\"text\\\": \\\"Từng gốc cây được chăm sóc kỹ. Giá chỉ 150.000đ một hũ.\\\", \\\"visual\\\": \\\"cận cảnh lá\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Đóng gói\\\", \\\"text\\\": \\\"Sản phẩm được đóng gói cẩn thận trong xưởng.\\\", \\\"visual\\\": \\\"xưởng\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Quà gửi gia đình\\\", \\\"text\\\": \\\"Món quà quê gửi người thân dịp cuối năm.\\\", \\\"visual\\\": \\\"hộp quà\\\", \\\"duration_s\\\": 90}], \\\"shorts\\\": [{\\\"segments\\\": [0], \\\"title\\\": \\\"Bình minh vùng quê\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[short\\] [0-9a-f]{64}\\.mp4"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,hashlib,os,runpy,sys,psycopg; d,sql,v=sys.argv[1:4]; f=glob.glob(d+'/*.mp4'); assert len(f)==1,f; h=hashlib.sha256(open(f[0],'rb').read()).hexdigest(); c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); n=c.execute(sql,(h,)).fetchone()[0]; c.close(); print('SHA_DB_KHOP' if n==1 else 'SHA_DB_LECH',h,n,flush=True); sys.argv=[v,f[0]]+sys.argv[4:]; runpy.run_path(v,run_name='__main__')",
+        "{SCR}/yt_out",
+        "select count(*) from agent_action_log where action = 'youtube_short_render' and detail->>'sha256' = %s and object_id = (select max(id)::text from content_drafts where channel = 'youtube')",
+        "{FX10}/g3/harness/verify_video.py.txt",
+        "32",
+        "1670",
+        "1016",
+        "154",
+        "0.5",
+        "7",
+        "14"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*SHA_DB_KHOP )(?=.*duration_s (?:1[5-9]|[23]\\d|4[0-4])(?:\\.\\d+)?\\s|.*duration_s 45(?:\\.0+)?\\s)(?=.*audio_streams 0 video_streams 1\\b)(?=.*metadata_location_or_time False)(?=.*\\bt=0.5s label_region_meandiff_vs_first=)(?=.*\\bt=7s label_region_meandiff_vs_first=)(?=.*\\bt=14s label_region_meandiff_vs_first=)(?!.*meandiff_vs_first=(?:\\d{2,}|nan|inf))(?!.*label_region_stddev=(?:\\d|1\\d)\\.\\d\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/yt_out/*.mp4",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/yt_out/*.json",
+       "re": "\"privacyStatus\":\\s*\"private\"",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from agent_action_log where action = 'youtube_short_render'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from content_drafts where channel = 'youtube'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "marketing-07.2__C5",
+     "nguon_r10": "07.2-C5",
+     "mo_ta": "tắt — r10 FAIL (D1: 1 lời gọi LLM + traceback exit 1); r12 kỳ vọng exit 2 '[rollout] … marketing-07.2', không traceback, 0 lời gọi AI, 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "marketing-07.2",
+        "--by",
+        "Người Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.mkt_youtube",
+        "--brief",
+        "Video dài khi tính năng tắt Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"title\\\": \\\"Vùng quê Quảng Nam và người làm vườn Thử IT\\\", \\\"description\\\": \\\"Video kể chuyện vùng quê và người làm vườn Thử IT.\\\", \\\"segments\\\": [{\\\"title\\\": \\\"Bình minh trên đồi\\\", \\\"text\\\": \\\"Sương sớm phủ những triền đồi. Người làm vườn bắt đầu ngày mới.\\\", \\\"visual\\\": \\\"cảnh đồi\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Chăm vườn\\\", \\\"text\\\": \\\"Từng gốc cây được chăm sóc kỹ. Giá chỉ 150.000đ một hũ.\\\", \\\"visual\\\": \\\"cận cảnh lá\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Đóng gói\\\", \\\"text\\\": \\\"Sản phẩm được đóng gói cẩn thận trong xưởng.\\\", \\\"visual\\\": \\\"xưởng\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Quà gửi gia đình\\\", \\\"text\\\": \\\"Món quà quê gửi người thân dịp cuối năm.\\\", \\\"visual\\\": \\\"hộp quà\\\", \\\"duration_s\\\": 90}], \\\"shorts\\\": [{\\\"segments\\\": [0], \\\"title\\\": \\\"Bình minh vùng quê\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*marketing-07\\.2",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\s*\\Z",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from content_drafts where channel = 'youtube'",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from content_drafts where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-07.2' and kind = 'disable')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-07.2__X1",
+     "nguon_r10": "MOI",
+     "mo_ta": "tắt + --dry-run (r12 D1: chặn trước lời gọi AI kể cả --dry-run) → exit 2, 0 lời gọi AI, không in gói",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/wrap.py.txt",
+        "-m",
+        "agents.mkt_youtube",
+        "--brief",
+        "Video dài khi tính năng tắt Thử IT",
+        "--dry-run"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_LLM_RESPONSES": "[\"{\\\"title\\\": \\\"Vùng quê Quảng Nam và người làm vườn Thử IT\\\", \\\"description\\\": \\\"Video kể chuyện vùng quê và người làm vườn Thử IT.\\\", \\\"segments\\\": [{\\\"title\\\": \\\"Bình minh trên đồi\\\", \\\"text\\\": \\\"Sương sớm phủ những triền đồi. Người làm vườn bắt đầu ngày mới.\\\", \\\"visual\\\": \\\"cảnh đồi\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Chăm vườn\\\", \\\"text\\\": \\\"Từng gốc cây được chăm sóc kỹ. Giá chỉ 150.000đ một hũ.\\\", \\\"visual\\\": \\\"cận cảnh lá\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Đóng gói\\\", \\\"text\\\": \\\"Sản phẩm được đóng gói cẩn thận trong xưởng.\\\", \\\"visual\\\": \\\"xưởng\\\", \\\"duration_s\\\": 90}, {\\\"title\\\": \\\"Quà gửi gia đình\\\", \\\"text\\\": \\\"Món quà quê gửi người thân dịp cuối năm.\\\", \\\"visual\\\": \\\"hộp quà\\\", \\\"duration_s\\\": 90}], \\\"shorts\\\": [{\\\"segments\\\": [0], \\\"title\\\": \\\"Bình minh vùng quê\\\"}]}\"]",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\A(?![\\s\\S]*Chương:)[\\s\\S]*\\[rollout\\][^\\n]*marketing-07\\.2",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\s*\\Z",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from content_drafts where channel = 'youtube'",
+       "expect": 2
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

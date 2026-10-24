@@ -1,0 +1,7 @@
+PASS C1_readyz_db_ok_probe_exit0 {"rc": 0, "out": "[ok] http://127.0.0.1:63150/readyz — HTTP 200\n"}
+PASS C2_db_loi_probe_exit1_canh_bao {"rc": 1, "alerts": [0, 1], "out": "[LỖI] http://127.0.0.1:63150/readyz — HTTP 503\n[RED-ALERT][warn] cảnh báo đỏ #5 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận\n[ALERT] cảnh báo đỏ #5\n"}
+PASS C3_cung_dot_khong_bao_lap {"rc": 1, "alerts": 1}
+PASS C4_db_phuc_hoi_probe_exit0 {"rc": 0}
+PASS C5_tien_trinh_tat_roi_khoi_dong_lai {"rc_tat": 1, "rc_lai": 0}
+PASS D1_role_ung_dung_khong_owner_superuser {"roles": ["agent_writer", "app_human", "ben_a_reader", "bks_reader", "svc_backup", "svc_job", "svc_loader", "svc_ui", "svc_webhook"], "vi_pham": []}
+TỔNG 6 ca, FAIL 0

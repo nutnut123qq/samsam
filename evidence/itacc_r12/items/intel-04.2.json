@@ -1,0 +1,664 @@
+{
+ "id": "intel-04.2",
+ "ten": "Gợi ý từ khóa an toàn pháp lý",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Xu hướng và từ khóa: 'gợi ý từ khóa an toàn về pháp lý'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/intel-04.2.json",
+  "sha256": "382de8313c95b2b51d1f5c4a99a9011da1229e58fc326fb1db1b65a72536b64a"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (scripts/intel_weekly.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_intel.json",
+ "tieu_chi_sha256": "aa415a08350762dd5e92f2fab4651d65449bf19d650afb2758ee9afd22bddf3a",
+ "tieu_chi_khoa": "r12_intel.json aa415a08350762dd5e92f2fab4651d65449bf19d650afb2758ee9afd22bddf3a 2026-10-24T08:59:10+07:00",
+ "tieu_chi": [
+  "T1 `python scripts/intel_weekly.py --suggest-keywords [--dry-run]` exit đúng (0 / 1 cấu hình hỏng / 2 tắt)",
+  "T2 đúng 1 mục intel/keyword_suggest pending created_by agent:intel_keywords, object_id kw:<id file related>; danh sách đề xuất KHÔNG chứa chữa/tiểu đường/rượu/ngọc linh/KGC/hàn quốc/Cheong; mục loại chỉ ghi trends_related #id + lý do (không chép 'sâm chữa tiểu đường'/'rượu sâm ngọc linh'/'sâm ngọc linh giá bao nhiêu'); 'nhân sâm hàn quốc' + 'hồng sâm KGC chính hãng' ở nhóm CHỜ QUYẾT; không SĐT thô",
+  "T3 dry-run không ghi; chạy lại → [skip], vẫn 1; cấu hình đối thủ hỏng (da_duyet thiếu duyet_boi/can_cu/xu_ly) → exit 1 fail-closed, 0 mục; tắt → exit 2 '[rollout] … intel-04.2', 0 mục cho file mới",
+  "T4 mục pending, không tự duyệt, không chạy quảng cáo/SEO; dữ liệu fixture thử IT"
+ ],
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451, mỗi mục 1 DB samsam_itacc_r12_<mã> dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; DEPLOY/RED_ALERT_NOTIFY tắt; INTEL_HASH_SALT/CONTACT_VAULT_KEY thử; RSS giả http.server 127.0.0.1 (bg_start/bg_stop); runner_r12.py.txt DB samsam_itacc_r12_i042.",
+ "run_id": "20261024T111608-a2c8",
+ "ca": [
+  {
+   "ma": "intel-04.2__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed + nạp it_g1_relatedQueries.csv --seed 'sâm ngọc linh' (r10 nạp ở intel-04.1 C02, DB chung)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from trends_related",
+      "expect": 10
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:16:08+07:00",
+      "ket_thuc": "2026-10-24T11:16:10+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.intel_import --trend evidence\\itacc_r12\\fixtures/items/intel-04.2/it_g1_relatedQueries.csv --seed sâm ngọc linh",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:16:10+07:00",
+      "ket_thuc": "2026-10-24T11:16:14+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from trends_related",
+      "expect": 10,
+      "actual": 10,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01"
+  },
+  {
+   "ma": "intel-04.2__C01",
+   "nguon_r10": "C01",
+   "mo_ta": "Dry-run",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[dry-run\\] kw:\\d+ — KHÔNG ghi DB"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'intel'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/intel_weekly.py --suggest-keywords --dry-run",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[dry-run\\] kw:\\d+ — KHÔNG ghi DB",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:16:14+07:00",
+      "ket_thuc": "2026-10-24T11:16:19+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'intel'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C01"
+  },
+  {
+   "ma": "intel-04.2__C02",
+   "nguon_r10": "C02",
+   "mo_ta": "Gợi ý",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[ok\\] mục hàng duyệt #\\d+ \\(keyword_suggest"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and block = 'intel' and status = 'pending' and created_by = 'agent:intel_keywords'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and object_id = 'kw:' || (select max(id) from intel_imports where kind = 'trend_related')::text",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'Từ khóa đề xuất(.*)Lý do loại') is not null and substring(payload from 'Từ khóa đề xuất(.*)Lý do loại') !~* 'chữa|tiểu đường|rượu|ngọc linh|kgc|hàn quốc|cheong'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'Lý do loại(.*)CHỜ QUYẾT') ~ 'trends_related #[0-9]+' and substring(payload from 'Lý do loại(.*)CHỜ QUYẾT') !~* 'chữa|tiểu đường|rượu|ngọc linh'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'CHỜ QUYẾT(.*)$') like '%nhân sâm hàn quốc%' and substring(payload from 'CHỜ QUYẾT(.*)$') like '%hồng sâm KGC chính hãng%'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and payload ~* 'sâm chữa tiểu đường|rượu sâm ngọc linh|sâm ngọc linh giá bao nhiêu|0900000456'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/intel_weekly.py --suggest-keywords",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[ok\\] mục hàng duyệt #\\d+ \\(keyword_suggest",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:16:19+07:00",
+      "ket_thuc": "2026-10-24T11:16:24+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and block = 'intel' and status = 'pending' and created_by = 'agent:intel_keywords'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and object_id = 'kw:' || (select max(id) from intel_imports where kind = 'trend_related')::text",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'Từ khóa đề xuất(.*)Lý do loại') is not null and substring(payload from 'Từ khóa đề xuất(.*)Lý do loại') !~* 'chữa|tiểu đường|rượu|ngọc linh|kgc|hàn quốc|cheong'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'Lý do loại(.*)CHỜ QUYẾT') ~ 'trends_related #[0-9]+' and substring(payload from 'Lý do loại(.*)CHỜ QUYẾT') !~* 'chữa|tiểu đường|rượu|ngọc linh'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and substring(payload from 'CHỜ QUYẾT(.*)$') like '%nhân sâm hàn quốc%' and substring(payload from 'CHỜ QUYẾT(.*)$') like '%hồng sâm KGC chính hãng%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest' and payload ~* 'sâm chữa tiểu đường|rượu sâm ngọc linh|sâm ngọc linh giá bao nhiêu|0900000456'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C02"
+  },
+  {
+   "ma": "intel-04.2__C03",
+   "nguon_r10": "C03",
+   "mo_ta": "Chạy lại",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[skip\\] kw:\\d+ đã có mục #\\d+"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/intel_weekly.py --suggest-keywords",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[skip\\] kw:\\d+ đã có mục #\\d+",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:16:25+07:00",
+      "ket_thuc": "2026-10-24T11:16:31+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C03"
+  },
+  {
+   "ma": "intel-04.2__C04",
+   "nguon_r10": "C04",
+   "mo_ta": "Cấu hình đối thủ hỏng (COMPETITORS_FILE → keyword_competitors_hong.json, qua wrap như patch_run r10)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stdout_re": "\\[err\\][^\\n]*fail-closed"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m scripts.intel_weekly --suggest-keywords --import 1",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "\\[err\\][^\\n]*fail-closed",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:16:31+07:00",
+      "ket_thuc": "2026-10-24T11:16:36+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C04/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C04"
+  },
+  {
+   "ma": "intel-04.2__C05",
+   "nguon_r10": "C05",
+   "mo_ta": "Tắt (nạp it_g1_relatedQueries_2.csv --seed 'quà tết' trước như r10 C05x); bật lại",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*intel-04\\.2",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_id like 'kw:' || (select max(id) from intel_imports where kind = 'trend_related')::text || '%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.intel_import --trend evidence\\itacc_r12\\fixtures/items/intel-04.2/it_g1_relatedQueries_2.csv --seed quà tết",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:16:36+07:00",
+      "ket_thuc": "2026-10-24T11:16:41+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.rollout --disable intel-04.2 --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:16:41+07:00",
+      "ket_thuc": "2026-10-24T11:16:42+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step02.stderr.txt"
+     },
+     {
+      "argv": "python scripts/intel_weekly.py --suggest-keywords --import 2",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*intel-04\\.2",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:16:42+07:00",
+      "ket_thuc": "2026-10-24T11:16:47+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step03.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.rollout --promote intel-04.2 --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:16:47+07:00",
+      "ket_thuc": "2026-10-24T11:16:48+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step04.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step04.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'keyword_suggest'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_id like 'kw:' || (select max(id) from intel_imports where kind = 'trend_related')::text || '%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C01/asserts.json",
+   "sha256": "cb0b5a9b78caa8c03ed37c57371f1f0059f8ae41f8f94f5ca26b4a21418d1854"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C01/case.json",
+   "sha256": "6af4f825c0d8ee360a01cbc000092f66c729204432e1bc7fe2845c11af6f92ee"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C01/step01.cmd.json",
+   "sha256": "fbbd2e672c5b603f24b99036b55e528dc85a62df31644dd74b116983f6ad43f6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C01/step01.stdout.txt",
+   "sha256": "0c132c3295195935712b7460b9991fb27c6ec21063145bab0b433be5f3707461"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C02/asserts.json",
+   "sha256": "7eb052ce00da5bf4f3f433a870584556b74841ad375950899f10f65947c7bf36"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C02/case.json",
+   "sha256": "7d3efa21faadbfbf021ac81e691fcf205ea643115aab6ba80975a7910dd58671"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C02/step01.cmd.json",
+   "sha256": "33318e9db77f3acd6cbb12d0c1f9edc2161b11590a6e3f2c522b78093f7387e7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C02/step01.stdout.txt",
+   "sha256": "1150e484904cafa1045dd0f6de75786c8583b6799692bbe2028ef683b3749b72"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C03/asserts.json",
+   "sha256": "ea96978e81a82ebc71b38ab49868558ae044f56997378afc453c046a1e78e56f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C03/case.json",
+   "sha256": "8321ca2b8727a962ef04eac93cf3607737b3eae2361ae515a5c8c4ae33bfece1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C03/step01.cmd.json",
+   "sha256": "49b48e43e521ed69ee000f6ffc4f14d362e06934a75a9b16589b8ab15f75fa0e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C03/step01.stdout.txt",
+   "sha256": "525302eeaa3c5cb9c9e23f23406f3a7478cdab78da04487af91270d9c1288fb2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C04/asserts.json",
+   "sha256": "ea96978e81a82ebc71b38ab49868558ae044f56997378afc453c046a1e78e56f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C04/case.json",
+   "sha256": "d7ab6bd34ef06b9ba9e70875c737b165127ce346a24ae857de2da6ac2d0677bc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C04/step01.cmd.json",
+   "sha256": "b5294b3bdeefd5dd5b340b68cf6418ebe318d544083965cc9ebd616060ea2238"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C04/step01.stderr.txt",
+   "sha256": "6c03708b444ac220e3cc481ba07e08331daf81aceca77b4e191b0789d760ccf0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C04/step01.stdout.txt",
+   "sha256": "9669ec241ee0305df5e417f8ef648f7942492fe0b990fea98a1d08e6683d4f8d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/asserts.json",
+   "sha256": "f7aa535c4089a803bc90c01f12b09f7bf04d0e3852e829f884350e5d6bbe0ba5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/case.json",
+   "sha256": "35a865b2b8fd7c5e834a39435480f2cba69222703c9fa96026e229c51742c132"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step01.cmd.json",
+   "sha256": "7d8f86970efe2f28a5dfa159ce267dd1d3ba27080375161322401f1327ded9cd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step01.stdout.txt",
+   "sha256": "b988a1c7de9a1b09b310ed45e6912dd8259c9afb93ace4889c97de3481eef633"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step02.cmd.json",
+   "sha256": "ef0e3ed62be5faf3ea062d18e80fdc8edc04e324f4440bc8138e7ba9a92ef652"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step02.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step02.stdout.txt",
+   "sha256": "1e7e1ebe6c1508f7b6f72133df8f4274b56c50060ddbad1ceba4a787a895f739"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step03.cmd.json",
+   "sha256": "8dec9e1f453b805dafb1724080dbdd3d330649d8a187b99240ffc384530dd968"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step03.stdout.txt",
+   "sha256": "c0c3379699014c959b3f8c2574a1e4d322dbe78e437122f98b77f161ee6de7c1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step04.cmd.json",
+   "sha256": "754043f6b1d4901e048681c8401398c6c0aafa2d777e8e60937b462c6b7582fe"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step04.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__C05/step04.stdout.txt",
+   "sha256": "8041af2d637c5c7a8aa6ab6996339c8b8d4ee48d4f9db2afa35dfc45a5ae1a9e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/asserts.json",
+   "sha256": "871dade734fa3eb1ba1f84fa013fd46277b01f1e8162fdd365a0a8d6b59d5dff"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/case.json",
+   "sha256": "62aaf914ca58b9244379e50cef1f114e476a1a12dca38b643956412146a931ed"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step01.cmd.json",
+   "sha256": "2cbb8c194ad6b7fe6da54e71b9379a80e3430c3b3d4774586e36eb571b3584ea"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step02.cmd.json",
+   "sha256": "6e729f4cc1a43d8fff6337d5a69c8d11b062f77ca5c0c2bc967c94d703ccc930"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/intel-04.2__S01/step02.stdout.txt",
+   "sha256": "c96d890a447fda420fadec27138e1ba35d66aed0635432a5753a7d275114ca66"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-04.2/20261024T111608-a2c8/ket_qua.json",
+   "sha256": "d43f8ff13beb67c4b9b0223011f7199121eeaf9eb21e9fa1f6cfc3261c1e7f94"
+  }
+ ],
+ "loi_san_pham": []
+}

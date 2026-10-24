@@ -1,0 +1,38 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r10/g4/harness/run.py.txt",
+  "--fake-llm",
+  "ok",
+  "--reports-dir",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__P051-5\\out",
+  "--",
+  "agents.sx_tracuu",
+  "--ask",
+  "bảo quản sâm khô độ ẩm",
+  "--out"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:24:49+07:00",
+ "ket_thuc": "2026-10-24T11:24:54+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*production-05\\.1",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*(Traceback))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "7f60593e72593448b5b5e420f2be2069c084949c0ce2054b7cabdd44575c1af4",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

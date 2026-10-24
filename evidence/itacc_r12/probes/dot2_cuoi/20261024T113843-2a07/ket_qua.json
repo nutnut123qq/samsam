@@ -1,0 +1,443 @@
+{
+ "label": "dot2_cuoi",
+ "run_id": "20261024T113843-2a07",
+ "root": "D:\\code\\samsam",
+ "db": "samsam_itacc_r12_pfdot2a",
+ "fingerprint": null,
+ "probe_sha256": "574199acda30b7d8e8c082d64180ea1daa6865acdfb78a37ca0c3ec232b7b480",
+ "ket_thuc": "2026-10-24T11:40:39+07:00",
+ "ket_qua": [
+  {
+   "loi": "D1",
+   "ca": "video_bat_van_goi_AI (positive control)",
+   "ket_qua": "PASS",
+   "expected": "tính năng bật → ≥1 lời gọi AI",
+   "actual": {
+    "exit": 0,
+    "llm_calls": 1
+   }
+  },
+  {
+   "loi": "D1",
+   "ca": "video_tat_0_loi_goi_AI",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … marketing-02.2', không traceback, không đầu ra/side effect của marketing-02.2",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "llm_calls": 0,
+    "video_drafts": [
+     1,
+     1
+    ],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "D1",
+   "ca": "youtube_bat_van_goi_AI (positive control)",
+   "ket_qua": "PASS",
+   "expected": "≥1 lời gọi AI",
+   "actual": {
+    "exit": 0,
+    "llm_calls": 1
+   }
+  },
+  {
+   "loi": "D1",
+   "ca": "youtube_tat_0_loi_goi_AI",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … marketing-07.2', không traceback, không đầu ra/side effect của marketing-07.2",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "llm_calls": 0,
+    "drafts": [
+     1,
+     1
+    ],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "P052",
+   "ca": "sx_tracuu_bat_van_goi_chat (positive control)",
+   "ket_qua": "PASS",
+   "expected": "05.2 bật → ≥1 lời gọi chat + có sx-tomtat",
+   "actual": {
+    "exit": 0,
+    "chat_calls": 1,
+    "files": [
+     "sx-tomtat-2026-10-24-c4a63127.md"
+    ]
+   }
+  },
+  {
+   "loi": "P052",
+   "ca": "sx_tracuu_tat_0_loi_goi_chat_0_tom_tat",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … production-05.2', không traceback, không đầu ra/side effect của production-05.2",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "chat_calls": 0,
+    "files": [],
+    "stderr_cuoi": "tracuu.REPORTS_DIR = C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261024T113843-2a07\\rd_tat"
+   }
+  },
+  {
+   "loi": "L5",
+   "ca": "kd_live_bat_van_goi_AI (positive control)",
+   "ket_qua": "PASS",
+   "expected": "≥1 lời gọi AI",
+   "actual": {
+    "exit": 0,
+    "llm_calls": 1,
+    "loi": ""
+   }
+  },
+  {
+   "loi": "L5",
+   "ca": "kd_live_tat_0_loi_goi_AI",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … sales-07.1', không traceback, không đầu ra/side effect của sales-07.1",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "llm_calls": 0,
+    "drafts": [
+     1,
+     1
+    ],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "G1-L1",
+   "ca": "ceo_audit_tat_043_van_sinh_ceo_gia_cua_044",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … ceo-04.3', không traceback, không đầu ra/side effect của ceo-04.3",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [
+     "ceo-gia-2026-10-24.md"
+    ],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "ceo_audit_tat_ca_hai_khong_file",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … ceo-04', không traceback, không đầu ra/side effect của ceo-04",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "G1-L1",
+   "ca": "intel_weekly_tat_03_van_sinh_trend_cua_04.1",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … intel-03', không traceback, không đầu ra/side effect của intel-03",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [
+     "intel-trend-2026-10-19.md"
+    ],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "G1-L1",
+   "ca": "intel_bulletin_tat_012_van_sinh_ban_tin_011",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … intel-01.2', không traceback, không đầu ra/side effect của intel-01.2",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [
+     "intel-bulletin-day-2026-10-23.md"
+    ],
+    "intel_topic": 0,
+    "stderr_cuoi": "tin.REPORTS_DIR = C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261024T113843-2a07\\ib_tat012"
+   }
+  },
+  {
+   "loi": "G1-L1",
+   "ca": "intel_bulletin_bat_ca_hai_sinh (positive control)",
+   "ket_qua": "FAIL",
+   "expected": "exit 0, ≥1 intel_topic, có bản tin",
+   "actual": {
+    "exit": 0,
+    "intel_topic": 0
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "intel_bulletin_tat_011_khong_file",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … intel-01.1', không traceback, không đầu ra/side effect của intel-01.1",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": "tin.REPORTS_DIR = C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261024T113843-2a07\\ib_tat011"
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "da_pmo_board_submit",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … ceo-02.1', không traceback, không đầu ra/side effect của ceo-02.1",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "ceo_risk_report",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … ceo-03', không traceback, không đầu ra/side effect của ceo-03",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "mkt_director_briefs",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … marketing-01.2', không traceback, không đầu ra/side effect của marketing-01.2",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "seo_web_submit_khong_ghi_bao_cao",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … marketing-06.1', không traceback, không đầu ra/side effect của marketing-06.1",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "pc_hr_jd",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … legal_hr-06.1', không traceback, không đầu ra/side effect của legal_hr-06.1",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "content_listing",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … sales-03', không traceback, không đầu ra/side effect của sales-03",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "kd_forecast_write",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … sales-07.3', không traceback, không đầu ra/side effect của sales-07.3",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": "d_forecast.REPORTS_DIR = C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261024T113843-2a07\\fc"
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "vt_thuhoach_submit_khong_ghi_bao_cao",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … farming-05.2', không traceback, không đầu ra/side effect của farming-05.2",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": "t_thuhoach.REPORTS_DIR = C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261024T113843-2a07\\vt"
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "fp_pnl_pnl",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … finance-04.1', không traceback, không đầu ra/side effect của finance-04.1",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": "ts.fp_pnl.REPORTS_DIR = C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261024T113843-2a07\\pnl"
+   }
+  },
+  {
+   "loi": "GATE-OUT",
+   "ca": "sx_tracuu_tat_051_khong_in_trich_doan_0_embed",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … production-05.1', không traceback, không đầu ra/side effect của production-05.1",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "llm_calls": 0,
+    "stdout_dong": 1,
+    "stderr_cuoi": "x_tracuu.REPORTS_DIR = C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261024T113843-2a07\\rd51"
+   }
+  },
+  {
+   "loi": "GATE-OUT",
+   "ca": "fp_cash_tat_khong_in_du_bao",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … finance-05.2', không traceback, không đầu ra/side effect của finance-05.2",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "stdout_dong": 1,
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "GATE-OUT",
+   "ca": "bulletin_tat_01_van_sinh_canhan_khong_in_bantin",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … production-01', không traceback, không đầu ra/side effect của production-01",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [
+     "sx-canhan-2026-10-23.md"
+    ],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "GATE-OUT",
+   "ca": "bulletin_tat_043_van_sinh_bantin_khong_in_canhan",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + '[rollout] … production-04.3', không traceback, không đầu ra/side effect của production-04.3",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [
+     "sx-bantin-tuan-2026-10-23.md"
+    ],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "L3",
+   "ca": "chatbot_chay_thu_ghi_handoff_roi_hen (positive control)",
+   "ket_qua": "PASS",
+   "expected": "ghi được cskh_handoff → được hẹn nhân viên",
+   "actual": {
+    "exit": 0,
+    "handoff": [
+     0,
+     1
+    ],
+    "text": "Chào Quý khách, Sâm Sâm dùng trợ lý tự động để trả lời tin nhắn. Chính sách xử lý dữ liệu cá nhân: https://samsamngoclinh.com/chinh-sach-bao-mat. Nếu Quý khách đồng ý để Sâm Sâm xử lý tin nhắn nhằm tư vấn sản phẩm, vui lòng nhắn \"Đồng ý\"; nhắn \"Không đồng ý\" nếu Quý khách muốn trợ lý tự động dừng xử lý tin nhắn.\n\nSâm Sâm đã nhận câu hỏi của Quý khách — nhân viên sẽ phản hồi sớm nhất. Quý khách cần gấp vui lòng gọi hotline 1800577732 để được hỗ trợ."
+   }
+  },
+  {
+   "loi": "L3",
+   "ca": "loi_ghi_handoff_khong_hua",
+   "ket_qua": "PASS",
+   "expected": "không ghi được handoff → không hứa, có hotline",
+   "actual": {
+    "exit": 0,
+    "text": "Dạ, Sâm Sâm không tư vấn về tình trạng sức khỏe qua tin nhắn tự động. Quý khách vui lòng hỏi ý kiến bác sĩ về tình trạng của mình; cần hỗ trợ vui lòng gọi hotline 1800577732."
+   }
+  },
+  {
+   "loi": "L3",
+   "ca": "chatbot_tat_tat_thuong_khong_hua_khong_traceback",
+   "ket_qua": "PASS",
+   "expected": "tắt: 0 handoff, không hứa nhân viên, có hotline, không traceback",
+   "actual": {
+    "exit": 0,
+    "handoff": 1,
+    "text": "Chào Quý khách, Sâm Sâm dùng trợ lý tự động để trả lời tin nhắn. Chính sách xử lý dữ liệu cá nhân: https://samsamngoclinh.com/chinh-sach-bao-mat. Nếu Quý khách đồng ý để Sâm Sâm xử lý tin nhắn nhằm tư vấn sản phẩm, vui lòng nhắn \"Đồng ý\"; nhắn \"Không đồng ý\" nếu Quý khách muốn trợ lý tự động dừng xử lý tin nhắn.\n\nSâm Sâm đã nhận tin nhắn nhưng chưa trả lời tự động được câu này. Quý khách vui lòng gọi hotline 1800577732 để được hỗ trợ.",
+    "traceback": false
+   }
+  },
+  {
+   "loi": "L3",
+   "ca": "chatbot_tat_tat_suckhoe_khong_hua_khong_traceback",
+   "ket_qua": "PASS",
+   "expected": "tắt: 0 handoff, không hứa nhân viên, có hotline, không traceback",
+   "actual": {
+    "exit": 0,
+    "handoff": 1,
+    "text": "Dạ, Sâm Sâm không tư vấn về tình trạng sức khỏe qua tin nhắn tự động. Quý khách vui lòng hỏi ý kiến bác sĩ về tình trạng của mình; cần hỗ trợ vui lòng gọi hotline 1800577732.",
+    "traceback": false
+   }
+  }
+ ]
+}

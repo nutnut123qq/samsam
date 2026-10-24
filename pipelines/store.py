@@ -119,8 +119,9 @@ COLS = ("id", "created_at", "brief", "channel", "text", "guardrail",
 
 _INSERT_SQL = (
     "insert into content_drafts (brief, channel, text, guardrail, source, "
-    "created_by, content_type, sku, is_ai, prompt_version, prompt_sha256) "
-    "values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) returning id")
+    "created_by, content_type, sku, is_ai, prompt_version, prompt_sha256, "
+    "block) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+    "returning id")
 
 _LOG_SQL = (
     "insert into agent_action_log (actor, action, object_type, object_id, "
@@ -314,7 +315,11 @@ def save_draft(conn, brief: str, channel: str, text: str,
             _INSERT_SQL,
             ((brief or "").strip(), ch, text,
              Jsonb(snap), source, by, content_type, sku, is_ai,
-             prompt_version, prompt_sha256)).fetchone()
+             prompt_version, prompt_sha256,
+             # đợt an toàn S04: khối sở hữu ghi lúc tạo → DB kiểm khối khi
+             # duyệt/từ chối/xếp lịch (không tin khối người duyệt tự khai)
+             _draft_block({"created_by": by,
+                           "content_type": content_type}))).fetchone()
         did = row[0] if row else None
         if did is not None:
             conn.execute(_LOG_SQL, (

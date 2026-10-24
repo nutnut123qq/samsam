@@ -1,0 +1,2462 @@
+{
+ "_doc": "v2 (điều phối viên, 24/10/2026, TRƯỚC mọi lượt chạy của nhóm): chỉ đổi kỳ vọng 2 ca sales-01__C12 và sales-01__X1 — kỳ vọng r10 'khách nhận HOLD_TEXT/template hứa nhân viên + 1 cskh_handoff khi chatbot TẮT' buộc hệ thống hứa người phản hồi trong khi HĐ 6.7 cấm sinh mục cskh_handoff của tính năng tắt — chính là lỗi L3. Kỳ vọng mới = tiêu chí đóng L3 đã khóa trong probe_dot2.py.txt TRƯỚC khi vá (không hứa, có hotline 1800577732, 0 handoff, không traceback). Kỳ vọng cũ giữ ở trường 'ky_vong_r10_cu'. sales-04.2 C04/C07 GIỮ NGUYÊN (mâu thuẫn với thiết kế handoff không PII khi chưa đồng ý — cần quyết định nghiệp vụ, không tự đổi). Sha harness {H}/sales_a/ khóa kèm ở r12_sales_a_v2.harness_sha.txt. | Tiêu chí kiểm lại r12 nhóm sales_a (sales-01, sales-02, sales-04.2, sales-05) — viết và KHÓA trước khi chạy. Ca cũ = bản ghi hiện hành evidence/itacc_r10/items/<id>.json (theo evidence/itacc_r11/source_map.json, lượt r10), mỗi ca cũ ↔ 1 ca r12 (nguon_r10), cùng lệnh + fixture CHÉP nguyên văn ở {FX12}/items/<id>/ (SHA256SUMS.txt). Harness r12 ở {H}/sales_a/ là bản chuyển của harness r10 g2 (đuôi .py.txt không import được làm module, và r10 ghi kết quả vào evidence/itacc_r10): run_sa.py.txt (= run_mod + fake_llm; fake AI chuyển xuống biên cuối llm_gateway._client như wrap.py.txt + chặn socket ngoài localhost), zalo_e2e_r12 (1 lần gọi = 1 ca, kết quả {OUT}/facts.txt), seed_chunk_r12, b2b_post_r12/b2b_post2_r12 (thêm chờ server bind), fu_r12 (đường ghi run_followups với now cố định, thay fu_probe chỉ đọc), dem_042 (đọc số đầu ra sales-04.2 từ `rollout --status`). Thứ tự ca khác số thứ tự r10 khi cần (ca tắt tính năng luôn sau cùng). Ca có `ghi_chu` 'mâu thuẫn expected cũ ↔ hướng vá' giữ expected r10 nguyên văn, KHÔNG nới — có thể FAIL theo thiết kế vá r12 (L3: tắt → không handoff + câu hotline không hứa; L1: chỉ sửa bộ đếm).",
+ "fingerprint_code": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "moi_truong": "Docker postgres samsam-itacc-r12 chỉ bind 127.0.0.1:55451; mỗi mục 1 DB samsam_itacc_r12_<mã> dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); DEPLOY/RED_ALERT_NOTIFY tắt; OPENROUTER_API_KEY rỗng; INTEL_HASH_SALT + CONTACT_VAULT_KEY = giá trị thử của env file DB (mkdb sinh); CHANNEL_HASH_SALT / OA secret / Messenger app secret = giá trị GIẢ đặt trong harness (như r10, không phải secret thật); webhook zalo/messenger cổng động 127.0.0.1, form B2B 127.0.0.1:18851/18852; fake AI ở biên cuối, mạng ngoài localhost bị chặn trong run_sa.",
+ "items": [
+  {
+   "id": "sales-01",
+   "db": "samsam_itacc_r12_s01",
+   "tieu_chi_cu_the": [
+    "T1 Handler webhook THẬT (connectors.zalo.Handler / connectors.messenger.Handler) chạy trên 127.0.0.1 cổng động trong harness zalo_e2e_r12 (bản chuyển r10 zalo_e2e), DEPLOY tắt (send_text thật = dry-run, sent=false); fake AI ở biên cuối llm_gateway._client (run_sa.py.txt --fake-llm), socket ngoài localhost bị chặn — mức MOCK như r10",
+    "T2 Chạy thử: câu bot KHÔNG tới khách; khách nhận HOLD_TEXT; approval_queue sales/cskh_reply created_by agent:kd_a1 payload = câu bot (fake) không PII; sales/cskh_handoff lý do chua_van_hanh (rollout)",
+    "T3 Luật trước LLM: rượu → template alcohol + handoff san_pham_han_che; sức khỏe → template health + handoff suc_khoe; 0 lời gọi AI",
+    "T4 Che PII: convlog (scratch) không SĐT/email/user_id thô; payload hàng duyệt không PII; stdout không user_id thô",
+    "T5 Chữ ký sai → 403, không xử lý; dedup cùng msg_id → xử lý 1 lần",
+    "T6 Hạn chót (FIXTURE CHAT_BUDGET_S=4, SEND_RESERVE_S=1, fake chat ngủ 6s): HANDOFF_TEXT + convlog error deadline:* + cskh_handoff lý do qua_han_tra_loi",
+    "T7 Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có 'Nguồn:' + URL fixture; sent=false → file_output_evidence 0",
+    "T8 sales_director --run gom convlog answered:false → cskh_handoff created_by agent:sales_director, payload không câu khách; chạy lại 0 mới",
+    "T9 data/conversations.jsonl(.1), data/zalo_seen.db, data/zalo_tokens.json thật KHÔNG đổi (sha lần chạy đầu ↔ cuối)",
+    "T10 Tắt (rollout --disable) → 0 lời gọi AI, không cskh_reply",
+    "T11 (r12 L3, MOI) chatbot chỉ hứa 'nhân viên sẽ phản hồi' khi ĐÃ ghi được cskh_handoff; không ghi được (DB lỗi / tắt) → câu có hotline 1800577732, không hứa; tắt không traceback"
+   ],
+   "ca": [
+    {
+     "ma": "sales-01__S00",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (mọi tính năng có code = chạy thử) — như r10 SETUP-rollout-seed",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'sales-01'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "FIXTURE 1 chunk KB example.com (bản chuyển r10 seed_chunk, vector 8 chiều = fake run_sa.VEC)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/seed_chunk_r12.py.txt"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from chunks",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from chunks where doc_id = 'it-g2-fixture'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C01",
+     "nguon_r10": "S01-C01",
+     "mo_ta": "Zalo câu hỏi thường, chạy thử",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C01_thuong"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hold=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_sent=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_rollout=\"chay_thu\"$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_reply=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^q=cskh_reply\\|agent:kd_a1\\|sales$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^reply_payload_has_fake=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^queue_payload_pii=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^handoff_lydo=chua_van_hanh$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C02",
+     "nguon_r10": "S01-C02",
+     "mo_ta": "Chữ ký sai",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C02_badsig"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=403$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_new=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_queue=0$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C03",
+     "nguon_r10": "S01-C03",
+     "mo_ta": "Câu sức khỏe",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C03_health"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_route=\"health\"$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_tpl_health=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^handoff_lydo=suc_khoe$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C04",
+     "nguon_r10": "S01-C04",
+     "mo_ta": "Câu rượu",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C04_alcohol"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_route=\"alcohol\"$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_tpl_alcohol=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^handoff_lydo=san_pham_han_che$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      }
+     ],
+     "ghi_chu": "'handoff alcohol' lấy từ expected tiêu chí khóa r10 (criteria/g2.json); bản ghi item chỉ ghi 'template alcohol; 0 lời gọi'"
+    },
+    {
+     "ma": "sales-01__C05",
+     "nguon_r10": "S01-C05",
+     "mo_ta": "PII trong câu khách (SĐT 0900000123 + email + tên, uid it-g2-uid-pii-777)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C05_pii"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*it-g2-uid-pii-777)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^convlog_has_phone=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^convlog_has_email=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^convlog_has_raw_uid=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^queue_payload_pii=false$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C06",
+     "nguon_r10": "S01-C06",
+     "mo_ta": "Dedup retry cùng msg_id",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C06_dedup"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=\\[200,\\ 200\\]$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^lan2_conv_tang=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^lan2_calls_tang=0$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C07",
+     "nguon_r10": "S01-C07",
+     "mo_ta": "Hạn chót trả lời (FIXTURE CHAT_BUDGET_S=4, SEND_RESERVE_S=1, fake chat ngủ 6s)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C07_deadline"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_is_handoff_text=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_error=\"deadline:",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^handoff_lydo=qua_han_tra_loi$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C08",
+     "nguon_r10": "S01-C08",
+     "mo_ta": "Ép van_hanh (FIXTURE _FORCE_MODE): câu trả lời có nguồn",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C08_vanhanh"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_nguon_url=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_sent=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^foe=0$",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from file_output_evidence",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C09",
+     "nguon_r10": "S01-C09",
+     "mo_ta": "Messenger HMAC đúng / sai",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C09_messenger"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http_bad=403$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^conv_channel=\"messenger\"$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_reply=1$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^q=cskh_reply\\|agent:kd_a1\\|sales$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C11",
+     "nguon_r10": "S01-C11",
+     "mo_ta": "/healthz /readyz",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C11_endpoints"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=\\[200,\\ 200\\]$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^healthz=\\{\"status\":\\ \"up\"\\}$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^readyz=.*\"db\": \"ok\"",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__L3a",
+     "nguon_r10": "MOI",
+     "mo_ta": "r12 L3 — chạy thử, câu sức khỏe, KHÔNG ghi được cskh_handoff (FIXTURE channels._connect = None trong ca): không hứa nhân viên, có hotline, không traceback",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "L3_dbloi_suckhoe"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C10",
+     "nguon_r10": "S01-C10",
+     "mo_ta": "sales_director gom handoff từ convlog harness (scratch)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--data-dir",
+        "{SCR}/conv",
+        "-m",
+        "agents.sales_director",
+        "--run",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "KHÔNG ghi DB"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--data-dir",
+        "{SCR}/conv",
+        "-m",
+        "agents.sales_director",
+        "--run"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--data-dir",
+        "{SCR}/conv",
+        "-m",
+        "agents.sales_director",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đẩy 0 mục mới"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) >= 1 from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'cskh_handoff' and created_by = 'agent:sales_director' and (payload ilike '%mật ong%' or payload ilike '%tiểu đường%' or payload ilike '%rượu%' or payload ilike '%mất ngủ%')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__C12",
+     "nguon_r10": "S01-C12",
+     "mo_ta": "Tắt tính năng: rollout --disable sales-01 rồi câu thường",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "sales-01",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiểm nhánh tắt r12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "C12_tat"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_reply=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=0$",
+       "expect": true
+      }
+     ],
+     "ghi_chu": "v2: kỳ vọng theo tiêu chí đóng L3 (xem _doc).",
+     "ky_vong_r10_cu": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hold=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__X1",
+     "nguon_r10": "S01-X1",
+     "mo_ta": "Câu sức khỏe khi chatbot TẮT: không hứa nhân viên, có hotline, 0 cskh_handoff (HĐ 6.7), không ngoại lệ",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "X1_tat_health"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=0$",
+       "expect": true
+      }
+     ],
+     "ghi_chu": "v2: kỳ vọng theo tiêu chí đóng L3 (xem _doc).",
+     "ky_vong_r10_cu": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_tpl_health=true$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_cskh_handoff=1$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__L3b",
+     "nguon_r10": "MOI",
+     "mo_ta": "r12 L3 — chatbot TẮT, câu thường: 0 lời gọi AI, 0 mục hàng duyệt, không hứa nhân viên, có hotline, không traceback",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "L3_tat_thuong"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_queue=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__L3c",
+     "nguon_r10": "MOI",
+     "mo_ta": "r12 L3 — chatbot TẮT, câu sức khỏe: 0 lời gọi AI, 0 mục, không hứa, có hotline, không traceback",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "L3_tat_suckhoe"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^http=200$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_chat=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^calls_embed=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^n_queue=0$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_promise=false$",
+       "expect": true
+      },
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^ans_has_hotline=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__T9",
+     "nguon_r10": "MOI",
+     "mo_ta": "T9 — data/ thật (convlog, seen db, token store) không đổi so với sha lần chạy harness đầu",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--path",
+        "{H}/sales_a/zalo_e2e_r12.py.txt",
+        "{SCR}/conv",
+        "{OUT}",
+        "T9"
+       ],
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-01/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/facts.txt",
+       "re": "(?m)^data_khong_doi=true$",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-01__UI02",
+     "nguon_r10": "MOI",
+     "mo_ta": "UI-02: tab 'Chat Sâm Sâm' Streamlit chế độ thực (login in role svc_ui) trả lời câu thường không lỗi quyền chunks, không lộ traceback; câu sức khỏe vẫn chuyển người",
+     "not_run": "UI — xem evidence/itacc_r12/ui/ui_sau_*"
+    }
+   ]
+  },
+  {
+   "id": "sales-02",
+   "db": "samsam_itacc_r12_s02",
+   "tieu_chi_cu_the": [
+    "T1 CLI thật `connectors.channels --suggest shopee|tiktok --by` (stdin) ghi 1 dòng san_suggestions: msg_ref 32 hex (không tin buyer), answer không PII, guardrail_ok, stage=chay_thu, created_by = người MXH",
+    "T2 Chạy thử: in nhãn CHẠY THỬ, không gợi ý lệnh --mark-sent; --mark-sent gợi ý chạy thử → exit 1",
+    "T3 Câu gợi ý sàn không chứa URL/SĐT",
+    "T4 LLM lỗi (key rỗng, không fake) → câu chuyển nhân viên (san_handoff), exit 0, handoff no_data; stdin rỗng → exit 2",
+    "T5 Ép van_hanh (FIXTURE _FORCE_MODE) → --mark-sent ghi san_suggestion_uses; lặp lại → skip (idempotent)",
+    "T6 Tắt → --suggest exit 2, 0 dòng, 0 lời gọi AI",
+    "Fake AI ở biên cuối llm_gateway._client (run_sa.py.txt --fake-llm; r10: thay llm_gateway.chat/embed) — chunk fixture example.com"
+   ],
+   "ca": [
+    {
+     "ma": "sales-02__S00",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (mọi tính năng có code = chạy thử) — như r10 SETUP-rollout-seed",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'sales-02'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "sales-02__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "FIXTURE 1 chunk KB example.com (bản chuyển r10 seed_chunk)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/seed_chunk_r12.py.txt"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from chunks",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-02__C01",
+     "nguon_r10": "S02-C01",
+     "mo_ta": "Gợi ý chat sàn, fake AI (stdin s02_buyer1)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "-m",
+        "connectors.channels",
+        "--suggest",
+        "shopee",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "stdin": "{FX12}/items/sales-02/s02_buyer1.txt",
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-02/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stdout_re": "^(?=[\\s\\S]*CHẠY THỬ)(?![\\s\\S]*--mark-sent)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from san_suggestions",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from san_suggestions where id = (select max(id) from san_suggestions) and channel = 'shopee' and stage = 'chay_thu' and msg_ref ~ '^[0-9a-f]{32}$' and guardrail_ok and created_by = 'MXH Thử IT' and answer !~* '(https?://|www\\.|[a-z0-9-]+\\.(com|vn|net)\\b)' and answer !~ '(\\+84|0)[0-9][0-9 .-]{7,}'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-02__C02",
+     "nguon_r10": "S02-C02",
+     "mo_ta": "LLM không khả dụng (key rỗng, KHÔNG fake — như r10, stdin s02_buyer1)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "connectors.channels",
+        "--suggest",
+        "tiktok",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "stdin": "{FX12}/items/sales-02/s02_buyer1.txt",
+       "expect_exit": 0,
+       "stdout_re": "cần nhân viên Sâm Sâm kiểm tra thêm"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from san_suggestions where id = (select max(id) from san_suggestions) and channel = 'tiktok' and handoff = 'no_data'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-02__C03",
+     "nguon_r10": "S02-C03",
+     "mo_ta": "Tin buyer có SĐT 0900000222 (stdin s02_buyer_pii)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "-m",
+        "connectors.channels",
+        "--suggest",
+        "shopee",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "stdin": "{FX12}/items/sales-02/s02_buyer_pii.txt",
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-02/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from san_suggestions s where row_to_json(s)::text like '%0900000222%'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from san_suggestions where id = (select max(id) from san_suggestions) and msg_ref ~ '^[0-9a-f]{32}$' and answer !~* '(https?://|www\\.|[a-z0-9-]+\\.(com|vn|net)\\b)' and answer !~ '(\\+84|0)[0-9][0-9 .-]{7,}'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-02__C04",
+     "nguon_r10": "S02-C04",
+     "mo_ta": "Câu sức khỏe (stdin s02_buyer_health): template health_san, 0 lời gọi AI",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "-m",
+        "connectors.channels",
+        "--suggest",
+        "shopee",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "stdin": "{FX12}/items/sales-02/s02_buyer_health.txt",
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-02/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0,
+       "stdout_re": "không tư vấn về tình trạng sức khỏe"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from san_suggestions where id = (select max(id) from san_suggestions) and handoff = 'health'",
+       "expect": 1
+      },
+      {
+       "file_glob": "{OUT}/fake_calls.jsonl",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-02__C05",
+     "nguon_r10": "S02-C05",
+     "mo_ta": "--mark-sent gợi ý chạy thử (gợi ý đầu tiên = C01)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "connectors.channels",
+        "--mark-sent",
+        "{sql:select min(id) from san_suggestions}",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "expect_exit": 1,
+       "stderr_re": "TỪ CHỐI"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from san_suggestion_uses",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-02__C06",
+     "nguon_r10": "S02-C06",
+     "mo_ta": "Ép van_hanh (FIXTURE) + mark-sent + lặp (stdin s02_buyer2)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "--force-mode",
+        "van_hanh",
+        "-m",
+        "connectors.channels",
+        "--suggest",
+        "shopee",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "stdin": "{FX12}/items/sales-02/s02_buyer2.txt",
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-02/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--force-mode",
+        "van_hanh",
+        "-m",
+        "connectors.channels",
+        "--mark-sent",
+        "{sql:select max(id) from san_suggestions where stage = 'van_hanh'}",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã dán gửi"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--force-mode",
+        "van_hanh",
+        "-m",
+        "connectors.channels",
+        "--mark-sent",
+        "{sql:select max(id) from san_suggestions where stage = 'van_hanh'}",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "expect_exit": 0,
+       "out_re": "\\[skip\\]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from san_suggestion_uses",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from san_suggestion_uses u join san_suggestions s on s.id = u.suggestion_id where u.used_by = 'MXH Thử IT' and s.stage = 'van_hanh'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-02__C07",
+     "nguon_r10": "S02-C07",
+     "mo_ta": "stdin rỗng (empty.txt)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "connectors.channels",
+        "--suggest",
+        "shopee",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "stdin": "{FX12}/items/sales-02/empty.txt",
+       "expect_exit": 2,
+       "stderr_re": "STDIN rỗng"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from san_suggestions",
+       "expect": 5
+      }
+     ]
+    },
+    {
+     "ma": "sales-02__C08",
+     "nguon_r10": "S02-C08",
+     "mo_ta": "Tắt tính năng: rollout --disable sales-02 rồi --suggest (stdin s02_buyer1)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "sales-02",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiểm nhánh tắt r12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--fake-llm",
+        "-m",
+        "connectors.channels",
+        "--suggest",
+        "shopee",
+        "--by",
+        "MXH Thử IT"
+       ],
+       "stdin": "{FX12}/items/sales-02/s02_buyer1.txt",
+       "env": {
+        "IT_FAKE_CHAT": "{FX12}/items/sales-02/fake_rag_answer.txt",
+        "IT_FAKE_LOG": "{OUT}/fake_calls.jsonl"
+       },
+       "expect_exit": 2
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from san_suggestions",
+       "expect": 5
+      },
+      {
+       "file_glob": "{OUT}/fake_calls.jsonl",
+       "count": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sales-04.2",
+   "db": "samsam_itacc_r12_s042",
+   "tieu_chi_cu_the": [
+    "T1 Sổ đại lý FIXTURE nạp qua `crm --load-dealers PATH --by`",
+    "T2 `crm --add-contact -` (stdin) lưu PII chỉ dạng ciphertext Fernet (CONTACT_VAULT_KEY thử của DB); bảng không chứa SĐT/email/tên/địa chỉ thô",
+    "T3 `crm --assign LEAD --dealer --province` gán đại lý theo tỉnh",
+    "T4 `crm --handoff` KHÔNG có đồng ý dai_ly đích danh → exit 1, không payload; có đồng ý → in payload (người tự chuyển, hệ thống không gửi), agent_action_log crm_handoff detail không PII",
+    "T5 Rút đồng ý / đại lý khác → handoff bị chặn; thiếu khóa vault → exit 2",
+    "T6 (r10 X1 / r12 L1) chuyển lead khi khách CHƯA đồng ý dai_ly KHÔNG được bộ đếm đầu ra sales-04.2 (rollout --status) tính",
+    "Lead 8/7 của r10 (sinh từ convlog live hôm qua của sales-04.1) dựng lại bằng CÙNG fixture + ingest.lead_store (--data-dir scratch); id lấy theo dedup_key convlog:it-g2-lead-m2 (lead 8) / m1 (lead 7)"
+   ],
+   "ca": [
+    {
+     "ma": "sales-04.2__S00",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (mọi tính năng có code = chạy thử) — như r10 SETUP-rollout-seed",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'sales-04.2'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "sales-04.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "dựng lead 8/7 như r10: convlog live FIXTURE (s041_convlog_live_homqua.jsonl) → ingest.lead_store",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os, shutil, sys; os.makedirs(sys.argv[2], exist_ok=True); shutil.copyfile(sys.argv[1], os.path.join(sys.argv[2], 'conversations.jsonl'))",
+        "{FX12}/items/sales-04.2/s041_convlog_live_homqua.jsonl",
+        "{SCR}/leads_live"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--data-dir",
+        "{SCR}/leads_live",
+        "-m",
+        "ingest.lead_store"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "mới=2"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from leads where dedup_key in ('convlog:it-g2-lead-m1', 'convlog:it-g2-lead-m2')",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "sales-04.2__C01",
+     "nguon_r10": "S042-C01",
+     "mo_ta": "Nạp sổ đại lý (2 đại lý thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--load-dealers",
+        "{FX12}/items/sales-04.2/s042_dealer_regions.json",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "mới=2"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from dealers where code in ('DLTHU01', 'DLTHU02')",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "sales-04.2__C02",
+     "nguon_r10": "S042-C02",
+     "mo_ta": "Thêm liên hệ (stdin s042_contact.json) gắn lead 8",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--add-contact",
+        "-",
+        "--lead",
+        "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m2'}",
+        "--by",
+        "CSKH Thử IT"
+       ],
+       "stdin": "{FX12}/items/sales-04.2/s042_contact.json",
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from contacts c where row_to_json(c)::text like '%0900000101%' or row_to_json(c)::text ilike '%khach.thu.it@example.com%' or row_to_json(c)::text like '%Khách Thử IT%' or row_to_json(c)::text like '%Đường Thử IT%'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from leads where dedup_key = 'convlog:it-g2-lead-m2' and contact_id is not null",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-04.2__C03",
+     "nguon_r10": "S042-C03",
+     "mo_ta": "Gán lead 8 → DLTHU01 (Đà Nẵng)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--assign",
+        "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m2'}",
+        "--dealer",
+        "DLTHU01",
+        "--province",
+        "Đà Nẵng",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-04.2__C04",
+     "nguon_r10": "S042-C04",
+     "mo_ta": "Handoff lead 8 khi CHƯA đồng ý dai_ly",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--handoff",
+        "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m2'}",
+        "--dealer",
+        "DLTHU01",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "^(?![\\s\\S]*\"lead_id\")"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from agent_action_log where action = 'crm_handoff'",
+       "expect": 0
+      }
+     ],
+     "ghi_chu": "Giữ nguyên expected tiêu chí khóa r10 (exit 1; không payload; không log crm_handoff). Bản vá L1 r12 chỉ sửa BỘ ĐẾM (không đếm pii_included=false), CLI vẫn exit 0 + payload không PII + log → ca này có thể FAIL do mâu thuẫn expected cũ ↔ hướng vá; KHÔNG nới — điều phối viên quyết."
+    },
+    {
+     "ma": "sales-04.2__C05",
+     "nguon_r10": "S042-C05",
+     "mo_ta": "Đồng ý dai_ly đích danh DLTHU01 + handoff",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--consent",
+        "{sql:select contact_id from leads where dedup_key = 'convlog:it-g2-lead-m2'}",
+        "--purpose",
+        "dai_ly",
+        "--grant",
+        "--dealer",
+        "DLTHU01",
+        "--source",
+        "zalo",
+        "--evidence",
+        "BB-THU-IT-001",
+        "--policy-version",
+        "nhap-2026-10",
+        "--by",
+        "CSKH Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--handoff",
+        "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m2'}",
+        "--dealer",
+        "DLTHU01",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?=[\\s\\S]*\"lead_id\")[\\s\\S]*\"phone\""
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from consents where purpose = 'dai_ly' and granted and recipient_dealer = 'DLTHU01'",
+       "expect": 1
+      },
+      {
+       "sql": "select detail->>'pii_included' from agent_action_log where action = 'crm_handoff' order by id desc limit 1",
+       "expect": "true"
+      },
+      {
+       "sql": "select count(*) from agent_action_log where action = 'crm_handoff' and (detail::text like '%0900000101%' or detail::text ilike '%khach.thu.it@example.com%' or detail::text like '%Khách Thử IT%' or detail::text like '%Đường Thử IT%')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-04.2__C06",
+     "nguon_r10": "S042-C06",
+     "mo_ta": "Handoff lead 8 cho đại lý khác (DLTHU02, đồng ý chỉ cho DLTHU01)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--handoff",
+        "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m2'}",
+        "--dealer",
+        "DLTHU02",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-04.2__C07",
+     "nguon_r10": "S042-C07",
+     "mo_ta": "Rút đồng ý rồi handoff",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--consent",
+        "{sql:select contact_id from leads where dedup_key = 'convlog:it-g2-lead-m2'}",
+        "--purpose",
+        "dai_ly",
+        "--withdraw",
+        "--dealer",
+        "DLTHU01",
+        "--source",
+        "zalo",
+        "--by",
+        "CSKH Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--handoff",
+        "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m2'}",
+        "--dealer",
+        "DLTHU01",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "ghi_chu": "Giữ nguyên expected r10 (exit 1). Bản vá L1 r12 không đổi exit của CLI → có thể FAIL do mâu thuẫn expected cũ ↔ hướng vá; KHÔNG nới."
+    },
+    {
+     "ma": "sales-04.2__C08",
+     "nguon_r10": "S042-C08",
+     "mo_ta": "Thiếu khóa vault (CONTACT_VAULT_KEY rỗng)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--handoff",
+        "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m2'}",
+        "--dealer",
+        "DLTHU01",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "env": {
+        "CONTACT_VAULT_KEY": ""
+       },
+       "expect_exit": 2,
+       "stdout_re": "thiếu CONTACT_VAULT_KEY"
+      }
+     ]
+    },
+    {
+     "ma": "sales-04.2__X1",
+     "nguon_r10": "S042-X1",
+     "mo_ta": "Handoff lead 7 (không liên hệ/không đồng ý) KHÔNG được tính đầu ra 'chuyển khi khách đồng ý' — số đầu ra sales-04.2 của `rollout --status` trước = sau (r12 L1)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--outputs",
+        "sales-04.2"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/dem_042.py.txt",
+        "save",
+        "{SCR}/x1_dem_truoc.txt"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--assign",
+        "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m1'}",
+        "--dealer",
+        "DLTHU02",
+        "--province",
+        "Đà Nẵng",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.crm",
+        "--handoff",
+        "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m1'}",
+        "--dealer",
+        "DLTHU02",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/dem_042.py.txt",
+        "bang",
+        "{SCR}/x1_dem_truoc.txt"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select detail->>'pii_included' from agent_action_log where action = 'crm_handoff' order by id desc limit 1",
+       "expect": "false"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sales-05",
+   "db": "samsam_itacc_r12_s05",
+   "tieu_chi_cu_the": [
+    "T1 `kd_quote --check-matrix` exit 0 với ma trận GIẢ ĐỊNH",
+    "T2 Form B2B mặc định TẮT (exit 2 trước bind); bật trên 127.0.0.1 → POST hợp lệ ghi b2b_requests + contacts mã hóa + consent; sai content-type 415; honeypot 0 ghi",
+    "T3 `kd_quote --quote REQ --submit` → approval_queue b2b_quote/b2b_quote_matrix (khối sales) + finance/b2b_margin_review khi thiếu giá vốn duyệt; created_by agent:kd_quote, không PII người liên hệ",
+    "T4 --export trước duyệt → exit 1; sau người duyệt → xuất (ép van_hanh FIXTURE); --verify-send khớp → b2b_quote_events da_gui; tệp sửa → exit 1",
+    "T5 `kd_catalog --submit` → b2b_catalog không rượu; `da_b2b --import/--submit-batch` → org_prospect_batch; CSV có SĐT → exit 1 0 dòng",
+    "T6 `kd_quote --followups` → b2b_followup created_by agent:kd_quote cho báo giá duyệt quá ngưỡng; chạy lại không nhân đôi (r12: đường ghi run_followups với now CỐ ĐỊNH 2026-11-10T10:00:00+07:00 — CLI không có --now)",
+    "T7 Tắt → không sinh (r12 RB: exit 2 '[rollout] … sales-05', 0 file báo giá, 0 mục)",
+    "T8 (r10 X1 / r12 L2) báo giá/catalog chỉ dùng giá price_list ĐÃ duyệt đúng kênh/ngày, không fallback JSON; catalog loại SKU readiness CAM",
+    "Seed r12 (MOI, bắt buộc sau vá L2): duyệt giá list+floor shopee của mat-ong-sam-300ml (người duyệt thử, dev) để báo giá YC-1 có giá đã duyệt như dữ liệu r10; mat-ong-sam-120ml-1hu giữ giá CHƯA duyệt cho X1"
+   ],
+   "ca": [
+    {
+     "ma": "sales-05__S00",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (mọi tính năng có code = chạy thử) — như r10 SETUP-rollout-seed",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'sales-05'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "golden FIXTURE r10 g2 (golden_fixture.json) — như r10 SETUP-golden-fixture",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/sales-05/golden_fixture.json"
+       ],
+       "expect_exit": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "duyệt giá list + floor shopee mat-ong-sam-300ml (sau vá L2 báo giá cần giá price_list ĐÃ duyệt)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select max(id) from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and program_id is null and valid_to is null and approved_by is null}",
+        "--by",
+        "Người Duyệt Giá Thử R12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select max(id) from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'floor' and program_id is null and valid_to is null and approved_by is null}",
+        "--by",
+        "Người Duyệt Giá Thử R12"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind in ('list', 'floor') and program_id is null and valid_to is null and approved_by is not null",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) > 0 from price_list where sku_key = 'mat-ong-sam-120ml-1hu' and channel = 'shopee' and kind = 'list' and program_id is null and valid_to is null and approved_by is null",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C01",
+     "nguon_r10": "S05-C01",
+     "mo_ta": "Kiểm ma trận",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--check-matrix"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "hợp lệ"
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C02",
+     "nguon_r10": "S05-C02",
+     "mo_ta": "Form tắt mặc định (B2B_FORM_ENABLED rỗng)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "connectors.b2b_form"
+       ],
+       "env": {
+        "B2B_FORM_ENABLED": ""
+       },
+       "expect_exit": 2,
+       "stderr_re": "mặc định TẮT"
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C03",
+     "nguon_r10": "S05-C03",
+     "mo_ta": "Form bật 127.0.0.1:18851: GET, POST hợp lệ, gửi lại cùng ngày, sai content-type, honeypot, SKU rượu (b2b_post_r12)",
+     "buoc": [
+      {
+       "bg_start": "form1",
+       "argv": [
+        "python",
+        "-m",
+        "connectors.b2b_form"
+       ],
+       "env": {
+        "B2B_FORM_ENABLED": "1",
+        "B2B_FORM_HOST": "127.0.0.1",
+        "B2B_FORM_PORT": "18851"
+       }
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/b2b_post_r12.py.txt",
+        "http://127.0.0.1:18851/b2b",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "^(?=[\\s\\S]*\"get_status\": 200)(?=[\\s\\S]*\"valid\": \\[200, true\\])(?=[\\s\\S]*\"wrong_ct\": 415)"
+      },
+      {
+       "bg_stop": "form1"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from b2b_requests",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from b2b_requests where org_name ilike '%spam%'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from contacts c where row_to_json(c)::text like '%0900000301%' or row_to_json(c)::text ilike '%lienhe.thu.it@example.com%' or row_to_json(c)::text like '%Người Liên Hệ Thử IT%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C04",
+     "nguon_r10": "S05-C04",
+     "mo_ta": "Lập báo giá YC-1 + submit",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--requests"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "YC-\\d+ · Công ty Thử IT G2"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--quote",
+        "{sql:select min(id) from b2b_requests}",
+        "--out-dir",
+        "{OUT}",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[dry-run\\]"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--quote",
+        "{sql:select min(id) from b2b_requests}",
+        "--out-dir",
+        "{OUT}",
+        "--submit"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\]"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix') and created_by = 'agent:kd_quote'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'finance' and object_type = 'b2b_margin_review' and created_by = 'agent:kd_quote'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type in ('b2b_quote', 'b2b_quote_matrix', 'b2b_margin_review') and (payload like '%0900000301%' or payload ilike '%lienhe.thu.it@example.com%' or payload like '%Người Liên Hệ Thử IT%')",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C05",
+     "nguon_r10": "S05-C05",
+     "mo_ta": "Export trước duyệt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--export",
+        "{sql:select min(id) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix')}",
+        "--out",
+        "{OUT}/q_pre.md"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/q_pre.md",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C06",
+     "nguon_r10": "S05-C06",
+     "mo_ta": "Người duyệt (dev) + export chạy thử (bị từ chối như r10) + export ép van_hanh (FIXTURE) + verify-send khớp + tệp sửa",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.approval_queue",
+        "--approve",
+        "{sql:select min(id) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix')}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--export",
+        "{sql:select min(id) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix')}",
+        "--out",
+        "{OUT}/q_trial.md"
+       ],
+       "expect_exit": 1
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--force-mode",
+        "van_hanh",
+        "-m",
+        "agents.kd_quote",
+        "--export",
+        "{sql:select min(id) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix')}",
+        "--out",
+        "{OUT}/q_export.md"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--force-mode",
+        "van_hanh",
+        "-m",
+        "agents.kd_quote",
+        "--verify-send",
+        "{sql:select min(id) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix')}",
+        "{OUT}/q_export.md",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "KHỚP"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import sys; from pathlib import Path; s = Path(sys.argv[1]).read_text(encoding='utf-8'); Path(sys.argv[2]).write_text(s + '\\nSửa tay Thử IT\\n', encoding='utf-8')",
+        "{OUT}/q_export.md",
+        "{OUT}/q_tamper.md"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/run_sa.py.txt",
+        "--force-mode",
+        "van_hanh",
+        "-m",
+        "agents.kd_quote",
+        "--verify-send",
+        "{sql:select min(id) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix')}",
+        "{OUT}/q_tamper.md",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 1
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from b2b_quote_events where kind = 'da_gui'",
+       "expect": 1
+      },
+      {
+       "file_glob": "{OUT}/q_export.md",
+       "count": 1
+      },
+      {
+       "file_glob": "{OUT}/q_trial.md",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C07",
+     "nguon_r10": "S05-C07",
+     "mo_ta": "Catalog build + submit",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_catalog",
+        "--build",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_catalog",
+        "--submit"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where block = 'sales' and object_type = 'b2b_catalog'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'b2b_catalog' and payload ilike '%rượu%'",
+       "expect": 0
+      },
+      {
+       "file_re": "{OUT}/catalog-tet-*.md",
+       "re": "(?i)rượu",
+       "expect": false
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C08",
+     "nguon_r10": "S05-C08",
+     "mo_ta": "Danh sách tổ chức: CSV có SĐT, CSV hợp lệ, submit-batch",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_b2b",
+        "--import",
+        "{FX12}/items/sales-05/s05_orgs_bad.csv",
+        "--by",
+        "NV KD Thử IT"
+       ],
+       "expect_exit": 1
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_b2b",
+        "--import",
+        "{FX12}/items/sales-05/s05_orgs.csv",
+        "--by",
+        "NV KD Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "inserted=2"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.da_b2b",
+        "--submit-batch"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from org_prospects",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from org_prospects where fit_reason like '%0900000333%'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from approval_queue where block = 'sales' and object_type = 'org_prospect_batch'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C09",
+     "nguon_r10": "S05-C09",
+     "mo_ta": "Nhắc chốt đơn: CLI --followups (dry-run, thật — giờ thật chưa đủ 24 giờ LV), rồi đường ghi run_followups với now cố định 2026-11-10T10:00:00+07:00 (fu_r12) ×2, --outcome chot, fu_r12 lại",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--followups",
+        "--dry-run"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--followups"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/fu_r12.py.txt",
+        "2026-11-10T10:00:00+07:00"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\"enqueued\": 1\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/fu_r12.py.txt",
+        "2026-11-10T10:00:00+07:00"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\"enqueued\": 0\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--outcome",
+        "{sql:select min(id) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix')}",
+        "chot",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/fu_r12.py.txt",
+        "2026-11-10T10:00:00+07:00"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\"found\": 0, \"enqueued\": 0\\b"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type = 'b2b_followup' and created_by = 'agent:kd_quote'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from b2b_quote_events where kind = 'chot'",
+       "expect": 1
+      }
+     ],
+     "ghi_chu": "r10 NOT_RUN (cần ≥24 giờ làm việc thật, CLI không có --now). r12 chạy ĐƯỜNG GHI thật (run_followups) với now cố định thay vì chỉ đọc (fu_probe r10); không lùi mốc trong DB. Mốc 2026-11-10T10:00:00+07:00 đúng khi lượt chạy diễn ra trước ~05/11/2026."
+    },
+    {
+     "ma": "sales-05__X1",
+     "nguon_r10": "S05-X1",
+     "mo_ta": "YC-2 SKU mat-ong-sam-120ml-1hu (giá list CHƯA duyệt) qua form 127.0.0.1:18852 → báo giá dry-run: chặn hoặc reason giá chưa duyệt",
+     "buoc": [
+      {
+       "bg_start": "form2",
+       "argv": [
+        "python",
+        "-m",
+        "connectors.b2b_form"
+       ],
+       "env": {
+        "B2B_FORM_ENABLED": "1",
+        "B2B_FORM_HOST": "127.0.0.1",
+        "B2B_FORM_PORT": "18852"
+       }
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/sales_a/b2b_post2_r12.py.txt",
+        "http://127.0.0.1:18852/b2b"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "^200 True"
+      },
+      {
+       "bg_stop": "form2"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--quote",
+        "{sql:select max(id) from b2b_requests where items::text like '%mat-ong-sam-120ml-1hu%'}",
+        "--dry-run"
+       ],
+       "expect_exit": [
+        0,
+        1
+       ],
+       "out_re": "thieu_gia_niem_yet|bị chặn"
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__L2a",
+     "nguon_r10": "MOI",
+     "mo_ta": "r12 L2 — báo giá YC-2 không chứa giá JSON/chưa duyệt (745.000) hay giá suy ra từ nó (685.000)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--quote",
+        "{sql:select max(id) from b2b_requests where items::text like '%mat-ong-sam-120ml-1hu%'}",
+        "--dry-run"
+       ],
+       "expect_exit": [
+        0,
+        1
+       ],
+       "out_re": "^(?![\\s\\S]*(745\\.000|685\\.000))"
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__L2b",
+     "nguon_r10": "MOI",
+     "mo_ta": "r12 L2 — catalog loại SKU readiness CAM (120ml) và không giá chưa duyệt; đối chứng dương: có giá list ĐÃ duyệt 2.980.000 của 300ml",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_catalog",
+        "--build",
+        "--out-dir",
+        "{OUT}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "mat-ong-sam-120ml-1hu\\(readiness_cam\\)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_re": "{OUT}/catalog-tet-*.md",
+       "re": "745\\.000|1\\.340\\.000|120ml",
+       "expect": false
+      },
+      {
+       "file_re": "{OUT}/catalog-tet-*.md",
+       "re": "2\\.980\\.000",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-05__C10",
+     "nguon_r10": "S05-C10",
+     "mo_ta": "Tắt: rollout --disable sales-05 rồi --quote YC-2 --submit",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "sales-05",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiểm nhánh tắt r12"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_quote",
+        "--quote",
+        "{sql:select max(id) from b2b_requests where items::text like '%mat-ong-sam-120ml-1hu%'}",
+        "--out-dir",
+        "{OUT}",
+        "--submit"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*sales-05",
+       "stderr_re": "^(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where object_type in ('b2b_quote', 'b2b_quote_matrix')",
+       "expect": 1
+      },
+      {
+       "file_glob": "{OUT}/bao-gia-*",
+       "count": 0
+      }
+     ],
+     "ghi_chu": "Expected r10 'không sinh mục'; r12 thêm exit 2 + '[rollout] … sales-05' + 0 file theo bản vá RB (điều phối viên chỉ định) — chặt hơn, không nới."
+    }
+   ]
+  }
+ ]
+}

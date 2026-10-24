@@ -1,0 +1,44 @@
+[
+ {
+  "sql": "select count(*) from intel_items",
+  "expect": 7,
+  "actual": 7,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from intel_items where source = 'it-a'",
+  "expect": 7,
+  "actual": 7,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from intel_items where source <> 'it-a'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from intel_items where title || ' ' || coalesce(snippet, '') like '%0900000123%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from intel_items where snippet like '%***%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from intel_items where title like 'Giá vàng%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select coalesce(max(char_length(snippet)), 0) <= 300 from intel_items",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

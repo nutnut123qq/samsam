@@ -1,0 +1,25 @@
+[harness] FAKE LLM ở biên llm_gateway._client (1 phản hồi kịch bản)
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r10\g3\harness\run.py", line 88, in <module>
+    runpy.run_module(mod, run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\code\samsam\pipelines\video_studio.py", line 987, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "D:\code\samsam\pipelines\video_studio.py", line 974, in main
+    it = _one(conn, sku, ch, fmt, args, readiness)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\video_studio.py", line 907, in _one
+    r = save_video(conn, res, by=args.by.strip())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\video_studio.py", line 861, in save_video
+    did = store.save_draft(
+          ^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\store.py", line 308, in save_draft
+    _rollout().check_generate(conn, _draft_feature(by, content_type),
+  File "D:\code\samsam\pipelines\rollout.py", line 671, in check_generate
+    raise RolloutBlocked(_why(fid, "tat", what) + " — không sinh đầu ra")
+pipelines.rollout.RolloutBlocked: nháp video: tính năng marketing-02.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+[exit=1]

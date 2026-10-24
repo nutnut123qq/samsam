@@ -46,9 +46,9 @@ def test_p2_health_records_report_output(monkeypatch, tmp_path, quiet):
     seen = []
     monkeypatch.setattr(rollout, "_FORCE_MODE", None)
     monkeypatch.setattr(rollout, "report_stage",
-                        lambda name: ("data_platform-07.1", "van_hanh"))
+                        lambda name, fid=None: ("data_platform-07.1", "van_hanh"))
     monkeypatch.setattr(rollout, "record_report",
-                        lambda name, text, sample=None: seen.append(
+                        lambda name, text, sample=None, fid=None: seen.append(
                             (name, sample)) or True)
     assert hb.main(["--out-dir", str(tmp_path), "--date", "2026-10-19"]) == 0
     assert seen == [("health-2026-10-19.md", False)]

@@ -1,0 +1,23 @@
+[
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__X01\\out/llm.json",
+  "re": "\\\"kind\\\"",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\production-05.1\\20261024T112406-3893\\production-05.1__X01\\out/sx-*",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ },
+ {
+  "sql": "select case when (select stage from feature_rollout where feature_id = 'production-05.1') = 'tat' then (select count(*) from llm_usage where agent_id = 'sx_tracuu' and ts >= (select stage_since from feature_rollout where feature_id = 'production-05.1')) else -1 end",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

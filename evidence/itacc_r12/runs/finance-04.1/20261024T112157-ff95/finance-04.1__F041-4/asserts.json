@@ -1,0 +1,28 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\finance-04.1\\20261024T112157-ff95\\finance-04.1__F041-4\\out/pnl-2026-09.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/finance-04.1/20261024T112157-ff95/finance-04.1__F041-4/out/pnl-2026-09.md",
+    "sha256": "13b0b5919c4aab7a77924ed938e1760d6ce22739b548663374c5ab81b4b333fe"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\finance-04.1\\20261024T112157-ff95\\finance-04.1__F041-4\\out/pnl-2026-09.md",
+  "re": "(?s)\\A(?=.*\\A> \\*\\*CHẠY THỬ)(?=.*BẢN NHÁP)(?=.*\\| `sapentol-30v` \\| shopee \\| 1\\.000\\.000đ \\| 120\\.000đ \\| 0đ \\| 880\\.000đ \\| 400\\.000đ \\| 480\\.000đ \\|)(?=.*\\| `saphraton-20v` \\| shopee \\|[^\\n]*\\| chưa có giá vốn duyệt \\|)(?=.*\\| `savigout-30v` \\| shopee \\|[^\\n]*\\| chưa có giá vốn duyệt \\|)(?=.*BẤT THƯỜNG\\*\\* shopee)",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from report_outputs where feature_id = 'finance-04.1' and name = 'pnl-2026-09.md'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

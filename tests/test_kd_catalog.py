@@ -38,6 +38,22 @@ SAMPLE_BOM = _j(ROOT / "data" / "sample_bom.json")["combos"]
 ALC = [s for s in GOLD["skus"] if s["category"] == "alcohol"]
 
 
+def _ready(golden):
+    """r12 L2: catalog loại SKU readiness CAM (view DB) — ca cũ giả lập mọi
+    SKU đã đủ điều kiện để giữ nguyên phạm vi kiểm của ca."""
+    return {(s["sku_key"], ch): "QC_DAY_DU" for s in golden["skus"]
+            for ch in ("shopee", "web")}
+
+
+def _prices(golden):
+    """Giá price_list ĐÃ duyệt giả lập = giá trong golden (ca cũ)."""
+    return {(s["sku_key"], ch): {k: {"price": v, "approved": True, "id": 0}
+                                 for k, v in kinds.items()
+                                 if k in ("list", "floor")}
+            for s in golden["skus"]
+            for ch, kinds in (s.get("prices") or {}).items()}
+
+
 def _forbidden(text: str) -> list[str]:
     low = text.casefold()
     bad = [n for s in ALC for n in (s["sku_key"], s["name"])
@@ -66,7 +82,7 @@ def test_eligible_excludes_alcohol_and_unapproved_tpbvsk():
 
 
 def test_build_md_html_no_alcohol(tmp_path):
-    b = kc.build(GOLD, BOM, MX, day=DAY)
+    b = kc.build(GOLD, BOM, MX, day=DAY, readiness=_ready(GOLD))
     assert b["problems"] == [], b["problems"]
     md, html = b["payload"], kq.render_html(b["payload"])
     for t in (md, html):
@@ -81,7 +97,8 @@ def test_build_md_html_no_alcohol(tmp_path):
 
 
 def test_build_without_tpbvsk_no_disclaimer_and_contact_line():
-    b = kc.build(GOLD_REAL, SAMPLE_BOM, MX_REAL, day=DAY)
+    b = kc.build(GOLD_REAL, SAMPLE_BOM, MX_REAL, day=DAY,
+                 readiness=_ready(GOLD_REAL))
     assert b["problems"] == [] and b["n_items"] == 3
     md = b["payload"]
     for k in ("Mật ong sâm 120ml (1 hũ)", "Mật ong sâm 120ml (2 hũ)",
@@ -93,7 +110,8 @@ def test_build_without_tpbvsk_no_disclaimer_and_contact_line():
     assert md.count(kc.NO_PHOTO) == 3
     m = json.loads(json.dumps(MX_REAL))
     m["items"].pop("mat-ong-sam-300ml")
-    md2 = kc.build(GOLD_REAL, SAMPLE_BOM, m, day=DAY)["payload"]
+    md2 = kc.build(GOLD_REAL, SAMPLE_BOM, m, day=DAY,
+                   readiness=_ready(GOLD_REAL))["payload"]
     assert "Giá theo số lượng: liên hệ báo giá" in md2
 
 
@@ -102,7 +120,8 @@ def test_packshot_png_only(tmp_path):
     d.mkdir()
     (d / "mat-ong-sam-120ml-1hu.png").write_bytes(PNG)
     (d / "mat-ong-sam-300ml.png").write_bytes(b"GIF89a not png")
-    b = kc.build(GOLD_REAL, SAMPLE_BOM, MX_REAL, day=DAY, packshot_dir=d)
+    b = kc.build(GOLD_REAL, SAMPLE_BOM, MX_REAL, day=DAY, packshot_dir=d,
+                 readiness=_ready(GOLD_REAL))
     sha = hashlib.sha256(PNG).hexdigest()[:16]
     md = b["payload"]
     assert f"packshots/mat-ong-sam-120ml-1hu.png (sha256 {sha})" in md
@@ -120,7 +139,7 @@ def test_packshot_png_only(tmp_path):
 
 
 def test_gate_blocks_tampered_payload(monkeypatch):
-    b = kc.build(GOLD, BOM, MX, day=DAY)
+    b = kc.build(GOLD, BOM, MX, day=DAY, readiness=_ready(GOLD))
     names = kc.excluded_names(GOLD, BOM, b["excluded"])
     assert "Rượu sâm chai thủy tinh 500ml" in names
     errs = kq.gate_text(b["payload"] + "\nRượu sâm chai thủy tinh 500ml\n",
@@ -132,7 +151,22 @@ def test_gate_blocks_tampered_payload(monkeypatch):
     assert "guardrail:thieu_nhan_quang_cao" in errs
 
 
-def test_cli_build_real_bom_no_alcohol(tmp_path, capsys):
+def test_cli_build_real_bom_no_alcohol(tmp_path, capsys, monkeypatch):
+    from agents import kd_listing
+    from pipelines import store
+
+    class _Conn:
+        def commit(self):
+            pass
+
+        rollback = close = commit
+
+    # r12 L2: --build luôn đọc giá đã duyệt + readiness từ DB (giả lập).
+    monkeypatch.setattr(kc, "connect", _Conn)
+    monkeypatch.setattr(kd_listing, "golden_prices",
+                        lambda conn, day: _prices(GOLD_REAL))
+    monkeypatch.setattr(store, "readiness_from_db",
+                        lambda conn: _ready(GOLD_REAL))
     out = tmp_path / "o"
     assert kc.main(["--build", "--bom", str(ROOT / "data" / "sample_bom.json"),
                     "--out-dir", str(out), "--date", "2026-10-12"]) == 0
@@ -177,6 +211,13 @@ def _cli(db, monkeypatch, *argv):
 
 
 def test_db_submit_approve_verify(db, monkeypatch, capsys, tmp_path):
+    from agents import kd_listing
+    from pipelines import store
+    # r12 L2: giá đã duyệt + readiness DB giả lập = golden (phạm vi ca cũ).
+    monkeypatch.setattr(kd_listing, "golden_prices",
+                        lambda conn, day: _prices(GOLD_REAL))
+    monkeypatch.setattr(store, "readiness_from_db",
+                        lambda conn: _ready(GOLD_REAL))
     bom = str(FX / "bom_MAU.json")
     assert _cli(db, monkeypatch, "--submit", "--bom", bom, "--date",
                 "2026-10-12") == 0

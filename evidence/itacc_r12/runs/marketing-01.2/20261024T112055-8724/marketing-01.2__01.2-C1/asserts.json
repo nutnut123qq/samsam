@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) >= 1 from approval_queue where object_type = 'campaign_brief' and block = 'marketing' and created_by = 'agent:MKT-00' and status = 'pending' and payload::text like '%Mốc (giờ VN):%' and payload::text like '%Ô kênh × định dạng:%' and payload::text like '%Nguồn: data/marketing_calendar.json%' and abs(extract(epoch from (due_at - created_at)) - 48 * 3600) < 60",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'campaign_brief' and not (block = 'marketing' and created_by = 'agent:MKT-00' and status = 'pending' and payload::text like '%Mốc (giờ VN):%' and payload::text like '%Ô kênh × định dạng:%' and payload::text like '%Nguồn: data/marketing_calendar.json%' and abs(extract(epoch from (due_at - created_at)) - 48 * 3600) < 60)",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

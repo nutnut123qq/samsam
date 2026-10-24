@@ -1,0 +1,30 @@
+"""HARNESS g2 — client localhost cho form B2B THẬT (python -m
+connectors.b2b_form chạy riêng, 127.0.0.1). Dữ liệu GIẢ (tổ chức/ người
+liên hệ "Thử IT", SĐT 0900000xxx, example.com). Kết quả → out/S05-C03.json"""
+import json, re, sys
+from pathlib import Path
+from urllib.parse import urlencode
+import httpx
+sys.stdout.reconfigure(encoding="utf-8")
+url = sys.argv[1]
+OUT = Path(__file__).resolve().parent.parent / "out" / "S05-C03.json"
+g = httpx.get(url, timeout=10)
+opts = re.findall(r'<option value="([^"]+)"', g.text)
+base = {"org_name": "Công ty Thử IT G2", "org_type": "doanh_nghiep", "region": "Đà Nẵng",
+        "contact_name": "Người Liên Hệ Thử IT", "phone": "0900000301", "email": "lienhe.thu.it@example.com",
+        "need_by": "", "consent": "b2b", "policy_version": "b2b-v0-nhap", "website": "",
+        "sku1": "mat-ong-sam-300ml", "qty1": "50"}
+CT = {"Content-Type": "application/x-www-form-urlencoded"}
+res = {"get_status": g.status_code, "options": opts}
+r = httpx.post(url, content=urlencode(base).encode(), headers=CT, timeout=10)
+res["valid"] = [r.status_code, "Đã nhận yêu cầu" in r.text]
+r = httpx.post(url, content=urlencode(base).encode(), headers=CT, timeout=10)
+res["valid_resend_same_day"] = [r.status_code, "Đã nhận yêu cầu" in r.text]
+r = httpx.post(url, content=json.dumps(base).encode(), headers={"Content-Type": "application/json"}, timeout=10)
+res["wrong_ct"] = r.status_code
+r = httpx.post(url, content=urlencode({**base, "website": "http://spam.example.com", "org_name": "Spam Thử IT"}).encode(), headers=CT, timeout=10)
+res["honeypot"] = [r.status_code, "Đã nhận yêu cầu" in r.text]
+r = httpx.post(url, content=urlencode({**base, "sku1": "ruou-sam-chai-thuy-tinh-500ml", "org_name": "Công ty Rượu Thử IT"}).encode(), headers=CT, timeout=10)
+res["alcohol_sku"] = r.status_code
+OUT.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+print(json.dumps(res, ensure_ascii=False))

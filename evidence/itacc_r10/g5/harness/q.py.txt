@@ -1,0 +1,17 @@
+"""Truy vấn assert nhanh trên DB thử (DATABASE_URL đã source). In từng dòng."""
+import os
+import sys
+
+import psycopg
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5) as c:
+    for sql in sys.argv[1:]:
+        cur = c.execute(sql)
+        if cur.description:
+            print("--", sql[:160])
+            for r in cur.fetchall():
+                print(r)
+        else:
+            print("--", sql[:160], "rowcount", cur.rowcount)
+    c.commit()

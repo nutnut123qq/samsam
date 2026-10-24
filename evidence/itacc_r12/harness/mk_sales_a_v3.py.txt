@@ -1,0 +1,107 @@
+"""HARNESS r12 — tạo criteria/r12_sales_a_v3.json từ r12_sales_a_v2.json (đã khóa, KHÔNG sửa) + khóa mới. Chỉ đổi mục
+sales-04.2 (sales-01/02/05 giữ nguyên v2). python -I mk_sales_a_v3.py.txt <fingerprint_code>
+
+QUYẾT ĐỊNH (điều phối viên 24/10/2026, TRƯỚC mọi lượt chạy nhóm sales_a) — phân biệt 3 thứ:
+ (a) chuyển YÊU CẦU (lead) không kèm dữ liệu cá nhân: thiết kế hợp lệ có căn cứ — docs/handover/playbook-sales-admin.md
+     ("`--handoff` in nội dung để BẠN tự gửi (có SĐT chỉ khi khách đồng ý đích danh đại lý đó)"), docs/handover/sop.md
+     mục 5c ("Chưa có đồng ý = KHÔNG liên hệ marketing / KHÔNG chuyển PII cho đại lý"), runbook-ha-tang.md 9.7 (ciphertext
+     liên hệ chỉ trả qua crm_handoff_human khi có đồng ý dai_ly đích danh), test nghiệm thu khóa test_handoff_acceptance_1
+     + gate v14 test_handoff_question_names_scrubbed_v14_gate (câu hỏi lead qua scrub_user);
+ (b) bàn giao THÔNG TIN KHÁCH (SĐT/tên/email/địa chỉ) cho đại lý: CHỈ khi có đồng ý dai_ly hiện hành đích danh đại lý đó;
+     rút đồng ý / đại lý khác → không lộ;
+ (c) đầu ra tính nghiệm thu sales-04.2: data/contract_features.json output_sources_note — "lần NGƯỜI chuyển lead ĐÃ đồng ý
+     cho đại lý" (+ dòng đồng ý dai_ly đã cấp). Yêu cầu chưa đủ điều kiện KHÔNG được tính (tiêu chí đóng L1, probe_dot3).
+Kỳ vọng r10 C04/C07 "exit 1, không payload, không log crm_handoff" RỘNG HƠN rủi ro cần chặn: nó cấm luôn (a) mà tài liệu
+vận hành + test nghiệm thu đã cho phép; rủi ro thật là lộ (b) và tính (a) thành (c). Đính chính: C04/C07 kiểm payload tối
+thiểu (lead_id/dealer/province/intent/question), KHÔNG có khóa phone/name/email/address, KHÔNG giá trị PII fixture, dấu vết
+log `pii_included=false` (dấu vết chuyển yêu cầu không PII — không phải log bàn giao PII), bộ đếm sales-04.2 KHÔNG tăng.
+C05 thêm đối chứng dương: đúng đại lý, có đủ PII được phép, bộ đếm +2 (1 đồng ý + 1 lần chuyển có đồng ý). MOI X2: câu hỏi
+lead chứa tên/địa chỉ/SĐT, chưa đồng ý → payload đã che. Kỳ vọng cũ giữ ở 'ky_vong_r10_cu'. Không dùng "code hiện trả như
+vậy" làm căn cứ: căn cứ là tài liệu vận hành + định nghĩa đầu ra hợp đồng + test nghiệm thu đã khóa trước r12."""
+import datetime
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+C = Path(__file__).resolve().parents[1] / "criteria"
+d = json.loads((C / "r12_sales_a_v2.json").read_text(encoding="utf-8"))
+d["_doc"] = ("v3 (điều phối viên 24/10/2026, TRƯỚC mọi lượt chạy): chỉ đổi mục sales-04.2 — quyết định + căn cứ ở "
+             "docstring evidence/itacc_r12/harness/mk_sales_a_v3.py.txt. | " + d["_doc"])
+d["fingerprint_code"] = sys.argv[1]
+it = next(i for i in d["items"] if i["id"] == "sales-04.2")
+LEAD8 = "{sql:select id from leads where dedup_key = 'convlog:it-g2-lead-m2'}"
+H = "{H}/sales_a/dem_042_v3.py.txt"
+PII_VALS = r"0900000101|Khách Thử IT|khach\.thu\.it@example\.com|Đường Thử IT"
+NO_PII_OUT = r'^(?![\s\S]*"(phone|name|email|address)"\s*:)(?![\s\S]*(' + PII_VALS + r'))'
+MIN_PAYLOAD = r'(?=[\s\S]*"lead_id")(?=[\s\S]*"dealer": "DLTHU01")(?=[\s\S]*"province")(?=[\s\S]*"intent")[\s\S]*"question"'
+it["tieu_chi_cu_the_v2"] = list(it["tieu_chi_cu_the"])
+it["tieu_chi_cu_the"][3] = ("T4 (v3) `crm --handoff` CHƯA có đồng ý dai_ly đích danh → chuyển yêu cầu KHÔNG PII: payload tối thiểu, "
+                            "không khóa/giá trị SĐT/tên/email/địa chỉ, log pii_included=false, KHÔNG tính đầu ra; có đồng ý → "
+                            "payload kèm PII đúng đại lý, log pii_included=true không PII, tính đầu ra")
+it["tieu_chi_cu_the"][4] = ("T5 (v3) Rút đồng ý → quay về chuyển yêu cầu không PII, không tính đầu ra; đại lý khác (lead không gán)"
+                            " → exit 1; thiếu khóa vault → exit 2")
+
+
+def step_save(tag):
+    return {"argv": ["python", H, "save", "{SCR}/dem_" + tag + ".txt"], "expect_exit": 0}
+
+
+def step_cmp(tag, mode, n=None):
+    return {"argv": ["python", H, mode, "{SCR}/dem_" + tag + ".txt"] + ([str(n)] if n is not None else []),
+            "expect_exit": 0}
+
+
+LOG_LAST = "select detail->>'pii_included' from agent_action_log where action = 'crm_handoff' order by id desc limit 1"
+LOG_PII = ("select count(*) from agent_action_log where action = 'crm_handoff' and (detail::text ~* '"
+           + PII_VALS.replace("\\.", ".") + "')")
+for c in it["ca"]:
+    if c["ma"] == "sales-04.2__C04":
+        c["ky_vong_r10_cu"] = {"buoc": c["buoc"], "kiem": c["kiem"]}
+        hand = {"argv": c["buoc"][0]["argv"], "expect_exit": 0, "stdout_re": MIN_PAYLOAD, "out_re": NO_PII_OUT}
+        c["buoc"] = [step_save("c04"), hand, step_cmp("c04", "bang")]
+        c["kiem"] = [{"sql": "select count(*) from agent_action_log where action = 'crm_handoff'", "expect": 1},
+                     {"sql": LOG_LAST, "expect": "false"}, {"sql": LOG_PII, "expect": 0}]
+        c["mo_ta"] = "(v3) Handoff lead 8 khi CHƯA đồng ý dai_ly → chuyển yêu cầu không PII, không tính đầu ra"
+    if c["ma"] == "sales-04.2__C05":
+        c["buoc"].insert(0, step_save("c05"))
+        c["buoc"][-1]["stdout_re"] = (r'(?=[\s\S]*"dealer": "DLTHU01")(?=[\s\S]*"phone": "0900000101")'
+                                      r'(?=[\s\S]*"name": "Khách Thử IT")(?=[\s\S]*"email": "khach\.thu\.it@example\.com")'
+                                      r'[\s\S]*"address": "Số 1 Đường Thử IT"')
+        c["buoc"].append(step_cmp("c05", "tang", 2))
+        c["mo_ta"] = c["mo_ta"] + " (v3: đối chứng dương — đúng đại lý, đủ PII được phép, bộ đếm +2)"
+    if c["ma"] == "sales-04.2__C07":
+        c["ky_vong_r10_cu"] = {"buoc": c["buoc"][1:], "kiem": c.get("kiem", [])}
+        hand = dict(c["buoc"][1])
+        hand.update(expect_exit=0, stdout_re=MIN_PAYLOAD, out_re=NO_PII_OUT)
+        c["buoc"] = [c["buoc"][0], step_save("c07"), hand, step_cmp("c07", "bang")]
+        c["kiem"] = [{"sql": LOG_LAST, "expect": "false"}, {"sql": LOG_PII, "expect": 0},
+                     {"sql": "select count(*) from consents where purpose = 'dai_ly' and recipient_dealer = 'DLTHU01'",
+                      "expect": 2}]
+        c["mo_ta"] = "(v3) Rút đồng ý rồi handoff → không lộ PII, log pii_included=false, không tính đầu ra"
+x2 = {"ma": "sales-04.2__X2", "nguon_r10": "MOI",
+      "mo_ta": "(v3) Lead có tên/địa chỉ/SĐT trong CÂU HỎI, chưa đồng ý → payload che (scrub_user), không tính đầu ra",
+      "buoc": [{"argv": ["python", "-c",
+                         "import os,psycopg,sys;from psycopg import conninfo as ci;u=os.environ['DATABASE_URL'];"
+                         "assert ci.conninfo_to_dict(u)['dbname'].startswith('samsam_itacc_r12_');"
+                         "c=psycopg.connect(u,autocommit=True);c.execute(\"insert into leads (dedup_key, ts, channel, "
+                         "user_hash, question, intent, source) values ('manual:r12-x2', now(), 'zalo', 'uh-r12-x2', "
+                         "'Tôi là Nguyễn Văn Mẫu, giao cho chị Bích số 12 đường Ví Dụ Đà Nẵng, sđt 0905 123 456', "
+                         "'order', 'manual')\");print('ok')"], "expect_exit": 0},
+               {"argv": ["python", "-m", "ingest.crm", "--assign",
+                         "{sql:select id from leads where dedup_key = 'manual:r12-x2'}", "--dealer", "DLTHU01",
+                         "--province", "Đà Nẵng", "--by", "GĐ Bán Hàng Thử IT"], "expect_exit": 0},
+               step_save("x2"),
+               {"argv": ["python", "-m", "ingest.crm", "--handoff",
+                         "{sql:select id from leads where dedup_key = 'manual:r12-x2'}", "--dealer", "DLTHU01",
+                         "--by", "GĐ Bán Hàng Thử IT"], "expect_exit": 0, "stdout_re": r'"question"',
+                "out_re": r'^(?![\s\S]*(Nguyễn Văn Mẫu|Bích|Ví Dụ|0905 123 456|"(phone|name|email|address)"\s*:))'},
+               step_cmp("x2", "bang")],
+      "kiem": [{"sql": LOG_LAST, "expect": "false"}]}
+it["ca"].append(x2)
+s = json.dumps(d, ensure_ascii=False, indent=1)
+(C / "r12_sales_a_v3.json").write_text(s, encoding="utf-8", newline="\n")
+h = hashlib.sha256(s.encode("utf-8")).hexdigest()
+(C / "r12_sales_a_v3.lock.txt").write_text(
+    f"r12_sales_a_v3.json {h} {datetime.datetime.now().astimezone().isoformat(timespec='seconds')}\n", encoding="utf-8")
+print(h)

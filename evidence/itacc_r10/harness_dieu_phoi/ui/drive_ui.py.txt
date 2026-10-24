@@ -1,0 +1,313 @@
+"""Kiểm UI THẬT: Chromium (Playwright) thao tác Streamlit đang chạy ở 127.0.0.1:8599
+(chế độ thực AUTH_MODE=local, login DB thật, DB thử samsam_itacc_r10ui) — mỗi
+bước chụp ảnh + đối chiếu DB (owner, chỉ đọc). Không in mật khẩu.
+Chạy: python -I drive_ui.py <dsn_admin_file>"""
+import json
+import sys
+import time
+from pathlib import Path
+
+import psycopg
+from playwright.sync_api import sync_playwright
+
+sys.stdout.reconfigure(encoding="utf-8")
+HERE = Path(__file__).parent
+SHOTS = HERE / "shots"
+SHOTS.mkdir(exist_ok=True)
+SEC = json.loads((HERE / "secrets.json").read_text(encoding="utf-8"))
+ADMIN = Path(sys.argv[1]).read_text().split("'")[1]
+URL = "http://127.0.0.1:8610"
+OUT = HERE / "out"
+REPO_REPORTS = Path("D:/code/samsam/data/reports")
+USER = {"mkt1": "marketing ui một", "mkt2": "marketing ui hai",
+        "sales": "bán hàng ui", "mismatch": "người lệch ui",
+        "tgd1": "tgđ ui"}
+R = []
+
+
+def db(sql, args=()):
+    with psycopg.connect(ADMIN, connect_timeout=5) as c:
+        return c.execute(sql, args).fetchall()
+
+
+def step(name, ok, page, **kw):
+    shot = SHOTS / f"{len(R) + 1:02d}_{name}.png"
+    page.screenshot(path=str(shot), full_page=True)
+    R.append({"step": name, "verdict": "PASS" if ok else "FAIL",
+              "shot": shot.name, **kw})
+    print(f"{'PASS' if ok else 'FAIL'}  {name}  {json.dumps(kw, ensure_ascii=False, default=str)[:220]}")
+
+
+def idle(page, t=1.2):
+    page.wait_for_timeout(int(t * 1000))
+    for _ in range(60):
+        if not page.locator('[data-testid="stStatusWidget"]').is_visible():
+            break
+        page.wait_for_timeout(500)
+    page.wait_for_timeout(400)
+
+
+def login(page, who, pw=None):
+    page.goto(URL)
+    page.get_by_label("Tên đăng nhập").wait_for(timeout=60000)
+    page.get_by_label("Tên đăng nhập").fill(USER[who])
+    page.get_by_label("Mật khẩu", exact=True).fill(pw or SEC["ui_pw"][who])
+    page.get_by_role("button", name="Đăng nhập").click()
+    idle(page, 2)
+
+
+def logout(page):
+    page.get_by_role("button", name="Đăng xuất").click()
+    idle(page)
+
+
+def tab(page, name):
+    page.get_by_role("tab", name=name).click()
+    idle(page, 0.8)
+
+
+def unlock(page, pw):
+    page.get_by_label("Mật khẩu Postgres").fill(pw)
+    page.get_by_role("button", name="Mở quyền quyết định").click()
+    idle(page, 2)
+
+
+def exp(page, prefix):
+    e = page.locator('[data-testid="stExpander"]', has_text=prefix).first
+    e.locator("summary").first.click()
+    page.wait_for_timeout(500)
+    return e
+
+
+def text(page):
+    return page.locator("body").inner_text()
+
+
+def draft(did):
+    """(status, reviewer chuẩn hóa casefold, created_by, created_login, block,
+    scheduled_date) — UI ghi reviewer bằng tên đăng nhập (đã casefold)."""
+    r = db("select status, reviewer, created_by, created_login, block,"
+           " scheduled_date from content_drafts where id = %s", (did,))[0]
+    return (r[0], r[1].casefold() if r[1] else r[1], *r[2:])
+
+
+with sync_playwright() as p:
+    br = p.chromium.launch()
+    page = br.new_page(viewport={"width": 1400, "height": 1000})
+    page.set_default_timeout(60000)
+    try:
+        d1, d2 = (r[0] for r in db("select id from content_drafts order by id limit 2"))
+        q1 = db("select id from approval_queue where object_id = 'ui-q1'")[0][0]
+
+        login(page, "mkt1", pw="sai-" + "x" * 12)
+        step("dang_nhap_ui_sai_mat_khau", "sai tên đăng nhập hoặc mật khẩu" in text(page), page)
+        login(page, "mkt1")
+        tab(page, "Duyệt & Lịch")
+        e = exp(page, f"#{d1} [")
+        e.get_by_role("button", name="Duyệt").click()
+        idle(page)
+        step("chua_mo_quyen_khong_quyet_bang_login_chung",
+             "Chưa mở quyền quyết định" in text(page) and draft(d1)[0] == "pending",
+             page, db=draft(d1))
+        unlock(page, "sai-" + "y" * 12)
+        step("mo_quyen_sai_mat_khau_postgres",
+             "đăng nhập Postgres thất bại" in text(page), page)
+        unlock(page, SEC["db_pw"]["mkt1"])
+        ev = db("select count(*) from human_login_checks where db_login = %s", (SEC["login"]["mkt1"],))[0][0]
+        step("mo_quyen_dung_nguoi_ghi_bang_chung_dang_nhap",
+             page.get_by_label("Mật khẩu Postgres").count() == 0 and ev == 1, page, login_checks=ev)
+        e = exp(page, f"#{d1} [")
+        e.get_by_role("button", name="Duyệt").click()
+        idle(page, 2)
+        step("nguoi_dung_khoi_duyet_draft_agent",
+             draft(d1)[:2] == ("approved", "marketing ui một"), page, db=draft(d1))
+
+        tab(page, "Content Studio")
+        page.get_by_label("Brief").fill("Lời chào mùa thu cho khách hàng")
+        page.get_by_label("Brief").press("Control+Enter")   # commit giá trị text_area
+        idle(page)
+        page.get_by_role("button", name="Sinh bài").click()
+        idle(page, 3)
+        page.get_by_role("button", name="Lưu vào hàng duyệt").click()
+        idle(page, 2)
+        mine = db("select id from content_drafts where created_by not like 'agent:%%'"
+                  " order by id desc limit 1")
+        mid = mine[0][0] if mine else None
+        step("tao_nhap_qua_ui_bang_login_nguoi",
+             mid is not None and draft(mid)[2:5] == ("Marketing UI Một", SEC["login"]["mkt1"], "marketing"),
+             page, db=draft(mid) if mid else None)
+
+        tab(page, "Duyệt & Lịch")
+        if mid:
+            e = exp(page, f"#{mid} [")
+            btn = e.get_by_role("button", name="Duyệt")
+            step("nguoi_tao_khong_tu_duyet_nhap_ai_ho_tro",
+                 btn.is_disabled() and draft(mid)[0] == "pending", page, db=draft(mid))
+        stage0 = db("select stage from feature_rollout where feature_id = 'marketing-01.1'")[0][0]
+        sel = page.get_by_role("button", name="Xếp lịch")
+        if sel.count():
+            sel.first.click()
+            idle(page, 2)
+        step("xep_lich_bi_chan_khi_chay_thu", stage0 == "chay_thu" and draft(d1)[5] is None,
+             page, stage=stage0, db=draft(d1))
+        # FIXTURE DB thử: nhánh đủ điều kiện (owner đặt van_hanh CHỈ trong DB thử UI)
+        with psycopg.connect(ADMIN, connect_timeout=5) as c:
+            c.execute("update feature_rollout set stage = 'van_hanh' where feature_id = 'marketing-01.1'")
+        tab(page, "Content Studio")       # rerun trang (reload làm mất phiên)
+        tab(page, "Duyệt & Lịch")
+        sel = page.get_by_role("button", name="Xếp lịch")
+        if sel.count():
+            sel.first.click()
+            idle(page, 2)
+        step("xep_lich_bang_login_nguoi_khi_van_hanh_fixture", draft(d1)[5] is not None, page, db=draft(d1))
+        logout(page)
+
+        login(page, "mismatch")
+        tab(page, "Duyệt & Lịch")
+        unlock(page, SEC["db_pw"]["mkt2"])
+        step("login_db_thuoc_nguoi_khac_bi_tu_choi", "thuộc người khác" in text(page)
+             and page.get_by_label("Mật khẩu Postgres").count() == 1, page)
+        logout(page)
+
+        login(page, "mkt2")
+        tab(page, "Duyệt & Lịch")
+        step("doi_nguoi_khong_dung_lai_ket_noi_cu",
+             page.get_by_label("Mật khẩu Postgres").count() == 1, page)
+        unlock(page, SEC["db_pw"]["mkt2"])
+        if mid:
+            e = exp(page, f"#{mid} [")
+            e.get_by_role("button", name="Duyệt").click()
+            idle(page, 2)
+            step("nguoi_khac_dung_khoi_duyet_nhap_cua_nguoi_tao",
+                 draft(mid)[:2] == ("approved", "marketing ui hai")
+                 and draft(mid)[3] == SEC["login"]["mkt1"], page, db=draft(mid))
+        e = exp(page, f"#{d2} [")
+        e.get_by_role("button", name="Từ chối").click()
+        idle(page, 2)
+        step("tu_choi_bang_login_nguoi", draft(d2)[:2] == ("rejected", "marketing ui hai"),
+             page, db=draft(d2))
+        logout(page)
+
+        d3 = db("insert into content_drafts (brief, channel, text, guardrail, source,"
+                " created_by, content_type, block) values ('nháp agent UI 3', 'facebook',"
+                " 'Nội dung agent thử UI số 3. Nội dung có sử dụng AI.', '{\"ok\": true}', 'cli', 'agent:mkt02',"
+                " 'post', 'marketing') returning id")[0][0] if False else None
+        with psycopg.connect(ADMIN, connect_timeout=5) as c:
+            d3 = c.execute("insert into content_drafts (brief, channel, text, guardrail,"
+                           " source, created_by, content_type, block) values ('nháp agent"
+                           " UI 3', 'facebook', 'Nội dung agent thử UI số 3. Nội dung có sử dụng AI.', '{\"ok\":"
+                           " true}', 'cli', 'agent:mkt02', 'post', 'marketing') returning id"
+                           ).fetchone()[0]
+        login(page, "sales")
+        tab(page, "Duyệt & Lịch")
+        unlock(page, SEC["db_pw"]["sales"])
+        e = exp(page, f"#{d3} [")
+        btn = e.get_by_role("button", name="Duyệt")
+        step("sai_khoi_khong_duyet_duoc", btn.is_disabled() and draft(d3)[0] == "pending",
+             page, db=draft(d3))
+        e = exp(page, f"#{q1} [sales/")
+        e.get_by_role("button", name="Duyệt").click()
+        idle(page, 2)
+        qs = db("select status, decided_by from approval_queue where id = %s", (q1,))[0]
+        step("hang_duyet_chung_dung_khoi_bang_login_nguoi",
+             (qs[0], qs[1].casefold()) == ("approved", "bán hàng ui"), page, db=qs)
+        logout(page)
+
+        # --- r10: tab theo vai trò, lỗi nhập, Chat/Chưa trả lời/Báo cáo/Nhật ký vườn
+        login(page, "sales")
+        tabs_sales = [t.inner_text() for t in page.get_by_role("tab").all()]
+        step("vai_tro_sales_khong_co_content_studio", "Content Studio" not in tabs_sales
+             and "Duyệt & Lịch" in tabs_sales, page, tabs=tabs_sales)
+        logout(page)
+        login(page, "tgd1")
+        tabs_tgd = [t.inner_text() for t in page.get_by_role("tab").all()]
+        step("tgd_thay_du_7_tab", len(tabs_tgd) == 7, page, tabs=tabs_tgd)
+        tab(page, "Content Studio")
+        btn = page.get_by_role("button", name="Sinh bài")
+        step("loi_nhap_brief_rong_khong_sinh", btn.is_disabled(), page)
+        tab(page, "Chat Sâm Sâm")
+        n_conv0 = len((OUT / "conversations.jsonl").read_text(encoding="utf-8").splitlines()) if (OUT / "conversations.jsonl").exists() else 0
+        page.get_by_placeholder("Hỏi về Sâm Sâm...").fill("Sâm Ngọc Linh trồng ở đâu?")
+        page.get_by_placeholder("Hỏi về Sâm Sâm...").press("Enter")
+        idle(page, 4)
+        for _ in range(60):
+            if page.locator('[data-testid="stChatMessage"]').count() >= 2:
+                break
+            page.wait_for_timeout(500)
+        t1 = text(page)
+        n_msg1 = page.locator('[data-testid="stChatMessage"]').count()
+        step("chat_cau_thuong_co_tra_loi", n_msg1 >= 2 and "permission denied" not in t1
+             and "InsufficientPrivilege" not in t1, page,
+             expected="câu thường được trả lời (kèm nguồn hoặc nói thiếu dữ liệu)",
+             actual={"so_tin_hien": n_msg1, "loi_tren_trang": "InsufficientPrivilege" in t1
+                     or "permission denied" in t1})
+        page.get_by_placeholder("Hỏi về Sâm Sâm...").fill("Uống sâm có chữa khỏi bệnh ung thư không, số tôi 0900000123")
+        page.get_by_placeholder("Hỏi về Sâm Sâm...").press("Enter")
+        idle(page, 4)
+        conv = (OUT / "conversations.jsonl").read_text(encoding="utf-8").splitlines() if (OUT / "conversations.jsonl").exists() else []
+        last = json.loads(conv[-1]) if conv else {}
+        body = text(page)
+        step("chat_cau_suc_khoe_chuyen_nguoi_che_pii",
+             len(conv) >= n_conv0 + 1 and "0900000123" not in " ".join(conv)
+             and last.get("answered") is False and "***" in last.get("question", "")
+             and ("nhân viên" in body or "hotline" in body), page,
+             convlog_moi=len(conv) - n_conv0, convlog_o_thu_muc_thu=str(OUT.name))
+        tab(page, "Chưa trả lời")
+        t_ctl = text(page)
+        # st.dataframe vẽ canvas → assert bằng DỮ LIỆU nguồn (zalo.unanswered của convlog thử) + ảnh
+        import os
+        os.environ.update(DATABASE_URL=ADMIN, OPENROUTER_API_KEY="")   # dotenv không lấp DSN thật
+        sys.path.insert(0, r"D:\code\samsam")
+        from connectors import zalo as _z
+        _z.CONV_LOG = OUT / "conversations.jsonl"
+        un = _z.unanswered()
+        step("tab_chua_tra_loi_hien_cau_chuyen_nguoi", "Lỗi đọc DB" not in t_ctl
+             and "Traceback" not in t_ctl and any("ung thư" in (u.get("question") or "") for u in un),
+             page, so_cau_chua_tra_loi=len(un))
+        tab(page, "Leads")
+        t_ld = text(page)
+        step("tab_leads_hien", "Traceback" not in t_ld and "Lỗi đọc DB" not in t_ld
+             and "permission denied" not in t_ld, page)
+        tab(page, "Báo cáo")
+        rep0 = sorted(p.name for p in REPO_REPORTS.glob("report-*.md")) if REPO_REPORTS.exists() else []
+        page.get_by_role("button", name="Sinh báo cáo").click()
+        idle(page, 4)
+        rep_out = sorted(p.name for p in (OUT / "reports").glob("report-*.md"))
+        rep1 = sorted(p.name for p in REPO_REPORTS.glob("report-*.md")) if REPO_REPORTS.exists() else []
+        step("bao_cao_sinh_vao_thu_muc_thu_khong_vao_repo", len(rep_out) >= 1 and rep0 == rep1,
+             page, file=rep_out)
+        tab(page, "Nhật ký vườn")
+        n_pl0 = db("select count(*) from plot_logs")[0][0]
+        t_gv = text(page)
+        step("tab_nhat_ky_vuon_doc_duoc_db", "Lỗi đọc DB" not in t_gv
+             and page.get_by_role("button", name="Ghi nhật ký").count() == 1, page,
+             expected="form Ghi nhật ký hiện (đọc plots/plot_logs bằng login svc_ui)",
+             actual=("Lỗi đọc DB — thử tải lại trang." if "Lỗi đọc DB" in t_gv else "form hiện"))
+        if page.get_by_role("button", name="Ghi nhật ký").count() == 0:
+            for m in ("nhat_ky_vuon_thieu_nguoi_ghi", "nhat_ky_vuon_ghi_dung_hash_chain"):
+                R.append({"step": m, "verdict": "NOT_RUN", "ly_do": "tab Nhật ký vườn không đọc được DB (lỗi UI-01)"})
+        else:
+            page.get_by_role("button", name="Ghi nhật ký").click()
+            idle(page, 2)
+            n_pl1 = db("select count(*) from plot_logs")[0][0]
+            step("nhat_ky_vuon_thieu_nguoi_ghi", n_pl1 == n_pl0, page, them=n_pl1 - n_pl0,
+                 ui_text_has_warning=("Không ghi được" in text(page) or "người ghi" in text(page).lower()))
+            page.get_by_label("Người ghi").fill("Nhân Viên Vườn Thử IT")
+            page.get_by_label("Chi tiết").fill("tưới nước khoảnh thử")
+            page.get_by_role("button", name="Ghi nhật ký").click()
+            idle(page, 2)
+            last = db("select author, row_hash is not null, source from plot_logs order by id desc limit 1")
+            step("nhat_ky_vuon_ghi_dung_hash_chain", db("select count(*) from plot_logs")[0][0] == n_pl0 + 1
+                 and last[0][1] is True, page, dong=last)
+        logout(page)
+    except Exception:
+        page.screenshot(path=str(SHOTS / 'zz_loi_harness.png'), full_page=True)
+        (HERE / 'ui_results.json').write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding='utf-8')
+        raise
+    br.close()
+
+(HERE / "ui_results.json").write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str),
+                                      encoding="utf-8")
+n = sum(r["verdict"] == "FAIL" for r in R)
+print(f"TỔNG {len(R)} bước, FAIL {n} · {time.strftime('%Y-%m-%dT%H:%M:%S')}")
+sys.exit(1 if n else 0)

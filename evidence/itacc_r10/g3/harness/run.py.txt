@@ -1,0 +1,94 @@
+"""HARNESS g3 (r10) — chạy entry point THỰC của repo trên DB thử, có fake ở biên.
+
+python evidence/itacc_r10/g3/harness/run.py [--fake-llm F.json] [--llm-log F]
+    [--set mod.ATTR=JSON|path ...] -m <module> [args...]
+  - Chặn chạy nếu DATABASE_URL không trỏ 127.0.0.1:55432 DB samsam_itacc_r10*.
+  - Chặn socket Python ra ngoài localhost (bằng chứng T4: không gọi mạng ngoài).
+  - --fake-llm: thay llm_gateway._client (biên OpenRouter) bằng client giả trả
+    lần lượt `responses` (hết thì lặp cái cuối); gate/trần/llm_usage vẫn thật.
+  - --set: monkeypatch hằng của module (FIXTURE — ghi rõ trong evidence).
+"""
+import json, os, runpy, socket, sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(REPO))
+os.chdir(REPO)
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+
+from psycopg import conninfo  # noqa: E402
+d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+if not (d.get("host") == "127.0.0.1" and str(d.get("port")) == "55432"
+        and str(d.get("dbname", "")).startswith("samsam_itacc_r10")):
+    sys.exit("[harness] DATABASE_URL không phải DB thử r10 — dừng")
+
+_orig_connect = socket.socket.connect
+def _guard(self, addr):
+    host = addr[0] if isinstance(addr, tuple) else str(addr)
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        raise OSError(f"[harness] chặn kết nối mạng ngoài tới {host}")
+    return _orig_connect(self, addr)
+socket.socket.connect = _guard
+
+argv = sys.argv[1:]
+fake, llm_log, sets = None, None, []
+while argv and argv[0] != "-m":
+    k = argv.pop(0)
+    if k == "--fake-llm":
+        fake = json.loads(Path(argv.pop(0)).read_text(encoding="utf-8"))
+    elif k == "--llm-log":
+        llm_log = Path(argv.pop(0))
+    elif k == "--set":
+        sets.append(argv.pop(0))
+    else:
+        sys.exit(f"[harness] cờ lạ {k}")
+if not argv:
+    sys.exit("[harness] thiếu -m module")
+argv.pop(0)
+mod = argv.pop(0)
+
+import importlib  # noqa: E402
+for s in sets:
+    lhs, val = s.split("=", 1)
+    mname, attr = lhs.rsplit(".", 1)
+    try:
+        v = json.loads(val)
+    except ValueError:
+        v = Path(val)
+    setattr(importlib.import_module(mname), attr, v)
+    print(f"[harness] FIXTURE {lhs} = {v!r}", file=sys.stderr)
+
+if fake is not None:
+    from types import SimpleNamespace as NS
+    from pipelines import llm_gateway as g
+    resp = list(fake["responses"])
+    calls = []
+
+    class _Comp:
+        def create(self, **kw):
+            i = min(len(calls), len(resp) - 1)
+            calls.append({"model": kw.get("model"), "n_msgs": len(kw.get("messages") or []),
+                          "extra_body": kw.get("extra_body"), "resp_index": i})
+            if llm_log:
+                llm_log.write_text(json.dumps(calls, ensure_ascii=False, indent=1), encoding="utf-8")
+            c = resp[i]
+            return NS(choices=[NS(message=NS(content=c))],
+                      usage=NS(prompt_tokens=100, completion_tokens=50))
+
+    g._client = lambda: NS(chat=NS(completions=_Comp()))
+    os.environ.setdefault("OR_CHAT_MODEL", "openai/gpt-4o-mini")
+    print("[harness] FAKE LLM ở biên llm_gateway._client "
+          f"({len(resp)} phản hồi kịch bản)", file=sys.stderr)
+
+sys.argv = [mod] + argv
+if mod.endswith(".py"):
+    runpy.run_path(mod, run_name="__main__")
+elif any(s.split("=", 1)[0].rsplit(".", 1)[0] == mod for s in sets):
+    # sửa lỗi harness (lượt 03.1-C6 hỏng): runpy chạy module ở namespace __main__ MỚI nên
+    # hằng của CHÍNH module đích không nhận patch → import module (đã patch) rồi gọi main(argv)
+    m = importlib.import_module(mod)
+    print(f"[harness] gọi {mod}.main(argv) trên module đã patch", file=sys.stderr)
+    sys.exit(m.main(argv))
+else:
+    runpy.run_module(mod, run_name="__main__", alter_sys=True)

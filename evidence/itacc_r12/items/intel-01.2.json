@@ -1,0 +1,665 @@
+{
+ "id": "intel-01.2",
+ "ten": "Gợi ý chủ đề cho Marketing",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Bản tin thị trường: 'kèm gợi ý chủ đề cho Marketing'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/intel-01.2.json",
+  "sha256": "9887da95ac683080826f8950830c2876bcf1bf45a9369421a681f0924a647aa4"
+ },
+ "ly_do_chay_lai": "r10/r11 CODE_FAIL (g1-L1, g1-L2) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_intel.json",
+ "tieu_chi_sha256": "aa415a08350762dd5e92f2fab4651d65449bf19d650afb2758ee9afd22bddf3a",
+ "tieu_chi_khoa": "r12_intel.json aa415a08350762dd5e92f2fab4651d65449bf19d650afb2758ee9afd22bddf3a 2026-10-24T08:59:10+07:00",
+ "tieu_chi": [
+  "T1 `scripts.intel_bulletin --period day --date <ngày VN của lượt thu> --suggest` (wrap, REPORTS_DIR → {OUT}) exit 0",
+  "T2 mục intel/intel_topic pending created_by agent:intel_bulletin cho ĐÚNG các chủ đề nội dung có ≥2 tin (= sam, tpbvsk với feed fixture); payload/title không URL, không tiêu đề tin ('Thử IT'); không mục phap_ly",
+  "T3 chạy lại → suggested_new=0, vẫn 2 mục; intel-01.2 tắt → 0 mục mới, exit 2 + '[rollout] … intel-01.2', không traceback, bản tin intel-01.1 VẪN sinh (G1-L1); ngược lại intel-01.1 tắt → gợi ý intel-01.2 VẪN sinh, 0 bản tin",
+  "T4 mục pending (không tự duyệt), không gửi/đăng; dữ liệu fixture thử IT"
+ ],
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451, mỗi mục 1 DB samsam_itacc_r12_<mã> dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; DEPLOY/RED_ALERT_NOTIFY tắt; INTEL_HASH_SALT/CONTACT_VAULT_KEY thử; RSS giả http.server 127.0.0.1 (bg_start/bg_stop); runner_r12.py.txt DB samsam_itacc_r12_i012.",
+ "run_id": "20261024T111458-692e",
+ "ca": [
+  {
+   "ma": "intel-01.2__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed + thu feed fixture (DB riêng nên phải thu lại như intel-01.1 C01; RSS giả 127.0.0.1:18742, nguồn = it_g1_sources.json chỉ đổi cổng)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {},
+     {
+      "expect_exit": 0,
+      "out_re": "\\A(?=[\\s\\S]*mới 7)(?![\\s\\S]*\\[req\\] \\{[^\\n]*\"host\": \"(?!127\\.0\\.0\\.1\")[^\"]*\")"
+     },
+     {}
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from intel_items",
+      "expect": 7
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:14:58+07:00",
+      "ket_thuc": "2026-10-24T11:15:00+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m crawler.intel --run --sources evidence\\itacc_r12\\fixtures/items/intel-01.2/it_g1_sources_p18742.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "out_re": "\\A(?=[\\s\\S]*mới 7)(?![\\s\\S]*\\[req\\] \\{[^\\n]*\"host\": \"(?!127\\.0\\.0\\.1\")[^\"]*\")",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:15:02+07:00",
+      "ket_thuc": "2026-10-24T11:15:09+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from intel_items",
+      "expect": 7,
+      "actual": 7,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01"
+  },
+  {
+   "ma": "intel-01.2__C01",
+   "nguon_r10": "C01",
+   "mo_ta": "Gợi ý chủ đề",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\] [^\\n]*suggested_new=2 suggested_total=2"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and block = 'intel' and status = 'pending' and created_by = 'agent:intel_bulletin'",
+      "expect": 2
+     },
+     {
+      "sql": "select (select count(*) from approval_queue where object_type = 'intel_topic') = (select count(*) from (select t from intel_items, unnest(topics) t where t in ('sam', 'tpbvsk', 'gioi_tre', 'quang_cao', 'doi_thu') group by t having count(*) >= 2) x)",
+      "expect": true
+     },
+     {
+      "sql": "select string_agg(regexp_replace(object_id, '^day-[0-9]{8}-', ''), ',' order by object_id) from approval_queue where object_type = 'intel_topic'",
+      "expect": "sam,tpbvsk"
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and (payload || ' ' || title) ~* 'https?://|www\\.|tin-thu-it|Thử IT'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like '%phap_ly'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m scripts.intel_bulletin --period day --date 2026-10-24 --suggest",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\] [^\\n]*suggested_new=2 suggested_total=2",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:15:09+07:00",
+      "ket_thuc": "2026-10-24T11:15:15+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and block = 'intel' and status = 'pending' and created_by = 'agent:intel_bulletin'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select (select count(*) from approval_queue where object_type = 'intel_topic') = (select count(*) from (select t from intel_items, unnest(topics) t where t in ('sam', 'tpbvsk', 'gioi_tre', 'quang_cao', 'doi_thu') group by t having count(*) >= 2) x)",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select string_agg(regexp_replace(object_id, '^day-[0-9]{8}-', ''), ',' order by object_id) from approval_queue where object_type = 'intel_topic'",
+      "expect": "sam,tpbvsk",
+      "actual": "sam,tpbvsk",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and (payload || ' ' || title) ~* 'https?://|www\\.|tin-thu-it|Thử IT'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like '%phap_ly'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C01"
+  },
+  {
+   "ma": "intel-01.2__C02",
+   "nguon_r10": "C02",
+   "mo_ta": "Chạy lại",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "suggested_new=0 suggested_total=2"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic'",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m scripts.intel_bulletin --period day --date 2026-10-24 --suggest",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "suggested_new=0 suggested_total=2",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:15:15+07:00",
+      "ket_thuc": "2026-10-24T11:15:20+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C02"
+  },
+  {
+   "ma": "intel-01.2__C03",
+   "nguon_r10": "C03",
+   "mo_ta": "Tắt intel-01.2: 0 mục mới, kết thúc có kiểm soát (exit 2 [rollout], không traceback), bản tin intel-01.1 vẫn sinh; bật lại",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*intel-01\\.2",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic'",
+      "expect": 2
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like 'week-%'",
+      "expect": 0
+     },
+     {
+      "file_glob": "{OUT}/repiw/intel-bulletin-week-*.md",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable intel-01.2 --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:15:20+07:00",
+      "ket_thuc": "2026-10-24T11:15:21+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m scripts.intel_bulletin --period week --date 2026-10-24 --suggest",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*intel-01\\.2",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:15:21+07:00",
+      "ket_thuc": "2026-10-24T11:15:26+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.rollout --promote intel-01.2 --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:15:26+07:00",
+      "ket_thuc": "2026-10-24T11:15:28+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like 'week-%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\intel-01.2\\20261024T111458-692e\\intel-01.2__C03\\out/repiw/intel-bulletin-week-*.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/out/repiw/intel-bulletin-week-2026-10-19.md",
+        "sha256": "d6babb328b6c440ea692efd8bdcb1a38229eb5d45b9199057a77d9e772c3a081"
+       }
+      ],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03"
+  },
+  {
+   "ma": "intel-01.2__C04",
+   "nguon_r10": "MOI",
+   "mo_ta": "G1-L1 chiều ngược: CHỈ intel-01.1 tắt + --suggest → gợi ý intel-01.2 VẪN sinh, không bản tin; bật lại",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\A(?=[\\s\\S]*suggested_new=2)(?=[\\s\\S]*\\[rollout\\][^\\n]*intel-01\\.1)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like 'week-%' and status = 'pending'",
+      "expect": 2
+     },
+     {
+      "file_glob": "{OUT}/repiw/intel-bulletin-week-*.md",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from report_outputs where name like 'intel-bulletin-week-%'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable intel-01.1 --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:15:28+07:00",
+      "ket_thuc": "2026-10-24T11:15:29+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m scripts.intel_bulletin --period week --date 2026-10-24 --suggest",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*suggested_new=2)(?=[\\s\\S]*\\[rollout\\][^\\n]*intel-01\\.1)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:15:29+07:00",
+      "ket_thuc": "2026-10-24T11:15:34+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.rollout --promote intel-01.1 --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:15:34+07:00",
+      "ket_thuc": "2026-10-24T11:15:36+07:00",
+      "stdout": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'intel_topic' and object_id like 'week-%' and status = 'pending'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\intel-01.2\\20261024T111458-692e\\intel-01.2__C04\\out/repiw/intel-bulletin-week-*.md",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from report_outputs where name like 'intel-bulletin-week-%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C01/asserts.json",
+   "sha256": "10feec97538b5f86d5f351f6695f41cdec252e46170689645abbf9248e53eec9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C01/case.json",
+   "sha256": "955515dbd3a0bebc8e92688a5e471a54b39a93c80516b0a013901e904a945414"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C01/out/repi/intel-bulletin-day-2026-10-24.md",
+   "sha256": "ffd7e546cbfaa60296b1bd55106487e8590e80ce0b3f4aa15347dc6cec53dd68"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C01/step01.cmd.json",
+   "sha256": "647af4250058d17d977803d8d73e689a1272880fad73bb790c339b5086d7a993"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C01/step01.stderr.txt",
+   "sha256": "3a8d00087c62aa5bad8525589dc888dcab7b527d49014a627b6592e597e4fe86"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C01/step01.stdout.txt",
+   "sha256": "e033edaef1966be59c382e62a848484fce38a5e0a7f229e05b8776bdc019190a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C02/asserts.json",
+   "sha256": "591da2a954f4f244e442ab6d579b01dd84e029001b3f7dc47d8cc3b3f6d5d4ea"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C02/case.json",
+   "sha256": "c5760606ae3b7aa409fae21d79dbda7ec077a0e4c2d068d19129372daf1c452c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C02/out/repi/intel-bulletin-day-2026-10-24.md",
+   "sha256": "71dd24cba8e4ad3d436abf2e73f10e9ca8bb1912a542ca61ba7661c99df104c4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C02/step01.cmd.json",
+   "sha256": "9080bff04a8eb9b7f3b6bf2d0cb1d5738dc21c2cc000191d39fc91c1383a52f2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C02/step01.stderr.txt",
+   "sha256": "eadc2f7bca7ce23a2279dd5864e0df0aa054cfe2af3d82669df2a430b9061188"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C02/step01.stdout.txt",
+   "sha256": "9985e11b15be28cb12029f7c1e88c6bd9320f31d02c45b31d156fcadbfeeda82"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/asserts.json",
+   "sha256": "7e57dc815a313f7bc18242cd6ee9c9e7520f88cf49a499b589bdacf7357316e8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/case.json",
+   "sha256": "9f81ff740300f2fbe32796e0298fb8a444b21aaf5168f35b90ea5ece06cb7971"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/out/repiw/intel-bulletin-week-2026-10-19.md",
+   "sha256": "d6babb328b6c440ea692efd8bdcb1a38229eb5d45b9199057a77d9e772c3a081"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step01.cmd.json",
+   "sha256": "3ea4bedaa26bdd7f6e4ced4988efd624eaf3e045de4ceba69ac4adbdf02c597c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step01.stdout.txt",
+   "sha256": "328002f14499d2999d81e7eb3588f811ed7b09991f036d17f588c0f996c4a62d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step02.cmd.json",
+   "sha256": "bf67a02f9130ba96c7c14df39dcc2a9859065bf46e94b8ac7842bd9c88132088"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step02.stderr.txt",
+   "sha256": "d72ff20f72c19c58862a57a918596b54b6fef3e6c99ccfe6439fa285c067c4ac"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step02.stdout.txt",
+   "sha256": "e257bc09473954ae3e01614be23bb7721cb31f3f970a66b8ae5dacc923bc7576"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step03.cmd.json",
+   "sha256": "58b7b0bfe0104104b61e82db5af252f8a42045893e8ce4668a7c628e4d29e7eb"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step03.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C03/step03.stdout.txt",
+   "sha256": "da421eb8851c6ca48d082e196bc68d5c6fcba99a05725bda11f5f9a6075193d5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/asserts.json",
+   "sha256": "213d6faf58cb031ec658e5e74ce522d0f893690300b30a4a8cdb309a0e84baac"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/case.json",
+   "sha256": "e4f7a782749017397efeca8262a858728da3b7b41dc640152eebcd0fc6e5221c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step01.cmd.json",
+   "sha256": "ca41dd255db34c5d977216266e24b9550c246db25d3e681756b3d0e9414c6bd1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step01.stdout.txt",
+   "sha256": "3a32f84db366ee5cb11af5ca62ad3853c45a0e5ddacb9492cb58cd5c20180fec"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step02.cmd.json",
+   "sha256": "86e8e0f5d41c5cc0d5a8c011adcf26f0dc0e318aac73bf0cc9890e832af0e563"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step02.stderr.txt",
+   "sha256": "d52b3d53663f71325876a509c40f796025f4b7aab415e6af0c35fd835de622d0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step02.stdout.txt",
+   "sha256": "f1d2fb4fed2dcde7328290a9adc7ad9277ebf1a01120215e8a46674d33563688"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step03.cmd.json",
+   "sha256": "f7e5468f5ff216af4a35c986b5a1ae9fe963a5d37d6a76fd83b01e21517c9243"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step03.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__C04/step03.stdout.txt",
+   "sha256": "42ae88a8647e496e16e45276174d0dbd5a4995866f3825a573a48265629f7dcc"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/asserts.json",
+   "sha256": "09ee70b9c7b5a2e2057371bc642d7af3d2b4d748ffe83335106cd270640f5900"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/case.json",
+   "sha256": "646bb86309f447e1eebac27eacfb3cd87a683dcd6232baac6f8f9919b1b65f21"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step01.cmd.json",
+   "sha256": "826585bb90dc57e02c1aba464508f81c360f2e5aca68c53cec32d6bf20ac5142"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step02.bg_stderr.txt",
+   "sha256": "02de7d22c31234e6af4bbbe003a0c1479909406d7455ee3a7e8e88ec20f7692b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step02.bg_stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step03.cmd.json",
+   "sha256": "2b43c592a7f108a7d52f444bf548fdaeb2d856fff0cf06690a9ec99ad4d747f7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/intel-01.2__S01/step03.stdout.txt",
+   "sha256": "96aa6e207a6412b9bfad1f546b93fd3bef79f525b7c8d4d7e3b33f476ff9e023"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/intel-01.2/20261024T111458-692e/ket_qua.json",
+   "sha256": "c4694058217a159141c52e179942accefe81afcfb6cd46a27a20656d41e69982"
+  }
+ ],
+ "loi_san_pham": []
+}

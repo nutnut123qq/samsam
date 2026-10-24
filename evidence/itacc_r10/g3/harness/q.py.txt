@@ -1,0 +1,34 @@
+"""HARNESS g3: truy vấn assert trên DB thử r10 (chỉ DB samsam_itacc_r10*).
+python q.py "SQL" [param ...]  → in JSON các dòng. Câu ghi phải có tiền tố
+'-- FIXTURE' (dữ liệu mồi, ghi rõ trong evidence)."""
+import json, os, sys
+from datetime import date, datetime
+from decimal import Decimal
+import psycopg
+from psycopg import conninfo
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+if not (d.get("host") == "127.0.0.1" and str(d.get("port")) == "55432"
+        and str(d.get("dbname", "")).startswith("samsam_itacc_r10")):
+    sys.exit("[q] DATABASE_URL không phải DB thử r10 — dừng")
+sql = sys.argv[1]
+low = sql.lstrip().lower()
+if not low.startswith(("select", "with", "-- fixture", "show")):
+    sys.exit("[q] câu ghi phải có tiền tố '-- FIXTURE'")
+def enc(o):
+    if isinstance(o, (datetime, date)):
+        return o.isoformat()
+    if isinstance(o, Decimal):
+        return str(o)
+    if isinstance(o, (bytes, memoryview)):
+        return bytes(o).hex()
+    return str(o)
+with psycopg.connect(conninfo.make_conninfo(**d), connect_timeout=5) as c:
+    cur = c.execute(sql, sys.argv[2:] or None)
+    rows = []
+    if cur.description:
+        cols = [x.name for x in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+    c.commit()
+print(json.dumps(rows, ensure_ascii=False, default=enc, indent=1))

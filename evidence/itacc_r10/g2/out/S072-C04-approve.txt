@@ -1,0 +1,11 @@
+# ma: S072-C04-approve
+# luc: 2026-10-23T10:50:58+07:00
+# lenh: python -m pipelines.approval_queue --approve 58 --by GĐ Bán Hàng Thử IT
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+[done] mục #58 → approved (người duyệt: GĐ Bán Hàng Thử IT)
+
+## stderr
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)

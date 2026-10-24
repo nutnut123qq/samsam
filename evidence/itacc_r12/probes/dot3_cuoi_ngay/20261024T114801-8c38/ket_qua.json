@@ -1,0 +1,230 @@
+{
+ "label": "dot3_cuoi_ngay",
+ "run_id": "20261024T114801-8c38",
+ "root": "D:\\code\\samsam",
+ "db": "samsam_itacc_r12_pfdot3b",
+ "fingerprint": null,
+ "probe_sha256": "4dce4f17ccf252c992e61d838453fb837166b258f31513ad45d047e7e450e622",
+ "ket_thuc": "2026-10-24T11:49:06+07:00",
+ "ket_qua": [
+  {
+   "loi": "L2",
+   "ca": "quote_khong_dung_gia_chua_duyet",
+   "ket_qua": "PASS",
+   "expected": "giá list shopee chưa duyệt → không có đơn giá suy từ JSON (745.000 → 685.000), lý do thieu_gia_niem_yet",
+   "actual": {
+    "exit": 0,
+    "stdout": "[quote] YC-1 (1 dòng hợp lệ):\r\n  mat-ong-sam-120ml-1hu ×50 · CK 8% · đơn giá — · thành tiền —\r\n  tổng — · giá vốn duyệt — · biên chưa tính được\r\n  phân loại: per_item · reasons: ma_tran_chua_xac_nhan, thieu_gia_niem_yet, thieu_gia_von_duyet · problems: (không)\r\n[dry-run] BG-20261024-1-7c53fa5f — không ghi file, không vào hàng duyệt"
+   }
+  },
+  {
+   "loi": "L2",
+   "ca": "quote_gia_db_da_duyet (positive control)",
+   "ket_qua": "PASS",
+   "expected": "đơn giá = giá list price_list ĐÃ duyệt (3.100.000, khác JSON 2.980.000) × (1 − CK)",
+   "actual": {
+    "exit": 0,
+    "don_gia": 2852000,
+    "ky_vong": 2852000,
+    "stdout": "-sam-300ml ×50 · CK 8% · đơn giá 2.852.000đ · thành tiền 142.600.000đ\r\n  tổng 142.600.000đ · giá vốn duyệt — · biên chưa tính được\r\n  phân loại: per_item · reasons: ma_tran_chua_xac_nhan, thieu_gia_von_duyet · problems: (không)\r\n[dry-run] BG-20261024-2-6140c8cd — không ghi file, không vào hàng duyệt"
+   }
+  },
+  {
+   "loi": "L2",
+   "ca": "catalog_loai_CAM_gia_db (positive control)",
+   "ket_qua": "PASS",
+   "expected": "catalog có SKU TP_THUONG với giá DB đã duyệt",
+   "actual": {
+    "exit": 0,
+    "co_3100": true
+   }
+  },
+  {
+   "loi": "L2",
+   "ca": "catalog_khong_co_sku_CAM_va_gia_chua_duyet",
+   "ket_qua": "PASS",
+   "expected": "không SKU readiness CAM (120ml), không giá JSON/chưa duyệt",
+   "actual": {
+    "exit": 0,
+    "files": [
+     "catalog-tet-2026-10-24.html",
+     "catalog-tet-2026-10-24.md"
+    ],
+    "stdout": "chpad\\r12\\ext\\20261024T114801-8c38\\cat\\catalog-tet-2026-10-24.md\r\n[file] C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261024T114801-8c38\\cat\\catalog-tet-2026-10-24.html\r\n[done] NHÁP — --submit để vào hàng duyệt; HTML → In → Lưu PDF"
+   }
+  },
+  {
+   "loi": "RB",
+   "ca": "kd_quote_tat_khong_file_khong_muc",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + [rollout] sales-05, 0 file, 0 mục",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "muc": [
+     0,
+     0
+    ],
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "L1",
+   "ca": "handoff_chua_dong_y_khong_dem",
+   "ket_qua": "PASS",
+   "expected": "chuyển lead khi chưa đồng ý dai_ly (pii_included=false) → đếm không đổi",
+   "actual": {
+    "exit": 0,
+    "pii": "false",
+    "dem": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "loi": "L1",
+   "ca": "handoff_da_dong_y_duoc_dem (positive control)",
+   "ket_qua": "PASS",
+   "expected": "đồng ý + chuyển (pii_included=true) → +1",
+   "actual": {
+    "exit": 0,
+    "pii": "true",
+    "dem": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "loi": "F06-6",
+   "ca": "report_sha256_khop_file_tren_dia",
+   "ket_qua": "PASS",
+   "expected": "sha trong sổ = sha byte file đã ghi (bản có nhãn)",
+   "actual": {
+    "exit": 0,
+    "file": "bf7525ea2750b2f14b3b6d221a80bdeccf9af268e6834d9feba64a1ba07c7183",
+    "so": "bf7525ea2750b2f14b3b6d221a80bdeccf9af268e6834d9feba64a1ba07c7183",
+    "co_nhan": true,
+    "stderr_cuoi": ""
+   }
+  },
+  {
+   "loi": "F031-6",
+   "ca": "co_cot_0_30_va_cong_khop",
+   "ket_qua": "PASS",
+   "expected": "có cột 0-30; mỗi dòng tổng cột tuổi = Quá hạn",
+   "actual": {
+    "exit": 0,
+    "cot": [
+     "Đại lý",
+     "Quá hạn",
+     "0-30",
+     "31-60",
+     "61-90",
+     ">90"
+    ],
+    "so_dong": 3,
+    "dong_lech": []
+   }
+  },
+  {
+   "loi": "G1-L3",
+   "ca": "khong_nguon_khong_in_so_0",
+   "ket_qua": "PASS",
+   "expected": "0 dòng opex + 0 llm_usage → [chưa có dữ liệu], không '0đ'/'0.0%'",
+   "actual": {
+    "exit": 0,
+    "dong": [
+     "| 2026-09 | `ads` | [chưa có dữ liệu] | 20.000.000đ | [chưa có dữ liệu] |",
+     "| 2026-09 | `ai` | [chưa có dữ liệu] | 5.000.000đ | [chưa có dữ liệu] |",
+     "| 2026-09 | `cloud` | [chưa có dữ liệu] | 4.000.000đ | [chưa có dữ liệu] |",
+     "| 2026-09 | `khac` | [chưa có dữ liệu] | 2.000.000đ | [chưa có dữ liệu] |",
+     "| 2026-09 | `saas` | [chưa có dữ liệu] | 7.000.000đ | [chưa có dữ liệu] |",
+     "| 2026-09 | `tong` | [chưa có dữ liệu] | 35.000.000đ | [chưa có dữ liệu] |"
+    ]
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "hdtv_co_nhan_chay_thu",
+   "ket_qua": "PASS",
+   "expected": "hdtv-<kỳ>.md mang nhãn CHẠY THỬ của ceo-05",
+   "actual": {
+    "dong_dau": "> **CHẠY THỬ — KHÔNG GỬI.** Tính năng ceo-05 đang chạy thử nội bộ (HĐ 6.7, PL02 mục 1): báo cáo chỉ để kiểm tra, không g"
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "hdtv_vao_report_outputs",
+   "ket_qua": "PASS",
+   "expected": "1 dòng report_outputs ceo-05",
+   "actual": {
+    "report_outputs": 1
+   }
+  },
+  {
+   "loi": "G1-L3",
+   "ca": "co_nguon_in_so_that (positive control)",
+   "ket_qua": "PASS",
+   "expected": "opex cloud 3.500.000 → in đúng số",
+   "actual": {
+    "exit": 0,
+    "cloud": "| 2026-09 | `cloud` | 3.500.000đ | 4.000.000đ | 87.5% |"
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "hdtv_tat_exit2_khong_file",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + thông báo chặn ceo-05, 0 file",
+   "actual": {
+    "exit_2": true,
+    "thong_bao_chan": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": "[blocked] gói báo cáo HĐTV: tính năng ceo-05 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra"
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "ceo_report_co_nhan_chay_thu",
+   "ket_qua": "PASS",
+   "expected": "ceo-<kỳ>.md mang nhãn CHẠY THỬ của ceo-01",
+   "actual": {
+    "exit": 0,
+    "files": [
+     "ceo-2026-W42.md"
+    ],
+    "dong_dau": "> **CHẠY THỬ — KHÔNG GỬI.** Tính năng ceo-01 đang chạy thử nội bộ (HĐ 6.7, PL02 mục 1): báo cáo chỉ để kiểm tra, không g"
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "ceo_report_vao_report_outputs",
+   "ket_qua": "PASS",
+   "expected": "≥1 dòng report_outputs ceo-01",
+   "actual": {
+    "report_outputs": 1
+   }
+  },
+  {
+   "loi": "G1-L4",
+   "ca": "ceo_report_tat_exit2_khong_file",
+   "ket_qua": "PASS",
+   "expected": "exit 2 + [rollout] ceo-01, 0 file",
+   "actual": {
+    "exit_2": true,
+    "rollout_msg": true,
+    "khong_traceback": true,
+    "exit": 2,
+    "files": [],
+    "stderr_cuoi": ""
+   }
+  }
+ ]
+}

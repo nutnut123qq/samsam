@@ -1,0 +1,47 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "pipelines.video_studio",
+  "--sku",
+  "mat-ong-sam-300ml",
+  "--channel",
+  "tiktok",
+  "--brief",
+  "Video quà tặng Thử IT"
+ ],
+ "env_doi": [
+  "BROLL_DIR",
+  "IMAGE_OUT_DIR",
+  "IMAGE_PROVIDER",
+  "PACKSHOT_DIR",
+  "PROBE_LLM_LOG",
+  "PROBE_LLM_RESPONSES",
+  "PROBE_ROOT",
+  "TTS_PROVIDER",
+  "VIDEO_OUT_DIR"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:13:47+07:00",
+ "ket_thuc": "2026-10-24T11:13:52+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*marketing-02\\.2",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "00b67934788303f50e74e3b4487952be88e7b1ce7dad83e8e56e9d7ab0658491",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

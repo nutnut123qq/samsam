@@ -1,0 +1,20 @@
+# ca: DP05-02q
+# env: DB thử khối dp (DSN che)
+# cmd: python /d/code/samsam/evidence/itacc_r10/g5/harness/q.py select id,channel,export_kind,left(file_sha256,12),file_name,row_count from market_snapshots order by id select snapshot_id,raw::text from market_rows where snapshot_id=2 select alert_type,severity,status,item_id from market_alerts order by id
+# exit: 1
+# thoi_gian: 2026-10-23T10:48:12+0700
+-- select id,channel,export_kind,left(file_sha256,12),file_name,row_count from market_snapshots order by id
+(1, 'shopee', 'listing', '0ba66307e22e', 'listing_thu_it.csv', 4)
+(2, 'shopee', 'order', '6e0bff775df2', 'order_thu_it.csv', 2)
+-- select snapshot_id,raw::text from market_rows where snapshot_id=2
+(2, '{"qty": 2, "price": 159000, "stock": null, "title": "Savina 12v thử IT", "status": "Hoàn thành", "item_id": null, "ads_spend": null, "sale_price": null, "seller_sku": "savina-12v", "voucher_code": null, "order_id_hash": "6e5f7cf28c00cda6"}')
+(2, '{"qty": 1, "price": 439000, "stock": null, "title": "Savigout thử IT", "status": "Đã hủy", "item_id": null, "ads_spend": null, "sale_price": null, "seller_sku": "savigout-30v", "voucher_code": null, "order_id_hash": "6801c4e9e646d395"}')
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r10\g5\harness\q.py", line 10, in <module>
+    cur = c.execute(sql)
+          ^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py", line 300, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column "alert_type" does not exist
+LINE 1: select alert_type,severity,status,item_id from market_alerts...
+               ^

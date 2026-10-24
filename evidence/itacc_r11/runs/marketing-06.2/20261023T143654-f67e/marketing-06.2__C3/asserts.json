@@ -1,0 +1,44 @@
+[
+ {
+  "sql": "select count(*) > 0 from channel_snapshots where channel = 'noi_bo' and source = 'api' and period_kind = 'week' and period_start = '2026-10-12'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_created' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from content_drafts where created_at >= timestamptz '2026-10-12 00:00:00+07' and created_at < timestamptz '2026-10-19 00:00:00+07')",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_approved' and period_kind = 'week' and period_start = '2026-10-12') = (select count(distinct object_id) from approvals where object_type = 'content_draft' and decision = 'approved' and approved_at >= timestamptz '2026-10-12 00:00:00+07' and approved_at < timestamptz '2026-10-19 00:00:00+07')",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_rejected' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from content_drafts where status = 'rejected' and reviewed_at >= timestamptz '2026-10-12 00:00:00+07' and reviewed_at < timestamptz '2026-10-19 00:00:00+07')",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'leads.new' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from leads where ts >= timestamptz '2026-10-12 00:00:00+07' and ts < timestamptz '2026-10-19 00:00:00+07')",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'jobs.failed' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from job_runs where ok is not true and started_at >= timestamptz '2026-10-12 00:00:00+07' and started_at < timestamptz '2026-10-19 00:00:00+07')",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from channel_snapshots where period_start = '2026-10-12' and metric_id in ('content.review_hours_median', 'content.review_hours_p90')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

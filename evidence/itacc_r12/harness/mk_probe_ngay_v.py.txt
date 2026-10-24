@@ -1,0 +1,44 @@
+"""HARNESS r12 — tạo probe_dot1_v2 / probe_dot2_v2 / probe_dot3_v3 từ bản đã chạy (GIỮ nguyên bản cũ + kết quả cũ).
+Lý do (24/10/2026, lượt probe_cuoi.txt): ca ĐỐI CHỨNG DƯƠNG phụ thuộc ngày fixture cố định 23/10 nhưng chạy ngày 24/10:
+- dot1 G5-02: nhật ký thu hoạch ghi giờ hiện tại → sau ngày SX lô fixture (23/10) → sản phẩm từ chối ĐÚNG, các ca sau đổ
+  dây chuyền. v2: thêm `--ts 2026-10-23T03:24:00Z` (cùng mốc tiêu chí farming r12) cho bước nhật ký.
+- dot2 G1-L1 intel_bulletin: `--date 2026-10-23` cố định, tin thu hôm nay → bản tin 0 tin. v2: `--date` = ngày VN hôm nay.
+- dot3 L2: báo giá/catalog `--date 2026-10-23`, giá duyệt hôm nay có hiệu lực từ hôm nay → chưa hiệu lực ngày 23. v3: `--date`
+  = ngày VN hôm nay (cả tên tệp catalog).
+KHÔNG đổi assertion/kỳ vọng. python -I mk_probe_ngay_v.py.txt"""
+from pathlib import Path
+
+H = Path(__file__).resolve().parent
+
+
+def mk(src, dst, pairs, note):
+    s = (H / src).read_text(encoding="utf-8")
+    for o, n, cnt in pairs:
+        assert s.count(o) == cnt, (src, o, s.count(o))
+        s = s.replace(o, n)
+    s = s.replace('"""', '"""' + note + " | ", 1)
+    (H / dst).write_text(s, encoding="utf-8", newline="\n")
+    compile(s, dst, "exec")
+    print("ok", dst)
+
+
+TODAY = ('from datetime import datetime as _dt, timedelta as _td, timezone as _tz\n'
+         'HOM_NAY = _dt.now(_tz(_td(hours=7))).date().isoformat()   # ngày VN lúc chạy (fixture theo ngày)\n')
+mk("probe_dot1.py.txt", "probe_dot1_v2.py.txt",
+   [('"--detail", "thu hoạch thử R12 5kg", "--author", "Nông Dân Thử R12"])',
+     '"--detail", "thu hoạch thử R12 5kg", "--author", "Nông Dân Thử R12",\n'
+     '                                 "--ts", "2026-10-23T03:24:00Z"])', 1)],
+   "v2 (24/10): chỉ thêm --ts cho nhật ký thu hoạch G5-02 — xem mk_probe_ngay_v.py.txt")
+mk("probe_dot2.py.txt", "probe_dot2_v2.py.txt",
+   [("PY = \"python\"\n", "PY = \"python\"\n" + TODAY, 1),
+    ('"2026-10-23", "--suggest"], env=ib', 'HOM_NAY, "--suggest"], env=ib', 2),
+    ('"--date", "2026-10-23"],\n', '"--date", HOM_NAY],\n', 1)],
+   "v2 (24/10): chỉ đổi --date bản tin intel sang ngày VN hôm nay — xem mk_probe_ngay_v.py.txt")
+mk("probe_dot3_v2.py.txt", "probe_dot3_v3.py.txt",
+   [("PY = \"python\"\n", "PY = \"python\"\n" + TODAY, 1),
+    ('"--dry-run",\n                                                      "--date", "2026-10-23"]', '"--dry-run",\n                                                      "--date", HOM_NAY]', 1),
+    ('"--dry-run",\n                                                    "--date", "2026-10-23"]', '"--dry-run",\n                                                    "--date", HOM_NAY]', 1),
+    ('"--build", "--date", "2026-10-23",', '"--build", "--date", HOM_NAY,', 1),
+    ('(EXT / "cat" / "catalog-tet-2026-10-23.md")', '(EXT / "cat" / f"catalog-tet-{HOM_NAY}.md")', 1),
+    ('"--date",\n                                              "2026-10-23", "--out-dir", EXT / "q_tat"]', '"--date",\n                                              HOM_NAY, "--out-dir", EXT / "q_tat"]', 1)],
+   "v3 (24/10): chỉ đổi --date báo giá/catalog sang ngày VN hôm nay — xem mk_probe_ngay_v.py.txt")

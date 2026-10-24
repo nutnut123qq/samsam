@@ -302,6 +302,9 @@ def test_zalo_health_question_gets_handoff(fake, monkeypatch):
     monkeypatch.setattr(zalo, "CONV_LOG", fake.cfg_path.parent / "c.jsonl")
     monkeypatch.setattr(zalo, "send_text", lambda u, t: sent.update(t=t) or True)
     monkeypatch.setattr(zalo, "_histories", type(zalo._histories)())
+    # r12 L3: câu hứa nhân viên chỉ khi ĐÃ ghi được handoff — giả lập.
+    monkeypatch.setattr("connectors.channels.record_handoff",
+                        lambda *a, **k: 77)
     zalo.handle_text("u1", "bị gout uống Savigout được không")
     # FLIP v5.1: câu sức khỏe chặn ở connectors.channels.pre_route TRƯỚC
     # answer() → template sức khỏe (hỏi ý kiến bác sĩ + chuyển người), không
@@ -319,6 +322,9 @@ def test_zalo_gateway_blocked_gets_handoff_not_error(fake, monkeypatch):
     monkeypatch.setattr(zalo, "CONV_LOG", fake.cfg_path.parent / "c.jsonl")
     monkeypatch.setattr(zalo, "send_text", lambda u, t: sent.update(t=t) or True)
     monkeypatch.setattr(zalo, "_histories", type(zalo._histories)())
+    # r12 L3: câu hứa nhân viên chỉ khi ĐÃ ghi được handoff — giả lập.
+    monkeypatch.setattr("connectors.channels.record_handoff",
+                        lambda *a, **k: 77)
     monkeypatch.setenv("LLM_KILL", "chatbot")
     zalo.handle_text("u1", "Sâm Sâm có showroom ở đâu?")
     assert sent["t"] == zalo.HANDOFF_TEXT

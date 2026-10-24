@@ -1,0 +1,16 @@
+# ma: S09-C01
+# lenh: ls connectors/ api/; grep -rln 'website.*chat|web_chat|webchat|chatbot website' connectors api app; grep CHAT_CHANNELS/SAN_CHANNELS connectors/channels.py
+## connectors/
+connectors/__init__.py
+connectors/b2b_form.py
+connectors/channels.py
+connectors/messenger.py
+connectors/zalo.py
+connectors/zalo_garden.py
+## api/
+api/__init__.py
+api/rag.py
+## grep adapter website chat (rỗng = không có)
+## kênh chat được hỗ trợ
+74:CHAT_CHANNELS = ("zalo", "messenger")
+75:SAN_CHANNELS = ("shopee", "tiktok")

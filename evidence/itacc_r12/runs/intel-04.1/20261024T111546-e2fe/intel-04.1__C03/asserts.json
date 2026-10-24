@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from intel_imports",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from trends_weekly where import_id <> (select min(id) from intel_imports)",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

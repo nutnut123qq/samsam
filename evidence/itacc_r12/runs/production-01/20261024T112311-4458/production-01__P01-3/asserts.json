@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) > 0 and bool_and(status = 'pending') and count(distinct run_id) = 1 from allocation_proposals",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from allocation_proposals a join sku_master m using (sku_key) where m.category = 'alcohol' and a.channel in ('shopee','tiktok','web','facebook','zalo','chatbot') and a.proposed_qty <> 0",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) > 0 from allocation_proposals a join sku_master m using (sku_key) where m.category = 'alcohol' and a.channel in ('shopee','tiktok','web','facebook','zalo','chatbot')",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

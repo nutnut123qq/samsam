@@ -842,3 +842,98 @@ ro lịch sử. Thứ tự đề xuất:
    rotation (bước 2–3) là bắt buộc dù có viết lại hay không.
 6. Ghi bằng chứng: ngày đổi, role, người đổi, kết quả kiểm bước 3 (không ghi
    giá trị mật khẩu) vào sổ nghĩa vụ/biên bản vận hành.
+
+**10.8 Gói rotation có công cụ (đợt an toàn S01, 22/10/2026)** — quản trị viên
+chạy trên ĐÚNG môi trường được giao; mỗi môi trường đóng riêng (đổi ở dev
+không đóng server/CI/máy khác). Agent không chạy trên môi trường thật.
+
+| Bước | Lệnh (`scripts/db_rotate_password.py`) | Đạt khi |
+|---|---|---|
+| 0. Hiện trạng | `--check --role <role> --leaked-git '60d9acf^:evidence/v82_pytest.log' --leaked-git '60d9acf^:evidence/v82_pytest_vong1.log' [--env-file /etc/samsam/<dịch vụ>.env …] [--probe-db <DB thử>]` | in tên biến/tệp dùng role (không in giá trị), `trùng giá trị lộ=True/False`, đường TCP kiểm mật khẩu |
+| 1. Đổi | `--rotate --role <role> --admin-env ADMIN_DATABASE_URL --new-password-file <tệp mới, ngoài repo>` | sinh mật khẩu ngẫu nhiên vào tệp (tạo mới, chỉ chủ đọc); server chỉ nhận VERIFIER SCRAM (log câu lệnh không có mật khẩu rõ); thuộc tính role/thành viên không đổi |
+| 2. Cập nhật nơi dùng | quản trị viên sửa EnvironmentFile/`.env`/CI theo danh sách bước 0, khởi động lại dịch vụ | — |
+| 3. Kiểm nơi dùng | `--verify-consumers --role <role> --env-file …` | mọi biến DSN của role kết nối được (exit 0) |
+| 4. Kiểm thu hồi | `--verify --role <role> --dsn-env <biến DSN TCP> --new-password-file … --leaked-git …` | mới `ok`; mật khẩu SAI ngẫu nhiên `28P01` (chứng minh đường kiểm mật khẩu, không trust/peer); cũ `28P01` → exit 0. Đường không kiểm mật khẩu → exit 3 KHÔNG KẾT LUẬN (kiểm từ máy/đường có scram) |
+| 5. Ghi bằng chứng | ngày, môi trường, role, người thực hiện, exit bước 3–4 (KHÔNG giá trị) → sổ nghĩa vụ | — |
+
+Không có "khôi phục mật khẩu cũ": nơi dùng lệch → sửa nơi dùng bằng mật khẩu
+MỚI hoặc chạy `--rotate` lần nữa với mật khẩu mới khác. Không mở rộng
+`pg_hba`/`listen_addresses`, không cấp thêm quyền để chữa lỗi kết nối. Kiểm
+cơ chế: `tests/test_safety_s01_rotation.py` (Postgres Docker tạm). Hiện trạng
+22/10/2026: dev `.env` (role `postgres`, localhost TCP scram) CÒN trùng giá trị
+lộ — `evidence/safety_s01_check.log`; dev listen chỉ `localhost`, `pg_hba`
+scram cho local/127.0.0.1/::1. Server Bên B/CI/máy khác: CHƯA kiểm.
+
+**10.9 Quyết định ở UI bằng login người (đợt an toàn S04, 22/10/2026 — bổ sung mục 9.1/9.7)**
+
+- Từ bản này login UI dùng chung (`in role svc_ui`) KHÔNG ghi được quyết định/
+  nhật ký mang tên người (DB 42501) — chỉ đọc và ghi dòng của agent.
+- Chế độ thực (`AUTH_MODE=local|proxy` hoặc `APPROVAL_ENFORCE=1`): tab "Duyệt &
+  Lịch" hiện form "Mở quyền quyết định" — người dùng nhập MẬT KHẨU POSTGRES
+  CỦA CHÍNH HỌ cho login `db_login` ghi trong `data/users.json`; UI mở kết nối
+  bằng login đó (`pipelines.auth.person_connect`), không lưu mật khẩu; DB đối
+  chiếu `human_logins` (người + khối) ở mọi quyết định. Người khác khối, tự
+  duyệt, tên agent → bị chặn ở DB kể cả gọi thẳng SQL.
+- Draft nội dung mang khối sở hữu (`content_drafts.block`, code ghi lúc tạo);
+  draft cũ không có khối → `marketing`.
+- (Vá controller S04b, 22/10/2026) `created_login` = login tạo (DB ghi, caller
+  không khai được) trên `content_drafts`/`approval_queue`; login người tạo draft
+  phải mang tên CHÍNH mình (nhãn `agent:`/`system:`/`auto_policy:` bị 42501) và
+  khối do hệ thống xác định (draft của người → `marketing`); mục hàng duyệt
+  nhãn agent do CLI người khởi chạy (vd `ra_kenh --partner-file`) giữ nhãn,
+  tác giả thật = login. Duyệt/quyết/override: login = login tạo hoặc tên trùng
+  tác giả (chuẩn hóa) → 42501. Agent CHẠY bằng login dịch vụ (`svc_job`), không
+  bằng login người — chạy agent bằng login người không còn tạo được draft
+  nhãn agent.
+- (Vòng r8) Một NGƯỜI nhiều login: duyệt/quyết/override/duyệt giá vốn bị chặn
+  khi login tạo và login quyết cùng ánh xạ MỘT người trong `human_logins` (kể
+  cả login cũ đã khóa). Giá vốn (`cogs_versions`) cũng ghi `created_login`,
+  login người không lập giá vốn bằng nhãn agent.
+- (Vòng r8) Mỗi lần "Mở quyền quyết định" thành công ghi `human_login_checks`
+  (login, người, thời điểm DB — không mật khẩu); ma trận nghiệm thu đòi bằng
+  chứng này (B3) + login còn dùng được lúc kiểm (B2: LOGIN, chưa hết hạn VALID
+  UNTIL, giới hạn kết nối ≠ 0, CONNECT, app_human, không superuser). Sau khi
+  cấp login, mỗi người duyệt mở phiên UI một lần để có bằng chứng.
+- (Vòng r9) Bằng chứng B3 chỉ tính cho ĐÚNG login VÀ ĐÚNG người ánh xạ hiện
+  hành (chuẩn hóa `p10_norm`): đổi `human_logins` của một login sang người
+  khác → người mới phải tự mở phiên một lần; lịch sử đăng nhập của người cũ
+  giữ nguyên (append-only) nhưng không tính.
+- Quản trị chuẩn bị cho từng người duyệt: login Postgres riêng (`in role
+  app_human`, KHÔNG svc_ui/superuser), dòng `human_logins` (CHỈ owner ghi,
+  theo văn bản ủy quyền), `db_login` trong `data/users.json`.
+- Proxy/SSO: định danh SSO chưa nối với danh tính DB — người dùng vẫn phải mở
+  quyền bằng login Postgres riêng; nối SSO ↔ DB (vd chứng chỉ/GSS) là quyết
+  định kiến trúc của Bên B, chưa làm.
+
+**10.10 Thay đổi giao diện/quyền đợt r12 (24/10/2026 — kiểm kỹ thuật nội bộ, chưa nghiệm thu hợp đồng)**
+
+- Tab **Nhật ký vườn** chế độ thực: `svc_ui` được ĐỌC cột `plots(id, location,
+  status)` + `plot_logs(id, plot_id, ts, activity, detail, author, source)`
+  (không ghi). GHI nhật ký chỉ bằng login Postgres RIÊNG của người (mở ở tab
+  "Duyệt & Lịch") qua function `plot_log_add_human` (SECURITY DEFINER,
+  `human_actor(..., 'farming')`): người ghi = người của login, khối `farming`
+  trong `human_logins`; không còn ô "Người ghi" tự gõ. Chưa mở quyền → không
+  ghi; login của người khác/khối khác/tên agent → 42501, 0 dòng. Người ghi nhật
+  ký vườn cần: login `in role app_human` + dòng `human_logins` khối `farming`
+  + `db_login` trong `data/users.json` (vai trò UI có tab vườn: `tgd`,
+  `ha_tang`). Chế độ dev giữ ô người ghi như cũ.
+- Tab **Chat Sâm Sâm**: `svc_ui` được `SELECT chunks` (KB CÔNG KHAI — như
+  `svc_webhook`); lỗi đọc KB/LLM → câu thân thiện, KHÔNG hiện traceback/đường
+  dẫn mã (lỗi ghi stderr dạng `[warn]` chỉ tên ngoại lệ).
+- Chatbot Zalo/Messenger: câu hứa "nhân viên sẽ phản hồi" chỉ gửi khi ĐÃ ghi
+  được mục `cskh_handoff` (hoặc đã có mục chờ của khách); không ghi được
+  (tính năng tắt — HĐ 6.7 cấm sinh đầu ra, DB lỗi, thiếu muối) → câu có hotline
+  1800577732, không hứa. Nhánh quá 30 giây giữ thứ tự cũ (gửi ngay, ghi sau).
+- `qr_trace link/unlink` qua `auth.cli_gate` khối `farming` (hành động
+  `link_origin`/`unlink_origin`); function `link_lot_origin`/`unlink_lot_origin`
+  dùng `human_actor` — tên rỗng/`agent:`/`system:` bị 42501 kể cả login owner.
+- `garden_media_mkt --release/--revoke` dùng hành động `media_cap`/`media_thu_hoi`
+  (đã thêm vào `auth.ACTIONS`) — chế độ thực theo `approvers` khối farming.
+- Guardrail đăng bài: luật mới `pii_ca_nhan` (critical, block — "chờ Pháp chế
+  duyệt", mặc định an toàn) chặn SĐT/email cá nhân trong nội dung công khai;
+  liên hệ công khai của công ty = `pii_allow` trong `data/llm_gateway.json` +
+  hotline 1800577732. Chế độ chat `check()` không đổi.
+- CLI bị cổng tắt (nhóm RB/GATE-OUT r12): exit 2 + dòng `[rollout] … <mã tính
+  năng>` trên stdout, không traceback, không in nội dung nghiệp vụ, không ghi
+  file/DB. CLI đã có giao diện `[blocked] …` trên stderr từ v14.3 (vd
+  `hdtv_report`, `acc_ar`, `rev_share`) giữ nguyên.

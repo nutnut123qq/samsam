@@ -1,0 +1,9 @@
+"""HARNESS g3: đọc ingest.crm.can_contact(conn, id, purpose) — CHỈ ĐỌC."""
+import sys
+sys.path.insert(0, ".")
+from ingest import crm
+from ingest.lead_store import connect
+c = connect()
+for p in sys.argv[2:]:
+    print(p, crm.can_contact(c, int(sys.argv[1]), p))
+c.rollback(); c.close()

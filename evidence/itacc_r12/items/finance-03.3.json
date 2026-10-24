@@ -1,0 +1,587 @@
+{
+ "id": "finance-03.3",
+ "ten": "Nháp thư nhắc nợ",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Công nợ, hoa hồng: 'nháp thư nhắc nợ'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/finance-03.3.json",
+  "sha256": "1e40ebdbb7fe574d194bf59b1677441eb6992897365509ec42f411cd38333124"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/acc_ar.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_finance.json",
+ "tieu_chi_sha256": "04217b9dc6c35adddde0efc99a2b8055c3ca1575f8cb5a68883079c91520076b",
+ "tieu_chi_khoa": "r12_finance.json 04217b9dc6c35adddde0efc99a2b8055c3ca1575f8cb5a68883079c91520076b 2026-10-24T01:54:48+00:00",
+ "tieu_chi": [
+  "T1 (C1) `acc_ar --reminders --as-of 2026-10-23` → đúng 2 mục approval_queue finance/ar_reminder pending created_by agent:acc_ar (IT-DL01 quá hạn 12.000.000đ: HD-IT-001 hạn 31/07/2026 quá 84 ngày + HD-IT-002 quá 13 ngày; IT-DL03 1.000.000đ); payload có file nguồn ar_ok.csv + sha256 8031bc6d, placeholder {{TEN_DAI_LY}}/{{NGUOI_KY}}, KHÔNG tên đại lý trong sổ",
+  "T2 (C2) IT-DL02 (ngoài sổ dealers) → [skip], 0 mục",
+  "T3 (C3) `--dry-run` in 2 nháp, 0 ghi; chạy lại cùng trạng thái nợ → 0 mới, vẫn 2",
+  "T4 (C4) agent không gửi; tắt finance-03.3 → exit 2 (mã finance-03.3), ar_reminder vẫn 2"
+ ],
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451; mỗi mục 1 DB samsam_itacc_r12_<f031|f033|f041|f051|f052|f06> dựng bằng harness/mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; 0 LLM (6 mục thuần tất định); ngày cố định qua --as-of/--start/--month/--now. DB samsam_itacc_r12_f033.",
+ "run_id": "20261024T112131-20f8",
+ "ca": [
+  {
+   "ma": "finance-03.3__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "tiền đề (r10 SETUP-seed-fin): seed sổ rollout → tính năng chạy thử",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\]"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:21:31+07:00",
+      "ket_thuc": "2026-10-24T11:21:33+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S01"
+  },
+  {
+   "ma": "finance-03.3__S02",
+   "nguon_r10": "MOI",
+   "mo_ta": "tiền đề = trạng thái DB r10: sổ công nợ (r10 F031-2) + sổ dealers IT-DL01, IT-DL03 (r10 F032-1, SQL fixture owner — cùng câu insert dealers)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[load\\] 7 dòng"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[fixture-sql\\] ok samsam_itacc_r12_f033 1"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from dealer_ar",
+      "expect": 7
+     },
+     {
+      "sql": "select string_agg(code, ',' order by code) from dealers",
+      "expect": "IT-DL01,IT-DL03"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.acc_ar --load evidence\\itacc_r12\\fixtures/items/finance-03.3/ar_ok.csv",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[load\\] 7 dòng",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:21:33+07:00",
+      "ket_thuc": "2026-10-24T11:21:34+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step01.stderr.txt"
+     },
+     {
+      "argv": "python -c import os,sys,psycopg\nc=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5)\ndb=c.execute('select current_database()').fetchone()[0]\nassert db.startswith('samsam_itacc_r12_'),db\nfor s in sys.argv[1:]:\n    c.execute(s)\nc.commit()\nprint('[fixture-sql] ok',db,len(sys.argv)-1) insert into dealers (code, name, region, status, commission_default, source) values ('IT-DL01','Đại lý Thử IT 01','mien-trung','active',10,'fixture-thu-it'),('IT-DL03','Đại lý Thử IT 03','mien-trung','active',8,'fixture-thu-it')",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[fixture-sql\\] ok samsam_itacc_r12_f033 1",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:21:34+07:00",
+      "ket_thuc": "2026-10-24T11:21:36+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from dealer_ar",
+      "expect": 7,
+      "actual": 7,
+      "dat": true
+     },
+     {
+      "sql": "select string_agg(code, ',' order by code) from dealers",
+      "expect": "IT-DL01,IT-DL03",
+      "actual": "IT-DL01,IT-DL03",
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02"
+  },
+  {
+   "ma": "finance-03.3__F033-1",
+   "nguon_r10": "F033-1",
+   "mo_ta": "dry-run",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)\\A(?=.*--- \\[dry-run\\] ar_reminder ar:IT-DL01:)(?=.*--- \\[dry-run\\] ar_reminder ar:IT-DL03:)(?=.*\\[skip\\] IT-DL02)(?=.*2 nháp \\(dry-run, không ghi\\))"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.acc_ar --reminders --as-of 2026-10-23 --dry-run",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)\\A(?=.*--- \\[dry-run\\] ar_reminder ar:IT-DL01:)(?=.*--- \\[dry-run\\] ar_reminder ar:IT-DL03:)(?=.*\\[skip\\] IT-DL02)(?=.*2 nháp \\(dry-run, không ghi\\))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:21:36+07:00",
+      "ket_thuc": "2026-10-24T11:21:37+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-1"
+  },
+  {
+   "ma": "finance-03.3__F033-2",
+   "nguon_r10": "F033-2",
+   "mo_ta": "đẩy hàng duyệt",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)\\A(?=.*\\[reminder\\] IT-DL01 quá hạn 12\\.000\\.000đ)(?=.*\\[reminder\\] IT-DL03 quá hạn 1\\.000\\.000đ)(?=.*\\[skip\\] IT-DL02)(?=.*2 nháp mới)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and block = 'finance' and status = 'pending' and created_by = 'agent:acc_ar'",
+      "expect": 2
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL01:%' and payload like '%HD-IT-001%' and payload like '%31/07/2026%' and payload like '%84 ngày%' and payload like '%HD-IT-002%' and payload like '%13 ngày%' and payload like '%12.000.000%' and payload like '%ar_ok.csv%' and payload like '%8031bc6d%' and payload like '%{{TEN_DAI_LY}}%' and payload like '%{{NGUOI_KY}}%'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL03:%' and payload like '%1.000.000%'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL02:%'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and (payload like '%Đại lý Thử IT%' or title like '%Đại lý Thử IT%')",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.acc_ar --reminders --as-of 2026-10-23",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)\\A(?=.*\\[reminder\\] IT-DL01 quá hạn 12\\.000\\.000đ)(?=.*\\[reminder\\] IT-DL03 quá hạn 1\\.000\\.000đ)(?=.*\\[skip\\] IT-DL02)(?=.*2 nháp mới)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:21:37+07:00",
+      "ket_thuc": "2026-10-24T11:21:42+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-2/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and block = 'finance' and status = 'pending' and created_by = 'agent:acc_ar'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL01:%' and payload like '%HD-IT-001%' and payload like '%31/07/2026%' and payload like '%84 ngày%' and payload like '%HD-IT-002%' and payload like '%13 ngày%' and payload like '%12.000.000%' and payload like '%ar_ok.csv%' and payload like '%8031bc6d%' and payload like '%{{TEN_DAI_LY}}%' and payload like '%{{NGUOI_KY}}%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL03:%' and payload like '%1.000.000%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL02:%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and (payload like '%Đại lý Thử IT%' or title like '%Đại lý Thử IT%')",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-2"
+  },
+  {
+   "ma": "finance-03.3__F033-3",
+   "nguon_r10": "F033-3",
+   "mo_ta": "ÂM idempotent",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "0 nháp mới"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder'",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m agents.acc_ar --reminders --as-of 2026-10-23",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "0 nháp mới",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:21:42+07:00",
+      "ket_thuc": "2026-10-24T11:21:43+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-3"
+  },
+  {
+   "ma": "finance-03.3__F033-4",
+   "nguon_r10": "F033-4",
+   "mo_ta": "ÂM tắt finance-03.3 (chạy cuối) — như lượt 2 r10: --as-of 2026-11-20 (trạng thái nợ mới) để chạm cổng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "out_re": "finance-03\\.3"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder'",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable finance-03.3 --by Người Thử R12 --note kiem nhanh tat IT r12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:21:43+07:00",
+      "ket_thuc": "2026-10-24T11:21:46+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m agents.acc_ar --reminders --as-of 2026-11-20",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "out_re": "finance-03\\.3",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:21:46+07:00",
+      "ket_thuc": "2026-10-24T11:21:47+07:00",
+      "stdout": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where object_type = 'ar_reminder'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-1/asserts.json",
+   "sha256": "a0d7979fc2e86df7cb0835caec71ffc7902ce764c41f242b4e19d000552e199d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-1/case.json",
+   "sha256": "53db991ebdb6b7e3b646d9ada11e9c9b3ca0827fa03284b04adab83846a033e6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-1/step01.cmd.json",
+   "sha256": "950cbe82b219875b503ccf7d48e9c68d0b2cc4d877fc48c078eb5ff95059909f"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-1/step01.stdout.txt",
+   "sha256": "93b2e55902871f67ff3be02a9ad1a811893eea7b44c35b5d56bc7482f5fb705b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-2/asserts.json",
+   "sha256": "7e227347ab938b46284f08f277be39dfd2c9744b106309f87d3f80d88685ae25"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-2/case.json",
+   "sha256": "2f12c43d374cf016fcac07828e62e7a36da568473996e77310b1369b490d047d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-2/step01.cmd.json",
+   "sha256": "d86994f4f1ca28cfec03023106f9ae21e1eabb9fc0f2b55355bc3b16994b8b0e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-2/step01.stdout.txt",
+   "sha256": "73e44016651bc6bbbf8bb8e303375443d3671276b828f3a76f38d995956aab08"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-3/asserts.json",
+   "sha256": "76b768b05f455af8e7c2d0070b8b94684ca92530d19b3578050861218d139827"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-3/case.json",
+   "sha256": "a7c0ec116b5e9a3545a9c21a34799de6211980ef51aa082622471134f329fd35"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-3/step01.cmd.json",
+   "sha256": "07069b7862522585006bdd3191c6b386aec4deba245e9275a3fd93b537b0cec5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-3/step01.stdout.txt",
+   "sha256": "959c2ac849514e71abf36b7c8c797985cb4f445e7a9c27c34974385efd35fd01"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/asserts.json",
+   "sha256": "76b768b05f455af8e7c2d0070b8b94684ca92530d19b3578050861218d139827"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/case.json",
+   "sha256": "8cebcd7d00b82a71fc600972e6f9a8ff428c93d6bde8d12ff6cd2b8eeaed8494"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step01.cmd.json",
+   "sha256": "517379dddde8f40811a2ee5fbea700b916bcfd0ba6dae1e9ef05ca80c0ce4226"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step01.stdout.txt",
+   "sha256": "317cc81dbe06965e410d2ac8c7b0cc5f7deb85aa9b82b9991cf01c9459eb297d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step02.cmd.json",
+   "sha256": "9c8f81aba905b1cf06fefed29900640cfccdd829b4d6ec940cef9ac5c4ed62c9"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step02.stderr.txt",
+   "sha256": "3def05058b8a626a8f2765120522a39f925835a0fb7c01387794c92b78cc4e0b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__F033-4/step02.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S01/case.json",
+   "sha256": "8c23760bf83fd8c73e44329e04e9192b639538962b064b61a773abe5cf816559"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S01/step01.cmd.json",
+   "sha256": "d4103e4d3368e7633df63a6ddc855928eda8fb74906cf5c306aff8063c64e575"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/asserts.json",
+   "sha256": "4972e6292266b3897527642566afd7f3557b6c6d34b25a49a72b33350f85a6e8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/case.json",
+   "sha256": "72fcbb21c4d4756dcc3e9c13a48d9d4c36f6650e035af73d790cba3c0abd35c1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step01.cmd.json",
+   "sha256": "2166c7e36e5a002fb29d6f3fd7b08ef385de2ad6b702084b23308731d60feaf8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step01.stdout.txt",
+   "sha256": "058f2f15296ff4923ee786fbe85279123459cfc714263c358c1d502cce9a93a7"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step02.cmd.json",
+   "sha256": "31e74cf76373fffa0515607fddead410ef0eb2c15bf65d3fdc9f6b8ea4c6ac4a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/finance-03.3__S02/step02.stdout.txt",
+   "sha256": "33c53e11cf105a1c01561a54069e8c9631505073a5a110e25329e88fac235180"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/finance-03.3/20261024T112131-20f8/ket_qua.json",
+   "sha256": "38b744419150d9c64f18e7e9680d0c7b78f29f3134e4d40655f56afc754d6dd2"
+  }
+ ],
+ "loi_san_pham": []
+}

@@ -1,0 +1,221 @@
+{
+ "id": "sales-04.1",
+ "ten": "Người phụ trách khách trong ngày",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Quản lý khách và đại lý: 'Mỗi khách có người phụ trách trong ngày'",
+ "tieu_chi": [
+  "`ingest.lead_store` (DATA_DIR → scratchpad convlog fixture) nạp leads; idempotent",
+  "`ingest.crm --owner LEAD --staff MÃ --by` ghi owner = MÃ (không tên) + owner_due_at = giờ làm việc theo cấu hình; agent_action_log; tên người làm --staff → exit 2 không ghi",
+  "`agents.sales_director --run` đẩy lead_followup created_by agent:sales_director cho lead chưa gán quá hạn, payload không câu khách; chạy lại không nhân đôi",
+  "--dry-run --now (giờ giả sau hạn) chỉ đọc: kế hoạch có lead_followup cho lead đã gán quá hạn, 0 ghi",
+  "Tắt → loader lead_store exit 2"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: không LLM",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s041_convlog.jsonl",
+   "sha256": "bf07b714160af147ebb6630c6bcbbd05c3b8efe5dc88df0344591e5eb990eabf",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s041_convlog_live_homqua.jsonl",
+   "sha256": "74848e0d88e15979728cec8d6431c98ebddd1a6f2d6a430d1bc3dfcba82873b7",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "S041-C01",
+   "mo_ta": "Nạp lead từ convlog",
+   "lenh": "python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/leads_conv -m ingest.lead_store ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv -m ingest.lead_store ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv -m ingest.lead_store ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/leads_live -m ingest.lead_store",
+   "expected": "exit 0; leads mới; chạy lại mới=0",
+   "actual": "convlog thật của harness sales-01 (provenance live): mới=3, chạy lại mới=0 trùng=3; convlog fixture hôm qua (FIXTURE provenance live, ghi chú trong dòng): mới=2; (bổ sung) dòng provenance sample → 0 lead (đúng: mẫu không thành vận hành)",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S041-C02",
+   "mo_ta": "Gán người phụ trách",
+   "lenh": "python -m ingest.crm --owner 7 --staff NVTHU01 --by Trưởng KD Thử IT",
+   "expected": "owner=MÃ, due>now, log",
+   "actual": "lead #7 owner_code NVTHU01, owner_due_at 26/10 08:30 VN (8 giờ LV từ T6 10:30), agent_action_log crm_owner actor 'Trưởng KD Thử IT'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S041-C03",
+   "mo_ta": "--staff là tên người",
+   "lenh": "python -m ingest.crm --owner 8 --staff Nguyen Van A --by Trưởng KD Thử IT",
+   "expected": "exit 2 không ghi",
+   "actual": "exit 2 '--staff phải là MÃ nhân viên ... không ghi gì'",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S041-C04",
+   "mo_ta": "sales_director lead_followup",
+   "lenh": "python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/leads_live -m agents.sales_director --run ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/leads_live -m agents.sales_director --run",
+   "expected": "lead_followup agent:sales_director; lần 2 0 mới",
+   "actual": "#49 lead_followup object lead:8:chua_gan created_by agent:sales_director, payload chỉ mã lead/kênh/ý định/hạn (không câu khách); lần 2 đẩy 0",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S041-C05",
+   "mo_ta": "Dry-run giờ giả",
+   "lenh": "python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/leads_live -m agents.sales_director --run --dry-run --now 2026-10-26T09:00+07:00",
+   "expected": "kế hoạch có lead đã gán; 0 ghi",
+   "actual": "--now 26/10 09:00: 'sẽ đẩy lead_followup 4 — KHÔNG ghi DB' (= lead 1,2,3 chưa gán + lead 7 đã gán quá hạn 08:30; lead 8 đã có mục); approval_queue max id không đổi",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S041-C06",
+   "mo_ta": "Tắt",
+   "lenh": "python -m pipelines.rollout --disable sales-04.1 --by Người Thử IT --note kiểm nhánh tắt r10 g2 ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv -m ingest.lead_store ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/leads_live -m agents.sales_director --run --dry-run --now 2026-10-26T09:00+07:00 ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/leads_live -m agents.sales_director --run",
+   "expected": "exit 2",
+   "actual": "lead_store exit 2 '[rollout] ... tính năng TẮT: sales-04.1 → KHÔNG nạp'",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Lead quá hạn thật cần ≥4 giờ làm việc → dùng 2 dòng convlog FIXTURE 'live' ts hôm qua (ghi chú FIXTURE trong dòng) — chỉ kiểm logic SLA, KHÔNG là bằng chứng ngày chạy thử/đầu ra vận hành; lead đã gán quá hạn chỉ kiểm bằng --dry-run --now; staff_codes rỗng (chỉ kiểm mẫu mã); quyền chế độ thực do điều phối viên kiểm.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post.py",
+   "sha256": "09d71906afc3419051c2a7e3bfca166a96497b75be67087efc4640c102e6d9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post2.py",
+   "sha256": "1ab72f65b0881f3e20f7da54403a360f526728a95638f6dce6c6cf6ab872314e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/case.py",
+   "sha256": "0d5e5ea91967bf225c4ff3c733a5817c1ff87bb36095d808aa546fa8186b1340"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fake_llm.py",
+   "sha256": "adbc2f9799ed0ac98bf5ca1f83c7c11c2900579da8dc9bc2aa4ca3e91481cc81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fu_probe.py",
+   "sha256": "cd000fe41aa6172cf25198596a21d765938df14d3d1c2c9721812bc926b84953"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_golden_fixture.py",
+   "sha256": "82dcec52b25e0cb39b9111a0d2031d75c3d2b1c72ef60fcc71ebd747fdf0abb1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_items.py",
+   "sha256": "dfe2f77d4674e3134ba3fe9b26b320d6e1f8c54bebff43405b10cc98357b72c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/q.py",
+   "sha256": "1f522e8a212386aa99f6b6b44c4831b6aface0ecf34266af1c39eff527f274c1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/run_mod.py",
+   "sha256": "a5e9c3d3fdf5ad9706b50d5c01e7f1a66d8ab94ca05f8d449d57e6648519391b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/seed_chunk.py",
+   "sha256": "e2c8e72b3c8bd29336aa00af4138a19700aa0721aa993ef1286d2b235ad47b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/shift_orders.py",
+   "sha256": "b630f0394d2543a79471f4174f56d87461bb4c687718ff5d3da83a0d16791afe"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/zalo_e2e.py",
+   "sha256": "f6f1700f4569219eff9446fce3724d65f259fbddaba0930cc0ccc876ee416ae4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C01a.txt",
+   "sha256": "71a8033e92300b7ad1212a17647250a31ecf8038675b5d38d5335b6094333d23"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C01b.txt",
+   "sha256": "416ae964b31ef643389a6d8d0fcb9698081631db33d420a36d3f407c986a4c99"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C01c.txt",
+   "sha256": "06d35257d9655ea8e98f792b11f0a27c3c252ce1f33c705a62373ca1e917db87"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C01x-sample-a.txt",
+   "sha256": "4918cdfaf746e23c79fc7d7a65b06da48b394ac9eb4d2273ec84fb28aeabe324"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C02.txt",
+   "sha256": "e8fd8728670aaf9e3440efe5a7e3c0d2e58d618b8e4d8eb604c0e6417fac416d"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C03.txt",
+   "sha256": "2bd04373c86759219cba105fb4332f7429f5a715d45fbcac352bc289cd91aa08"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C04a.txt",
+   "sha256": "fecd54ffc4453efd7efdaad5067f16648a50f9e95da8a88588915afb8714730f"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C04b.txt",
+   "sha256": "9409bb312f7a62db9af8ccb22a611a2ec46ce6c743308dbcc4557b6c9db9eff4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C05.txt",
+   "sha256": "be10d38b8d2880dcb9928e14d9a628d3a4f7bc1a43309424578f2c9e4c1c2c15"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C06.txt",
+   "sha256": "fc29da45db4f9a8cfc2463a43f159b361b6188de613c012f48546ba2afa4b2a2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C06b.txt",
+   "sha256": "4b3bd559456d19640a77fe257e8161d6a1df71cf18cede7594dd76dcec52f612"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C06c.txt",
+   "sha256": "e0bf25f5564554562d3efa0f31440fdbdf04aa3ce3e78ca811d5a2ded401cb1b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-followup.json",
+   "sha256": "b750bfc0ba64ec630c5ad0e4fc6fb0cdbaf16d708b8c30bf4efa871b1c788611"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-leads.json",
+   "sha256": "7d922eec3453dd70c8d67be258901f443114ee47d6fc6ec8fede1456e9bb1965"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-owner.json",
+   "sha256": "ad13c4be519436484e8cf65c552afc0925f56066b73da21ce068c8deb4dd139e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt",
+   "sha256": "6318bbc062812637309bbc78e092657139921c2ff309792bd10b70bd6a306179"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt",
+   "sha256": "0627f43797cc5b00090dcdaddc96bf287ec3a0575fe234785a105ab05814f01c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/TAT-disable-sales-04.1.txt",
+   "sha256": "3f0486f928f1e219b7717ef54093fee30863b16c22f1ca776043f04ddc4fe86d"
+  }
+ ],
+ "loi_san_pham": [],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

@@ -1,0 +1,128 @@
+[
+ {
+  "ma": "R1",
+  "mo_ta": "check() từ cấm: 'Sâm Sâm Thử IT chữa bệnh tiểu đường'",
+  "expected": "ok=False",
+  "actual": "ok=False codes=['tu_cam']",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "R2",
+  "mo_ta": "check() từ cấm: 'Uống mật ong sâm Thử IT là khỏi bệnh'",
+  "expected": "ok=False",
+  "actual": "ok=False codes=['tu_cam']",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "R3",
+  "mo_ta": "check() từ cấm: 'Thuốc bổ từ sâm Thử IT'",
+  "expected": "ok=False",
+  "actual": "ok=False codes=['tu_cam']",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "R3b",
+  "mo_ta": "check() từ cấm: 'Sản phẩm Thử IT hỗ trợ điều trị gout'",
+  "expected": "ok=False",
+  "actual": "ok=False codes=['claim_ngoai_cong_bo', 'tu_cam']",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "R4",
+  "mo_ta": "check() văn bản sạch",
+  "expected": "ok=True",
+  "actual": "ok=True codes=[]",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "P1",
+  "mo_ta": "claim NGẦM: đối tượng bệnh + lời chứng",
+  "expected": "ok=False, có ngam_y_suc_khoe",
+  "actual": "ok=False codes=['claim_khong_ro_sku', 'ngam_y_suc_khoe', 'thieu_khuyen_cao']",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "P2",
+  "mo_ta": "đăng bài sạch + nhãn AI",
+  "expected": "ok=True",
+  "actual": "ok=True codes=[]",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "P3",
+  "mo_ta": "nội dung AI thiếu nhãn AI",
+  "expected": "ok=False",
+  "actual": "ok=False codes=['thieu_nhan_ai']",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "P4",
+  "mo_ta": "SĐT cá nhân trong bài đăng",
+  "expected": "ok=False (cờ PII)",
+  "actual": "ok=False codes=['pii_ca_nhan']",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "P5",
+  "mo_ta": "quảng cáo rượu",
+  "expected": "ok=False",
+  "actual": "ok=False codes=['ruou_cam_quang_cao']",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "K1",
+  "mo_ta": "kb_filter.is_alcohol rượu vs mật ong",
+  "expected": "True / False",
+  "actual": "True / False",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "L0",
+  "mo_ta": "model chưa cấu hình (mặc định tắt)",
+  "expected": "llm_check=off ok=True code=None calls=0",
+  "actual": "llm_check=off ok=True codes=[] calls=0",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "L1",
+  "mo_ta": "luật đã chặn → không gọi LLM",
+  "expected": "llm_check=skipped ok=False code=None calls=0",
+  "actual": "llm_check=skipped ok=False codes=['tu_cam'] calls=0",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "L2",
+  "mo_ta": "LLM giả: không cờ",
+  "expected": "llm_check=pass ok=True code=None calls=1",
+  "actual": "llm_check=pass ok=True codes=[] calls=1",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "L3",
+  "mo_ta": "LLM giả: cờ ẩn ý",
+  "expected": "llm_check=flag ok=False code=llm_ngam_y_suc_khoe calls=1",
+  "actual": "llm_check=flag ok=False codes=['llm_ngam_y_suc_khoe'] calls=1",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "L4",
+  "mo_ta": "LLM giả: phản hồi không phải JSON",
+  "expected": "llm_check=unavailable ok=False code=llm_check_unavailable calls=1",
+  "actual": "llm_check=unavailable ok=False codes=['llm_check_unavailable'] calls=1",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "L5",
+  "mo_ta": "LLM giả: provider lỗi",
+  "expected": "llm_check=unavailable ok=False code=llm_check_unavailable calls=1",
+  "actual": "llm_check=unavailable ok=False codes=['llm_check_unavailable'] calls=1",
+  "ket_qua": "PASS"
+ },
+ {
+  "ma": "L6",
+  "mo_ta": "prompt injection trong văn bản sạch luật — LLM giả trả flag false → vẫn chỉ là pass (không gỡ chặn nào)",
+  "expected": "llm_check=pass ok=True code=None calls=1",
+  "actual": "llm_check=pass ok=True codes=[] calls=1",
+  "ket_qua": "PASS"
+ }
+]

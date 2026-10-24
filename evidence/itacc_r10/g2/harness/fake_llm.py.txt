@@ -1,0 +1,43 @@
+"""HARNESS g2 — FAKE LLM/embedding Ở BIÊN (thay pipelines.llm_gateway.chat/
+embed TRƯỚC khi module sản phẩm import). Không gọi OpenRouter/mạng.
+Cấu hình qua env:
+  IT_FAKE_CHAT   = đường file .txt/.json nội dung trả về của chat (toàn văn)
+  IT_FAKE_LOG    = đường file jsonl ghi mỗi lời gọi (agent, feature, kind)
+Câu hỏi/messages chứa "[cham]" → fake chat ngủ IT_FAKE_SLEEP giây (mặc 6)
+để kiểm hạn chót. Vector embedding cố định 8 chiều (khớp chunk fixture)."""
+import json, os, time
+from types import SimpleNamespace
+
+VEC = [0.5, 0.1, 0.2, 0.3, 0.1, 0.4, 0.2, 0.1]
+
+
+def _log(kind, agent, kw, extra=None):
+    p = os.environ.get("IT_FAKE_LOG")
+    if p:
+        with open(p, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"kind": kind, "agent": str(agent),
+                                "feature": kw.get("feature"),
+                                **(extra or {})}, ensure_ascii=False) + "\n")
+
+
+def chat(agent, messages, **kw):
+    blob = json.dumps(messages, ensure_ascii=False)
+    slow = "[cham]" in blob
+    _log("chat", agent, kw, {"slow": slow})
+    if slow:
+        time.sleep(float(os.environ.get("IT_FAKE_SLEEP", "6")))
+    p = os.environ.get("IT_FAKE_CHAT")
+    txt = open(p, encoding="utf-8").read().strip() if p else "Chưa đủ dữ liệu để trả lời."
+    return SimpleNamespace(choices=[SimpleNamespace(
+        message=SimpleNamespace(content=txt))], usage=None)
+
+
+def embed(agent, text, **kw):
+    _log("embed", agent, kw)
+    return SimpleNamespace(data=[SimpleNamespace(embedding=list(VEC))])
+
+
+def install():
+    from pipelines import llm_gateway
+    llm_gateway.chat = chat
+    llm_gateway.embed = embed

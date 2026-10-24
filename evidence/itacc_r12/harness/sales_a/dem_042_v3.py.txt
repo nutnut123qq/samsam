@@ -1,0 +1,28 @@
+"""HARNESS r12 nhóm sales_a v3 (sales-04.2): như dem_042.py.txt (đọc số đầu ra sales-04.2 từ đầu ra THẬT của
+`python -m pipelines.rollout --status`, không tự đếm bảng) + chế độ `tang`:
+  python dem_042_v3.py.txt save <tệp>        → lưu số hiện tại
+  python dem_042_v3.py.txt bang <tệp>        → exit 0 nếu số hiện tại == số đã lưu
+  python dem_042_v3.py.txt tang <tệp> <N>    → exit 0 nếu số hiện tại == số đã lưu + N"""
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[4]
+sys.stdout.reconfigure(encoding="utf-8")
+p = subprocess.run([sys.executable, "-m", "pipelines.rollout", "--status"], cwd=ROOT, capture_output=True,
+                   env={**os.environ, "PYTHONIOENCODING": "utf-8"}, timeout=300)
+m = re.search(r"^sales-04\.2\s.*?·\s*(\d+)\s*\(", p.stdout.decode("utf-8", "replace"), re.M)
+if p.returncode != 0 or not m:
+    sys.exit(f"[dem_042] không đọc được dòng sales-04.2 (exit {p.returncode})")
+n = int(m.group(1))
+mode, f = sys.argv[1], Path(sys.argv[2])
+if mode == "save":
+    f.write_text(str(n), encoding="utf-8")
+    print(f"dem={n}")
+    sys.exit(0)
+before = int(f.read_text(encoding="utf-8"))
+want = before + (int(sys.argv[3]) if mode == "tang" else 0)
+print(f"truoc={before} sau={n} ky_vong={want}")
+sys.exit(0 if n == want else 1)

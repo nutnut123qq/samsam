@@ -103,7 +103,63 @@ with st.sidebar:
     if _mode == "local" and st.button("Đăng xuất"):
         for _k in ("auth_user", "auth_role"):
             st.session_state.pop(_k, None)
+        _drop_person = st.session_state.pop("person_conn", None)
+        if _drop_person is not None:
+            with suppress(Exception):
+                _drop_person[1].close()
         st.rerun()
+
+
+def _person_conn(form: bool = True):
+    """Đợt an toàn S04 (HĐ 6.7, 7.2): chế độ thực — quyết định (duyệt/từ
+    chối/xếp lịch/hàng duyệt chung) và nháp mang tên người ghi bằng LOGIN
+    Postgres RIÊNG của người đang đăng nhập (Postgres xác thực mật khẩu của
+    chính họ; DB đối chiếu `human_logins`). Login UI dùng chung (`svc_ui`)
+    KHÔNG ghi được tên người. → conn | None (đã hiện form mở khóa/lý do).
+    Mật khẩu không lưu: chỉ giữ kết nối đã xác thực trong phiên."""
+    _cur_pc = st.session_state.get("person_conn")
+    if _cur_pc is not None:
+        _owner, _pc = _cur_pc
+        if _owner == _ident and not _pc.closed:
+            if _pc.info.transaction_status == 3:      # INERROR
+                with suppress(Exception):
+                    _pc.rollback()
+            return _pc
+        with suppress(Exception):
+            _pc.close()
+        st.session_state.pop("person_conn", None)
+    _dbl = (_auth.load_users().get((_ident or "").casefold())
+            or {}).get("db_login")
+    if not _dbl:
+        st.error(f"`{_ident}` chưa có login Postgres riêng (users file "
+                 "`db_login`) — chế độ thực không ghi quyết định bằng login "
+                 "UI dùng chung. Quản trị cấp login + `human_logins` theo "
+                 "văn bản ủy quyền của Bên B (runbook 9.7).")
+        return None
+    if not form:
+        st.warning("Chế độ thực: mở quyền quyết định bằng login Postgres của "
+                   "bạn ở tab 'Duyệt & Lịch' trước khi lưu.")
+        return None
+    with st.form(f"person-unlock-{_dbl}"):
+        st.caption(f"Xác thực quyết định bằng login Postgres `{_dbl}` của "
+                   "bạn — mật khẩu không được lưu.")
+        _pw = st.text_input("Mật khẩu Postgres", type="password")
+        _go = st.form_submit_button("Mở quyền quyết định")
+    if _go:
+        try:
+            _c, _person, _blocks = _auth.person_connect(
+                _auth._env().get("DATABASE_URL") or "", _dbl, _pw)
+        except _auth.PersonSessionError as _e:
+            st.error(str(_e))
+            return None
+        if _auth._norm_name(_person) != _auth._norm_name(_ident):
+            _c.close()
+            st.error(f"login `{_dbl}` thuộc người khác `{_ident}` — không "
+                     "mở quyền quyết định")
+            return None
+        st.session_state.person_conn = (_ident, _c)
+        st.rerun()
+    return None
 
 _allowed = _auth.tabs_for(_role)
 if not _allowed:
@@ -168,6 +224,15 @@ if "Chat Sâm Sâm" in _tabs:
                               f"({type(e).__name__}) -> handoff", flush=True)
                         r = {"answer": NO_DATA, "sources": [],
                              "handoff": "gateway"}
+                    except Exception as e:  # noqa: BLE001
+                        # r12 UI-02: lỗi DB/provider KHÔNG hiện traceback/DSN/
+                        # đường dẫn cho người dùng — câu vào hàng 'Chưa trả
+                        # lời' (convlog bên dưới) như mọi câu thiếu dữ liệu;
+                        # log server chỉ tên loại lỗi (ASCII).
+                        print(f"[warn] chat streamlit: loi tra cuu "
+                              f"({type(e).__name__}) -> handoff", flush=True)
+                        r = {"answer": NO_DATA, "sources": [],
+                             "handoff": "loi_he_thong"}
                     latency_ms = int((time.monotonic() - t0) * 1000)
 
                 # Invariant: mọi text AI trước khi hiển thị phải qua
@@ -355,7 +420,8 @@ if "Content Studio" in _tabs:
 
                 from ingest.lead_store import connect as _ldc
                 from pipelines import store as _dstore
-                _sconn = _ldc()
+                _spers = _auth.approval_enforced()
+                _sconn = _person_conn(form=False) if _spers else _ldc()
                 if _sconn is None:
                     st.warning("Chưa nạp — không kết nối được Postgres "
                                "(kiểm tra DATABASE_URL); draft chưa lưu "
@@ -385,7 +451,8 @@ if "Content Studio" in _tabs:
                             except _pg2.Error:
                                 _errs += 1
                     finally:
-                        _sconn.close()
+                        if not _spers:          # phiên người giữ lại
+                            _sconn.close()
                     # Bỏ kênh đã lưu khỏi session — bấm lại không nhân đôi
                     # draft (kênh lỗi ghi giữ lại để thử lại).
                     for _ch in _saved:
@@ -584,7 +651,16 @@ if "Nhật ký vườn" in _tabs:
             _d = st.date_input("Ngày",
                                value=_dt.now(timezone.utc).date())
             _det = st.text_area("Chi tiết", height=68)
-            _g_author = st.text_input("Người ghi")
+            # r12 UI-01: chế độ thực KHÔNG ghi bằng login UI dùng chung —
+            # ghi bằng login Postgres RIÊNG của người (phiên "Mở quyền quyết
+            # định"); người ghi = người của login (DB kiểm, khối farming).
+            _g_enf = _auth.approval_enforced()
+            if _g_enf:
+                st.caption(f"Người ghi: **{_ident}** (theo login Postgres "
+                           "riêng — mở quyền ở tab 'Duyệt & Lịch').")
+                _g_author = _ident
+            else:
+                _g_author = st.text_input("Người ghi")
             if st.button("Ghi nhật ký", type="primary"):
                 if not _pick_plot:
                     st.error("Chưa có khoảnh active nào trong DB.")
@@ -596,9 +672,21 @@ if "Nhật ký vườn" in _tabs:
                     _ts = _dt.combine(_d, _dt.now(timezone.utc).time(),
                                       tzinfo=timezone.utc)
                     try:
-                        _lid, _warns = _g.add_log(
-                            _gconn, _pid, _ts, _act, _det.strip(),
-                            _g_author.strip())
+                        if _g_enf:
+                            _gpc = _person_conn(form=False)
+                            _lid, _warns = ((None, [("Chưa mở quyền bằng "
+                                                     "login Postgres riêng.")])
+                                            if _gpc is None else
+                                            _g.add_log_human(
+                                                _gpc, _pid, _ts, _act,
+                                                _det.strip(), _g_author))
+                        else:
+                            _lid, _warns = _g.add_log(
+                                _gconn, _pid, _ts, _act, _det.strip(),
+                                _g_author.strip())
+                    except _auth.HumanDenied as _e:
+                        _lid, _warns = None, [(f"Không có quyền ghi "
+                                               f"nhật ký vườn: {_e}")]
                     except _pg.Error:
                         _lid, _warns = None, ["Lỗi DB khi ghi — thử lại."]
                     except BaseException:
@@ -667,6 +755,9 @@ if "Duyệt & Lịch" in _tabs:
                     _rconn.close()
                 _rconn = None
                 st.info("Lỗi đọc DB — thử tải lại trang.")
+        # Đợt an toàn S04: chế độ thực → quyết định bằng login người.
+        _dconn = (_person_conn() if _enforced and _rconn is not None
+                  else _rconn)
         if _rconn is not None:
             st.subheader(f"Hàng chờ duyệt ({len(_pending)})")
             if not _pending:
@@ -730,10 +821,13 @@ if "Duyệt & Lịch" in _tabs:
                             help=(None if _can_rej else _rej_why or
                                   f"Vai trò `{_role}` không có quyền "
                                   f"duyệt/từ chối"))
-                    if (_appr and _why is None) or (_rej and _can_rej):
+                    if _dconn is None and (_appr or _rej):
+                        st.warning("Chưa mở quyền quyết định bằng login "
+                                   "Postgres của bạn (form phía trên).")
+                    elif (_appr and _why is None) or (_rej and _can_rej):
                         _target = "approved" if _appr else "rejected"
                         _ok, _warn = _store.set_status(
-                            _rconn, _d["id"], _target, _ident, _note,
+                            _dconn, _d["id"], _target, _ident, _note,
                             via="ui", role=_role)
                         if _ok:
                             st.success(f"Draft #{_d['id']} → {_target}")
@@ -760,9 +854,12 @@ if "Duyệt & Lịch" in _tabs:
                 if st.button("Xếp lịch", type="primary"):
                     if _day is None:  # user xoá ngày → None (precedent v2.1)
                         st.error("Chọn ngày đăng.")
+                    elif _dconn is None:
+                        st.warning("Chưa mở quyền quyết định bằng login "
+                                   "Postgres của bạn (form phía trên).")
                     else:
                         _ok, _warn = _store.schedule(
-                            _rconn, _pick["id"], _day, _ident,
+                            _dconn, _pick["id"], _day, _ident,
                             via="ui", role=_role)
                         if _ok:
                             st.success(f"Draft #{_pick['id']} xếp lịch "
@@ -834,10 +931,13 @@ if "Duyệt & Lịch" in _tabs:
                             "Duyệt", disabled=not _oka, help=_wa)
                         _qr = _q2.form_submit_button(
                             "Từ chối", disabled=not _okr, help=_wr)
-                    if (_qa and _oka) or (_qr and _okr):
+                    if _dconn is None and (_qa or _qr):
+                        st.warning("Chưa mở quyền quyết định bằng login "
+                                   "Postgres của bạn (form phía trên).")
+                    elif (_qa and _oka) or (_qr and _okr):
                         _qt = "approved" if _qa else "rejected"
                         _ok, _warn = _aq.decide(
-                            _rconn, _q["id"], _ident, _qt, _qnote or None,
+                            _dconn, _q["id"], _ident, _qt, _qnote or None,
                             via="ui", role=_role)
                         if _ok:
                             st.success(f"Mục #{_q['id']} → {_qt}")

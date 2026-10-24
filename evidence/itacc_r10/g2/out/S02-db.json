@@ -1,0 +1,75 @@
+[
+ {
+  "sql": "select id, channel, msg_ref, answer, handoff, guardrail_ok, stage, created_by, created_at from san_suggestions order by id",
+  "rows": [
+   {
+    "id": 1,
+    "channel": "shopee",
+    "msg_ref": "2e2418d50fa5e463d2837a7128db257e",
+    "answer": "Mật ong sâm 300ml là thực phẩm đóng hũ 300ml của Sâm Sâm [1].",
+    "handoff": null,
+    "guardrail_ok": true,
+    "stage": "chay_thu",
+    "created_by": "MXH Thử IT",
+    "created_at": "2026-10-23 03:23:32.718450+00:00"
+   },
+   {
+    "id": 2,
+    "channel": "tiktok",
+    "msg_ref": "2e2418d50fa5e463d2837a7128db257e",
+    "answer": "Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này.",
+    "handoff": "no_data",
+    "guardrail_ok": true,
+    "stage": "chay_thu",
+    "created_by": "MXH Thử IT",
+    "created_at": "2026-10-23 03:23:39.176093+00:00"
+   },
+   {
+    "id": 3,
+    "channel": "shopee",
+    "msg_ref": "77e1152d75f1b839e31e9710319186a1",
+    "answer": "Mật ong sâm 300ml là thực phẩm đóng hũ 300ml của Sâm Sâm [1].",
+    "handoff": null,
+    "guardrail_ok": true,
+    "stage": "chay_thu",
+    "created_by": "MXH Thử IT",
+    "created_at": "2026-10-23 03:23:43.865735+00:00"
+   },
+   {
+    "id": 4,
+    "channel": "shopee",
+    "msg_ref": "98f59a6cbf60e671b6de38536a0ea4db",
+    "answer": "Dạ, Sâm Sâm không tư vấn về tình trạng sức khỏe qua tin nhắn tự động. Quý khách vui lòng hỏi ý kiến bác sĩ về tình trạng của mình. Nhân viên Sâm Sâm sẽ phản hồi Quý khách ngay trong khung chat này.",
+    "handoff": "health",
+    "guardrail_ok": true,
+    "stage": "chay_thu",
+    "created_by": "MXH Thử IT",
+    "created_at": "2026-10-23 03:23:48.855975+00:00"
+   },
+   {
+    "id": 5,
+    "channel": "shopee",
+    "msg_ref": "b495308f6b8da4c723d86f2e9bec4fc8",
+    "answer": "Mật ong sâm 300ml là thực phẩm đóng hũ 300ml của Sâm Sâm [1].",
+    "handoff": null,
+    "guardrail_ok": true,
+    "stage": "van_hanh",
+    "created_by": "MXH Thử IT",
+    "created_at": "2026-10-23 03:24:16.935709+00:00"
+   }
+  ]
+ },
+ {
+  "sql": "select * from san_suggestion_uses order by 1",
+  "rows": [
+   {
+    "id": 1,
+    "suggestion_id": 5,
+    "used_by": "MXH Thử IT",
+    "stage": "van_hanh",
+    "used_at": "2026-10-23 03:24:21.301588+00:00",
+    "db_role": "postgres"
+   }
+  ]
+ }
+]

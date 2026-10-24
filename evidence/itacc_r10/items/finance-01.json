@@ -1,0 +1,273 @@
+{
+ "id": "finance-01",
+ "ten": "Đối soát tiền sàn",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Đối soát tiền sàn: 'Biết số tiền thực nhận từng đơn sau phí sàn, voucher, hoàn hàng'",
+ "tieu_chi": [
+  "C1 settlement_csv --file nạp file quyết toán fixture → settlement_rows + recon_results, mỗi dòng đúng 1 nhãn (khop/lech/hoan/thieu_chung_tu) khớp tính tay; lý do lệch có expected/actual",
+  "C2 kd_orders --recon xuất CSV cho kế toán 1 dòng/đơn + dòng TONG theo kênh, cột tiền đúng, không mã đơn đầy đủ/PII",
+  "C3 khoản xuất lại ở file thứ 2: trùng nguyên văn tính 1 lần trong tổng (view v_settlement_khoan), số khác → báo lệch, giữ cả hai, không tự chọn",
+  "C4 file lỗi (cột lạ/số sai/mã đơn trùng) → exit 1, 0 dòng; nạp lại cùng file → [skip], không nhân dòng",
+  "C5 tính năng tắt → không sinh recon_results (exit 2 với --reconcile); không gửi/bút toán"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/orders_shopee.csv",
+   "sha256": "e10f04fcddbd06e64bc24c462ae8b21b220d3dc7aa914ffd0a4dd3ba583b89a5",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/orders_tiktok.csv",
+   "sha256": "8cef83f872600065b668a6f1874716bae0d5b58ed325f9c34948431e050bdec9",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_s1.csv",
+   "sha256": "d4cf91e619527ce5babf8ee88120ad4bf1e8f8b9ef05dd12f96cb3b3e990f02a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_s2.csv",
+   "sha256": "5cab733253921fde06f7e2589e0c802c462d7647717d7f63513c6fd5779b1080",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_tiktok.csv",
+   "sha256": "ba5d82419f52ca9cc4c8de1a345c0f1916171226d8e2a4bd9600f1c5dc154162",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_bad.csv",
+   "sha256": "65f695c1b8138806612f43179596be6c9cd776ad6b8385fed4f8906f1009371c",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_bad2.csv",
+   "sha256": "83c16f03a8188c5ad22f0ad1e90ca9348c7fdd97028b344f80377346cf244895",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F01-1",
+   "mo_ta": "nạp file đơn sàn + kd_orders --sync",
+   "lenh": "[F01-1a] python -m ingest.market_csv --file evidence/itacc_r10/g4/fixtures/orders_shopee.csv --channel shopee --kind order || [F01-1b] python -m ingest.market_csv --file evidence/itacc_r10/g4/fixtures/orders_tiktok.csv --channel tiktok --kind order || [F01-1c] python -m agents.kd_orders --sync || [F01-1-q] python evidence/itacc_r10/g4/harness/q.py select id, channel, status, total_vnd, source from orders where source like 'market:%' order by id ; select count(*) filter (where raw::text ilike '%0900000%' or raw::text ilike '%Người Nhận%') as pii_rows, count(*) from market_rows ; select column_name from information_schema.columns where table_name='market_rows' order by ordinal_position",
+   "expected": "exit 0; 5 đơn shopee + 1 tiktok vào orders source market:%; cột PII bị bỏ",
+   "actual": "exit 0 cả 3 lệnh; orders 6 dòng market:shopee/tiktok, đơn hủy → status cancelled; market_rows 0 dòng chứa SĐT/tên người nhận",
+   "exit": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F01-2",
+   "mo_ta": "nạp quyết toán shopee S1",
+   "lenh": "[F01-2] python -m ingest.settlement_csv --file evidence/itacc_r10/g4/fixtures/qt_shopee_s1.csv --channel shopee || [F01-2-q] python evidence/itacc_r10/g4/harness/q.py select s.file_name, s.row_no, s.channel, s.order_amount_vnd, s.payout_vnd, s.refund_vnd, s.settled_on, r.label, r.reasons, r.expected_payout_vnd from settlement ; select count(*) from settlement_rows",
+   "expected": "khop=2 lech=1 (B -14000) hoan=2 thieu_chung_tu=1",
+   "actual": "exit 0; khop=2 (A,F), lech=1 (B thuc_nhan expected 264000 actual 250000), hoan=2 (C,D), thieu_chung_tu=1 (E); recon_results có reasons expected/actual",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F01-3",
+   "mo_ta": "nạp quyết toán tiktok",
+   "lenh": "[F01-3] python -m ingest.settlement_csv --file evidence/itacc_r10/g4/fixtures/qt_tiktok.csv --channel tiktok",
+   "expected": "exit 0 khop=1",
+   "actual": "exit 0; khop=1",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F01-4",
+   "mo_ta": "CSV cho kế toán (kd_orders --recon)",
+   "lenh": "[F01-4] python -m agents.kd_orders --recon --since 2026-10-01 --until 2026-10-31 --out-dir evidence/itacc_r10/g4/out",
+   "expected": "1 dòng/đơn, nhãn khớp, E=thieu_don, dòng TONG đúng, order_ref 8 ký tự",
+   "actual": "exit 0; doi-soat-2026-10-01-2026-10-31.csv: 7 dòng (6 đơn + E thieu_don), TONG shopee total 2.600.000/order_amount 2.750.000/payout 1.830.000 = tổng cột (kiểm tay), order_ref 8 ký tự, không PII",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F01-5",
+   "mo_ta": "ÂM file lỗi (cột lạ) + bổ sung F01-5b (số sai/ngày sai/mã đơn trùng)",
+   "lenh": "[F01-5] python -m ingest.settlement_csv --file evidence/itacc_r10/g4/fixtures/qt_shopee_bad.csv --channel shopee || [F01-5b] python -m ingest.settlement_csv --file evidence/itacc_r10/g4/fixtures/qt_shopee_bad2.csv --channel shopee",
+   "expected": "exit 1, không connect, settlement_rows không đổi",
+   "actual": "F01-5 exit 1 '[err] cột lạ'; F01-5b exit 1 nêu 3 lỗi dòng (order_amount, settled_on, mã đơn trùng); settlement_rows vẫn 7",
+   "exit": [
+    1,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "ghi_chu": "F01-5b bổ sung sau khóa: file F01-5 dừng ở lỗi header nên chưa chạm kiểm số/ngày/trùng mã"
+  },
+  {
+   "ma": "F01-6",
+   "mo_ta": "ÂM nạp lại S1",
+   "lenh": "[F01-6] python -m ingest.settlement_csv --file evidence/itacc_r10/g4/fixtures/qt_shopee_s1.csv --channel shopee",
+   "expected": "[skip], không nhân dòng",
+   "actual": "exit 0 '[skip] file quyết toán đã nạp'; settlement_rows 7",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F01-7",
+   "mo_ta": "file xuất lại S2 (A nguyên văn, B số khác)",
+   "lenh": "[F01-7] python -m ingest.settlement_csv --file evidence/itacc_r10/g4/fixtures/qt_shopee_s2.csv --channel shopee || [F01-7r] python -m ingest.settlement_csv --report || [F01-7-q] python evidence/itacc_r10/g4/harness/q.py select channel, count(*), sum(order_amount_vnd), sum(payout_vnd) from v_settlement_khoan group by 1 ; select channel, count(*), sum(order_amount_vnd), sum(payout_vnd) from settlement_rows group by 1",
+   "expected": "[warn] trùng 1 lệch 1; tổng tính A 1 lần, B giữ cả hai",
+   "actual": "exit 0 [warn] chồng kỳ trùng 1, lệch 1; v_settlement_khoan shopee 7 khoản (thô 8 dòng): order_amount 3.050.000 vs thô 4.050.000 → A không cộng lần 2; --report in 'trùng 1, lệch 1 … lệch giữ cả hai'",
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F01-8",
+   "mo_ta": "ÂM tắt finance-01 (chạy cuối)",
+   "lenh": "[TAT-finance-01] python -m pipelines.rollout --disable finance-01 --by Người Thử IT --note kiem nhanh tat IT r10 || [F01-8] python -m ingest.settlement_csv --reconcile || [TAT-fin-q2] python evidence/itacc_r10/g4/harness/q.py select count(*), max(reconciled_at) from recon_results ; select object_type, count(*) from approval_queue group by 1 order by 1 ; select count(*) from affiliate_attributions ; select count(*) from invoice_lines",
+   "expected": "exit 2 [blocked]; recon_results không đổi",
+   "actual": "exit 2 '[blocked] … finance-01 đang tắt … không đối soát'; recon_results 9 dòng, max(reconciled_at) không đổi",
+   "exit": [
+    0,
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Mapping cột Seller Center + biểu phí là GIẢ ĐỊNH (data/settlement_map.json, settlement_fees.json) — chưa xác minh với file thật; kiểm trên fixture giả. Quan sát: file CSV của kd_orders --recon tên doi-soat-<since>-<until>.csv trùng tiền tố báo cáo finance-06 (doi-soat-) — không qua write_report nên không đếm, nhưng dễ nhầm tên.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-1a.txt",
+   "sha256": "3d3899f03530eccfd9de2fc4fd6d0c4c7fadbe67fbf05d1278ba0921d15b396b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-1b.txt",
+   "sha256": "742dbc280f833442748856efb1aafa5c8706fd0b4ac163e5d4f33b80cf7ca2b9"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-1c.txt",
+   "sha256": "5951c165da0828c7295080c82469d8fffe3612410ff1d02446607b94f020e193"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-1-q.txt",
+   "sha256": "69c7217615ed1cefe69828a9e4b970794948fffe45f80339ff6d4971c73309a6"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-2.txt",
+   "sha256": "19641b2086096a051ccf278569f7946300fa6fb1cfcf737636b4136d3e4886dd"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-2-q.txt",
+   "sha256": "0ba2f28a1426800a210be80ae38d6c5173523ccc6e62d58d22ccf4db9232afab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-3.txt",
+   "sha256": "a16979201ec0968b33c4297ee83e2bd013a23c3ee467a29807d5e20a1a0dd3d4"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-4.txt",
+   "sha256": "fa03692b23c44e23682bed9598a955a19e10ad31857b455bfee7e22993771260"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-5.txt",
+   "sha256": "1da96480ec6302d8acb0deb12c084b927cff406f8e2c3cc7aff1b9bc0c83cb4c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-5b.txt",
+   "sha256": "6a23ae7f13b0ede72097809a16d1f9ee78dc8d768d80b69dde540c184094ba8d"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-6.txt",
+   "sha256": "92805db74c1b3742f2ddb14ff3841edec868d22162482499daf6e7334a4f3532"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-7.txt",
+   "sha256": "4f8f91a420a446dce6567c09b43056a65704f5f2904eba01e6c8137250840774"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-7r.txt",
+   "sha256": "fdffa197d73acbc866afecc00b78d009471662f7620f433b338cf447224a6e0e"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-7-q.txt",
+   "sha256": "826d6474466e9fd7d07efa9a3d45e910ebe0366128853b11596fc0ad3eac51c6"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F01-8.txt",
+   "sha256": "6c28379256c9bf45370f5e00c51ec0eeed29b30e7d13499efdc4ec9dfc2d44f2"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-finance-01.txt",
+   "sha256": "95763d38a6785a5ce4fdf9a1c6d04d016cd440cc97bd0ef9d6a38353f978f1a9"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-fin-q2.txt",
+   "sha256": "0c8b06bfd64deab09a82da2860968efcf2e3a0d9d7f2f6059d205e4e0c1f642c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/doi-soat-2026-10-01-2026-10-31.csv",
+   "sha256": "c05450a7f4a669454187b3c63b5a0a52a3e42a33b0c19c45d091cdcec6adc32a"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": []
+}

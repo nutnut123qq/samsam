@@ -1,0 +1,28 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-09.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/sales-07.3/20261024T112032-a05b/scratch/s073/kd-forecast-2026-11-09.md",
+    "sha256": "779a09d9ba7644ee78a93d8e9c02c921fe6129ce09332af2b83d2d35278c3f4d"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\sales-07.3\\20261024T112032-a05b\\scratch/s073/kd-forecast-2026-11-09.md",
+  "re": "saphraton-20v: tồn 450[^\\n]*MẪU",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) >= 1 and bool_and(is_sample) from report_outputs where feature_id = 'sales-07.3' and name = 'kd-forecast-2026-11-09.md'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

@@ -1,0 +1,157 @@
+{
+ "id": "ceo-04.5",
+ "ten": "So voucher/khuyến mãi đang chạy với bản đã duyệt",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Kiểm soát nội bộ: 'Mỗi ngày so ... voucher đang chạy với bản đã duyệt'",
+ "tieu_chi": [
+  "T1 `python -m agents.ceo_promo [--plan] [--running] [--as-of] [--dry-run]` exit đúng",
+  "T2 mục ceo/promo_deviation created_by=agent:ceo_audit pending cho mỗi lệch: KM listing không có bản duyệt → km_ngoai_ke_hoach; giá KM file sâu hơn kế hoạch → km_sau_hon_duyet; KM khớp kế hoạch không sinh mục; payload có nguồn (sha file/snapshot), không tiêu đề listing",
+  "T3 ca âm: dry-run không ghi; chạy lại cùng đầu vào không nhân bản; file kế hoạch lỗi → exit 1 trước connect; tắt → exit 2 0 mục",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_ceo; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [
+  {
+   "ten": "it_g1_km_plan.csv",
+   "sha256": "fa70be66a2ae6c9958c42312a1090e1f6d58fbacf7c24df09e7f312b30d40fe0",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_km_running.csv",
+   "sha256": "a9d73e513148f4f344c5be7995ff3074c28a4834687a18926a3fffadbc2c2f51",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_km_running2.csv",
+   "sha256": "2e22b8c80ca84d8466779eba8bb73cb7327790570d3052dcc4f43ecedcd05a76",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_km_plan_loi.csv",
+   "sha256": "2155b6f51a574009f02a0b65e2b50516ab56b738d76173805513dffa6f052192",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Dry-run",
+   "lenh": "python -m agents.ceo_promo --plan evidence/itacc_r10/g1/harness/it_g1_km_plan.csv --running evidence/itacc_r10/g1/harness/it_g1_km_running.csv --as-of 2026-10-23 --dry-run",
+   "expected": "exit 0, approval_queue không đổi",
+   "actual": "dry-run: 5 KM chạy, khớp 1, lệch 4, 'KHÔNG ghi DB'; approval_queue 5→5",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Chạy thật",
+   "lenh": "python -m agents.ceo_promo --plan evidence/itacc_r10/g1/harness/it_g1_km_plan.csv --running evidence/itacc_r10/g1/harness/it_g1_km_running.csv --as-of 2026-10-23",
+   "expected": "exit 0; mục promo_deviation: km_ngoai_ke_hoach (saphraton-20v listing KM không kế hoạch), km_sau_hon_duyet (savina file giá KM < kế hoạch); khớp không sinh mục",
+   "actual": "4 mục ceo/promo_deviation created_by=agent:ceo_audit pending: km_ngoai_ke_hoach sapentol (file) + saphraton-20v (listing s1), km_khac_loai savina flash_sale, km_sau_hon_duyet savina 120.000<140.000; savina listing 140.000 khớp kế hoạch → không sinh mục; payload có sha256 kế hoạch + nguồn dòng/listing, không tiêu đề listing. Ghi chú: quy % → giá dùng giá list golden CHƯA duyệt (sapentol 417.000)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Chạy lại",
+   "lenh": "python -m agents.ceo_promo --plan evidence/itacc_r10/g1/harness/it_g1_km_plan.csv --running evidence/itacc_r10/g1/harness/it_g1_km_running.csv --as-of 2026-10-23",
+   "expected": "exit 0, 0 mục mới",
+   "actual": "chạy lại: mới 0, đẩy 0; vẫn 4 mục",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Kế hoạch lỗi",
+   "lenh": "python -m agents.ceo_promo --plan evidence/itacc_r10/g1/harness/it_g1_km_plan_loi.csv --as-of 2026-10-23",
+   "expected": "exit 1, không connect, 0 mục",
+   "actual": "--plan không hợp lệ dòng 2 cột loai_km — 0 dòng, trước connect",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Tắt",
+   "lenh": "python -m agents.ceo_promo --plan evidence/itacc_r10/g1/harness/it_g1_km_plan.csv --running evidence/itacc_r10/g1/harness/it_g1_km_running2.csv --as-of 2026-10-23",
+   "expected": "exit 2, 0 mục; bật lại",
+   "actual": "tắt ceo-04.5 → [rollout] exit 2, promo_deviation vẫn 4 (0 mục mới với file running2); bật lại",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Kế hoạch KM/file KM là fixture; ghi chú: quy % → giá dùng giá list golden kể cả CHƯA duyệt (payload sapentol 417.000) — nên xem lại",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_km_plan.csv",
+   "sha256": "fa70be66a2ae6c9958c42312a1090e1f6d58fbacf7c24df09e7f312b30d40fe0"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_km_plan_loi.csv",
+   "sha256": "2155b6f51a574009f02a0b65e2b50516ab56b738d76173805513dffa6f052192"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_km_running.csv",
+   "sha256": "a9d73e513148f4f344c5be7995ff3074c28a4834687a18926a3fffadbc2c2f51"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_km_running2.csv",
+   "sha256": "2e22b8c80ca84d8466779eba8bb73cb7327790570d3052dcc4f43ecedcd05a76"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo045_C01.txt",
+   "sha256": "00ab1c3ad521eeba22ac9d6728bdea8c46d3cb8ed1c0a5e1cc35db4cee27703b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo045_C02.txt",
+   "sha256": "0b5d32d2d721220c6a878a82e474c588537e0550678cda35591907a6d9fff709"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo045_C03.txt",
+   "sha256": "8ca775ffd2b197acf2dcedcbdced0583a549ba3fa28901019a24ce43380b8763"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo045_C04.txt",
+   "sha256": "fe7946fa49a958934dd48c8516e923f1e20e5932162033aee4fd0cd0716e21a9"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo045_C05.txt",
+   "sha256": "a7ef2050a345a3788fbebf79a7cfceb22a9690c00729a7de99a5e5278fe98aa0"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo045_C05a.txt",
+   "sha256": "bd323844da7b71f20c207d11cace4d8365c1332226370abe6450ce2614b63686"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo045_C05b.txt",
+   "sha256": "af0ac7948a501671aaf7f74d96ff410c0372a4eb245b112a9f96c853b72e9367"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/db_approval_queue_ceo.txt",
+   "sha256": "ce9ecb14195de2f4b39823c082b3e00346a79d5b08505db53e5b22f435d186a6"
+  }
+ ],
+ "loi_san_pham": [],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

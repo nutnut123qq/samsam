@@ -1,0 +1,23 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "-c",
+  "import hashlib,sys\na=hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest()\nb=open(sys.argv[2]).read().strip()\nprint('truoc',b,'sau',a)\nsys.exit(0 if a==b else 1)",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\finance-04.1\\20261024T112157-ff95\\finance-04.1__F041-5\\out/../../finance-04.1__F041-4/out/pnl-2026-09.md",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\finance-04.1\\20261024T112157-ff95\\finance-04.1__F041-5\\out/sha_truoc.txt"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:22:50+07:00",
+ "ket_thuc": "2026-10-24T11:22:50+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "281d55ef7debc01dcfc9a201b984412e24318f40e310c43d505f8c9b9865d317",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

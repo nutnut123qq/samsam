@@ -351,6 +351,11 @@ def main(argv=None) -> int:
         if opening is None:
             ap.error("--opening phải là số nguyên VND")
     start = start or vn_date(datetime.now(VN_TZ))
+    # r12 GATE-OUT: tắt → không in dự báo ra stdout (không chỉ chặn file).
+    from pipelines import rollout
+    why = rollout.blocked(None, "dự báo dòng tiền", fid="finance-05.2")
+    if why:
+        return rollout.say_blocked(why)
     try:
         cfg, a, golden = load_inputs()
     except ValueError as e:
@@ -386,14 +391,12 @@ def main(argv=None) -> int:
         # giai đoạn + sổ `report_outputs`). Không đo được tỷ lệ thực nhận từ
         # quyết toán thật (DB down/thiếu dữ liệu) → cờ mẫu (không đếm).
         from agents.report import write_report
-        from pipelines import rollout
         try:
             p = write_report(render(fc), Path(args.out_dir),
                              f"dong-tien-{start.isoformat()}.md",
                              sample=not measured)
         except rollout.RolloutBlocked as e:
-            print(f"[rollout] {e}", file=sys.stderr)
-            return 2
+            return rollout.say_blocked(str(e))
         print(f"[done] {p}")
     return 0
 

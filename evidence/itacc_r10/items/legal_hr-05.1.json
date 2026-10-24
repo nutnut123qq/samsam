@@ -1,0 +1,152 @@
+{
+ "id": "legal_hr-05.1",
+ "ten": "Hợp đồng mẫu KOC, đại lý",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Hợp đồng, dữ liệu cá nhân: 'Hợp đồng mẫu KOC, đại lý'",
+ "tieu_chi": [
+  "T1 `python scripts/contract_check.py --kind koc|dai_ly --file F --out-dir <thử>` exit 0/1 đúng",
+  "T2 báo cáo hd-mau-<loại>-<sha8>.md chỉ mã điều khoản + sha256 file (không chép nội dung), nhãn CHẠY THỬ; report_outputs 1 dòng feature legal_hr-05.1",
+  "T3 hợp đồng thiếu điều khoản → exit 1 liệt kê id; file rỗng/đuôi lạ → exit 2; tắt → exit 2 không ghi báo cáo",
+  "T4 kiểm từ khóa, không thay luật sư"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_legal; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); --out-dir evidence/itacc_r10/g3/reports",
+ "dau_vao": [
+  {
+   "ten": "docs/legal/mau-hop-dong-koc-NHAP.md",
+   "sha256": "4598f2196c05bf611f9e59426089827ae12b670fcfa9939e34e42347e8081431",
+   "provenance": "file repo (đọc, không sửa)"
+  },
+  {
+   "ten": "docs/legal/mau-hop-dong-dai-ly-NHAP.md",
+   "sha256": "271a5510e2629db202cc2f51ce743c7e009919769097a30a14a23638ed73a674",
+   "provenance": "file repo (đọc, không sửa)"
+  },
+  {
+   "ten": "tests/fixtures/mkt/hop-dong-koc-thieu-MAU.md",
+   "sha256": "bad1145342c9ec1ea2d55b646508976d0bfd172bac55bcfb9877e8d8d306f4a6",
+   "provenance": "file repo (đọc, không sửa)"
+  },
+  {
+   "ten": "harness/fixtures/empty.md",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/contract.pdf",
+   "sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "05.1-C1",
+   "mo_ta": "hợp đồng KOC",
+   "lenh": "python scripts/contract_check.py --kind koc --file docs/legal/mau-hop-dong-koc-NHAP.md --out-dir evidence/itacc_r10/g3/reports",
+   "expected": "exit 0 + báo cáo T2",
+   "actual": "đủ 9 điều khoản; hd-mau-koc-4598f219.md nhãn CHẠY THỬ, chỉ sha + mã; report_outputs legal_hr-05.1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.1-C2",
+   "mo_ta": "hợp đồng đại lý",
+   "lenh": "python scripts/contract_check.py --kind dai_ly --file docs/legal/mau-hop-dong-dai-ly-NHAP.md --out-dir evidence/itacc_r10/g3/reports",
+   "expected": "exit 0",
+   "actual": "đủ 9 điều khoản (dai_ly)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.1-C3",
+   "mo_ta": "thiếu điều khoản",
+   "lenh": "python scripts/contract_check.py --kind koc --file tests/fixtures/mkt/hop-dong-koc-thieu-MAU.md --out-dir evidence/itacc_r10/g3/reports",
+   "expected": "exit 1",
+   "actual": "exit 1 liệt kê go_24h, cam_ruou, nghia_vu_nguoi_chuyen_tai",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.1-C4",
+   "mo_ta": "rỗng / .pdf",
+   "lenh": "python scripts/contract_check.py --kind koc --file evidence/itacc_r10/g3/harness/fixtures/empty.md",
+   "expected": "exit 2",
+   "actual": "exit 2 'file rỗng' / 'chỉ nhận .md|.txt'",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.1-C5",
+   "mo_ta": "tắt",
+   "lenh": "python scripts/contract_check.py --kind koc --file docs/legal/mau-hop-dong-koc-NHAP.md --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/hd_off",
+   "expected": "exit 2 không file",
+   "actual": "exit 2 [rollout], thư mục rỗng, report_outputs không thêm",
+   "exit": 2,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "Kiểm từ khóa, không thay luật sư; hợp đồng mẫu NHÁP.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.1-C1.txt",
+   "sha256": "ce5a4b65a6ac9cc69f3941bfab8fa109be6bd755c022efdebc919e9d8048989b"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.1-C2.txt",
+   "sha256": "2414c972979616b21246f983626f81a524681e23ff6fa432cb8a33e8e9876967"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.1-C3.txt",
+   "sha256": "19608b0e36c28ef1ca7b3b41a06153b940ca09e09a05aea5280703cbc5e2a62a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.1-C4a.txt",
+   "sha256": "e3c009f844e9219fbe4ac41ce9198da1f49f34483740291d2cd1eb5180bb588a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.1-C4b.txt",
+   "sha256": "bbe94fc1874e706b0316d151af9cceaa02917bd9f1d6bb57aa9f69b13740210e"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.1-C5a.txt",
+   "sha256": "30fb9627d367ecb5b4b9cfc947a1d7726afe5a5dc587bbe3450fa25ab9d7e003"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.1-C5.txt",
+   "sha256": "e99deea2cadc4938914851ec9e62aa1f9385ad55ce634042477ec40189796424"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.1-C5b.txt",
+   "sha256": "ee2f1412d8039d2f7db2c32350afc54e19d0802c3281a24093191d7e1a4078ce"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/reports/hd-mau-koc-4598f219.md",
+   "sha256": "21df865b2c9103eedef8b90dec81d8495bce62299300f9643df80006974e077e"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/reports/hd-mau-dai_ly-271a5510.md",
+   "sha256": "2f824b79a918771e42737f09dd7b67644b493d7e11639e8155f94ddcdab75b2f"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/reports/hd-mau-koc-bad11453.md",
+   "sha256": "d996b863f151b9f9cd0378d3936421d15b6883d9d7ecb34f41463301d4394df2"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "Q2",
+   "muc_do": "quan sát",
+   "mo_ta": "contract_check --out-dir luôn ghi report_outputs is_sample=false, kể cả khi kiểm file mẫu test (tests/fixtures/...MAU.md) — có thể đếm file mẫu thành đầu ra.",
+   "tai_hien": "L-05.1-C3",
+   "evidence": [
+    "evidence/itacc_r10/g3/out/L-05.1-C3.txt"
+   ]
+  }
+ ]
+}

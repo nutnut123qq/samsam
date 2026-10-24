@@ -1,0 +1,35 @@
+"""FIXTURE data_platform-08 lượt 2 (KHÔNG phải bằng chứng ngày chạy thử hợp đồng).
+Lượt 1 (approval_queue) không dựng được: trigger approval_queue_guard ép created_at = now()
+(đúng thiết kế — chặn lùi giờ đầu ra). Lượt 2 dùng nguồn đếm `documents` của
+data_platform-02.2 (cột created_at không bị ép) để kiểm NHÁNH ĐỦ ĐIỀU KIỆN của cổng:
+  1) mốc chạy thử lùi về T0 qua CHÍNH hàm rollout.disable/promote (tham số now → function DB);
+  2) 50 dòng documents GIẢ (filename fixture_thu_it_*, sha256 của chuỗi fixture) rải 8 ngày LV.
+Nâng giai đoạn sau đó bằng CLI thật `rollout --promote` (DB rollout_transition_human đếm lại)."""
+import hashlib, os, sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+import psycopg
+from pipelines import rollout
+VN = timezone(timedelta(hours=7)); FID = "data_platform-02.2"; BY = "Người Thử IT"
+T0 = datetime(2026, 10, 12, 8, 0, tzinfo=VN)
+feats, shift = rollout.load_features(), rollout.load_shift()
+conn = psycopg.connect(os.environ["DATABASE_URL"])
+print("disable@T0:", rollout.disable(conn, FID, BY, note="FIXTURE thử IT g5 — lùi mốc", now=T0))
+print("promote tat->chay_thu@T0+1m:", {k: v for k, v in rollout.promote(conn, feats, FID, BY, shift, now=T0 + timedelta(minutes=1)).items() if k != "facts"})
+days = [d for d in (T0.date() + timedelta(days=i) for i in range(1, 12)) if d.weekday() < 5][:8]
+for i in range(50):
+    d = days[i % len(days)]
+    sha = hashlib.sha256(f"it-g5-fixture-doc-{i}".encode()).hexdigest()
+    conn.execute("insert into documents (sha256, filename, doc_type, pages, text_source, pii_flag, status, created_at)"
+                 " values (%s, %s, 'khac', 1, 'pdf_text', false, 'pending_review', %s)",
+                 (sha, f"fixture_thu_it_{i:03d}.pdf", datetime(d.year, d.month, d.day, 10, i % 50, tzinfo=VN)))
+conn.commit()
+print("days:", [d.isoformat() for d in days])
+print("stage:", conn.execute("select stage, stage_since from feature_rollout where feature_id=%s", (FID,)).fetchone())
+print("db recount:", conn.execute("select rollout_recount_human(%s)", (FID,)).fetchone()[0])
+f = next(x for x in feats if x["id"] == FID)
+st, since = conn.execute("select stage, stage_since from feature_rollout where feature_id=%s", (FID,)).fetchone()
+fa = rollout._facts(conn, f, st, since, datetime.now(VN), shift)
+print("python facts:", {k: fa[k] for k in ("days", "outputs", "out_days", "human", "target", "why")})

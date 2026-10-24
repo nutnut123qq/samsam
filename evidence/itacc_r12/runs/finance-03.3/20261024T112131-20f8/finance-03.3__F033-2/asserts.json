@@ -1,0 +1,32 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and block = 'finance' and status = 'pending' and created_by = 'agent:acc_ar'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL01:%' and payload like '%HD-IT-001%' and payload like '%31/07/2026%' and payload like '%84 ngày%' and payload like '%HD-IT-002%' and payload like '%13 ngày%' and payload like '%12.000.000%' and payload like '%ar_ok.csv%' and payload like '%8031bc6d%' and payload like '%{{TEN_DAI_LY}}%' and payload like '%{{NGUOI_KY}}%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL03:%' and payload like '%1.000.000%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and object_id like 'ar:IT-DL02:%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ar_reminder' and (payload like '%Đại lý Thử IT%' or title like '%Đại lý Thử IT%')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

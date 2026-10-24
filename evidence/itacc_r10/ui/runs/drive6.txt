@@ -1,0 +1,25 @@
+PASS  dang_nhap_ui_sai_mat_khau  {}
+PASS  chua_mo_quyen_khong_quyet_bang_login_chung  {"db": ["pending", null, "agent:mkt02", "postgres", "marketing", null]}
+PASS  mo_quyen_sai_mat_khau_postgres  {}
+PASS  mo_quyen_dung_nguoi_ghi_bang_chung_dang_nhap  {"login_checks": 1}
+PASS  nguoi_dung_khoi_duyet_draft_agent  {"db": ["approved", "marketing ui một", "agent:mkt02", "postgres", "marketing", null]}
+PASS  tao_nhap_qua_ui_bang_login_nguoi  {"db": ["pending", null, "Marketing UI Một", "it_ui_mkt1", "marketing", null]}
+PASS  nguoi_tao_khong_tu_duyet_nhap_ai_ho_tro  {"db": ["pending", null, "Marketing UI Một", "it_ui_mkt1", "marketing", null]}
+PASS  xep_lich_bi_chan_khi_chay_thu  {"stage": "chay_thu", "db": ["approved", "marketing ui một", "agent:mkt02", "postgres", "marketing", null]}
+PASS  xep_lich_bang_login_nguoi_khi_van_hanh_fixture  {"db": ["approved", "marketing ui một", "agent:mkt02", "postgres", "marketing", "2026-10-23"]}
+PASS  login_db_thuoc_nguoi_khac_bi_tu_choi  {}
+PASS  doi_nguoi_khong_dung_lai_ket_noi_cu  {}
+PASS  nguoi_khac_dung_khoi_duyet_nhap_cua_nguoi_tao  {"db": ["approved", "marketing ui hai", "Marketing UI Một", "it_ui_mkt1", "marketing", null]}
+PASS  tu_choi_bang_login_nguoi  {"db": ["rejected", "marketing ui hai", "agent:mkt02", "postgres", "marketing", null]}
+PASS  sai_khoi_khong_duyet_duoc  {"db": ["pending", null, "agent:mkt02", "postgres", "marketing", null]}
+PASS  hang_duyet_chung_dung_khoi_bang_login_nguoi  {"db": ["approved", "bán hàng ui"]}
+PASS  vai_tro_sales_khong_co_content_studio  {"tabs": ["Chat Sâm Sâm", "Chưa trả lời", "Leads", "Báo cáo", "Duyệt & Lịch"]}
+PASS  tgd_thay_du_7_tab  {"tabs": ["Chat Sâm Sâm", "Content Studio", "Chưa trả lời", "Leads", "Báo cáo", "Nhật ký vườn", "Duyệt & Lịch"]}
+PASS  loi_nhap_brief_rong_khong_sinh  {}
+FAIL  chat_cau_thuong_co_tra_loi  {"expected": "câu thường được trả lời (kèm nguồn hoặc nói thiếu dữ liệu)", "actual": {"so_tin_hien": 2, "loi_tren_trang": true}}
+PASS  chat_cau_suc_khoe_chuyen_nguoi_che_pii  {"convlog_moi": 1, "convlog_o_thu_muc_thu": "out"}
+PASS  tab_chua_tra_loi_hien_cau_chuyen_nguoi  {"so_cau_chua_tra_loi": 1}
+PASS  tab_leads_hien  {}
+PASS  bao_cao_sinh_vao_thu_muc_thu_khong_vao_repo  {"file": ["report-2026-10-16_2026-10-23.md"]}
+FAIL  tab_nhat_ky_vuon_doc_duoc_db  {"expected": "form Ghi nhật ký hiện (đọc plots/plot_logs bằng login svc_ui)", "actual": "Lỗi đọc DB — thử tải lại trang."}
+TỔNG 26 bước, FAIL 2 · 2026-10-23T10:56:46

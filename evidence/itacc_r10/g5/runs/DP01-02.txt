@@ -1,0 +1,15 @@
+# ca: DP01-02
+# env: DB thử khối dp (DSN che)
+# cmd: python /d/code/samsam/evidence/itacc_r10/g5/harness/q.py select rolname, rolcanlogin from pg_roles where rolname in ('svc_webhook','svc_job','svc_loader','svc_backup','app_human','ben_a_reader','agent_writer','svc_ui','bks_reader') order by 1
+# exit: 0
+# thoi_gian: 2026-10-23T10:41:01+0700
+-- select rolname, rolcanlogin from pg_roles where rolname in ('svc_webhook','svc_job','svc_loader','svc_backup','app_human','ben_a_reader','agent_writer','svc_ui'
+('agent_writer', False)
+('app_human', False)
+('ben_a_reader', False)
+('bks_reader', False)
+('svc_backup', False)
+('svc_job', False)
+('svc_loader', False)
+('svc_ui', False)
+('svc_webhook', False)

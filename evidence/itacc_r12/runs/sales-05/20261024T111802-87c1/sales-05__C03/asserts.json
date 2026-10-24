@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from b2b_requests",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from b2b_requests where org_name ilike '%spam%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from contacts c where row_to_json(c)::text like '%0900000301%' or row_to_json(c)::text ilike '%lienhe.thu.it@example.com%' or row_to_json(c)::text like '%Người Liên Hệ Thử IT%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

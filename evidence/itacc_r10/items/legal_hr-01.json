@@ -1,0 +1,89 @@
+{
+ "id": "legal_hr-01",
+ "ten": "Kiểm duyệt nội dung tự động",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Kiểm duyệt nội dung tự động: 'Chặn từ cấm, chặn rượu, bắt buộc câu khuyến cáo và nhãn AI trước khi trình duyệt'",
+ "tieu_chi": [
+  "T1 entry point thật `pipelines.guardrail.check/check_publish`, `guardrail_llm.check_publish_llm`, `kb_filter.is_alcohol` qua script harness (module API)",
+  "T2 từ cấm/claim y tế bị chặn (mã vi phạm), văn bản sạch ok; claim ngầm 'đối tượng bệnh + lời chứng' → ngam_y_suc_khoe ở check_publish; rượu bị nhận diện; SĐT trong văn bản đăng bị cờ PII; nháp thật (01.1) mang guardrail_result",
+  "T3 LLM-check (fake ở biên): luật đã chặn → skipped 0 call; LLM lỗi → llm_check_unavailable (fail-closed); LLM cờ → thêm violation, không bao giờ gỡ chặn luật; tắt mặc định (model rỗng) → off",
+  "T4 không gọi OpenRouter thật"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_legal; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: LLM-check qua llm_gateway._client giả trong harness/guardrail_cases.py (GUARDRAIL_LLM_MODEL đặt trong script)",
+ "dau_vao": [
+  {
+   "ten": "harness/guardrail_cases.py",
+   "sha256": "e6a5a486aa3938d0c0d775e8e5af6aee9eec11ad165d9f477c3ebccdfb253734",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "01-C1",
+   "mo_ta": "bộ ca luật (R1–R4, P1–P5, K1)",
+   "lenh": "python evidence/itacc_r10/g3/harness/guardrail_cases.py evidence/itacc_r10/g3/out/01-C1C2.cases.json",
+   "expected": "mọi ca khớp",
+   "actual": "10/11 PASS: từ cấm/claim chặn, sạch ok, ngam_y_suc_khoe bắt claim ngầm, thiếu nhãn AI chặn, rượu chặn, kb_filter đúng; P4 SĐT cá nhân trong bài đăng → ok=True (kỳ vọng cờ PII)",
+   "exit": 1,
+   "ket_qua": "FAIL"
+  },
+  {
+   "ma": "01-C2",
+   "mo_ta": "LLM-check qua fake (L0–L6)",
+   "lenh": "python evidence/itacc_r10/g3/harness/guardrail_cases.py evidence/itacc_r10/g3/out/01-C1C2.cases.json",
+   "expected": "off/skipped/pass/flag/unavailable đúng",
+   "actual": "7/7 PASS: off (0 call), skipped khi luật chặn (0 call), pass, flag thêm llm_ngam_y_suc_khoe, JSON sai/provider lỗi → llm_check_unavailable (fail-closed), injection không gỡ chặn",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "01-C3",
+   "mo_ta": "nháp thật mang guardrail",
+   "lenh": "q.py content_drafts (DB mkt)",
+   "expected": "guardrail không null",
+   "actual": "DB mkt: nháp #1,#2 guardrail ok=true + required_labels (out/01.1-C1.db.json)",
+   "exit": null,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Thêm kiểm PII (SĐT/email cá nhân, trừ pii_allow công ty) vào guardrail đăng bài, hoặc Pháp chế xác nhận không yêu cầu (khi đó sửa tiêu chí).",
+ "gioi_han": "Không chạy red-team toàn bộ (điều phối viên); LLM-check thật tắt mặc định — chỉ fake. Tiêu chí P4 suy từ invariant PII của AGENTS.md (khung không ghi rõ).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/L-01-C1C2.txt",
+   "sha256": "c64a799b93f319677be84574b7f329040ae57bb67cb64489cf478d9af7aa9e95"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-01-C1C2.cases.json",
+   "sha256": "1cdf8fe85257f01ecd5e985c4960ee030edad03167fcf2b2247b77f89421b749"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/guardrail_cases.py",
+   "sha256": "e6a5a486aa3938d0c0d775e8e5af6aee9eec11ad165d9f477c3ebccdfb253734"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/01.1-C1.db.json",
+   "sha256": "f5ce761d5c219b9d9e8349e4c496982ef9665d1e6f85fdd15413b3ee58ca9b79"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "D2",
+   "muc_do": "thấp–trung bình",
+   "mo_ta": "guardrail.check_publish (và check) không phát hiện SĐT cá nhân trong văn bản đăng — nháp chứa SĐT thô vẫn ok=True và có thể lưu vào content_drafts (trái invariant AGENTS.md: PII khách chỉ nằm trong contacts dạng mã hóa).",
+   "tai_hien": "python evidence/itacc_r10/g3/harness/guardrail_cases.py (ca P4: 'Đặt quà Thử IT gọi 0900000123 nhé.' + nhãn AI, kênh facebook/shopee/zalo/web)",
+   "expected": "ok=False (cờ PII)",
+   "actual": "ok=True, 0 vi phạm (mọi kênh)",
+   "evidence": [
+    "evidence/itacc_r10/g3/out/L-01-C1C2.txt"
+   ]
+  }
+ ]
+}

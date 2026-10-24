@@ -1,0 +1,9 @@
+# ca: DP073-03
+# env: DB thử khối dp (DSN che)
+# cmd: python scripts/deploy_gate.py --sha 16b33fc9b4f0e0ff45dbeab78972100909ec0340 --approved-by Người Thử IT
+# exit: 1
+# thoi_gian: 2026-10-23T10:51:35+0700
+[deny] không deploy '16b33fc9b4f0e0ff45dbeab78972100909ec0340':
+  - agent guardrail: chưa có eval_runs cho SHA này
+  - agent chatbot: chưa có eval_runs cho SHA này
+  - danh sách người duyệt chưa được công ty cấp (external-dep) — không ai duyệt được

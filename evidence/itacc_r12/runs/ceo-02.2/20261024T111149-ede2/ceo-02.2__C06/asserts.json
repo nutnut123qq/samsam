@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from decision_log c where c.entry_kind = 'cap_nhat' and c.follow_status = 'xong' and c.parent_id = (select id from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT')",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select follow_status from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT'",
+  "expect": "mo",
+  "actual": "mo",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from decision_log",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ }
+]

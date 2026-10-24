@@ -1,0 +1,90 @@
+{
+ "id": "legal_hr-06.3",
+ "ten": "Chấm công",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Nhân sự: 'chấm công'",
+ "tieu_chi": [
+  "T1 `python -m agents.pc_hr --attendance F --month 2026-09` exit 0",
+  "T2 approval_queue legal_hr/hr_attendance pending: ngày công, đi trễ/về sớm (lần+phút), thiếu chấm, vắng theo luật ca khớp tính độc lập; chỉ mã NV",
+  "T3 file lỗi (header sai/ngày tương lai/mã NV dạng SĐT/trùng) → exit 1 0 dòng; chạy lại → không trùng",
+  "T4 không tính lương/không kỷ luật"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_legal; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/att.csv",
+   "sha256": "7530568ece433ed1ac497f2a4165aec31f19b8a2bcc524022d5e7a4382e7b238",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/att_bad.csv",
+   "sha256": "0be3cb9e0b1e22997e9dfd5d7e088a6284998e8c12452ee238f530533851ca80",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "data/hr/attendance_rules.json",
+   "sha256": "9252fa34fb01918fb019a334e0694d8035b62c884619d9014f2c901e678c9c42",
+   "provenance": "file repo (đọc, không sửa)"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "06.3-C1",
+   "mo_ta": "chấm công T9",
+   "lenh": "python -m agents.pc_hr --attendance evidence/itacc_r10/g3/harness/fixtures/att.csv --month 2026-09",
+   "expected": "hr_attendance khớp tính tay",
+   "actual": "mục #9: NV-IT01 4 | 1/10 | 1/10 | 1 | 18 | 1; NV-IT02 1 | 0/0 | 0/0 | 0 | 21 | 0 — khớp out/L-06.3-C1.expected.txt",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.3-C2",
+   "mo_ta": "mã NV dạng SĐT",
+   "lenh": "python -m agents.pc_hr --attendance evidence/itacc_r10/g3/harness/fixtures/att_bad.csv --month 2026-09",
+   "expected": "exit 1",
+   "actual": "exit 1, không connect",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.3-C3",
+   "mo_ta": "chạy lại",
+   "lenh": "python -m agents.pc_hr --attendance evidence/itacc_r10/g3/harness/fixtures/att.csv --month 2026-09",
+   "expected": "không trùng",
+   "actual": "[skip]",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "Luật ca GIẢ ĐỊNH; holidays rỗng (2/9 tính ngày làm — đúng ghi chú sản phẩm).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/L-06.3-C1.txt",
+   "sha256": "f587bd2bd2d089d353b5d52dd146487f0b14c622eaa41e75565c2cd1eb4ca372"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-06.3-C1.expected.txt",
+   "sha256": "303033536d719e187ae3bce35441bfa6af6932318ac5715906022a0e4a46215a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-06.3-C1.db.json",
+   "sha256": "296fc3b66a24bda1fd5a069add6f47b5810ccbcb44db591c7f2421f3d328016a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-06.3-C2.txt",
+   "sha256": "d4c16b4a200843e853a61eedd3574e708556af18e5d320eb7cd41d17eab1df15"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-06.3-C3.txt",
+   "sha256": "247128d11e83b55b9a063b8c7d55432403889fe03ca566a23ef7b575d95c6f65"
+  }
+ ],
+ "loi_san_pham": []
+}

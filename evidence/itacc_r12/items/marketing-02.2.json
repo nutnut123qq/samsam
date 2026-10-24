@@ -1,0 +1,839 @@
+{
+ "id": "marketing-02.2",
+ "ten": "Video 15–45 giây từ tư liệu thật",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Ảnh và video AI: 'video 15–45 giây từ tư liệu thật; luôn gắn nhãn AI'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/marketing-02.2.json",
+  "sha256": "d85fab6c96fbc98b01e625932393440ee64e9a867bcbfa4f0b365303096799b4"
+ },
+ "ly_do_chay_lai": "r10/r11 CODE_FAIL (D1) — kiểm lại toàn bộ ca đã khóa sau bản vá r12",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_marketing_b.json",
+ "tieu_chi_sha256": "f0eac3b2cfa9d56afff36f3462ed744c54c44ba19588cd3f48446ff6c1dc7773",
+ "tieu_chi_khoa": "r12_marketing_b.json f0eac3b2cfa9d56afff36f3462ed744c54c44ba19588cd3f48446ff6c1dc7773 2026-10-24T08:54:35+07:00",
+ "tieu_chi": [
+  "T1 `python -m pipelines.video_studio` chạy được với ffmpeg (FFMPEG_BIN/imageio-ffmpeg), exit 0",
+  "T2 mp4 15–45 giây, không track âm thanh, không metadata vị trí; content_drafts content_type='video' created_by='agent:mkt04' pending + video_assets sha256 = sha file; caption có nhãn AI + nhãn QC; câu chạm giá bị bỏ; nhãn AI hiện trên khung trích (đầu/giữa/cuối) kiểm độc lập (verify_video.py.txt r10)",
+  "T3 kịch bản LLM có từ cấm sau 1 lượt sửa → kich_ban, 2 lời gọi AI, 0 file/dòng; brief cấm → brief_cam 0 lời gọi AI; TTS lạ → exit 2, 0 lời gọi AI; tắt (r12 D1) → exit 2 '[rollout] … marketing-02.2', không traceback, 0 lời gọi AI (đếm ở biên _client), 0 mp4/nháp",
+  "T4 không có đường gửi/đăng ra ngoài; wrap chặn socket ngoài localhost; không lời gọi OpenRouter thật; B-roll chỉ dùng khi có license (B-roll MẪU có licenses.json MẪU)"
+ ],
+ "moi_truong": "Docker postgres 127.0.0.1:55451, DB riêng samsam_itacc_r12_m022/m031/m032/m061/m072 dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống); rollout --seed trên DB thử (tính năng = chạy thử); AI giả ở biên (wrap.py.txt), socket ngoài localhost bị chặn; ffmpeg = imageio-ffmpeg (requirements). DB samsam_itacc_r12_m022.",
+ "run_id": "20261024T111303-1305",
+ "ca": [
+  {
+   "ma": "marketing-02.2__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout (r10 mkt-seed dùng chung DB; r12 DB riêng) + golden FIXTURE + packshot MẪU + B-roll MẪU có license (r10 FIXTURE, nay chép vào {FX12}/items, dùng bản sao ở {SCR})",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:03+07:00",
+      "ket_thuc": "2026-10-24T11:13:04+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.golden_store --file evidence\\itacc_r12\\fixtures/items/marketing-02.2/golden_fixture_food.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:04+07:00",
+      "ket_thuc": "2026-10-24T11:13:06+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/mk_packshot.py.txt evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/packshots mat-ong-sam-300ml",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:06+07:00",
+      "ket_thuc": "2026-10-24T11:13:10+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step03.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step03.stderr.txt"
+     },
+     {
+      "argv": "python -c import shutil,sys; shutil.copytree(sys.argv[1], sys.argv[2]) evidence\\itacc_r12\\fixtures/items/marketing-02.2/broll evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/broll",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:10+07:00",
+      "ket_thuc": "2026-10-24T11:13:10+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step04.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step04.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01"
+  },
+  {
+   "ma": "marketing-02.2__C1",
+   "nguon_r10": "02.2-C1",
+   "mo_ta": "dựng video từ packshot/B-roll MẪU, LLM giả trả 4 cảnh (1 cảnh chứa giá)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "mat-ong-sam-300ml × facebook × 9:16: created #\\d+ [0-9a-f]{64}\\.mp4"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)(?=.*SHA_DB_KHOP )(?=.*duration_s (?:1[5-9]|[23]\\d|4[0-4])(?:\\.\\d+)?\\s|.*duration_s 45(?:\\.0+)?\\s)(?=.*audio_streams 0 video_streams 1\\b)(?=.*metadata_location_or_time False)(?=.*\\bt=0.5s label_region_meandiff_vs_first=)(?=.*\\bt=6s label_region_meandiff_vs_first=)(?=.*\\bt=10s label_region_meandiff_vs_first=)(?=.*\\bt=15.5s label_region_meandiff_vs_first=)(?!.*meandiff_vs_first=(?:\\d{2,}|nan|inf))(?!.*label_region_stddev=(?:\\d|1\\d)\\.\\d\\b)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{SCR}/video_c1/*.mp4",
+      "count": 1
+     },
+     {
+      "file_re": "{OUT}/llm.json",
+      "re": "\"kind\": \"chat\"",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video' and created_by = 'agent:mkt04' and status = 'pending' and channel = 'facebook'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video' and text like '%Nội dung có sử dụng AI%' and text like '%Quảng cáo%' and text not like '%150.000%' and text not like '%Giá chỉ%'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from video_assets",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.video_studio --sku mat-ong-sam-300ml --channel facebook --brief Video quà tặng mật ong sâm Thử IT cho gia đình",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "mat-ong-sam-300ml × facebook × 9:16: created #\\d+ [0-9a-f]{64}\\.mp4",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:10+07:00",
+      "ket_thuc": "2026-10-24T11:13:26+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step01.stderr.txt"
+     },
+     {
+      "argv": "python -c import glob,hashlib,os,runpy,sys,psycopg; d,sql,v=sys.argv[1:4]; f=glob.glob(d+'/*.mp4'); assert len(f)==1,f; h=hashlib.sha256(open(f[0],'rb').read()).hexdigest(); c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); n=c.execute(sql,(h,)).fetchone()[0]; c.close(); print('SHA_DB_KHOP' if n==1 else 'SHA_DB_LECH',h,n,flush=True); sys.argv=[v,f[0]]+sys.argv[4:]; runpy.run_path(v,run_name='__main__') evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/video_c1 select count(*) from video_assets where file_sha256 = %s and created_by = 'agent:mkt04' and draft_id = (select max(id) from content_drafts where content_type = 'video') evidence\\itacc_r10/g3/harness/verify_video.py.txt 32 1670 1016 154 0.5 6 10 15.5",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*SHA_DB_KHOP )(?=.*duration_s (?:1[5-9]|[23]\\d|4[0-4])(?:\\.\\d+)?\\s|.*duration_s 45(?:\\.0+)?\\s)(?=.*audio_streams 0 video_streams 1\\b)(?=.*metadata_location_or_time False)(?=.*\\bt=0.5s label_region_meandiff_vs_first=)(?=.*\\bt=6s label_region_meandiff_vs_first=)(?=.*\\bt=10s label_region_meandiff_vs_first=)(?=.*\\bt=15.5s label_region_meandiff_vs_first=)(?!.*meandiff_vs_first=(?:\\d{2,}|nan|inf))(?!.*label_region_stddev=(?:\\d|1\\d)\\.\\d\\b)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:26+07:00",
+      "ket_thuc": "2026-10-24T11:13:29+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/video_c1/*.mp4",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/scratch/video_c1/355a05bff071e050d4b33bc472b29cf21a3ad7388d212df32f9b2807d7da3edd.mp4",
+        "sha256": "355a05bff071e050d4b33bc472b29cf21a3ad7388d212df32f9b2807d7da3edd"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\marketing-02.2__C1\\out/llm.json",
+      "re": "\"kind\": \"chat\"",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video' and created_by = 'agent:mkt04' and status = 'pending' and channel = 'facebook'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video' and text like '%Nội dung có sử dụng AI%' and text like '%Quảng cáo%' and text not like '%150.000%' and text not like '%Giá chỉ%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from video_assets",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1"
+  },
+  {
+   "ma": "marketing-02.2__C2",
+   "nguon_r10": "02.2-C2",
+   "mo_ta": "LLM trả từ cấm cả 2 lượt",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "refused kich_ban"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/llm.json",
+      "re": "\\A\\[\\{\"kind\": \"chat\"[^{}]*\\}, \\{\"kind\": \"chat\"[^{}]*\\}\\]\\s*\\Z",
+      "expect": true
+     },
+     {
+      "file_glob": "{SCR}/video_c2/*.mp4",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from video_assets",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief Video quà tặng Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "refused kich_ban",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:29+07:00",
+      "ket_thuc": "2026-10-24T11:13:35+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C2/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\marketing-02.2__C2\\out/llm.json",
+      "re": "\\A\\[\\{\"kind\": \"chat\"[^{}]*\\}, \\{\"kind\": \"chat\"[^{}]*\\}\\]\\s*\\Z",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/video_c2/*.mp4",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from video_assets",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C2"
+  },
+  {
+   "ma": "marketing-02.2__C3",
+   "nguon_r10": "02.2-C3",
+   "mo_ta": "brief 'chữa bệnh'",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "refused brief_cam"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/llm.json",
+      "re": "\\A\\[\\]\\s*\\Z",
+      "expect": true
+     },
+     {
+      "file_glob": "{SCR}/video_c3/*.mp4",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from video_assets",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief Mật ong sâm giúp chữa bệnh mất ngủ",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "refused brief_cam",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:35+07:00",
+      "ket_thuc": "2026-10-24T11:13:40+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\marketing-02.2__C3\\out/llm.json",
+      "re": "\\A\\[\\]\\s*\\Z",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/video_c3/*.mp4",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from video_assets",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C3"
+  },
+  {
+   "ma": "marketing-02.2__C4",
+   "nguon_r10": "02.2-C4",
+   "mo_ta": "TTS_PROVIDER lạ (elevenlabs)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stderr_re": "TTS_PROVIDER='elevenlabs' chưa cắm"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/llm.json",
+      "re": "\\A\\[\\]\\s*\\Z",
+      "expect": true
+     },
+     {
+      "file_glob": "{SCR}/video_c4/*.mp4",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief Video quà tặng Thử IT",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "TTS_PROVIDER='elevenlabs' chưa cắm",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:40+07:00",
+      "ket_thuc": "2026-10-24T11:13:45+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C4/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\marketing-02.2__C4\\out/llm.json",
+      "re": "\\A\\[\\]\\s*\\Z",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/video_c4/*.mp4",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C4"
+  },
+  {
+   "ma": "marketing-02.2__C5",
+   "nguon_r10": "02.2-C5",
+   "mo_ta": "tính năng tắt — r10 FAIL (D1: gọi LLM rồi traceback exit 1); r12 kỳ vọng hành vi đúng: exit 2 '[rollout] … marketing-02.2', không traceback, 0 lời gọi AI, 0 mp4/dòng",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\][^\\n]*marketing-02\\.2",
+      "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "{OUT}/llm.json",
+      "re": "\\A\\[\\]\\s*\\Z",
+      "expect": true
+     },
+     {
+      "file_glob": "{SCR}/video_c5/*",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from content_drafts where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-02.2' and kind = 'disable')",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from video_assets",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable marketing-02.2 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:13:45+07:00",
+      "ket_thuc": "2026-10-24T11:13:47+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief Video quà tặng Thử IT",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\][^\\n]*marketing-02\\.2",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:13:47+07:00",
+      "ket_thuc": "2026-10-24T11:13:52+07:00",
+      "stdout": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step02.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\marketing-02.2__C5\\out/llm.json",
+      "re": "\\A\\[\\]\\s*\\Z",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\marketing-02.2\\20261024T111303-1305\\scratch/video_c5/*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'video'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from content_drafts where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-02.2' and kind = 'disable')",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from video_assets",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/ket_qua.json",
+   "sha256": "210969a4a7f7d52ad5b91a440dabbe00d0ff136d9a7410efe97e92897efda192"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/asserts.json",
+   "sha256": "2f3ee450d9f48007e5b51ce34f81a32705716c30f178fbc54822a5a8ae9ac630"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/case.json",
+   "sha256": "e1688daacb7bac1feb2f6bd594de3e816aeb66eeed784ffdb81e8ea5c58371e8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/out/llm.json",
+   "sha256": "0d011e79fb6570b5d6a418a1887b747973322d33c5843ff156d936cfcd42d8bd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step01.cmd.json",
+   "sha256": "9d8e879abd79b8b9e7fd3cf92b003191377738123bcfbc610f4d0b0ee33d5eaa"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step01.stdout.txt",
+   "sha256": "7ef45344d4b8071d68168838dc6d362510ec724344c8757968751b98b51c62df"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step02.cmd.json",
+   "sha256": "62e04805956c476931eecf3682e628f9c37811c45c61410ca5b03ff6a1b7f821"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C1/step02.stdout.txt",
+   "sha256": "e1f974f9cece44e0676964c308346e3cc72d5612e5f92c362c89dfa2ed8dc048"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C2/asserts.json",
+   "sha256": "e0b134cf1cb81dbf2cfdea75fde78fe4d6e1ef44b65a7bcac38c85feaa356354"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C2/case.json",
+   "sha256": "393ee05d3c5a7bd1a5a4f52127823a570555df51e06613660f00e3efef062486"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C2/out/llm.json",
+   "sha256": "8c589998a53cd8d8d52d7513ddeec75cff8f9fb7f547c8988fd4a12d4fed55e0"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C2/step01.cmd.json",
+   "sha256": "2ce74f012803fd762ec48a3dd040cae964b5ee43351896acc2de10378dfb7e5e"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C2/step01.stdout.txt",
+   "sha256": "31dbc0344829a111befef5eb1b7be8747782a60ba7dcf7bce3899e201d45ecf8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C3/asserts.json",
+   "sha256": "fadd9387334472c85564330258df9fdc2e1b4dc678bd945bad809ae588ad7000"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C3/case.json",
+   "sha256": "5c18e68ce09a598e5c15f8e13216f623dc0a76742f58414e1ab95a652d77fa81"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C3/out/llm.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C3/step01.cmd.json",
+   "sha256": "482b95de34f14fa7b391c8b06c8339812f7ee38f8f755a03587ee0d20bc04d05"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C3/step01.stdout.txt",
+   "sha256": "7e2d1aea347504429dcb8e4f02ff5a3b48a23208b4455ffe7492eac638e54cb4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C4/asserts.json",
+   "sha256": "ae86d7525c23268edea630f6cff934bb83408ca6a8c9cd075fc40b4008f1e152"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C4/case.json",
+   "sha256": "a2af23d6c9c1c67e6748fa41ba61f18ec264ec18199908a97083253f52083b64"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C4/out/llm.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C4/step01.cmd.json",
+   "sha256": "d48407ddd0110d18d1c1e14bc67b3f482dc378f8f3fe20c413cb5509c78d178b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C4/step01.stderr.txt",
+   "sha256": "550e5bafe95083b980e8f33f18d6786d8456b4739c09ccf61dd18204ffb73d0a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C4/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/asserts.json",
+   "sha256": "dfcd34cbdbd52b4545951718233756575b862f18653adc9c1db1c76edb48b516"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/case.json",
+   "sha256": "3bd85961811615308884ab8585a3969086e307f8ce842eb82c151f0d445e895c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/out/llm.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step01.cmd.json",
+   "sha256": "2ef42850bdce753c86ddb59e215996a8282b1d1cee72b78e88c18ddedbc96f95"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step01.stdout.txt",
+   "sha256": "5bbcc3f021cd8bd48af99f731dfb445640fc2b68cbb1785a5e4808f540728dae"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step02.cmd.json",
+   "sha256": "ef9653a85d36e240e5a145e8ff3ddbbfe6f2b7082d80b66bca6ecfd61328d6f6"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__C5/step02.stdout.txt",
+   "sha256": "00b67934788303f50e74e3b4487952be88e7b1ce7dad83e8e56e9d7ab0658491"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/case.json",
+   "sha256": "91c9734af62fa250a1b1f8cf19585bae2a602972a3121884c25332549acf7c6d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step01.cmd.json",
+   "sha256": "46436217715591eb1c8346bfa3ad53753df3a86aaa8dc8ed03685e60c0d55250"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step02.cmd.json",
+   "sha256": "686c5a075d6d2db67c0259f0c4dafb73259047ada0e04d9b562f0349a2cce168"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step02.stdout.txt",
+   "sha256": "3bd938efc3a980a40723330e0ce633e12b4401b0086d81cad0137edf65b2833a"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step03.cmd.json",
+   "sha256": "d8028cc4bea75acb9ca96927cc22944939e0bce7e7f90758934863499f8adc85"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step03.stdout.txt",
+   "sha256": "55393f7935d7a829abdb2cfca1d5fcd903843a5b1de7449467be90dc37f38b4b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step04.cmd.json",
+   "sha256": "93a3eb7579aeff1539ab56833e152fcf71f06b6008252b822fc16e2779df2bb8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step04.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/marketing-02.2__S01/step04.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/scratch/broll/broll-vuon-thu-it.png",
+   "sha256": "4930589cddce14e1806446ae052d6c338f1d32c614ebbe78e43a82bc660525a5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/scratch/broll/licenses.json",
+   "sha256": "ff892e4e3e23bdc1e8cd3bc3a20d470529722f15858e170acfc4324b0aa4c783"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/scratch/packshots/mat-ong-sam-300ml.png",
+   "sha256": "aabab111cb0dbbe9929f163d12949cabbbc10050baff605da05521d9d8a5d38d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/scratch/video_c1/355a05bff071e050d4b33bc472b29cf21a3ad7388d212df32f9b2807d7da3edd.json",
+   "sha256": "06233b52092fcbe178769d16b7f3a34e3a2b46aacb056e59840a99ae36bceb4b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/marketing-02.2/20261024T111303-1305/scratch/video_c1/355a05bff071e050d4b33bc472b29cf21a3ad7388d212df32f9b2807d7da3edd.mp4",
+   "sha256": "355a05bff071e050d4b33bc472b29cf21a3ad7388d212df32f9b2807d7da3edd"
+  }
+ ],
+ "loi_san_pham": []
+}

@@ -1,0 +1,135 @@
+{
+ "id": "marketing-05.2",
+ "ten": "Soạn nháp trả lời bình luận, đánh giá",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Bình luận, đánh giá: 'soạn nháp trả lời'",
+ "tieu_chi": [
+  "T1 `python -m agents.mkt_ugc --reviews F --channel shopee --by` và `--mentions --since` exit 0",
+  "T2 mục marketing/ugc_reply pending theo lớp phân loại; câu hỏi sức khỏe không lặp claim; payload KHÔNG chép nội dung khách/PII; ugc_reuse chỉ khi can_contact marketing",
+  "T3 chạy lại → skip; --reuse không có đồng ý → bị chặn 0 dòng; thiếu muối → exit 1",
+  "T4 agent không tự trả lời/nhắn khách"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); INTEL_HASH_SALT/CONTACT_VAULT_KEY = giá trị thử (key Fernet sinh mới, chỉ ở scratchpad)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/reviews_shopee.csv",
+   "sha256": "6a9bc005051acf1bb3d8091b7cd56266ed8238bb06eb352cc33e0255c3160af9",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "05.2-C1",
+   "mo_ta": "review file",
+   "lenh": "python -m agents.mkt_ugc --reviews evidence/itacc_r10/g3/harness/fixtures/reviews_shopee.csv --channel shopee --by Người Thử IT",
+   "expected": "ugc_reply theo lớp, không chép lời khách",
+   "actual": "5 mục #10-#14 marketing/ugc_reply pending (khen/che/claim_suc_khoe/sp_cam_qc/hoi_gia); câu sức khỏe = template không lặp claim; payload không chứa lời khách/SĐT/tên (kiểm chuỗi)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C2",
+   "mo_ta": "từ social_mentions",
+   "lenh": "python -m agents.mkt_ugc --mentions --since 2026-10-01 --by Người Thử IT",
+   "expected": "ugc_reply theo nhãn",
+   "actual": "6 mục #15-#20 kênh facebook theo nhãn 05.1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C3",
+   "mo_ta": "chạy lại",
+   "lenh": "python -m agents.mkt_ugc --reviews evidence/itacc_r10/g3/harness/fixtures/reviews_shopee.csv --channel shopee --by Người Thử IT",
+   "expected": "skip",
+   "actual": "skip 5, 0 mục mới",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C4",
+   "mo_ta": "--reuse không đồng ý",
+   "lenh": "python -m agents.mkt_ugc --reuse ugc-2ee024993c4c70d7 --contact-id 1 --by Người Thử IT",
+   "expected": "bị chặn",
+   "actual": "exit 1 UGC_NO_CONSENT, 0 ugc_reuse",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C4b",
+   "mo_ta": "bổ sung sau khóa (T2 'ugc_reuse chỉ khi can_contact'): grant consent marketing rồi --reuse; lớp nhạy cảm vẫn chặn",
+   "lenh": "python -m agents.mkt_ugc --reuse ugc-2ee024993c4c70d7 --contact-id 1 --by Người Thử IT",
+   "expected": "ugc_reuse khi có consent; claim_suc_khoe bị chặn",
+   "actual": "#21 ugc_reuse pending sau consent #1; UGC_SENSITIVE cho lớp claim_suc_khoe (05.2-C4c)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C5",
+   "mo_ta": "thiếu muối",
+   "lenh": "python -m agents.mkt_ugc --reviews /reviews_shopee.csv --channel shopee --by Người Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 trước connect",
+   "exit": 1,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "out/05.2-C1..C4.txt TÁI TẠO từ transcript (trùng mã ca); 05.2-C1.pii_check.txt tính lại từ 05.2-C1.db.json gốc. Review file xuất tay.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C1.txt",
+   "sha256": "b11de86bb3572b836b1b7aa274341afe89a8e4aaeb36c8bf94b78e5573023a21"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C1.db.json",
+   "sha256": "884c97f7f67c598b903f804fa2c40aeaf4f4808e223699b4ac8a7a57817b72cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C1.pii_check.txt",
+   "sha256": "d1448c3d77f8721ee1fdd8a49e071076e3df837ec8e49ceff1f099c56eeea941"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C2.txt",
+   "sha256": "e42fb508d24c4671553d9597e47a088e09b98b3b09d55e27efc41525981dadc9"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C3.txt",
+   "sha256": "bf247fd2f65e23ce295a2dc0a951d5b244a208059995c818418e511fc7a8327f"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C4a.txt",
+   "sha256": "ad60fc1855fbb6be107324c40d2c6867de7f1912fd5e0e873d78ce57fc902452"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C4.txt",
+   "sha256": "d9d898ecaee699113bdbb6cc41d0ce7df52a41ac42f9b642539af131a2bdce25"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C4b1.txt",
+   "sha256": "c6e84758c9db0c1b88c6ca744f4cf3567828e1d48be5133730d924a8a9407c21"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C4b.txt",
+   "sha256": "bd299af9c1edbeccda0eb933bda35e6917b9ed78a2c67954267c4e836374eec8"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C4c.txt",
+   "sha256": "ce43ef75459e4989a80897abe96f42f9166d3d6909d1d674b6eaf2f3492bcacd"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/05.2-C5.txt",
+   "sha256": "9c41c8dd89dcd78ab79d5190c4c196b0f854737248ef6e67405c3dd4c0ba6ded"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/reconstruct_mkt.py",
+   "sha256": "08030f099938a7ba32b76467e474bb577a94c128e20681c85e1a5d68c93c785f"
+  }
+ ],
+ "loi_san_pham": []
+}

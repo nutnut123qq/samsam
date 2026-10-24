@@ -1,0 +1,37 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.mkt_director",
+  "--briefs",
+  "--today",
+  "2026-10-23"
+ ],
+ "env_doi": [
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:21:07+07:00",
+ "ket_thuc": "2026-10-24T11:21:11+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  },
+  {
+   "out_re": "calendar_broken\\.json[^\\n]*JSON hỏng",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "450b114634535f474b3c5e1c8e050663cc84624249db1601bdeaac3b9bde4a62"
+}

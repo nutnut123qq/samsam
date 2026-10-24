@@ -1,0 +1,214 @@
+{
+ "id": "production-02",
+ "ten": "Hồ sơ sản phẩm",
+ "khoi": "production",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Sản xuất, R&D / Hồ sơ sản phẩm: 'Hồ sơ gốc 14 sản phẩm (thành phần, quy cách, số công bố); cấp dữ liệu chuẩn cho mọi kênh'",
+ "tieu_chi": [
+  "C1 golden_store --file nạp golden → sku_master/price_list (chờ duyệt) + golden_discrepancies có detail theo từng nguồn (không 'đề xuất')",
+  "C2 golden lỗi (vi phạm R1/file rỗng) → exit 1, 0 ghi; nạp lại → không nhân dòng price_list",
+  "C3 product_dossiers --check trên sổ thật → exit 2 BLOCKED nêu đúng phần thiếu (0/14 hồ sơ, SKU chưa gắn); bộ kiểm hoạt động trên fixture (đủ → 0, lệch số công bố → 1)",
+  "C4 duyệt giá chỉ người (agent: bị chặn)"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_prod; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/golden_prod.json",
+   "sha256": "4db38d4adf991dc769ffe1079054aa491969d33479217698c34d5dfa7d013061",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/golden_bad.json",
+   "sha256": "7d16337df7126532530c725bcac3a95c67b1c17c946743ab45b1a40caafa0274",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/golden_empty.json",
+   "sha256": "ea03cb0485d8f69e5559fb6fbb90800d013201d029f96b0dc445e32e9f0bd040",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/dossier_full.json",
+   "sha256": "f15ebfa2250ffcd105b4abe397030096bf310da38df402dc6fe0de7c968c3390",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/dossier_lech.json",
+   "sha256": "b5d56d12c437266e909806c5fed1112377b711be657d3c48d6354fcab89d8669",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "P02-1",
+   "mo_ta": "nạp golden fixture (savina-12v quy cách 12→10 viên)",
+   "lenh": "[P02-0-q] python evidence/itacc_r10/g4/harness/q.py select count(*) from price_list ; select kind, count(*) from golden_discrepancies group by 1 order by 1 ; select pack_spec, version from sku_master where sku_key='savina-12v' || [P02-1] python -m ingest.golden_store --file evidence/itacc_r10/g4/fixtures/golden_prod.json || [P02-1-q] python evidence/itacc_r10/g4/harness/q.py select count(*) from price_list ; select kind, count(*) from golden_discrepancies group by 1 order by 1 ; select pack_spec, version, source from sku_master where sku_key='savina-12v' ; select kind, sku_key, product_id, status, detail from golden_discrepancies where kind='spec_mismatch' order by id",
+   "expected": "phiếu spec_mismatch; detail theo nguồn",
+   "actual": "exit 0 sku_changed=1 (version 2); golden_discrepancies +2 spec_mismatch pending, detail {web: 12 viên, golden: 10 viên} — không có trường đề xuất; price_list giữ 34 dòng chờ duyệt",
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P02-2",
+   "mo_ta": "ÂM idempotent",
+   "lenh": "[P02-2] python -m ingest.golden_store --file evidence/itacc_r10/g4/fixtures/golden_prod.json",
+   "expected": "price_list không thêm",
+   "actual": "exit 0 sku_changed=0 price_same=34; tổng không đổi",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P02-3",
+   "mo_ta": "ÂM golden vi phạm R1 / rỗng",
+   "lenh": "[P02-3a] python -m ingest.golden_store --file evidence/itacc_r10/g4/fixtures/golden_bad.json || [P02-3b] python -m ingest.golden_store --file evidence/itacc_r10/g4/fixtures/golden_empty.json",
+   "expected": "exit 1, 0 ghi",
+   "actual": "bad: exit 1 R1+R2 'không nạp gì'; empty: exit 1 'không connect, không ghi/xóa'; price_list 34, discrepancies 41, version max 2 không đổi",
+   "exit": [
+    1,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P02-4",
+   "mo_ta": "report phiếu lệch",
+   "lenh": "[P02-4] python -m ingest.golden_store --report",
+   "expected": "liệt kê pending",
+   "actual": "exit 0 '41 phiếu lệch pending (giá trị theo nguồn, agent không chọn)'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P02-5",
+   "mo_ta": "ÂM agent duyệt giá",
+   "lenh": "[P02-5] python -m ingest.golden_store --approve-price 2 --by agent:x",
+   "expected": "exit !=0",
+   "actual": "exit 1 \"'agent:x' không phải người\"; price_list #2 approved_by vẫn null",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P02-6",
+   "mo_ta": "hồ sơ gốc thật",
+   "lenh": "[P02-6] python -m ingest.product_dossiers --check",
+   "expected": "exit 2 BLOCKED 0/14 + SKU chưa gắn",
+   "actual": "exit 2 '[blocked] danh mục hồ sơ gốc: 0/14', '[blocked] SKU golden đã gắn hồ sơ gốc: 0/13'",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P02-7",
+   "mo_ta": "bộ kiểm trên fixture đủ / lệch",
+   "lenh": "[P02-7a] python -m ingest.product_dossiers --check --file evidence/itacc_r10/g4/fixtures/dossier_full.json --golden evidence/itacc_r10/g4/fixtures/golden_prod.json || [P02-7b] python -m ingest.product_dossiers --check --file evidence/itacc_r10/g4/fixtures/dossier_lech.json --golden evidence/itacc_r10/g4/fixtures/golden_prod.json",
+   "expected": "đủ 0; lệch 1",
+   "actual": "dossier_full exit 0 (13/13 — fixture GIẢ, chỉ để chạy bộ kiểm); dossier_lech exit 1 'số công bố lệch golden của savina-12v'",
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "EXTERNAL_INPUT",
+ "can_de_go": "Bên B cung cấp danh_muc_ho_so_goc 14 hồ sơ (tên, thành phần, quy cách, số công bố, xác nhận + căn cứ) và gắn mọi SKU golden vào data/product_dossiers.json → product_dossiers --check exit 0.",
+ "gioi_han": "Phần con golden master + phiếu lệch + bộ kiểm hồ sơ chạy đúng trên fixture; đầu ra thiết yếu 'hồ sơ gốc 14 sản phẩm' chưa có dữ liệu. Chính sách cổng tắt loader chưa cấu hình (data/loader_gate.json chinh_sach null — loader in 'CHƯA CẤU HÌNH').",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-0-q.txt",
+   "sha256": "80934e84fbfd7009178a4e67498cd3236bccaca508c81877c0032b2dd81f81b4"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-1.txt",
+   "sha256": "b2dcfd7ae5ac3ed0fc2662c2f22f6d6cd13e2265004fd7c0cf882cb35c45406b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-1-q.txt",
+   "sha256": "d7bee277d4287f8c2775a32063cf22014afeb89e4160b871167889f86b1a983d"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-2.txt",
+   "sha256": "b2171aa4e22c5e068bf1f9ebb39635fe0cf6d85ed39d761cb666802b56203784"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-3a.txt",
+   "sha256": "2ef9ef2658d3207eeb60a95dba39ebd83925df6b1f529e37d7a1b85a240910c5"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-3b.txt",
+   "sha256": "46b82f3ae34822b686541a7437fc093c8b6fb551a0d0633db675170045217b6e"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-4.txt",
+   "sha256": "40669dc6ad4d3bc935ef0f22c7884ff103a208df6c9b488d596204fa2586ea80"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-5.txt",
+   "sha256": "5063d32d546e95588ada07cd383ca1b7a297ef7af61668036d44c343e6dbceb2"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-6.txt",
+   "sha256": "2dae925d0c8ef77a207aec1752d42b27dd90cb48a2dcc738c6832921a0620254"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-7a.txt",
+   "sha256": "6968e4762f745129ce7a4874a4e9c0a119a06012988f01b97ef3694e4eba77fd"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P02-7b.txt",
+   "sha256": "cccdf98bf627bf65faebeac2f20c8cba68a515a00c847ee79ce04afcb47a3ad4"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-prod.txt",
+   "sha256": "602c88845811a35b82861c29168029e190441247d92c4c6f4f60caf7340c5824"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": []
+}

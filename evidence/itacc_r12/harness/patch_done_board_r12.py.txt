@@ -1,0 +1,61 @@
+"""[r12] Ghi checkpoint r12 vào DONE.md + docs/handover/v13-board.md (số đọc từ evidence/itacc_r12 — tong_hop.json, log gate)."""
+import json
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+EV = ROOT / "evidence" / "itacc_r12"
+T = json.loads((EV / "tong_hop.json").read_text(encoding="utf-8"))["tom_tat"]
+t = T["tong"]
+tot = f"{t.get('DAT', 0)} ĐẠT / {t.get('CHUA_KIEM', 0)} CHƯA KIỂM / {t.get('BI_CHAN', 0)} BỊ CHẶN"
+full = (EV / "gate" / "full_chot_fchot.txt").read_text(encoding="utf-8")
+fr = re.search(r"(\d+ passed[^\n]*)", full).group(1)
+fex = re.search(r"EXIT (\d+)", full).group(1)
+FPC = "57538e8935d0ab71e7b1cd8d803aab397be27cd1ab47516b75a1d437c7435c18"
+cause = ", ".join(f"{k} {v}" for k, v in sorted(T["nguyen_nhan_bi_chan"].items()))
+
+b = ROOT / "docs" / "handover" / "v13-board.md"
+s = b.read_bytes().decode("utf-8")
+anchor = "## Checkpoint mới — Vòng r11 (23/10/2026)"
+assert s.count(anchor) == 1
+board = f"""## Checkpoint mới — Vòng r12 (24/10/2026): VÁ 20 lỗi r10 + kiểm lại 48 mục + UI thật + gate chốt — CHƯA commit/merge/push/deploy
+
+Không dùng DB `samsam`; không đổi `acceptance_status` (0/96 nghiệm thu hợp đồng); không mở rộng adapter vendor/website/quan sát ngoài danh sách. Postgres Docker riêng `samsam-itacc-r12` (127.0.0.1:55451). Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| 20 lỗi r10 | 20/20 **FIXED** trên bản cuối (probe trước/sau cùng input: baseline 22 PASS/56 FAIL → bản cuối 78/78 PASS) | `evidence/itacc_r12/probes/`, `harness/probe_dot*.py.txt` |
+| Hai test fail full sơ bộ | `test_link_ok_and_refusals` (thông báo cũ — thêm ca âm rỗng/agent/system link+unlink); `test_hdtv_off_no_pack` (trả hdtv_report về giao diện v14.3 `[blocked]` stderr) | `gate/full_so_bo_fs1.txt` (FAIL, giữ) |
+| sales-04.2 | tiêu chí v3: chuyển yêu cầu không PII ≠ bàn giao PII; chỉ bàn giao có đồng ý được đếm — căn cứ playbook/SOP/runbook/test nghiệm thu | `criteria/r12_sales_a_v3.json`, `harness/mk_sales_a_v3.py.txt` |
+| UI thật | 28/28 PASS (26 bước r10 + 2 bước mới; baseline tái hiện UI-01/UI-02) | `ui/ui_sau_full_v3_20261024T110553`, `ui/anh_xa_buoc_r10_r12.json` |
+| 48 mục (24 CODE_FAIL + 24 ảnh hưởng) | 47 ĐẠT, farming-01 BỊ CHẶN (MISSING_ADAPTER STT) | `evidence/itacc_r12/items/`, `runs/` |
+| Tổng 96 (48 r12 + 48 kế thừa r10/r11, code sinh) | **{tot}** (r11: 60/0/36); BỊ CHẶN còn lại ngoài code: {cause}; {len(T['loi_nhat_quan'])} vi phạm nhất quán | `tong_hop.json`, `source_map.json` |
+| Gate chốt (fp mã `{FPC[:12]}…`) | full {fr} EXIT {fex}; ruff/eval/DPIA/red-team EXIT 0; secret 0 giá trị thật; nâng cấp schema ×2 OK; S04/S04b/r8/B3/S03/F1/F2 PASS | `evidence/itacc_r12/gate/`, `xuyen_suot/`, `runs/upgrade_up1.txt` |
+
+"""
+b.write_bytes(s.replace(anchor, board + anchor).encode("utf-8"))
+
+d = ROOT / "DONE.md"
+s = d.read_bytes().decode("utf-8")
+h = "## Vòng r11 (23/10/2026)"
+assert s.count(h) == 1
+done = f"""## Vòng r12 (24/10/2026) — vá 20 lỗi nghiệm thu nội bộ r10 + kiểm lại 48 mục — CHƯA commit/merge/push/deploy
+
+Không truy cập DB `samsam`, không đổi `acceptance_status`, không mở adapter vendor/website/quan sát ngoài 20 lỗi.
+Postgres Docker riêng `samsam-itacc-r12`. Fingerprint mã bản cuối (loại *.md) `{FPC}`.
+
+1. Vá 20 lỗi (P-01, UI-01, UI-02, G5-01, G1-L1, G1-L3, D1/P052/L5, L3, L1, L2, F06-6, D2, RB, G1-L4, F031-6, G1-L5,
+   G1-L6, D4, G5-02, GATE-OUT) — probe trước/sau cùng input, baseline tái hiện, bản cuối 78/78 PASS; regression
+   `tests/test_r12_dot2.py`, `test_r12_dot3.py`, `test_r12_dot4.py` + cập nhật test cũ theo hành vi mới (giữ assertion an toàn).
+2. Schema/roles: `plot_log_add_human` (SECURITY DEFINER, human_actor farming), svc_ui SELECT cột plots/plot_logs + chunks,
+   link/unlink_lot_origin dùng human_actor; luật guardrail `pii_ca_nhan` (chờ Pháp chế). Nâng cấp baseline → bản vá ×2 OK.
+3. Full sơ bộ 2 failed (giữ `evidence/itacc_r12/gate/full_so_bo_fs1.txt`): sửa test qr_trace (thêm ca âm), trả hdtv_report về
+   giao diện `[blocked]` đã cam kết.
+4. Kiểm lại 48 mục bằng tiêu chí khóa trước khi chạy (8 nhóm + phiên bản sửa lỗi harness/tiêu chí có lý do) → 47 ĐẠT,
+   farming-01 BỊ CHẶN (adapter STT). UI thật 28/28. Tổng 96: **{tot}** (r11 60/0/36).
+5. Gate chốt: full {fr}, EXIT {fex} (gồm DR Docker); ruff/eval/DPIA/red-team EXIT 0; quét secret 0 giá trị thật (đã che mật
+   khẩu cluster thử lọt vào 2 log full — `gate/GHI_CHU_CHE_SECRET.md`). Runbook mục 10.10.
+
+"""
+d.write_bytes(s.replace(h, done + h).encode("utf-8"))
+print("ok")

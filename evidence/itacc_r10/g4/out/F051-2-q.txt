@@ -1,0 +1,8 @@
+# db samsam_itacc_r10_fin
+> insert into llm_usage (ts, agent_id, model, tokens_in, tokens_out, cost_usd, ok, error, feature_id) values ('2026-10-10 10:00+07','chatbot','fixture/thu-it',1000,500,100,true,'FIXTURE thu IT',null),('2026-10-12 10:00+07','content','fixture/thu-it',1000,500,68,true,'FIXTURE thu IT',null)
+(rowcount 2)
+> select count(*), sum(amount_vnd) from opex_entries
+[3, "12000000"]
+> select agent_id, sum(cost_usd) from llm_usage group by 1
+["chatbot", "100.000000"]
+["content", "68.000000"]

@@ -1,0 +1,215 @@
+{
+ "id": "farming-02.1",
+ "ten": "Nhắc người phụ trách khoảnh",
+ "khoi": "farming",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Vùng trồng / Nhắc ghi nhật ký: 'Nhắc khoảnh lâu không có nhật ký'",
+ "tieu_chi": [
+  "`agents.garden_director --remind --submit` ghi garden_reminders 1 dòng/khoảnh/đợt (dot_key), ma_nv từ staff fixture, status theo kênh (null→cho_kenh; thu_cong→cho_gui; không người→khong_nguoi_nhan), is_sample đúng",
+  "Người đánh dấu đã nhắc `--mark-reminded ID --by` (kênh thu_cong FIXTURE) → reminded_at, chỉ 1 lần",
+  "Ca âm: chạy lại không nhân dòng; --by agent: bị chặn; đánh dấu lần 2 → exit 1",
+  "T4: không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:58:33+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_farm; dev mode (AUTH_MODE trống, DEPLOY tắt); FIXTURE: staff file (khoảnh phụ trách) + cấu hình kênh thu_cong bản sao scratchpad (harness gd_run.py)",
+ "dau_vao": [
+  {
+   "ten": "garden_staff_v2.json",
+   "sha256": "99c6ffd3c3783571dbe1344b38ab4ff68a2262a8e0dbb305cb2dccc462c15a8b",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "garden_staff_v3.json",
+   "sha256": "8d2bb90b051b8c527a47e78f87e07a19a9e9d2a93a2aaa377c3028a1b5162fe7",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "garden_remind_thucong.json",
+   "sha256": "90b5b22460d751d6f2ffdd20f0e78fcde537f0078541d756aae5a4f276c094f8",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F021-01",
+   "mo_ta": "Sinh sổ nhắc",
+   "lenh": "python evidence/itacc_r10/g5/harness/gd_run.py --staff <scratch>/fixtures/garden_staff_v2.json --remind-cfg <scratch>/fixtures/garden_remind_thucong.json --remind --submit",
+   "expected": "1 dòng/khoảnh/đợt, ma_nv, status theo kênh, is_sample",
+   "actual": "garden_reminders: IT-K03 ma_nv IT-NV01 cho_gui thu_cong; IT-K02/IT-K04 khong_nguoi_nhan; KV-A02 gap is_sample=True (dữ liệu mồi đổi IT-K01→IT-K03)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F021-02",
+   "mo_ta": "Idempotent",
+   "lenh": "python evidence/itacc_r10/g5/harness/gd_run.py --staff <scratch>/fixtures/garden_staff_v2.json --remind-cfg <scratch>/fixtures/garden_remind_thucong.json --remind --submit",
+   "expected": "0 dòng mới",
+   "actual": "garden_reminders giữ 4; 0 mục mới",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F021-03",
+   "mo_ta": "Người đánh dấu đã nhắc",
+   "lenh": "python evidence/itacc_r10/g5/harness/gd_run.py --staff <scratch>/fixtures/garden_staff_v2.json --remind-cfg <scratch>/fixtures/garden_remind_thucong.json --mark-reminded 3 --by Người Thử IT",
+   "expected": "exit 0; reminded_at",
+   "actual": "[ok] #3 đã nhắc; reminded_at set, reminded_by 'Người Thử IT'; agent_action_log garden_reminder_done",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F021-03b",
+   "mo_ta": "--reminders",
+   "lenh": "python evidence/itacc_r10/g5/harness/gd_run.py --staff <scratch>/fixtures/garden_staff_v2.json --remind-cfg <scratch>/fixtures/garden_remind_thucong.json --reminders",
+   "expected": "liệt kê đợt mở",
+   "actual": "4 đợt; #3 'đã nhắc'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F021-04",
+   "mo_ta": "Âm: agent ghi thay",
+   "lenh": "python evidence/itacc_r10/g5/harness/gd_run.py --staff <scratch>/fixtures/garden_staff_v2.json --remind-cfg <scratch>/fixtures/garden_remind_thucong.json --mark-reminded 3 --by agent:garden_director",
+   "expected": "exit 1",
+   "actual": "exit 1 'agent:garden_director' không phải người",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F021-05",
+   "mo_ta": "Âm: đánh dấu lần 2",
+   "lenh": "python evidence/itacc_r10/g5/harness/gd_run.py --staff <scratch>/fixtures/garden_staff_v2.json --remind-cfg <scratch>/fixtures/garden_remind_thucong.json --mark-reminded 3 --by Người Thử IT",
+   "expected": "exit 1",
+   "actual": "exit 1 không ở trạng thái chờ",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "F021-06",
+   "mo_ta": "Kênh null (cấu hình repo)",
+   "lenh": "python evidence/itacc_r10/g5/harness/gd_run.py --staff <scratch>/fixtures/garden_staff_v3.json --remind --submit",
+   "expected": "cho_kenh + [blocked]",
+   "actual": "IT-K05 cho_kenh kenh null; in [blocked] chưa chọn kênh; báo GĐ 1 mục",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "Bên B chọn kênh nhắc (data/garden_remind.json kenh, D-KH-09) + điền khoảnh phụ trách trong garden_staff.json",
+ "gioi_han": "Kênh thu_cong và người phụ trách là FIXTURE; với cấu hình repo (kenh=null) mọi khoảnh → cho_kenh + báo thẳng GĐ (F021-06). Dữ liệu mồi IT-K01 đã có nhật ký từ F01 nên ca 'có người' dùng IT-K03 (staff_v2) — ghi lệch so với tiêu chí. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g5/runs/F021-01.txt",
+   "sha256": "ccd7b760d5c83d2c751da1178987f97923de5c87192e5721f4cc0037f2500a47"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F021-02.txt",
+   "sha256": "4238c3eeffa7313434f53d77e4ad1d8aa9dddee07eb2a658d2f4c4c561c6eef5"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F021-03.txt",
+   "sha256": "5dc2f0f8d6e9d358d6fce66464186ec5f9562dc2169a185dc291fa4d02276c6d"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F021-03b.txt",
+   "sha256": "d4db07821381cdd6cd0ed49a1181d3df3006601d5e10e7e25234d68bb38d806f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F021-04.txt",
+   "sha256": "d9d1b469fb7158fd0f7a640f0838d8156e2d28d70ccca69d2a59e4fec915d4b5"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F021-05.txt",
+   "sha256": "de3d972e1db91c50787088ea161138857f4f2d72d6f6c4fb8df5319d83e28a58"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/F021-06.txt",
+   "sha256": "d23e64f4dd992a55df60928d3c6e1a8bffda26fddb0b9f30b304aab2eec2df3e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/check_media.py",
+   "sha256": "9dc52b8eefb2b5ddb13334435174e3083f32f7006c60a6ce8271c7fd20fe4c23"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_llm_run.py",
+   "sha256": "df4672d90c7d9faa51a83ed42a6e1d159bf8eda0bb5aa95860cf15bef3c6fe3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_shopee.py",
+   "sha256": "9402db0719ea6f325d9d75b29af4ce22574dbae49dc2cfc7c24ad459534329cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gd_run.py",
+   "sha256": "84c646e3dd2019f6bc417e9071b5a422d8d37d7f10c0de077db3f303b1f21eaa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gw_probe.py",
+   "sha256": "8038c6f83facb83baab8eb2bb0fbb8b8cb1ab328082e7b6af0b718734f6cf981"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/hold_lock.py",
+   "sha256": "2a511640b93c4a5d3e2529f711f9b3ca07085bbb08b7be3f88383ffc230d1cab"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_criteria_g5.py",
+   "sha256": "6e64178e75ce85a9b8c265c33862e0395c7cdcfcc943ac19b4915e3b53e21dcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_fixtures.py",
+   "sha256": "d5117a5728c04a988c7d151150fa7e7153a45d59f3752eb470c16ed86aabb241"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_items_g5.py",
+   "sha256": "879a76de3bfb1285557de44386e17428ebf513bf1368f5a554b534fad9edfb82"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_pdf.py",
+   "sha256": "f68506f1c8158b51a4a4048c894df8bfbc88d4a14071cb6c3d2393464add3867"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/mod_run.py",
+   "sha256": "0ba336024389f8ea885b2d63bb2056bdee2c03b814a74eb12343daff901a31d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/probe_run.py",
+   "sha256": "c0f2386d31984f5e279392c44c55209837e13b5f93ded55d5c80709c6b3e5105"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/q.py",
+   "sha256": "6b1c569d67e265d3ad9593331334d286cdbc525eb304ca55128eb686e57d97ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/qr_run.py",
+   "sha256": "8dbe083a6119eee0d80849374b7b053ef5bb44cac67abd85bae74a94562571c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/role_probe.py",
+   "sha256": "c1364ecad746feaeddbb98de7853e542a757cc4ddbbaaa6cae8aada075375a07"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture.py",
+   "sha256": "3b5ae3fad7dac20dc7fab16d1d704833bbb85ba6554c4fd41717f5441bed497b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "sha256": "c530ef5bce990aaa8e0393e582192b93687501195dfcbfa32520a3c28be1c90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/tamper.py",
+   "sha256": "0c27a266124476bb3369ed975395dd2d27ec8e30207e31647a817eda7540a186"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/zalo_webhook.py",
+   "sha256": "de7da44a52a26cb27510f89ffc5659c59c22e53f4fd01d7db142760bf371866c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/lib.sh",
+   "sha256": "c3d88bf45e775e5246126bb82b28042b0d4e6bc5e69a80b70e9d4d263c308a3d"
+  }
+ ],
+ "loi_san_pham": []
+}

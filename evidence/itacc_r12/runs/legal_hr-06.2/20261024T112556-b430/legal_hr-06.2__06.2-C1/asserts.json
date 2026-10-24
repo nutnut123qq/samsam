@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'hr_screening' and status = 'pending' and created_by = 'agent:pc_hr'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select 0 < position('`2033d7a8e330`' in p) and position('`2033d7a8e330`' in p) < position('`91244abb6f8b`' in p) and position('`91244abb6f8b`' in p) < position('`583640a67bd7`' in p) and position('`583640a67bd7`' in p) < position('`a32313eb2ca1`' in p) from (select payload from approval_queue where object_type = 'hr_screening' and status = 'pending' order by id limit 1) t(p)",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select p like '%| 4 | `a32313eb2ca1` | — | — | cần người đọc tay%' from (select payload from approval_queue where object_type = 'hr_screening' and status = 'pending' order by id limit 1) t(p)",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select p ~* '(Ứng Viên|0900000|example\\.com|ung-vien|a-it@)' from (select payload from approval_queue where object_type = 'hr_screening' and status = 'pending' order by id limit 1) t(p)",
+  "expect": false,
+  "actual": true,
+  "dat": false
+ }
+]

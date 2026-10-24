@@ -1,0 +1,92 @@
+{
+ "id": "ceo-90",
+ "ten": "Nghĩa vụ hợp đồng ngoài phần mềm",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "nghia_vu_hd",
+ "can_cu": "HĐ Điều 2, 4, 6, 9, 13; PL01 mục 7; PL03; PL04 — nghĩa vụ không phải phần mềm",
+ "tieu_chi": [
+  "Kiểm phần tài liệu/công cụ: sổ nghĩa vụ docs/handover/so-nghia-vu-hop-dong.md có N01–N20, mỗi dòng có căn cứ + trạng thái; danh mục `rollout --catalog` thể hiện ceo-90 ngoài code",
+  "Phần nghĩa vụ thực hiện (nhân sự, đào tạo, trực, góp/hoàn trả, bảo hành, bàn giao/xóa bản sao) KHÔNG chứng minh được trên máy dev → BI_CHAN NON_SOFTWARE"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Máy dev, chỉ đọc tài liệu repo + rollout --catalog (không DB nghiệp vụ)",
+ "dau_vao": [
+  {
+   "ten": "parse_so_nghia_vu.py",
+   "sha256": "c3b6917db90c4493ff738ed4b9f365a22d382c59b47c4ad8888278fb93ca21ef",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Sổ nghĩa vụ đủ cấu trúc",
+   "lenh": "python evidence/itacc_r10/g1/harness/parse_so_nghia_vu.py",
+   "expected": "có N01..N20, mỗi dòng có căn cứ HĐ/PL + trạng thái",
+   "actual": "sổ nghĩa vụ có 22 dòng (N01–N22, đủ N01..N20), mỗi dòng 8 cột (#, nghĩa vụ, căn cứ, owner, hạn, bằng chứng, blocker, trạng thái), căn cứ HĐ/PL (N05 ghi rõ 'không thấy điều khoản riêng'), mọi trạng thái de_xuat. (Lượt 1 parser tách cả '\\|' thoát → lỗi harness, giữ log ceo90_C01_luot1_parser_hong)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Danh mục thể hiện mục ngoài code",
+   "lenh": "python -m pipelines.rollout --catalog",
+   "expected": "exit 0; ceo-90 / ngoai_code xuất hiện",
+   "actual": "rollout --catalog exit 0: 'ngoài 89: … nghia_vu_hd 4', code_status ngoai_code 2; data/contract_features.json ceo-90 pham_vi nghia_vu_hd, code_status ngoai_code, acceptance_status chua_nghiem_thu, output_sources [] (ceo90_C02b)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Thực hiện nghĩa vụ",
+   "lenh": "—",
+   "expected": "NOT_RUN: ngoài phần mềm",
+   "actual": "Thực hiện nghĩa vụ (nhân sự toàn thời gian, bàn giao đầu vào, đào tạo, trực, góp/hoàn trả bằng sản phẩm, bảo hành, bàn giao/xóa bản sao khi chấm dứt) là hành vi ngoài phần mềm của hai bên — không chứng minh được trên máy dev",
+   "exit": "-",
+   "ket_qua": "NOT_RUN",
+   "ly_do_not_run": "Thực hiện nghĩa vụ (nhân sự toàn thời gian, bàn giao đầu vào, đào tạo, trực, góp/hoàn trả bằng sản phẩm, bảo hành, bàn giao/xóa bản sao khi chấm dứt) là hành vi ngoài phần mềm của hai bên — không chứng minh được trên máy dev"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "NON_SOFTWARE",
+ "can_de_go": "Hai bên thực hiện + xác nhận từng nghĩa vụ N01–N22 (nhân sự toàn thời gian, bàn giao đầu vào, đào tạo, trực, góp/hoàn trả bằng sản phẩm, bảo hành, bàn giao/xóa bản sao khi chấm dứt); PL05 chưa được cung cấp",
+ "gioi_han": "Chỉ kiểm cấu trúc sổ + danh mục; mọi nghĩa vụ đang de_xuat",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/parse_so_nghia_vu.py",
+   "sha256": "c3b6917db90c4493ff738ed4b9f365a22d382c59b47c4ad8888278fb93ca21ef"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo90_C01.txt",
+   "sha256": "a3144162f647830e30a06ea1c5322eaa5d9de175351c7519c4af8858f30da0ff"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo90_C01_luot1_parser_hong.txt",
+   "sha256": "a404f9d17d14a41974f9c84ac6f62509ccc875bc9e1c058599793ac48fb4a395"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo90_C02.txt",
+   "sha256": "67e3ea926641d743d2109f2e36e8dc1981ae3b3b6b0ad0b52fa070dd01459177"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo90_C02b.txt",
+   "sha256": "76db81673bda7be5a716f2bbd14fedbf9c3f91da289f384693405daa02124607"
+  }
+ ],
+ "loi_san_pham": [],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

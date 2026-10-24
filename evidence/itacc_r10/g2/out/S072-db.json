@@ -1,0 +1,37 @@
+[
+ {
+  "sql": "select id, object_type, object_id, created_by, status, risk, title, payload from approval_queue where object_type in ('care_review','care_rebuy') order by id",
+  "rows": [
+   {
+    "id": 57,
+    "object_type": "care_rebuy",
+    "object_id": "4:2026-10:p1",
+    "created_by": "agent:kd_a7",
+    "status": "pending",
+    "risk": "high",
+    "title": "Nhắc mua lại — khách #4, lần mua #1",
+    "payload": "Sâm Sâm kính chào Quý khách. Sản phẩm Mật ong sâm 300ml Quý khách đã chọn lần trước hiện vẫn có tại cửa hàng Sâm Sâm trên Zalo. Quý khách muốn đặt thêm vui lòng nhắn lại cho Sâm Sâm. Quý khách không muốn nhận tin này nữa vui lòng nhắn \"Dừng\". Quảng cáo\n---\ncontact_id: 4\nmuc_dich: marketing\ngui_luc: 2026-10-23 10:50 (giờ VN)\nHệ thống KHÔNG tự gửi — người gửi tay phần tin phía trên dòng '---' qua Zalo OA sau khi duyệt và chạy --verify-send."
+   },
+   {
+    "id": 58,
+    "object_type": "care_review",
+    "object_id": "review:1",
+    "created_by": "agent:kd_a7",
+    "status": "pending",
+    "risk": "medium",
+    "title": "Xin đánh giá — khách #4, lần mua #1",
+    "payload": "Sâm Sâm cảm ơn Quý khách đã chọn Mật ong sâm 300ml. Quý khách vui lòng dành chút thời gian chia sẻ đánh giá về sản phẩm và dịch vụ giao hàng để Sâm Sâm phục vụ tốt hơn.\n---\ncontact_id: 4\nmuc_dich: cskh\ngui_luc: 2026-10-23 10:50 (giờ VN)\nHệ thống KHÔNG tự gửi — người gửi tay phần tin phía trên dòng '---' qua Zalo OA sau khi duyệt và chạy --verify-send."
+   },
+   {
+    "id": 59,
+    "object_type": "care_review",
+    "object_id": "review:3",
+    "created_by": "agent:kd_a7",
+    "status": "pending",
+    "risk": "medium",
+    "title": "Xin đánh giá — khách #4, lần mua #3",
+    "payload": "Sâm Sâm cảm ơn Quý khách đã chọn Saphraton 20 viên. Quý khách vui lòng dành chút thời gian chia sẻ đánh giá về sản phẩm và dịch vụ giao hàng để Sâm Sâm phục vụ tốt hơn.\nThực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.\n---\ncontact_id: 4\nmuc_dich: cskh\ngui_luc: 2026-10-23 10:50 (giờ VN)\nHệ thống KHÔNG tự gửi — người gửi tay phần tin phía trên dòng '---' qua Zalo OA sau khi duyệt và chạy --verify-send."
+   }
+  ]
+ }
+]

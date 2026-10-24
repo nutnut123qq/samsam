@@ -1,0 +1,31 @@
+{
+ "muc0": [
+  "## 0. Checkpoint r11 — kiểm lại 6 mục bằng evidence gốc mới (23/10/2026)",
+  "",
+  "- **Vì sao:** controller chưa chấp nhận chốt r10 vì (a) 5 mục marketing dựa trên 20 file log bị ca legal_hr trùng mã ghi đè rồi TÁI TẠO từ transcript; (b) legal_hr-07 được chấm PASS \"theo ý định\" dù ca đã khóa yêu cầu 2 dòng `intel_items` (thực tế 1).",
+  "- **Tiêu chí khóa TRƯỚC khi chạy:** `evidence/itacc_r11/criteria/r11.json` sha256 `601f16a149d825ea76f94ccc3a805cad5f8ac23f10f1aaa3f96eb2a3f7c6cd34` (2026-10-23T14:25:52+07:00); `r11_v2_marketing-03.2.json` sha256 `5dad880992c025b0a5529427e6a373ce17936401a720eead0c6a4c604fe65a87` (2026-10-23T14:38:13+07:00). Tiêu chí khóa r10 (`criteria/g3.json`, sha256 `4de39b8b…581e`) GIỮ NGUYÊN.",
+  "- **Môi trường:** Postgres Docker riêng `samsam-itacc-r11` (`postgres:17-alpine`, chỉ `127.0.0.1:55441`, credential mới không lưu repo); mỗi mục 1 DB mới `samsam_itacc_r11_*` (schema/roles ×2 + core + golden — log `runs/_dung_db/`); mạng ngoài localhost bị chặn trong harness; RSS giả `127.0.0.1:18793`; không LLM/provider thật.",
+  "- **Evidence gốc:** runner `harness/runner.py.txt` — mỗi lần chạy 1 thư mục `runs/<id>/<run_id>/<id>__Cn/`, stdout/stderr gốc + `stepNN.cmd.json` (argv, giờ VN, exit lấy từ tiến trình, sha256), assertion SQL/file máy kiểm `asserts.json`; file mở chế độ không ghi đè; bộ lọc secret tự động (mật khẩu DSN, muối, khóa vault) — không sửa nội dung nghiệp vụ.",
+  "",
+  "| ID | Trạng thái r11 | Mức | Ca PASS/FAIL/NOT_RUN | Lần chạy hiện hành | Thay bản ghi r10 |",
+  "|---|---|---|---|---|---|",
+  "| marketing-03.2 | **ĐẠT** | LOCAL | 10/0/0 | `runs/marketing-03.2/20261023T143832-6f49` | `evidence/itacc_r10/items/marketing-03.2.json` (sha256 `b6ba9e0865f1…`) |",
+  "| marketing-05.1 | **ĐẠT** | LOCAL | 6/0/0 | `runs/marketing-05.1/20261023T143116-fa63` | `evidence/itacc_r10/items/marketing-05.1.json` (sha256 `dabf12075add…`) |",
+  "| marketing-05.2 | **ĐẠT** | LOCAL | 8/0/0 | `runs/marketing-05.2/20261023T143241-897d` | `evidence/itacc_r10/items/marketing-05.2.json` (sha256 `11c26e2d7fe7…`) |",
+  "| marketing-06.1 | **ĐẠT** | LOCAL | 4/0/0 | `runs/marketing-06.1/20261023T143332-24ae` | `evidence/itacc_r10/items/marketing-06.1.json` (sha256 `370bfb591549…`) |",
+  "| marketing-06.2 | **ĐẠT** | LOCAL | 6/0/0 | `runs/marketing-06.2/20261023T143654-f67e` | `evidence/itacc_r10/items/marketing-06.2.json` (sha256 `383540029c9d…`) |",
+  "| legal_hr-07 | **ĐẠT** | MOCK | 6/0/0 | `runs/legal_hr-07/20261023T144012-9ab4` | `evidence/itacc_r10/items/legal_hr-07.json` (sha256 `2fca6cfdc223…`) |",
+  "",
+  "- **Đính chính legal_hr-07 (lỗi KỲ VỌNG của harness, không phải evidence cũ đã đạt ca khóa):** `crawler/intel.py` `build_items()` loại tin 0 chủ đề TRƯỚC khi lưu (`off += 1; continue`). Fixture `rss_it.xml` = 1 tin nghị định quảng cáo TPBVSK + 1 tin không liên quan ⇒ kỳ vọng đúng: CHÍNH XÁC 1 dòng `intel_items` (đúng url/nguồn/tiêu đề/chủ đề tpbvsk), 0 dòng tin lạc, stdout `2 tin, 1 đúng chủ đề, mới 1` + `off_topic=1`. Chạy lại đủ flow: thu RSS → cảnh báo (`legal_doc`, exit 1 fail-closed thiếu người nhận, 0 lần gửi) → `legal_doc_review` pending payload template (link, sha256 tiêu đề, \"KHÔNG diễn giải\") → chạy lại 0 mục mới → tắt `legal_hr-07`: tin mới chỉ có luật `regulation`, `legal_updates` báo tắt, 0 mục mới; `llm_usage` 0 dòng; log http.server chỉ 127.0.0.1.",
+  "- **Đính chính marketing-06.2-C3:** r10 khóa `--ref 2026-10-19` (tuần HIỆN TẠI, chưa đóng → sản phẩm từ chối đúng). r11 khóa tuần đã đóng gần nhất giờ VN 2026-10-12; assertion so 5 chỉ số nội bộ với đếm SQL ĐỘC LẬP cùng khung giờ VN, không median/p90 khi 0 quyết định, chạy lại `inserted=0` (C3b). Giới hạn khóa trước: DB mới, không lùi timestamp → số của kỳ đóng đều 0.",
+  "- **Lỗi harness lượt r11 (đã thay thế):** marketing-03.2 lượt `runs/marketing-03.2/20261023T143204-6665` (tiêu chí v1) — fixture kết quả còn `bien_the=4` (id creative DB r10) trong khi creative phiếu r11 là #1 → sản phẩm từ chối ĐÚNG, C1/C3/C4 FAIL do fixture. Mở tiêu chí v2 chỉ đổi fixture `*_r11.csv` (4→1), expected giữ nguyên, chạy lại toàn bộ trên DB mới `…m032b` → 10/10 PASS. Lượt hỏng giữ nguyên, không tính.",
+  "- **Khác tiêu chí r10 (ghi ở `khac_r10` từng ca):** 03.2-C2 dùng chính phiếu #1 trước khi duyệt (r10 dùng phiếu --propose); bổ sung 05.2-C4b (có đồng ý → 1 `ugc_reuse`), 05.2-C4c (lớp nhạy cảm → UGC_SENSITIVE), 06.2-C3b (insert-only); 05.2-C5 đặt DB host chết để chứng minh thoát trước kết nối.",
+  "- **Evidence r10 yếu GIỮ NGUYÊN làm lịch sử:** `evidence/itacc_r10/g3/out/` (log tái tạo có header), `g3/harness_fixes.tsv`, 6 bản ghi `evidence/itacc_r10/items/`, `evidence/itacc_r10/tong_hop.json` (checkpoint r10). Nguồn hiện hành từng id: `evidence/itacc_r11/source_map.json`; tổng hợp hiện hành: `evidence/itacc_r11/tong_hop.json`.",
+  "- **Kế thừa r10 (KHÔNG chạy lại ở r11):** 90 mục còn lại; full pytest 6619/0/0, UI thật 22/2/2, ruff/eval/DPIA/red-team/DR — chạy ở r10 trên CÙNG fingerprint mã `97051e55…8001` (xác minh lại ở r11: không đổi). Lượt r11 không chạy full pytest (chỉ chạy harness + cập nhật evidence/tài liệu).",
+  "- **Tổng hiện hành (sinh bằng code):** 60 ĐẠT / 0 CHƯA KIỂM / 36 BỊ CHẶN trên 96 — checkpoint r10: 60/0/36. Kiểm nhất quán: 0 vi phạm, 2159 tham chiếu evidence khớp file/hash."
+ ],
+ "chu_thich_muc9": [
+  "> **Chú thích r11:** điểm \"legal_hr-07 ca C1\" và \"Log tái tạo\" bên dưới ĐÃ XỬ LÝ ở r11 (mục 0) — tiêu chí đính chính + chạy lại bằng log gốc mới. Các điểm còn lại (intel-06, D2, marketing-01.1) giữ nguyên như r10.",
+  ""
+ ]
+}

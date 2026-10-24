@@ -1,0 +1,11 @@
+# db samsam_itacc_r10_fin
+> select s.file_name, s.row_no, s.channel, s.order_amount_vnd, s.payout_vnd, s.refund_vnd, s.settled_on, r.label, r.reasons, r.expected_payout_vnd from settlement_rows s left join recon_results r on r.settlement_row_id=s.id order by s.id
+["qt_shopee_s1.csv", 2, "shopee", 1000000, 880000, 0, "2026-09-10", "khop", [], 880000]
+["qt_shopee_s1.csv", 3, "shopee", 300000, 250000, 0, "2026-09-11", "lech", [{"code": "thuc_nhan", "actual": 250000, "expected": 264000}], 264000]
+["qt_shopee_s1.csv", 4, "shopee", 200000, 0, 200000, "2026-09-12", "hoan", [{"code": "phi_co_dinh", "actual": 0, "expected": 8000}, {"code": "phi_thanh_toan", "actual": 0, "expected": 10000}, {"code": "phi_dich_vu", "actual": 0, "expected": 6000}], 0]
+["qt_shopee_s1.csv", 5, "shopee", 400000, -48000, 400000, "2026-09-13", "hoan", [], -48000]
+["qt_shopee_s1.csv", 6, "shopee", 150000, 132000, 0, "2026-10-05", "thieu_chung_tu", [], 132000]
+["qt_shopee_s1.csv", 7, "shopee", 700000, 616000, 0, "2026-09-14", "khop", [], 616000]
+["qt_tiktok.csv", 2, "tiktok", 500000, 440000, 0, "2026-09-15", "khop", [], 440000]
+> select count(*) from settlement_rows
+[7]

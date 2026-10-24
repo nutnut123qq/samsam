@@ -1,0 +1,529 @@
+{
+ "id": "marketing-06.2",
+ "ten": "Báo cáo kênh",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / SEO và báo cáo kênh: 'báo cáo lượt xem, đơn, tỷ lệ hủy'",
+ "luot": "r11",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/marketing-06.2.json",
+  "sha256": "383540029c9df19271b78f98a7dd29bacb1bc442330cd073fd705e8e13078e38"
+ },
+ "ly_do_chay_lai": "r10: 20 file output marketing bị ca legal_hr trùng mã ghi đè rồi TÁI TẠO từ transcript (không phải stdout/stderr gốc). Lượt r11 chạy lại TOÀN BỘ ca bắt buộc trên DB mới, log gốc mới (mã ca đầy đủ <id>__Cn, thư mục chạy riêng, file mở chế độ 'x').",
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "tieu_chi_file": "evidence/itacc_r11/criteria/r11.json",
+ "tieu_chi_sha256": "601f16a149d825ea76f94ccc3a805cad5f8ac23f10f1aaa3f96eb2a3f7c6cd34",
+ "tieu_chi_khoa": "sha256 601f16a149d825ea76f94ccc3a805cad5f8ac23f10f1aaa3f96eb2a3f7c6cd34  criteria/r11.json  khoa_luc 2026-10-23T14:25:52+07:00 (Asia/Saigon) — khóa TRƯỚC mọi lần chạy r11\ntham_chieu_r10 criteria/g3.json sha256 4de39b8b0fa1f8b62f3b0a9902428b6ac98321ebc7f007403561e84b4378581e (giữ nguyên, khớp khóa r10 4de39b8b…581e: True)",
+ "tieu_chi": [
+  "T1 `python -m pipelines.cockpit --import F --by <người> --sample` và `--collect --period week --ref <kỳ ĐÃ ĐÓNG giờ VN>` exit 0",
+  "T2 channel_snapshots: 12 dòng manual_export từ kenh_MAU.csv (source_ref 'sample:…', captured_by người xuất); dòng số đo nội bộ channel noi_bo/source api cho kỳ đã đóng; giá trị content.drafts_created / content.drafts_approved / content.drafts_rejected / leads.new / jobs.failed khớp ĐẾM SQL ĐỘC LẬP (viết riêng, không dùng SQL sản phẩm) trên cùng khung giờ VN; không ghi median/p90 khi 0 quyết định",
+  "T3 file lỗi → exit 1, 0 dòng; kỳ chưa đóng → exit 2, không ghi; insert-only (chạy lại kỳ đã đóng không thêm dòng)",
+  "T4 không gọi API kênh",
+  "Giới hạn (khóa trước khi chạy): DB dựng mới hôm nay, KHÔNG lùi timestamp → mọi số nội bộ của kỳ đã đóng = 0; phép kiểm chứng minh chặn kỳ chưa đóng, đếm đúng nguồn/khung giờ, không bịa median, insert-only — KHÔNG chứng minh phép đếm trên dữ liệu khác 0 của kỳ đã đóng"
+ ],
+ "dinh_chinh_r10": null,
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r11 (postgres:17-alpine) chỉ bind 127.0.0.1:55441; mỗi mục 1 DB samsam_itacc_r11_<mã> dựng mới (apply_schema --roles ×2 + core_store + golden_store); dev mode (AUTH_MODE trống); OPENROUTER_API_KEY rỗng; DEPLOY/RED_ALERT_NOTIFY tắt; INTEL_HASH_SALT + CONTACT_VAULT_KEY giá trị thử sinh ngẫu nhiên (không lưu repo); mạng ngoài localhost bị chặn trong harness run.py.txt; RSS giả http.server 127.0.0.1:18793. DB samsam_itacc_r11_m062.",
+ "run_id": "20261023T143654-f67e",
+ "dau_vao": [
+  {
+   "ten": "kenh_MAU.csv",
+   "sha256": "cf0d47124058b7fe08512746a4f7fca1359b87b5acfd4491843c6278adc0d002",
+   "r10_ghi": "cf0d47124058b7fe08512746a4f7fca1359b87b5acfd4491843c6278adc0d002",
+   "khop_r10": true
+  },
+  {
+   "ten": "kenh_loi.csv",
+   "sha256": "ae41677b1fb443a25fffcbbe7021d94526e647d28e7b3df204a4fc0aaf9f97c8",
+   "r10_ghi": "ae41677b1fb443a25fffcbbe7021d94526e647d28e7b3df204a4fc0aaf9f97c8",
+   "khop_r10": true
+  }
+ ],
+ "ca": [
+  {
+   "ma": "marketing-06.2__S01",
+   "mo_ta": "seed sổ rollout",
+   "tien_quyet": true,
+   "khac_r10": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:36:54+07:00",
+      "ket_thuc": "2026-10-23T14:36:57+07:00",
+      "stdout": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__S01"
+  },
+  {
+   "ma": "marketing-06.2__C1",
+   "mo_ta": "import file kênh MẪU",
+   "tien_quyet": false,
+   "khac_r10": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+      "expect": 12
+     },
+     {
+      "sql": "select count(*) from channel_snapshots where source = 'manual_export' and source_ref like 'sample:%' and captured_by = 'Người Thử IT'",
+      "expect": 12
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.cockpit --import evidence\\itacc_r11\\fixtures/kenh_MAU.csv --by Người Thử IT --sample",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:36:57+07:00",
+      "ket_thuc": "2026-10-23T14:36:59+07:00",
+      "stdout": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+      "file_glob": null,
+      "actual": 12,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from channel_snapshots where source = 'manual_export' and source_ref like 'sample:%' and captured_by = 'Người Thử IT'",
+      "file_glob": null,
+      "actual": 12,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C1"
+  },
+  {
+   "ma": "marketing-06.2__C2",
+   "mo_ta": "file lỗi",
+   "tien_quyet": false,
+   "khac_r10": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from channel_snapshots",
+      "expect": 12
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.cockpit --import evidence\\itacc_r11\\fixtures/kenh_loi.csv --by Người Thử IT",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:36:59+07:00",
+      "ket_thuc": "2026-10-23T14:37:00+07:00",
+      "stdout": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C2/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from channel_snapshots",
+      "file_glob": null,
+      "actual": 12,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C2"
+  },
+  {
+   "ma": "marketing-06.2__C3",
+   "mo_ta": "collect tuần đã đóng 2026-10-12 (giờ VN)",
+   "tien_quyet": false,
+   "khac_r10": "ĐÍNH CHÍNH tiêu chí r10: r10 khóa --ref 2026-10-19 tưởng là tuần đã đóng, nhưng 2026-10-19 là thứ Hai của tuần HIỆN TẠI (23/10/2026 là thứ Sáu) → sản phẩm từ chối đúng (exit 2). Kỳ đã đóng gần nhất theo giờ VN = tuần 2026-10-12 → 2026-10-18. Lỗi kỳ vọng của harness, không phải lỗi sản phẩm; không lùi timestamp.",
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "inserted=[1-9]"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) > 0 from channel_snapshots where channel = 'noi_bo' and source = 'api' and period_kind = 'week' and period_start = '2026-10-12'",
+      "expect": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_created' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from content_drafts where created_at >= timestamptz '2026-10-12 00:00:00+07' and created_at < timestamptz '2026-10-19 00:00:00+07')",
+      "expect": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_approved' and period_kind = 'week' and period_start = '2026-10-12') = (select count(distinct object_id) from approvals where object_type = 'content_draft' and decision = 'approved' and approved_at >= timestamptz '2026-10-12 00:00:00+07' and approved_at < timestamptz '2026-10-19 00:00:00+07')",
+      "expect": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_rejected' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from content_drafts where status = 'rejected' and reviewed_at >= timestamptz '2026-10-12 00:00:00+07' and reviewed_at < timestamptz '2026-10-19 00:00:00+07')",
+      "expect": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'leads.new' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from leads where ts >= timestamptz '2026-10-12 00:00:00+07' and ts < timestamptz '2026-10-19 00:00:00+07')",
+      "expect": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'jobs.failed' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from job_runs where ok is not true and started_at >= timestamptz '2026-10-12 00:00:00+07' and started_at < timestamptz '2026-10-19 00:00:00+07')",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from channel_snapshots where period_start = '2026-10-12' and metric_id in ('content.review_hours_median', 'content.review_hours_p90')",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.cockpit --collect --period week --ref 2026-10-12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "inserted=[1-9]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-23T14:37:00+07:00",
+      "ket_thuc": "2026-10-23T14:37:02+07:00",
+      "stdout": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) > 0 from channel_snapshots where channel = 'noi_bo' and source = 'api' and period_kind = 'week' and period_start = '2026-10-12'",
+      "file_glob": null,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_created' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from content_drafts where created_at >= timestamptz '2026-10-12 00:00:00+07' and created_at < timestamptz '2026-10-19 00:00:00+07')",
+      "file_glob": null,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_approved' and period_kind = 'week' and period_start = '2026-10-12') = (select count(distinct object_id) from approvals where object_type = 'content_draft' and decision = 'approved' and approved_at >= timestamptz '2026-10-12 00:00:00+07' and approved_at < timestamptz '2026-10-19 00:00:00+07')",
+      "file_glob": null,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'content.drafts_rejected' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from content_drafts where status = 'rejected' and reviewed_at >= timestamptz '2026-10-12 00:00:00+07' and reviewed_at < timestamptz '2026-10-19 00:00:00+07')",
+      "file_glob": null,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'leads.new' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from leads where ts >= timestamptz '2026-10-12 00:00:00+07' and ts < timestamptz '2026-10-19 00:00:00+07')",
+      "file_glob": null,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select (select value from channel_snapshots where channel = 'noi_bo' and metric_id = 'jobs.failed' and period_kind = 'week' and period_start = '2026-10-12') = (select count(*) from job_runs where ok is not true and started_at >= timestamptz '2026-10-12 00:00:00+07' and started_at < timestamptz '2026-10-19 00:00:00+07')",
+      "file_glob": null,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from channel_snapshots where period_start = '2026-10-12' and metric_id in ('content.review_hours_median', 'content.review_hours_p90')",
+      "file_glob": null,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3"
+  },
+  {
+   "ma": "marketing-06.2__C3b",
+   "mo_ta": "chạy lại collect cùng kỳ",
+   "tien_quyet": false,
+   "khac_r10": "bổ sung: kiểm insert-only (T3) bằng lần chạy lại kỳ đã đóng",
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "inserted=0 unchanged=[1-9]"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) = (select count(distinct metric_id) from channel_snapshots where channel = 'noi_bo' and period_start = '2026-10-12') from channel_snapshots where channel = 'noi_bo' and period_start = '2026-10-12'",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.cockpit --collect --period week --ref 2026-10-12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "inserted=0 unchanged=[1-9]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-23T14:37:02+07:00",
+      "ket_thuc": "2026-10-23T14:37:04+07:00",
+      "stdout": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3b/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3b/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) = (select count(distinct metric_id) from channel_snapshots where channel = 'noi_bo' and period_start = '2026-10-12') from channel_snapshots where channel = 'noi_bo' and period_start = '2026-10-12'",
+      "file_glob": null,
+      "actual": true,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3b"
+  },
+  {
+   "ma": "marketing-06.2__C4",
+   "mo_ta": "kỳ chưa đóng (tuần chứa 23/10/2026)",
+   "tien_quyet": false,
+   "khac_r10": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from channel_snapshots where channel = 'noi_bo' and period_start >= '2026-10-19'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.cockpit --collect --period week --ref 2026-10-23",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [],
+      "bat_dau": "2026-10-23T14:37:04+07:00",
+      "ket_thuc": "2026-10-23T14:37:06+07:00",
+      "stdout": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C4/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from channel_snapshots where channel = 'noi_bo' and period_start >= '2026-10-19'",
+      "file_glob": null,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "thu_muc": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C4"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "DB dựng mới, KHÔNG lùi timestamp → mọi số nội bộ của tuần đã đóng 2026-10-12 = 0: chứng minh chặn kỳ chưa đóng, đếm đúng nguồn/khung giờ VN, không bịa median/p90, insert-only — KHÔNG chứng minh phép đếm trên dữ liệu khác 0 của kỳ đã đóng (khóa trước khi chạy). File kênh là MẪU (source_ref sample:). Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/ket_qua.json",
+   "sha256": "a39dd43e0b1ebe6e2129ea1e612f60464ecea90e5591f0fa21cd9376f0a70de3"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C1/asserts.json",
+   "sha256": "95cf9b71d5850abfffe07f52626e725d511190c1f612dc0a26602c4e1b252fa8"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C1/case.json",
+   "sha256": "fbea61d0e85adf6f3a95629ffae581cd0f940d4abc1ac3207355c5c9a4b1049e"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C1/step01.cmd.json",
+   "sha256": "8493564d58f0a3f06f7507226b9dad466dcf031309c8423016667bd139e6ebb2"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C1/step01.stdout.txt",
+   "sha256": "f81a5cb9d043e891ca8c214e1aedded6071f4eae0d70e8ba2457bc6f88070c31"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C2/asserts.json",
+   "sha256": "001927808b89560751f869454b57111ff3ab7972a33694691b329ae4a7cd901d"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C2/case.json",
+   "sha256": "772c921412743b09425383745984a24f72917ab6bd263fb890394d3811f8eacc"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C2/step01.cmd.json",
+   "sha256": "d3cd63b963223ba9a33600282f441f4672a90496c43b3a9fd7fa15685e62d5ed"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C2/step01.stderr.txt",
+   "sha256": "67a0887cc189015f5c1e5b829321c4fe6347599638cadeeee006bb25fcaad6a3"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C2/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3/asserts.json",
+   "sha256": "dcb2d84c32c956642af6f60fb17facf69f385c3e8d419593f33bea33b4326bec"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3/case.json",
+   "sha256": "05a35c6306da70e2681ea19ddbb9a77891a1ab731946e9367f192049afac20f2"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3/step01.cmd.json",
+   "sha256": "5ae237eceefa782be7570ef31f71e556c8563be5a236d7210a0562e44a6d3916"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3/step01.stdout.txt",
+   "sha256": "1bff97e0a10ce3870b53677127915f8188b7ecd2e1e1da329d8336fee6562517"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3b/asserts.json",
+   "sha256": "9614ea12064d257d3d1acc35146c675a9d079adc7d213c7e68696cd02583aeb1"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3b/case.json",
+   "sha256": "7242a30fa894bf6e69de9d4c57e564bf79e3dfc30ed8d39dbb757d7cc09ebe54"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3b/step01.cmd.json",
+   "sha256": "588f545f9d449da660d68738def6deee35d2d229460fa8d80f366a3dd9d72ee3"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3b/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C3b/step01.stdout.txt",
+   "sha256": "2fa36ccef591793a4f93d777dd6fe26c999eb49ae122c9d38127e209b6340daf"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C4/asserts.json",
+   "sha256": "e71c64fa6d0ca0acd55ae84612991381a2fb7bed9457a71ed25378d9fcbde8f1"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C4/case.json",
+   "sha256": "1b240acc1244edc0e56c4a5a57eca67b7bc11d47d19e187b82f467b212a27c75"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C4/step01.cmd.json",
+   "sha256": "e86d7b963402defc0f8b2ab95436db5f029157e0705c7c590ee86230bdd1c788"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C4/step01.stderr.txt",
+   "sha256": "c9e56638bc7d11560f2a22deccde8b1f9245b1cae3131db3dd164ffcaca7ee71"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__C4/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__S01/case.json",
+   "sha256": "bd88dc325bb456410450d2008a27af60c3ecefbb6b9a0e6594c6688d032f071a"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__S01/step01.cmd.json",
+   "sha256": "9bcbc5285f311ca23c1f22b4de3fb6979fe9b01449c920b6e11790ec0ed51500"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r11/runs/marketing-06.2/20261023T143654-f67e/marketing-06.2__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  }
+ ],
+ "loi_san_pham": []
+}

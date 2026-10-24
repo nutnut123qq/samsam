@@ -41,7 +41,7 @@ def _st(qty, stale=(), sample=False):
 
 
 def test_source_uses_shared_engine_only():
-    assert "from pipelines import scenario" in SRC
+    assert re.search(r"from pipelines import [\w, ]*\bscenario\b", SRC)
     assert "scenario.project(" in SRC
     assert not re.search(r"baseline|trend|coef|\* *1\.[0-9]", SRC)
     assert not re.search(r"smtplib|import httpx|import requests|"

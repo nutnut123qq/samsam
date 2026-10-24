@@ -1,0 +1,28 @@
+"""HARNESS g3: kiểm ĐỘC LẬP mp4 (ffmpeg của imageio-ffmpeg): thời lượng, stream, metadata,
+trích khung tại các mốc và so vùng nhãn AI (label_box) giữa các khung + với ảnh nhãn
+tham chiếu dựng từ khung đầu. argv: mp4 x y w h t1 t2 ..."""
+import hashlib, re, subprocess, sys, tempfile
+from pathlib import Path
+import imageio_ffmpeg
+from PIL import Image, ImageChops, ImageStat
+mp4, x, y, w, h, *ts = sys.argv[1], *map(int, sys.argv[2:6]), *sys.argv[6:]
+ff = imageio_ffmpeg.get_ffmpeg_exe()
+print("sha256_file", hashlib.sha256(Path(mp4).read_bytes()).hexdigest())
+info = subprocess.run([ff, "-hide_banner", "-i", mp4], capture_output=True, text=True).stderr
+dur = re.search(r"Duration: (\d+):(\d+):([\d.]+)", info)
+print("duration_s", int(dur[1]) * 3600 + int(dur[2]) * 60 + float(dur[3]))
+print("audio_streams", len(re.findall(r"Stream #\S+.*Audio:", info)), "video_streams", len(re.findall(r"Stream #\S+.*Video:", info)))
+print("metadata_location_or_time", bool(re.search(r"location|creation_time|com.apple", info)))
+crops = []
+with tempfile.TemporaryDirectory() as d:
+    for t in ts:
+        p = Path(d) / f"f{t}.png"
+        subprocess.run([ff, "-v", "error", "-ss", t, "-i", mp4, "-frames:v", "1", str(p)], check=True)
+        im = Image.open(p).convert("RGB")
+        crops.append((t, im.crop((x, y, x + w, y + h)), im.crop((0, 0, im.width, y))))
+ref = crops[0][1]
+for t, c, above in crops:
+    lab = ImageStat.Stat(ImageChops.difference(c, ref)).mean
+    print(f"t={t}s label_region_meandiff_vs_first={sum(lab)/3:.2f} label_region_stddev={sum(ImageStat.Stat(c).stddev)/3:.1f}")
+# nội dung phía trên vùng nhãn phải khác nhau giữa các cảnh (chứng minh vùng nhãn cố định trên nền đổi)
+print("above_label_meandiff_first_vs_mid", round(sum(ImageStat.Stat(ImageChops.difference(crops[0][2], crops[len(crops)//2][2])).mean)/3, 2))

@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from price_list where channel = 'shopee' and kind = 'list' and approved_by = 'Người Duyệt Giá Thử IT' and ((sku_key = 'savina-12v' and price_vnd = 159000) or (sku_key = 'saphraton-20v' and price_vnd = 299000))",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from price_list where approved_by is not null",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ }
+]

@@ -1,0 +1,11 @@
+# ma: S042-C05a
+# luc: 2026-10-23T10:33:02+07:00
+# lenh: python -m ingest.crm --consent 1 --purpose dai_ly --grant --dealer DLTHU01 --source zalo --evidence BB-THU-IT-001 --policy-version nhap-2026-10 --by CSKH Thử IT
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+[ok] consent #1: contact #1 dai_ly/DLTHU01 ĐỒNG Ý
+
+## stderr
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)

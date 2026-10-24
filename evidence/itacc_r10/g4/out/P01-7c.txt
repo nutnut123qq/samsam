@@ -1,0 +1,30 @@
+# ca P01-7c
+# gio 2026-10-23T10:38:05+07:00
+# lenh python -m pipelines.production bulletin --date 2026-10-23 --out-dir evidence/itacc_r10/g4/out/rep_prod
+# exit 1
+--- stdout ---
+
+--- stderr ---
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\code\samsam\pipelines\production.py", line 1393, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "D:\code\samsam\pipelines\production.py", line 1389, in main
+    return cmd_bulletin(args)
+           ^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\production.py", line 1276, in cmd_bulletin
+    return _db_call(run)
+           ^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\production.py", line 962, in _db_call
+    return fn(conn)
+           ^^^^^^^^
+  File "D:\code\samsam\pipelines\production.py", line 1269, in run
+    data = collect(conn, golden, why, day + near, day - near)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\production.py", line 861, in collect
+    total = stock[sku]["qty"] if sku in stock else None
+                                 ^^^^^^^^^^^^
+TypeError: argument of type 'int' is not iterable
+

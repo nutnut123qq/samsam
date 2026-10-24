@@ -1,0 +1,33 @@
+"""HARNESS r12 — tạo criteria/r12_farming_v2.json từ r12_farming.json (đã khóa, KHÔNG sửa) + khóa mới.
+Lỗi HARNESS (không phải sản phẩm): runner_r12 cũ chỉ glob `*` ở thành phần CUỐI, nên mẫu `{SCR}/qr_site_*/*/index.html`
+luôn ra 0 tệp — lượt 20261024T112658-23dc: C12/C14 FAIL dù trang index.html CÓ (scratch/qr_site_vh/8AXe…/index.html),
+và C11 (kỳ vọng 0 tệp) có thể PASS GIẢ. v2: 5 assertion có `*` ở thư mục đổi sang loại kiểm mới `file_glob_dq`/`file_re_dq`
+(glob.glob, cùng mẫu, cùng kỳ vọng). Không đổi bước, không đổi kỳ vọng. python -I mk_farming_v2.py.txt <fingerprint_code>"""
+import datetime
+import hashlib
+import json
+import os
+import sys
+from pathlib import Path
+
+C = Path(__file__).resolve().parents[1] / "criteria"
+d = json.loads((C / "r12_farming.json").read_text(encoding="utf-8"))
+d["_doc"] = ("v2 (điều phối viên 24/10/2026): chỉ đổi loại kiểm của 5 assertion có `*` ở thư mục (farming-03.2 C11/C12/C14)"
+             " sang file_glob_dq/file_re_dq — lỗi glob của runner; xem docstring evidence/itacc_r12/harness/mk_farming_v2.py.txt."
+             " | " + d["_doc"])
+d["fingerprint_code"] = sys.argv[1]
+n = 0
+for it in d["items"]:
+    for c in it["ca"]:
+        for k in c.get("kiem", []):
+            for old, new in (("file_glob", "file_glob_dq"), ("file_re", "file_re_dq")):
+                if old in k and "*" in os.path.dirname(k[old].replace("\\", "/")):
+                    k[new] = k.pop(old)
+                    n += 1
+assert n == 5, n
+s = json.dumps(d, ensure_ascii=False, indent=1)
+(C / "r12_farming_v2.json").write_text(s, encoding="utf-8", newline="\n")
+h = hashlib.sha256(s.encode("utf-8")).hexdigest()
+(C / "r12_farming_v2.lock.txt").write_text(
+    f"r12_farming_v2.json {h} {datetime.datetime.now().astimezone().isoformat(timespec='seconds')}\n", encoding="utf-8")
+print(h, n)

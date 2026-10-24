@@ -1,0 +1,114 @@
+[
+ {
+  "sql": "select id, object_type, object_id, created_by, status, risk, title, payload from approval_queue where id between 46 and 48 order by id",
+  "rows": [
+   {
+    "id": 46,
+    "object_type": "market_alert_s2",
+    "object_id": "ma:1:20261023T032531890735Z",
+    "created_by": "agent:sales_director",
+    "status": "pending",
+    "risk": "medium",
+    "title": "Xử lý cảnh báo sàn S2 — cảnh báo #1",
+    "payload": "Cảnh báo sàn S2 #1: lệch giá niêm yết so với bảng giá — kênh shopee, file xuất listing, mở lúc 23/10/2026 10:25 (giờ VN). Việc cần làm: Quản lý MXH/sàn kiểm tra listing trên Seller Center, xử lý theo SOP mục 4d; cảnh báo đóng khi file xuất kế tiếp không còn lỗi. Agent không tự sửa sàn."
+   },
+   {
+    "id": 47,
+    "object_type": "market_alert_s1",
+    "object_id": "ma:2:20261023T032531890735Z",
+    "created_by": "agent:sales_director",
+    "status": "pending",
+    "risk": "high",
+    "title": "Xử lý cảnh báo sàn S1 — cảnh báo #2",
+    "payload": "Cảnh báo sàn S1 #2: listing thuộc nhóm hàng cấm bán online — kênh shopee, file xuất listing, mở lúc 23/10/2026 10:25 (giờ VN). Việc cần làm: Quản lý MXH/sàn kiểm tra listing trên Seller Center, xử lý theo SOP mục 4d; cảnh báo đóng khi file xuất kế tiếp không còn lỗi. Agent không tự sửa sàn."
+   },
+   {
+    "id": 48,
+    "object_type": "market_alert_s2",
+    "object_id": "ma:3:20261023T032531890735Z",
+    "created_by": "agent:sales_director",
+    "status": "pending",
+    "risk": "medium",
+    "title": "Xử lý cảnh báo sàn S2 — cảnh báo #3",
+    "payload": "Cảnh báo sàn S2 #3: lệch giá niêm yết so với bảng giá — kênh shopee, file xuất listing, mở lúc 23/10/2026 10:25 (giờ VN). Việc cần làm: Quản lý MXH/sàn kiểm tra listing trên Seller Center, xử lý theo SOP mục 4d; cảnh báo đóng khi file xuất kế tiếp không còn lỗi. Agent không tự sửa sàn."
+   }
+  ]
+ },
+ {
+  "sql": "select * from market_alerts order by id",
+  "rows": [
+   {
+    "id": 1,
+    "kind": "price_mismatch",
+    "severity": "S2",
+    "channel": "shopee",
+    "export_kind": "listing",
+    "item_id": "29007947088",
+    "seller_sku": "mat-ong-sam-300ml",
+    "sku_key": "mat-ong-sam-300ml",
+    "detail": {
+     "row_no": 2,
+     "sku_key": "mat-ong-sam-300ml",
+     "price_id": 30,
+     "price_san": 2800000,
+     "approved_by": "GĐ Bán Hàng Thử IT",
+     "golden_note": "giá golden đã duyệt",
+     "price_golden": 2980000,
+     "golden_approved": true
+    },
+    "status": "open",
+    "snapshot_id": 2,
+    "opened_at": "2026-10-23 03:25:31.890735+00:00",
+    "updated_at": "2026-10-23 03:26:07.477001+00:00",
+    "closed_at": null
+   },
+   {
+    "id": 2,
+    "kind": "alcohol_listed",
+    "severity": "S1",
+    "channel": "shopee",
+    "export_kind": "listing",
+    "item_id": "27325048614",
+    "seller_sku": "ruou-sam-chai-thuy-tinh-500ml",
+    "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+    "detail": {
+     "title": "Rượu sâm chai 500ml (fixture Thử IT)",
+     "row_no": 3,
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "price_san": 745000,
+     "status_san": "Đang hoạt động"
+    },
+    "status": "open",
+    "snapshot_id": 2,
+    "opened_at": "2026-10-23 03:25:31.890735+00:00",
+    "updated_at": "2026-10-23 03:26:07.477001+00:00",
+    "closed_at": null
+   },
+   {
+    "id": 3,
+    "kind": "price_mismatch",
+    "severity": "S2",
+    "channel": "shopee",
+    "export_kind": "listing",
+    "item_id": "24825885894",
+    "seller_sku": "saphraton-20v",
+    "sku_key": "saphraton-20v",
+    "detail": {
+     "row_no": 4,
+     "sku_key": "saphraton-20v",
+     "price_id": 5,
+     "price_san": 200000,
+     "approved_by": "GĐ Bán Hàng Thử IT",
+     "golden_note": "giá golden đã duyệt",
+     "price_golden": 299000,
+     "golden_approved": true
+    },
+    "status": "open",
+    "snapshot_id": 2,
+    "opened_at": "2026-10-23 03:25:31.890735+00:00",
+    "updated_at": "2026-10-23 03:26:07.477001+00:00",
+    "closed_at": null
+   }
+  ]
+ }
+]

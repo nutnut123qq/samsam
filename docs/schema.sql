@@ -2166,15 +2166,14 @@ language plpgsql security definer set search_path from current as $$
 declare
   l production_lots%rowtype;
   g plot_logs%rowtype;
-  v_by text := btrim(coalesce(p_by, ''));
+  -- r12 G5-02: danh tính theo login (`human_actor` — chặn agent/system kể cả
+  -- owner; login người phải đúng người + khối farming). Trước: chỉ kiểm rỗng.
+  v_by text := human_actor(p_by, 'farming');
   v_media text[] := coalesce(p_media, '{}'::text[]);
   v_src text;
   v_id bigint;
   m text;
 begin
-  if v_by = '' then
-    raise exception 'thiếu tên người ánh xạ (--by)';
-  end if;
   select * into l from production_lots p where p.lot_code = p_lot for update;
   if not found then
     raise exception 'không có lô %', p_lot;
@@ -2249,12 +2248,9 @@ create or replace function unlink_lot_origin(p_lot text, p_plot_log_id bigint,
 returns bigint
 language plpgsql security definer set search_path from current as $$
 declare
-  v_by text := btrim(coalesce(p_by, ''));
+  v_by text := human_actor(p_by, 'farming');   -- r12 G5-02 (như link)
   v_id bigint;
 begin
-  if v_by = '' then
-    raise exception 'thiếu tên người gỡ ánh xạ (--by)';
-  end if;
   perform 1 from production_lots p where p.lot_code = p_lot for update;
   if exists (select 1 from qr_codes c
              where c.lot_code = p_lot and c.revoked_at is null) then
@@ -6468,3 +6464,318 @@ create or replace view v_garden_media_marketing as
                    where g.sha256 = m.sha256 order by g.id desc limit 1) r
       on r.action = 'cap'
    where m.source not like 'sample:%';
+
+-- ===== Đợt an toàn S04 (22/10/2026): danh tính quyết định gắn LOGIN =====
+-- (HĐ 6.7, 7.2) Trước: `person_login()` MIỄN kiểm cho `svc_ui` — login UI
+-- DÙNG CHUNG gọi thẳng `decide_item`/`approve_draft`/`schedule_draft` hoặc
+-- INSERT log quyết định mang tên BẤT KỲ người nào (DB tin tên UI truyền); DB
+-- cũng không kiểm KHỐI khi duyệt draft nội dung (khối chỉ kiểm ở Python).
+-- Nay:
+--   * `svc_ui` KHÔNG còn được miễn: mọi login không owner thuộc `app_human`
+--     (gồm `svc_ui`) ghi tên người → `human_actor` (login phải ánh xạ đúng
+--     người trong `human_logins`). Login UI dùng chung không ánh xạ người →
+--     KHÔNG ghi được quyết định/nhật ký mang tên người. UI chế độ thực ghi
+--     quyết định bằng login Postgres RIÊNG của người dùng
+--     (`pipelines.auth.person_connect` — Postgres xác thực mật khẩu của
+--     chính người đó; UI không giữ mật khẩu);
+--   * draft nội dung có cột `block` (khối sở hữu — code tính từ danh mục lúc
+--     tạo, `store._draft_block`; không ai UPDATE được sau khi tạo — không có
+--     grant UPDATE); duyệt/từ chối/xếp lịch draft kiểm khối ở DB. Draft cũ
+--     `block` null → 'marketing' (đúng mặc định Python). Người tạo tự rút
+--     (từ chối draft của chính mình) không kiểm khối;
+--   * `human_whoami()` — người + khối của login đang dùng (UI hiển thị/đối
+--     chiếu phiên; chỉ đọc dòng của chính login).
+-- (không CHECK: drift-guard chỉ cho add column 1 hành động; giá trị lạ → không
+-- người nào có khối đó trong `human_logins` → duyệt bị chặn = fail-closed)
+alter table content_drafts add column if not exists block text;
+
+create or replace function person_login() returns boolean
+language sql stable security definer set search_path from current as $$
+  select exists (select 1 from pg_roles r where r.rolname = 'app_human'
+                   and pg_has_role(session_user, r.oid, 'MEMBER'))
+     and not p10_owner_login()
+$$;
+revoke execute on function person_login() from public;
+
+create or replace function human_whoami()
+returns table (person text, blocks text[])
+language sql stable security definer set search_path from current as $$
+  select btrim(h.person), h.blocks from human_logins h
+   where h.db_login = session_user and h.active
+$$;
+revoke execute on function human_whoami() from public;
+
+create or replace function person_login_guard() returns trigger
+language plpgsql security definer set search_path from current as $$
+declare
+  v_who text := to_jsonb(new)->>tg_argv[0];
+  v_decision boolean := false;
+  v_block text;
+  v_role text;
+begin
+  if tg_table_name = 'agent_action_log' then
+    if new.action = 'authz_denied' then
+      return new;
+    end if;
+    v_decision := new.action = any(array['lot_intake', 'alloc_approve',
+      'alloc_reject', 'queue_approve', 'queue_reject', 'queue_override_qa',
+      'cogs_approve', 'draft_approve', 'draft_reject', 'draft_schedule',
+      'qr_lot_sign', 'qr_issue', 'qr_revoke', 'qr_lot_link',
+      'qr_lot_unlink']);
+  end if;
+  if p10_owner_login() then
+    return new;
+  end if;
+  if v_decision and (btrim(coalesce(v_who, '')) = ''
+      or normalize(v_who, NFKC) ~* '^\s*(agent|system|auto_policy)\s*:') then
+    raise exception 'quyết định của người không ghi bằng tên agent/hệ thống (%)',
+      left(coalesce(v_who, ''), 40) using errcode = '42501';
+  end if;
+  if not person_login() or (not v_decision and not p10_is_person(v_who)) then
+    return new;
+  end if;
+  if tg_table_name = 'agent_action_log' then
+    v_block := case
+      when new.action in ('queue_approve', 'queue_reject', 'queue_override_qa')
+        then (select a.block from approval_queue a
+               where a.id = (new.detail->>'queue_id')::bigint)
+      when new.action in ('alloc_approve', 'alloc_reject', 'lot_intake')
+        then 'production'
+      when new.action = 'cogs_approve' then 'finance'
+      when new.action in ('draft_approve', 'draft_reject', 'draft_schedule')
+        then (select case when new.action = 'draft_reject'
+                           and lower(btrim(c.created_by)) = lower(btrim(v_who))
+                          then null else coalesce(c.block, 'marketing') end
+                from content_drafts c
+               where new.object_type = 'content_draft'
+                 and c.id::text = new.object_id) end;
+  end if;
+  perform human_actor(v_who, v_block);
+  if v_decision then         -- (lồng: bảng khác không có cột action)
+    if new.action in ('qr_lot_sign', 'qr_issue', 'qr_revoke') then
+      v_role := case when new.action = 'qr_lot_sign'
+                     then coalesce(new.detail->>'role', '?') end;
+      if not exists (select 1 from human_qr_roles r
+                      where r.db_login = session_user and r.active
+                        and (v_role is null or r.role = v_role)) then
+        raise exception 'login % không có vai QR % (human_qr_roles — Bên B điền theo văn bản ủy quyền)',
+          session_user, coalesce(v_role, '(bất kỳ)') using errcode = '42501';
+      end if;
+    end if;
+  end if;
+  return new;
+end $$;
+revoke execute on function person_login_guard() from public;
+
+-- ===== Đợt an toàn S04b (22/10/2026): tác giả thật theo LOGIN, chặn tự duyệt =====
+-- (HĐ 6.7, 7.2) Controller tái hiện: login NGƯỜI (app_human, có human_logins)
+-- INSERT draft `created_by = 'agent:controller'` + tự chọn `block` (quyền INSERT
+-- kế thừa agent_writer), rồi `approve_draft` bằng tên chính mình → duyệt được
+-- (kiểm "người duyệt ≠ người tạo" so tên, tác giả thật bị che bằng nhãn agent).
+-- Cùng lớp: `enqueue_item` (SECURITY DEFINER, agent_writer → app_human) nhãn
+-- agent rồi `decide_item` tự quyết; tên biến thể khoảng trắng/hoa thường qua mặt
+-- so `lower(btrim())`.
+-- Nay:
+--   * `created_login` (content_drafts, approval_queue) = `session_user` do
+--     trigger ghi — caller không khai được (không có grant cột);
+--   * login người (app_human, kể cả svc_ui, không owner) tạo draft/mục: tác giả
+--     BẮT BUỘC là chính người của login (`human_actor` — chặn nhãn agent/
+--     system/auto_policy và tên người khác); khối draft KHÔNG do người tự khai:
+--     danh mục chỉ có nguồn content_drafts cho tác giả agent → draft của người
+--     thuộc khối mặc định 'marketing' (cùng quy tắc `store._draft_block`);
+--   * duyệt draft / quyết mục / override QA: người có login = login tạo, hoặc
+--     tên trùng tác giả theo `p10_norm`, → 42501 (cả function rollback).
+-- Luồng agent/dịch vụ (agent_writer, svc_job…) giữ nguyên: tác giả nhãn agent,
+-- người có quyền khác duyệt. Dòng cũ `created_login` null: chỉ còn so tên.
+alter table content_drafts add column if not exists created_login text;
+alter table approval_queue add column if not exists created_login text;
+-- (vòng r8) giá vốn: người lập qua login (app_human được INSERT bảng này)
+alter table cogs_versions add column if not exists created_login text;
+
+create or replace function creator_login_guard() returns trigger
+language plpgsql security definer set search_path from current as $$
+begin
+  new.created_login := session_user;
+  if p10_owner_login() or not person_login() then
+    return new;
+  end if;
+  if tg_table_name = 'approval_queue' and not p10_is_person(new.created_by) then
+    -- mục nhãn agent do CLI người khởi chạy (vd ra_kenh --partner-file —
+    -- nhập liệu, khối do code của agent chọn): giữ nhãn làm nguồn gốc, tác
+    -- giả thật = created_login (login phải ánh xạ người); tự quyết bị chặn
+    -- theo login (person_login_guard).
+    perform human_actor((select h.person from human_logins h
+                          where h.db_login = session_user and h.active), null);
+    return new;
+  end if;
+  new.created_by := human_actor(new.created_by, null);
+  if tg_table_name = 'content_drafts' then
+    -- shortcut: khối draft của người cố định 'marketing' vì danh mục chưa có
+    -- nguồn content_drafts cho tác giả người; thêm nguồn đó → đổi quy tắc ở đây.
+    if coalesce(new.block, 'marketing') <> 'marketing' then
+      raise exception 'khối draft do hệ thống xác định (draft của người → marketing), không tự khai %',
+        new.block using errcode = '42501';
+    end if;
+    new.block := 'marketing';
+  end if;
+  return new;
+end $$;
+revoke execute on function creator_login_guard() from public;
+
+create or replace trigger content_drafts_creator_login
+  before insert on content_drafts
+  for each row execute function creator_login_guard();
+create or replace trigger approval_queue_creator_login
+  before insert on approval_queue
+  for each row execute function creator_login_guard();
+create or replace trigger cogs_versions_creator_login
+  before insert on cogs_versions
+  for each row execute function creator_login_guard();
+
+create or replace function person_login_guard() returns trigger
+language plpgsql security definer set search_path from current as $$
+declare
+  v_who text := to_jsonb(new)->>tg_argv[0];
+  v_decision boolean := false;
+  v_block text;
+  v_role text;
+  v_cl text;
+  v_cb text;
+begin
+  if tg_table_name = 'agent_action_log' then
+    if new.action = 'authz_denied' then
+      return new;
+    end if;
+    v_decision := new.action = any(array['lot_intake', 'alloc_approve',
+      'alloc_reject', 'queue_approve', 'queue_reject', 'queue_override_qa',
+      'cogs_approve', 'draft_approve', 'draft_reject', 'draft_schedule',
+      'qr_lot_sign', 'qr_issue', 'qr_revoke', 'qr_lot_link',
+      'qr_lot_unlink']);
+  end if;
+  if p10_owner_login() then
+    return new;
+  end if;
+  if v_decision and (btrim(coalesce(v_who, '')) = ''
+      or normalize(v_who, NFKC) ~* '^\s*(agent|system|auto_policy)\s*:') then
+    raise exception 'quyết định của người không ghi bằng tên agent/hệ thống (%)',
+      left(coalesce(v_who, ''), 40) using errcode = '42501';
+  end if;
+  if not person_login() or (not v_decision and not p10_is_person(v_who)) then
+    return new;
+  end if;
+  if tg_table_name = 'agent_action_log' then
+    v_block := case
+      when new.action in ('queue_approve', 'queue_reject', 'queue_override_qa')
+        then (select a.block from approval_queue a
+               where a.id = (new.detail->>'queue_id')::bigint)
+      when new.action in ('alloc_approve', 'alloc_reject', 'lot_intake')
+        then 'production'
+      when new.action = 'cogs_approve' then 'finance'
+      when new.action in ('draft_approve', 'draft_reject', 'draft_schedule')
+        then (select case when new.action = 'draft_reject'
+                           and lower(btrim(c.created_by)) = lower(btrim(v_who))
+                          then null else coalesce(c.block, 'marketing') end
+                from content_drafts c
+               where new.object_type = 'content_draft'
+                 and c.id::text = new.object_id) end;
+  end if;
+  perform human_actor(v_who, v_block);
+  if v_decision then         -- (lồng: bảng khác không có cột action)
+    if new.action = 'draft_approve' then
+      select c.created_login, c.created_by into v_cl, v_cb
+        from content_drafts c
+       where new.object_type = 'content_draft' and c.id::text = new.object_id;
+    elsif new.action in ('queue_approve', 'queue_override_qa') then
+      select a.created_login, a.created_by into v_cl, v_cb
+        from approval_queue a where a.id = (new.detail->>'queue_id')::bigint;
+    elsif new.action = 'cogs_approve' then
+      select g.created_login, g.created_by into v_cl, v_cb
+        from cogs_versions g
+       where new.object_type = 'cogs_version' and g.id::text = new.object_id;
+    end if;
+    -- (vòng r8) cùng NGƯỜI qua login khác: so người của login tạo và login
+    -- hiện tại theo human_logins (mọi trạng thái — login cũ đã khóa vẫn tính)
+    if v_cl = session_user::text or p10_norm(v_cb) = p10_norm(v_who)
+       or exists (select 1 from human_logins h1 join human_logins h2
+                    on p10_norm(h1.person) = p10_norm(h2.person)
+                   where h1.db_login = v_cl and h2.db_login = session_user) then
+      raise exception 'người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt'
+        using errcode = '42501';
+    end if;
+    if new.action in ('qr_lot_sign', 'qr_issue', 'qr_revoke') then
+      v_role := case when new.action = 'qr_lot_sign'
+                     then coalesce(new.detail->>'role', '?') end;
+      if not exists (select 1 from human_qr_roles r
+                      where r.db_login = session_user and r.active
+                        and (v_role is null or r.role = v_role)) then
+        raise exception 'login % không có vai QR % (human_qr_roles — Bên B điền theo văn bản ủy quyền)',
+          session_user, coalesce(v_role, '(bất kỳ)') using errcode = '42501';
+      end if;
+    end if;
+  end if;
+  return new;
+end $$;
+revoke execute on function person_login_guard() from public;
+
+-- ===== Vòng r8 (22/10/2026): bằng chứng ĐĂNG NHẬP THẬT của người duyệt =====
+-- Ma trận nghiệm thu (pipelines.acceptance) tách "cấu hình login dùng được"
+-- (pg_roles: LOGIN, hạn VALID UNTIL, giới hạn kết nối, CONNECT, app_human, không
+-- superuser) khỏi "đã đăng nhập thật": mỗi lần `auth.person_connect` mở phiên
+-- người thành công (Postgres đã xác thực mật khẩu) ghi 1 dòng — login, người,
+-- thời điểm DB; KHÔNG lưu mật khẩu. Append-only.
+create table if not exists human_login_checks (
+  id bigint generated always as identity primary key,
+  db_login text not null,
+  person text not null,
+  checked_at timestamptz not null default now()
+);
+create or replace trigger human_login_checks_append_only_row
+  before update or delete on human_login_checks
+  for each row execute function append_only_guard();
+
+create or replace function human_login_check() returns timestamptz
+language plpgsql security definer set search_path from current as $$
+declare
+  v_person text;
+begin
+  select btrim(h.person) into v_person from human_logins h
+   where h.db_login = session_user and h.active;
+  if v_person is null then
+    raise exception 'login % chưa được ánh xạ người (human_logins)',
+      session_user using errcode = '42501';
+  end if;
+  insert into human_login_checks (db_login, person) values (session_user, v_person);
+  return now();
+end $$;
+revoke execute on function human_login_check() from public;
+
+-- ===== Vòng r12 (UI-01): ghi nhật ký vườn NHẬP TAY từ UI chế độ thực =====
+-- Tab "Nhật ký vườn" đọc bằng login UI dùng chung (`svc_ui`, SELECT theo cột —
+-- roles.sql khối r12) nhưng GHI bằng login Postgres RIÊNG của người (phiên "Mở
+-- quyền quyết định", `auth.person_connect`) qua function này: `human_actor`
+-- buộc --by = người của login + khối farming (svc_ui/dịch vụ không ánh xạ
+-- người → 42501; agent/system → 42501). `author` = người của login, nguồn
+-- `manual`; chuỗi băm do trigger `plot_logs` hiện có. Không cấp INSERT
+-- plot_logs cho role nào.
+create or replace function plot_log_add_human(p_plot text, p_ts timestamptz,
+  p_activity text, p_detail text, p_by text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'farming');
+  v_id bigint;
+begin
+  if not exists (select 1 from plots where id = p_plot and status = 'active') then
+    raise exception 'khoảnh % không tồn tại hoặc không active', left(coalesce(p_plot, ''), 40);
+  end if;
+  if btrim(coalesce(p_activity, '')) = '' then
+    raise exception 'thiếu hoạt động';
+  end if;
+  insert into plot_logs (plot_id, ts, activity, detail, author, source)
+  values (p_plot, p_ts, btrim(p_activity), nullif(btrim(coalesce(p_detail, '')), ''),
+          v_by, 'manual')
+  returning id into v_id;
+  return v_id;
+end $$;
+revoke execute on function plot_log_add_human(text, timestamptz, text, text, text)
+  from public;

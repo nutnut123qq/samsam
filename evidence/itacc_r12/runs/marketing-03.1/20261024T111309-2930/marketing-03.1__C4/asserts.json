@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from ad_test_plans",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ }
+]

@@ -29,7 +29,7 @@ from agents.report import REPORTS_DIR, write_report
 from ingest import golden_store
 from ingest.inventory_csv import STALE_NOTE, current_stock
 from ingest.lead_store import connect
-from pipelines import scenario
+from pipelines import rollout, scenario
 from pipelines.job_runs import job_run
 from pipelines.production import NOTE_NO_STOCK, TZ_VN, shortage
 
@@ -159,6 +159,10 @@ def main(argv=None) -> int:
     ap.add_argument("--write", action="store_true",
                     help="ghi data/reports/kd-forecast-<start>.md")
     a = ap.parse_args(argv)
+    # r12 RB: tắt → không in/ghi dự báo (chặn trước khi đọc dữ liệu).
+    why = rollout.blocked(None, "dự báo mùa", fid="sales-07.3")
+    if why:
+        return rollout.say_blocked(why)
     start = scenario.week_start(a.start or _today_vn())
     doc, why = golden_store.read_golden(scenario.GOLDEN_FILE)
     if doc is None:
@@ -214,6 +218,9 @@ def main(argv=None) -> int:
             return 1
         print(f"[write] {p}")
     return rc
+
+
+main = rollout.cli_entry(main)
 
 
 if __name__ == "__main__":

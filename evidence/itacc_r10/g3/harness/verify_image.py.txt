@@ -1,0 +1,26 @@
+"""HARNESS g3: kiểm ĐỘC LẬP ảnh nháp image_studio (không dùng hàm kiểm của sản phẩm).
+argv: png packshot box_x box_y box_w box_h"""
+import hashlib, sys
+from PIL import Image
+png, pk, x, y, w, h = sys.argv[1], sys.argv[2], *map(int, sys.argv[3:7])
+raw = open(png, "rb").read()
+print("sha256_file", hashlib.sha256(raw).hexdigest())
+im = Image.open(png)
+print("format", im.format, "mode", im.mode, "size", im.size)
+print("info_keys", sorted(im.info.keys()), "exif_len", len(im.getexif()))
+# chunk PNG: không có tEXt/iTXt/zTXt/eXIf/iCCP
+chunks, i = [], 8
+while i < len(raw):
+    n = int.from_bytes(raw[i:i+4], "big"); chunks.append(raw[i+4:i+8].decode()); i += 12 + n
+print("chunks", sorted(set(chunks)))
+src = Image.open(pk).convert("RGBA").resize((w, h), Image.LANCZOS)
+out = im.convert("RGB")
+tot = bad = 0
+for yy in range(h):
+    for xx in range(w):
+        r, g, b, a = src.getpixel((xx, yy))
+        if a == 255:
+            tot += 1
+            if out.getpixel((x+xx, y+yy)) != (r, g, b):
+                bad += 1
+print("alpha255_pixels", tot, "mismatch", bad)

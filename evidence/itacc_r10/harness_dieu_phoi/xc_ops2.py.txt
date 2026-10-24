@@ -1,0 +1,102 @@
+"""Kiểm xuyên suốt r10 phần 2: (C) webhook /readyz + scripts/webhook_probe.py khi DB lỗi →
+cảnh báo, phục hồi, khởi động lại; (D) role ứng dụng không owner/superuser.
+HARNESS: Handler THẬT của connectors.zalo chạy trên ThreadingHTTPServer bind 127.0.0.1 (main()
+của sản phẩm bind 0.0.0.0 — không dùng trong máy dev), đường dẫn convlog/seen → thư mục tạm.
+Chạy: python -I xc_ops2.py <ROOT> <OUT.json>  (DATABASE_URL đã trỏ DB thử)."""
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import threading
+from http.server import ThreadingHTTPServer
+from pathlib import Path
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(ROOT))
+os.chdir(ROOT)
+from psycopg import conninfo  # noqa: E402
+
+GOOD = os.environ["DATABASE_URL"]
+assert conninfo.conninfo_to_dict(GOOD)["dbname"].startswith("samsam_itacc_")
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+import psycopg  # noqa: E402
+
+from connectors import zalo  # noqa: E402
+
+TMP = Path(tempfile.mkdtemp(prefix="xc_ops2_"))
+zalo.CONV_LOG = TMP / "conversations.jsonl"
+zalo.SEEN_DB = TMP / "zalo_seen.db"
+R = []
+
+
+def rec(ma, ok, expected, actual):
+    R.append({"ma": ma, "ket_qua": "PASS" if ok else "FAIL", "expected": expected, "actual": actual})
+    print("PASS" if ok else "FAIL", ma, json.dumps(actual, ensure_ascii=False, default=str)[:240])
+
+
+def q(sql, args=()):
+    with psycopg.connect(GOOD, connect_timeout=5) as c:
+        return c.execute(sql, args).fetchall()
+
+
+def start():
+    s = ThreadingHTTPServer(("127.0.0.1", 0), zalo.Handler)
+    threading.Thread(target=s.serve_forever, daemon=True).start()
+    return s
+
+
+def probe(port):
+    p = subprocess.run([sys.executable, "scripts/webhook_probe.py", "--url",
+                        f"http://127.0.0.1:{port}/readyz"], cwd=ROOT, capture_output=True,
+                       text=True, encoding="utf-8", env=dict(os.environ, DATABASE_URL=GOOD))
+    return p.returncode, (p.stdout + p.stderr)[-240:]
+
+
+def n_alerts():
+    return q("select count(*) from red_alerts where source_agent = 'webhook_probe'")[0][0]
+
+
+srv = start()
+port = srv.server_address[1]
+rc, out = probe(port)
+rec("C1_readyz_db_ok_probe_exit0", rc == 0, "exit 0 khi config + DB ok", {"rc": rc, "out": out})
+a0 = n_alerts()
+os.environ["DATABASE_URL"] = "postgresql://it@10.255.255.1:5432/samsam_itacc_dead"   # DB chết
+rc, out = probe(port)
+a1 = n_alerts()
+rec("C2_db_loi_probe_exit1_canh_bao", rc == 1 and a1 == a0 + 1,
+    "exit 1 + 1 cảnh báo đỏ webhook_probe", {"rc": rc, "alerts": [a0, a1], "out": out})
+rc, out = probe(port)
+rec("C3_cung_dot_khong_bao_lap", rc == 1 and n_alerts() == a1,
+    "exit 1, không thêm cảnh báo cùng đợt", {"rc": rc, "alerts": n_alerts()})
+os.environ["DATABASE_URL"] = GOOD
+rc, out = probe(port)
+rec("C4_db_phuc_hoi_probe_exit0", rc == 0, "DB sống lại → exit 0", {"rc": rc})
+srv.shutdown()
+srv.server_close()
+rc_down, out = probe(port)
+srv = start()
+rc_up, _ = probe(srv.server_address[1])
+rec("C5_tien_trinh_tat_roi_khoi_dong_lai", rc_down == 1 and rc_up == 0,
+    "tắt → exit 1 (không kết nối); khởi động lại → exit 0", {"rc_tat": rc_down, "rc_lai": rc_up})
+srv.shutdown()
+
+# D. role ứng dụng
+rows = q("select r.rolname, r.rolsuper, r.rolcreaterole, r.rolcreatedb, r.rolbypassrls,"
+         " pg_has_role(r.oid, (select relowner from pg_class where oid = 'human_logins'::regclass),"
+         " 'MEMBER') from pg_roles r where r.rolname in ('agent_writer','app_human','svc_ui',"
+         "'svc_webhook','svc_job','svc_loader','svc_backup','bks_reader','ben_a_reader')"
+         " order by 1")
+bad = [r for r in rows if any(r[1:])]
+rec("D1_role_ung_dung_khong_owner_superuser", len(rows) >= 7 and not bad,
+    "mọi role ứng dụng: không superuser/createrole/createdb/bypassrls, không thành viên owner",
+    {"roles": [r[0] for r in rows], "vi_pham": bad})
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+n = sum(r["ket_qua"] != "PASS" for r in R)
+print(f"TỔNG {len(R)} ca, FAIL {n}")
+sys.exit(1 if n else 0)

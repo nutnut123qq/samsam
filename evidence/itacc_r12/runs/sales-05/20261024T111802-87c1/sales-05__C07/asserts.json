@@ -1,0 +1,22 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'sales' and object_type = 'b2b_catalog'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'b2b_catalog' and payload ilike '%rượu%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\sales-05\\20261024T111802-87c1\\sales-05__C07\\out/catalog-tet-*.md",
+  "re": "(?i)rượu",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ }
+]

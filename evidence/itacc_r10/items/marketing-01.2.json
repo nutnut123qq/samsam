@@ -1,0 +1,130 @@
+{
+ "id": "marketing-01.2",
+ "ten": "Lịch mùa vụ (brief chiến dịch)",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Nội dung hằng ngày: '... theo lịch mùa vụ'",
+ "tieu_chi": [
+  "T1 `python -m agents.mkt_director --briefs --today 2026-10-23` exit 0",
+  "T2 ≥1 mục approval_queue block='marketing', object_type='campaign_brief', created_by='agent:MKT-00', status='pending', object_id=id chiến dịch trong lịch, payload có mốc + ô kênh + 'Nguồn: data/marketing_calendar.json', due_at theo SLA cấu hình",
+  "T3 chạy lại → skip, 0 dòng mới; --dry-run → 0 dòng; tắt → exit≠0 và 0 dòng; lịch hỏng → exit 1 không ghi",
+  "T4 agent không tự duyệt (status pending), không đăng"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM)",
+ "dau_vao": [
+  {
+   "ten": "data/marketing_calendar.json",
+   "sha256": "8e115f831761dd93b447c223e4f3f6c3b65776f978907fcea4825d0e2b95501d",
+   "provenance": "file repo (đọc, không sửa)"
+  },
+  {
+   "ten": "harness/fixtures/calendar_broken.json",
+   "sha256": "df99637769d1b772c04b33cfd9e1b1436eae1831240dc0f9ee43bbd69b153d7d",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "01.2-C1",
+   "mo_ta": "đẩy brief",
+   "lenh": "python -m agents.mkt_director --briefs --today 2026-10-23",
+   "expected": "≥1 campaign_brief đúng T2",
+   "actual": "#1 c-1111-2026 marketing/campaign_brief pending risk medium created_by agent:MKT-00, payload mốc + ô kênh + 'Nguồn: data/marketing_calendar.json…', due_at = created+48h (SLA cấu hình)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "01.2-C2",
+   "mo_ta": "chạy lại",
+   "lenh": "python -m agents.mkt_director --briefs --today 2026-10-23",
+   "expected": "skip, 0 dòng mới",
+   "actual": "[skip] đã có; tổng vẫn 1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "01.2-C3",
+   "mo_ta": "dry-run",
+   "lenh": "python -m agents.mkt_director --briefs --dry-run --today 2026-10-23",
+   "expected": "0 dòng DB",
+   "actual": "in brief, 'không connect DB'; tổng vẫn 1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "01.2-C4",
+   "mo_ta": "tính năng tắt (--today 2026-11-05 --horizon-days 30)",
+   "lenh": "python -m agents.mkt_director --briefs --today 2026-11-05 --horizon-days 30",
+   "expected": "exit≠0, 0 dòng mới",
+   "actual": "exit 1, 0 dòng mới (brief 12.12 không sinh) — nhưng traceback RolloutBlocked chưa bắt (D3)",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "01.2-C5",
+   "mo_ta": "lịch JSON hỏng (FIXTURE patch CALENDAR_FILE)",
+   "lenh": "python evidence/itacc_r10/g3/harness/run.py --set pipelines.mkt_calendar.CALENDAR_FILE=evidence/itacc_r10/g3/harness/fixtures/calendar_broken.json -m agents.mkt_director --briefs --today 2026-10-23",
+   "expected": "exit 1 CalendarError, 0 dòng",
+   "actual": "exit 1 '[err] calendar_broken.json JSON hỏng'; 0 dòng",
+   "exit": 1,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "Lịch chiến dịch GIẢ ĐỊNH; approvers marketing rỗng (dev).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/01.2-C1.txt",
+   "sha256": "624c39127749008775224a2ece06114205b7f3ce8d7229467b754b2b6a83500e"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/01.2-C1.db.json",
+   "sha256": "d0b2137aad28dcb3202efd0b111f18c26ef6db451e7888cfb0e123f6690119f8"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/01.2-C2.txt",
+   "sha256": "444e26e41dc6d104435fa5e428bf1aa04cbed6cea532a1fa5ff38e1e52a564e4"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/01.2-C3.txt",
+   "sha256": "9043d90fbb6f53a532f64a1cc6d970e495b7b89653de5508d8a8bd45f96b0c87"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/01.2-C4a.txt",
+   "sha256": "955019622b77233c0b2e9fc1810ee2dc48342f9a24875efe5adc0394e9c7abfe"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/01.2-C4.txt",
+   "sha256": "436a9de57ed2a71d1bb410a6ed4e17366278a61a411f4e34a87b97c1941ac5ac"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/01.2-C4b.txt",
+   "sha256": "f6a6f14ad6b36464cb7f3dedfbdbe720c491a99116998a5fcf58183739f6fd9b"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/01.2-C5.txt",
+   "sha256": "8626181f46e34119d4f46cabcbd2ca74347bd2db080bf8ae6f846170db1a589f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "D3",
+   "muc_do": "thấp",
+   "mo_ta": "RolloutBlocked (tính năng tắt) không được bắt ở CLI → traceback exit 1 (mkt_director --briefs, seo_web --submit, pc_hr --jd); mkt_ads --propose in '[error] RolloutBlocked: RolloutBlocked' exit 1 — mất lý do, lệch quy ước exit 2 của các CLI khác. Hành vi cốt lõi (không sinh đầu ra) vẫn đúng.",
+   "tai_hien": "rollout --disable <tính năng>; chạy CLI tương ứng",
+   "expected": "[blocked] <lý do> exit 2",
+   "actual": "traceback / thông báo mất lý do, exit 1",
+   "evidence": [
+    "evidence/itacc_r10/g3/out/01.2-C4.txt",
+    "evidence/itacc_r10/g3/out/06.1-C3.txt",
+    "evidence/itacc_r10/g3/out/L-06.1-C4.txt",
+    "evidence/itacc_r10/g3/out/03.1-C7.txt"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from channel_snapshots where source = 'manual_export'",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from channel_snapshots where source = 'manual_export' and source_ref like 'it_g1_cockpit.csv#sha256:90476ba534e4%'",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ }
+]

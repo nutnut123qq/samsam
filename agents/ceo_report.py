@@ -53,7 +53,7 @@ from agents import ceo_audit, ceo_decisions, ceo_risk
 from agents.ra_kenh import parse_now
 from agents.report import REPORTS_DIR, write_report
 from ingest.lead_store import connect
-from pipelines import director
+from pipelines import director, rollout
 from pipelines.cockpit import (
     CEO_METRICS,
     INTERNAL_CHANNEL,
@@ -519,6 +519,9 @@ def finalize(rep: dict) -> tuple[str, bool]:
     return render(rep), False
 
 
+FEATURE_WEEK = "ceo-01"            # r12 G1-L4: báo cáo tuần tự động
+
+
 def report_name(rep: dict) -> str:
     return f"ceo-{rep['label']}.md"
 
@@ -609,6 +612,15 @@ def main(argv=None, now=None) -> int:
         print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
               " host chết)", file=sys.stderr)
         return 2
+    # r12 G1-L4: báo cáo TUẦN = đầu ra ceo-01 (tiền tố ceo- không thuộc
+    # output_sources) — cổng tắt TRƯỚC khi dựng/gọi LLM, ghi tường minh
+    # tính năng để có nhãn giai đoạn + sổ report_outputs.
+    fid = FEATURE_WEEK if args.period == "week" else None
+    why = rollout.blocked(conn, "báo cáo tuần TGĐ", fid=fid)
+    if why:
+        with suppress(Exception):
+            conn.close()
+        return rollout.say_blocked(why)
     try:
         try:
             secs = compute_sections(conn, now or datetime.now(VN_TZ))
@@ -619,7 +631,7 @@ def main(argv=None, now=None) -> int:
             return 2
         text, ok = finalize(rep)
         path = write_report(text, Path(args.out_dir), report_name(rep),
-                            sample=rep_sample(rep))
+                            sample=rep_sample(rep), feature=fid)
         n_data = sum(1 for r in rep["rows"] if r["cur"] is not None)
         print(f"[done] {path} — kỳ {rep['label']}, {n_data}/"
               f"{len(rep['rows'])} chỉ số có số kỳ này"

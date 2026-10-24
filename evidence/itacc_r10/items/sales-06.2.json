@@ -1,0 +1,222 @@
+{
+ "id": "sales-06.2",
+ "ten": "Cảnh báo đơn trễ, hủy, hoàn bất thường",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Giám sát giá và đơn hàng: 'cảnh báo đơn trễ, hủy, hoàn bất thường'",
+ "tieu_chi": [
+  "`ingest.market_csv --kind order` (fixture, cột người mua bị bỏ) + `kd_orders --sync` → orders source market:<kênh>, không PII",
+  "`kd_orders --watch --dry-run --as-of` → kế hoạch order_anomaly khi tỷ lệ hủy vượt ngưỡng tuần đã đóng; 0 ghi",
+  "`kd_orders --watch` → order_anomaly created_by agent:kd_orders payload tỷ lệ/tuần; đơn trễ = chưa đo (không suy); chạy lại không nhân đôi",
+  "Dưới min_orders → không cảnh báo; file cột lạ → exit 1 0 dòng",
+  "Tắt → loader market_csv/--watch không sinh"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: không LLM",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s062_orders_shopee.csv",
+   "sha256": "1213689c7f39acfcf0c2092f0dc5ce79a0d02bbf52ed966b8d805d371adc6f33",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s062_orders_tiktok.csv",
+   "sha256": "14837e780614b26278c7560e9e7693a426bbd9d4c68bb69de4ff2c62d642dfd4",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s062_orders_bad.csv",
+   "sha256": "7481ae09a8d4117627f49016cc70b865274fa4c52c0f920a94843d7077091acb",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "S062-C01",
+   "mo_ta": "Nạp đơn + sync",
+   "lenh": "python -m ingest.market_csv --file evidence/itacc_r10/g2/fixtures/s062_orders_shopee.csv --channel shopee --kind order ;; python -m ingest.market_csv --file evidence/itacc_r10/g2/fixtures/s062_orders_tiktok.csv --channel tiktok --kind order ;; python -m agents.kd_orders --sync",
+   "expected": "orders market:shopee; không SĐT",
+   "actual": "snapshot #3 shopee 12 dòng, #4 tiktok 3 dòng; --sync thêm 15 đơn source market:<kênh>, mã đơn chỉ hash, 5 'cancelled'; market_rows không chứa SĐT/tên người nhận (0 dòng)",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S062-C02",
+   "mo_ta": "File cột lạ",
+   "lenh": "python -m ingest.market_csv --file evidence/itacc_r10/g2/fixtures/s062_orders_bad.csv --channel shopee --kind order",
+   "expected": "exit 1 0 dòng",
+   "actual": "exit 1 'cột lạ ... không connect, không nạp gì'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S062-C03",
+   "mo_ta": "watch dry-run as-of tuần sau",
+   "lenh": "python -m agents.kd_orders --watch --dry-run --as-of 2026-10-30",
+   "expected": "kế hoạch có hủy vượt ngưỡng; 0 ghi",
+   "actual": "'[shopee] tuần 2026-10-19: đơn hủy 5/12 (41.7%)' · đẩy 0 — KHÔNG ghi DB; 'Đơn trễ: CHƯA ĐO'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S062-C04",
+   "mo_ta": "watch thật (FIXTURE dời orders.ts 7 ngày)",
+   "lenh": "python -m agents.kd_orders --watch ;; python evidence/itacc_r10/g2/harness/shift_orders.py ;; python -m agents.kd_orders --watch ;; python -m agents.kd_orders --watch",
+   "expected": "order_anomaly agent:kd_orders; lần 2 0; trễ chưa đo",
+   "actual": "trước fixture: 0 (tuần hiện tại chưa đóng — đúng); sau dời ts: #56 order_anomaly ow:shopee:cancel:2026-10-12:5 created_by agent:kd_orders payload 12 đơn hủy 5 (41.7%) > 15% GIẢ ĐỊNH, 'Đơn trễ: CHƯA ĐO'; lần 2 0 mới",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S062-C05",
+   "mo_ta": "Dưới min_orders",
+   "lenh": "python -m agents.kd_orders --watch --dry-run --as-of 2026-10-30 ;; python -m agents.kd_orders --watch --dry-run --as-of 2026-10-30",
+   "expected": "không cảnh báo tiktok",
+   "actual": "tiktok 3 đơn (1 hủy) không xuất hiện trong phát hiện",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S062-C06",
+   "mo_ta": "Tắt",
+   "lenh": "python -m pipelines.rollout --disable sales-06.2 --by Người Thử IT --note kiểm nhánh tắt r10 g2 ;; python -m ingest.market_csv --file evidence/itacc_r10/g2/fixtures/s062_orders_tiktok.csv --channel tiktok --kind order ;; python -m agents.kd_orders --watch",
+   "expected": "chặn",
+   "actual": "market_csv exit 2 '[rollout] ... KHÔNG nạp'; --watch exit 2 '[rollout] ... không sinh đầu ra'",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "File xuất Seller Center chưa có cột ngày đặt → orders.ts = lúc nạp; để kiểm tuần ĐÃ ĐÓNG phải dời ts 7 ngày (FIXTURE harness shift_orders.py, ghi rõ) — không là bằng chứng vận hành; đơn trễ chưa đo (thiết kế); tên trạng thái hoàn/trả + ngưỡng GIẢ ĐỊNH; mapping cột chưa xác minh với file thật.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post.py",
+   "sha256": "09d71906afc3419051c2a7e3bfca166a96497b75be67087efc4640c102e6d9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post2.py",
+   "sha256": "1ab72f65b0881f3e20f7da54403a360f526728a95638f6dce6c6cf6ab872314e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/case.py",
+   "sha256": "0d5e5ea91967bf225c4ff3c733a5817c1ff87bb36095d808aa546fa8186b1340"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fake_llm.py",
+   "sha256": "adbc2f9799ed0ac98bf5ca1f83c7c11c2900579da8dc9bc2aa4ca3e91481cc81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fu_probe.py",
+   "sha256": "cd000fe41aa6172cf25198596a21d765938df14d3d1c2c9721812bc926b84953"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_golden_fixture.py",
+   "sha256": "82dcec52b25e0cb39b9111a0d2031d75c3d2b1c72ef60fcc71ebd747fdf0abb1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_items.py",
+   "sha256": "dfe2f77d4674e3134ba3fe9b26b320d6e1f8c54bebff43405b10cc98357b72c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/q.py",
+   "sha256": "1f522e8a212386aa99f6b6b44c4831b6aface0ecf34266af1c39eff527f274c1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/run_mod.py",
+   "sha256": "a5e9c3d3fdf5ad9706b50d5c01e7f1a66d8ab94ca05f8d449d57e6648519391b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/seed_chunk.py",
+   "sha256": "e2c8e72b3c8bd29336aa00af4138a19700aa0721aa993ef1286d2b235ad47b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/shift_orders.py",
+   "sha256": "b630f0394d2543a79471f4174f56d87461bb4c687718ff5d3da83a0d16791afe"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/zalo_e2e.py",
+   "sha256": "f6f1700f4569219eff9446fce3724d65f259fbddaba0930cc0ccc876ee416ae4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C01-db.json",
+   "sha256": "2fd5703ffc38e6484563491b5b019a7cb8f6223a58c3693e950204e2e2a41435"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C01a.txt",
+   "sha256": "a35ac84a91028f361113f06cd1b41ad8cc3136eb364b16d7b34d8bbb4821328f"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C01b.txt",
+   "sha256": "2529e3f83e4aa4dfc8b91244ded91c35e517b223f211e155d9645bed01416eb9"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C01c.txt",
+   "sha256": "03a8a4b3ad5e2dff669fa316ca67d648706c020ed167d337c9207442d4e11b94"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C02.txt",
+   "sha256": "02714ed87a0351c6db233345f1bc590b99e623740e139dae26225cf88daab014"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C03.txt",
+   "sha256": "2f6e9812eae29488f4e4146377dc339f85ca72e2be08526f3c8423ab8068b805"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C04-db.json",
+   "sha256": "2cb7837ddf8b16947aa1a22da872e5578132a45c17376c1e510b1b116c2c2092"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C04-fixture.txt",
+   "sha256": "71f09e1b80e68607cd6801055793d258f608f1494efaf92d0b2f294654c9b06b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C04a.txt",
+   "sha256": "83e85f910471a14ef6f042facd3424d124bd5c78075b06fdaeb7283506fca861"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C04b.txt",
+   "sha256": "ec21e5dba5bbcd3bec87782fa2832b6cbbb3340f5e546c3f97e9774172ea684e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C04pre.txt",
+   "sha256": "5d821f1ed355fc68e91af07aca395a7572a1c3cc886f9b0acd140ee84dc34102"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C05.txt",
+   "sha256": "aabb5716fa03555ab8143dfe64478c58867167400c6224adcc81a11b1e4d1337"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C06a.txt",
+   "sha256": "d7f0656b71c442d5d7a3a31b736dcae1ebea9a84b06b72ac7392a57a4c529198"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S062-C06b.txt",
+   "sha256": "07dabf5171b55ae56c365d2d60ba0c5e90986b741231f335e4e1be24e374963f"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt",
+   "sha256": "6318bbc062812637309bbc78e092657139921c2ff309792bd10b70bd6a306179"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt",
+   "sha256": "0627f43797cc5b00090dcdaddc96bf287ec3a0575fe234785a105ab05814f01c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/TAT-disable-sales-06.2.txt",
+   "sha256": "cdcc470ce4f8db4760cb1d794d942f041bed047ba0a35b3136e7c97ab9350170"
+  }
+ ],
+ "loi_san_pham": [],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

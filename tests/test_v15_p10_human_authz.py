@@ -688,9 +688,11 @@ def test_p10_4_creator_cannot_self_approve(live):
 def test_p10_4_deny_does_not_commit_caller_work(live, monkeypatch):
     monkeypatch.setattr(auth, "_APPROVAL_FORCE", True)
     with _conn(live, "legal") as c:
+        # việc dở của caller (đợt an toàn S04b: login người chỉ tạo draft
+        # bằng tên CHÍNH mình — trước đây 'Lan')
         c.execute("insert into content_drafts (brief, channel, text,"
                   " guardrail, source, created_by) values ('p10-dang-do',"
-                  " 'facebook', 'x', '{}'::jsonb, 'cli', 'Lan')")
+                  " 'facebook', 'x', '{}'::jsonb, 'cli', %s)", (P_LEGAL,))
         with pytest.raises(auth.HumanDenied):
             auth.call_human(c, "select approve_price_human(1, %s)",
                             (P_SALES,), by=P_SALES, block="sales",

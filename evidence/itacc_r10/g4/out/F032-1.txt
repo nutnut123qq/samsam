@@ -1,0 +1,10 @@
+# db samsam_itacc_r10_fin
+> insert into dealers (code, name, region, status, commission_default, source) values ('IT-DL01','Đại lý Thử IT 01','mien-trung','active',10,'fixture-thu-it'),('IT-DL03','Đại lý Thử IT 03','mien-trung','active',8,'fixture-thu-it')
+(rowcount 2)
+> insert into affiliate_codes (code, dealer_code, channel, status, created_by, activated_at, activated_by) values ('SSQATEST2345','IT-DL01','shopee','active','Người Thử IT', now(), 'GĐ Bán hàng Thử IT')
+(rowcount 1)
+> select code,status,commission_default,source from dealers
+["IT-DL01", "active", "10.00", "fixture-thu-it"]
+["IT-DL03", "active", "8.00", "fixture-thu-it"]
+> select id,code,dealer_code,channel,status from affiliate_codes
+[1, "SSQATEST2345", "IT-DL01", "shopee", "active"]

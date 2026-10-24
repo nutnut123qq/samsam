@@ -1,0 +1,109 @@
+"""Dựng evidence/itacc_r10/gates.json (phần mô tả hồ sơ) — số full/gate đọc từ log thật."""
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+EV = Path(r"D:\code\samsam\evidence\itacc_r10")
+full = (EV / "gate" / "full_pytest.txt").read_text(encoding="utf-8")
+gates = (EV / "gate" / "gates_final.txt").read_text(encoding="utf-8")
+fp = re.search(r"fingerprint[^=]*= ([0-9a-f]{64})", full).group(1)
+m = re.search(r"^(\d+ passed[^\n]*)$", full, re.M)
+full_line = m.group(1) if m else "KHÔNG đọc được dòng tổng"
+full_exit = re.search(r"^EXIT (\d+)", full, re.M).group(1)
+fails = re.findall(r"^FAILED (\S+)", full, re.M)
+skips = len(re.findall(r"^SKIPPED", full, re.M))
+gx = dict(re.findall(r"## ([^\n]+)\n(?:.*\n)*?EXIT (\d+)", gates))
+
+
+def gl(pattern):
+    m = re.search(pattern, gates)
+    return m.group(0) if m else "(không thấy)"
+
+
+GV = r"guardrail v\d PASS [^\n]*"
+RT = r"tỷ lệ lọt: [^\n]*"
+U = json.loads((EV / 'ui' / 'ui_results_run6.json').read_text(encoding='utf-8'))
+from collections import Counter
+_uc = Counter(r['verdict'] for r in U)
+G_UI = f"{len(U)} bước: {_uc.get('PASS',0)} PASS, {_uc.get('FAIL',0)} FAIL (UI-01, UI-02 — lỗi sản phẩm), {_uc.get('NOT_RUN',0)} NOT_RUN (bị UI-01 chặn)"
+S = []
+S.append({"title": "5. Lỗi sản phẩm đã tái hiện (KHÔNG vá trong đợt — xếp theo mức độ)", "lines": [
+ "| Mã | Mức | Mô tả ngắn | Mục ảnh hưởng | Tái hiện / evidence |",
+ "|---|---|---|---|---|",
+ "| P-01 | CAO | `pipelines/production.py collect`: biến vòng lặp `stock` (cột min(stock_total), ~dòng 820) đè dict tồn kho → dòng 861 `sku in stock` TypeError; `production bulletin` crash khi có ≥1 run phân bổ + lô cận hạn → không ra `sx-bantin-*`/`sx-canhan-*` | production-01, production-04.3 | g4 `out/P01-7c*.txt`; điều phối viên tái hiện độc lập `xuyen_suot/prod_repro.txt` |",
+ "| UI-01 | TRUNG BÌNH | Tab \"Nhật ký vườn\" chế độ thực: login `svc_ui` không có SELECT `plots`/`plot_logs` (42501) → \"Lỗi đọc DB\", không ghi nhật ký vườn qua UI | farming-01 | `ui/shots/24_*.png`, `xuyen_suot/ui01_garden_svc_ui_repro.txt` |",
+ "| UI-02 | TRUNG BÌNH | Tab \"Chat Sâm Sâm\" chế độ thực: `svc_ui` không SELECT `chunks` → InsufficientPrivilege, traceback hiện cho người dùng (lộ đường dẫn mã); câu sức khỏe vẫn chuyển người | sales-01 (UI demo) | `ui/shots/19_*.png`, `ui/streamlit_run6_log.txt` |",
+ "| G5-01 | TRUNG BÌNH (MAJOR) | `scripts/garden_media_mkt.py --release/--revoke` gọi `cli_gate` hành động `media_cap`/`media_thu_hoi` không có trong `auth.ACTIONS` → luôn từ chối mọi chế độ; luồng cấp tư liệu vườn cho Marketing không dùng được | farming-04 | g5 `runs/F04-05a`, `F04-DIAG*`; điều phối viên kiểm `auth.ACTIONS` |",
+ "| G1-L1 | TRUNG BÌNH | Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (ceo-04.3→ceo-04.4 `ceo-gia`; intel-03→intel-04.1 `intel-trend`; intel-01.2→intel-01.1 bản tin job 7h) — job theo lịch chết kéo theo tính năng đang chạy | ceo-04.3, ceo-04.4, intel-01.1, intel-01.2, intel-03, intel-04.1 | g1 `out/ceo043_C04`, `intel03_C06*`, `intel012_C03`; điều phối viên kiểm `scripts/intel_weekly.py` vòng `REPORTS` |",
+ "| G1-L3 | TRUNG BÌNH | Gói HĐTV in \"Thực chi 0đ / 0.0% trần\" khi KHÔNG có nguồn chi (bịa số 0) | ceo-05 | g1 items/ceo-05 |",
+ "| D1 / P052 / L5 | TRUNG BÌNH | Tính năng TẮT vẫn gọi LLM (phát sinh chi phí, gửi ngữ cảnh ra dịch vụ AI) rồi mới bị chặn muộn: `video_studio`, `mkt_youtube`, `sx_tracuu --llm`, `kd_live` | marketing-02.2, marketing-07.2, production-05.2, sales-07.1 (thấp) | g3 `out/02.2-C5*`, g4 `out/P052-4.txt`, g2 items/sales-07.1 |",
+ "| L3 | TRUNG BÌNH | Chatbot TẮT: khách vẫn nhận câu hứa \"nhân viên sẽ phản hồi\" (kể cả câu sức khỏe) nhưng KHÔNG tạo `cskh_handoff` (`channels.record_handoff` không bắt RolloutBlocked) | sales-01 | g2 `out/S01-X1.txt` |",
+ "| L1 | TRUNG BÌNH | Bộ đếm đầu ra sales-04.2 đếm cả handoff khi khách CHƯA đồng ý `dai_ly` (không lọc `pii_included`) | sales-04.2 | g2 `out/S042-X1-*` |",
+ "| L2 | TRUNG BÌNH | `kd_quote`/`kd_catalog` lấy giá từ `data/golden_skus.json`, không kiểm `price_list` ĐÃ duyệt (cùng lớp đã vá ở S03/F2); catalog nhận SKU readiness CAM | sales-05 | g2 `out/S05-X1b.txt`; điều phối viên kiểm `read_golden(GOLDEN_FILE)` |",
+ "| F06-6 | THẤP–TB | `rev_share --record` ghi `report_sha256` của bản CHƯA gắn nhãn giai đoạn → sổ đối soát quý không truy được file thật | finance-06 | g4 `out/F06-1-q.txt`, `F06-6-sha.txt` |",
+ "| D2 | THẤP–TB | `guardrail.check_publish` không gắn cờ SĐT cá nhân trong bài đăng (nháp có SĐT thô vẫn ok) — tiêu chí suy từ invariant PII, chờ Pháp chế xác nhận yêu cầu | legal_hr-01 | g3 `out/L-01-C1C2.txt` |",
+ "| RB | THẤP | RolloutBlocked không bắt ở nhiều CLI khi tính năng tắt → traceback/exit 1 thay vì báo gọn exit 2 (kết quả vẫn an toàn, 0 đầu ra): da_pmo, ceo_audit, ceo_risk, intel_bulletin, mkt_director, seo_web, pc_hr, mkt_ads, content --listing, kd_quote (còn ghi 3 file báo giá trước khi chặn), kd_forecast, vt_thuhoach, fp_pnl, sx_tracuu | marketing-03.1 (ca khóa đòi exit 2 → FAIL); ghi nhận ở nhiều mục khác | g1-L2, g3-D3, g2-L4, g5 OBS-G5-03, g4 |",
+ "| G1-L4 | THẤP | File `ceo-<kỳ>.md`, `hdtv-<kỳ>.md` không nhãn CHẠY THỬ, không qua cổng tắt, không vào `report_outputs` | ceo-01, ceo-05 | g1 items |",
+ "| F031-6 | THẤP | Bản tin công nợ thiếu nhóm tuổi 0-30 (hàng không cộng khớp) | finance-03.1 | g4 `out/rep_f031/` |",
+ "| G1-L5 | THẤP | `ceo_decisions --list` không in việc chờ quyết/chờ ký | ceo-02.2 | g1 `out/ceo022_C10.txt` |",
+ "| G1-L6 | THẤP | `combo_price`: nhánh `thieu_du_lieu` không tới được | intel-05.2 | g1 items |",
+ "| D4 | THẤP | `xnqc --draft --submit` lặp → lỗi DB duplicate key exit 2 thay vì bỏ qua (dữ liệu đúng) | legal_hr-02 (ĐẠT — ca khóa không đòi) | g3 items |",
+ "| G5-02 | THẤP | `qr_trace link/unlink` không qua `cli_gate`; function không chặn tên `agent:` (đường login owner/dev) — chế độ thực có trigger chặn | farming-03.1 | g5 `runs/F031-04` |",
+ "| GATE-OUT | THẤP | Cổng tắt chỉ ở bước ghi file: `fp_cash`, `sx_tracuu`, `production bulletin` vẫn in đủ nội dung ra stdout khi tắt | finance-04.1/05.2, production-05.1 (ghi nhận) | g4 |",
+ "",
+ "Quan sát không tính lỗi: `mkt_ads --results` nhận ngày tương lai; `contract_check` luôn `is_sample=false`; `verify-send`/`apply-due`/`--export` khi chạy thử in thêm \"LỆCH bản duyệt\" gây hiểu nhầm; kiểm nhập lô đã quá hạn không cảnh báo; 1 file phiếu kiểm nghiệm nhận cho 2 lô; `ceo_promo` quy % bằng giá list chưa duyệt; từ khóa đã che SĐT (`***`) vẫn vào đề xuất intel-04.2; diễn tập khôi phục của sản phẩm (`db_restore_drill`) chỉ đối chiếu số dòng, không verify hash chain (điều phối viên verify riêng — mục 6)."]})
+S.append({"title": "6. Kiểm xuyên suốt (điều phối viên tự chạy lượt này, DB Docker)", "lines": [
+ "| Nhóm | Phép kiểm | Kết quả | Evidence |",
+ "|---|---|---|---|",
+ "| Danh tính/quyền | probe S04 (svc_ui không ghi tên người, khối, login người) | 17/17 PASS | `xuyen_suot/probe_s04.txt` |",
+ "| | probe S04b (người tạo không tự duyệt/quyết/override, agent không quyết thay) | 17/17 PASS | `probe_s04b.txt` |",
+ "| | probe r8 (cùng NGƯỜI qua login thứ hai không tự quyết; login hết hạn/NOLOGIN/connlimit không READY) | 13/13 PASS | `probe_r8.txt` |",
+ "| | probe B3 (đổi login A→B: B không kế thừa evidence của A; B đăng nhập thật qua `auth.person_connect` thì tính; chuẩn hóa tên; offline/lỗi quyền; mất app_human/sai khối) | 7/7 PASS | `probe_b3.txt` |",
+ "| | probe S03 (giá listing đã duyệt đúng phiên bản), F1 (chat sàn chi phí/feature), F2 (feed website giá DB) | 14/14, 28/28, 12/12 PASS | `probe_s03.txt`, `probe_f1.txt`, `probe_f2.txt` |",
+ "| | Role ứng dụng (agent_writer, app_human, svc_ui, svc_webhook, svc_job, svc_loader, svc_backup, bks_reader, ben_a_reader): không superuser/createrole/createdb/bypassrls, không thành viên owner | PASS | `ops2.json` D1 |",
+ "| Vận hành | Job `red_alert_escalate`: chạy ghi `job_runs`; giữ khóa → lần 2 exit 75 + dòng ok=false \"chạy chồng\"; nhả khóa chạy lại được | 3/3 PASS | `ops.json` A1–A3 |",
+ "| | Cảnh báo đỏ qua SMTP GIẢ cục bộ có STARTTLS: chỉ gửi người nhận độc lập (TGĐ bị loại), SĐT trong tiêu đề bị che, deliveries không lưu địa chỉ; SMTP sập → không báo \"đã gửi\"; `--deliver` gửi lại khi SMTP sống; chứng chỉ không tin → từ chối; thiếu người nhận → fail-closed | 5/5 PASS (giao thức — KHÔNG phải gửi tới người thật) | `ops.json` B1–B5 |",
+ "| | Webhook `/readyz` (Handler thật, bind 127.0.0.1) + `scripts/webhook_probe.py`: DB ok exit 0; DB chết → 503, exit 1, 1 cảnh báo, cùng đợt không báo lặp; DB phục hồi exit 0; tắt tiến trình exit 1, khởi động lại exit 0 | 5/5 PASS | `ops2.json` C1–C5 |",
+ "| Backup/DR | `tests/test_dr_drill.py` ca Docker thật (dump → restore vào container tạm → so 100% bảng, RTO/RPO, container luôn xóa) | 3/3 PASSED | `dr.txt` |",
+ "| | `db_backup` + `db_restore_drill` trên DB thử; restore thủ công vào DB `…restore` rồi chạy `store --verify-log` + `garden_director --verify` trên bản KHÔI PHỤC; so md5 chuỗi `row_hash` nguồn ↔ khôi phục | khớp; verify OK (chuỗi `plot_logs` của dữ liệu mẫu chưa chain — chỉ chứng minh chuỗi `agent_action_log`) | `dr_chain_a.txt`, `dr_chain_b.txt` (lượt hỏng harness giữ ở `dr_chain_b_HARNESS_SAI_tro_DB_goc.txt`) |",
+ "| Rotation | `tests/test_safety_s01_rotation.py` trên Postgres Docker tạm (mới ok, cũ/sai 28P01, không lộ secret; trust path = không kết luận) | 3/3 PASSED | `rotation.txt` |",
+ "| | Rotation THẬT dev/production | KHÔNG làm (ngoài quyền) — mục rotation thật vẫn MỞ | — |",
+ "| UI thật | Streamlit 1.66.1 (venv tạm ngoài repo) 127.0.0.1:8610, AUTH_MODE=local, login DB thử riêng (không owner/superuser), AI giả, convlog/báo cáo → thư mục thử; Chromium (Playwright) | " + G_UI + " | `ui/ui_results_run6.json`, `ui/shots/`, `ui/runs/` |",
+ "",
+ "UI lượt cuối (run 6) gồm: đăng nhập sai mật khẩu; chưa mở quyền không quyết bằng login chung; mở quyền sai mật khẩu Postgres; mở quyền đúng ghi đúng 1 bằng chứng đăng nhập; duyệt draft agent đúng khối; tạo nháp bằng login người; người tạo không tự duyệt; xếp lịch BỊ CHẶN khi chạy thử; xếp lịch được khi `van_hanh` (FIXTURE owner trong DB thử UI); login DB của người khác bị từ chối; đổi người không dùng lại kết nối cũ; người khác đúng khối duyệt nháp của người tạo; từ chối; sai khối không duyệt được; hàng duyệt chung đúng khối; vai trò sales không có Content Studio; TGĐ thấy đủ 7 tab; brief rỗng không sinh; chat câu thường (FAIL UI-02); chat câu sức khỏe chuyển người + che SĐT trong convlog; tab Chưa trả lời (assert theo dữ liệu — `st.dataframe` vẽ canvas); tab Leads; báo cáo sinh vào thư mục thử không vào `data/reports`; tab Nhật ký vườn (FAIL UI-01) → 2 bước ghi nhật ký NOT_RUN. Evidence UI r8 chỉ tham khảo, không tính là chạy lại.",
+ "Lượt UI hỏng do harness (giữ log `ui/runs/drive1..5_HARNESS_*.txt`): reload làm mất phiên; Streamlit giữ mật khẩu svc cũ sau dựng lại DB; timeout chờ nút vô hiệu (lượt sau đạt); gửi câu chat thứ 2 khi lượt 1 đang xử lý; assert chữ trên `st.dataframe` canvas."]})
+S.append({"title": "7. Gate chung (tự chạy lượt này, DB Docker mới `samsam_itacc_r10full`)", "lines": [
+ f"- Full pytest (tuần tự, 1 lượt, gồm 3 ca DR Docker thật): **{full_line}**, EXIT {full_exit}; FAILED: {fails or 'không'}; SKIPPED: {skips}. Evidence `evidence/itacc_r10/gate/full_pytest.txt`.",
+ f"- Ruff toàn repo (`--exclude .agents --exclude founder`): EXIT {gx.get('ruff check . --exclude .agents --exclude founder', '?')}. Lượt đầu (10:58) EXIT 1 do script harness `.py` của agent trong `evidence/itacc_r10` — đã đổi đuôi `.py.txt` (nội dung + sha256 giữ, `harness_doi_duoi.json`), mã sản phẩm không đổi.",
+ f"- Agent eval tất định `--no-record`: EXIT {gx.get('python scripts/agent_eval.py --deterministic --no-record', '?')} — {gl(GV)}.",
+ f"- DPIA `--check`: EXIT {gx.get('python scripts/dpia_draft.py --check', '?')}. Red-team: EXIT {gx.get('python scripts/redteam.py', '?')} — {gl(RT)}.",
+ "- DR Docker thật: 3/3 PASSED (riêng `xuyen_suot/dr.txt` + trong full). Probe hồi quy: mục 6.",
+ f"- Fingerprint code trong log full: `{fp}`."]})
+S.append({"title": "8. Phụ thuộc ngoài máy / đầu vào cần để kiểm tiếp", "lines": [
+ "| Cần | Ai | Gỡ cho |",
+ "|---|---|---|",
+ "| Sửa 20 lỗi sản phẩm mục 5 (đợt sửa riêng — KHÔNG mở trong đợt kiểm này) rồi chạy lại đúng ca FAIL | Dev, người giao việc quyết | 24 mục CODE_FAIL |",
+ "| Chọn vendor + đặc tả API + DPA + credential cho OCR / STT / ảnh AI; dev viết adapter + contract test + sandbox | QL AI + Pháp chế; dev | production-03, data_platform-02.1, farming-01, marketing-02.1 |",
+ "| App key/sandbox Shopee/TikTok; chọn chuỗi/provider/phí neo blockchain | Bên B; hai bên | data_platform-06, farming-06 |",
+ "| 14 hồ sơ sản phẩm gốc; DPIA ký + nhà cung cấp LLM cho persona giả lập | GĐ sản xuất; Pháp chế | production-02, intel-05.1 |",
+ "| Repo + owner website/chatbot website | Bên B / owner | sales-08, sales-09 |",
+ "| Server Bên B, UPS/offsite/máy giám sát ngoài, xác nhận nghĩa vụ hợp đồng | Bên B; hai bên | data_platform-90, ceo-90, và mọi kiểm trên môi trường thật |",
+ "| Người duyệt/login thật, người nhận cảnh báo + SMTP, dữ liệu vận hành thật | TGĐ/Pháp chế Bên B | chạy thử/nghiệm thu hợp đồng (ma trận riêng) |"]})
+S.append({"title": "9. Điểm cần người xác nhận", "lines": [
+ "- **legal_hr-07 ca C1:** tiêu chí khóa ghi \"2 dòng\", thực tế 1 dòng vì tin lạc chủ đề bị lọc trước khi lưu (thiết kế, `off_topic=1`). Agent g3 chấm PASS theo ý định T2 — mục để ĐẠT kèm cảnh báo này; người giao việc có thể chấm lại.",
+ "- **intel-06:** tiêu chí g1 viết quá khái quát về tuần Tết (hệ số giả định 0,6 cho kết quả thấp hơn — đúng giả định).",
+ "- **D2 (SĐT trong bài đăng):** tiêu chí suy từ invariant PII của AGENTS.md, khung không ghi rõ — Pháp chế xác nhận có yêu cầu hay không.",
+ "- **Log tái tạo:** 20 file output marketing (03.2, 05.1, 05.2, 06.1 …) bị ca legal_hr trùng mã ghi đè; g3 tái tạo nguyên văn từ transcript (header ghi rõ, `g3/harness/reconstruct_mkt.py.txt`), snapshot DB là bản gốc/lấy lại — evidence log yếu hơn, kết luận dựa thêm vào DB.",
+ "- **marketing-01.1:** nhánh \"đủ 3 nháp\" do điều phối viên bổ sung sau khóa (golden FIXTURE, DB mới `…mk11`) — 3/3 PASS; với golden thật hiện chỉ 2/3 + THIẾU (blocker danh mục)."]})
+S.append({"title": "10. Giới hạn và tài nguyên", "lines": [
+ "- Một máy dev, một cluster Docker cùng máy: không chứng minh server vật lý/UPS/offsite/máy giám sát độc lập; không đo hiệu năng/24×7.",
+ "- Phần lớn mục chạy chế độ dev (AUTH_MODE trống, login owner); danh tính chế độ thực kiểm riêng ở mục 6 (probe + UI), không lặp cho từng mục.",
+ "- MOCK: chất lượng câu trả lời/embedding/LLM thật chưa kiểm; mapping cột sàn, biểu phí, ngưỡng là GIẢ ĐỊNH — ĐẠT chỉ là đạt kỹ thuật trên fixture.",
+ "- DB thử khối có tính năng đã chuyển `tat` qua CLI thật (ca tắt) — không dùng lại cho lượt khác.",
+ "- Agent g2 lỡ in DSN DB thử (có mật khẩu superuser cluster thử ngẫu nhiên) ra console phiên của nó — không nằm trong evidence; cluster thử bị xóa khi dọn nên mật khẩu vô hiệu.",
+ "- Tài nguyên lượt này: container `samsam-itacc-r10` + mọi DB `samsam_itacc_r10*`, login thử `it_ui_*`, venv UI dùng lại `scratchpad/r7/venv_ui` (ngoài repo) — dọn sau khi lưu evidence (xem DONE)."]})
+G_out = {"fingerprint": fp, "sections": S}
+(EV / "gates.json").write_text(json.dumps(G_out, ensure_ascii=False, indent=1), encoding="utf-8")
+print("ok", full_line, full_exit, fails, skips)

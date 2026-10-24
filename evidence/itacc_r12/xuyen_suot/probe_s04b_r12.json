@@ -1,0 +1,207 @@
+[
+ {
+  "case": "a) login mkt tạo draft nhãn agent:controller khối marketing rồi tự duyệt → chặn, không ghi dở",
+  "verdict": "PASS",
+  "insert": [
+   "denied",
+   "42501 người thực hiện không hợp lệ (agent:controller) — agent/hệ thống không ghi thay người"
+  ],
+  "approve": null,
+  "ghi_do": false
+ },
+ {
+  "case": "b) login sales tạo draft nhãn agent:controller khối sales rồi tự duyệt → chặn, không ghi dở",
+  "verdict": "PASS",
+  "insert": [
+   "denied",
+   "42501 người thực hiện không hợp lệ (agent:controller) — agent/hệ thống không ghi thay người"
+  ],
+  "approve": null,
+  "ghi_do": false
+ },
+ {
+  "case": "c) nhãn 'system:auto' không tạo đường vòng",
+  "verdict": "PASS",
+  "insert": [
+   "denied",
+   "42501 người thực hiện không hợp lệ (system:auto) — agent/hệ thống không ghi thay người"
+  ],
+  "approve": null,
+  "ghi_do": false
+ },
+ {
+  "case": "c) nhãn 'auto_policy:x' không tạo đường vòng",
+  "verdict": "PASS",
+  "insert": [
+   "denied",
+   "42501 người thực hiện không hợp lệ (auto_policy:x) — agent/hệ thống không ghi thay người"
+  ],
+  "approve": null,
+  "ghi_do": false
+ },
+ {
+  "case": "c) nhãn 'AGENT :x' không tạo đường vòng",
+  "verdict": "PASS",
+  "insert": [
+   "denied",
+   "42501 người thực hiện không hợp lệ (AGENT :x) — agent/hệ thống không ghi thay người"
+  ],
+  "approve": null,
+  "ghi_do": false
+ },
+ {
+  "case": "c) nhãn 'agent：x' không tạo đường vòng",
+  "verdict": "PASS",
+  "insert": [
+   "denied",
+   "42501 --by \"agent：x\" không phải người của login t_s04b_mkt_f719a7f5 — không ghi thay người khác"
+  ],
+  "approve": null,
+  "ghi_do": false
+ },
+ {
+  "case": "d) người tự khai block khác khối hệ thống xác định (post→marketing) → chặn",
+  "verdict": "PASS",
+  "insert": [
+   "denied",
+   "42501 khối draft do hệ thống xác định (draft của người → marketing), không tự khai sales"
+  ]
+ },
+ {
+  "case": "e) người tạo tự duyệt bằng tên 'Marketing Giả B1' → chặn",
+  "verdict": "PASS",
+  "approve": [
+   "denied",
+   "P0001 người duyệt trùng người tạo draft #8, cần người khác duyệt"
+  ]
+ },
+ {
+  "case": "e) người tạo tự duyệt bằng tên '  marketing   giả b1 ' → chặn",
+  "verdict": "PASS",
+  "approve": [
+   "denied",
+   "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"
+  ]
+ },
+ {
+  "case": "f) người khác đúng khối duyệt draft của người tạo → được",
+  "verdict": "PASS",
+  "approve": [
+   "ok",
+   [
+    [
+     2
+    ]
+   ]
+  ]
+ },
+ {
+  "case": "g) người sai khối duyệt draft marketing → chặn",
+  "verdict": "PASS",
+  "approve": [
+   "denied",
+   "42501 người \"Bán Hàng Giả B1\" không được ủy quyền khối marketing (human_logins)"
+  ]
+ },
+ {
+  "case": "h) login agent tạo draft agent → người marketing duyệt → được",
+  "verdict": "PASS",
+  "insert": [
+   "ok",
+   [
+    [
+     10
+    ]
+   ]
+  ],
+  "approve": [
+   "ok",
+   [
+    [
+     4
+    ]
+   ]
+  ]
+ },
+ {
+  "case": "h) login job tạo draft agent → người marketing duyệt → được",
+  "verdict": "PASS",
+  "insert": [
+   "ok",
+   [
+    [
+     11
+    ]
+   ]
+  ],
+  "approve": [
+   "ok",
+   [
+    [
+     5
+    ]
+   ]
+  ]
+ },
+ {
+  "case": "i) hàng duyệt (insert): người nhãn agent rồi tự quyết → chặn",
+  "verdict": "PASS",
+  "insert": [
+   "denied",
+   "42501 permission denied for table approval_queue"
+  ],
+  "decide": null
+ },
+ {
+  "case": "i) hàng duyệt (enqueue_item): người nhãn agent rồi tự quyết → chặn",
+  "verdict": "PASS",
+  "insert": [
+   "ok",
+   [
+    [
+     1
+    ]
+   ]
+  ],
+  "decide": [
+   "denied",
+   "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"
+  ]
+ },
+ {
+  "case": "i) svc_job enqueue_item agent → người marketing quyết → được",
+  "verdict": "PASS",
+  "insert": [
+   "ok",
+   [
+    [
+     2
+    ]
+   ]
+  ],
+  "decide": [
+   "ok",
+   [
+    [
+     7
+    ]
+   ]
+  ]
+ },
+ {
+  "case": "i) người tạo mục tên mình: tự quyết (biến thể tên) chặn, người khác đúng khối được",
+  "verdict": "PASS",
+  "self": [
+   "denied",
+   "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"
+  ],
+  "other": [
+   "ok",
+   [
+    [
+     9
+    ]
+   ]
+  ]
+ }
+]

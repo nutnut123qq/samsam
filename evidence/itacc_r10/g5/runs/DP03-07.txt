@@ -1,0 +1,11 @@
+# DP03-07 (bổ sung sau khóa): grep tĩnh — chatbot khách (api/rag.py) không đọc chunks_internal
+10:truyền tường minh và đọc bảng RIÊNG `chunks_internal`. answer() (kênh
+172:        return ((f"select {_COLS_INTERNAL}{extra} from chunks_internal"
+255:        src, where, wp = "chunks_internal", "collection = %s and ", (collection,)
+170:        return f"select {_COLS}{extra} from chunks", ()
+267:            f"select {cols} from chunks where doc_id = 'catalog-products'"
+
+# kết luận: answer() (kênh khách) gọi retrieve() không truyền collection (dòng 442-443); retrieve mặc định collection='public' → SELECT ... from chunks; chunks_internal chỉ khi collection 'internal:<phong>' tường minh (_query, deny-by-default).
+def retrieve(question: str, k: int = TOP_K, *,
+             collection: str = "public",
+             deadline: float | None = None,

@@ -1,0 +1,731 @@
+{
+ "id": "farming-05.2",
+ "ten": "Dự báo sản lượng thu hoạch",
+ "khoi": "farming",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Vùng trồng / Cảnh báo, dự báo (P2): 'dự báo sản lượng thu hoạch'",
+ "luot": "r12",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/farming-05.2.json",
+  "sha256": "2003cfc60843562a953bade8fb4d1f0187d66b14603c54cf246c16239ee8145b"
+ },
+ "ly_do_chay_lai": "module của mục đổi ở r12 (agents/vt_thuhoach.py) — kiểm lại ảnh hưởng trực tiếp",
+ "fingerprint_code_luc_khoa": "a6223967137ba1539841fe23a0b9de01a6ae0bb7f894a411a5893dbf691cc995",
+ "tieu_chi_file": "evidence/itacc_r12/criteria/r12_farming.json",
+ "tieu_chi_sha256": "d38a4243821f9e69da1ee52edea59634829156102cd284605766abec4d65660d",
+ "tieu_chi_khoa": "r12_farming.json d38a4243821f9e69da1ee52edea59634829156102cd284605766abec4d65660d 2026-10-24T08:57:50+07:00",
+ "tieu_chi": [
+  "T1 `agents.vt_thuhoach --date 2026-10-23 --submit` (wrap: REPORTS_DIR → {SCR}/reports, chặn mạng ngoài) → đúng 1 mục approval_queue farming/harvest_forecast pending created_by agent:VT; payload có khoảng thấp–cơ sở–cao theo khoảnh, sha 2 tệp giả định, dòng 'thiếu dữ liệu'",
+  "T2 Chạy lại cùng ngày → [submit] skipped, không nhân mục pending",
+  "T3 Khoảnh IT-K02 thiếu tree_count/planted_year → 'thiếu dữ liệu (tree_count, planted_year) — không ước lượng' (không coi = 0)",
+  "T4 Tắt qua sổ triển khai → không sinh mục mới (MOI: chặn sạch exit 2, không traceback, không ghi tệp báo cáo — quan sát OBS-G5-03 r10); bật lại → chạy thử; không gửi/đăng ra ngoài"
+ ],
+ "moi_truong": "Postgres Docker samsam-itacc-r12 127.0.0.1:55451; mỗi mục 1 DB samsam_itacc_r12_farm<mã> dựng bằng mkdb_r12.sh.txt (schema/roles ×2 + core + golden); dev mode (AUTH_MODE trống), DEPLOY tắt (bước Zalo đặt DEPLOY rỗng), OPENROUTER_API_KEY rỗng; CDN Zalo = FakeClient của harness r10 (không mạng); ffmpeg imageio-ffmpeg; vt_thuhoach qua wrap.py.txt (chặn mạng ngoài, PROBE_CALL_MAIN=1). DB samsam_itacc_r12_farm052.",
+ "run_id": "20261024T112815-1971",
+ "ca": [
+  {
+   "ma": "farming-05.2__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai (tính năng co_code = chạy thử) — như r10 F01-09a",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R12",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:28:15+07:00",
+      "ket_thuc": "2026-10-24T11:28:16+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S01"
+  },
+  {
+   "ma": "farming-05.2__S02",
+   "nguon_r10": "MOI",
+   "mo_ta": "khoảnh FIXTURE IT-K01..K04 (owner, đúng giá trị evidence/itacc_r10/g5/seed_farm_plots.txt) — DB r12 riêng mục",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+      "expect": 4
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T11:28:16+07:00",
+      "ket_thuc": "2026-10-24T11:28:17+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S02"
+  },
+  {
+   "ma": "farming-05.2__C01",
+   "nguon_r10": "F052-01",
+   "mo_ta": "Dự báo + submit",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "IT-K03: \\d{4}-Q[1-4] — \\d+–\\d+–\\d+ kg[\\s\\S]*\\[submit\\] pending #\\d+ \\(farming/harvest_forecast\\)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast' and status = 'pending' and created_by = 'agent:VT'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast' and payload ~ 'IT-K0[34]: [0-9]{4}-Q[1-4] — [0-9]+–[0-9]+–[0-9]+ kg' and payload like '%harvest_assumptions_sha256: %' and payload like '%scenario_assumptions_sha256: %' and payload like '%thiếu dữ liệu%'",
+      "expect": 1
+     },
+     {
+      "file_glob": "{SCR}/reports/vt-thu-hoach-2026-10-23.md",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.vt_thuhoach --date 2026-10-23 --submit",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "IT-K03: \\d{4}-Q[1-4] — \\d+–\\d+–\\d+ kg[\\s\\S]*\\[submit\\] pending #\\d+ \\(farming/harvest_forecast\\)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:28:17+07:00",
+      "ket_thuc": "2026-10-24T11:28:20+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast' and status = 'pending' and created_by = 'agent:VT'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast' and payload ~ 'IT-K0[34]: [0-9]{4}-Q[1-4] — [0-9]+–[0-9]+–[0-9]+ kg' and payload like '%harvest_assumptions_sha256: %' and payload like '%scenario_assumptions_sha256: %' and payload like '%thiếu dữ liệu%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\farming-05.2\\20261024T112815-1971\\scratch/reports/vt-thu-hoach-2026-10-23.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/scratch/reports/vt-thu-hoach-2026-10-23.md",
+        "sha256": "24978ee08b693ea52cd185b691fbae81096a4176b02ba3856052974da67ba371"
+       }
+      ],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C01"
+  },
+  {
+   "ma": "farming-05.2__C02",
+   "nguon_r10": "F052-02",
+   "mo_ta": "Idempotent — chạy lại không thêm",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[submit\\] skipped #\\d+"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.vt_thuhoach --date 2026-10-23 --submit",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[submit\\] skipped #\\d+",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:28:21+07:00",
+      "ket_thuc": "2026-10-24T11:28:25+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C02"
+  },
+  {
+   "ma": "farming-05.2__C03",
+   "nguon_r10": "F052-03",
+   "mo_ta": "Thiếu dữ liệu — IT-K02 'thiếu' (cùng lệnh r10)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "IT-K02: thiếu dữ liệu \\(tree_count, planted_year\\) — không ước lượng"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.vt_thuhoach --date 2026-10-23 --submit",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "IT-K02: thiếu dữ liệu \\(tree_count, planted_year\\) — không ước lượng",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:28:25+07:00",
+      "ket_thuc": "2026-10-24T11:28:28+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C03"
+  },
+  {
+   "ma": "farming-05.2__C04",
+   "nguon_r10": "F052-04a",
+   "mo_ta": "disable farming-05.2",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "farming-05\\.2: chạy thử → tắt"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable farming-05.2 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "farming-05\\.2: chạy thử → tắt",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:28:28+07:00",
+      "ket_thuc": "2026-10-24T11:28:29+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C04/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C04"
+  },
+  {
+   "ma": "farming-05.2__C05",
+   "nguon_r10": "F052-04b",
+   "mo_ta": "Âm: tắt → không mục mới (r10 không ràng buộc exit; exit ≠0)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": [
+       1,
+       2
+      ]
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.vt_thuhoach --date 2026-10-24 --submit",
+      "exit": 2,
+      "expect_exit": [
+       1,
+       2
+      ],
+      "regex": [],
+      "bat_dau": "2026-10-24T11:28:29+07:00",
+      "ket_thuc": "2026-10-24T11:28:33+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C05/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C05"
+  },
+  {
+   "ma": "farming-05.2__M01",
+   "nguon_r10": "MOI",
+   "mo_ta": "OBS-G5-03 (r12 RB): tắt → chặn sạch exit 2 [rollout], không traceback, KHÔNG ghi tệp báo cáo",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[rollout\\] .*farming-05\\.2",
+      "out_re": "^(?![\\s\\S]*Traceback)[\\s\\S]*"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+      "expect": 1
+     },
+     {
+      "file_glob": "{OUT}/reports/vt-thu-hoach-*.md",
+      "count": 0
+     },
+     {
+      "file_glob": "{SCR}/reports/vt-thu-hoach-2026-10-24.md",
+      "count": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m agents.vt_thuhoach --date 2026-10-24 --submit",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[rollout\\] .*farming-05\\.2",
+        "khop": true
+       },
+       {
+        "out_re": "^(?![\\s\\S]*Traceback)[\\s\\S]*",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:28:33+07:00",
+      "ket_thuc": "2026-10-24T11:28:36+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__M01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__M01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'harvest_forecast'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\farming-05.2\\20261024T112815-1971\\farming-05.2__M01\\out/reports/vt-thu-hoach-*.md",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r12\\runs\\farming-05.2\\20261024T112815-1971\\scratch/reports/vt-thu-hoach-2026-10-24.md",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     }
+    ],
+    "ui": null
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__M01"
+  },
+  {
+   "ma": "farming-05.2__C06",
+   "nguon_r10": "F052-04c",
+   "mo_ta": "promote → chạy thử",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "farming-05\\.2: tắt → chạy thử"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --promote farming-05.2 --by Người Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "farming-05\\.2: tắt → chạy thử",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T11:28:36+07:00",
+      "ket_thuc": "2026-10-24T11:28:37+07:00",
+      "stdout": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C06/step01.stdout.txt",
+      "stderr": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C06/step01.stderr.txt"
+     }
+    ],
+    "kiem": [],
+    "ui": null
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C06"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Fixture/dữ liệu THỬ trong DB riêng của mục; người duyệt chế độ dev trừ ca dùng login Postgres thật; AI giả ở biên; không gửi ra ngoài. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C01/asserts.json",
+   "sha256": "deead5d475519061f115d0712bc02816c529d5a78daea324bd866a81df56aa7d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C01/case.json",
+   "sha256": "8456969cb0028374cd58e94d2d74db7c800f89f228b55c5279044ba2359d29f4"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C01/step01.cmd.json",
+   "sha256": "df551f0a090856b106b540d3f285d86c92f40dcb020897e33d5ef78dd5d50962"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C01/step01.stderr.txt",
+   "sha256": "0b792b72d0b4efc16e31b3ad8b1ce857ab7cb2cdf6d90df4f50c2f1e54ac618c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C01/step01.stdout.txt",
+   "sha256": "081d83571520dc6c37c3aea8951ee3278c9f0dbbfbaee2284e9b9de9ce437f28"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C02/asserts.json",
+   "sha256": "974167de875e361b1fbf119fe57697308a1fd0511318c0366d5d6796eb35879d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C02/case.json",
+   "sha256": "709c82419110f95309c7adf32665c2a65c2fcc93bc6b56fb98c2594aabd80036"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C02/step01.cmd.json",
+   "sha256": "400f9f5be8569006a541ba1f3cc1de56b6fd0b8ea0a8c21d16a1ff0da7d37346"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C02/step01.stderr.txt",
+   "sha256": "0b792b72d0b4efc16e31b3ad8b1ce857ab7cb2cdf6d90df4f50c2f1e54ac618c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C02/step01.stdout.txt",
+   "sha256": "1b77c03910e1490fe37834f806699c54b771af36a870ccf442586a78deb17218"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C03/asserts.json",
+   "sha256": "974167de875e361b1fbf119fe57697308a1fd0511318c0366d5d6796eb35879d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C03/case.json",
+   "sha256": "cf9db2706a80c6cdd910776a8249d2bce6bb2af0f448038a504e3d62f6c2b805"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C03/step01.cmd.json",
+   "sha256": "6a8ae78ad80e96c5bd17a8a06b5077f07fd9eda4e0b827e42abd9882485b9383"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C03/step01.stderr.txt",
+   "sha256": "0b792b72d0b4efc16e31b3ad8b1ce857ab7cb2cdf6d90df4f50c2f1e54ac618c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C03/step01.stdout.txt",
+   "sha256": "1b77c03910e1490fe37834f806699c54b771af36a870ccf442586a78deb17218"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C04/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C04/case.json",
+   "sha256": "8a7daaf24c30cd9fbe78b5100e4b4e0b2593f2c74c69bcc53f1b434ed77567ac"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C04/step01.cmd.json",
+   "sha256": "8831b720804acd81805ea967c0e34cd27dc8bde775b51e87d550dd914acdc860"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C04/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C04/step01.stdout.txt",
+   "sha256": "92eaab9df015df7b27331a57ffd0dc2716621c904b95dd0f7ee35db3a70f1eb5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C05/asserts.json",
+   "sha256": "974167de875e361b1fbf119fe57697308a1fd0511318c0366d5d6796eb35879d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C05/case.json",
+   "sha256": "93718432d161ca57b04d7fa54b9c5a737fbc594144f121ab637c20b59f0d476b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C05/step01.cmd.json",
+   "sha256": "2219bf70d1e2da19182d7325f110dcab1cb7219eb3fb185d59537a11d2cbcd87"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C05/step01.stderr.txt",
+   "sha256": "0b792b72d0b4efc16e31b3ad8b1ce857ab7cb2cdf6d90df4f50c2f1e54ac618c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C05/step01.stdout.txt",
+   "sha256": "d7e084e25b6f19c5b1fabe5a682e057de2bc507868f5addb238fe8068f53855b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C06/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C06/case.json",
+   "sha256": "fb0b3588f032c9717b16d8b9e123c8cad55036dcda5abcb43b57bf8c11ede7a8"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C06/step01.cmd.json",
+   "sha256": "9c12ae726a6eb01f661be6ca24d4c465dbd786de2f77c3d5f7ffe19540799135"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C06/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__C06/step01.stdout.txt",
+   "sha256": "de63e739b72a80900d305152c31f2a37ffaffaf77d7296f5d2a00aecb16d548c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__M01/asserts.json",
+   "sha256": "6e8b1034294e09f9ee7b8b3f79c45df0a52cf563d822ca3b983c8d49cead60e5"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__M01/case.json",
+   "sha256": "25602335c23789fc90801eae980151ba19d828be9d47169cb27a01c4c01d003d"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__M01/step01.cmd.json",
+   "sha256": "ce4f75e558e46a2cfeccfa0d79d3d6013b7292695c5d7ae47325024d0cd27715"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__M01/step01.stderr.txt",
+   "sha256": "365f2ef0985825606421da2b9d7429e2f3365c5c358c519ed1c5c3ecab6ab42c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__M01/step01.stdout.txt",
+   "sha256": "d7e084e25b6f19c5b1fabe5a682e057de2bc507868f5addb238fe8068f53855b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S01/case.json",
+   "sha256": "df1c63cdd5e991345c752ca66a696aec43a8bf18922889a82e109dbb1c7ce956"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S01/step01.cmd.json",
+   "sha256": "db257ce1c4df07b394f7da30c0662c85a6d3784829ae2922b22dc55a8e741f0b"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S02/asserts.json",
+   "sha256": "4cf636e88930608faa9dd24f96c53220b83a1283ca0d9aa122875d2034d89f9c"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S02/case.json",
+   "sha256": "64b8bc6f89459003af83152b9afe7df48587d24d357c4c7ce8a2cac4ba0a92c1"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S02/step01.cmd.json",
+   "sha256": "af0ea271d8033d45a93b234833d7df4bc91b4e6dfb38adacfc3e4764be270b98"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/farming-05.2__S02/step01.stdout.txt",
+   "sha256": "6f8aa80ad50cc17c10952ec5d93ac2addd4a2ba2eeac0003c34212bddb2e33b2"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/ket_qua.json",
+   "sha256": "f02a7bb7ac8149650c6fe3ccf0ec3cf9dd855725a2524ab722937c985dee2958"
+  },
+  {
+   "path": "evidence/itacc_r12/runs/farming-05.2/20261024T112815-1971/scratch/reports/vt-thu-hoach-2026-10-23.md",
+   "sha256": "24978ee08b693ea52cd185b691fbae81096a4176b02ba3856052974da67ba371"
+  }
+ ],
+ "loi_san_pham": []
+}

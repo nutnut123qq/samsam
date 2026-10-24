@@ -1,0 +1,82 @@
+[
+ {
+  "case": "c1_A_dang_nhap_that_ready",
+  "verdict": "PASS",
+  "status": "READY_FOR_TRIAL",
+  "thieu": [],
+  "person_connect": "Người A1 c2a48323",
+  "evidence": [
+   "Người A1 c2a48323"
+  ]
+ },
+ {
+  "case": "c2_B_khong_thua_huong_bang_chung_cua_A",
+  "verdict": "PASS",
+  "status_truoc_doi": "READY_FOR_TRIAL",
+  "status": "CHUA_SAN_SANG",
+  "thieu": [
+   "khối ceo: chưa có bằng chứng đăng nhập thật (human_login_checks) của: Người B2 c2a48323"
+  ],
+  "evidence_persons": [
+   "Người A2 c2a48323"
+  ],
+  "current_person": "Người B2 c2a48323"
+ },
+ {
+  "case": "c3_B_dang_nhap_that_roi_ready",
+  "verdict": "PASS",
+  "status": "READY_FOR_TRIAL",
+  "thieu": [],
+  "person_connect": "Người B2 c2a48323",
+  "evidence_persons": [
+   "Người A2 c2a48323",
+   "Người B2 c2a48323"
+  ]
+ },
+ {
+  "case": "c4_chuan_hoa_ten_cung_danh_tinh",
+  "verdict": "PASS",
+  "status_bien_the": "READY_FOR_TRIAL",
+  "status_sau_sua_NFD": "READY_FOR_TRIAL",
+  "thieu": [],
+  "evidence_persons": [
+   "nGƯỜI   c4 c2a48323"
+  ]
+ },
+ {
+  "case": "c5_bang_chung_login_khac_khong_tinh",
+  "verdict": "PASS",
+  "status": "CHUA_SAN_SANG",
+  "thieu": [
+   "khối ceo: chưa có bằng chứng đăng nhập thật (human_login_checks) của: Người D5 c2a48323"
+  ],
+  "evidence_login_khac": [
+   "Người D5 c2a48323"
+  ],
+  "evidence_login_xet": []
+ },
+ {
+  "case": "c6_chua_dang_nhap_offline_loi",
+  "verdict": "PASS",
+  "chua_dang_nhap": [
+   "khối ceo: chưa có bằng chứng đăng nhập thật (human_login_checks) của: Người E6 c2a48323"
+  ],
+  "offline": [
+   "CHƯA KIỂM login người duyệt (không đọc DB — chạy `--db` trên server Bên B)"
+  ],
+  "loi_truy_van": [
+   "không kiểm được login người duyệt (InsufficientPrivilege)"
+  ]
+ },
+ {
+  "case": "c7_login_khong_dung_duoc_sau_bang_chung",
+  "verdict": "PASS",
+  "truoc": "READY_FOR_TRIAL",
+  "het_han": "CHUA_SAN_SANG",
+  "nologin": "CHUA_SAN_SANG",
+  "connlimit0": "CHUA_SAN_SANG",
+  "khong_app_human": "CHUA_SAN_SANG",
+  "sai_khoi": "CHUA_SAN_SANG",
+  "khoi_phuc": "READY_FOR_TRIAL"
+ }
+]

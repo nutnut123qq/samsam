@@ -1,0 +1,13 @@
+# ca P051-1
+# gio 2026-10-23T10:41:42+07:00
+# lenh python evidence/itacc_r10/g4/harness/run.py --fake-llm ok -- ingest.kb_internal --file evidence/itacc_r10/g4/fixtures/rd_baoquan.md --collection internal:sx --approved-by GĐ Sản xuất Thử IT --doc-id rd-baoquan-thu-it
+# exit 0
+--- stdout ---
+[harness] llm_gateway._client = FAKE(ok) — 0 gọi mạng
+[loader-gate] kb_internal: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-03 chay_thu → nạp
+[embed] batch 1: 1 texts
+[kb-internal] internal:sx / rd-baoquan-thu-it: đã nạp — 1 chunk, version 1
+
+--- stderr ---
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+

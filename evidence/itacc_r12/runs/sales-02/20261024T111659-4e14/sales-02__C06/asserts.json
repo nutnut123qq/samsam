@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from san_suggestion_uses",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from san_suggestion_uses u join san_suggestions s on s.id = u.suggestion_id where u.used_by = 'MXH Thử IT' and s.stage = 'van_hanh'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

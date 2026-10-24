@@ -1,0 +1,25 @@
+"""HARNESS r12 nhóm sales_a — thay r10 g2 `fu_probe.py` (S05-C09): gọi ĐƯỜNG GHI THẬT
+`agents.kd_quote.run_followups(conn, now, dry_run)` (hàm mà CLI `kd_quote --followups` gọi với now = giờ thật) với
+`now` CỐ ĐỊNH truyền vào — vì CLI không có --now/--as-of và nhắc chốt đơn cần ≥24 giờ làm việc sau lần gửi/duyệt
+(r10 C09 NOT_RUN vì lý do này). Không lùi/sửa mốc thời gian trong DB; không mock cổng rollout/director.
+Dùng: python fu_r12.py.txt <now ISO có múi giờ> [--dry-run]   → in JSON {"found", "enqueued"}"""
+import json
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+os.chdir(ROOT)
+sys.stdout.reconfigure(encoding="utf-8")
+import psycopg  # noqa: E402
+
+from agents import kd_quote  # noqa: E402
+
+now = datetime.fromisoformat(sys.argv[1])
+assert now.tzinfo is not None, "now phải có múi giờ"
+c = psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5)
+res = kd_quote.run_followups(c, now, "--dry-run" in sys.argv[2:])
+c.close()
+print(json.dumps(res, ensure_ascii=False))

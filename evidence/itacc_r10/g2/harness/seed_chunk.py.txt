@@ -1,0 +1,11 @@
+"""HARNESS g2 — FIXTURE 1 chunk KB công khai (doc_id it-g2-fixture, URL
+example.com) với embedding 8 chiều = vector fake_llm.VEC — để retrieve thật
+chạy với embedding fake. Không phải dữ liệu thật."""
+import os, sys, psycopg
+sys.path.insert(0, os.path.dirname(__file__))
+from fake_llm import VEC
+c = psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5)
+c.execute("insert into chunks (doc_id, chunk_index, source_url, title, lang, content, embedding) values (%s,0,%s,%s,'vi',%s,%s) on conflict (doc_id, chunk_index) do nothing",
+          ("it-g2-fixture", "https://example.com/it-g2/mat-ong-sam-300ml", "Mật ong sâm 300ml (fixture Thử IT)",
+           "Mật ong sâm 300ml là thực phẩm đóng hũ 300ml của Sâm Sâm (dữ liệu fixture thử IT).", VEC))
+c.commit(); print(c.execute("select count(*) from chunks").fetchone())

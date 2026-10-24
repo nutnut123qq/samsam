@@ -1,0 +1,213 @@
+{
+ "id": "finance-04.1",
+ "ten": "Biên lợi nhuận từng sản phẩm, từng kênh",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Lãi lỗ theo kênh: 'Biên lợi nhuận từng sản phẩm, từng kênh'",
+ "tieu_chi": [
+  "C1 fp_pnl --pnl --month 2026-09 ghi pnl-2026-09.md (REPORTS_DIR vá): ô SKU × kênh với doanh thu, khấu trừ sàn, hoàn, thực nhận từ quyết toán; giá vốn từ cogs ĐÃ duyệt; lãi gộp/biên đúng tính tay",
+  "C2 SKU chưa có giá vốn duyệt → ghi 'chưa có giá vốn duyệt', không 0",
+  "C3 người lập tự duyệt giá vốn → DB từ chối; --channel → file riêng không đè bản toàn kênh",
+  "C4 chồng kỳ (file xuất lại) được nêu; BẢN NHÁP, không gửi; tắt → không ghi"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_s1.csv",
+   "sha256": "d4cf91e619527ce5babf8ee88120ad4bf1e8f8b9ef05dd12f96cb3b3e990f02a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_s2.csv",
+   "sha256": "5cab733253921fde06f7e2589e0c802c462d7647717d7f63513c6fd5779b1080",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_tiktok.csv",
+   "sha256": "ba5d82419f52ca9cc4c8de1a345c0f1916171226d8e2a4bd9600f1c5dc154162",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/orders_shopee.csv",
+   "sha256": "e10f04fcddbd06e64bc24c462ae8b21b220d3dc7aa914ffd0a4dd3ba583b89a5",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F041-1",
+   "mo_ta": "lập giá vốn 4 SKU",
+   "lenh": "[F041-1.1] python -m agents.fp_pnl --cogs-add --sku sapentol-30v --cost 200000 --from 2026-09-01 --by Kế toán Thử IT || [F041-1.2] python -m agents.fp_pnl --cogs-add --sku savina-12v --cost 100000 --from 2026-09-01 --by Kế toán Thử IT || [F041-1.3] python -m agents.fp_pnl --cogs-add --sku mat-ong-sam-120ml-1hu --cost 200000 --from 2026-09-01 --by Kế toán Thử IT || [F041-1.4] python -m agents.fp_pnl --cogs-add --sku mat-ong-sam-300ml --cost 2100000 --from 2026-09-01 --by Kế toán Thử IT",
+   "expected": "exit 0 chờ duyệt",
+   "actual": "exit 0 ×4 (#1..#4 chờ duyệt)",
+   "exit": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F041-2",
+   "mo_ta": "ÂM người lập tự duyệt",
+   "lenh": "[F041-2] python -m agents.fp_pnl --cogs-approve 1 --by Kế toán Thử IT",
+   "expected": "exit 1 DB từ chối",
+   "actual": "exit 1 'người duyệt trùng người lập'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F041-3",
+   "mo_ta": "người khác duyệt",
+   "lenh": "[F041-3.1] python -m agents.fp_pnl --cogs-approve 1 --by GĐ Tài chính Thử IT || [F041-3.2] python -m agents.fp_pnl --cogs-approve 2 --by GĐ Tài chính Thử IT || [F041-3.3] python -m agents.fp_pnl --cogs-approve 3 --by GĐ Tài chính Thử IT || [F041-3.4] python -m agents.fp_pnl --cogs-approve 4 --by GĐ Tài chính Thử IT || [F041-q] python evidence/itacc_r10/g4/harness/q.py select id, sku_key, cost_vnd, valid_from, created_by, approved_by from cogs_versions order by id",
+   "expected": "exit 0",
+   "actual": "exit 0 ×4; cogs_versions approved_by 'GĐ Tài chính Thử IT'",
+   "exit": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F041-4",
+   "mo_ta": "P&L 09/2026",
+   "lenh": "[F041-4] python evidence/itacc_r10/g4/harness/run.py --reports-dir evidence/itacc_r10/g4/out/rep_f041 -- agents.fp_pnl --pnl --month 2026-09",
+   "expected": "sapentol shopee thực nhận 880.000 giá vốn 400.000; savigout/saphraton 'chưa có giá vốn duyệt'; nhãn CHẠY THỬ",
+   "actual": "exit 0; pnl-2026-09.md: sapentol shopee 1.000.000/120.000/880.000/giá vốn 400.000/lãi 480.000/48%; saphraton-20v & savigout-30v 'chưa có giá vốn duyệt' (không 0); nêu BẤT THƯỜNG chồng kỳ; nhãn CHẠY THỬ; report_outputs finance-04.1",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F041-5",
+   "mo_ta": "lọc kênh tiktok",
+   "lenh": "[F041-5] python evidence/itacc_r10/g4/harness/run.py --reports-dir evidence/itacc_r10/g4/out/rep_f041 -- agents.fp_pnl --pnl --month 2026-09 --channel tiktok",
+   "expected": "file riêng; bản toàn kênh không đổi",
+   "actual": "exit 0; pnl-2026-09-tiktok.md riêng (1 ô sapentol tiktok); sha pnl-2026-09.md giữ 13b0b591…",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F041-6",
+   "mo_ta": "ÂM tắt finance-04.1 (chạy cuối)",
+   "lenh": "[TAT-finance-04.1] python -m pipelines.rollout --disable finance-04.1 --by Người Thử IT --note kiem nhanh tat IT r10 || [F041-6] python evidence/itacc_r10/g4/harness/run.py --reports-dir evidence/itacc_r10/g4/out/rep_tat -- agents.fp_pnl --pnl --month 2026-08",
+   "expected": "exit !=0, không ghi file",
+   "actual": "exit 1 (traceback RolloutBlocked không bắt) — không ghi file pnl-2026-08.md",
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "ghi_chu": "chặn đúng nhưng ném traceback thô thay vì thông báo — xem lỗi thấp chung"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Giá vốn là fixture (người lập ≠ người duyệt ở chế độ dev); P&L chỉ kênh sàn (doanh thu đại lý/B2B chưa có nguồn — external). Dòng lệch chồng kỳ (B) được giữ cả hai trong ô savina-12v + gắn BẤT THƯỜNG theo thiết kế.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F041-1.1.txt",
+   "sha256": "8bb688fdc903f5444be46199d9b3ffc4474907727cc2efa3102f1e770e3fa3e3"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F041-2.txt",
+   "sha256": "5bdc92247ad4d0d99c81577df675d421b4624c5861a8192d8d7f1bf51d8245d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F041-3.1.txt",
+   "sha256": "bc0004b5d09249109d1b16041ea38670ff46ef47b551fd958cc9fcb2d89c4f84"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F041-q.txt",
+   "sha256": "ec34c8cab5960746110ef7c28c69ed664dbe89b20f7d5d9f544d159a084af3b1"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F041-4.txt",
+   "sha256": "962ae48735149967ee0b6ce7195a9fbfa354cff02e587f71622db2f738cd0f08"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F041-5.txt",
+   "sha256": "fe855a7dd7bbe11be1558ab0ad06ace3e79994813f39b7484e2394f40914c4ff"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F041-6.txt",
+   "sha256": "6216da6bd1d249f84f04e6c7922a5e861fcede8fe24533baf70ab5b7c07f9d4f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-finance-04.1.txt",
+   "sha256": "b5ba52c8f59111fa8f7ad82c20dde952a1cdf4103618bc49464321e7a449125e"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_f041/pnl-2026-09.md",
+   "sha256": "13b0b5919c4aab7a77924ed938e1760d6ce22739b548663374c5ab81b4b333fe"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_f041/pnl-2026-09-tiktok.md",
+   "sha256": "45406ffa8f7c34c8c3a0c3586b020e0e85d6129a3d5aa1aab6b15f9130ed2609"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "muc_do": "thấp",
+   "mo_ta": "Cổng tắt tính năng chỉ ở biên ghi file (write_report): fp_cash --forecast, sx_tracuu, production bulletin vẫn tính và IN toàn bộ nội dung ra stdout khi tính năng tắt (không nhãn giai đoạn); fp_pnl/sx_tracuu không bắt RolloutBlocked → traceback thô, exit 1.",
+   "tai_hien": "rollout --disable <id>; chạy CLI tương ứng với --out-dir/--out",
+   "expected": "không sinh nội dung, thông báo chặn gọn",
+   "actual": "stdout in nội dung / traceback",
+   "evidence": [
+    "evidence/itacc_r10/g4/out/F052-5.txt",
+    "evidence/itacc_r10/g4/out/P051-5.txt",
+    "evidence/itacc_r10/g4/out/F041-6.txt"
+   ]
+  }
+ ]
+}

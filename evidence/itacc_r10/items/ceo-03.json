@@ -1,0 +1,139 @@
+{
+ "id": "ceo-03",
+ "ten": "Sổ rủi ro pháp lý",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Sổ rủi ro pháp lý: 'Theo dõi giấy xác nhận quảng cáo, hạn nộp hồ sơ, rủi ro rượu, chỉ dẫn địa lý'",
+ "tieu_chi": [
+  "T1 `python -m agents.ceo_risk --report --now <ISO> --out-dir <scratch>` exit 0",
+  "T2 file ceo-risk-<ngày>.md: rủi ro xếp mức ĐỎ/VÀNG/XANH đúng luật với fixture (XNQC hết hạn → ĐỎ, sắp hết hạn → VÀNG, đã nộp chờ cấp → XANH, DPIA chưa ký → ĐỎ, tuyến cảnh báo → ĐỎ, chỉ dẫn địa lý/nhóm hạn chế → VÀNG), ĐỎ xếp trước; có nguồn/owner vai trò; sổ report_outputs ghi feature ceo-03",
+  "T3 ca âm: chỉ đọc (không đổi bảng nghiệp vụ); cấu hình hỏng → exit 2 không file; tính năng tắt → không file",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành",
+  "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_ceo; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [
+  {
+   "ten": "ceo03_fixture.sql",
+   "sha256": "c4aa93861f46ec4b6166b036a449383e03999e404b61f503f0c741850b6c12d8",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Dựng fixture tracker Pháp chế",
+   "lenh": "python -m agents.xnqc --set 1 --status da_nop --ngay-nop 2026-10-20 --by Pháp chế Thử IT",
+   "expected": "dòng xnqc_dossiers tồn tại",
+   "actual": "xnqc --add (#1 savigout chuan_bi) + --set da_nop (CLI); SQL fixture harness/ceo03_fixture.sql (lượt 2 — lượt 1 thiếu document_sha256 bị CHECK chặn): #3 savina da_cap hết hạn 01/10/2026, #4 saphraton-20v da_cap hết hạn 05/11/2026",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Báo cáo sổ rủi ro",
+   "lenh": "python -m agents.ceo_risk --report --out-dir <scratch>/rep03",
+   "expected": "exit 0; file có mã XNQC-HET-HAN (ĐỎ), XNQC-HET-HAN sắp hết hạn (VÀNG), XNQC-CHO-CAP (XANH), DPIA (ĐỎ), TUYEN-CANH-BAO (ĐỎ); ĐỎ đứng trước VÀNG trước XANH; nhãn CHẠY THỬ",
+   "actual": "ceo-risk-2026-10-23.md đỏ 3 vàng 11 xanh 1: ĐỎ XNQC-HET-HAN:3, DPIA, TUYEN-CANH-BAO; VÀNG KENH:facebook (2 S2 mở), XNQC-HET-HAN:4 (còn 13 ngày), XNQC-CHO-NOP×6, CDDL-NGOC-LINH, NHOM-HAN-CHE×2; XANH XNQC-CHO-CAP:savigout; thứ tự ĐỎ→VÀNG→XANH; owner vai trò phap_che; nhãn CHẠY THỬ; report_outputs ceo-03. (Lượt 1 dùng --now 09:00 TRƯỚC giờ tạo fixture → as-of loại fixture đúng thiết kế; lỗi harness, giữ log ceo03_C02_luot1_now_truoc_fixture)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Chỉ đọc",
+   "lenh": "SQL đếm trước/sau qua harness sql.py (login owner DB thử) — ceo03_C03_after.txt",
+   "expected": "không đổi",
+   "actual": "xnqc_dossiers/red_alerts/approval_queue/channel_posts trước = sau = (3,0,10,3); kết nối read_only",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Cấu hình hỏng",
+   "lenh": "python evidence/itacc_r10/g1/harness/patch_run.py agents.ceo_risk CONFIG=evidence/itacc_r10/g1/harness/cfg/ceo_risk_hong.json -- --report --out-dir <scratch>/rep03b",
+   "expected": "exit 2, không file",
+   "actual": "HARNESS patch CONFIG→JSON hỏng: '[error] cấu hình: month must be in 1..12' exit 2, 0 file",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Tính năng tắt",
+   "lenh": "python -m agents.ceo_risk --report --now 2026-10-24T09:00:00+07:00 --out-dir <scratch>/rep03b",
+   "expected": "không sinh ceo-risk-2026-10-24.md; bật lại",
+   "actual": "tắt ceo-03 → RolloutBlocked, không sinh ceo-risk-2026-10-24.md; bật lại. Ghi chú: traceback không bắt (exit 1)",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": "Hồ sơ da_cap dựng bằng SQL fixture (đường CLI đòi tài liệu doc_intake); luật mức data/ceo_risk.json + phap_che.json là BẢN DEV SOẠN chờ Pháp chế. Ghi chú: tắt → traceback (g1-L2)",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/ceo03_fixture.sql",
+   "sha256": "c4aa93861f46ec4b6166b036a449383e03999e404b61f503f0c741850b6c12d8"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo03_C01b.txt",
+   "sha256": "2a790e6b6e2b35e4da968e70e23ceb0ba6dce20a9acbfb6f4d445a878463eee6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo03_C02.txt",
+   "sha256": "b743dc2f68ee9d748527544726b1d307475ae2da55425796d035275417528283"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo03_C02_luot1_now_truoc_fixture.txt",
+   "sha256": "ef4e3f0a01a8153c6085587027575b1cc07f5e0b8dd954c31b046d3662eb0506"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo03_C03_after.txt",
+   "sha256": "64119d0669757d0e9580760226b63a424c46636e295de10cdf0357508184f083"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo03_C03_before.txt",
+   "sha256": "64119d0669757d0e9580760226b63a424c46636e295de10cdf0357508184f083"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo03_C04.txt",
+   "sha256": "a84b5bbe13159a32e74e13914e910784afb65f3ac26e2684913e79a388fe3040"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo03_C05.txt",
+   "sha256": "0e54a2642cec92caaf950aeebaccf34b3e175b87247c127822d6a6a56189126f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo03_C05a.txt",
+   "sha256": "7cfd98782295d64ac1b3f7e6f5539666f1d802c177b7b4b78e48d9ad303e5ee0"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo03_C05b.txt",
+   "sha256": "8b4d9016e5701f9a3bb6b09600292b6f4442a51f08a30a1c7a7d5b1e2c889c26"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/ceo-risk-2026-10-23.md",
+   "sha256": "1160fbd57e455cb122fd54dc3a6f5e705157185c79e43499dd3d7c746740e638"
+  }
+ ],
+ "loi_san_pham": [],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

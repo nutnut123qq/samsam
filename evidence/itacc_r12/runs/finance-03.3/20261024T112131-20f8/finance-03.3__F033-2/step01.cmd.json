@@ -1,0 +1,29 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "agents.acc_ar",
+  "--reminders",
+  "--as-of",
+  "2026-10-23"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:21:37+07:00",
+ "ket_thuc": "2026-10-24T11:21:42+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?s)\\A(?=.*\\[reminder\\] IT-DL01 quá hạn 12\\.000\\.000đ)(?=.*\\[reminder\\] IT-DL03 quá hạn 1\\.000\\.000đ)(?=.*\\[skip\\] IT-DL02)(?=.*2 nháp mới)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "73e44016651bc6bbbf8bb8e303375443d3671276b828f3a76f38d995956aab08",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

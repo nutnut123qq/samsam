@@ -1,0 +1,213 @@
+{
+ "id": "ceo-02.2",
+ "ten": "Sổ quyết định TGĐ",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Ban TGĐ, HĐTV, BKS / Theo dõi tiến độ, sổ quyết định: 'việc nào chờ ký'",
+ "tieu_chi": [
+  "T1 `python -m agents.ceo_decisions --record/--follow/--propose/--list` exit đúng",
+  "T2 decision_log: dòng quyet_dinh có recorded_by = người, decided_by, basis; cap_nhat là dòng MỚI (không UPDATE); --propose liệt kê mục ceo đã quyết chưa vào sổ và không ghi gì; --list có mục chờ quyết/chờ ký",
+  "T3 ca âm: --by agent: bị chặn trước connect; căn cứ chưa quyết bị từ chối; căn cứ trùng bị từ chối; ngày tương lai bị từ chối; UPDATE/DELETE sổ bị DB chặn; xong thiếu bằng chứng bị chặn; tắt ceo-02.2 KHÔNG chặn người ghi",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_ceo; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Ghi quyết định căn cứ văn bản",
+   "lenh": "python -m agents.ceo_decisions --record --topic Chốt lịch thử IT --decision Đồng ý lịch thử --decided-by TGĐ Thử IT --note Biên bản họp thử IT số 01 --by Thư ký Thử IT --due 2026-10-30",
+   "expected": "exit 0; 1 dòng quyet_dinh recorded_by='Thư ký Thử IT' decided_by='TGĐ Thử IT' basis_kind=van_ban",
+   "actual": "decision_log #1 quyet_dinh recorded_by='Thư ký Thử IT' decided_by='TGĐ Thử IT' basis van_ban due 30/10",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Người ghi là agent",
+   "lenh": "python -m agents.ceo_decisions --record --topic X --decision Y --decided-by TGĐ Thử IT --note Biên bản họp thử IT số 02 --by agent:x",
+   "expected": "exit 2, 0 dòng",
+   "actual": "--by agent: bị chặn ở argparse (trước connect), 0 dòng",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Căn cứ mục hàng duyệt chưa quyết",
+   "lenh": "python -m agents.ceo_decisions --record --basis approval_queue:3 --topic Bảng tuần --decision Duyệt --by Thư ký Thử IT",
+   "expected": "exit 1, 0 dòng",
+   "actual": "mục #3 đang pending — chỉ ghi mục đã quyết; 0 dòng",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Đề xuất từ mục đã duyệt",
+   "lenh": "python -m agents.ceo_decisions --propose",
+   "expected": "exit 0; in mục đó; decision_log không đổi",
+   "actual": "approve #1 rồi --propose liệt kê #1 và #5 (đã quyết, chưa vào sổ); decision_log 1→1 (không ghi)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Ghi theo căn cứ đã duyệt + ghi trùng",
+   "lenh": "python -m agents.ceo_decisions --record --basis approval_queue:1 --topic Báo cáo tuần W42 --decision Duyệt báo cáo tuần --by Thư ký Thử IT --due 2026-10-31",
+   "expected": "lần 1 exit 0 decided_by = người duyệt mục; lần 2 exit 1",
+   "actual": "lần 1 #2 decided_by='TGĐ Duyệt Thử IT' (lấy từ mục); lần 2 exit 1 'đã ghi (#2)' (ceo022_C05b)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C06",
+   "mo_ta": "Theo dõi thực hiện",
+   "lenh": "python -m agents.ceo_decisions --follow 1 --status xong --note BB nghiệm thu thử IT --by Thư ký Thử IT",
+   "expected": "lần 1 exit 2; lần 2 exit 0 thêm dòng cap_nhat; lần 3 exit 1 (đã đóng)",
+   "actual": "xong không note exit 2 (C06a); có note → dòng cap_nhat #3 parent 1; cập nhật lần nữa exit 1 'đã đóng' (C06c); dòng gốc không bị UPDATE",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C07",
+   "mo_ta": "Ngày quyết tương lai",
+   "lenh": "python -m agents.ceo_decisions --record --topic Ngày tương lai --decision Thử --decided-by TGĐ Thử IT --note Biên bản tương lai thử IT --by Thư ký Thử IT --date 2027-01-01",
+   "expected": "exit 1",
+   "actual": "ngày quyết 01/01/2027 ở tương lai — từ chối",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C08",
+   "mo_ta": "Append-only ở DB",
+   "lenh": "SQL đếm trước/sau qua harness sql.py (login owner DB thử) — ceo022_C08.txt",
+   "expected": "DB từ chối (trigger)",
+   "actual": "UPDATE/DELETE decision_log bằng login owner thử → RaiseException 'append-only' (trigger), dữ liệu nguyên",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C09",
+   "mo_ta": "Tắt ceo-02.2 không chặn người ghi",
+   "lenh": "python -m agents.ceo_decisions --record --topic Quyết định khi tắt --decision Ghi sổ người --decided-by TGĐ Thử IT --note Văn bản thử IT khi tắt --by Thư ký Thử IT",
+   "expected": "exit 0 (dòng người ghi); bật lại",
+   "actual": "ceo-02.2 tắt → --record người vẫn ghi #4 (đúng contract v14.3); bật lại",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C10",
+   "mo_ta": "Danh sách chờ quyết/chờ ký",
+   "lenh": "python -m agents.ceo_decisions --list",
+   "expected": "exit 0; có mục chờ quyết (pending khối ceo) và mục 'Chờ ký' mốc can_ky",
+   "actual": "--list chỉ in sổ + mốc trễ; KHÔNG in mục chờ quyết/chờ ký dù read() đã đọc (wait_lines chỉ dùng ở section trang TGĐ/bản tin). Bổ sung sau khóa C10b: ceo_report --bulletin hiện đúng 'Chờ quyết định' #3 + 'Chờ ký' DUYET-1111/MOC-C/MOC-D/TT3/NGHIEM-THU-P1",
+   "exit": "0",
+   "ket_qua": "FAIL",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Thêm mục chờ quyết/chờ ký vào --list (lỗi THẤP); yêu cầu PL01 'việc nào chờ ký' đã hiện ở trang TGĐ/bản tin khối ceo",
+ "gioi_han": "Append-only kiểm bằng login owner (trigger); quyền app_human/svc_ui chế độ thực do điều phối viên kiểm",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C01.txt",
+   "sha256": "9015efda279c1cf78305f3b1bc10c3d65b248194dcfea4f94003ff39eea13468"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C02.txt",
+   "sha256": "2d79b27fa6473ea7e518ea89d7d7c18993d52453f1d0d62e7371d2621b0b9367"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C03.txt",
+   "sha256": "f4140d42479956bcc111f65831402bb6257cf380c0926d90c9725f27d278f482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C04.txt",
+   "sha256": "264169db92ba6c0164bce32e75e7f515e2f172293b3ffc4dc5b89065303616bd"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C04a.txt",
+   "sha256": "8e6010c859a10e33da9dfae518b1a1b66473e9d5f39cae9a2e743be6ef2e9147"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C05a.txt",
+   "sha256": "976fcca57e1236b8d940e736ff59bb744d9b1c1cc6f69aaefc61a681eb8132cb"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C06b.txt",
+   "sha256": "b60c57fb1778f722f6f86379e98609584c2afd21fd208fdc27e1c5825a3a430f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C07.txt",
+   "sha256": "ad4c21e4ad08a99ed9422c4d775e29652d66d22af6e1565651def7bd3a2c3752"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C08.txt",
+   "sha256": "ba721384b355b05a366385227ebb91820bcf7ff4d16ab845148f6ad8098ed8a3"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C09.txt",
+   "sha256": "85c9532c5f46931ab3c5afca6a09a88e110a24807237eca25e7a14a08ac74f48"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C09a.txt",
+   "sha256": "115b3e38be69fecf4cf13aceeabc265e55f1f1e9232243dd24cfe0a67070c126"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C09b.txt",
+   "sha256": "2ad13145a45c9309b19dac1beba0695af2aaede366058deca25b0599d8eddaf1"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C10.txt",
+   "sha256": "3055c7bce2b145c1e610eba643fd45d415456eb3ce5c0f52794c061c73a54349"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/ceo022_C10b.txt",
+   "sha256": "14d6fee9a046b097f6ee742638d102b374b5d05de69bd605731294944a412e55"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/director-ceo-2026-10-23.md",
+   "sha256": "db50b002e871cb7877553a0a224b84df3b44c8534cdb9efea421de74d94f8554"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "g1-L5",
+   "muc_do": "THẤP",
+   "tieu_de": "ceo_decisions --list không in 'việc chờ quyết/chờ ký' dù read() đã đọc (chỉ có ở section trang TGĐ/bản tin)",
+   "tai_hien": [
+    "python -m agents.ceo_decisions --list (out/ceo022_C10.txt) so với ceo_report --bulletin (reports/director-ceo-2026-10-23.md)"
+   ],
+   "expected": "CLI sổ quyết định hiện được việc chờ ký (PL01: 'việc nào chờ ký')",
+   "actual": "--list chỉ in sổ + mốc trễ",
+   "evidence": [
+    "out/ceo022_C10.txt",
+    "out/ceo022_C10b.txt"
+   ]
+  }
+ ],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

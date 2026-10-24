@@ -968,6 +968,17 @@ def main(argv=None, today: date | None = None) -> int:
         print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
               " host chết)", file=sys.stderr)
         return 2
+    from pipelines import rollout  # lười: rollout → director → ...
+    if not a.dry_run and a.status is None:
+        # r12 RB: phiếu/đề xuất = 03.1, kết quả = 03.2 — tắt → exit 2 rõ lý
+        # do, trước mọi ghi (trước đây RolloutBlocked rơi vào nhánh ValueError
+        # → "[error] RolloutBlocked" exit 1).
+        why = rollout.blocked(conn, "phiếu thử nghiệm ads",
+                              fid="marketing-03.2" if a.results else FEATURE)
+        if why:
+            with suppress(Exception):
+                conn.close()
+            return rollout.say_blocked(why)
     try:
         if a.status is not None:
             return _print_status(conn, a.status)
@@ -1020,6 +1031,10 @@ def main(argv=None, today: date | None = None) -> int:
             print(f"[results] mục hàng duyệt #{res['qid']} — đề xuất "
                   f"{ev['de_xuat']}{flags} (CHỜ NGƯỜI QUYẾT).")
         return 0
+    except rollout.RolloutBlocked as e:
+        with suppress(Exception):
+            conn.rollback()
+        return rollout.say_blocked(str(e))
     except (psycopg.Error, ValueError, OSError) as e:
         with suppress(Exception):
             conn.rollback()

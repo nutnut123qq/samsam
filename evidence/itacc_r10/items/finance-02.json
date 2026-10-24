@@ -1,0 +1,233 @@
+{
+ "id": "finance-02",
+ "ten": "Hóa đơn điện tử",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Hóa đơn điện tử: 'Mỗi tối lập sẵn lô đơn cần xuất hóa đơn; kế toán kiểm tra và bấm phát hành'",
+ "tieu_chi": [
+  "C1 acc_invoice --batch gom đơn đạt mốc (Hoàn thành/Completed), loại hủy + chưa đạt mốc → 1 mục approval_queue finance/invoice_batch created_by agent:acc_invoice, pending, payload có csv_sha256 + số tiền, KHÔNG thông tin người mua",
+  "C2 file yêu cầu có MST hợp lệ → dòng can_mst; MST sai → exit 1 trước connect, 0 ghi",
+  "C3 chạy lại cùng ngày khi lô pending → [skip], không thêm mục",
+  "C4 verify-draft: mục chưa duyệt → fail exit 1; đã duyệt nhưng tính năng chạy thử → bị chặn (không cho dùng); ép van_hanh (FIXTURE) + file đúng → ok; file sửa → fail",
+  "C5 agent không phát hành/gửi; tắt tính năng → không sinh lô"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/orders_shopee.csv",
+   "sha256": "e10f04fcddbd06e64bc24c462ae8b21b220d3dc7aa914ffd0a4dd3ba583b89a5",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/orders_tiktok.csv",
+   "sha256": "8cef83f872600065b668a6f1874716bae0d5b58ed325f9c34948431e050bdec9",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/yeucau_ok.csv",
+   "sha256": "3a256e317b83d7e7421a6fbbe70b15aa9210bea3a10fd9c6e50be8aeb3a46445",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/yeucau_bad.csv",
+   "sha256": "c802909fa3b48b84a7aacd1dd74631fbed70ebea8ab013d98856d99824b84314",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/orders_shopee_g.csv",
+   "sha256": "cf7da8fd365282720a3fd8b466b7aff96a80dedfcf39248203cf582499b65761",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F02-1",
+   "mo_ta": "ÂM MST sai trong file yêu cầu",
+   "lenh": "[F02-1] python -m agents.acc_invoice --batch --day 2026-10-23 --yeu-cau evidence/itacc_r10/g4/fixtures/yeucau_bad.csv --channel shopee",
+   "expected": "exit 1, không connect, 0 invoice_lines",
+   "actual": "exit 1 '[err] dòng 2: tax_code không phải MST'; invoice_lines 0",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F02-2",
+   "mo_ta": "lập lô 2026-10-23 kèm yêu cầu MST",
+   "lenh": "[F02-2] python evidence/itacc_r10/g4/harness/run.py --reports-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g4/reports -- agents.acc_invoice --batch --day 2026-10-23 --yeu-cau evidence/itacc_r10/g4/fixtures/yeucau_ok.csv --channel shopee || [F02-2-q] python evidence/itacc_r10/g4/harness/q.py select id, block, object_type, object_id, status, created_by, is_sample, payload from approval_queue where object_type='invoice_batch' ; select batch_key, channel, kind, amount_vnd from invoice_lines order by id",
+   "expected": "thường A,F,T1; can_mst B; loại hủy 1, chưa đạt mốc 1; 1 mục invoice_batch pending agent:acc_invoice; payload không tên người mua/MST",
+   "actual": "exit 0; lô 2026-10-23-f74707095916: thường 3, cần MST 1, hủy 1, chưa đạt mốc 1 → approval_queue #1 finance/invoice_batch pending agent:acc_invoice is_sample=false; payload chỉ mã 8 ký tự + số tiền + csv_sha256 (không tên/MST); file nháp (scratchpad) sha = csv_sha256",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F02-3",
+   "mo_ta": "ÂM chạy lại khi lô pending",
+   "lenh": "[F02-3] python evidence/itacc_r10/g4/harness/run.py --reports-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g4/reports -- agents.acc_invoice --batch --day 2026-10-23",
+   "expected": "[skip]",
+   "actual": "exit 0 '[skip] … đã có lô chờ duyệt #1'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F02-4",
+   "mo_ta": "verify-draft mục pending",
+   "lenh": "[F02-4] python -m agents.acc_invoice --verify-draft 1 --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g4/reports/hoa-don-nhap/lo-2026-10-23-f74707095916.csv",
+   "expected": "exit 1 chưa duyệt",
+   "actual": "exit 1 '[fail] mục #1 đang pending — chưa được duyệt'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F02-5",
+   "mo_ta": "người duyệt (dev) rồi verify-draft khi chạy thử",
+   "lenh": "[F02-5a] python -m pipelines.approval_queue --approve 1 --by Kế toán Thử IT || [F02-5b] python -m agents.acc_invoice --verify-draft 1 --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g4/reports/hoa-don-nhap/lo-2026-10-23-f74707095916.csv",
+   "expected": "approve 0; verify 1 (chạy thử chặn dùng)",
+   "actual": "approve exit 0 (cảnh báo CHẾ ĐỘ DEV); verify exit 1, stderr '[rollout] TỪ CHỐI DÙNG … finance-02 đang chạy thử'",
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "ghi_chu": "stdout của verify ghi 'payload lệch bản đã duyệt' (thông điệp gây hiểu nhầm; lý do thật ở stderr rollout)"
+  },
+  {
+   "ma": "F02-6",
+   "mo_ta": "ép van_hanh (FIXTURE _FORCE_MODE) — file đúng / file sửa",
+   "lenh": "[F02-6a] python evidence/itacc_r10/g4/harness/run.py --force-mode van_hanh -- agents.acc_invoice --verify-draft 1 --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g4/reports/hoa-don-nhap/lo-2026-10-23-f74707095916.csv || [F02-6b] python evidence/itacc_r10/g4/harness/run.py --force-mode van_hanh -- agents.acc_invoice --verify-draft 1 --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g4/reports/lo-sua.csv",
+   "expected": "đúng 0; sửa 1",
+   "actual": "file đúng exit 0 '[ok] … khớp csv_sha256'; file thêm 1 byte exit 1 'sha256 lệch — không nhập'",
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F02-7",
+   "mo_ta": "ÂM tắt finance-02 (chạy cuối)",
+   "lenh": "[TAT-finance-02] python -m pipelines.rollout --disable finance-02 --by Người Thử IT --note kiem nhanh tat IT r10 || [F02-7-tienDe] python -m ingest.market_csv --file evidence/itacc_r10/g4/fixtures/orders_shopee_g.csv --channel shopee --kind order || [F02-7] python evidence/itacc_r10/g4/harness/run.py --reports-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g4/reports -- agents.acc_invoice --batch --day 2026-10-24 || [TAT-fin-q3] python evidence/itacc_r10/g4/harness/q.py select object_type, count(*) from approval_queue group by 1 order by 1 ; select count(*) from invoice_lines",
+   "expected": "exit !=0; không thêm invoice_batch",
+   "actual": "lượt 2 (sau khi nạp đơn G mới): exit 1 'RolloutBlocked … finance-02 đang tắt'; invoice_batch vẫn 1, invoice_lines vẫn 4 (rollback)",
+   "exit": [
+    0,
+    0,
+    1,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "ghi_chu": "lỗi harness đã sửa: lượt 1 ca tắt tính năng chạy khi không còn dữ liệu mới để sinh (lô rỗng / cùng trạng thái nợ) nên không chạm cổng — giữ log *-luot1-harness-hong.txt, lượt 2 nạp thêm dữ liệu fixture rồi chạy lại"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Phát hành HĐĐT trên phần mềm nhà cung cấp do kế toán làm tay (external-dep, ngoài phần mềm); mốc lập hóa đơn + format CSV GIẢ ĐỊNH (invoice_config.json confirmed_by null). Nhánh dùng (verify-draft) chỉ kiểm được bằng FIXTURE _FORCE_MODE=van_hanh.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-1.txt",
+   "sha256": "cac7b55bff1d2d5f04a8049a3c84d8d6bbc183fc2ca820a8966ef717882e68bb"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-2.txt",
+   "sha256": "2c792d2cfc33473e3d40c818cb2708bd08531ed339342b3202d95f0e8fb6dea5"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-2-q.txt",
+   "sha256": "053503e8f9682fa73c75841051b8e2ff0216db0dba68c68a39dc83b4eb98e788"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-3.txt",
+   "sha256": "86bff4f81ce5c1f6b733d79a04c0ab0d85b35059cc9f1f918ea3d15d639e4144"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-4.txt",
+   "sha256": "d9cedba9988053755dad62d6693f5bc7049be832e0ef08c9a195089df7de9675"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-5a.txt",
+   "sha256": "e28a032ee265b49489eb8e94904900fc74e83d8791d03ba410c1237344e5adbd"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-5b.txt",
+   "sha256": "d0afe88082a0da2cc965652e1b74aff42084302f41c209ab737cb5ae4fc43f47"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-6a.txt",
+   "sha256": "d59f22a6cbd0b27d7df7cd3f01789ed0ef7cb676741a68580c647353b09a4159"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-6b.txt",
+   "sha256": "28f99dc2fab72d9df5e002518b645dba49e1f3f2f509b5a9e434995848b6cb70"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-7-luot1-harness-hong.txt",
+   "sha256": "209bcd4e752d9f0fb970260df09a3336934667be0c6db8d7d50db8ff8faf86b5"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-7-tienDe.txt",
+   "sha256": "8c27e785abaa30c2c36af3964605e3e8419d98bcd24754c3307afeed5f13ec06"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F02-7.txt",
+   "sha256": "ac7e6b3c28cf48c105a336425f7fe7df9108efb34f816284808b797c8da06dcd"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-finance-02.txt",
+   "sha256": "7a9bdf86bda459f4ac790a381cdba2447a9ca1a0fb8156682445f5fcf7d56c2b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-fin-q3.txt",
+   "sha256": "585b6f3a1989a153d69d1c39eeb052e1749537494c9f0c3fec832fb0c9ae0abd"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": []
+}

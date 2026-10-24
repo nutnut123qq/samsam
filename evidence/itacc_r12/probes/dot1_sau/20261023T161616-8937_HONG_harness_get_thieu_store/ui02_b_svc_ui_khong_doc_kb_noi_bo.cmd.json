@@ -1,0 +1,17 @@
+{
+ "ca": "ui02_b_svc_ui_khong_doc_kb_noi_bo",
+ "argv": [
+  "python",
+  "-c",
+  "import psycopg,os; c=psycopg.connect(os.environ['DATABASE_URL']); print(c.execute('select count(*) from chunks_internal').fetchone()[0])"
+ ],
+ "env_doi": [
+  "DATABASE_URL"
+ ],
+ "bat_dau": "2026-10-23T16:16:32+07:00",
+ "ket_thuc": "2026-10-23T16:16:33+07:00",
+ "exit": 1,
+ "llm_calls": null,
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "949d493656de4fc01952c4220b9c6c4c38b87d77b4e80b0f1c961313cf9f1ac3"
+}

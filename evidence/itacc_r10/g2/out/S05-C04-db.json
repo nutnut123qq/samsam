@@ -1,0 +1,29 @@
+[
+ {
+  "sql": "select id, block, object_type, object_id, created_by, status, risk, title, left(payload, 1500) payload from approval_queue where object_type in ('b2b_quote','b2b_quote_matrix','b2b_margin_review') order by id",
+  "rows": [
+   {
+    "id": 50,
+    "block": "sales",
+    "object_type": "b2b_quote",
+    "object_id": "BG-20261023-1-7e8576c2",
+    "created_by": "agent:kd_quote",
+    "status": "pending",
+    "risk": "high",
+    "title": "Báo giá B2B BG-20261023-1-7e8576c2 (YC-1, 1 dòng)",
+    "payload": "# Báo giá quà Tết — BG-20261023-1-7e8576c2\n\n- Ngày báo giá: 23/10/2026\n- Hiệu lực đến: 06/11/2026\n- Kính gửi: Công ty Thử IT G2 (Doanh nghiệp) — Đà Nẵng\n\n| # | Sản phẩm | Quy cách | SL | Giá niêm yết | CK % | Đơn giá | Thành tiền |\n|---|---|---|---|---|---|---|---|\n| 1 | Mật ong sâm 300ml | 300ml x 1 hũ | 50 | 2.980.000đ | 8 | 2.741.000đ | 137.050.000đ |\n\n**Tổng cộng: 137.050.000đ**\n\nĐiều khoản:\n\n- Giá GIẢ ĐỊNH đã gồm VAT, chưa gồm vận chuyển — tài chính chốt trước khi ký.\n- Báo giá có hiệu lực 14 ngày kể từ ngày báo giá.\n- Số lượng và ngày giao theo xác nhận của GĐ bán hàng.\n\nBáo giá chỉ có hiệu lực khi GĐ bán hàng ký — hệ thống không tự gửi.\n"
+   },
+   {
+    "id": 51,
+    "block": "finance",
+    "object_type": "b2b_margin_review",
+    "object_id": "BG-20261023-1-7e8576c2",
+    "created_by": "agent:kd_quote",
+    "status": "pending",
+    "risk": "high",
+    "title": "Rà biên báo giá B2B BG-20261023-1-7e8576c2",
+    "payload": "# Nội bộ — báo giá BG-20261023-1-7e8576c2 (KHÔNG gửi khách)\n\n- Yêu cầu: YC-1\n- Phân loại: per_item\n- Lý do: ma_tran_chua_xac_nhan, thieu_gia_von_duyet\n- Tổng: 137.050.000đ · Giá vốn đã duyệt: — · Biên: chưa tính được (ngưỡng 30%)\n- Ma trận v1 sha 7666b096d514d5b9\n\n| # | Mã | SL | Đơn giá | Thành tiền | Giá vốn dòng | Lý do dòng |\n|---|---|---|---|---|---|---|\n| 1 | mat-ong-sam-300ml | 50 | 2.741.000đ | 137.050.000đ | — | — |\n\nBản nội bộ cho tài chính/GĐ bán hàng — không đính kèm báo giá gửi khách.\n"
+   }
+  ]
+ }
+]

@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from lot_origins where lot_code = 'IT-LOT-G5-02' and linked_by = 'GĐ SX Thử IT' and cardinality(media_sha256) = 1",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from lot_origins",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

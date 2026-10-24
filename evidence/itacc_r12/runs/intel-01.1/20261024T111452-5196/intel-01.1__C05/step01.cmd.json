@@ -1,0 +1,35 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "scripts.intel_bulletin",
+  "--period",
+  "day",
+  "--date",
+  "2026-10-24"
+ ],
+ "env_doi": [
+  "PROBE_CALL_MAIN",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:15:25+07:00",
+ "ket_thuc": "2026-10-24T11:15:31+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\[done\\] [^\\n]*intel-bulletin-day-\\d{4}-\\d{2}-\\d{2}\\.md items=7 ",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "12ffb2a4ccb82f3288ce0e4e54ca837095787530536f0e3fed295628f66f6672",
+ "stderr_sha256": "06aada62cef98eef724638a74f295cd4a3a676bc44a716201a51ac6df66889ec"
+}

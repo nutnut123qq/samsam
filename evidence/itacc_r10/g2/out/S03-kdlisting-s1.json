@@ -1,0 +1,17 @@
+[
+ {
+  "sql": "select id, object_type, object_id, created_by, status, risk, title, payload from approval_queue where created_by='agent:kd_listing' and object_type='market_alert_s1' order by id",
+  "rows": [
+   {
+    "id": 45,
+    "object_type": "market_alert_s1",
+    "object_id": "a4:unready_listed:shopee:99900000040:671e9de5f0fd",
+    "created_by": "agent:kd_listing",
+    "status": "pending",
+    "risk": "high",
+    "title": "Xử lý cảnh báo sàn S1 — listing thuộc nhóm không được bán/quảng bá online — kênh shopee, mã sản phẩm sàn 99900000040",
+    "payload": "Cảnh báo sàn S1 (A4 catalog): listing thuộc nhóm không được bán/quảng bá online — kênh shopee, mã sản phẩm sàn 99900000040; mức sẵn sàng golden CAM. Việc cần làm: Quản lý MXH ẩn listing trên Seller Center sau khi GĐ bán hàng/Pháp chế xác nhận. Agent không tự sửa sàn, không tự duyệt."
+   }
+  ]
+ }
+]

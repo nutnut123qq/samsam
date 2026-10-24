@@ -1,0 +1,19 @@
+PASS  1 svc_ui decide_item tên tự khai → chặn  | got=('denied', '42501') status=pending ghi_do=False
+PASS  2 svc_ui approve_draft mang tên người THẬT khác → chặn  | got=('denied', '42501')
+PASS  3 svc_ui schedule_draft (draft đã duyệt hợp lệ) tên tự khai → chặn  | got=('denied', '42501')
+PASS  3b người marketing xếp lịch draft đã duyệt khối mình → được  | got=('ok', [('',)])
+PASS  4 người sales tự quyết mục khối sales → được  | got=('ok', [(4,)])
+PASS  5 người marketing duyệt draft khối marketing → được  | got=('ok', [(5,)])
+PASS  6 người sales quyết mục khối marketing → chặn  | got=('denied', '42501')
+PASS  7 người sales duyệt draft khối marketing (gọi thẳng function) → chặn  | got=('denied', '42501') ghi_do=False draft_status=pending
+PASS  8 login sales ghi tên người khác → chặn  | got=('denied', '42501')
+PASS  9 login người ghi tên agent → chặn  | got=('denied', 'P0001')
+PASS  10 người tự duyệt mục mình tạo → chặn  | got=('denied', 'P0001')
+PASS  11 login người chưa ánh xạ human_logins → chặn  | got=('denied', '42501')
+PASS  12 login agent_writer → chặn  | got=('denied', '42501')
+PASS  13 login dịch vụ svc_job → chặn  | got=('denied', '42501')
+PASS  14 svc_ui INSERT thẳng log quyết định tên người → chặn  | got=('denied', '42501')
+PASS  15 auth.person_connect: login người mở được; svc_ui/chưa ánh xạ/sai mật khẩu bị từ chối  | got={'ok': ('Marketing Giả S04', ['marketing']), 'ui': 'từ chối PersonSessionError', 'unmapped': 'từ chối PersonSessionError', 'sai_mk': 'từ chối PersonSessionError'}
+PASS  16 login UI không superuser/createrole/createdb  | got=False
+dọn: role tạm còn lại = 0
+TỔNG 17 ca, FAIL 0

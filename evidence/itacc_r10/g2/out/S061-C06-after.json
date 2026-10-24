@@ -1,0 +1,11 @@
+[
+ {
+  "sql": "select md5(string_agg(row_to_json(p)::text, '|' order by id)) h, count(*) n from price_list p",
+  "rows": [
+   {
+    "h": "672a95ca3de2b6bb86ba1b2ddd6254b0",
+    "n": 42
+   }
+  ]
+ }
+]

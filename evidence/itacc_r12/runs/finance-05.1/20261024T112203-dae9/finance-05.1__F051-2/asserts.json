@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from opex_entries",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select sum(amount_vnd)::bigint from opex_entries",
+  "expect": 12000000,
+  "actual": 12000000,
+  "dat": true
+ },
+ {
+  "sql": "select sum(cost_usd)::int from llm_usage",
+  "expect": 168,
+  "actual": 168,
+  "dat": true
+ }
+]

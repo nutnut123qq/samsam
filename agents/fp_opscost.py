@@ -363,12 +363,17 @@ def summary(conn, month, cfg: dict, users: dict) -> dict:
     """→ {actuals, alerts, over: [(entry, status)], why: {entry id: mã lý
     do}} — dùng chung report/status/fin_director."""
     opex = fetch_opex(conn, month)
-    acts = actuals(fetch_ai_usd(conn, month), opex, cfg["usd_vnd"])
+    ai_usd = fetch_ai_usd(conn, month)
+    acts = actuals(ai_usd, opex, cfg["usd_vnd"])
     items = fetch_items(conn)
     x = cfg["threshold_x_vnd"]
     vs = [(e, *verdict(e, items, users, x)) for e in opex
           if e["amount_vnd"] > x]
-    return {"actuals": acts, "over": [(e, st) for e, st, _ in vs],
+    # r12 G1-L3: phạm vi có ≥1 dòng nguồn trong tháng (0 dòng ≠ chi 0đ).
+    src = ({f"ai:{a}" for a in ai_usd} | ({"ai"} if ai_usd else set())
+           | {e["category"] for e in opex})
+    return {"actuals": acts, "co_nguon": src | ({"tong"} if src else set()),
+            "over": [(e, st) for e, st, _ in vs],
             "why": {e["id"]: why for e, _, why in vs},
             "alerts": budget_alerts(acts, cfg["budget_vnd"], cfg["warn_pct"],
                                     cfg["stop_pct"])}

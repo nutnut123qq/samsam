@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from agent_action_log where action = 'crm_handoff'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select detail->>'pii_included' from agent_action_log where action = 'crm_handoff' order by id desc limit 1",
+  "expect": "false",
+  "actual": "false",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from agent_action_log where action = 'crm_handoff' and (detail::text ~* '0900000101|Khách Thử IT|khach.thu.it@example.com|Đường Thử IT')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

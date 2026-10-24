@@ -1,0 +1,20 @@
+#!/bin/bash
+# Full pytest nghiệm thu kỹ thuật nội bộ r10 — DB MỚI samsam_itacc_r10full trên Docker samsam-itacc-r10 (127.0.0.1:55432), gồm 3 ca DR Docker.
+SP="/c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad"; R="$SP/r10"
+cd /d/code/samsam
+LOG="$R/full_pytest.raw"
+{
+echo "# Full pytest r10 — ngày (client) $(date -Iseconds)"
+echo "# nhánh $(git rev-parse --abbrev-ref HEAD) · HEAD $(git rev-parse HEAD)"
+echo "# fingerprint (index tạm, 9 file mới, trừ DONE+board, so 16b33fc) = $(bash "$SP/r6/fp.sh" 2>/dev/null)"
+echo "# Docker: $(docker version --format '{{.Server.Version}}' 2>/dev/null || echo 'KHÔNG chạy') · Postgres DB thử: container samsam-itacc-r10 postgres:17-alpine 127.0.0.1:55432"
+echo "## dựng DB mới samsam_itacc_r10full: apply_schema --roles ×2 + core_store + golden_store"
+bash "$R/mkdb.sh" samsam_itacc_r10full; echo "  mkdb rc=$?"
+source "$R/secret/env_samsam_itacc_r10full.sh"
+python -c "import os;from psycopg import conninfo;d=conninfo.conninfo_to_dict(os.environ['DATABASE_URL']);print('# DB',d.get('dbname'),'@',d.get('host'),d.get('port'),'(KHÔNG phải samsam)')"
+echo "## lệnh: python -m pytest -q -ra -p no:cacheprovider"
+python -m pytest -q -ra -p no:cacheprovider
+RC=$?
+echo
+echo "EXIT $RC"
+} > "$LOG" 2>&1

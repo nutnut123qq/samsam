@@ -1,0 +1,161 @@
+{
+ "id": "finance-03.2",
+ "ten": "Hoa hồng affiliate",
+ "khoi": "finance",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tài chính – kế toán / Công nợ, hoa hồng: 'hoa hồng affiliate'",
+ "tieu_chi": [
+  "C1 kd_affiliate --attribute ghi affiliate_attributions cho dòng đơn mang mã affiliate active khớp kênh: amount = giá×SL, tỷ lệ theo crm.commission_rate, hoa hồng tạm tính đúng; đơn hủy → 0 + cờ huy",
+  "C2 mã không khớp → không ghi (đếm unknown_code); chạy lại → không đổi (idempotent)",
+  "C3 --report in bảng hoa hồng BẢN NHÁP, không phải lệnh chi",
+  "C4 tắt → không ghi; agent không gửi/liên hệ đại lý"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_fin; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: không (thuần tất định, 0 LLM); báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/orders_shopee.csv",
+   "sha256": "e10f04fcddbd06e64bc24c462ae8b21b220d3dc7aa914ffd0a4dd3ba583b89a5",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/qt_shopee_s1.csv",
+   "sha256": "d4cf91e619527ce5babf8ee88120ad4bf1e8f8b9ef05dd12f96cb3b3e990f02a",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "F032-1",
+   "mo_ta": "fixture đại lý + mã affiliate active (SQL owner, FIXTURE)",
+   "lenh": "[F032-1] python evidence/itacc_r10/g4/harness/q.py insert into dealers (code, name, region, status, commission_default, source) values ('IT-DL01','Đại lý Thử IT 01','mien-trung','active',10,'fixture-thu-it'),('I ; insert into affiliate_codes (code, dealer_code, channel, status, created_by, activated_at, activated_by) values ('SSQATEST2345','IT-DL01','shopee','active','Ngư ; select code,status,commission_default,source from dealers ; select id,code,dealer_code,channel,status from affiliate_codes",
+   "expected": "insert ok",
+   "actual": "dealers IT-DL01 (10%), IT-DL03; affiliate_codes SSQATEST2345 active",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "ghi_chu": "mã fixture đổi từ SSITTESTAAAA (ghi trong criteria) sang SSQATEST2345 vì bảng mã không có chữ I — sửa dữ liệu mồi"
+  },
+  {
+   "ma": "F032-2",
+   "mo_ta": "ghi nhận đơn qua mã",
+   "lenh": "[F032-2] python -m agents.kd_affiliate --attribute || [F032-q] python evidence/itacc_r10/g4/harness/q.py select id, code_id, dealer_code, channel, sku_key, category, qty, amount_vnd, rate_pct, commission_vnd, status, flags, settled from affiliate_attributions order",
+   "expected": "mới 2 (A tinh, C huy), unknown 1; A 1.000.000×10%; C 0",
+   "actual": "exit 0 mới 2, mã không khớp 1; A sapentol amount 1.000.000 rate 10.00 hoa hồng 100.000 status tinh settled=true; C savigout 200.000 hoa hồng 0 status huy cờ huy",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F032-3",
+   "mo_ta": "ÂM idempotent",
+   "lenh": "[F032-3] python -m agents.kd_affiliate --attribute",
+   "expected": "mới 0, không đổi 2",
+   "actual": "exit 0 'mới 0 · không đổi 2'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F032-4",
+   "mo_ta": "báo cáo hoa hồng",
+   "lenh": "[F032-4] python -m agents.kd_affiliate --report --from 2026-10-01 --to 2026-10-31",
+   "expected": "BẢN NHÁP — không phải lệnh chi",
+   "actual": "exit 0; 'BẢN NHÁP — không phải lệnh chi'; IT-DL01 shopee 2 dòng, doanh số 1.000.000, hoa hồng 100.000, cờ huy×1",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "F032-5",
+   "mo_ta": "ÂM tắt finance-03.2 (chạy cuối)",
+   "lenh": "[TAT-finance-03.2] python -m pipelines.rollout --disable finance-03.2 --by Người Thử IT --note kiem nhanh tat IT r10 || [F032-5] python -m agents.kd_affiliate --attribute || [TAT-fin-q2] python evidence/itacc_r10/g4/harness/q.py select count(*), max(reconciled_at) from recon_results ; select object_type, count(*) from approval_queue group by 1 order by 1 ; select count(*) from affiliate_attributions ; select count(*) from invoice_lines",
+   "expected": "exit 1 RolloutBlocked; số dòng không đổi",
+   "actual": "exit 1 '[error] RolloutBlocked … finance-03.2 đang tắt'; affiliate_attributions 2",
+   "exit": [
+    0,
+    1,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Tỷ lệ hoa hồng MẪU (dealers.commission_default fixture); mã affiliate/đại lý chèn bằng SQL owner làm dữ liệu mồi (luồng --issue cần nội dung marketing đã duyệt — không kiểm ở mục này). Mã voucher trên file sàn GIẢ ĐỊNH cột.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/F032-1.txt",
+   "sha256": "c6d206bb60130145f4fbfe71a9ec0847d91ba5a53ec7a1221d514eb7f7a69ce3"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F032-2.txt",
+   "sha256": "510d72ecd1cb81e083d62bf2bb3e1ba062682623153d6418218d012ae6c1649b"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F032-3.txt",
+   "sha256": "8d94e363f94ab071293556de2fbb0b979157bfa2366c68eed5acc58c7225ef97"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F032-q.txt",
+   "sha256": "61fc1d1271196d0f90c6858595520b0de62731f70697551cfd4496eef0c06414"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F032-4.txt",
+   "sha256": "c5b02dc9f76692e054b345e505b7f12b40dd7d721e390c3f4a6e7c6c5ac72c72"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/F032-5.txt",
+   "sha256": "397c94f3236d5bcd0284d4a13f7527834ad1da29aa160a1d733cae4e396e78f6"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-finance-03.2.txt",
+   "sha256": "8da1bdfd5724a95e29d68c8a8a9246d3cd7f911f985e2004baf641dfae246c7f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-fin.txt",
+   "sha256": "a61c76c668bdfc75f8227ab2f5e242d1c390289f28ecb19f001b0c359052a28f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": []
+}

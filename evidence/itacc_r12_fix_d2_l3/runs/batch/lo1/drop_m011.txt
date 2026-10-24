@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "<string>", line 7, in <module>
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1258.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1eed' in position 19: character maps to <undefined>
+(1,)
+
+# ghi chú (sau): lệnh DROP đã chạy xong trước dòng print bị lỗi mã hóa cp1258 (print có dấu); bằng chứng: lô lo2 mkdb tạo lại samsam_itacc_r12fix_m011 thành công (dung_db_samsam_itacc_r12fix_m011.txt). Nguyên nhân lỗi lô lo1: 3 apply_schema --roles song song trên cluster MỚI tranh nhau create role agent_writer (role là đối tượng toàn cluster) — lỗi môi trường harness, không phải sản phẩm; lo2 chạy tuần tự.

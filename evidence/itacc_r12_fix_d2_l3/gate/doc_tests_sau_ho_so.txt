@@ -1,0 +1,29 @@
+# kiểm tài liệu sau cập nhật hồ sơ/DONE/board · 2026-10-24T16:34:26+07:00 · fp_code=8f9188ade140c8aea64162400a772ae3f41c2780f788edb40fc9b254ae82aed3 · fp_full=6ba43cc44a995b3f1b8f530972733108a7ad3b28a8a136e7d09d2e5e6cd1eb5e · DB samsam_itacc_r12fix_full1
+## python -m pytest -q -p no:cacheprovider tests/test_da_b2b.py tests/test_docx_p0c_person_login.py tests/test_fin_qa.py tests/test_handover_docs.py tests/test_intel_alert.py tests/test_legal_docs.py tests/test_mkt_calendar.py tests/test_ops_monthly.py tests/test_qr_trace.py tests/test_rollout.py tests/test_runbook.py tests/test_v13_c07_ops.py tests/test_v13_c09_anchor_legal.py tests/test_v14_p6_ops.py tests/test_v15_fix_p102.py tests/test_v15_p10_human_authz.py tests/test_r12fix_d2_l3.py
+........................................................................ [  9%]
+........................................................................ [ 19%]
+........................................................................ [ 29%]
+........................................................................ [ 38%]
+........................................................................ [ 48%]
+........................................................................ [ 58%]
+........................................................................ [ 67%]
+........................................................................ [ 77%]
+...................F.................................................... [ 87%]
+........................................................................ [ 97%]
+......................                                                   [100%]
+================================== FAILURES ===================================
+_______ test_p102_authorized_person_completes[anchor-submit-by-person] ________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55452 user=postgres database=samsam_itacc_r12fix_full1) at 0... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3492/p102cfg0/launch_p102.py'), ...}
+path = 'anchor-submit-by-person'
+
+>   ???
+E   AssertionError: [err] DB không kết nối được
+E     
+E   assert 2 == 0
+
+tests\test_v15_fix_p102.py:387: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[anchor-submit-by-person]
+1 failed, 741 passed in 819.26s (0:13:39)
+EXIT 1

@@ -1,0 +1,12 @@
+# ma: S041-C02
+# luc: 2026-10-23T10:29:54+07:00
+# lenh: python -m ingest.crm --owner 7 --staff NVTHU01 --by Trưởng KD Thử IT
+# stdin: -
+# DB: DATABASE_URL tới DB thử (che) — env file khối sales
+# exit: 0
+## stdout
+[warn] chưa có danh sách mã nhân viên kinh doanh (lead_owner.staff_codes rỗng — Bên B cấp) — chỉ kiểm mẫu mã
+[ok] lead #7 → người phụ trách NVTHU01, hạn xử lý 26/10/2026 08:30 (giờ VN)
+
+## stderr
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)

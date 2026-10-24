@@ -1,0 +1,15 @@
+# ca: DP05-06
+# env: DB thử khối dp (DSN che)
+# cmd: python -m ingest.market_csv --report
+# exit: 0
+# thoi_gian: 2026-10-23T10:48:28+0700
+[report] 3 cảnh báo sàn đang mở (agent không sửa sàn — MXH sửa sau khi GĐ bán hàng/Pháp chế duyệt):
+  [S1] alcohol_listed shopee/listing item=26975028961 seller_sku=ruou-sam-binh-su-do-500ml sku=ruou-sam-binh-su-do-500ml mở=2026-10-23 03:48 {"price_san": 500000, "row_no": 4, "sku_key": "ruou-sam-binh-su-do-500ml", "status_san": "Đang hoạt động", "title": "Rượu sâm thử IT"}
+  [S2] item_unmapped shopee/listing item=99999999999 seller_sku=None sku=None mở=2026-10-23 03:48 {"candidates": [], "item_id": "99999999999", "row_no": 5, "seller_sku": null, "title": "Item lạ thử IT"}
+  [S2] price_mismatch shopee/listing item=24325987926 seller_sku=savigout-30v sku=savigout-30v mở=2026-10-23 03:48 {"approved_by": null, "golden_approved": false, "golden_note": "giá golden CHƯA duyệt", "price_golden": 439000, "price_id": 15, "price_san": 449000, "row_no": 3, "sku_key": "savigout-30v"}
+[report] snapshot mới nhất: 2
+  shopee/listing #1 listing_thu_it.csv 4 dòng, nạp 2026-10-23 03:48 (0 ngày trước)
+  shopee/order #2 order_thu_it.csv 2 dòng, nạp 2026-10-23 03:48 (0 ngày trước)
+[warn] shopee: không đủ dữ liệu quảng cáo (có listing, chưa có file ads) — chưa kiểm được TPBVSK chạy ads
+  shopee: 1 dòng listing đã map nhưng golden chưa có giá list để so
+  shopee đơn: hủy=1 đơn; theo trạng thái: Hoàn thành=1 đơn/1 dòng, Đã hủy=1 đơn/1 dòng

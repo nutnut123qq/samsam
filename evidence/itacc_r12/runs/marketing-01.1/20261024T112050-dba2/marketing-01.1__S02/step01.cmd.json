@@ -1,0 +1,23 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import os,subprocess,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); ids=[r[0] for r in c.execute(\"select id from content_drafts where brief like '[daily 2026-10-23 #%' and status <> 'rejected' order by id\")]; c.close(); print('reject',ids,flush=True); rc=[subprocess.run([sys.executable,'-m','pipelines.store','--reject',str(i),'--by',sys.argv[1],'--note',sys.argv[2]]).returncode for i in ids]; print('rc',rc); sys.exit(1 if any(rc) or not ids else 0)",
+  "Duyệt MKT Thử IT",
+  "FIXTURE r12: giải phóng slot 23/10 sau ca C6 (r10 chạy C6 trên DB riêng)"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:21:01+07:00",
+ "ket_thuc": "2026-10-24T11:21:06+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "b7a058a9a2a140fb92d99155c7d11024820b5c2fd4c267e1702708bc910fe458",
+ "stderr_sha256": "7ca8005e4cd546769fb0baf86d4492734caa0cddb22d2df821d2cc7771bd060a"
+}

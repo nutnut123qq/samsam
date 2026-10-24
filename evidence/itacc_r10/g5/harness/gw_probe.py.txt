@@ -1,0 +1,78 @@
+"""HARNESS data_platform-04 — gọi THẬT pipelines.llm_gateway.chat/embed; chỉ thay
+transport ở biên (_client → FakeClient ghi payload) và CONFIG → bản sao scratchpad
+(FIXTURE trần/nút tắt). Không mạng/OpenRouter. In PASS/FAIL từng ca."""
+import json, os, sys
+from pathlib import Path
+from types import SimpleNamespace as NS
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+import psycopg
+from pipelines import llm_gateway as gw
+SCR = Path(sys.argv[1]); SCR.mkdir(parents=True, exist_ok=True)
+SENT = []
+class _C:
+    def create(self, **kw):
+        SENT.append(kw); return NS(choices=[NS(message=NS(content="ok"))], usage=NS(prompt_tokens=10, completion_tokens=5))
+class _E:
+    def create(self, **kw):
+        SENT.append(kw); return NS(data=[NS(embedding=[0.1] * 4) for _ in kw["input"]], usage=NS(prompt_tokens=8, completion_tokens=0))
+gw._client = lambda: NS(chat=NS(completions=_C()), embeddings=_E())
+base = json.loads((ROOT / "data" / "llm_gateway.json").read_text(encoding="utf-8"))
+def cfg(**over):
+    d = json.loads(json.dumps(base)); d.update(over)
+    p = SCR / f"llm_gateway_{len(list(SCR.glob('llm_gateway_*.json')))}.json"
+    p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8"); gw.CONFIG = p
+    return p.name
+res = {}
+def case(ma, fn, expect_block):
+    n0 = len(SENT)
+    try:
+        fn(); out = "ALLOWED"
+    except gw.GatewayBlocked as e:
+        out = f"BLOCKED: {e}"
+    except gw.GatewayError as e:
+        out = f"ERROR: {e}"
+    calls = len(SENT) - n0
+    ok = (out.startswith(("BLOCKED", "ERROR")) and calls == 0) if expect_block else (out == "ALLOWED" and calls == 1)
+    res[ma] = ok
+    print(f"{ma}: {'PASS' if ok else 'FAIL'} — {out} — lời gọi transport: {calls}")
+dsn = os.environ["DATABASE_URL"]
+# DP04-01/02 che PII + llm_usage feature_id
+cfg()
+q = ("Tôi là Nguyễn Văn Thử, SĐT 0900000123, email thu.it@example.com, nhà 12 đường Lê Lợi. "
+     "Hotline công ty 0235 3699 899 có làm việc không?")
+case("DP04-01a", lambda: gw.chat("smoke", [{"role": "system", "content": "Hệ thống thử IT"},
+                                         {"role": "user", "content": q}], feature="sales-01"), False)
+sent = json.dumps(SENT[-1]["messages"], ensure_ascii=False)
+leak = [s for s in ("0900000123", "thu.it@example.com", "Nguyễn Văn Thử", "12 đường Lê Lợi") if s in sent]
+keep = "0235 3699 899" in sent
+print("payload gửi transport:", SENT[-1]["messages"][-1]["content"])
+print("provider block:", json.dumps(SENT[-1].get("extra_body"), ensure_ascii=False))
+res["DP04-01b"] = not leak and keep
+print(f"DP04-01b: {'PASS' if res['DP04-01b'] else 'FAIL'} — rò rỉ={leak} giữ_hotline={keep}")
+case("DP04-01c", lambda: gw.embed("smoke", ["Liên hệ 0900000456 hoặc a.thu@example.com"], feature="data_platform-03"), False)
+s2 = json.dumps(SENT[-1]["input"], ensure_ascii=False); res["DP04-01d"] = "0900000456" not in s2 and "a.thu@example.com" not in s2
+print(f"DP04-01d: {'PASS' if res['DP04-01d'] else 'FAIL'} — embed input: {s2}")
+with psycopg.connect(dsn) as c:
+    rows = c.execute("select agent_id, feature_id, ok, cost_usd > 0 from llm_usage where agent_id='smoke' order by id desc limit 2").fetchall()
+print("llm_usage:", rows); res["DP04-02"] = ("smoke", "sales-01", True, True) in rows
+print(f"DP04-02: {'PASS' if res['DP04-02'] else 'FAIL'}")
+# DP04-03 trần tính năng: FIXTURE trần sales-02=0.001 + 1 dòng chi tiêu FIXTURE 0.01
+with psycopg.connect(dsn) as c:
+    c.execute("insert into llm_usage (agent_id, model, tokens_in, tokens_out, cost_usd, ok, error, feature_id) values ('it_g5_fixture','fixture',0,0,0.01,true,'FIXTURE thử IT g5 — chi tiêu giả để kiểm trần','sales-02')")
+print("cfg", cfg(feature_caps_usd={"default": 5.0, "sales-02": 0.001}))
+case("DP04-03", lambda: gw.chat("smoke", [{"role": "user", "content": "xin chào"}], feature="sales-02"), True)
+case("DP04-03b", lambda: gw.chat("smoke", [{"role": "user", "content": "xin chào"}], feature="sales-01"), False)
+print("cfg", cfg(kill_features=["sales-01"]))
+case("DP04-04", lambda: gw.chat("smoke", [{"role": "user", "content": "xin chào"}], feature="sales-01"), True)
+cfg(); os.environ["LLM_KILL_FEATURES"] = "sales-01"
+case("DP04-05", lambda: gw.chat("smoke", [{"role": "user", "content": "xin chào"}], feature="sales-01"), True)
+del os.environ["LLM_KILL_FEATURES"]
+case("DP04-06", lambda: gw.chat("smoke", [{"role": "user", "content": "xin chào"}], feature="BAD"), True)
+print("cfg", cfg(monthly_cap_usd={"default": 5.0, "smoke": 0}))
+case("DP04-07", lambda: gw.chat("smoke", [{"role": "user", "content": "xin chào"}], feature="sales-01"), True)
+cfg(feature_caps_usd={"default": 0})
+case("DP04-07b", lambda: gw.chat("smoke", [{"role": "user", "content": "xin chào"}], feature="sales-01"), True)
+print("TONG:", "PASS" if all(res.values()) else "FAIL", res)
+raise SystemExit(0 if all(res.values()) else 1)

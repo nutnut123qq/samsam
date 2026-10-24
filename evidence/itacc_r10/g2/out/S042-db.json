@@ -1,0 +1,175 @@
+[
+ {
+  "sql": "select id, ts, actor, action, object_type, object_id, detail from agent_action_log where action like 'crm%' order by id",
+  "rows": [
+   {
+    "id": 120,
+    "ts": "2026-10-23 03:30:12.223627+00:00",
+    "actor": "Trưởng KD Thử IT",
+    "action": "crm_owner",
+    "object_type": "lead",
+    "object_id": "7",
+    "detail": {
+     "to": "NVTHU01",
+     "from": null,
+     "due_at": "2026-10-26T01:30:12.223627+00:00"
+    }
+   },
+   {
+    "id": 130,
+    "ts": "2026-10-23 03:32:29.202516+00:00",
+    "actor": "GĐ Bán Hàng Thử IT",
+    "action": "crm_dealer_load",
+    "object_type": "dealer",
+    "object_id": "*",
+    "detail": {
+     "new": 2,
+     "kept": 0,
+     "updated": 0
+    }
+   },
+   {
+    "id": 132,
+    "ts": "2026-10-23 03:32:34.919286+00:00",
+    "actor": "CSKH Thử IT",
+    "action": "crm_contact_add",
+    "object_type": "contact",
+    "object_id": "1",
+    "detail": {
+     "new": true,
+     "lead_id": 8,
+     "province": "Đà Nẵng"
+    }
+   },
+   {
+    "id": 134,
+    "ts": "2026-10-23 03:32:55.363246+00:00",
+    "actor": "GĐ Bán Hàng Thử IT",
+    "action": "crm_assign",
+    "object_type": "lead",
+    "object_id": "8",
+    "detail": {
+     "dealer": "DLTHU01",
+     "province": "Đà Nẵng"
+    }
+   },
+   {
+    "id": 136,
+    "ts": "2026-10-23 03:33:01.613405+00:00",
+    "actor": "GĐ Bán Hàng Thử IT",
+    "action": "crm_handoff",
+    "object_type": "lead",
+    "object_id": "8",
+    "detail": {
+     "dealer": "DLTHU01",
+     "lead_id": 8,
+     "pii_included": false
+    }
+   },
+   {
+    "id": 138,
+    "ts": "2026-10-23 03:33:10.659583+00:00",
+    "actor": "CSKH Thử IT",
+    "action": "crm_consent",
+    "object_type": "contact",
+    "object_id": "1",
+    "detail": {
+     "dealer": "DLTHU01",
+     "granted": true,
+     "purpose": "dai_ly",
+     "consent_id": 1
+    }
+   },
+   {
+    "id": 140,
+    "ts": "2026-10-23 03:33:18.274704+00:00",
+    "actor": "GĐ Bán Hàng Thử IT",
+    "action": "crm_handoff",
+    "object_type": "lead",
+    "object_id": "8",
+    "detail": {
+     "dealer": "DLTHU01",
+     "lead_id": 8,
+     "pii_included": true
+    }
+   },
+   {
+    "id": 142,
+    "ts": "2026-10-23 03:33:48.468951+00:00",
+    "actor": "CSKH Thử IT",
+    "action": "crm_consent",
+    "object_type": "contact",
+    "object_id": "1",
+    "detail": {
+     "dealer": "DLTHU01",
+     "granted": false,
+     "purpose": "dai_ly",
+     "consent_id": 2
+    }
+   },
+   {
+    "id": 144,
+    "ts": "2026-10-23 03:33:54.360544+00:00",
+    "actor": "GĐ Bán Hàng Thử IT",
+    "action": "crm_handoff",
+    "object_type": "lead",
+    "object_id": "8",
+    "detail": {
+     "dealer": "DLTHU01",
+     "lead_id": 8,
+     "pii_included": false
+    }
+   }
+  ]
+ },
+ {
+  "sql": "select id, contact_id, purpose, granted, recipient_dealer, source, evidence_ref, policy_version, recorded_by from consents order by id",
+  "rows": [
+   {
+    "id": 1,
+    "contact_id": 1,
+    "purpose": "dai_ly",
+    "granted": true,
+    "recipient_dealer": "DLTHU01",
+    "source": "zalo",
+    "evidence_ref": "BB-THU-IT-001",
+    "policy_version": "nhap-2026-10",
+    "recorded_by": "CSKH Thử IT"
+   },
+   {
+    "id": 2,
+    "contact_id": 1,
+    "purpose": "dai_ly",
+    "granted": false,
+    "recipient_dealer": "DLTHU01",
+    "source": "zalo",
+    "evidence_ref": null,
+    "policy_version": null,
+    "recorded_by": "CSKH Thử IT"
+   }
+  ]
+ },
+ {
+  "sql": "select id, province, source, phone_hmac is not null as has_hmac, position('0900000101' in coalesce(phone_enc::text,'')||coalesce(name_enc::text,'')||coalesce(email_enc::text,'')) as plain_pos from contacts",
+  "rows": [
+   {
+    "id": 1,
+    "province": "Đà Nẵng",
+    "source": "zalo",
+    "has_hmac": true,
+    "plain_pos": 0
+   }
+  ]
+ },
+ {
+  "sql": "select id, dealer_code, province, status from leads where id=8",
+  "rows": [
+   {
+    "id": 8,
+    "dealer_code": "DLTHU01",
+    "province": "Đà Nẵng",
+    "status": "new"
+   }
+  ]
+ }
+]

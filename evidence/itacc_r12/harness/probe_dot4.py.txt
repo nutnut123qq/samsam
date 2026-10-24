@@ -1,0 +1,124 @@
+"""PROBE r12 đợt 4 — G1-L5, G1-L6, D4, D2. Cùng input/assertion trên snapshot baseline và working tree.
+python -I probe_dot4.py.txt <ROOT> <envfile> <label>
+
+Tiêu chí đóng (viết TRƯỚC khi vá):
+- G1-L5: `ceo_decisions --list` in mục CHỜ QUYẾT (hàng duyệt khối ceo pending, kèm #id) và CHỜ KÝ (mốc sign_required).
+- G1-L6: combo có thành phần đủ readiness nhưng THIẾU giá list đã duyệt → `thieu_du_lieu` (không phải nhom_han_che);
+  đối chứng: thành phần TPBVSK chưa XNQC → vẫn nhom_han_che; duyệt giá → de_xuat.
+- D4: `xnqc --draft --submit` chạy lại cùng nội dung → exit 0, '[skip]', vẫn đúng 1 mục, không lỗi DB.
+- D2: `check_publish` chặn SĐT/email cá nhân trong nội dung công khai (mã pii_ca_nhan); đối chứng: hotline 1800577732,
+  số/email công khai trong pii_allow, giá, ngày, quy cách KHÔNG bị gắn cờ; chế độ chat `check()` không đổi."""
+import importlib.machinery
+import importlib.util
+import json
+import os
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+H = Path(__file__).resolve().parent
+_l = importlib.machinery.SourceFileLoader("plib", str(H / "plib.py.txt"))
+plib = importlib.util.module_from_spec(importlib.util.spec_from_loader("plib", _l))
+_l.exec_module(plib)
+ROOT, ENVF, LABEL = sys.argv[1], sys.argv[2], sys.argv[3]
+p = plib.P(ROOT, ENVF, LABEL)
+F = plib.FIX
+EXT = Path(os.environ["PROBE_EXT_DIR"]) / p.run_id
+EXT.mkdir(parents=True, exist_ok=False)
+BY = "Người Thử R12"
+PY = "python"
+
+assert p.run("s_seed", [PY, "-m", "pipelines.rollout", "--seed", "--by", BY])[0] == 0
+assert p.run("s_golden_l2", [PY, "-m", "ingest.golden_store", "--file", F / "golden_fixture_l2.json"])[0] == 0
+
+# ================================================================ G1-L5
+try:
+    assert p.run("s_pmo_seed", [PY, "-m", "agents.da_pmo", "--seed"])[0] == 0
+    assert p.run("s_ceo_submit", [PY, "-m", "agents.ceo_report", "--period", "week", "--ref", "2026-10-12", "--submit",
+                                  "--out-dir", EXT / "ceo"])[0] == 0
+    qid = p.q("select max(id) from approval_queue where block = 'ceo' and status = 'pending'")
+    nsign = p.q("select count(*) from project_milestones where sign_required and status <> 'xong'")
+    rc, so, se, _ = p.run("g1l5_list", [PY, "-m", "agents.ceo_decisions", "--list", "--now", "2026-10-24T10:00:00+07:00"])
+    p.check("G1-L5", "list_in_cho_quyet_va_cho_ky", rc == 0 and qid is not None and "Chờ quyết định" in so
+            and re.search(rf"#{qid}\b", so) is not None and "Chờ ký" in so,
+            "--list in mục chờ quyết (#id hàng duyệt ceo pending) + mục chờ ký",
+            {"exit": rc, "qid": qid, "moc_can_ky": nsign, "stdout_cuoi": so.strip()[-500:]})
+except Exception as e:  # noqa: BLE001
+    p.error("G1-L5", "setup", e)
+
+# ================================================================ G1-L6
+STATUS = re.compile(r"^- (\S+) × shopee: (\w+)", re.M)
+try:
+    assert p.run("s_bom", [PY, "-m", "pipelines.production", "bom", "--load", F / "bom_r12_g1l6.json"])[0] == 0
+    rc, so, se, _ = p.run("g1l6_chua_duyet_gia", [PY, "-m", "agents.combo_price", "--dry-run", "--as-of", "2026-10-24"])
+    st = dict(STATUS.findall(so))
+    p.check("G1-L6", "thieu_gia_duyet_la_thieu_du_lieu", rc == 0 and st.get("r12-c1-mat-ong-300-doi") == "thieu_du_lieu",
+            "300ml TP_THUONG, giá list chưa duyệt → thieu_du_lieu", {"exit": rc, "trang_thai": st})
+    p.check("G1-L6", "tpbvsk_chua_xnqc_van_nhom_han_che (positive control)",
+            rc == 0 and st.get("r12-c2-mat-ong-savina") == "nhom_han_che", "kèm savina (TPBVSK chưa XNQC) → nhom_han_che",
+            {"trang_thai": st})
+    for pid, in p.rows("select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee'"
+                       " and approved_by is null and valid_to is null order by id"):
+        assert p.run(f"s_duyet_gia_{pid}", [PY, "-m", "ingest.golden_store", "--approve-price", pid, "--by",
+                                            "Người Duyệt Giá Thử R12"])[0] == 0
+    rc, so, se, _ = p.run("g1l6_da_duyet_gia", [PY, "-m", "agents.combo_price", "--dry-run", "--as-of", "2026-10-24"])
+    st = dict(STATUS.findall(so))
+    p.check("G1-L6", "duyet_gia_thi_de_xuat (positive control)", rc == 0 and st.get("r12-c1-mat-ong-300-doi") == "de_xuat",
+            "giá đã duyệt → de_xuat", {"exit": rc, "trang_thai": st})
+except Exception as e:  # noqa: BLE001
+    p.error("G1-L6", "setup", e)
+
+# ================================================================ D4
+try:
+    argv = [PY, "-m", "agents.xnqc", "--draft", "--sku", "savina-12v", "--loai", "maket", "--ten", "Maket thử R12",
+            "--submit"]
+    rc1, so1, se1, _ = p.run("d4_lan1", argv)
+    n1 = p.q("select count(*) from approval_queue where object_type = 'xnqc_dossier'")
+    rc2, so2, se2, _ = p.run("d4_lan2", argv)
+    n2 = p.q("select count(*) from approval_queue where object_type = 'xnqc_dossier'")
+    p.check("D4", "submit_lap_bo_qua_khong_loi", rc1 == 0 and n1 == 1 and rc2 == 0 and n2 == 1 and "[skip]" in so2
+            and "duplicate" not in (so2 + se2).lower() and "Traceback" not in se2,
+            "lần 2 exit 0 + [skip], vẫn 1 mục", {"exit": [rc1, rc2], "muc": [n1, n2], "lan2_cuoi": (so2 + se2).strip()[-300:]})
+except Exception as e:  # noqa: BLE001
+    p.error("D4", "setup", e)
+
+# ================================================================ D2
+D2 = r"""
+import json, sys
+from pipelines import guardrail as g
+L = "Nội dung có sử dụng AI."
+cases = {
+  "sdt_ca_nhan": "Đặt quà Thử IT gọi 0900000123 nhé. " + L,
+  "sdt_ca_nhan_84": "Liên hệ +84 912 345 678 để đặt hàng Thử R12. " + L,
+  "email_ca_nhan": "Gửi đơn về ban.thu.r12@example.com nhé. " + L,
+  "hotline": "Gọi hotline 1800577732 để được tư vấn. " + L,
+  "showroom": "Showroom 0235 3699 899 — email vnsamsam@gmail.com. " + L,
+  "gia_ngay_quy_cach": "Giá 1.500.000 đ, giao từ 23/10/2026, hộp 10 củ, hũ 300ml. " + L,
+  "gia_lon": "Tổng giá trị 10.050.000.000 đ cho đơn doanh nghiệp. " + L,
+}
+out = {}
+for k, t in cases.items():
+    out[k] = {}
+    for ch in ("facebook", "shopee", "zalo", "web"):
+        r = g.check_publish(t, channel=ch)
+        out[k][ch] = [r["ok"], sorted({v.get("code") for v in r["violations"]})]
+out["chat_check"] = g.check("gọi 0900000123")["ok"]
+print(json.dumps(out, ensure_ascii=False))
+"""
+try:
+    rc, so, se, _ = p.run("d2_cases", [PY, "-c", D2])
+    d = json.loads(so.strip().splitlines()[-1])
+    blocked = all(not v[0] for k in ("sdt_ca_nhan", "sdt_ca_nhan_84", "email_ca_nhan") for v in d[k].values())
+    p.check("D2", "chan_sdt_email_ca_nhan_moi_kenh", rc == 0 and blocked,
+            "SĐT/email cá nhân → ok=False trên facebook/shopee/zalo/web",
+            {k: d[k] for k in ("sdt_ca_nhan", "sdt_ca_nhan_84", "email_ca_nhan")})
+    clean = all(v[0] for k in ("hotline", "showroom", "gia_ngay_quy_cach", "gia_lon") for v in d[k].values())
+    p.check("D2", "khong_gan_co_lien_he_cong_ty_gia_ngay (positive control)", rc == 0 and clean,
+            "hotline/số-email công khai/giá/ngày/quy cách → ok=True",
+            {k: d[k] for k in ("hotline", "showroom", "gia_ngay_quy_cach", "gia_lon")})
+    p.check("D2", "che_do_chat_khong_doi (positive control)", d.get("chat_check") is True,
+            "check() chat không đổi (SĐT do lớp PII kênh che riêng)", {"chat_check": d.get("chat_check")})
+except Exception as e:  # noqa: BLE001
+    p.error("D2", "cases", e)
+p.finish(__file__)

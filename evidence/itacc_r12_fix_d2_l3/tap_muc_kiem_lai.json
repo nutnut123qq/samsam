@@ -1,0 +1,17 @@
+{
+ "_doc": "r12-fix — tập mục kiểm lại sau vá D2/L3. Danh sách + lý do đã khóa TRƯỚC khi chạy trong criteria/r12fix_v1.json (`ly_do_kiem_lai`, sha 559aa67d…); tệp tổng hợp này ghi sau khi lô lo1 khởi chạy. Tệp mã đổi so snapshot baseline r12: pipelines/guardrail.py (luật 8 pii_ca_nhan + _contact_key), pipelines/pii.py (tách _flatten_paren từ _mask_pii — đầu ra _mask_pii không đổi), connectors/zalo.py (nhánh quá 30 giây). Mục khác kế thừa nguồn hiện hành r12.",
+ "tep_ma_doi": ["pipelines/guardrail.py", "pipelines/pii.py", "connectors/zalo.py"],
+ "tep_test_doi": ["tests/test_r12fix_d2_l3.py (mới)", "tests/test_v13_c07_ops.py (2 test hạn chót: HANDOFF_TEXT → NO_HANDOFF_TEXT, giữ assertion handoff/convlog/kết quả muộn bị bỏ)"],
+ "muc": [
+  {"id": "legal_hr-01", "muc_kiem": "MOCK", "ly_do": "D2 — luật pii_ca_nhan nằm trong guardrail.check_publish (entry point của mục); tiêu chí MỚI thêm T5 + ca X02 SĐT ngoặc", "bat_buoc": true},
+  {"id": "sales-01", "muc_kiem": "MOCK", "ly_do": "L3 — nhánh quá 30 giây của connectors/zalo._reply_turn (Zalo + Messenger dùng chung); C07 siết kỳ vọng (không hứa + hotline + handoff 1 lần + provenance không live), thêm C07M Messenger", "bat_buoc": true},
+  {"id": "marketing-01.1", "muc_kiem": "MOCK", "ly_do": "đại diện luồng gọi guardrail: nháp bài/ngày qua check_publish_llm → check_publish; thêm X01 LLM giả trả SĐT ngoặc", "bat_buoc": false},
+  {"id": "sales-03", "muc_kiem": "LOCAL", "ly_do": "đại diện luồng gọi guardrail: nháp listing (content --listing) qua check_publish — kiểm hồi quy", "bat_buoc": false},
+  {"id": "sales-07.1", "muc_kiem": "MOCK", "ly_do": "đại diện luồng gọi guardrail: kịch bản livestream (kd_live) qua check_publish — kiểm hồi quy; câu có chữ số bị bỏ trước guardrail nên không thêm ca SĐT", "bat_buoc": false}
+ ],
+ "khong_kiem_lai_theo_muc": {
+  "pipelines.pii._mask_pii (agents/acc_ar, bks_*, ceo_*, connectors/channels.san_violations, zalo convlog …)": "chỉ tách hàm, đầu ra giữ nguyên — kiểm bằng test đông cứng giá trị baseline (tests/test_r12fix_d2_l3.py::test_d2_mask_pii_output_unchanged) + bộ test PII hiện có trong full pytest",
+  "gọi check_publish khác (kd_care, kd_catalog, kd_quote, listing_export, mkt_*, ra_kenh, seo_san, xnqc, qr_trace, store, intel_weekly, streamlit)": "kiểm bằng full pytest; 3 mục đại diện ở trên chạy lại theo tiêu chí khóa",
+  "UI": "không chạy lại UI — không đổi app/streamlit_app.py; mức UI của sales-01 kế thừa r12 (ui_sau_full_v3) cho phần UI, phần L3 kiểm ở biên gửi (MOCK)"
+ }
+}

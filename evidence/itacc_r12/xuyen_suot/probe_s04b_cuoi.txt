@@ -1,0 +1,19 @@
+PASS  a) login mkt tạo draft nhãn agent:controller khối marketing rồi tự duyệt → chặn, không ghi dở  | {"insert": ["denied", "42501 người thực hiện không hợp lệ (agent:controller) — agent/hệ thống không ghi thay người"], "approve": null, "ghi_do": false}
+PASS  b) login sales tạo draft nhãn agent:controller khối sales rồi tự duyệt → chặn, không ghi dở  | {"insert": ["denied", "42501 người thực hiện không hợp lệ (agent:controller) — agent/hệ thống không ghi thay người"], "approve": null, "ghi_do": false}
+PASS  c) nhãn 'system:auto' không tạo đường vòng  | {"insert": ["denied", "42501 người thực hiện không hợp lệ (system:auto) — agent/hệ thống không ghi thay người"], "approve": null, "ghi_do": false}
+PASS  c) nhãn 'auto_policy:x' không tạo đường vòng  | {"insert": ["denied", "42501 người thực hiện không hợp lệ (auto_policy:x) — agent/hệ thống không ghi thay người"], "approve": null, "ghi_do": false}
+PASS  c) nhãn 'AGENT :x' không tạo đường vòng  | {"insert": ["denied", "42501 người thực hiện không hợp lệ (AGENT :x) — agent/hệ thống không ghi thay người"], "approve": null, "ghi_do": false}
+PASS  c) nhãn 'agent：x' không tạo đường vòng  | {"insert": ["denied", "42501 --by \"agent：x\" không phải người của login t_s04b_mkt_4e20d7d5 — không ghi thay người khác"], "approve": null, "ghi_do": false}
+PASS  d) người tự khai block khác khối hệ thống xác định (post→marketing) → chặn  | {"insert": ["denied", "42501 khối draft do hệ thống xác định (draft của người → marketing), không tự khai sales"]}
+PASS  e) người tạo tự duyệt bằng tên 'Marketing Giả B1' → chặn  | {"approve": ["denied", "P0001 người duyệt trùng người tạo draft #8, cần người khác duyệt"]}
+PASS  e) người tạo tự duyệt bằng tên '  marketing   giả b1 ' → chặn  | {"approve": ["denied", "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"]}
+PASS  f) người khác đúng khối duyệt draft của người tạo → được  | {"approve": ["ok", [[2]]]}
+PASS  g) người sai khối duyệt draft marketing → chặn  | {"approve": ["denied", "42501 người \"Bán Hàng Giả B1\" không được ủy quyền khối marketing (human_logins)"]}
+PASS  h) login agent tạo draft agent → người marketing duyệt → được  | {"insert": ["ok", [[10]]], "approve": ["ok", [[4]]]}
+PASS  h) login job tạo draft agent → người marketing duyệt → được  | {"insert": ["ok", [[11]]], "approve": ["ok", [[5]]]}
+PASS  i) hàng duyệt (insert): người nhãn agent rồi tự quyết → chặn  | {"insert": ["denied", "42501 permission denied for table approval_queue"], "decide": null}
+PASS  i) hàng duyệt (enqueue_item): người nhãn agent rồi tự quyết → chặn  | {"insert": ["ok", [[1]]], "decide": ["denied", "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"]}
+PASS  i) svc_job enqueue_item agent → người marketing quyết → được  | {"insert": ["ok", [[2]]], "decide": ["ok", [[7]]]}
+PASS  i) người tạo mục tên mình: tự quyết (biến thể tên) chặn, người khác đúng khối được  | {"self": ["denied", "42501 người tạo không tự duyệt (login/tên trùng tác giả) — cần người khác duyệt"], "other": ["ok", [[9]]]}
+dọn: role tạm còn lại = 0
+TỔNG 17 ca, không PASS 0 (FAIL 0, ERROR 0)

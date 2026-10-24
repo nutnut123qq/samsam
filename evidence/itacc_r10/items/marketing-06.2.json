@@ -1,0 +1,123 @@
+{
+ "id": "marketing-06.2",
+ "ten": "Báo cáo kênh",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / SEO và báo cáo kênh: 'báo cáo lượt xem, đơn, tỷ lệ hủy'",
+ "tieu_chi": [
+  "T1 `python -m pipelines.cockpit --import F --by <người> --sample` và `--collect --period week --ref <kỳ đã đóng>` exit 0",
+  "T2 channel_snapshots: dòng manual_export (lượt xem/đơn/hủy theo file, cờ mẫu) + dòng số đo nội bộ (marketing từ content_drafts/approval_queue) cho kỳ đã đóng; số khớp đếm độc lập",
+  "T3 file lỗi → exit 1 0 dòng; kỳ chưa đóng → từ chối; insert-only",
+  "T4 không gọi API kênh"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM)",
+ "dau_vao": [
+  {
+   "ten": "harness/fixtures/kenh_MAU.csv",
+   "sha256": "cf0d47124058b7fe08512746a4f7fca1359b87b5acfd4491843c6278adc0d002",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "harness/fixtures/kenh_loi.csv",
+   "sha256": "ae41677b1fb443a25fffcbbe7021d94526e647d28e7b3df204a4fc0aaf9f97c8",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "06.2-C1",
+   "mo_ta": "import file kênh MẪU",
+   "lenh": "python -m pipelines.cockpit --import evidence/itacc_r10/g3/harness/fixtures/kenh_MAU.csv --by Người Thử IT --sample",
+   "expected": "manual_export is_sample",
+   "actual": "12 dòng channel_snapshots source manual_export, source_ref 'sample:kenh_MAU.csv#sha256:…', captured_by người thử",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.2-C2",
+   "mo_ta": "file lỗi",
+   "lenh": "python -m pipelines.cockpit --import evidence/itacc_r10/g3/harness/fixtures/kenh_loi.csv --by Người Thử IT",
+   "expected": "exit 1, 0 dòng",
+   "actual": "exit 1 (4 lỗi dòng/cột), 0 dòng, chưa kết nối DB",
+   "exit": 1,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.2-C3",
+   "mo_ta": "collect tuần đã đóng (--ref 2026-10-12; lượt đầu --ref 2026-10-19 là tuần hiện tại → sản phẩm từ chối đúng, xem harness_fixes)",
+   "lenh": "python -m pipelines.cockpit --collect --period week --ref 2026-10-12",
+   "expected": "snapshot nội bộ, số khớp SQL",
+   "actual": "13 số nội bộ inserted; content.* = 0 khớp SQL (0 nháp tạo tuần 12–18/10); median/p90 không ghi khi n=0 (không bịa 0)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.2-C4",
+   "mo_ta": "kỳ chưa đóng",
+   "lenh": "python -m pipelines.cockpit --collect --period week --ref 2026-10-23",
+   "expected": "từ chối",
+   "actual": "exit 2 'kỳ chưa đóng'",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "06.2-C5",
+   "mo_ta": "bổ sung sau khóa (tuần đóng không có dữ liệu marketing): agents.report --days 1 mục 5",
+   "lenh": "python -m agents.report --days 1 --out-dir evidence/itacc_r10/g3/reports",
+   "expected": "số mkt_metrics khớp SQL",
+   "actual": "mục 5: nháp 0/5 trả lại, hàng chờ marketing 0/2 — khớp SQL (5 draft approved, 2 queue decided)",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "Số lượt xem chỉ từ file xuất tay MẪU; tuần đã đóng không có dữ liệu marketing (không lùi timestamp) → số thực kiểm qua báo cáo kỳ hiện tại; out/06.2-C1..C3.txt TÁI TẠO (trùng mã ca).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/06.2-C1.txt",
+   "sha256": "95d50d6c13b2e0f346c6a6c297b411eddec7a6004091bc389d49c23871a0f3c7"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.2-C2.txt",
+   "sha256": "f7b90a8d0734015fd44450d271284d7b62b2f643b179e6dd753ff3f08a561966"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.2-C3.LUOT_HONG_input_ky_chua_dong.txt",
+   "sha256": "f40957ffb3db269f560cb386362b2feadcc49f580eb84a97f8fba8fa0f17f4e7"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.2-C3.txt",
+   "sha256": "dc90e7933ca994fe53acadb3e9ef9db6b025a2943b801e3fb5fc5b6663cf45c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.2-C4.txt",
+   "sha256": "f40957ffb3db269f560cb386362b2feadcc49f580eb84a97f8fba8fa0f17f4e7"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.2-C3b.txt",
+   "sha256": "57daaee98daaf533f5c1c8b20ecfb24f5f226127dfdd735b6f442630d7dd6fbc"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.2-C1C3.snapshot.json",
+   "sha256": "4a0d512467275608e07cd1f9cbb8433049254647f50216efa1d7c0222a81cf91"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/06.2-C5.txt",
+   "sha256": "c094a379d08b4c3c06629396d57d0051276a480f5883e453fd139ddc66c33654"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/reports/report-2026-10-22_2026-10-23.md",
+   "sha256": "3ff11399c589383bfee4952404e1a756f412d92c3eb57b68626913662a3eaa4a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/reconstruct_mkt.py",
+   "sha256": "08030f099938a7ba32b76467e474bb577a94c128e20681c85e1a5d68c93c785f"
+  }
+ ],
+ "loi_san_pham": []
+}

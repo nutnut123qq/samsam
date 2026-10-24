@@ -1,0 +1,38 @@
+"""[r11] Dựng evidence/itacc_r11/tong_hop_r11_6muc.json: mục 0 của hồ sơ (checkpoint r11) + chú thích mục 9,
+số liệu đọc từ items r11 + tong_hop r11 (không điền tay).  python -I build_hoso_parts_r11.py.txt"""
+import collections
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = Path(__file__).resolve().parents[3]
+R11 = ROOT / "evidence" / "itacc_r11"
+T = json.loads((R11 / "tong_hop.json").read_text(encoding="utf-8"))["tom_tat"]
+NEW = ("marketing-03.2", "marketing-05.1", "marketing-05.2", "marketing-06.1", "marketing-06.2", "legal_hr-07")
+LBL = {"DAT": "ĐẠT", "CHUA_KIEM": "CHƯA KIỂM", "BI_CHAN": "BỊ CHẶN"}
+locks = {p.name: p.read_text(encoding="utf-8").split() for p in (R11 / "criteria").glob("*.lock.txt")}
+L = ["## 0. Checkpoint r11 — kiểm lại 6 mục bằng evidence gốc mới (23/10/2026)", "",
+     "- **Vì sao:** controller chưa chấp nhận chốt r10 vì (a) 5 mục marketing dựa trên 20 file log bị ca legal_hr trùng mã ghi đè rồi TÁI TẠO từ transcript; (b) legal_hr-07 được chấm PASS \"theo ý định\" dù ca đã khóa yêu cầu 2 dòng `intel_items` (thực tế 1).",
+     f"- **Tiêu chí khóa TRƯỚC khi chạy:** `evidence/itacc_r11/criteria/r11.json` sha256 `{locks['r11.lock.txt'][1]}` ({locks['r11.lock.txt'][4]}); "
+     f"`r11_v2_marketing-03.2.json` sha256 `{locks['r11_v2_marketing-03.2.lock.txt'][1]}` ({locks['r11_v2_marketing-03.2.lock.txt'][4]}). Tiêu chí khóa r10 (`criteria/g3.json`, sha256 `4de39b8b…581e`) GIỮ NGUYÊN.",
+     "- **Môi trường:** Postgres Docker riêng `samsam-itacc-r11` (`postgres:17-alpine`, chỉ `127.0.0.1:55441`, credential mới không lưu repo); mỗi mục 1 DB mới `samsam_itacc_r11_*` (schema/roles ×2 + core + golden — log `runs/_dung_db/`); mạng ngoài localhost bị chặn trong harness; RSS giả `127.0.0.1:18793`; không LLM/provider thật.",
+     "- **Evidence gốc:** runner `harness/runner.py.txt` — mỗi lần chạy 1 thư mục `runs/<id>/<run_id>/<id>__Cn/`, stdout/stderr gốc + `stepNN.cmd.json` (argv, giờ VN, exit lấy từ tiến trình, sha256), assertion SQL/file máy kiểm `asserts.json`; file mở chế độ không ghi đè; bộ lọc secret tự động (mật khẩu DSN, muối, khóa vault) — không sửa nội dung nghiệp vụ.", "",
+     "| ID | Trạng thái r11 | Mức | Ca PASS/FAIL/NOT_RUN | Lần chạy hiện hành | Thay bản ghi r10 |", "|---|---|---|---|---|---|"]
+for fid in NEW:
+    r = json.loads((R11 / "items" / f"{fid}.json").read_text(encoding="utf-8"))
+    c = collections.Counter(x["ket_qua"] for x in r["ca"])
+    L.append(f"| {fid} | **{LBL[r['trang_thai']]}** | {r['muc_kiem']} | {c.get('PASS', 0)}/{c.get('FAIL', 0)}/{c.get('NOT_RUN', 0) + c.get('LOI_HARNESS', 0)} | "
+             f"`runs/{fid}/{r['run_id']}` | `{r['supersedes']['path']}` (sha256 `{r['supersedes']['sha256'][:12]}…`) |")
+L += ["",
+      "- **Đính chính legal_hr-07 (lỗi KỲ VỌNG của harness, không phải evidence cũ đã đạt ca khóa):** `crawler/intel.py` `build_items()` loại tin 0 chủ đề TRƯỚC khi lưu (`off += 1; continue`). Fixture `rss_it.xml` = 1 tin nghị định quảng cáo TPBVSK + 1 tin không liên quan ⇒ kỳ vọng đúng: CHÍNH XÁC 1 dòng `intel_items` (đúng url/nguồn/tiêu đề/chủ đề tpbvsk), 0 dòng tin lạc, stdout `2 tin, 1 đúng chủ đề, mới 1` + `off_topic=1`. Chạy lại đủ flow: thu RSS → cảnh báo (`legal_doc`, exit 1 fail-closed thiếu người nhận, 0 lần gửi) → `legal_doc_review` pending payload template (link, sha256 tiêu đề, \"KHÔNG diễn giải\") → chạy lại 0 mục mới → tắt `legal_hr-07`: tin mới chỉ có luật `regulation`, `legal_updates` báo tắt, 0 mục mới; `llm_usage` 0 dòng; log http.server chỉ 127.0.0.1.",
+      "- **Đính chính marketing-06.2-C3:** r10 khóa `--ref 2026-10-19` (tuần HIỆN TẠI, chưa đóng → sản phẩm từ chối đúng). r11 khóa tuần đã đóng gần nhất giờ VN 2026-10-12; assertion so 5 chỉ số nội bộ với đếm SQL ĐỘC LẬP cùng khung giờ VN, không median/p90 khi 0 quyết định, chạy lại `inserted=0` (C3b). Giới hạn khóa trước: DB mới, không lùi timestamp → số của kỳ đóng đều 0.",
+      "- **Lỗi harness lượt r11 (đã thay thế):** marketing-03.2 lượt `runs/marketing-03.2/20261023T143204-6665` (tiêu chí v1) — fixture kết quả còn `bien_the=4` (id creative DB r10) trong khi creative phiếu r11 là #1 → sản phẩm từ chối ĐÚNG, C1/C3/C4 FAIL do fixture. Mở tiêu chí v2 chỉ đổi fixture `*_r11.csv` (4→1), expected giữ nguyên, chạy lại toàn bộ trên DB mới `…m032b` → 10/10 PASS. Lượt hỏng giữ nguyên, không tính.",
+      "- **Khác tiêu chí r10 (ghi ở `khac_r10` từng ca):** 03.2-C2 dùng chính phiếu #1 trước khi duyệt (r10 dùng phiếu --propose); bổ sung 05.2-C4b (có đồng ý → 1 `ugc_reuse`), 05.2-C4c (lớp nhạy cảm → UGC_SENSITIVE), 06.2-C3b (insert-only); 05.2-C5 đặt DB host chết để chứng minh thoát trước kết nối.",
+      "- **Evidence r10 yếu GIỮ NGUYÊN làm lịch sử:** `evidence/itacc_r10/g3/out/` (log tái tạo có header), `g3/harness_fixes.tsv`, 6 bản ghi `evidence/itacc_r10/items/`, `evidence/itacc_r10/tong_hop.json` (checkpoint r10). Nguồn hiện hành từng id: `evidence/itacc_r11/source_map.json`; tổng hợp hiện hành: `evidence/itacc_r11/tong_hop.json`.",
+      f"- **Kế thừa r10 (KHÔNG chạy lại ở r11):** {T['nguon_r10']} mục còn lại; full pytest 6619/0/0, UI thật 22/2/2, ruff/eval/DPIA/red-team/DR — chạy ở r10 trên CÙNG fingerprint mã `97051e55…8001` (xác minh lại ở r11: không đổi). Lượt r11 không chạy full pytest (chỉ chạy harness + cập nhật evidence/tài liệu).",
+      f"- **Tổng hiện hành (sinh bằng code):** {T['tong'].get('DAT', 0)} ĐẠT / {T['tong'].get('CHUA_KIEM', 0)} CHƯA KIỂM / {T['tong'].get('BI_CHAN', 0)} BỊ CHẶN trên {T['mau_so']} — "
+      f"checkpoint r10: {T['checkpoint_r10_lich_su'].get('DAT', 0)}/{T['checkpoint_r10_lich_su'].get('CHUA_KIEM', 0)}/{T['checkpoint_r10_lich_su'].get('BI_CHAN', 0)}. Kiểm nhất quán: {len(T['loi_nhat_quan'])} vi phạm, {T['so_tham_chieu_evidence']} tham chiếu evidence khớp file/hash."]
+M9 = ["> **Chú thích r11:** điểm \"legal_hr-07 ca C1\" và \"Log tái tạo\" bên dưới ĐÃ XỬ LÝ ở r11 (mục 0) — tiêu chí đính chính + chạy lại bằng log gốc mới. Các điểm còn lại (intel-06, D2, marketing-01.1) giữ nguyên như r10.", ""]
+(R11 / "tong_hop_r11_6muc.json").write_text(json.dumps({"muc0": L, "chu_thich_muc9": M9}, ensure_ascii=False, indent=1), encoding="utf-8")
+print("ok", len(L))

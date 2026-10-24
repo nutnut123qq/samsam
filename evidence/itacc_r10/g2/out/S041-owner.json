@@ -1,0 +1,38 @@
+[
+ {
+  "sql": "select id, owner_code, owner_due_at, owner_assigned_at, status from leads where id in (7,8)",
+  "rows": [
+   {
+    "id": 7,
+    "owner_code": "NVTHU01",
+    "owner_due_at": "2026-10-26 01:30:12.223627+00:00",
+    "owner_assigned_at": "2026-10-23 03:30:12.223627+00:00",
+    "status": "new"
+   },
+   {
+    "id": 8,
+    "owner_code": null,
+    "owner_due_at": null,
+    "owner_assigned_at": null,
+    "status": "new"
+   }
+  ]
+ },
+ {
+  "sql": "select id, actor, action, object_type, object_id, detail from agent_action_log where object_type in ('crm','lead') or action like 'crm%' order by id",
+  "rows": [
+   {
+    "id": 120,
+    "actor": "Trưởng KD Thử IT",
+    "action": "crm_owner",
+    "object_type": "lead",
+    "object_id": "7",
+    "detail": {
+     "to": "NVTHU01",
+     "from": null,
+     "due_at": "2026-10-26T01:30:12.223627+00:00"
+    }
+   }
+  ]
+ }
+]

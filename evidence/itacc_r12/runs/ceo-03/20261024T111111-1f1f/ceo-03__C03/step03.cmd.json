@@ -1,0 +1,31 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "-c",
+  "import os,sys,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],connect_timeout=5); v=sorted((t, c.execute('select count(*)::text || chr(58) || md5(coalesce(string_agg(x::text, chr(10) order by x::text), chr(32))) from '+t+' x').fetchone()[0]) for t in sys.argv[2:]); c.close(); b=open(sys.argv[1],encoding='utf-8').read(); print('SAU', v); print('KHONG_DOI' if repr(v)==b else 'THAY_DOI'); sys.exit(0 if repr(v)==b else 1)",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\runs\\ceo-03\\20261024T111111-1f1f\\ceo-03__C03\\out/truoc.txt",
+  "xnqc_dossiers",
+  "red_alerts",
+  "approval_queue",
+  "channel_posts"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:11:24+07:00",
+ "ket_thuc": "2026-10-24T11:11:25+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\bKHONG_DOI\\b",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "f7069e46c6bad09206b1a8bff551a146b8e75097cd651a0e35a4618613f31e8b",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

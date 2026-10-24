@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from red_alerts where source_agent = 'intel_red_alert' and detail->'rules' ? 'legal_doc' and route_error is not null",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from red_alert_deliveries",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

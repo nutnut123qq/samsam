@@ -1,0 +1,42 @@
+# ca P051-5
+# gio 2026-10-23T10:47:23+07:00
+# lenh python evidence/itacc_r10/g4/harness/run.py --fake-llm ok --reports-dir evidence/itacc_r10/g4/out/rep_rd_tat -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --out
+# exit 1
+--- stdout ---
+[harness] REPORTS_DIR -> rep_rd_tat/ (vá biên)
+[harness] llm_gateway._client = FAKE(ok) — 0 gọi mạng
+**NỘI BỘ – không dùng cho truyền thông**
+
+Câu hỏi: bảo quản sâm khô độ ẩm
+Chế độ: extract
+
+[1] "DOI: 10.1234/thu-it.2026.001 # Tài liệu R&D Thử IT — bảo quản sâm khô Sâm khô sau khi sấy cần bảo quản nơi khô ráo, độ ẩm dưới 12%, tránh ánh nắng trực tiếp. Đóng gói kín trong túi hút chân không để hạn chế hút ẩm. Kiểm tra độ ẩm định kỳ mỗi tháng bằng máy đo độ ẩm. Nhiệt độ kho khuyến nghị từ 15 đến 25 độ C. Không để sâm khô gần nguồn nhiệt hoặc hóa chất có mùi."
+
+Nguồn:
+[1] rd_baoquan — DOI: 10.1234/thu-it.2026.001
+
+*NỘI BỘ – không dùng cho truyền thông. Không trích dẫn ra kênh khách/marketing.*
+
+--- stderr ---
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r10\g4\harness\run.py", line 142, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "D:\code\samsam\evidence\itacc_r10\g4\harness\run.py", line 135, in main
+    runpy.run_module(module, run_name="__main__", alter_sys=True)
+  File "<frozen runpy>", line 226, in run_module
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\code\samsam\agents\sx_tracuu.py", line 278, in <module>
+    rc = main()
+         ^^^^^^
+  File "D:\code\samsam\agents\sx_tracuu.py", line 265, in main
+    p = write_report(text, REPORTS_DIR,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\agents\report.py", line 570, in write_report
+    md = rollout.gate_report(name)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\code\samsam\pipelines\rollout.py", line 719, in gate_report
+    raise RolloutBlocked(_why(fid, "tat", f"báo cáo {name}")
+pipelines.rollout.RolloutBlocked: báo cáo sx-tracuu-2026-10-23-c4a63127.md: tính năng production-05.1 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+

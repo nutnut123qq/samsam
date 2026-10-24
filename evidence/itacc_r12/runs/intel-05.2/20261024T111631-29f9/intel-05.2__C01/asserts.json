@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from bom_combos where combo_key like 'it-%'",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from price_list where approved_by = 'Người Duyệt Giá Thử R12' and channel = 'shopee' and valid_to is null and sku_key in ('mat-ong-sam-120ml-1hu', 'mat-ong-sam-300ml') and kind in ('floor', 'list')",
+  "expect": 4,
+  "actual": 4,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-120ml-2hu' and approved_by is not null",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

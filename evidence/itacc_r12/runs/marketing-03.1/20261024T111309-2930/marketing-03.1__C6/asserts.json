@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select case when exists (select 1 from ad_test_plans where created_by = 'agent:mkt05') then (select count(*) from ad_test_plans where created_by = 'agent:mkt05') = 1 and (select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where p.created_by = 'agent:mkt05' and a.status = 'pending' and ((a.block = 'marketing' and a.object_type = 'ad_campaign' and a.created_by = 'agent:mkt05') or (a.block = 'finance' and a.object_type = 'budget_change' and a.created_by = 'agent:mkt05_budget'))) = 2 else true end",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from ad_test_plans where budget_vnd > cap_vnd",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

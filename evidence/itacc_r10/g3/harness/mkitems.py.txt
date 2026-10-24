@@ -1,0 +1,325 @@
+import hashlib, json, sys
+from datetime import datetime
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+REPO = Path("D:/code/samsam")
+G3 = REPO / "evidence/itacc_r10/g3"
+FP = "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001"
+NOW = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).isoformat(timespec="seconds")
+khung = {x["id"]: x for x in json.load(open(REPO / "evidence/itacc_r10/criteria/khung.json", encoding="utf-8"))["items"]}
+crit = {x["id"]: x for x in json.load(open(REPO / "evidence/itacc_r10/criteria/g3.json", encoding="utf-8"))["items"]}
+EXIT, CMD = {}, {}
+for line in open(G3 / "cases.tsv", encoding="utf-8"):
+    p = line.rstrip("\n").split("\t")
+    if len(p) >= 4:
+        EXIT[p[0]], CMD[p[0]] = int(p[1]), p[3]
+
+
+def sha(rel):
+    return hashlib.sha256((REPO / rel).read_bytes()).hexdigest()
+
+
+def ev(*rels):
+    out = []
+    for r in rels:
+        rp = r if r.startswith("evidence/") else f"evidence/itacc_r10/g3/{r}"
+        out.append({"path": rp, "sha256": sha(rp)})
+    return out
+
+
+def inp(*rels):
+    return [{"ten": r, "sha256": sha(f"evidence/itacc_r10/g3/{r}" if r.startswith(("harness", "out/")) else r),
+             "provenance": ("fixture thử IT" if r.startswith(("harness", "out/")) else "file repo (đọc, không sửa)")} for r in rels]
+
+
+def C(ma, mo_ta, expected, actual, ket="PASS", key=None, lenh=None, nr=None):
+    k = key or ma
+    d = {"ma": ma, "mo_ta": mo_ta, "lenh": lenh or CMD.get(k, "(xem out)"), "expected": expected,
+         "actual": actual, "exit": EXIT.get(k), "ket_qua": ket}
+    if nr:
+        d["ly_do_not_run"] = nr
+    return d
+
+
+ENV_M = "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_mkt; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử)"
+ENV_L = ENV_M.replace("samsam_itacc_r10_mkt", "samsam_itacc_r10_legal")
+FAKE = "; fake ở biên: LLM qua llm_gateway._client giả (gate/trần/llm_usage thật) — harness/run.py --fake-llm"
+NOFAKE = "; fake ở biên: không cần (tất định, 0 LLM)"
+D1 = {"ma": "D1", "muc_do": "trung bình", "mo_ta": "video_studio / mkt_youtube: khi tính năng TẮT vẫn gọi LLM gateway (phát sinh chi phí, ghi llm_usage) và dựng file trước khi bị chặn muộn ở store.save_draft → traceback RolloutBlocked, exit 1. Kỳ vọng (như content --daily): chặn TRƯỚC mọi lời gọi LLM, exit 2.",
+      "tai_hien": "python -m pipelines.rollout --disable marketing-02.2 --by X; python evidence/itacc_r10/g3/harness/run.py --fake-llm .../video.json -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --brief '...' (tương tự agents.mkt_youtube với marketing-07.2)",
+      "expected": "exit 2 [blocked], 0 lời gọi LLM, 0 dòng", "actual": "exit 1 traceback RolloutBlocked; 1 lời gọi LLM (llm_usage id 10 feature marketing-02.2 lúc tắt); 0 dòng content_drafts",
+      "evidence": ["evidence/itacc_r10/g3/out/02.2-C5.txt", "evidence/itacc_r10/g3/out/02.2-C5.llm_usage.json", "evidence/itacc_r10/g3/out/07.2-C5.txt"]}
+D2 = {"ma": "D2", "muc_do": "thấp–trung bình", "mo_ta": "guardrail.check_publish (và check) không phát hiện SĐT cá nhân trong văn bản đăng — nháp chứa SĐT thô vẫn ok=True và có thể lưu vào content_drafts (trái invariant AGENTS.md: PII khách chỉ nằm trong contacts dạng mã hóa).",
+      "tai_hien": "python evidence/itacc_r10/g3/harness/guardrail_cases.py (ca P4: 'Đặt quà Thử IT gọi 0900000123 nhé.' + nhãn AI, kênh facebook/shopee/zalo/web)",
+      "expected": "ok=False (cờ PII)", "actual": "ok=True, 0 vi phạm (mọi kênh)", "evidence": ["evidence/itacc_r10/g3/out/L-01-C1C2.txt"]}
+D3 = {"ma": "D3", "muc_do": "thấp", "mo_ta": "RolloutBlocked (tính năng tắt) không được bắt ở CLI → traceback exit 1 (mkt_director --briefs, seo_web --submit, pc_hr --jd); mkt_ads --propose in '[error] RolloutBlocked: RolloutBlocked' exit 1 — mất lý do, lệch quy ước exit 2 của các CLI khác. Hành vi cốt lõi (không sinh đầu ra) vẫn đúng.",
+      "tai_hien": "rollout --disable <tính năng>; chạy CLI tương ứng", "expected": "[blocked] <lý do> exit 2", "actual": "traceback / thông báo mất lý do, exit 1",
+      "evidence": ["evidence/itacc_r10/g3/out/01.2-C4.txt", "evidence/itacc_r10/g3/out/06.1-C3.txt", "evidence/itacc_r10/g3/out/L-06.1-C4.txt", "evidence/itacc_r10/g3/out/03.1-C7.txt"]}
+D4 = {"ma": "D4", "muc_do": "thấp", "mo_ta": "xnqc --draft --submit lặp cùng nội dung → '[err] lỗi DB: duplicate key ... approval_queue_pending_uq' exit 2 thay vì bỏ qua idempotent (không tạo trùng — dữ liệu đúng).",
+      "tai_hien": "python -m agents.xnqc --draft --sku saphraton-20v --loai maket --ten 'maket fanpage Thử IT' --maket maket_xnqc.txt --submit (2 lần)",
+      "expected": "[skip] đã có, exit 0", "actual": "exit 2 lỗi DB UniqueViolation", "evidence": ["evidence/itacc_r10/g3/out/L-02-C4.txt"]}
+Q1 = {"ma": "Q1", "muc_do": "quan sát", "mo_ta": "mkt_ads --results nhận file kết quả có ngày SAU hôm nay (trong khung phiếu tương lai) — không kiểm ngày ≤ hôm nay.", "tai_hien": "03.2-C1 (ngày 2026-10-26/27, hôm nay 2026-10-23)", "evidence": ["evidence/itacc_r10/g3/out/03.2-C1.db.json"]}
+Q2 = {"ma": "Q2", "muc_do": "quan sát", "mo_ta": "contract_check --out-dir luôn ghi report_outputs is_sample=false, kể cả khi kiểm file mẫu test (tests/fixtures/...MAU.md) — có thể đếm file mẫu thành đầu ra.", "tai_hien": "L-05.1-C3", "evidence": ["evidence/itacc_r10/g3/out/L-05.1-C3.txt"]}
+
+items = {}
+
+
+def item(id_, st, muc, env, dv, ca, evid, ng=None, cdg="", gh="", loi=()):
+    k, c = khung[id_], crit[id_]
+    d = {"id": id_, "ten": k["ten"], "khoi": k["khoi"], "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"],
+         "can_cu": k["can_cu"], "tieu_chi": c["tieu_chi_cu_the"], "fingerprint": FP, "thoi_gian": NOW,
+         "moi_truong": env, "dau_vao": dv, "ca": ca, "trang_thai": st, "muc_kiem": muc}
+    if st == "BI_CHAN":
+        d["nguyen_nhan"] = ng
+    d.update({"can_de_go": cdg, "gioi_han": gh, "evidence": evid, "loi_san_pham": list(loi)})
+    assert not (st == "DAT" and any(x["ket_qua"] != "PASS" for x in ca)), id_
+    items[id_] = d
+
+
+# ---------------- marketing ----------------
+item("marketing-01.1", "DAT", "MOCK", ENV_M + FAKE + " (fake/clean.json, fake/banned.json)",
+     inp("harness/fake/clean.json", "harness/fake/banned.json", "data/marketing_calendar.json"),
+     [C("01.1-C1", "soạn nháp ngày 2026-10-23", "≥1 nháp đúng T2; trụ 'auto' bị từ chối có lý do; exit 0|1",
+        "2 nháp #1,#2 created_by agent:mkt02, post, pending, brief [daily 2026-10-23 #1/#2], guardrail ok=true, is_ai, prompt_version content_facebook@1/content_zalo@1 + sha, text có nhãn AI; 2 trụ 'auto' [bị từ chối] readiness (0 SKU đủ điều kiện — đúng blocker); [THIẾU] 1/3, exit 1"),
+      C("01.1-C2", "chạy lại cùng ngày", "skipped, 0 LLM, 0 dòng mới", "#1,#2 skipped; 0 lời gọi LLM (không có file llmcalls); content_drafts=2, llm_usage=2 không đổi"),
+      C("01.1-C3", "LLM giả trả từ cấm (2026-10-24)", "failed, 0 dòng, exit 1", "2 slot failed (tu_cam, claim_ngoai_cong_bo…) sau 1 lượt sửa (4 lời gọi LLM), 0 dòng ngày 24, exit 1"),
+      C("01.1-C4", "tính năng tắt", "exit 2, 0 LLM, 0 dòng", "exit 2 [blocked] marketing-01.1 đang tắt; 0 lời gọi LLM; 0 dòng; bật lại --promote (01.1-C4b)"),
+      C("01.1-C5", "xếp lịch đăng khi chạy thử", "bị chặn", "draft #1 duyệt (01.1-C5a, dev) rồi --schedule → exit 2 'đang chạy thử… không dùng'; scheduled_date null")],
+     ev("out/01.1-C1.txt", "out/01.1-C1.db.json", "out/01.1-C1.llmcalls.json", "out/01.1-C2.txt", "out/01.1-C3.txt", "out/01.1-C3.llmcalls.json", "out/01.1-C4a.txt", "out/01.1-C4.txt", "out/01.1-C4b.txt", "out/01.1-C5a.txt", "out/01.1-C5.txt", "harness/run.py", "harness/q.py", "harness/rc.sh"),
+     gh="Chỉ 2/3 nháp/ngày vì 0 SKU đủ readiness bài đăng (blocker danh mục: XNQC/tự công bố) — đúng hành vi; lịch GIẢ ĐỊNH; LLM giả; người duyệt chế độ dev.")
+
+item("marketing-01.2", "DAT", "LOCAL", ENV_M + NOFAKE, inp("data/marketing_calendar.json", "harness/fixtures/calendar_broken.json"),
+     [C("01.2-C1", "đẩy brief", "≥1 campaign_brief đúng T2", "#1 c-1111-2026 marketing/campaign_brief pending risk medium created_by agent:MKT-00, payload mốc + ô kênh + 'Nguồn: data/marketing_calendar.json…', due_at = created+48h (SLA cấu hình)"),
+      C("01.2-C2", "chạy lại", "skip, 0 dòng mới", "[skip] đã có; tổng vẫn 1"),
+      C("01.2-C3", "dry-run", "0 dòng DB", "in brief, 'không connect DB'; tổng vẫn 1"),
+      C("01.2-C4", "tính năng tắt (--today 2026-11-05 --horizon-days 30)", "exit≠0, 0 dòng mới", "exit 1, 0 dòng mới (brief 12.12 không sinh) — nhưng traceback RolloutBlocked chưa bắt (D3)"),
+      C("01.2-C5", "lịch JSON hỏng (FIXTURE patch CALENDAR_FILE)", "exit 1 CalendarError, 0 dòng", "exit 1 '[err] calendar_broken.json JSON hỏng'; 0 dòng")],
+     ev("out/01.2-C1.txt", "out/01.2-C1.db.json", "out/01.2-C2.txt", "out/01.2-C3.txt", "out/01.2-C4a.txt", "out/01.2-C4.txt", "out/01.2-C4b.txt", "out/01.2-C5.txt"),
+     gh="Lịch chiến dịch GIẢ ĐỊNH; approvers marketing rỗng (dev).", loi=[D3])
+
+item("marketing-02.1", "BI_CHAN", "LOCAL", ENV_M + NOFAKE + "; FIXTURE: golden bản sao (mat-ong-sam-300ml self_declaration_ok=true) nạp qua ingest.golden_store --file; packshot MẪU make_sample_packshot; PACKSHOT_DIR/IMAGE_OUT_DIR = scratchpad",
+     inp("harness/fixtures/golden_fixture_food.json", "out/fixture_packshots.sha256.txt"),
+     [C("02.1-C1", "--scene khi IMAGE_PROVIDER none", "exit 2 blocked, 0 file/dòng", "exit 2 [blocked] cần nền AI — BLOCKED vendor+DPA+key; 0 file, 0 dòng (chặn an toàn — KHÔNG phải đầu ra ảnh AI)"),
+      C("02.1-C2", "IMAGE_PROVIDER=dalle", "exit 2", "exit 2 'chưa cắm… hỗ trợ: none'; 0 dòng"),
+      C("02.1-C3", "phần con: ghép packshot MẪU + nền gradient", "T2 phần con đạt", "exit 0; 4 nháp image (#3-#6, facebook/shopee/tiktok/web) created_by agent:mkt03 pending + 4 image_assets cùng sha 14a735…=sha file; label 'Nội dung có sử dụng AI\\nQuảng cáo'; ai_generated=false, provider none; kiểm độc lập: 182538 pixel alpha255 lệch 0, PNG chỉ IHDR/IDAT/IEND, exif 0"),
+      C("02.1-C4", "SKU TPBVSK / rượu", "maket_xnqc / ruou, 0 dòng", "refused maket_xnqc (saphraton-20v), ruou (rượu); 0 dòng mới"),
+      C("02.1-C5", "chạy lại", "skipped", "skipped, 0 dòng mới (4/4)")],
+     ev("out/mkt-fx-golden.txt", "out/02.1-C1.txt", "out/02.1-C2.txt", "out/02.1-C3.txt", "out/02.1-C3.db.json", "out/02.1-C3.verify.txt", "out/02.1-C4.txt", "out/02.1-C5.txt", "harness/verify_image.py", "media/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.png", "media/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.json"),
+     ng="MISSING_ADAPTER", cdg="Cắm provider sinh nền ảnh AI vào pipelines.image_studio.PROVIDERS (vendor + hợp đồng/DPA + key + trần chi phí agent image) rồi kiểm lại nhánh --scene; ảnh packshot THẬT do công ty cấp.",
+     gh="Đầu ra thiết yếu 'ảnh bối cảnh AI' chưa thực hiện được (registry chỉ none); nền gradient/ghép packshot MẪU KHÔNG thay đầu ra ảnh AI. Tính năng mot_phan nên không vào sổ rollout → không kiểm được nhánh tắt.")
+
+item("marketing-02.2", "BI_CHAN", "MOCK", ENV_M + FAKE + " (fake/video.json, video_banned.json); ffmpeg = imageio-ffmpeg 7.1 (gói requirements, không cài global); FIXTURE: golden bản sao, packshot + B-roll MẪU có license MẪU",
+     inp("harness/fake/video.json", "harness/fake/video_banned.json", "harness/fixtures/golden_fixture_food.json"),
+     [C("02.2-C1", "dựng video từ packshot/B-roll MẪU", "mp4 15–45s, nhãn mọi khung, T2", "exit 0; mp4 sha 355a05…= video_assets.file_sha256, 16.0s, 1 stream video, 0 audio, không metadata vị trí/thời điểm; nháp #7 video agent:mkt04 pending, caption có nhãn AI+QC; câu '150.000đ' bị bỏ; vùng nhãn giống nhau ở t=0.5/6/10/15.5s (meandiff ≤5.4) + ảnh khung 10s"),
+      C("02.2-C2", "LLM trả từ cấm cả 2 lượt", "kich_ban, 2 LLM, 0 mp4/dòng", "refused kich_ban (bác sĩ, khuyên dùng…), 2 lời gọi, 0 dòng mới"),
+      C("02.2-C3", "brief 'chữa bệnh'", "brief_cam, 0 LLM", "refused brief_cam, 0 lời gọi LLM, 0 dòng"),
+      C("02.2-C4", "TTS_PROVIDER lạ", "exit 2, 0 LLM", "exit 2 'chưa cắm', 0 LLM, 0 dòng"),
+      C("02.2-C5", "tính năng tắt", "không sinh, 0 LLM", "0 dòng NHƯNG đã gọi LLM 1 lần (llm_usage id 10 lúc tắt) + traceback exit 1 — chặn muộn ở save_draft (D1)", ket="FAIL")],
+     ev("out/02.2-C1.txt", "out/02.2-C1.db.json", "out/02.2-C1.verify.txt", "out/02.2-C1.llmcalls.json", "out/02.2-C2.txt", "out/02.2-C2.llmcalls.json", "out/02.2-C3.txt", "out/02.2-C4.txt", "out/02.2-C5a.txt", "out/02.2-C5.txt", "out/02.2-C5.llmcalls.json", "out/02.2-C5.llm_usage.json", "out/02.2-C5b.txt", "harness/verify_video.py", "media/02.2-C1-frame10s.png", "media/355a05bff071e050d4b33bc472b29cf21a3ad7388d212df32f9b2807d7da3edd.json"),
+     ng="CODE_FAIL", cdg="Kiểm rollout.check_generate (tính năng tắt) TRƯỚC write_script/LLM trong video_studio (và mkt_youtube), bắt RolloutBlocked → exit 2.",
+     gh="Packshot/B-roll là MẪU (tư liệu thật chưa có); TTS none (video không tiếng); LLM giả.", loi=[D1])
+
+item("marketing-03.1", "BI_CHAN", "LOCAL", ENV_M + NOFAKE + "; FIXTURE: P&L mồi qua CLI thật (market_csv order + settlement_csv bản sao tests/fixtures/finance/*_MAU.csv, fp_pnl --cogs-add/--cogs-approve 2 người khác nhau), golden bản sao (mat-ong food), nháp image #4 duyệt dev; ads_proposal FIXTURE qua --set agents.mkt_ads.PROPOSAL_FILE",
+     inp("harness/fixtures/order_shopee_MAU.csv", "harness/fixtures/order_shopee_multi_MAU.csv", "harness/fixtures/settlement_shopee_MAU.csv", "harness/fixtures/settlement_shopee_multi_MAU.csv", "harness/fixtures/plan_ok.json", "harness/fixtures/plan_over.json", "harness/fixtures/plan_ruou.json", "harness/fixtures/ads_proposal_fixture.json"),
+     [C("03.1-C0", "mồi P&L + creative", "cap mat-ong×shopee DE_XUAT", "cap_for = DE_XUAT 199.960đ (tiktok CHO_DU_LIEU)", key="03.1-C0g", lenh="xem out/03.1-C0*.txt + harness/cap_probe.py"),
+      C("03.1-C1", "phiếu người lập", "1 ad_test_plans + 2 mục T2", "phiếu #1 150.000đ ≤ trần 199.960đ, readiness TP_THUONG; mục #2 marketing/ad_campaign (created_by người lập) + #3 finance/budget_change created_by agent:mkt05_budget, pending, risk high, object_id adtest-1"),
+      C("03.1-C2", "vượt trần", "ADS_*, 0 dòng", "exit 1 ADS_OVER_CAP (250.000 + 150.000 đã phân bổ > 199.960), 0 dòng"),
+      C("03.1-C3", "SKU rượu", "ADS_OFFLINE_ONLY", "exit 1 ADS_OFFLINE_ONLY, 0 dòng"),
+      C("03.1-C4", "nộp lại", "skip", "exit 0 'đã có — chỉ bổ sung mục thiếu', 0 mục mới"),
+      C("03.1-C5", "--propose với ads_proposal thật", "exit 2 BLOCKED", "exit 2 [BLOCKED] tham số CHƯA CHỐT, 0 dòng"),
+      C("03.1-C6", "--propose với ads_proposal FIXTURE", "phiếu agent:mkt05 + 2 mục", "exit 0 DE_XUAT: phiếu #2 39.992đ (=199.960×0,2) created_by agent:mkt05, allocated 150.000, mục #4 ad_campaign agent:mkt05 + #5 budget_change agent:mkt05_budget (lượt đầu hỏng do harness — giữ out/03.1-C6.LUOT_HONG_harness.txt)"),
+      C("03.1-C7", "tính năng tắt (--propose)", "exit 2, 0 dòng", "0 dòng (đúng) nhưng exit 1 '[error] RolloutBlocked: RolloutBlocked' — mất lý do, lệch exit 2 (D3)", ket="FAIL")],
+     ev(*[f"out/{x}.txt" for x in ("03.1-C0a", "03.1-C0b", "03.1-C0c", "03.1-C0d", "03.1-C0e5", "03.1-C0f5", "03.1-C0g", "03.1-C1", "03.1-C2", "03.1-C3", "03.1-C4", "03.1-C5", "03.1-C6.LUOT_HONG_harness", "03.1-C6", "03.1-C7a", "03.1-C7", "03.1-C7c", "03.1-C7b")], "out/03.1-C0.cap.txt", "out/03.1-C1.db.json", "out/03.1-C6.db.json", "harness/cap_probe.py"),
+     ng="CODE_FAIL", cdg="mkt_ads.main bắt RolloutBlocked riêng → in lý do + exit 2 (quy ước tắt của các CLI khác). Nghiệp vụ: GĐ Marketing chốt data/ads_proposal.json; P&L/giá vốn thật.",
+     gh="Mọi hành vi thiết yếu (trần, chặn, idempotent, BLOCKED khi chưa chốt, đề xuất agent) đạt; FAIL duy nhất là thông báo/exit khi tắt (mức thấp). P&L là dữ liệu MẪU repo; người duyệt dev.", loi=[D3])
+
+item("marketing-03.2", "DAT", "LOCAL", ENV_M + NOFAKE + "; tiếp phiếu #1 của marketing-03.1; 2 mục duyệt bằng approval_queue --approve (dev, 2 người)",
+     inp("harness/fixtures/ads_result_ok.csv", "harness/fixtures/ads_result_badcol.csv"),
+     [C("03.2-C1", "duyệt 2 mục + nạp kết quả", "ad_result pending, quyết định khớp tính độc lập", "mục #6 marketing/ad_result pending; dat_muc_tieu; CTR 2,11% (190/9000), CPC 526đ, CPA 100.000đ — khớp tính tay; không có nhánh tăng ngân sách"),
+      C("03.2-C2", "phiếu #2 chưa duyệt", "ADS_PLAN_NOT_APPROVED", "exit 1 ADS_PLAN_NOT_APPROVED, 0 dòng"),
+      C("03.2-C3", "CSV sai cột", "exit 1", "exit 1 cột lạ 'chi_phi' — chặn cả file, 0 dòng"),
+      C("03.2-C4", "nạp lại", "skip", "[skip] đã nạp, tổng ad_result vẫn 1")],
+     ev("out/03.2-C1a.txt", "out/03.2-C1b.txt", "out/03.2-C1.txt", "out/03.2-C1.db.json", "out/03.2-C2.txt", "out/03.2-C3.txt", "out/03.2-C4.txt", "harness/reconstruct_mkt.py"),
+     gh="out/03.2-C1..C4.txt TÁI TẠO từ transcript (bị ghi đè do trùng mã ca — xem harness_fixes.tsv); DB 03.2-C1.db.json là bản gốc. Số kết quả nhập file tay (API ads ngoài phạm vi).", loi=[Q1])
+
+item("marketing-04.1", "DAT", "LOCAL", ENV_M + NOFAKE + "; FIXTURE: release ép _FORCE_MODE=van_hanh + REPORTS_DIR → evidence/itacc_r10/g3/reports (harness --set); đại lý MẪU nạp qua crm --load-dealers",
+     inp("data/koc_sample.json", "docs/legal/mau-hop-dong-koc-NHAP.md", "tests/fixtures/mkt/hop-dong-koc-thieu-MAU.md"),
+     [C("04.1-C1", "kit KOC-MAU-02", "koc_brief pending T2", "mục #7 marketing/koc_brief pending: brief nguyên văn nháp #3 đã duyệt, #quangcao + nhãn AI, {{LINK_AFFILIATE}}/mã PLACEHOLDER, contract_sha256 4598f2… (= sha file hợp đồng)"),
+      C("04.1-C2", "KOC-MAU-03 hợp đồng thiếu", "KIT_CONTRACT", "exit 1 KIT_CONTRACT (go_24h, cam_ruou, nghia_vu_nguoi_chuyen_tai), 0 dòng"),
+      C("04.1-C3", "nháp chưa duyệt", "KIT_CREATIVE_UNAPPROVED", "exit 1 draft #7 pending, 0 dòng"),
+      C("04.1-C4", "release khi chạy thử", "bị chặn, 0 file", "exit 1 '[rollout] TỪ CHỐI DÙNG… đang chạy thử'; không file trong data/reports"),
+      C("04.1-C5", "release ép van_hanh (FIXTURE)", "file kit trong thư mục thử", "exit 0 reports/koc-kit-KOC-MAU-02-7.md; 'hệ thống không gửi'"),
+      C("04.1-C6", "affiliate --issue", "affiliate_program + affiliate_codes pending", "mã SS+10 ký tự (pending, DLM01, web) + mục #8 sales/affiliate_program pending, link coupon GIẢ ĐỊNH")],
+     ev("out/04.1-C0-approve3.txt", "out/04.1-C1.txt", "out/04.1-C1.db.json", "out/04.1-C2.txt", "out/04.1-C3.txt", "out/04.1-C4a.txt", "out/04.1-C4.txt", "out/04.1-C5.txt", "reports/koc-kit-KOC-MAU-02-7.md", "out/04.1-C6a.txt", "out/04.1-C6.txt", "out/04.1-C6.db.json"),
+     gh="KOC/đại lý là MẪU; hợp đồng mẫu NHÁP; nhánh phát hành chỉ kiểm khi ép van_hanh (FIXTURE) — chạy thử chặn đúng.")
+
+item("marketing-04.2", "DAT", "LOCAL", ENV_M + NOFAKE + "; đối chiếu kit koc_brief #7 đã duyệt (dev)",
+     inp("harness/fixtures/partner_ok.csv", "harness/fixtures/partner_unknown.csv", "harness/fixtures/partner_badcol.csv", "harness/fixtures/partner_new.csv"),
+     [C("04.2-C1", "file bài KOC-MAU-02 (1 vi phạm, 1 sạch)", "partner_post_review agent:mkt_doi_tac; sổ chỉ sha", "exit 0; mục #9 marketing/partner_post_review created_by agent:mkt_doi_tac pending S1 (tu_cam, claim…), đối chiếu koc_brief#7; partner_post_scans 2 dòng chỉ url_sha256/text_sha256/host facebook.com — không text/URL thô"),
+      C("04.2-C2", "mã đối tác lạ", "từ chối file", "exit 1 'tu_choi_file' + cảnh báo chính sách chưa chọn; 0 dòng"),
+      C("04.2-C3", "cột lạ ten_koc", "exit 1", "exit 1 cột lạ, 0 dòng"),
+      C("04.2-C4", "nạp lại", "không nhân bản", "bỏ qua 2 (trùng), 0 mục mới"),
+      C("04.2-C5", "tắt", "exit 2", "exit 2 [rollout] marketing-04.2 đang tắt; 0 dòng")],
+     ev("out/04.2-C1.txt", "out/04.2-C1.db.json", "out/04.2-C1.scans.json", "out/04.2-C2.txt", "out/04.2-C3.txt", "out/04.2-C4.txt", "out/04.2-C5a.txt", "out/04.2-C5.txt", "out/04.2-C5b.txt"),
+     gh="File bài đối tác nhập tay (chưa có nguồn tự động); chính sách mã lạ chưa chọn → mặc định an toàn; danh tính người chạy (human_actor) chế độ thực do điều phối viên kiểm.")
+
+item("marketing-05.1", "DAT", "LOCAL", ENV_M + NOFAKE + "; INTEL_HASH_SALT = giá trị thử (không in)",
+     inp("harness/fixtures/social_ok.csv", "harness/fixtures/social_badcol.csv", "harness/fixtures/social_new.csv"),
+     [C("05.1-C1", "nạp social fixture", "nhãn đúng, không excerpt/PII", "6 dòng: khen / hoi_suc_khoe (sensitive) / hoi_gia / hoi_ruou / khieu_nai / nghi_hang_gia — khớp nội dung; excerpt null (DPIA chưa ký); không SĐT/tên/uid trong DB"),
+      C("05.1-C2", "thiếu muối", "exit 1, 0 dòng", "exit 1 thiếu INTEL_HASH_SALT"),
+      C("05.1-C3", "cột lạ", "exit 1", "exit 1 cột lạ 'dia_chi', không connect"),
+      C("05.1-C4", "nạp lại", "skip", "[skip] import #1; tổng 6"),
+      C("05.1-C5", "tắt", "exit 2", "exit 2 [blocked] marketing-05.1 tắt; tổng 6")],
+     ev("out/05.1-C1.txt", "out/05.1-C1.db.json", "out/05.1-C2.txt", "out/05.1-C3.txt", "out/05.1-C4.txt", "out/05.1-C5a.txt", "out/05.1-C5.txt", "out/05.1-C5b.txt", "harness/reconstruct_mkt.py"),
+     gh="out/05.1-C1,C2,C3,C5,C5a,C5b.txt TÁI TẠO từ transcript (trùng mã ca); DB 05.1-C1.db.json là bản gốc. File comment xuất tay; từ khóa nhãn ĐỀ XUẤT.")
+
+item("marketing-05.2", "DAT", "LOCAL", ENV_M + NOFAKE + "; INTEL_HASH_SALT/CONTACT_VAULT_KEY = giá trị thử (key Fernet sinh mới, chỉ ở scratchpad)",
+     inp("harness/fixtures/reviews_shopee.csv"),
+     [C("05.2-C1", "review file", "ugc_reply theo lớp, không chép lời khách", "5 mục #10-#14 marketing/ugc_reply pending (khen/che/claim_suc_khoe/sp_cam_qc/hoi_gia); câu sức khỏe = template không lặp claim; payload không chứa lời khách/SĐT/tên (kiểm chuỗi)"),
+      C("05.2-C2", "từ social_mentions", "ugc_reply theo nhãn", "6 mục #15-#20 kênh facebook theo nhãn 05.1"),
+      C("05.2-C3", "chạy lại", "skip", "skip 5, 0 mục mới"),
+      C("05.2-C4", "--reuse không đồng ý", "bị chặn", "exit 1 UGC_NO_CONSENT, 0 ugc_reuse"),
+      C("05.2-C4b", "bổ sung sau khóa (T2 'ugc_reuse chỉ khi can_contact'): grant consent marketing rồi --reuse; lớp nhạy cảm vẫn chặn", "ugc_reuse khi có consent; claim_suc_khoe bị chặn", "#21 ugc_reuse pending sau consent #1; UGC_SENSITIVE cho lớp claim_suc_khoe (05.2-C4c)"),
+      C("05.2-C5", "thiếu muối", "exit 1", "exit 1 trước connect")],
+     ev("out/05.2-C1.txt", "out/05.2-C1.db.json", "out/05.2-C1.pii_check.txt", "out/05.2-C2.txt", "out/05.2-C3.txt", "out/05.2-C4a.txt", "out/05.2-C4.txt", "out/05.2-C4b1.txt", "out/05.2-C4b.txt", "out/05.2-C4c.txt", "out/05.2-C5.txt", "harness/reconstruct_mkt.py"),
+     gh="out/05.2-C1..C4.txt TÁI TẠO từ transcript (trùng mã ca); 05.2-C1.pii_check.txt tính lại từ 05.2-C1.db.json gốc. Review file xuất tay.")
+
+item("marketing-06.1", "DAT", "LOCAL", ENV_M + NOFAKE + "; --out-dir evidence/itacc_r10/g3/reports",
+     inp("data/products.jsonl", "data/articles.jsonl", "data/news.jsonl", "data/about.jsonl"),
+     [C("06.1-C1", "rà từ crawl có sẵn", "báo cáo + seo_web_fix T2, 0 request", "exit 0 requests=0, 197 vấn đề; reports/seo-web-2026-10-23.md; mục #22 marketing/seo_web_fix agent:MKT-10 pending; payload chỉ URL/mã/đề xuất; host samsamngoclinh.com 121, samsam.net.vn 49, URL băm 27 (slug vi phạm) — không host ngoài"),
+      C("06.1-C2", "chạy lại", "skipped", "[submit] skipped, tổng 1"),
+      C("06.1-C3", "tắt", "không sinh mục", "exit 1, tổng vẫn 1 — traceback RolloutBlocked chưa bắt (D3); báo cáo file vẫn ghi (tiền tố không thuộc danh mục)")],
+     ev("out/06.1-C1.txt", "out/06.1-C1.snapshot.json", "out/06.1-C1.hosts.txt", "reports/seo-web-2026-10-23.md", "out/06.1-C2.txt", "out/06.1-C3a.txt", "out/06.1-C3.txt", "out/06.1-C3.LUOT_THAY_THE_set_thua.txt", "out/06.1-C3b.txt", "harness/reconstruct_mkt.py"),
+     gh="--fetch (mạng thật) không chạy — chỉ dữ liệu crawl có sẵn; out/06.1-C1..C3.txt TÁI TẠO (trùng mã ca), snapshot DB lấy lại sau.", loi=[D3])
+
+item("marketing-06.2", "DAT", "LOCAL", ENV_M + NOFAKE,
+     inp("harness/fixtures/kenh_MAU.csv", "harness/fixtures/kenh_loi.csv"),
+     [C("06.2-C1", "import file kênh MẪU", "manual_export is_sample", "12 dòng channel_snapshots source manual_export, source_ref 'sample:kenh_MAU.csv#sha256:…', captured_by người thử"),
+      C("06.2-C2", "file lỗi", "exit 1, 0 dòng", "exit 1 (4 lỗi dòng/cột), 0 dòng, chưa kết nối DB"),
+      C("06.2-C3", "collect tuần đã đóng (--ref 2026-10-12; lượt đầu --ref 2026-10-19 là tuần hiện tại → sản phẩm từ chối đúng, xem harness_fixes)", "snapshot nội bộ, số khớp SQL", "13 số nội bộ inserted; content.* = 0 khớp SQL (0 nháp tạo tuần 12–18/10); median/p90 không ghi khi n=0 (không bịa 0)"),
+      C("06.2-C4", "kỳ chưa đóng", "từ chối", "exit 2 'kỳ chưa đóng'"),
+      C("06.2-C5", "bổ sung sau khóa (tuần đóng không có dữ liệu marketing): agents.report --days 1 mục 5", "số mkt_metrics khớp SQL", "mục 5: nháp 0/5 trả lại, hàng chờ marketing 0/2 — khớp SQL (5 draft approved, 2 queue decided)")],
+     ev("out/06.2-C1.txt", "out/06.2-C2.txt", "out/06.2-C3.LUOT_HONG_input_ky_chua_dong.txt", "out/06.2-C3.txt", "out/06.2-C4.txt", "out/06.2-C3b.txt", "out/06.2-C1C3.snapshot.json", "out/06.2-C5.txt", "reports/report-2026-10-22_2026-10-23.md", "harness/reconstruct_mkt.py"),
+     gh="Số lượt xem chỉ từ file xuất tay MẪU; tuần đã đóng không có dữ liệu marketing (không lùi timestamp) → số thực kiểm qua báo cáo kỳ hiện tại; out/06.2-C1..C3.txt TÁI TẠO (trùng mã ca).")
+
+item("marketing-07.1", "DAT", "LOCAL", ENV_M + NOFAKE + "; mồi listing + trends qua CLI thật (bản sao fixture repo)",
+     inp("harness/fixtures/fixture_shopee_listing.csv", "harness/fixtures/relatedQueries_MAU.csv"),
+     [C("07.1-C0", "mồi", "nạp OK", "market_csv listing snapshot #3; trend_related 6 dòng", key="07.1-C0b"),
+      C("07.1-C1", "gợi ý + nháp", "listing agent:MKT-11 T2", "8 nháp listing (#8-#15) agent:MKT-11 pending, prompt_version seo-san-v1, guardrail ok; rượu refused ruou; 'sâm ngọc linh' loại ngoc_linh_chua_xac_nhan×2, ruou×1 (chỉ CODE); báo cáo nhãn CHẠY THỬ, report_outputs marketing-07.1"),
+      C("07.1-C2", "chạy lại", "skipped", "skipped=8"),
+      C("07.1-C3", "dry-run", "0 dòng", "dry_run=8, tổng vẫn 8"),
+      C("07.1-C4", "tắt", "0 dòng", "exit 1 '[error] RolloutBlocked: nháp listing… tắt', tổng vẫn 8")],
+     ev("out/07.1-C0a.txt", "out/07.1-C0b.txt", "out/07.1-C1.txt", "out/07.1-C1.db.json", "reports/seo-san-2026-10-23.md", "out/07.1-C2.txt", "out/07.1-C3.txt", "out/07.1-C4a.txt", "out/07.1-C4.txt", "out/07.1-C4b.txt"),
+     gh="Listing/Trends là file MẪU; giới hạn ký tự GIẢ ĐỊNH.")
+
+item("marketing-07.2", "BI_CHAN", "MOCK", ENV_M + FAKE + " (fake/yt.json, yt_short.json); B-roll MẪU license MẪU; ffmpeg imageio-ffmpeg",
+     inp("harness/fake/yt.json", "harness/fake/yt_short.json"),
+     [C("07.2-C1", "gói YouTube (360s)", "T2", "nháp #16 youtube/video agent:mkt12 pending, youtube_long@1; chương 00:00/01:30/03:00/04:30; SRT 4 cue; nhãn AI+QC; private; câu giá bị bỏ (lượt đầu hỏng do tiêu đề fixture 'Một ngày…' — giữ log)"),
+      C("07.2-C2", "brief rượu", "0 LLM", "refuse ruou, 0 lời gọi LLM"),
+      C("07.2-C3", "tổng 100s", "thoi_luong", "refuse thoi_luong, 0 dòng"),
+      C("07.2-C4", "render shorts", "mp4 15–45s + log", "mp4 0c7f7f… 15,0s, 0 audio, không metadata, vùng nhãn ổn định; sidecar privacyStatus private; agent_action_log youtube_short_render draft 17"),
+      C("07.2-C5", "tắt", "0 dòng, 0 LLM", "0 dòng NHƯNG 1 lời gọi LLM + traceback exit 1 (D1)", ket="FAIL")],
+     ev("out/07.2-C1.LUOT_HONG_fixture_tieude.txt", "out/07.2-C1.txt", "out/07.2-C1.db.json", "out/07.2-C2.txt", "out/07.2-C3.txt", "out/07.2-C4.txt", "out/07.2-C4.verify.txt", "media/0c7f7f950fa2c5812ae932140c0fe17e120f53bfad315568631715c7a9007e6e.json", "out/07.2-C5a.txt", "out/07.2-C5.txt", "out/07.2-C5.llmcalls.json", "out/07.2-C5b.txt"),
+     ng="CODE_FAIL", cdg="Như D1: chặn tính năng tắt trước LLM trong mkt_youtube.", gh="LLM giả; B-roll MẪU; không đăng YouTube (external-dep).", loi=[D1])
+
+# ---------------- legal_hr ----------------
+item("legal_hr-01", "BI_CHAN", "MOCK", ENV_L + "; fake ở biên: LLM-check qua llm_gateway._client giả trong harness/guardrail_cases.py (GUARDRAIL_LLM_MODEL đặt trong script)",
+     inp("harness/guardrail_cases.py"),
+     [C("01-C1", "bộ ca luật (R1–R4, P1–P5, K1)", "mọi ca khớp", "10/11 PASS: từ cấm/claim chặn, sạch ok, ngam_y_suc_khoe bắt claim ngầm, thiếu nhãn AI chặn, rượu chặn, kb_filter đúng; P4 SĐT cá nhân trong bài đăng → ok=True (kỳ vọng cờ PII)", ket="FAIL", key="L-01-C1C2"),
+      C("01-C2", "LLM-check qua fake (L0–L6)", "off/skipped/pass/flag/unavailable đúng", "7/7 PASS: off (0 call), skipped khi luật chặn (0 call), pass, flag thêm llm_ngam_y_suc_khoe, JSON sai/provider lỗi → llm_check_unavailable (fail-closed), injection không gỡ chặn", key="L-01-C1C2"),
+      C("01-C3", "nháp thật mang guardrail", "guardrail không null", "DB mkt: nháp #1,#2 guardrail ok=true + required_labels (out/01.1-C1.db.json)", lenh="q.py content_drafts (DB mkt)")],
+     ev("out/L-01-C1C2.txt", "out/L-01-C1C2.cases.json", "harness/guardrail_cases.py", "out/01.1-C1.db.json"),
+     ng="CODE_FAIL", cdg="Thêm kiểm PII (SĐT/email cá nhân, trừ pii_allow công ty) vào guardrail đăng bài, hoặc Pháp chế xác nhận không yêu cầu (khi đó sửa tiêu chí).",
+     gh="Không chạy red-team toàn bộ (điều phối viên); LLM-check thật tắt mặc định — chỉ fake. Tiêu chí P4 suy từ invariant PII của AGENTS.md (khung không ghi rõ).", loi=[D2])
+
+item("legal_hr-02", "DAT", "LOCAL", ENV_L + NOFAKE, inp("harness/fixtures/maket_xnqc.txt", "data/golden_skus.json"),
+     [C("02-C1", "nháp hồ sơ saphraton-20v", "xnqc_dossier pending T2", "mục #1 legal_hr/xnqc_dossier pending risk high agent:xnqc: số ĐKSP golden, claims đã công bố, danh mục giấy tờ (CHƯA Pháp chế duyệt), maket + 'Guardrail maket: thieu_khuyen_cao, thieu_nhan_ai'", key="L-02-C1"),
+      C("02-C2", "SKU thực phẩm/rượu", "exit 1, 0 dòng", "exit 1 'không phải TPBVSK' (cả 2 SKU), 0 dòng", key="L-02-C2"),
+      C("02-C3", "không --submit", "0 dòng", "exit 0 in nháp, tổng vẫn 1", key="L-02-C3"),
+      C("02-C4", "nộp lại", "không trùng", "tổng vẫn 1 (không trùng) — nhưng exit 2 '[err] lỗi DB: duplicate key … pending_uq' (D4)", key="L-02-C4")],
+     ev("out/L-02-C1.txt", "out/L-02-C1.db.json", "out/L-02-C2.txt", "out/L-02-C2b.txt", "out/L-02-C3.txt", "out/L-02-C4.txt"),
+     gh="Danh mục thành phần hồ sơ data/xnqc_draft.json chưa Pháp chế duyệt; agent không nộp.", loi=[D4])
+
+item("legal_hr-03.2", "DAT", "LOCAL", ENV_L + NOFAKE + "; FIXTURE golden bản sao (saphraton-20v xnqc approved) nạp qua golden_store --file",
+     inp("harness/fixtures/golden_fixture_xnqc.json"),
+     [C("03.2-C0", "mồi hồ sơ add + da_nop", "da_nop", "hồ sơ #1 chuan_bi → da_nop (dev); --set tự gọi sync_golden → mục #3", key="L-03.2-C0b"),
+      C("03.2-C1", "--sync-golden", "golden_xnqc_sync T2", "mục #3 legal_hr/golden_xnqc_sync agent:phap_che_a1 pending 'none→pending theo hồ sơ #1' (sinh ở bước --set qua cùng hàm sync_golden); CLI --sync-golden exit 0 xác nhận không còn lệch mới", key="L-03.2-C1"),
+      C("03.2-C2", "chạy lại", "không trùng", "'không có', tổng 1", key="L-03.2-C2"),
+      C("03.2-C3", "da_cap thiếu scan", "exit 1", "exit 1 'scan giấy không có trong documents', trạng thái giữ da_nop", key="L-03.2-C3"),
+      C("03.2-C4", "golden FIXTURE xnqc approved", "QC_DAY_DU", "sku_readiness saphraton-20v×shopee MO_TA → QC_DAY_DU", key="L-03.2-C4"),
+      C("03.2-C5", "tắt → loader chặn", "exit 2 không nạp", "exit 2 loader-gate 'tính năng TẮT: legal_hr-03.2 → KHÔNG nạp'; readiness không đổi", key="L-03.2-C5")],
+     ev("out/L-03.2-C0a.txt", "out/L-03.2-C0b.txt", "out/L-03.2-C1.txt", "out/L-03.2-C2.txt", "out/L-03.2-C3.txt", "out/L-03.2-C4.txt", "out/L-03.2-C4.db.json", "out/L-03.2-C5a.txt", "out/L-03.2-C5.txt", "out/L-03.2-C5c.txt", "out/L-03.2-C5b.txt"),
+     gh="Chính sách loader_gate chưa cấu hình; người sửa golden mô phỏng bằng file FIXTURE; da_cap thật cần scan verified (doc_intake).")
+
+item("legal_hr-04", "DAT", "LOCAL", ENV_L + NOFAKE + "; báo cáo tuần: --set agents.ra_kenh.REPORTS_DIR → evidence/itacc_r10/g3/reports (dòng in vẫn ghi 'data/reports/…' cố định)",
+     inp("harness/fixtures/posts.csv", "harness/fixtures/posts_fixed.csv", "harness/fixtures/posts_bad.csv"),
+     [C("04-C1", "3 bài (vi phạm / trang mặc định / sạch)", "channel_takedown + hosting_fix, hạn 24h", "#4 legal_hr/channel_takedown S1 tu_cam, #5 data_platform/hosting_fix S2; due_at = created + 24h; payload không chép đoạn vi phạm; red_alert S1 ghi (thiếu người nhận — fail-closed cảnh báo)", key="L-04-C1"),
+      C("04-C2", "nạp lại", "0 mục mới", "bỏ qua 3", key="L-04-C2"),
+      C("04-C3", "file thiếu cột", "exit 1", "exit 1 thiếu cột 'kenh', 0 dòng", key="L-04-C3"),
+      C("04-C4", "bản xuất lại sạch", "đóng da_sua", "bài #1 closed da_sua", key="L-04-C4"),
+      C("04-C5", "báo cáo tuần", "exit 0", "reports/phap-che-tuan-2026-10-23.md: mở S2 1, đóng đúng hạn 1, hạ tầng 1", key="L-04-C5")],
+     ev("out/L-04-C1.txt", "out/L-04-C1.db.json", "out/L-04-C1.posts.json", "out/L-04-C2.txt", "out/L-04-C3.txt", "out/L-04-C4.txt", "out/L-04-C5.txt", "reports/phap-che-tuan-2026-10-23.md"),
+     gh="Fanpage Graph API chưa có adapter (CSV --file); --scan-auto web/listing không chạy (mạng thật).")
+
+item("legal_hr-05.1", "DAT", "LOCAL", ENV_L + NOFAKE + "; --out-dir evidence/itacc_r10/g3/reports",
+     inp("docs/legal/mau-hop-dong-koc-NHAP.md", "docs/legal/mau-hop-dong-dai-ly-NHAP.md", "tests/fixtures/mkt/hop-dong-koc-thieu-MAU.md", "harness/fixtures/empty.md", "harness/fixtures/contract.pdf"),
+     [C("05.1-C1", "hợp đồng KOC", "exit 0 + báo cáo T2", "đủ 9 điều khoản; hd-mau-koc-4598f219.md nhãn CHẠY THỬ, chỉ sha + mã; report_outputs legal_hr-05.1", key="L-05.1-C1"),
+      C("05.1-C2", "hợp đồng đại lý", "exit 0", "đủ 9 điều khoản (dai_ly)", key="L-05.1-C2"),
+      C("05.1-C3", "thiếu điều khoản", "exit 1", "exit 1 liệt kê go_24h, cam_ruou, nghia_vu_nguoi_chuyen_tai", key="L-05.1-C3"),
+      C("05.1-C4", "rỗng / .pdf", "exit 2", "exit 2 'file rỗng' / 'chỉ nhận .md|.txt'", key="L-05.1-C4a"),
+      C("05.1-C5", "tắt", "exit 2 không file", "exit 2 [rollout], thư mục rỗng, report_outputs không thêm", key="L-05.1-C5")],
+     ev("out/L-05.1-C1.txt", "out/L-05.1-C2.txt", "out/L-05.1-C3.txt", "out/L-05.1-C4a.txt", "out/L-05.1-C4b.txt", "out/L-05.1-C5a.txt", "out/L-05.1-C5.txt", "out/L-05.1-C5b.txt", "reports/hd-mau-koc-4598f219.md", "reports/hd-mau-dai_ly-271a5510.md", "reports/hd-mau-koc-bad11453.md"),
+     gh="Kiểm từ khóa, không thay luật sư; hợp đồng mẫu NHÁP.", loi=[Q2])
+
+item("legal_hr-05.2", "DAT", "LOCAL", ENV_L + NOFAKE + "; CONTACT_VAULT_KEY = key Fernet thử (scratchpad, không in); DPIA --out-dir scratchpad (bản sao vào media/)",
+     inp("data/data_flow_map.json", "harness/fixtures/data_flow_map_broken.json"),
+     [C("05.2-C1", "thêm liên hệ giả", "ciphertext", "contact #1; hàng contacts chỉ *_enc/phone_hmac — không SĐT/tên/email thô", key="L-05.2-C1"),
+      C("05.2-C2", "grant marketing", "can_contact True", "consent #1 granted (web, evidence, policy v1-thu-it); can_contact marketing True, cskh False", key="L-05.2-C2"),
+      C("05.2-C3", "withdraw", "False, append-only", "consent #2 rút; can_contact False; UPDATE consents bị trigger chặn 'append-only'", key="L-05.2-C3"),
+      C("05.2-C4", "grant thiếu evidence", "từ chối", "exit 2 '--grant cần --evidence và --policy-version', không ghi", key="L-05.2-C4"),
+      C("05.2-C5", "DPIA/TIA 2 lần + --check (+ --check lệch)", "byte y hệt", "2 lần sha giống hệt (56ff9e…/88a923…); --check exit 0; file sửa tay → --check exit 1", key="L-05.2-C5c"),
+      C("05.2-C6", "map hỏng", "exit 2, 0 file", "exit 2 JSONDecodeError, 0 file", key="L-05.2-C6")],
+     ev("out/L-05.2-C1.txt", "out/L-05.2-C1.pii_check.txt", "out/L-05.2-C2.txt", "out/L-05.2-C2.probe.txt", "out/L-05.2-C3.txt", "out/L-05.2-C3.probe.txt", "out/L-05.2-C3.appendonly.txt", "out/L-05.2-C4.txt", "out/L-05.2-C5a.txt", "out/L-05.2-C5b.txt", "out/L-05.2-C5.sha.txt", "out/L-05.2-C5c.txt", "out/L-05.2-C5d.txt", "out/L-05.2-C6.txt", "media/05.2-DPIA-nhap.md", "media/05.2-TIA-nhap.md", "harness/can_contact_probe.py"),
+     gh="DPIA chưa ký; mẫu văn bản đồng ý chờ Pháp chế; DPIA/TIA là NHÁP.")
+
+item("legal_hr-06.1", "DAT", "LOCAL", ENV_L + NOFAKE, inp("data/hr/jd_templates.json"),
+     [C("06.1-C1", "JD nv_cskh", "hr_jd pending T2", "mục #6 legal_hr/hr_jd agent:pc_hr pending, payload template; agent_action_log queue_enqueue", key="L-06.1-C1"),
+      C("06.1-C2", "chạy lại", "không trùng", "[skip] đang chờ", key="L-06.1-C2"),
+      C("06.1-C3", "vị trí lạ", "exit≠0", "exit 1 không connect", key="L-06.1-C3"),
+      C("06.1-C4", "tắt", "0 dòng", "exit 1, 0 dòng mới — traceback RolloutBlocked (D3)", key="L-06.1-C4")],
+     ev("out/L-06.1-C1.txt", "out/L-06.1-C1.db.json", "out/L-06.1-C2.txt", "out/L-06.1-C3.txt", "out/L-06.1-C4a.txt", "out/L-06.1-C4.txt", "out/L-06.1-C4b.txt"),
+     gh="Template JD BẢN DEV SOẠN.", loi=[D3])
+
+item("legal_hr-06.2", "DAT", "LOCAL", ENV_L + NOFAKE + "; CV GIẢ trong scratchpad (ngoài repo)",
+     inp("data/hr/jd_templates.json", "harness/fixtures/jd_bad.json"),
+     [C("06.2-C1", "3 CV + 1 file không UTF-8", "xếp hạng T2", "mục #8 hr_screening: 2033d7a8e330 (1/1, 3) > 91244abb6f8b (1/1, 2) > 583640a67bd7 (0/1, 1) > a32313eb2ca1 'cần người đọc tay' — mã = sha256[:12] khớp tính độc lập, không PII/tên file", key="L-06.2-C1"),
+      C("06.2-C2", "thư mục trong repo", "exit 2", "exit 2 'thư mục CV nằm TRONG repo'", key="L-06.2-C2"),
+      C("06.2-C3", "JD có tiêu chí giới tính (FIXTURE)", "exit 1", "exit 1 'tiêu chí phân biệt đối xử', không connect", key="L-06.2-C3")],
+     ev("out/L-06.2-C1.txt", "out/L-06.2-C1.db.json", "out/L-06.2-C2.txt", "out/L-06.2-C3.txt"),
+     gh="Thời hạn lưu CV chưa chốt; chấm theo từ khóa.")
+
+item("legal_hr-06.3", "DAT", "LOCAL", ENV_L + NOFAKE, inp("harness/fixtures/att.csv", "harness/fixtures/att_bad.csv", "data/hr/attendance_rules.json"),
+     [C("06.3-C1", "chấm công T9", "hr_attendance khớp tính tay", "mục #9: NV-IT01 4 | 1/10 | 1/10 | 1 | 18 | 1; NV-IT02 1 | 0/0 | 0/0 | 0 | 21 | 0 — khớp out/L-06.3-C1.expected.txt", key="L-06.3-C1"),
+      C("06.3-C2", "mã NV dạng SĐT", "exit 1", "exit 1, không connect", key="L-06.3-C2"),
+      C("06.3-C3", "chạy lại", "không trùng", "[skip]", key="L-06.3-C3")],
+     ev("out/L-06.3-C1.txt", "out/L-06.3-C1.expected.txt", "out/L-06.3-C1.db.json", "out/L-06.3-C2.txt", "out/L-06.3-C3.txt"),
+     gh="Luật ca GIẢ ĐỊNH; holidays rỗng (2/9 tính ngày làm — đúng ghi chú sản phẩm).")
+
+item("legal_hr-07", "DAT", "LOCAL", ENV_L + NOFAKE + "; RSS GIẢ phục vụ bằng http.server 127.0.0.1:18793 (đã dừng); --sources FIXTURE (nguồn chinhphu-van-ban trỏ localhost)",
+     inp("harness/fixtures/sources_it.json", "harness/fixtures/sources_it2.json", "harness/fixtures/rss_it.xml", "harness/fixtures/rss_it2.xml", "harness/fixtures/robots.txt"),
+     [C("07-C1", "thu RSS giả", "intel_items có tin văn bản (tiêu chí ghi '2 dòng')", "1 dòng tin nghị định (topics phap_ly/quang_cao/tpbvsk); tin lạc chủ đề KHÔNG lưu, đếm off_topic=1 (thiết kế lọc trước khi lưu) — lệch chi tiết '2 dòng' của tiêu chí, không phải lỗi; robots + gap 1,0s; tầng C chặn cứng (L-07-C1x, exit 2)", key="L-07-C1"),
+      C("07-C2", "quét cảnh báo", "red_alerts legal_doc, exit 1", "red_alerts #2 intel_red_alert rules [regulation, legal_doc]; exit 1 fail-closed (thiếu người nhận)", key="L-07-C2"),
+      C("07-C3", "đẩy hàng Pháp chế", "legal_doc_review T2", "mục #11 legal_hr/legal_doc_review agent:legal_updates pending; payload nguồn, link, sha256 tiêu đề, không diễn giải", key="L-07-C3"),
+      C("07-C4", "chạy lại", "0 mục mới", "0 khớp chưa vào hàng", key="L-07-C4"),
+      C("07-C5", "tắt", "không legal_doc mới, không mục", "cảnh báo #3 chỉ rules [regulation] (legal_doc bị bỏ khi tắt); legal_updates exit 1 '[err] … legal_hr-07 đang tắt', tổng mục 1", key="L-07-C5")],
+     ev("out/L-07-C1x_tierC_chan.txt", "out/L-07-C1.txt", "out/L-07-C1.db.json", "out/L-07-C2.txt", "out/L-07-C2.db.json", "out/L-07-C3.txt", "out/L-07-C3.db.json", "out/L-07-C4.txt", "out/L-07-C5a.txt", "out/L-07-C5b.txt", "out/L-07-C5c.txt", "out/L-07-C5.txt", "out/L-07-C5d.txt"),
+     gh="URL nguồn văn bản tầng A chưa xác minh; từ khóa legal_doc GIẢ ĐỊNH; gửi cảnh báo thật (SMTP/routing) không kiểm — chỉ nhánh fail-closed; ca 07-C1 PASS theo ý định T2, chi tiết số dòng trong tiêu chí lệch thiết kế (ghi rõ để điều phối viên quyết).")
+
+assert len(items) == 24, len(items)
+out = REPO / "evidence/itacc_r10/items"
+for k, d in items.items():
+    (out / f"{k}.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+print("ok", len(items))
+for k, d in items.items():
+    print(k, d["trang_thai"], d["muc_kiem"], d.get("nguyen_nhan", ""), sum(c["ket_qua"] == "FAIL" for c in d["ca"]))

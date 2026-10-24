@@ -1,0 +1,195 @@
+{
+ "label": "dot1_truoc",
+ "run_id": "20261023T160354-0e98",
+ "root": "C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\before",
+ "db": "samsam_itacc_r12_d1b",
+ "fingerprint": null,
+ "probe_sha256": "3d2b50084c20982642dbbf0a0ab6f79444fc3e90b084823b18d8ea07d139fa95",
+ "ket_thuc": "2026-10-23T16:04:15+07:00",
+ "ket_qua": [
+  {
+   "loi": "P-01",
+   "ca": "a_khong_phan_bo_van_sinh (positive control)",
+   "ket_qua": "PASS",
+   "expected": "exit 0, bản tin có lô cận hạn",
+   "actual": {
+    "exit": 0,
+    "co_IT-LOT-001": true
+   }
+  },
+  {
+   "loi": "P-01",
+   "ca": "b_co_phan_bo_va_lo_can_han",
+   "ket_qua": "FAIL",
+   "expected": "exit 0; cận hạn có IT-LOT-001/002 (có tồn) + IT-R12-X01 (SKU chưa có tồn), không có IT-LOT-003 (HSD 2028); mục thiếu hàng có mốc chot_11_11",
+   "actual": {
+    "exit": 1,
+    "allocation_rows": 91,
+    "typeerror": true,
+    "can_han": ""
+   }
+  },
+  {
+   "loi": "P-01",
+   "ca": "c_ra_ca_hai_file_bantin_canhan",
+   "ket_qua": "FAIL",
+   "expected": "có sx-bantin-* và sx-canhan-*",
+   "actual": []
+  },
+  {
+   "loi": "UI-01",
+   "ca": "a_svc_ui_doc_khoanh_nhat_ky",
+   "ket_qua": "FAIL",
+   "expected": "svc_ui đọc được plots/plot_logs (cột tab cần)",
+   "actual": {
+    "exit": 1,
+    "stdout": "",
+    "loi": "ackages\\psycopg\\connection.py\", line 300, in execute\r\n    raise ex.with_traceback(None)\r\npsycopg.errors.InsufficientPrivilege: permission denied for table plots"
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "b_svc_ui_KHONG_ghi_thang_plot_logs",
+   "ket_qua": "PASS",
+   "expected": "svc_ui không INSERT plot_logs trực tiếp (ít quyền)",
+   "actual": {
+    "exit": 1,
+    "loi": "ges\\psycopg\\connection.py\", line 300, in execute\r\n    raise ex.with_traceback(None)\r\npsycopg.errors.InsufficientPrivilege: permission denied for table plot_logs"
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "c_svc_ui_khong_select_moi_cot_plots",
+   "ket_qua": "PASS",
+   "expected": "không cấp SELECT mọi cột",
+   "actual": {
+    "exit": 1,
+    "loi": ", in execute\r\n    raise ex.with_traceback(None)\r\npsycopg.errors.InsufficientPrivilege: permission denied for table plots"
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "d_nguoi_khoi_farming_ghi_qua_duong_hop_le",
+   "ket_qua": "FAIL",
+   "expected": "login người khối farming ghi được, author = người của login, có hash chain",
+   "actual": {
+    "exit": 1,
+    "row": [],
+    "loi": "Traceback (most recent call last):\r\n  File \"<string>\", line 1, in <module>\r\nAttributeError: module 'agents.garden' has no attribute 'add_log_human'"
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "e_nguoi_khac_khoi_bi_chan",
+   "ket_qua": "PASS",
+   "expected": "khối sales bị chặn, 0 dòng",
+   "actual": {
+    "exit": 1,
+    "loi": "Traceback (most recent call last):\r\n  File \"<string>\", line 1, in <module>\r\nAttributeError: module 'agents.garden' has no attribute 'add_log_human'"
+   }
+  },
+  {
+   "loi": "UI-01",
+   "ca": "f_ghi_thay_ten_nguoi_khac_bi_chan",
+   "ket_qua": "PASS",
+   "expected": "không ghi thay tên người khác",
+   "actual": {
+    "exit": 1,
+    "loi": "Traceback (most recent call last):\r\n  File \"<string>\", line 1, in <module>\r\nAttributeError: module 'agents.garden' has no attribute 'add_log_human'"
+   }
+  },
+  {
+   "loi": "UI-02",
+   "ca": "a_svc_ui_doc_kb_cong_khai",
+   "ket_qua": "FAIL",
+   "expected": "svc_ui SELECT chunks (KB công khai)",
+   "actual": {
+    "exit": 1,
+    "loi": "ckages\\psycopg\\connection.py\", line 300, in execute\r\n    raise ex.with_traceback(None)\r\npsycopg.errors.InsufficientPrivilege: permission denied for table chunks"
+   }
+  },
+  {
+   "loi": "UI-02",
+   "ca": "b_svc_ui_KHONG_doc_kb_noi_bo",
+   "ket_qua": "PASS",
+   "expected": "không mở chunks_internal",
+   "actual": {
+    "exit": 1,
+    "loi": "ycopg\\connection.py\", line 300, in execute\r\n    raise ex.with_traceback(None)\r\npsycopg.errors.InsufficientPrivilege: permission denied for table chunks_internal"
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "a_agent_khong_cap",
+   "ket_qua": "PASS",
+   "expected": "agent bị chặn, 0 dòng",
+   "actual": {
+    "exit": 1
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "b_nguoi_cap_duoc_marketing_thay",
+   "ket_qua": "FAIL",
+   "expected": "exit 0, 1 dòng cap, view marketing 1",
+   "actual": {
+    "exit": 1,
+    "rel": [],
+    "view": 0,
+    "loi": "prove_price', 'sign', 'issue', 'revoke', 'set_status', 'promote', 'severe', 'disable', 'ack', 'verify', 'consent', 'assign', 'handoff', 'load_dealers', 'purge_sample', 'adopt_plot', 'close_violation')"
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "c_marketing_lay_tu_lieu_da_cap",
+   "ket_qua": "FAIL",
+   "expected": "exit 0, 1 file",
+   "actual": {
+    "exit": 2,
+    "files": []
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "d_view_marketing_khong_lo_khoanh_gps",
+   "ket_qua": "PASS",
+   "expected": "view không có cột khoảnh/vị trí",
+   "actual": [
+    "sha256",
+    "ext",
+    "bytes",
+    "width",
+    "height",
+    "taken_on",
+    "released_at"
+   ]
+  },
+  {
+   "loi": "G5-01",
+   "ca": "e_thu_hoi_duoc_va_marketing_mat_quyen",
+   "ket_qua": "FAIL",
+   "expected": "thu hồi exit 0; view 0; --get sau thu hồi bị từ chối",
+   "actual": {
+    "exit_thu_hoi": 1,
+    "view": 0,
+    "exit_get": 2
+   }
+  },
+  {
+   "loi": "G5-01",
+   "ca": "g_login_nguoi_khoi_sales_bi_DB_chan",
+   "ket_qua": "PASS",
+   "expected": "42501",
+   "actual": {
+    "exit": 1,
+    "loi": "actor(text,text) line 27 at RAISE\r\nPL/pgSQL function garden_media_release_human(text,text,text,text) line 3 during statement block local variable initialization"
+   }
+  },
+  {
+   "loi": "G5-02",
+   "ca": "setup",
+   "ket_qua": "LOI_HARNESS",
+   "loi_harness": "AssertionError: "
+  }
+ ]
+}

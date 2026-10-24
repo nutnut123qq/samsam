@@ -1,0 +1,12 @@
+#!/bin/bash
+SP="/c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad"; U="$SP/r10/ui"
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset DEPLOY APPROVAL_ENFORCE RED_ALERT_NOTIFY LLM_KILL_FEATURES
+export DATABASE_URL="$(python -c "import json,sys;print(json.load(open(sys.argv[1]))['svc_dsn'])" "$(cygpath -w "$U/secrets.json")")"
+[ -n "$DATABASE_URL" ] || { echo "ABORT: DATABASE_URL rỗng"; exit 3; }
+export UI_TEST_DB=samsam_itacc_r10ui UI_TEST_OUT="$(cygpath -w "$U/out")"
+mkdir -p "$U/out/reports"
+export AUTH_MODE=local AUTH_USERS_FILE="$(cygpath -w "$U/cfg/users.json")" UI_TEST_DIRECTORS="$(cygpath -w "$U/cfg/directors")"
+export OPENROUTER_API_KEY="" PYTHONIOENCODING=utf-8
+cd /d/code/samsam
+exec "$SP/r7/venv_ui/Scripts/python" -m streamlit run "$U/launcher.py" --server.address 127.0.0.1 --server.port 8610 --server.headless true --browser.gatherUsageStats false

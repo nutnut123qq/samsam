@@ -1,0 +1,61 @@
+"""HARNESS r12-fix (MỚI) — ca D2 dạng NGOẶC cho legal_hr-01 trên entry point thật `pipelines.guardrail.check_publish/check`.
+Bổ sung (không thay) d2_cases.py.txt của r12. Văn bản GIẢ (SĐT 0912345678 dựng lại theo nhóm, example.com). Kỳ vọng
+(luật pii_ca_nhan 'chờ Pháp chế duyệt', mặc định an toàn):
+  - "(0912) 345 678", "+84 (912) 345 678", "(0912) - (345) - (678)", "(+84) 912 345 678" trong nội dung công khai →
+    ok=False + pii_ca_nhan trên facebook/shopee/zalo/web; chuỗi '(' bệnh lý trước SĐT ngoặc → vẫn chặn, < 3 giây;
+  - số công ty pii_allow dạng ngoặc/+84 ("(0235) 3699 899", "+84 235 3699 899"), hotline "(1800) 577 732", giá trong
+    ngoặc "(1.500.000 đ)(2.000.000 đ)", "(1.500.000)(2.000.000)", quy cách "(300ml)" → ok=True, không pii_ca_nhan;
+  - check() chat và content_type internal_note không gắn pii_ca_nhan (phạm vi giữ nguyên).
+In [PASS]/[FAIL] từng ca; exit 1 nếu có FAIL. Cần cwd = gốc repo."""
+import os
+import sys
+import time
+
+sys.path.insert(0, os.getcwd())
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+from pipelines import guardrail as g  # noqa: E402
+
+L = "Nội dung có sử dụng AI."
+BLOCK = {"ngoac_vung": "Đặt quà gọi (0912) 345 678 nhé. " + L,
+         "ngoac_84": "Liên hệ +84 (912) 345 678 để đặt hàng. " + L,
+         "ngoac_ba_nhom": "Gọi (0912) - (345) - (678) để được tư vấn. " + L,
+         "ngoac_dau_84": "Gọi (+84) 912 345 678 nhé. " + L}
+CLEAN = {"cong_ty_ngoac": "Showroom (0235) 3699 899. " + L,
+         "cong_ty_84": "Showroom +84 235 3699 899. " + L,
+         "hotline_ngoac": "Hotline (1800) 577 732. " + L,
+         "gia_ngoac_dong": "Combo quà (1.500.000 đ)(2.000.000 đ) cho khách sỉ. " + L,
+         "gia_ngoac_so": "Combo quà (1.500.000)(2.000.000) cho khách sỉ. " + L,
+         "quy_cach": "Mật ong sâm quy cách (300ml), hộp (10 củ). " + L}
+fails = n = 0
+
+
+def case(name, ok, actual):
+    global fails, n
+    n += 1
+    fails += 0 if ok else 1
+    print(f"[{'PASS' if ok else 'FAIL'}] {name} | actual={actual}")
+
+
+def codes(r):
+    return sorted({str(v.get("code") or v.get("type")) for v in r["violations"]})
+
+
+for group, texts, want_block in (("chan", BLOCK, True), ("khong_gan_co", CLEAN, False)):
+    for k, t in texts.items():
+        for ch in ("facebook", "shopee", "zalo", "web"):
+            r = g.check_publish(t, channel=ch)
+            c = codes(r)
+            ok = ((r["ok"] is False and "pii_ca_nhan" in c) if want_block
+                  else (r["ok"] is True and "pii_ca_nhan" not in c))
+            case(f"{group}:{k}:{ch}", ok, f"ok={r['ok']} codes={c}")
+t0 = time.perf_counter()
+r = g.check_publish("(" * 5000 + " (0912) 345 678 " + L, channel="facebook")
+dt = round(time.perf_counter() - t0, 3)
+case("chan:ngoac_benh_ly", r["ok"] is False and "pii_ca_nhan" in codes(r) and dt < 3, f"ok={r['ok']} giay={dt}")
+r = g.check("gọi (0912) 345 678")
+case("chat_check_khong_doi", "pii_ca_nhan" not in codes(r), f"ok={r['ok']} codes={codes(r)}")
+r = g.check_publish("Gọi (0912) 345 678 cho khách.", channel="facebook", content_type="internal_note")
+case("internal_note_khong_doi", "pii_ca_nhan" not in codes(r), f"ok={r['ok']} codes={codes(r)}")
+print(f"[tong] {n} ca, FAIL {fails}")
+sys.exit(1 if fails else 0)

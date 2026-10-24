@@ -1,0 +1,18 @@
+"""DP01-06: role thử it_g5_noprv (NOLOGIN, không quyền) qua SET ROLE trong phiên owner
+→ SELECT price_list/contacts phải bị từ chối. Role được DROP ở cuối."""
+import os, sys, psycopg
+sys.stdout.reconfigure(encoding="utf-8")
+c = psycopg.connect(os.environ["DATABASE_URL"], autocommit=True)
+c.execute("drop role if exists it_g5_noprv"); c.execute("create role it_g5_noprv nologin")
+try:
+    for t in ("price_list", "sku_master", "contacts", "plot_logs"):
+        try:
+            c.execute("set role it_g5_noprv"); c.execute(f"select count(*) from {t}").fetchone()
+            print("NOT_DENIED", t)
+        except psycopg.errors.InsufficientPrivilege as e:
+            print("DENIED", t, (str(e).splitlines() or [''])[0][:100])
+        finally:
+            c.execute("reset role")
+finally:
+    c.execute("drop role if exists it_g5_noprv")
+    print("dropped:", c.execute("select count(*) from pg_roles where rolname='it_g5_noprv'").fetchone()[0] == 0)

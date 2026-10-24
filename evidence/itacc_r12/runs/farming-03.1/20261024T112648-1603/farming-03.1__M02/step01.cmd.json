@@ -1,0 +1,33 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "pipelines.qr_trace",
+  "unlink",
+  "--lot",
+  "IT-LOT-G5-02",
+  "--log",
+  "10",
+  "--by",
+  "system:qr"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:27:32+07:00",
+ "ket_thuc": "2026-10-24T11:27:39+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "out_re": "không phải người",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "a9e0b61673314a697c3c5cd40db24b10dc3e43629598da4cc055a19d68c73d4f",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

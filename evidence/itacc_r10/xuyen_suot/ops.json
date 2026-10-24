@@ -1,0 +1,126 @@
+[
+ {
+  "ma": "A1_job_chay_ghi_job_runs",
+  "ket_qua": "PASS",
+  "expected": "job chạy (không 75), +1 dòng job_runs job:red_alert_escalate",
+  "actual": {
+   "rc": 0,
+   "row": [
+    [
+     true,
+     null
+    ]
+   ]
+  }
+ },
+ {
+  "ma": "A2_chay_chong_bi_khoa_exit75",
+  "ket_qua": "PASS",
+  "expected": "exit 75 + dòng ok=false 'chạy chồng', không chạy bước",
+  "actual": {
+   "rc": 75,
+   "row": [
+    [
+     false,
+     "chạy chồng — lần trước còn đang chạy, bỏ lượt"
+    ]
+   ]
+  }
+ },
+ {
+  "ma": "A3_nha_khoa_chay_lai_duoc",
+  "ket_qua": "PASS",
+  "expected": "sau khi nhả khóa chạy lại được",
+  "actual": {
+   "rc": 0
+  }
+ },
+ {
+  "ma": "B1_gui_smtp_starttls_dung_nguoi_doc_lap",
+  "ket_qua": "PASS",
+  "expected": "True; 1 thư qua STARTTLS chỉ tới pháp chế (TGĐ bị loại), SĐT trong tiêu đề bị che, 1 dòng deliveries ok không lưu địa chỉ",
+  "actual": {
+   "raise": [
+    true,
+    "cảnh báo đỏ #1 → đã gửi 1/1 người nhận"
+   ],
+   "rcpt": [
+    [
+     "it-phapche@example.com"
+    ]
+   ],
+   "tls": true,
+   "deliveries": [
+    [
+     "Pháp chế Thử IT",
+     "phap_che",
+     "email",
+     true,
+     null
+    ]
+   ]
+  }
+ },
+ {
+  "ma": "B2_smtp_sap_khong_bao_da_gui",
+  "ket_qua": "PASS",
+  "expected": "False + deliveries ok=false 'gửi lỗi: …'",
+  "actual": {
+   "raise": [
+    false,
+    "cảnh báo đỏ #2 đã ghi, chưa gửi được tới người nhận nào (1 người nhận) — CHƯA thông báo; `--deliver` sẽ gửi lại"
+   ],
+   "deliveries": [
+    [
+     false,
+     "gửi lỗi: ConnectionRefusedError"
+    ]
+   ]
+  }
+ },
+ {
+  "ma": "B3_deliver_gui_lai_khi_smtp_song_lai",
+  "ket_qua": "PASS",
+  "expected": "CLI --deliver exit 0, gửi lại đúng cảnh báo chưa gửi được",
+  "actual": {
+   "rc": 0,
+   "moi": 1,
+   "deliveries": [
+    [
+     false
+    ],
+    [
+     true
+    ]
+   ],
+   "stdout": "[done] pending=1 sent=1 failed=0 capped=0\n"
+  }
+ },
+ {
+  "ma": "B4_chung_chi_khong_tin_bi_tu_choi",
+  "ket_qua": "PASS",
+  "expected": "STARTTLS kiểm chứng chỉ: tự ký không tin → không gửi",
+  "actual": {
+   "raise": [
+    false,
+    "cảnh báo đỏ #3 đã ghi, chưa gửi được tới người nhận nào (1 người nhận) — CHƯA thông báo; `--deliver` sẽ gửi lại"
+   ]
+  }
+ },
+ {
+  "ma": "B5_thieu_nguoi_nhan_fail_closed",
+  "ket_qua": "PASS",
+  "expected": "False, cảnh báo vẫn ghi với route_error",
+  "actual": {
+   "raise": [
+    false,
+    "cảnh báo đỏ #4 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận"
+   ],
+   "route_error": [
+    [
+     "thiếu người nhận độc lập (external-dep)"
+    ]
+   ]
+  }
+ }
+]

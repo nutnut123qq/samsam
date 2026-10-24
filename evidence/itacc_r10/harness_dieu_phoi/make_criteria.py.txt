@@ -1,0 +1,43 @@
+"""Khung tiêu chí nghiệm thu kỹ thuật nội bộ r10 — sinh TRƯỚC mọi phép chạy từ danh mục."""
+import hashlib, json, sys
+from datetime import datetime, timezone, timedelta
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = r"D:\code\samsam"
+fs = json.load(open(ROOT + r"\data\contract_features.json", encoding="utf-8"))["features"]
+KNOWN = {  # phần đã biết còn thiếu (mục 8 yêu cầu) — đầu ra thiết yếu không thể thực hiện trên máy dev
+  "marketing-02.1": "MISSING_ADAPTER: ảnh AI registry none (nền gradient/ghép packshot KHÔNG thay đầu ra ảnh AI)",
+  "production-03": "MISSING_ADAPTER: OCR registry none (đọc ẢNH nhãn)",
+  "data_platform-02.1": "MISSING_ADAPTER: OCR registry none",
+  "farming-01": "MISSING_ADAPTER: STT registry none (phần giọng nói)",
+  "data_platform-06": "EXTERNAL_INPUT: adapter API sàn chưa kiểm sandbox (chưa app key)",
+  "farming-06": "EXTERNAL_INPUT: OpenTimestamps chưa neo thật (chọn chuỗi/provider)",
+  "sales-08": "SEPARATE_REPO: website ở repo riêng chưa được giao",
+  "sales-09": "SEPARATE_REPO: chatbot website ở repo riêng chưa được giao",
+  "ceo-90": "NON_SOFTWARE: nghĩa vụ hợp đồng ngoài phần mềm",
+  "data_platform-90": "NON_SOFTWARE/ENVIRONMENT: hạ tầng vật lý server Bên B",
+}
+GEN = [
+  "T1 entry point THỰC (CLI/module/job/UI) chạy trên DB thử cô lập với dữ liệu fixture có provenance thử; exit code đúng",
+  "T2 đầu ra «{dau_ra}» xuất hiện đúng nơi {src}: nội dung, nguồn, khối, created_by/phiên bản kiểm được (không chỉ 'có dòng')",
+  "T3 ≥1 ca âm phù hợp rủi ro (tắt tính năng/dữ liệu lỗi/quyền/idempotent-retry/nguồn chưa duyệt) cho kết quả đúng",
+  "T4 không gửi/đăng ra ngoài, không tự quyết thay người; dữ liệu mẫu không tính là vận hành",
+]
+out = []
+for f in fs:
+    src = json.dumps(f.get("output_sources") or "(không khai nguồn đếm)", ensure_ascii=False)
+    out.append({"id": f["id"], "ten": f["ten"], "khoi": f["phong_ban"], "giai_doan": f["giai_doan"],
+                "pham_vi": f["pham_vi"], "can_cu": f.get("nguon"), "dau_ra": f.get("dau_ra"),
+                "modules": f.get("modules") or [], "output_sources": f.get("output_sources") or [],
+                "bang_chung_test": f.get("bang_chung") or [], "code_status_danh_muc": f.get("code_status"),
+                "blocker_danh_muc": f.get("blocker") or "",
+                "da_biet_thieu": KNOWN.get(f["id"]),
+                "tieu_chi_khung": [g.format(dau_ra=f.get("dau_ra"), src=src) for g in GEN]})
+ids = [o["id"] for o in out]
+assert len(ids) == len(set(ids)) == 96
+now = datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+doc = {"_doc": "Khung tiêu chí nghiệm thu KỸ THUẬT NỘI BỘ r10 (máy dev) — sinh TRƯỚC khi chạy. "
+       "Tiêu chí cụ thể từng mục ở criteria/<khối>.json (khóa hash trước khi chạy ca).",
+       "sinh_luc": now, "mau_so": 96, "items": out}
+p = ROOT + r"\evidence\itacc_r10\criteria\khung.json"
+open(p, "w", encoding="utf-8", newline="\n").write(json.dumps(doc, ensure_ascii=False, indent=1))
+print(now, hashlib.sha256(open(p, "rb").read()).hexdigest())

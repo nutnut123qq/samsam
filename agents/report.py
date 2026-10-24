@@ -555,7 +555,8 @@ def report_name(since: datetime, until: datetime) -> str:
 
 
 def write_report(text: str, out_dir: Path, name: str,
-                 sample: bool | None = None) -> Path:
+                 sample: bool | None = None,
+                 feature: str | None = None) -> Path:
     """Atomic tmp + `os.replace` (precedent `_purge_convlog`); ghi
     BYTES utf-8 — `write_text` trên Windows đổi `\\n`→`\\r\\n`.
     v13.3: tên file thuộc tiền tố báo cáo của tính năng đang TẮT
@@ -565,16 +566,18 @@ def write_report(text: str, out_dir: Path, name: str,
     đếm). v15.2 (P8.5): tính năng đang chạy thử / chờ người duyệt → nội dung
     file (.md) mang nhãn "CHẠY THỬ — KHÔNG GỬI" / "CHỜ NGƯỜI DUYỆT — CHƯA
     GỬI" ở đầu; sha trong sổ = bản có nhãn (đúng bản trên đĩa). P8.4: mọi
-    caller truyền `sample=` tường minh theo provenance (test AST)."""
+    caller truyền `sample=` tường minh theo provenance (test AST).
+    r12 G1-L4: `feature` = mã tính năng tường minh khi tiền tố tên không thuộc
+    `output_sources` (ceo-<kỳ>.md, hdtv-<kỳ>.md) — cùng cổng/nhãn/sổ."""
     from pipelines import rollout  # lười: rollout import module này
-    md = rollout.gate_report(name)
-    text = rollout.label_report(name, text, md)
+    md = rollout.gate_report(name, feature)
+    text = rollout.label_report(name, text, md, feature)
     out_dir.mkdir(parents=True, exist_ok=True)
     final = out_dir / name
     tmp = out_dir / (name + ".tmp")
     tmp.write_bytes(text.encode("utf-8"))
     os.replace(tmp, final)
-    rollout.record_report(name, text, sample)
+    rollout.record_report(name, text, sample, feature)
     return final
 
 

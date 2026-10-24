@@ -1,0 +1,316 @@
+[
+ {
+  "case": "shopee respond, mở → embed+chat gắn sales-02",
+  "result": null,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-02",
+   "sales-02"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "shopee _suggest (CLI), mở → sales-02",
+  "result": 0,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-02",
+   "sales-02"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "shopee respond, kill sales-02 → 0 lời gọi",
+  "result": "EXC GatewayBlocked: tính năng 'sales-02' đang bị nút tắt khẩn",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "shopee _suggest, kill sales-02 → 0 lời gọi",
+  "result": 0,
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "shopee respond, trần sales-02 = 0 → 0 lời gọi",
+  "result": "EXC GatewayBlocked: tính năng 'sales-02' có trần 0 USD — đang tắt",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "shopee respond, sales-02 hết trần (chi 5/5) → 0 lời gọi",
+  "result": "EXC GatewayBlocked: tính năng 'sales-02' vượt trần tháng 5.0000/5.00 USD",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "shopee respond, ĐỐI CHỨNG kill sales-01 → sales-02 vẫn chạy",
+  "result": null,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-02",
+   "sales-02"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "shopee respond, trần AGENT chatbot hết → 0 lời gọi",
+  "result": "EXC GatewayBlocked: agent 'chatbot' vượt trần tháng 1.0000/1.00 USD",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "tiktok respond, mở → embed+chat gắn sales-02",
+  "result": null,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-02",
+   "sales-02"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "tiktok _suggest (CLI), mở → sales-02",
+  "result": 0,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-02",
+   "sales-02"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "tiktok respond, kill sales-02 → 0 lời gọi",
+  "result": "EXC GatewayBlocked: tính năng 'sales-02' đang bị nút tắt khẩn",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "tiktok _suggest, kill sales-02 → 0 lời gọi",
+  "result": 0,
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "tiktok respond, trần sales-02 = 0 → 0 lời gọi",
+  "result": "EXC GatewayBlocked: tính năng 'sales-02' có trần 0 USD — đang tắt",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "tiktok respond, sales-02 hết trần (chi 5/5) → 0 lời gọi",
+  "result": "EXC GatewayBlocked: tính năng 'sales-02' vượt trần tháng 5.0000/5.00 USD",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "tiktok respond, ĐỐI CHỨNG kill sales-01 → sales-02 vẫn chạy",
+  "result": null,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-02",
+   "sales-02"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "tiktok respond, trần AGENT chatbot hết → 0 lời gọi",
+  "result": "EXC GatewayBlocked: agent 'chatbot' vượt trần tháng 1.0000/1.00 USD",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "zalo respond, mở → sales-01",
+  "result": null,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-01",
+   "sales-01"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "zalo respond, ĐỐI CHỨNG kill sales-02 → sales-01 vẫn chạy",
+  "result": null,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-01",
+   "sales-01"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "zalo respond, kill sales-01 → 0 lời gọi",
+  "result": "EXC GatewayBlocked: tính năng 'sales-01' đang bị nút tắt khẩn",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "messenger respond, mở → sales-01",
+  "result": null,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-01",
+   "sales-01"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "messenger respond, ĐỐI CHỨNG kill sales-02 → sales-01 vẫn chạy",
+  "result": null,
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-01",
+   "sales-01"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "messenger respond, kill sales-01 → 0 lời gọi",
+  "result": "EXC GatewayBlocked: tính năng 'sales-01' đang bị nút tắt khẩn",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "zalo có history (rewrite) → rewrite+embed+chat sales-01",
+  "result": "ok",
+  "client_calls": [
+   "chat",
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-01",
+   "sales-01",
+   "sales-01"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "zalo có history, ĐỐI CHỨNG kill sales-02 → vẫn sales-01",
+  "result": "ok",
+  "client_calls": [
+   "chat",
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-01",
+   "sales-01",
+   "sales-01"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "rag.answer có history, feature=sales-02 → rewrite+embed+chat sales-02",
+  "result": "ok",
+  "client_calls": [
+   "chat",
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-02",
+   "sales-02",
+   "sales-02"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "rag.answer có history, feature=sales-02, kill sales-02 → 0 lời gọi",
+  "result": "EXC GatewayBlocked: tính năng 'sales-02' đang bị nút tắt khẩn",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "rag.answer mã lạ 'sales-99' → từ chối, 0 lời gọi",
+  "result": "EXC ValueError: feature RAG không thuộc danh sách nội bộ ['sales-01', 'sales-02']",
+  "client_calls": [],
+  "usage_feature_id": [],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ },
+ {
+  "case": "rag.answer mặc định (không truyền) → sales-01",
+  "result": "ok",
+  "client_calls": [
+   "embed",
+   "chat"
+  ],
+  "usage_feature_id": [
+   "sales-01",
+   "sales-01"
+  ],
+  "feature_in_payload": false,
+  "verdict": "PASS"
+ }
+]

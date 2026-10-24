@@ -1,0 +1,32 @@
+# ca F051-3
+# gio 2026-10-23T10:29:32+07:00
+# lenh python -m agents.fp_opscost --report --month 2026-10
+# exit 0
+--- stdout ---
+# Chi phí vận hành tháng 10/2026 — so trần (GIẢ ĐỊNH)
+
+Tỷ giá quy đổi chi phí AI 25.000đ/USD; cảnh báo 80% / 100% trần; ngưỡng X 5.000.000đ — `data/fpa_config.json` chờ GĐ tài chính chốt.
+
+| Phạm vi | Thực chi | Trần | % trần |
+|---|---|---|---|
+| `ads` | 0đ | 20.000.000đ | 0.0% |
+| `ai` | 4.200.000đ | 5.000.000đ | 84.0% |
+| `ai:chatbot` | 2.500.000đ | chưa có trần | — |
+| `ai:content` | 1.700.000đ | chưa có trần | — |
+| `cloud` | 3.500.000đ | 4.000.000đ | 87.5% |
+| `khac` | 1.000.000đ | 2.000.000đ | 50.0% |
+| `saas` | 7.500.000đ | 7.000.000đ | 107.1% |
+| `tong` | 16.200.000đ | 35.000.000đ | 46.3% |
+
+Cảnh báo:
+- [CẢNH BÁO 80%] `ai`: 4.200.000đ / trần 5.000.000đ
+- [CẢNH BÁO 80%] `cloud`: 3.500.000đ / trần 4.000.000đ
+- [VƯỢT TRẦN 100%] `saas`: 7.500.000đ / trần 7.000.000đ
+
+Khoản > ngưỡng X: 1 — đang chờ TGĐ ký: 1, được chi: 0.
+
+Agent chỉ cảnh báo — không chi, không tắt key, không đổi hạn mức; người quyết theo quy trình tài chính.
+
+
+--- stderr ---
+

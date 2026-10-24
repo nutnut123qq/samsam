@@ -1,0 +1,7 @@
+# db samsam_itacc_r10_fin
+> select channel, count(*), sum(order_amount_vnd), sum(payout_vnd) from v_settlement_khoan group by 1
+["shopee", 7, "3050000", "2094000"]
+["tiktok", 1, "500000", "440000"]
+> select channel, count(*), sum(order_amount_vnd), sum(payout_vnd) from settlement_rows group by 1
+["tiktok", 1, "500000", "440000"]
+["shopee", 8, "4050000", "2974000"]

@@ -189,9 +189,17 @@ CRITERIA = (
      "python scripts/health_bulletin.py"),
      (("deploy/docker-compose.monitoring.yml", None),
       ("scripts/health_bulletin.py", None))),
-    ("Phản hồi lỗi nghiêm trọng", "Trong vòng 03 giờ", None, ()),
-    ("Phản hồi lỗi thường", "Trong vòng 03 ngày làm việc", None, ()),
-    ("Sửa lỗi phát sinh", "Trong vòng 07 ngày", None, ()),
+    # Đợt an toàn A06: sổ sự cố vận hành (append-only) có từ v13.7 — mục 3b
+    # của hồ sơ đọc thật từ DB; thiếu sự kiện ≠ đạt.
+    ("Phản hồi lỗi nghiêm trọng", "Trong vòng 03 giờ",
+     "python -m pipelines.ops_incidents --list --month YYYY-MM",
+     (("pipelines/ops_incidents.py", None),)),
+    ("Phản hồi lỗi thường", "Trong vòng 03 ngày làm việc",
+     "python -m pipelines.ops_incidents --list --month YYYY-MM",
+     (("pipelines/ops_incidents.py", None),)),
+    ("Sửa lỗi phát sinh", "Trong vòng 07 ngày",
+     "python -m pipelines.ops_incidents --list --month YYYY-MM",
+     (("pipelines/ops_incidents.py", None),)),
     ("Phản hồi tự động của chatbot", "Trong vòng 30 giây",
      "convlog `reply_ms` · python scripts/ops_monthly.py --month YYYY-MM",
      (("connectors/zalo.py", "reply_ms"), ("scripts/ops_monthly.py", None))),
@@ -663,6 +671,58 @@ def check_generate(conn, fid: str | None, what: str) -> None:
         raise RolloutBlocked(_why(fid, "tat", what) + " — không sinh đầu ra")
 
 
+EXIT_BLOCKED = 2   # r12 RB: CLI bị cổng tắt chặn (một phần hoặc toàn bộ)
+
+
+def blocked(conn, what: str, fid: str | None = None, *,
+            report: str | None = None, **attrs) -> str | None:
+    """r12 RB/G1-L1: kiểm cổng SINH SỚM — trước mọi side effect (gọi AI, ghi
+    file, in nội dung, ghi DB) → lý do chặn | None. Tính năng = `fid` tường
+    minh, hoặc suy từ danh mục: tiền tố báo cáo `report` / thuộc tính
+    `output_sources` (`table`, `block`, `object_type`…). Không thuộc danh mục
+    → None (biên dùng vẫn chặn). Mỗi tính năng kiểm RIÊNG — lệnh nhiều đầu ra
+    gọi 1 lần/đầu ra để phần còn được phép vẫn chạy."""
+    if fid is None and report is not None:
+        fid, md = report_stage(report) if conn is None else (
+            feature_for_report(report), None)
+        if conn is None:
+            return (_why(fid, "tat", f"báo cáo {report}") + " — không sinh"
+                    " đầu ra") if md == "tat" else None
+    elif fid is None and attrs:
+        fid = feature_for(**attrs)
+    own = conn is None and fid is not None and quick_mode() is None
+    if own:
+        conn = connect()            # không truyền conn (vd --dry-run) vẫn đọc sổ
+    try:
+        check_generate(conn, fid, what)
+    except RolloutBlocked as e:
+        return str(e)
+    finally:
+        if own and conn is not None:
+            conn.close()
+    return None
+
+
+def say_blocked(why: str) -> int:
+    """In lý do chặn (stdout, có mã tính năng) → EXIT_BLOCKED."""
+    print(f"[rollout] {why}", flush=True)
+    return EXIT_BLOCKED
+
+
+def cli_entry(main):
+    """Bọc `main` CLI: RolloutBlocked lọt tới đỉnh → `[rollout] lý do`, exit
+    EXIT_BLOCKED — không traceback, không exit 0. Lỗi khác KHÔNG bắt."""
+    import functools
+
+    @functools.wraps(main)
+    def run(*a, **k):
+        try:
+            return main(*a, **k)
+        except RolloutBlocked as e:
+            return say_blocked(str(e))
+    return run
+
+
 def decide_reason(conn, fid: str | None, what: str) -> str | None:
     """Biên DUYỆT: mục của tính năng `tat` không được duyệt (kể cả mục đang
     chờ từ trước khi tắt). Từ chối vẫn được (dọn hàng)."""
@@ -685,12 +745,14 @@ def use_reason(conn, fid: str | None, what: str,
     return None
 
 
-def report_stage(name: str) -> tuple[str | None, str | None]:
+def report_stage(name: str, fid: str | None = None
+                 ) -> tuple[str | None, str | None]:
     """(tính năng, giai đoạn) của báo cáo file theo tiền tố — None khi không
     thuộc danh mục. Biết giai đoạn không cần DB → không mở DB; DB down →
-    `chay_thu` (fail-closed)."""
+    `chay_thu` (fail-closed). r12 G1-L4: `fid` tường minh (báo cáo của tính
+    năng mà tiền tố tên không nằm trong `output_sources`)."""
     q = quick_mode()
-    fid = feature_for_report(name)
+    fid = fid or feature_for_report(name)
     if fid is None:
         return None, None
     if q is not None:
@@ -703,10 +765,10 @@ def report_stage(name: str) -> tuple[str | None, str | None]:
             conn.close()
 
 
-def gate_report(name: str) -> str | None:
+def gate_report(name: str, fid: str | None = None) -> str | None:
     """Biên sinh báo cáo file: tiền tố thuộc tính năng `tat` →
     RolloutBlocked. → giai đoạn (None = không thuộc danh mục)."""
-    fid, md = report_stage(name)
+    fid, md = report_stage(name, fid)
     if md == "tat":
         raise RolloutBlocked(_why(fid, "tat", f"báo cáo {name}")
                              + " — không sinh đầu ra")
@@ -726,14 +788,15 @@ REPORT_LABELS = {
 }
 
 
-def label_report(name: str, text: str, md: str | None) -> str:
+def label_report(name: str, text: str, md: str | None,
+                 fid: str | None = None) -> str:
     """Chèn nhãn giai đoạn vào đầu báo cáo markdown (.md) của tính năng đang
     `chay_thu`/`co_nguoi_duyet`; file khác đuôi (csv/ics — sha phải khớp dữ
     liệu gốc) giữ nguyên."""
     lab = REPORT_LABELS.get(md)
     if lab is None or not str(name).endswith(".md"):
         return text
-    fid = feature_for_report(name) or "?"
+    fid = fid or feature_for_report(name) or "?"
     return lab.format(fid=fid) + "\n\n" + (text or "")
 
 
@@ -742,7 +805,8 @@ def label_report(name: str, text: str, md: str | None) -> str:
 _REPORT_SAMPLE_RE = re.compile(r"[(\[]MẪU[)\]]")
 
 
-def record_report(name: str, text: str, sample: bool | None = None) -> bool:
+def record_report(name: str, text: str, sample: bool | None = None,
+                  fid: str | None = None) -> bool:
     """v14.3 (F04): báo cáo file của TÍNH NĂNG (tiền tố `output_sources.
     report`) → 1 dòng `report_outputs` (tên, sha256 nội dung, `is_sample` =
     cờ caller HOẶC nhãn MẪU trong bản) để bộ đếm đầu ra loại `report` đếm
@@ -752,7 +816,7 @@ def record_report(name: str, text: str, sample: bool | None = None) -> bool:
     chỉ là không được ĐẾM, fail-closed)."""
     if _FORCE_MODE is not None:
         return False
-    fid = feature_for_report(name)
+    fid = fid or feature_for_report(name)
     if fid is None:
         return False
     is_sample = bool(sample) or bool(_REPORT_SAMPLE_RE.search(text or ""))
@@ -891,6 +955,10 @@ _TABLES = {
                 "coalesce(t.detail->>'dealer', '')"),
         "human": _h("t.actor"),
         "nosample": "NGƯỜI chuyển lead đã đồng ý (crm_handoff_human)",
+        # r12 L1: lần chuyển khi khách CHƯA đồng ý dai_ly (function ghi
+        # pii_included=false, không kèm liên hệ) không phải đầu ra.
+        "where": ("(t.action <> 'crm_handoff' or "
+                  "t.detail->>'pii_included' = 'true')"),
         "filters": {"action": "t.action = %s"}},
     "image_assets": {
         "ts": "t.created_at", "key": "'cd:' || md5(d.text)",
@@ -1816,9 +1884,14 @@ def _legacy_line(r) -> str:
 
 def render_dossier(phase: str, rows: list[dict], severe: list[dict],
                    n_reviewed: int, now: datetime,
-                   root: Path = ROOT, legacy=(), warnings=()) -> str:
-    """Markdown hồ sơ đề nghị nghiệm thu — THUẦN (đầu vào đã đọc DB)."""
-    L = [f"# Hồ sơ đề nghị nghiệm thu {phase} — BẢN NHÁP do hệ thống dựng",
+                   root: Path = ROOT, legacy=(), warnings=(), incidents=None,
+                   versions=None, exceptions=()) -> str:
+    """Markdown hồ sơ đề nghị nghiệm thu — THUẦN (đầu vào đã đọc DB).
+    Đợt an toàn A06: + mục 3b sổ sự cố vận hành (`incidents`; None = không
+    đọc được), 6 phiên bản bàn giao (`versions`), 7 ngoại lệ/blocker mở;
+    tiêu đề DỰ THẢO (PL05 — mẫu biên bản — chưa được cung cấp)."""
+    L = [(f"# Hồ sơ đề nghị nghiệm thu {phase} — DỰ THẢO do hệ thống dựng "
+          "(PL05 chưa có — không phải biên bản)"),
          "",
          (f"Ngày lập: {_d(now)} (giờ VN). Căn cứ: Hợp đồng hợp tác TEDO–Sâm "
          "Sâm, PL02 mục 1d (hồ sơ) + mục 2 (tiêu chí kỹ thuật)."),
@@ -1883,7 +1956,23 @@ def render_dossier(phase: str, rows: list[dict], severe: list[dict],
     else:
         L.append("Chưa ghi nhận lỗi nghiêm trọng nào.")
     L += ["", ("Nguồn: bảng `feature_rollout_events` (kind `severe`, "
-          "append-only)."), "", "## 4. Tiêu chí kỹ thuật (PL02 mục 2)", "",
+          "append-only)."), "", ("## 3b. Nhật ký sự cố vận hành (lỗi, mức "
+          "độ, xử lý, kiểm lại)"), ""]
+    if incidents is None:
+        L.append("Không đọc được sổ `ops_incidents` — CHƯA CÓ DỮ LIỆU (không "
+                 "suy ra 0 sự cố).")
+    elif not incidents:
+        L.append("Sổ `ops_incidents` chưa có sự cố nào được ghi — không phải "
+                 "bằng chứng 'không có sự cố' khi hệ thống chưa vận hành thật.")
+    else:
+        L += [("| # | Mức | Phát hiện | Phản hồi | Sửa xong | Khách xong | Bên"
+               " | Tiêu đề |"), "|---|---|---|---|---|---|---|---|"]
+        for i in incidents:
+            L.append(f"| {i['id']} | {i['severity']} | "
+                     f"{_ts(i['detected_at'])} | {_ts(i['responded'])} | "
+                     f"{_ts(i['fixed'])} | {_ts(i['resolved'])} | {i['ben']} "
+                     f"| {_cell(_mask_pii(i['title']))} |")
+    L += ["", "## 4. Tiêu chí kỹ thuật (PL02 mục 2)", "",
           "| Chỉ tiêu | Yêu cầu | Lệnh / bằng chứng | Trạng thái |",
           "|---|---|---|---|"]
     n_rev_sev = sum(1 for e in severe if e["from_stage"] == "co_nguoi_duyet")
@@ -1897,12 +1986,91 @@ def render_dossier(phase: str, rows: list[dict], severe: list[dict],
         else:
             st = evidence_status(ev, root)
         L.append(f"| {name} | {req} | {_cell(cmd or '—')} | {st} |")
-    L += ["", "## 5. Ký nhận", "",
+    L += ["", ("## 6. Phiên bản bàn giao (mã nguồn, schema, cấu hình, tài "
+          "sản)"), ""]
+    L += [f"- {k}: `{v}`" for k, v in (versions or {}).items()] or [
+        "- chưa xác định"]
+    L += ["", "## 7. Ngoại lệ / blocker còn mở", ""]
+    L += [f"- {e}" for e in exceptions] or ["- (không có dữ liệu)"]
+    L += ["", "## 8. Ký nhận", "",
           ("Bên B ký biên bản hoặc gửi danh sách lỗi trong 30 ngày kể từ ngày"
-          " nhận bàn giao (PL02 mục 1đ). Hồ sơ này chỉ là đề xuất của hệ "
-          "thống — không thay chữ ký."), "",
+          " NHẬN bàn giao có bằng chứng nhận (PL02 mục 1đ) — không tính từ "
+          "ngày tạo tệp này. Hồ sơ này chỉ là đề xuất của hệ thống — không "
+          "thay chữ ký; mẫu biên bản theo PL05 (chưa có)."), "",
           "| Đại diện Bên A | Đại diện Bên B |", "|---|---|", "|  |  |", ""]
     return "\n".join(L)
+
+
+def _ts(t) -> str:
+    return f"{t.astimezone(VN_TZ):%d/%m/%Y %H:%M}" if t else "—"
+
+
+def incident_rows(conn) -> list[dict] | None:
+    """Sổ sự cố vận hành + mốc phản hồi/sửa/khách xong (sự kiện ĐẦU mỗi
+    loại). None = không đọc được (thiếu bảng/quyền)."""
+    try:
+        with conn.transaction():
+            rs = conn.execute(
+                "select i.id, i.severity, i.detected_at, i.ben_trach_nhiem,"
+                " i.title, min(e.at) filter (where e.kind = 'responded'),"
+                " min(e.at) filter (where e.kind = 'fixed'),"
+                " min(e.at) filter (where e.kind = 'customer_resolved')"
+                " from ops_incidents i left join ops_incident_events e on"
+                " e.incident_id = i.id group by i.id order by i.id"
+            ).fetchall()
+    except psycopg.Error:
+        return None
+    return [{"id": r[0], "severity": r[1], "detected_at": r[2], "ben": r[3],
+             "title": r[4], "responded": r[5], "fixed": r[6],
+             "resolved": r[7]} for r in rs]
+
+
+def handover_versions(root: Path = ROOT) -> dict:
+    """Commit Git + sha256 schema/roles/danh mục + trạng thái sổ tài sản."""
+    import hashlib
+    import subprocess
+    out = {}
+    try:
+        r = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root,
+                           capture_output=True, text=True, timeout=10,
+                           check=False)
+        dirty = subprocess.run(["git", "status", "--porcelain",
+                                "--untracked-files=no"], cwd=root,
+                               capture_output=True, text=True, timeout=10,
+                               check=False).stdout.strip()
+        out["commit"] = (r.stdout.strip() or "chưa xác định") + (
+            " (+ thay đổi CHƯA commit)" if dirty else "")
+    except (OSError, subprocess.SubprocessError):
+        out["commit"] = "chưa xác định"
+    for rel in ("docs/schema.sql", "docs/roles.sql",
+                "data/contract_features.json"):
+        p = root / rel
+        out[f"sha256 {rel}"] = (hashlib.sha256(p.read_bytes()).hexdigest()
+                                if p.is_file() else "thiếu tệp")
+    try:
+        ts = json.loads((root / "data" / "tai_san_hop_tac.json").read_bytes()
+                        .decode("utf-8"))
+        out["sổ tài sản hợp tác"] = str(ts.get("trang_thai"))
+    except (OSError, ValueError):
+        out["sổ tài sản hợp tác"] = "không đọc được"
+    return out
+
+
+def open_exceptions(feats) -> list[str]:
+    """Blocker chung + số mục chưa sẵn sàng (pipelines.acceptance)."""
+    from pipelines import acceptance
+    rs = acceptance.rows(feats)
+    s = acceptance.summary(rs)
+    out = [(f"{s['ready_for_trial']}/{s['mau_so']} mục đủ điều kiện chạy "
+            f"thử; {s['da_nghiem_thu']}/{s['mau_so']} đã nghiệm thu "
+            "(docs/handover/ma-tran-nghiem-thu.md)")]
+    out += [f"{k}: {v}" for k, v in acceptance.env_state().items() if v]
+    out += [("Credential DB từng lộ: rotation theo từng môi trường — đối "
+             "chiếu sổ nghĩa vụ + runbook 10.7 (`scripts/db_rotate_password.py"
+             " --verify`); tại 22/10/2026 chưa đóng ở môi trường nào"),
+            ("Sự cố test chạm DB samsam 20/10/2026: UNVERIFIED "
+             "(docs/handover/su-co-db-samsam.md)")]
+    return out
 
 
 def dossier(conn, feats, phase: str, shift, now=None) -> str:
@@ -1916,7 +2084,10 @@ def dossier(conn, feats, phase: str, shift, now=None) -> str:
     return render_dossier(phase, rows, severe_events(conn, ids),
                           reviewed_count(conn, ids), now,
                           legacy=legacy_rows(conn, feats),
-                          warnings=[w for w in (holiday_warning(),) if w])
+                          warnings=[w for w in (holiday_warning(),) if w],
+                          incidents=incident_rows(conn),
+                          versions=handover_versions(),
+                          exceptions=open_exceptions(feats))
 
 
 # ------------------------------------------------------------ CLI

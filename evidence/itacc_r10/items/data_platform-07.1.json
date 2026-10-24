@@ -1,0 +1,177 @@
+{
+ "id": "data_platform-07.1",
+ "ten": "Giám sát lỗi",
+ "khoi": "data_platform",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Hạ tầng dữ liệu và AI / Vận hành hệ thống: 'Giám sát lỗi'",
+ "tieu_chi": [
+  "health_bulletin --out-dir scratch → health-<ngày>.md có DB/job/chi phí/lỗi LLM/hàng chờ",
+  "job_runs --list đọc lịch; --run job (JOB_LOCK_DIR scratch) ghi job_runs job:<tên>; khóa chồng → exit 75",
+  "webhook_probe --url localhost OK/dead → exit khác 0; máy giám sát NGOÀI server không chứng minh được",
+  "T4: không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:58:33+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_dp; dev mode (AUTH_MODE trống, DEPLOY tắt); JOB_LOCK_DIR + báo cáo → scratchpad; webhook Zalo thật trên 127.0.0.1 (state scratchpad)",
+ "dau_vao": [],
+ "ca": [
+  {
+   "ma": "DP071-01",
+   "mo_ta": "Bản tin sức khỏe",
+   "lenh": "python scripts/health_bulletin.py --out-dir <scratch>/reports",
+   "expected": "health-*.md đủ mục",
+   "actual": "health-2026-10-23.md: DB, Job 24h, Chi phí AI theo agent, Lỗi LLM 24h, Hàng chờ (content_drafts), Hạn lưu; nhãn CHẠY THỬ",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP071-02",
+   "mo_ta": "Lịch job",
+   "lenh": "python -m pipelines.job_runs --list",
+   "expected": "exit 0",
+   "actual": "liệt kê 34 job từ deploy/onprem/jobs.json",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP071-03",
+   "mo_ta": "Chạy job vt_pests",
+   "lenh": "python -m pipelines.job_runs --run vt_pests",
+   "expected": "job_runs job:vt_pests",
+   "actual": "exit 0; job_runs 'job:vt_pests' ok",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP071-04",
+   "mo_ta": "Âm: khóa chồng",
+   "lenh": "python evidence/itacc_r10/g5/harness/hold_lock.py vt_pests",
+   "expected": "exit 75",
+   "actual": "exit 75; job_runs ok=false 'chạy chồng — bỏ lượt'",
+   "exit": 75,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "DP071-05",
+   "mo_ta": "Probe sống/chết",
+   "lenh": "python evidence/itacc_r10/g5/harness/probe_run.py <scratch>/zstate_probe",
+   "expected": "0 / !=0",
+   "actual": "/readyz HTTP 200 exit 0; cổng chết URLError exit 1; --dry-run 0 red_alerts",
+   "exit": 0,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "Máy giám sát NGOÀI server Bên B chạy webhook_probe theo lịch + kênh báo (runbook 10.6)",
+ "gioi_han": "Giám sát chạy cùng máy dev; máy giám sát độc lập ngoài server không chứng minh được; --notify không kiểm. Kiểm kỹ thuật nội bộ trên máy dev — không phải nghiệm thu hợp đồng/production.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP071-01.txt",
+   "sha256": "81132169e6063985e116a94e1f169bf1e6f72c42c2b502df5ed974b7f9b0483a"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP071-02.txt",
+   "sha256": "127c625e9e02b575569f190825b27dd0ea742f268ea3ce345eea6637209ac358"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP071-03.txt",
+   "sha256": "90cf9cc75791eb1e1e44f815ceeb54ce8db8420962ef57c68f597a195266bfd0"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP071-04.txt",
+   "sha256": "904b0492b7ab566c8beee4c9bf76ddd1ecf2a59cf2f74082999a9120b1df6cd2"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/runs/DP071-05.txt",
+   "sha256": "26ac5f2ee6df42708dd4ec28e9a97342a6fb3ad180d0450e246c7b04a7ef2a26"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/outputs/health-2026-10-23.md",
+   "sha256": "b3b78bdba843158352617b7a82c34220de14ceee039d542c017c927e4a68a999"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/check_media.py",
+   "sha256": "9dc52b8eefb2b5ddb13334435174e3083f32f7006c60a6ce8271c7fd20fe4c23"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_llm_run.py",
+   "sha256": "df4672d90c7d9faa51a83ed42a6e1d159bf8eda0bb5aa95860cf15bef3c6fe3f"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/fake_shopee.py",
+   "sha256": "9402db0719ea6f325d9d75b29af4ce22574dbae49dc2cfc7c24ad459534329cc"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gd_run.py",
+   "sha256": "84c646e3dd2019f6bc417e9071b5a422d8d37d7f10c0de077db3f303b1f21eaa"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/gw_probe.py",
+   "sha256": "8038c6f83facb83baab8eb2bb0fbb8b8cb1ab328082e7b6af0b718734f6cf981"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/hold_lock.py",
+   "sha256": "2a511640b93c4a5d3e2529f711f9b3ca07085bbb08b7be3f88383ffc230d1cab"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_criteria_g5.py",
+   "sha256": "6e64178e75ce85a9b8c265c33862e0395c7cdcfcc943ac19b4915e3b53e21dcb"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_fixtures.py",
+   "sha256": "d5117a5728c04a988c7d151150fa7e7153a45d59f3752eb470c16ed86aabb241"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_items_g5.py",
+   "sha256": "879a76de3bfb1285557de44386e17428ebf513bf1368f5a554b534fad9edfb82"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/make_pdf.py",
+   "sha256": "f68506f1c8158b51a4a4048c894df8bfbc88d4a14071cb6c3d2393464add3867"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/mod_run.py",
+   "sha256": "0ba336024389f8ea885b2d63bb2056bdee2c03b814a74eb12343daff901a31d1"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/probe_run.py",
+   "sha256": "c0f2386d31984f5e279392c44c55209837e13b5f93ded55d5c80709c6b3e5105"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/q.py",
+   "sha256": "6b1c569d67e265d3ad9593331334d286cdbc525eb304ca55128eb686e57d97ad"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/qr_run.py",
+   "sha256": "8dbe083a6119eee0d80849374b7b053ef5bb44cac67abd85bae74a94562571c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/role_probe.py",
+   "sha256": "c1364ecad746feaeddbb98de7853e542a757cc4ddbbaaa6cae8aada075375a07"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture.py",
+   "sha256": "3b5ae3fad7dac20dc7fab16d1d704833bbb85ba6554c4fd41717f5441bed497b"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/rollout_fixture2.py",
+   "sha256": "c530ef5bce990aaa8e0393e582192b93687501195dfcbfa32520a3c28be1c90e"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/tamper.py",
+   "sha256": "0c27a266124476bb3369ed975395dd2d27ec8e30207e31647a817eda7540a186"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/zalo_webhook.py",
+   "sha256": "de7da44a52a26cb27510f89ffc5659c59c22e53f4fd01d7db142760bf371866c"
+  },
+  {
+   "path": "evidence/itacc_r10/g5/harness/lib.sh",
+   "sha256": "c3d88bf45e775e5246126bb82b28042b0d4e6bc5e69a80b70e9d4d263c308a3d"
+  }
+ ],
+ "loi_san_pham": []
+}

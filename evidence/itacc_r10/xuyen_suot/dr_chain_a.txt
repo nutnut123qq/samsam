@@ -1,0 +1,114 @@
+## nguồn: verify chuỗi trước backup
+[ok] chuỗi nguyên vẹn (6 dòng)
+EXIT 0
+[verify] OK — chuỗi nhật ký nguyên vẹn
+EXIT 0
+## backup
+[done] samsam_itacc_r10_20261023_101753_vn.dump — 17117143 bytes, sha256 9ca7ef56b12ad2fb…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 100 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+[evidence] đã ghi bằng chứng đầu ra vào DB (file_output_evidence)
+EXIT 0
+## restore drill sản phẩm (đếm dòng)
+  ad_test_plans          manifest=      0 thực tế=      0  khớp
+  affiliate_attributions manifest=      0 thực tế=      0  khớp
+  affiliate_codes        manifest=      0 thực tế=      0  khớp
+  agent_action_log       manifest=      6 thực tế=      6  khớp
+  allocation_proposals   manifest=      0 thực tế=      0  khớp
+  anchor_batches         manifest=      0 thực tế=      0  khớp
+  anchor_receipts        manifest=      0 thực tế=      0  khớp
+  approval_queue         manifest=      0 thực tế=      0  khớp
+  approvals              manifest=      0 thực tế=      0  khớp
+  assets                 manifest=    219 thực tế=    219  khớp
+  audit_runs             manifest=      0 thực tế=      0  khớp
+  auto_policies          manifest=      0 thực tế=      0  khớp
+  b2b_quote_events       manifest=      0 thực tế=      0  khớp
+  b2b_requests           manifest=      0 thực tế=      0  khớp
+  bom_combos             manifest=      0 thực tế=      0  khớp
+  bom_items              manifest=      0 thực tế=      0  khớp
+  care_purchases         manifest=      0 thực tế=      0  khớp
+  channel_posts          manifest=      0 thực tế=      0  khớp
+  channel_snapshots      manifest=      0 thực tế=      0  khớp
+  chat_consents          manifest=      0 thực tế=      0  khớp
+  chat_kpi_facts         manifest=      0 thực tế=      0  khớp
+  chat_kpi_live          manifest=      0 thực tế=      0  khớp
+  chunks                 manifest=      0 thực tế=      0  khớp
+  chunks_internal        manifest=      0 thực tế=      0  khớp
+  claims_approved        manifest=     22 thực tế=     22  khớp
+  cogs_versions          manifest=      0 thực tế=      0  khớp
+  competitor_observations manifest=      0 thực tế=      0  khớp
+  consents               manifest=      0 thực tế=      0  khớp
+  contacts               manifest=      0 thực tế=      0  khớp
+  content_drafts         manifest=      0 thực tế=      0  khớp
+  dealer_ar              manifest=      0 thực tế=      0  khớp
+  dealer_price_obs       manifest=      0 thực tế=      0  khớp
+  dealers                manifest=      0 thực tế=      0  khớp
+  decision_log           manifest=      0 thực tế=      0  khớp
+  decisions              manifest=      0 thực tế=      0  khớp
+  document_fields        manifest=      0 thực tế=      0  khớp
+  documents              manifest=      0 thực tế=      0  khớp
+  eval_runs              manifest=      0 thực tế=      0  khớp
+  feature_rollout        manifest=      0 thực tế=      0  khớp
+  feature_rollout_events manifest=      0 thực tế=      0  khớp
+  file_output_evidence   manifest=      2 thực tế=      2  khớp
+  garden_media           manifest=      0 thực tế=      0  khớp
+  garden_media_releases  manifest=      0 thực tế=      0  khớp
+  garden_reminders       manifest=      0 thực tế=      0  khớp
+  garden_voice_drafts    manifest=      0 thực tế=      0  khớp
+  golden_discrepancies   manifest=     39 thực tế=     39  khớp
+  human_login_checks     manifest=      0 thực tế=      0  khớp
+  human_logins           manifest=      0 thực tế=      0  khớp
+  human_qr_roles         manifest=      0 thực tế=      0  khớp
+  image_assets           manifest=      0 thực tế=      0  khớp
+  intel_imports          manifest=      0 thực tế=      0  khớp
+  intel_items            manifest=      0 thực tế=      0  khớp
+  inventory_snapshots    manifest=      0 thực tế=      0  khớp
+  invoice_lines          manifest=      0 thực tế=      0  khớp
+  job_runs               manifest=      6 thực tế=      6  khớp
+  leads                  manifest=      0 thực tế=      0  khớp
+  llm_usage              manifest=      0 thực tế=      0  khớp
+  lot_origins            manifest=      0 thực tế=      0  khớp
+  lot_test_certificates  manifest=      0 thực tế=      0  khớp
+  market_alerts          manifest=      0 thực tế=      0  khớp
+  market_rows            manifest=      0 thực tế=      0  khớp
+  market_snapshots       manifest=      0 thực tế=      0  khớp
+  opex_entries           manifest=      0 thực tế=      0  khớp
+  ops_incident_events    manifest=      0 thực tế=      0  khớp
+  ops_incidents          manifest=      0 thực tế=      0  khớp
+  order_history          manifest=      0 thực tế=      0  khớp
+  orders                 manifest=      5 thực tế=      5  khớp
+  org_prospects          manifest=      0 thực tế=      0  khớp
+  output_reviews         manifest=      0 thực tế=      0  khớp
+  partner_post_scans     manifest=      0 thực tế=      0  khớp
+  plot_logs              manifest=      6 thực tế=      6  khớp
+  plots                  manifest=      3 thực tế=      3  khớp
+  price_list             manifest=     34 thực tế=     34  khớp
+  product_sync_log       manifest=      0 thực tế=      0  khớp
+  production_lots        manifest=      0 thực tế=      0  khớp
+  production_plan_lots   manifest=      0 thực tế=      0  khớp
+  production_plans       manifest=      0 thực tế=      0  khớp
+  products               manifest=     27 thực tế=     27  khớp
+  project_milestones     manifest=      0 thực tế=      0  khớp
+  qr_codes               manifest=      0 thực tế=      0  khớp
+  qr_signatures          manifest=      0 thực tế=      0  khớp
+  recon_results          manifest=      0 thực tế=      0  khớp
+  red_alert_acks         manifest=      0 thực tế=      0  khớp
+  red_alert_deliveries   manifest=      4 thực tế=      4  khớp
+  red_alerts             manifest=      5 thực tế=      5  khớp
+  report_outputs         manifest=      0 thực tế=      0  khớp
+  revenue_quarters       manifest=      0 thực tế=      0  khớp
+  san_suggestion_uses    manifest=      0 thực tế=      0  khớp
+  san_suggestions        manifest=      0 thực tế=      0  khớp
+  settlement_rows        manifest=      0 thực tế=      0  khớp
+  sim_runs               manifest=      0 thực tế=      0  khớp
+  sku_map                manifest=     15 thực tế=     15  khớp
+  sku_master             manifest=     13 thực tế=     13  khớp
+  sla_escalations        manifest=      0 thực tế=      0  khớp
+  social_mentions        manifest=      0 thực tế=      0  khớp
+  social_mentions_vendor manifest=      0 thực tế=      0  khớp
+  trends_related         manifest=      0 thực tế=      0  khớp
+  trends_weekly          manifest=      0 thực tế=      0  khớp
+  video_assets           manifest=      0 thực tế=      0  khớp
+  xnqc_dossiers          manifest=      0 thực tế=      0  khớp
+[drill] samsam_itacc_r10_20261023_101753_vn.dump → samsam_drill_20261023_101836_23b5: 100/100 bảng khớp, RTO 279.39s
+EXIT 0

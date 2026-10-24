@@ -1,0 +1,22 @@
+{
+ "ca": "l3_tat_thuong",
+ "argv": [
+  "python",
+  "-c",
+  "\nimport json, os, sys\nfrom pathlib import Path\nfrom connectors import zalo, channels\nfrom api import rag\nzalo.CONV_LOG = Path(sys.argv[2]) / 'conv.jsonl'\nzalo.SEEN_DB = Path(sys.argv[2]) / 'seen.db'\nrag.answer = lambda *a, **k: {'answer': rag.NO_DATA, 'sources': []}\nif sys.argv[3] == 'db_loi':\n    channels._connect = lambda: None\nout = []\nr = zalo._reply_turn('uid-r12-' + sys.argv[1], sys.argv[4], 'm-' + sys.argv[1], send=lambda u, t: out.append(t) or True)\nprint(json.dumps({'text': r.get('text'), 'sent': out}, ensure_ascii=False))\n",
+  "tat_thuong",
+  "C:\\Users\\hahuy\\AppData\\Local\\Temp\\claude\\D--code-samsam\\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\\scratchpad\\r12\\ext\\20261024T114544-995e\\l3",
+  "ok",
+  "Hũ 300ml còn hàng không shop?"
+ ],
+ "env_doi": [
+  "CHANNEL_HASH_SALT",
+  "DEPLOY"
+ ],
+ "bat_dau": "2026-10-24T11:47:48+07:00",
+ "ket_thuc": "2026-10-24T11:47:51+07:00",
+ "exit": 0,
+ "llm_calls": null,
+ "stdout_sha256": "7c8f009eb0bf61782ebb9351bb88cf22eb64523c85bb01cdabbab367049dd0df",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

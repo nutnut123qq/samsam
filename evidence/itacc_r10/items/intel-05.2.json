@@ -1,0 +1,153 @@
+{
+ "id": "intel-05.2",
+ "ten": "Thử giá combo",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Giả lập khách hàng: 'Thử ... giá combo trên khách hàng giả lập'",
+ "tieu_chi": [
+  "T1 `python -m agents.combo_price [--dry-run]` exit 0",
+  "T2 mục intel/combo_price_option created_by=agent:combo_price cho combo đủ dữ liệu: giá = ⌊Σlist×(1−p)⌋ làm tròn xuống 1000, đánh giá duoi_san/khong_tinh_duoc theo floor/giá vốn; combo có thành phần hạn chế → nhom_han_che không mục; thiếu giá list đã duyệt → thieu_du_lieu không mục",
+  "T3 ca âm: dry-run không ghi; chạy lại không nhân bản; tắt → exit 2",
+  "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_intel; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: không",
+ "dau_vao": [
+  {
+   "ten": "it_g1_golden_skus.json",
+   "sha256": "212b04647dc1d84ba9091366a65603fe5f4d6e8bb45c5c3a489c865f9c2ada0f",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "it_g1_bom.json",
+   "sha256": "df5627d3370d53692f1ab024fa6598385355c2d4ccf98d20344e9fa056f95687",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Fixture golden + BOM",
+   "lenh": "python -m pipelines.production bom --load evidence/itacc_r10/g1/harness/it_g1_bom.json",
+   "expected": "exit 0",
+   "actual": "golden_store --file fixture (self_declaration_ok=true 3 SKU mật ong) sku_changed=3; --approve-price 23,24,29,30 bởi 'Người Duyệt Giá Thử IT'; production bom --load 3 combo; v_promotable = 2 SKU mật ong có list đã duyệt",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Dry-run",
+   "lenh": "python -m agents.combo_price --dry-run",
+   "expected": "exit 0; IT-A de_xuat, IT-B nhom_han_che, IT-C thieu_du_lieu; không ghi",
+   "actual": "dry-run không ghi (3→3); IT-A de_xuat, IT-B nhom_han_che (savina TPBVSK chưa XNQC) — ĐÚNG. NHƯNG IT-C (mật ong 2 hũ: thực phẩm, tự công bố OK, chỉ THIẾU giá list đã duyệt) báo nhom_han_che thay vì thieu_du_lieu: v_promotable đã đòi giá list đã duyệt nên nhánh thieu_du_lieu trong evaluate() không bao giờ tới được (nhãn lý do sai)",
+   "exit": "0",
+   "ket_qua": "FAIL",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Chạy",
+   "lenh": "python -m agents.combo_price",
+   "expected": "exit 0; đúng 1 mục cho IT-A; giá các mức đúng công thức",
+   "actual": "1 mục #4 intel/combo_price_option cb:it-a-mat-ong-doi:shopee:<sha> created_by=agent:combo_price pending: Σlist 3.725.000, Σsàn 2.500.000; 5%→3.538.000, 10%→3.352.000, 15%→3.166.000 (= ⌊3.725.000×(1−p)⌋ làm tròn xuống 1.000, tính tay khớp); khong_tinh_duoc vì thiếu giá vốn đã duyệt (không kết luận không lỗ)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Chạy lại",
+   "lenh": "python -m agents.combo_price",
+   "expected": "0 mục mới",
+   "actual": "0 mục mới; vẫn 1",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Tắt",
+   "lenh": "python -m agents.combo_price",
+   "expected": "exit 2; bật lại",
+   "actual": "tắt intel-05.2 → [rollout] exit 2; bật lại",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Tách kiểm readiness và kiểm giá đã duyệt trong combo_price (lỗi THẤP — mục đề xuất chính đã đạt). Ngoài code: mức chiết khấu data/combo_price.json GIẢ ĐỊNH; giá vốn đã duyệt; thử trên khách giả lập chờ DPIA",
+ "gioi_han": "Golden fixture đổi self_declaration_ok cho SKU mật ong; không có giá vốn → chỉ kiểm khong_tinh_duoc (chưa kiểm dat/lo/duoi_san)",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_bom.json",
+   "sha256": "df5627d3370d53692f1ab024fa6598385355c2d4ccf98d20344e9fa056f95687"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_golden_skus.json",
+   "sha256": "212b04647dc1d84ba9091366a65603fe5f4d6e8bb45c5c3a489c865f9c2ada0f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/db_approval_queue_intel.txt",
+   "sha256": "55246a120d2dc67f7ef5fcde53c7cea375a2c46ce86403cc68de0b423ed155e5"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel052_C01b.txt",
+   "sha256": "375582f306651209b90da1cf0415cb769c741cc956c273e74135a57ca11bcd28"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel052_C02.txt",
+   "sha256": "1adfa03fec3f99491c270fc614dcccf89d62f09055771fc5b492d2148443bdc5"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel052_C03.txt",
+   "sha256": "0f47f788af86959966d7a64eb944c6664409cc4d076be6e0e8d79159130e287b"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel052_C04.txt",
+   "sha256": "8d2fe25f94092e873abefc7841b80249bf92864848bc77f2d6c3f30d296986f3"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel052_C05.txt",
+   "sha256": "e2acbc97dc2201660668a6e2dfe507f49f12ea42ce51191685fd5da6252f7778"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel052_C05a.txt",
+   "sha256": "c4384022fad41f36f09f0c1c0a82d35759c4cb2d60baaa18160512dcb4c0eff8"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel052_C05b.txt",
+   "sha256": "cb5538ddbc74302fbe428c58305cd2a2db75daea5a53215e33baa2c98eb9fde5"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "g1-L6",
+   "muc_do": "THẤP",
+   "tieu_de": "combo_price: nhánh thieu_du_lieu không tới được — thành phần thiếu giá list đã duyệt bị báo nhom_han_che",
+   "tai_hien": [
+    "golden fixture mật ong 2 hũ tự công bố OK nhưng list chưa duyệt; combo it-c → python -m agents.combo_price --dry-run (out/intel052_C02.txt)"
+   ],
+   "expected": "thieu_du_lieu ('thiếu giá list ĐÃ DUYỆT của <sku>')",
+   "actual": "nhom_han_che vì v_promotable đã đòi giá list đã duyệt trước bước evaluate() kiểm giá",
+   "evidence": [
+    "out/intel052_C02.txt"
+   ]
+  }
+ ],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from ad_test_plans where created_by = 'Người Thử IT' and budget_vnd = 150000 and budget_vnd <= cap_vnd",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where a.status = 'pending' and a.block = 'marketing' and a.object_type = 'ad_campaign'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue a join ad_test_plans p on a.object_id = 'adtest-' || p.id where a.status = 'pending' and a.block = 'finance' and a.object_type = 'budget_change' and a.created_by = 'agent:mkt05_budget'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type in ('ad_campaign', 'budget_change')",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ }
+]

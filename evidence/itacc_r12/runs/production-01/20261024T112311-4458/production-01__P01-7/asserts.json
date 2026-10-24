@@ -1,0 +1,52 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\production-01\\20261024T112311-4458\\production-01__P01-7\\out/sx-bantin-tuan-2026-10-23.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/production-01/20261024T112311-4458/production-01__P01-7/out/sx-bantin-tuan-2026-10-23.md",
+    "sha256": "e7ee3f346567d9e5641d1a0a0af4c14d785dbeef0ed48f5a904850d249927c82"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-01\\20261024T112311-4458\\production-01__P01-7\\out/sx-bantin-tuan-2026-10-23.md",
+  "re": "CHẠY THỬ",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-01\\20261024T112311-4458\\production-01__P01-7\\out/sx-bantin-tuan-2026-10-23.md",
+  "re": "## Thiếu hàng theo mốc chốt[\\s\\S]*tồn \\d+",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-01\\20261024T112311-4458\\production-01__P01-7\\out/sx-bantin-tuan-2026-10-23.md",
+  "re": "IT-LOT-00[1-4]",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-01\\20261024T112311-4458\\production-01__P01-7\\out/sx-bantin-tuan-2026-10-23.md",
+  "re": "## Tiến độ sản xuất[\\s\\S]*KH-IT-001",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) >= 1 from report_outputs where feature_id = 'production-01' and name = 'sx-bantin-tuan-2026-10-23.md'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

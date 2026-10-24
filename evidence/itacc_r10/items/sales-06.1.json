@@ -1,0 +1,280 @@
+{
+ "id": "sales-06.1",
+ "ten": "Giám sát giá và phá giá",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Giám sát giá và đơn hàng: 'Phát hiện lệch giá, đại lý phá giá'",
+ "tieu_chi": [
+  "`ingest.dealer_price --file --by` nạp dealer_price_obs; cùng file → skip; header/URL lỗi, đại lý lạ → exit 1 0 dòng",
+  "`kd_price --dealer-watch` → dealer_price_alert created_by agent:kd_price cho giá < floor golden; file --sample không sinh; chạy lại không nhân đôi",
+  "`kd_price --run` trên listing fixture → market_alert_s1 (below_floor) / price_change created_by agent:kd_price; --dry-run 0 ghi",
+  "`sales_director --run` → market_alert_s1/s2 (từ market_alerts) và price_review (golden_discrepancies) created_by agent:sales_director",
+  "Không đổi giá: price_list không đổi sau các lệnh",
+  "Tắt → loader dealer_price exit 2"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: không LLM",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s061_dealer.csv",
+   "sha256": "850ca514f541ba910da5b4d3fac08d957cb200fe7b6a43ba3b1191a010792be8",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s061_dealer_bad_url.csv",
+   "sha256": "2ec8a3e565d96bc4143c7bca667dc38387485633e9ae623928e8494c077b23eb",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s061_dealer_unknown.csv",
+   "sha256": "45005ad1e34dc33faed1f4079ce26231e67b6438e12e2344abcb003fdf740f0a",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s061_dealer_sample.csv",
+   "sha256": "673ce19fd5768e181be9e1a759d898e60c67c672c1bd0d06be9cabfe7ea7bb93",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/s03_listing_shopee_v2.csv",
+   "sha256": "ee255a6d5296af2ae44ce136978eb5b1acc4bfbfd7ecdf85bcd35e3d72d7dfd1",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/golden_fixture.json",
+   "sha256": "2f33ddde4bec5f1d828a0b82fdadd5f00a05f3fbb3486580e06475be6106bc4e",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "S061-C01",
+   "mo_ta": "Nạp giá đại lý",
+   "lenh": "python -m ingest.dealer_price --file evidence/itacc_r10/g2/fixtures/s061_dealer.csv --by MXH Thử IT ;; python -m ingest.dealer_price --file evidence/itacc_r10/g2/fixtures/s061_dealer.csv --by MXH Thử IT",
+   "expected": "2 dòng; lần 2 skip",
+   "actual": "exit 0 nạp 2; lần 2 '[skip] file đã nạp'; dealer_price_obs created_by 'MXH Thử IT' source manual_export",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S061-C02",
+   "mo_ta": "File lỗi",
+   "lenh": "python -m ingest.dealer_price --file evidence/itacc_r10/g2/fixtures/s061_dealer_bad_url.csv --by MXH Thử IT ;; python -m ingest.dealer_price --file evidence/itacc_r10/g2/fixtures/s061_dealer_unknown.csv --by MXH Thử IT",
+   "expected": "exit 1 0 dòng",
+   "actual": "URL chứa SĐT → exit 1 (không connect); đại lý lạ → exit 1 'không nạp dòng nào'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S061-C03",
+   "mo_ta": "dealer-watch",
+   "lenh": "python -m ingest.dealer_price --file evidence/itacc_r10/g2/fixtures/s061_dealer_sample.csv --by MXH Thử IT --sample ;; python -m agents.kd_price --dealer-watch --dry-run ;; python -m agents.kd_price --dealer-watch ;; python -m agents.kd_price --dealer-watch",
+   "expected": "dealer_price_alert agent:kd_price; lần 2 0; mẫu không cảnh báo",
+   "actual": "dry-run 0 ghi; run → #54 dealer_price_alert dp:DLTHU01:saphraton-20v:shopee:2026-10-23 (200.000 < floor 236.000 đã duyệt, chỉ mã + tên miền nguồn); lần 2 0 mới; quan sát --sample (150.000) không được tính",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S061-C04",
+   "mo_ta": "kd_price run",
+   "lenh": "python -m agents.kd_price --run --dry-run ;; python -m agents.kd_price --run ;; python -m agents.kd_price --run",
+   "expected": "market_alert_s1/price_change agent:kd_price; dry-run 0 ghi",
+   "actual": "dry-run 0 ghi; run → #55 market_alert_s1 a5:below_floor (giá 200.000 < floor); 2 list_deviation trùng market_alerts price_mismatch → chỉ báo cáo (đúng thiết kế); lần 2 0 mới",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S061-C05",
+   "mo_ta": "sales_director",
+   "lenh": "python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/leads_live -m agents.sales_director --run ;; python evidence/itacc_r10/g2/harness/run_mod.py --data-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/conv -m agents.sales_director --run",
+   "expected": "market_alert_s1/s2 + price_review agent:sales_director",
+   "actual": "#46/#48 market_alert_s2 + #47 market_alert_s1 (ma:<id>:<opened_at>) và 17 price_review (gd:<id>) created_by agent:sales_director, payload template không chép tiêu đề",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S061-C06",
+   "mo_ta": "Không đổi giá",
+   "lenh": "(xem evidence)",
+   "expected": "price_list không đổi",
+   "actual": "md5 price_list trước/sau kd_price/dealer-watch giống nhau (42 dòng)",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S061-C07",
+   "mo_ta": "Tắt",
+   "lenh": "python -m pipelines.rollout --disable sales-06.1 --by Người Thử IT --note kiểm nhánh tắt r10 g2 ;; python -m ingest.dealer_price --file evidence/itacc_r10/g2/fixtures/s061_dealer_sample.csv --by MXH Thử IT ;; python -m agents.kd_price --dealer-watch",
+   "expected": "exit 2",
+   "actual": "dealer_price exit 2 '[rollout] ... KHÔNG nạp'; dealer-watch exit 2 '[rollout] ... không sinh đầu ra'",
+   "exit": 2,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "price_change agent:kd_price không tái hiện: list_deviation luôn trùng market_alerts price_mismatch đang mở (thiết kế chỉ báo cáo) và floor golden ≥ ~67–79% list nên listing_promo_over_cap (>40%) không đạt; price_review sinh từ golden_discrepancies của golden FIXTURE; nguồn giá đại lý tự động chưa có (chỉ file quan sát tay); ngưỡng GIẢ ĐỊNH.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post.py",
+   "sha256": "09d71906afc3419051c2a7e3bfca166a96497b75be67087efc4640c102e6d9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post2.py",
+   "sha256": "1ab72f65b0881f3e20f7da54403a360f526728a95638f6dce6c6cf6ab872314e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/case.py",
+   "sha256": "0d5e5ea91967bf225c4ff3c733a5817c1ff87bb36095d808aa546fa8186b1340"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fake_llm.py",
+   "sha256": "adbc2f9799ed0ac98bf5ca1f83c7c11c2900579da8dc9bc2aa4ca3e91481cc81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fu_probe.py",
+   "sha256": "cd000fe41aa6172cf25198596a21d765938df14d3d1c2c9721812bc926b84953"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_golden_fixture.py",
+   "sha256": "82dcec52b25e0cb39b9111a0d2031d75c3d2b1c72ef60fcc71ebd747fdf0abb1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_items.py",
+   "sha256": "dfe2f77d4674e3134ba3fe9b26b320d6e1f8c54bebff43405b10cc98357b72c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/q.py",
+   "sha256": "1f522e8a212386aa99f6b6b44c4831b6aface0ecf34266af1c39eff527f274c1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/run_mod.py",
+   "sha256": "a5e9c3d3fdf5ad9706b50d5c01e7f1a66d8ab94ca05f8d449d57e6648519391b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/seed_chunk.py",
+   "sha256": "e2c8e72b3c8bd29336aa00af4138a19700aa0721aa993ef1286d2b235ad47b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/shift_orders.py",
+   "sha256": "b630f0394d2543a79471f4174f56d87461bb4c687718ff5d3da83a0d16791afe"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/zalo_e2e.py",
+   "sha256": "f6f1700f4569219eff9446fce3724d65f259fbddaba0930cc0ccc876ee416ae4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S01-C10-run1.txt",
+   "sha256": "d972050dfa0b838b0a45618464e5d05ea196744e979199686be84993594d8ddc"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S01-db.json",
+   "sha256": "bb09d753fb8334cf1d18b7edbfee9dcd5708f59bfe85d5efbcbf58e8d6a6caea"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S041-C04a.txt",
+   "sha256": "fecd54ffc4453efd7efdaad5067f16648a50f9e95da8a88588915afb8714730f"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C01a.txt",
+   "sha256": "dce9fbd12f78606ec393276276e4bd3839895af0f809c57cc90ba6df90eb2fdd"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C01b.txt",
+   "sha256": "271804c208ea8b1a2ee3255e7e19a87d937b697bd8cfb5b2b739734606f98173"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C02a.txt",
+   "sha256": "2f1a8352d0bc78709810952e1738b0887e3d8bdc2fff790bad2adbe62ef7b2c8"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C02b.txt",
+   "sha256": "cdc73a8fef79d9a2746df152da1cf2b8455cfca91b727837ca60c5d1a81cb41a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C03-db.json",
+   "sha256": "573a5ebf9c611940f55d008f634420ee3274c081e20c2e85a0422b690fb0963a"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C03a.txt",
+   "sha256": "054f30a515f67fc9e50e0b6068f12c99668cd7d4cfefe75332dca042c56f7794"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C03b.txt",
+   "sha256": "0ec2225907ccbee8ad56826b7abac48e1339868212e54e91a74687ed0939851c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C03c.txt",
+   "sha256": "2e181f9912ceb43a3c2d0e0bedc66614de3142f648f8afbb9916eccda76a71ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C03s.txt",
+   "sha256": "bbe2939a58426b3b9693c673249484bff93df2a094378a0c4b5804e0cabc66a3"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C04-db.json",
+   "sha256": "97ede81020298b122fa6d7931af5f075f4432e51c3d0ee1a28bf2d563d5bfe03"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C04a.txt",
+   "sha256": "2210b14952a567b442c7577dd9549f89e8a4a7923737b4e21a1157b7fc020f22"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C04b.txt",
+   "sha256": "b037b7b8466fc6e168a97ee0f8e62c5d4e1eb96632565ebcdcb2f3d49ad31599"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C04c.txt",
+   "sha256": "3a9cdd3693e62a34230d9feed47e4092bcf267e9c6a3d336176f804e91e33350"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C06-after.json",
+   "sha256": "1f4e8e307e564de97096e18b0b0845cece8b67860cdf415c8bbd14d1c26cb8dc"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C06-before.json",
+   "sha256": "1f4e8e307e564de97096e18b0b0845cece8b67860cdf415c8bbd14d1c26cb8dc"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C07.txt",
+   "sha256": "406ba23772981f2db6ae770467930897cf677d3d82cee7e52ae53bd7b5321fb9"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-C07b.txt",
+   "sha256": "d828ee8789c50325f6d81f1546fba853b38591f618f569000c83131741440bce"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-obs.json",
+   "sha256": "fccddac462d35c62c0fdb34ebbdfa2e287b828a06bab1b8f9708337cdfd634ba"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S061-sd-alerts.json",
+   "sha256": "737fcd931c8a1f5ea3309f37fab1623cc8eda182121d866d045f01f4bf6f0f1e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt",
+   "sha256": "6318bbc062812637309bbc78e092657139921c2ff309792bd10b70bd6a306179"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt",
+   "sha256": "0627f43797cc5b00090dcdaddc96bf287ec3a0575fe234785a105ab05814f01c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/TAT-disable-sales-06.1.txt",
+   "sha256": "882267b797df39c2860509e27874cfb8e916453f03b44439bf5fa85d8943702b"
+  }
+ ],
+ "loi_san_pham": [],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

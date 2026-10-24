@@ -1,0 +1,11 @@
+# ca P01-1
+# gio 2026-10-23T10:32:49+07:00
+# lenh python -m ingest.inventory_csv --file evidence/itacc_r10/g4/fixtures/inv_bad.csv
+# exit 1
+--- stdout ---
+[err] dòng 2: qty (số nguyên 0..2000000000)
+[err] dòng 3: sku_key (không có trong golden); captured_at (YYYY-MM-DD)
+[err] 2 lỗi — không connect, không nạp gì.
+
+--- stderr ---
+

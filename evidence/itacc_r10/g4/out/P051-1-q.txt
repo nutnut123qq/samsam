@@ -1,0 +1,5 @@
+# db samsam_itacc_r10_prod
+> select collection, doc_id, chunk_index, approved_by, doc_version, left(content,80) from chunks_internal
+["internal:sx", "rd-baoquan-thu-it", 0, "GĐ Sản xuất Thử IT", 1, "DOI: 10.1234/thu-it.2026.001\n# Tài liệu R&D Thử IT — bảo quản sâm khô\n\nSâm khô s"]
+> select agent_id, model, ok, feature_id, cost_usd from llm_usage order by id
+["ingest", "openai/text-embedding-3-small", true, "data_platform-03", "0.000002"]

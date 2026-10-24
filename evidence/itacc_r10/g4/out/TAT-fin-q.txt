@@ -1,0 +1,13 @@
+# db samsam_itacc_r10_fin
+> select feature_id, stage from feature_rollout where stage='tat' order by 1
+["finance-01", "tat"]
+["finance-02", "tat"]
+["finance-03.1", "tat"]
+["finance-03.2", "tat"]
+["finance-03.3", "tat"]
+["finance-04.1", "tat"]
+["finance-04.2", "tat"]
+["finance-05.2", "tat"]
+["finance-06", "tat"]
+> select count(*), max(reconciled_at) from recon_results
+[9, "2026-10-23 03:23:16.221544+00:00"]

@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'ad_result'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where created_at >= (select max(ts) from feature_rollout_events where feature_id = 'marketing-03.2' and kind = 'disable')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

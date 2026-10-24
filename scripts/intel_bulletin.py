@@ -361,6 +361,17 @@ def main(argv=None, now: datetime | None = None) -> int:
         start, end = period_bounds(args.period, day or now)
     except OverflowError:   # --date 9999-12-31: cuối kỳ vượt năm 9999
         ap.error("--date ngoài khoảng tính được kỳ")
+    # r12 G1-L1/RB: bản tin (intel-01.1) và gợi ý chủ đề (intel-01.2) kiểm
+    # cổng RIÊNG, TRƯỚC khi đọc/ghi — tắt 1 phần không làm mất phần kia.
+    from pipelines import rollout
+    bname = f"intel-bulletin-{args.period}-{start:%Y-%m-%d}.md"
+    blk_b = rollout.blocked(None, "bản tin", report=bname)
+    blk_s = (rollout.blocked(None, "gợi ý chủ đề Marketing", fid="intel-01.2")
+             if args.suggest else None)
+    if blk_b and (blk_s or not args.suggest):
+        for why in filter(None, (blk_b, blk_s)):
+            rollout.say_blocked(why)
+        return rollout.EXIT_BLOCKED
     conn = connect()
     if conn is None:
         print("[err] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
@@ -368,7 +379,7 @@ def main(argv=None, now: datetime | None = None) -> int:
         return 1
     try:
         data = collect(conn, start, end, now)
-        if args.suggest:
+        if args.suggest and not blk_s:
             data["suggested"] = suggest(conn, args.period, start, end,
                                         data["groups"])
     except director.DirectorConfigError as e:
@@ -382,7 +393,7 @@ def main(argv=None, now: datetime | None = None) -> int:
         with suppress(Exception):
             conn.close()
     summaries, n_fail = {}, 0
-    if args.llm:
+    if args.llm and not blk_b:      # r12: bản tin tắt → không gọi AI tóm tắt
         cfg, _ = load_sources(SOURCES_FILE)
         if cfg is not None and cfg["llm"].get("enabled") is True:
             summaries, n_fail = summarize(data["groups"])
@@ -390,6 +401,11 @@ def main(argv=None, now: datetime | None = None) -> int:
             print("[warn] LLM tắt — chờ Pháp chế xác nhận (bản tin tất "
                   "định)", flush=True)
     text = render(data, start, end, summaries, args.period)
+    if blk_b:
+        new_sug = sum(1 for _, _, new in data["suggested"] if new)
+        print(f"[done] gợi ý chủ đề: suggested_new={new_sug} "
+              f"suggested_total={len(data['suggested'])}", flush=True)
+        return rollout.say_blocked(blk_b)
     try:
         # P8.4: tin thu thật (intel_items, không đường mẫu).
         path = write_report(text, REPORTS_DIR, f"intel-bulletin-{args.period}"
@@ -405,6 +421,8 @@ def main(argv=None, now: datetime | None = None) -> int:
           f"suggested_total={len(data['suggested'])} "
           f"llm_summaries={sum(1 for v in summaries.values() if v)} "
           f"llm_guardrail_fail={n_fail}", flush=True)
+    if blk_s:
+        return rollout.say_blocked(blk_s)
     return 0
 
 

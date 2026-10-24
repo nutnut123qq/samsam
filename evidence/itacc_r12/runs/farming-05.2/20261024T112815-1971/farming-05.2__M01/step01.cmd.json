@@ -1,0 +1,38 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.vt_thuhoach",
+  "--date",
+  "2026-10-24",
+  "--submit"
+ ],
+ "env_doi": [
+  "PROBE_CALL_MAIN",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:28:33+07:00",
+ "ket_thuc": "2026-10-24T11:28:36+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\] .*farming-05\\.2",
+   "khop": true
+  },
+  {
+   "out_re": "^(?![\\s\\S]*Traceback)[\\s\\S]*",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "d7e084e25b6f19c5b1fabe5a682e057de2bc507868f5addb238fe8068f53855b",
+ "stderr_sha256": "365f2ef0985825606421da2b9d7429e2f3365c5c358c519ed1c5c3ecab6ab42c"
+}

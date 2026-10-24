@@ -1,0 +1,17 @@
+"""HARNESS r12 nhóm sales_a — bản chuyển của r10 g2 `seed_chunk.py`: FIXTURE 1 chunk KB công khai (doc_id it-g2-fixture,
+URL example.com) với embedding 8 chiều = run_sa.VEC (= r10 fake_llm.VEC) để retrieve thật chạy với embedding fake.
+Đổi so với r10: VEC viết thẳng (r10 import từ fake_llm.py — tệp evidence chỉ có đuôi .py.txt). Không phải dữ liệu thật."""
+import os
+import sys
+
+import psycopg
+
+sys.stdout.reconfigure(encoding="utf-8")
+VEC = [0.5, 0.1, 0.2, 0.3, 0.1, 0.4, 0.2, 0.1]
+c = psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5)
+c.execute("insert into chunks (doc_id, chunk_index, source_url, title, lang, content, embedding) values (%s,0,%s,%s,'vi',%s,%s)"
+          " on conflict (doc_id, chunk_index) do nothing",
+          ("it-g2-fixture", "https://example.com/it-g2/mat-ong-sam-300ml", "Mật ong sâm 300ml (fixture Thử IT)",
+           "Mật ong sâm 300ml là thực phẩm đóng hũ 300ml của Sâm Sâm (dữ liệu fixture thử IT).", VEC))
+c.commit()
+print("chunks", c.execute("select count(*) from chunks").fetchone()[0])

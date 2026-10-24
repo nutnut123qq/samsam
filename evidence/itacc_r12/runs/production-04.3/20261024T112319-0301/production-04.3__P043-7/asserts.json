@@ -1,0 +1,44 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\production-04.3\\20261024T112319-0301\\production-04.3__P043-7\\out/sx-canhan-2026-10-23.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/production-04.3/20261024T112319-0301/production-04.3__P043-7/out/sx-canhan-2026-10-23.md",
+    "sha256": "5088a83736c73416d330c348ac9115bbbd5db349778b5ec70b2e21aa4d0cac8d"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-04.3\\20261024T112319-0301\\production-04.3__P043-7\\out/sx-canhan-2026-10-23.md",
+  "re": "## Hàng cận hạn \\(FEFO\\)(?=[\\s\\S]*IT-LOT-001)(?=[\\s\\S]*IT-LOT-002)",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-04.3\\20261024T112319-0301\\production-04.3__P043-7\\out/sx-canhan-2026-10-23.md",
+  "re": "IT-LOT-00[34]",
+  "expect": false,
+  "actual": false,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\production-04.3\\20261024T112319-0301\\production-04.3__P043-7\\out/diag/sx-canhan-2028-12-01.md",
+  "re": "## Hàng cận hạn \\(FEFO\\)[^#]*không có",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) >= 1 from report_outputs where feature_id = 'production-04.3' and name = 'sx-canhan-2026-10-23.md'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

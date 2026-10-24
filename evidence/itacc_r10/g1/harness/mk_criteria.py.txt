@@ -1,0 +1,287 @@
+"""Sinh evidence/itacc_r10/criteria/g1.json (pha 1, TRƯỚC khi chạy ca)."""
+import json
+from pathlib import Path
+
+OUT = Path(r"D:\code\samsam\evidence\itacc_r10\criteria\g1.json")
+T4 = "T4 không gửi/đăng ra ngoài, không tự duyệt/quyết thay người (mục ở trạng thái pending/chỉ báo cáo); dữ liệu fixture thử IT không tính là vận hành"
+TRIAL = "Tính năng chưa vận hành (rollout chạy thử) → báo cáo .md mang nhãn 'CHẠY THỬ — KHÔNG GỬI' / mục hàng duyệt vẫn sinh nhưng không dùng ra ngoài"
+
+
+def c(ma, mo_ta, ep, dv, exp):
+    return {"ma": ma, "mo_ta": mo_ta, "entry_point": ep, "dau_vao": dv,
+            "expected": exp}
+
+
+items = []
+
+items.append({"id": "ceo-01", "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.cockpit --import/--collect` + `python -m agents.ceo_report --period week --ref 2026-10-12 --submit --out-dir <scratch>` chạy trên DB thử, exit 0",
+    "T2 đúng 1 mục approval_queue block=ceo object_type=weekly_report created_by=agent:ceo_report status=pending; payload chứa số GMV/đơn từ CSV fixture đúng giá trị (định dạng VN) + cột Nguồn `manual_export · <ref file> · chụp <ngày>`; chỉ số không có số hiện `[chưa có dữ liệu]` (không 0); có 3 section Tiến độ/Rủi ro/Audit; dòng ĐỎ khi chưa có người nhận cảnh báo độc lập",
+    "T3 ca âm: CSV lỗi ô → exit 1 & 0 dòng; nạp lại khác số → exit 1 không ghi đè; kỳ chưa đóng → exit 2 không file/mục; nộp lại cùng kỳ không tạo mục trùng; tính năng tắt → không sinh mục",
+    T4, TRIAL],
+    "ca": [
+    c("C01", "Nạp CSV số kênh ngoài (fixture) 2 tuần đã đóng", "python -m pipelines.cockpit --import <it_g1_cockpit.csv> --by 'Người Thử IT'", "CSV channel,metric_id,period_kind,period_start,value: sales.gmv_vnd/orders_completed shopee tuần 2026-10-05 & 2026-10-12", "exit 0, inserted=N, channel_snapshots có N dòng source=manual_export"),
+    c("C02", "Nạp lại đúng file (idempotent)", "cùng lệnh C01", "cùng file", "exit 0, inserted=0 unchanged=N, số dòng không đổi"),
+    c("C03", "Nạp file sửa 1 giá trị đã nạp", "cockpit --import <it_g1_cockpit_sua.csv>", "1 ô value khác", "exit 1, 0 dòng mới, giá trị cũ giữ nguyên"),
+    c("C04", "CSV ô lỗi (chữ trong value)", "cockpit --import <it_g1_cockpit_loi.csv>", "value='abc'", "exit 1, thông báo dòng/cột không in giá trị, 0 dòng"),
+    c("C05", "Chụp số nội bộ tuần đã đóng", "python -m pipelines.cockpit --collect --period week --ref 2026-10-12", "DB thử", "exit 0; channel_snapshots có dòng channel=noi_bo source=api source_ref db:/file:"),
+    c("C06", "Lập + nộp báo cáo tuần", "python -m agents.ceo_report --period week --ref 2026-10-12 --submit --out-dir <scratch>", "snapshot C01/C05", "exit 0; file ceo-2026-W42.md có nhãn CHẠY THỬ; 1 mục ceo/weekly_report pending, payload kiểm như T2"),
+    c("C07", "Kỳ chưa đóng", "ceo_report --period week --ref 2026-10-21 --submit", "tuần hiện tại", "exit 2, không file mới, không mục mới"),
+    c("C08", "Nộp lại cùng kỳ", "lặp C06", "-", "không có mục weekly_report pending thứ 2 cho cùng kỳ (exit ≠0 hoặc bỏ qua)"),
+    c("C09", "Tính năng ceo-01 tắt", "rollout --disable ceo-01 rồi ceo_report --period week --ref 2026-10-05 --submit", "-", "không mục weekly_report mới (exit ≠0); bật lại sau ca"),
+]})
+
+items.append({"id": "ceo-02.1", "tieu_chi_cu_the": [
+    "T1 `python -m agents.da_pmo --seed/--board --submit/--set-status/--propose-due/--apply-due` exit đúng",
+    "T2 mục ceo/weekly_board created_by=agent:da_pmo pending: bảng có mốc quá hạn chưa xong tô **TRỄ** + mục 'Mốc trễ' + 'Mốc chưa có ngày'; mục ceo/milestone_change created_by=NGƯỜI đề xuất, payload code/old_due/new_due; hạn chỉ đổi sau khi người khác duyệt",
+    "T3 ca âm: xong không evidence bị từ chối; tự duyệt đề xuất của mình bị chặn; apply-due ở chạy thử bị chặn; nộp bảng trùng tuần không nhân bản; tắt tính năng không sinh mục",
+    T4],
+    "ca": [
+    c("C01", "Nạp sổ mốc", "python -m agents.da_pmo --seed", "data/projects/milestones.json (repo, chỉ đọc)", "exit 0, project_milestones có các mốc có ngày"),
+    c("C02", "Bảng tuần + nộp", "da_pmo --board --date 2026-11-10 --submit --out-dir <scratch>", "ngày giả định sau hạn DA-01/MOC-A", "exit 0; 1 mục ceo/weekly_board agent:da_pmo pending; payload có **TRỄ** cho mốc hạn < 2026-11-10 chưa xong + 'Mốc chưa có ngày'"),
+    c("C03", "Nộp lại cùng tuần", "lặp C02", "-", "exit 1, không mục thứ 2"),
+    c("C04", "Đánh dấu xong thiếu bằng chứng", "da_pmo --set-status DA-01 --status xong --by 'Người Thử IT'", "-", "exit 1, trạng thái không đổi"),
+    c("C05", "Đánh dấu xong có bằng chứng", "da_pmo --set-status DA-01 --status xong --evidence 'BB-THU-IT-01' --by 'Người Thử IT'", "-", "exit 0; DB status=xong evidence lưu; bảng sau không còn TRỄ cho DA-01"),
+    c("C06", "Đề xuất đổi hạn", "da_pmo --propose-due MOC-A --due 2026-11-14 --by 'Người Đề Xuất Thử IT'", "-", "exit 0; mục milestone_change created_by='Người Đề Xuất Thử IT'; due_date MOC-A chưa đổi"),
+    c("C07", "Tự duyệt đề xuất của mình", "python -m pipelines.approval_queue --approve <id> --by 'Người Đề Xuất Thử IT'", "-", "bị từ chối, status vẫn pending"),
+    c("C08", "Người khác duyệt rồi áp hạn ở chạy thử", "approval_queue --approve <id> --by 'Người Duyệt Thử IT'; da_pmo --apply-due <id> --by 'Người Duyệt Thử IT'", "-", "approve ok; apply-due exit 1 (rollout chạy thử chặn dùng), due_date không đổi"),
+    c("C09", "Áp hạn khi ép van_hanh (FIXTURE _FORCE_MODE) + chạy lại", "wrapper đặt rollout._FORCE_MODE='van_hanh' gọi da_pmo.main(['--apply-due',id,...]) ×2", "-", "lần 1 exit 0 due=2026-11-14; lần 2 exit 0 no-op"),
+    c("C10", "Tính năng tắt", "rollout --disable ceo-02.1; da_pmo --board --date 2026-11-17 --submit", "-", "không mục weekly_board mới; bật lại"),
+]})
+
+items.append({"id": "ceo-02.2", "tieu_chi_cu_the": [
+    "T1 `python -m agents.ceo_decisions --record/--follow/--propose/--list` exit đúng",
+    "T2 decision_log: dòng quyet_dinh có recorded_by = người, decided_by, basis; cap_nhat là dòng MỚI (không UPDATE); --propose liệt kê mục ceo đã quyết chưa vào sổ và không ghi gì; --list có mục chờ quyết/chờ ký",
+    "T3 ca âm: --by agent: bị chặn trước connect; căn cứ chưa quyết bị từ chối; căn cứ trùng bị từ chối; ngày tương lai bị từ chối; UPDATE/DELETE sổ bị DB chặn; xong thiếu bằng chứng bị chặn; tắt ceo-02.2 KHÔNG chặn người ghi",
+    T4],
+    "ca": [
+    c("C01", "Ghi quyết định căn cứ văn bản", "ceo_decisions --record --topic 'Chốt lịch thử IT' --decision 'Đồng ý lịch thử' --decided-by 'TGĐ Thử IT' --note 'Biên bản họp thử IT số 01' --by 'Thư ký Thử IT' --due 2026-10-30", "-", "exit 0; 1 dòng quyet_dinh recorded_by='Thư ký Thử IT' decided_by='TGĐ Thử IT' basis_kind=van_ban"),
+    c("C02", "Người ghi là agent", "ceo_decisions --record ... --by 'agent:x'", "-", "exit 2, 0 dòng"),
+    c("C03", "Căn cứ mục hàng duyệt chưa quyết", "ceo_decisions --record --basis approval_queue:<pending> ...", "-", "exit 1, 0 dòng"),
+    c("C04", "Đề xuất từ mục đã duyệt", "approve 1 mục ceo; ceo_decisions --propose", "-", "exit 0; in mục đó; decision_log không đổi"),
+    c("C05", "Ghi theo căn cứ đã duyệt + ghi trùng", "ceo_decisions --record --basis approval_queue:<id> ... ×2", "-", "lần 1 exit 0 decided_by = người duyệt mục; lần 2 exit 1"),
+    c("C06", "Theo dõi thực hiện", "--follow <id> --status xong (không note) ; --follow <id> --status xong --note 'BB nghiệm thu thử IT' ; --follow lần nữa", "-", "lần 1 exit 2; lần 2 exit 0 thêm dòng cap_nhat; lần 3 exit 1 (đã đóng)"),
+    c("C07", "Ngày quyết tương lai", "--record ... --date 2027-01-01", "-", "exit 1"),
+    c("C08", "Append-only ở DB", "SQL UPDATE/DELETE decision_log (login owner thử)", "-", "DB từ chối (trigger)"),
+    c("C09", "Tắt ceo-02.2 không chặn người ghi", "rollout --disable ceo-02.2; --record van_ban", "-", "exit 0 (dòng người ghi); bật lại"),
+    c("C10", "Danh sách chờ quyết/chờ ký", "ceo_decisions --list", "-", "exit 0; có mục chờ quyết (pending khối ceo) và mục 'Chờ ký' mốc can_ky"),
+]})
+
+items.append({"id": "ceo-03", "tieu_chi_cu_the": [
+    "T1 `python -m agents.ceo_risk --report --now <ISO> --out-dir <scratch>` exit 0",
+    "T2 file ceo-risk-<ngày>.md: rủi ro xếp mức ĐỎ/VÀNG/XANH đúng luật với fixture (XNQC hết hạn → ĐỎ, sắp hết hạn → VÀNG, đã nộp chờ cấp → XANH, DPIA chưa ký → ĐỎ, tuyến cảnh báo → ĐỎ, chỉ dẫn địa lý/nhóm hạn chế → VÀNG), ĐỎ xếp trước; có nguồn/owner vai trò; sổ report_outputs ghi feature ceo-03",
+    "T3 ca âm: chỉ đọc (không đổi bảng nghiệp vụ); cấu hình hỏng → exit 2 không file; tính năng tắt → không file",
+    T4, TRIAL],
+    "ca": [
+    c("C01", "Dựng fixture tracker Pháp chế", "xnqc --add/--set da_nop (CLI) + SQL fixture 2 hồ sơ da_cap (hết hạn / sắp hết hạn)", "SKU savina-12v, saphraton-20v, savigout-30v", "dòng xnqc_dossiers tồn tại"),
+    c("C02", "Báo cáo sổ rủi ro", "python -m agents.ceo_risk --report --now 2026-10-23T09:00:00+07:00 --out-dir <scratch>", "C01", "exit 0; file có mã XNQC-HET-HAN (ĐỎ), XNQC-HET-HAN sắp hết hạn (VÀNG), XNQC-CHO-CAP (XANH), DPIA (ĐỎ), TUYEN-CANH-BAO (ĐỎ); ĐỎ đứng trước VÀNG trước XANH; nhãn CHẠY THỬ"),
+    c("C03", "Chỉ đọc", "đếm xnqc_dossiers/red_alerts/approval_queue trước-sau C02", "-", "không đổi"),
+    c("C04", "Cấu hình hỏng", "wrapper monkeypatch ceo_risk.CONFIG → file JSON hỏng (scratch)", "-", "exit 2, không file"),
+    c("C05", "Tính năng tắt", "rollout --disable ceo-03; --report --now 2026-10-24T09:00:00+07:00", "-", "không sinh ceo-risk-2026-10-24.md; bật lại"),
+]})
+
+items.append({"id": "ceo-04.3", "tieu_chi_cu_the": [
+    "T1 `python -m agents.ceo_audit --report --now <ISO> --out-dir <scratch>` exit 0",
+    "T2 ceo-audit-<ngày>.md phân loại đúng: bài khớp bản duyệt → khop; bài sửa sau duyệt → lech_ban_duyet; bài không bản duyệt → thieu_ban_duyet; listing tiêu đề khớp bản duyệt listing → khop; listing không có bản duyệt → thieu; listing không map SKU → khong_xac_dinh_sku; tỷ lệ tuân thủ theo kênh; không chép text bài",
+    "T3 ca âm: chỉ đọc (không ghi bảng); tính năng ceo-04.3 tắt → không sinh ceo-audit nhưng không được chặn đầu ra tính năng khác (ceo-gia của ceo-04.4)",
+    T4, TRIAL],
+    "ca": [
+    c("C01", "Fixture: nháp đã duyệt + bài đăng + listing", "store.save_draft (harness) + `python -m pipelines.store --approve` + `python -m agents.ra_kenh --file` + `python -m ingest.market_csv --kind listing`", "CSV bài + CSV listing fixture", "dữ liệu nạp, exit 0"),
+    c("C02", "Audit", "python -m agents.ceo_audit --report --now 2026-10-23T10:00:00+07:00 --out-dir <scratch>", "C01", "exit 0; số đếm khop/lech/thieu/khong_xac_dinh_sku đúng fixture; tỷ lệ theo kênh"),
+    c("C03", "Chỉ đọc", "đếm approval_queue/red_alerts/channel_posts/market_alerts trước-sau", "-", "không đổi"),
+    c("C04", "Tắt ceo-04.3", "rollout --disable ceo-04.3; ceo_audit --report --now 2026-10-24T10:00:00+07:00", "-", "không ceo-audit-2026-10-24.md; ceo-gia-2026-10-24.md VẪN sinh (tính năng ceo-04.4 độc lập); bật lại"),
+]})
+
+items.append({"id": "ceo-04.4", "tieu_chi_cu_the": [
+    "T1 cùng lần chạy `agents.ceo_audit --report` exit 0",
+    "T2 ceo-gia-<ngày>.md: giá listing = giá list ĐÃ DUYỆT hiệu lực → khop; khác → lech kèm 'file X / duyệt Y (price_list #id)'; giá chưa duyệt → khong_so_duoc (không kết luận khớp); mô tả → khong_so_duoc vì file chưa có cột",
+    "T3 ca âm: giá chưa duyệt không được coi khớp; tính năng ceo-04.4 tắt → không sinh ceo-gia nhưng ceo-audit (ceo-04.3) vẫn sinh",
+    T4, TRIAL],
+    "ca": [
+    c("C01", "Duyệt giá list (người)", "python -m ingest.golden_store --approve-price <id> --by 'Người Duyệt Giá Thử IT'", "price_list savina-12v, saphraton-20v shopee list", "exit 0, approved_by set"),
+    c("C02", "So giá", "ceo_audit --report (chung C02 ceo-04.3)", "listing fixture: savina 159000 (=list), saphraton-20v 289000 (≠299000), sapentol-30v (list chưa duyệt)", "khop / lech (file 289000 / duyệt 299000) / khong_so_duoc; mô tả khong_so_duoc"),
+    c("C03", "Tắt ceo-04.4", "rollout --disable ceo-04.4; ceo_audit --report --now 2026-10-25T10:00:00+07:00", "-", "không ceo-gia-2026-10-25.md; ceo-audit-2026-10-25.md vẫn sinh; bật lại"),
+]})
+
+items.append({"id": "ceo-04.5", "tieu_chi_cu_the": [
+    "T1 `python -m agents.ceo_promo [--plan] [--running] [--as-of] [--dry-run]` exit đúng",
+    "T2 mục ceo/promo_deviation created_by=agent:ceo_audit pending cho mỗi lệch: KM listing không có bản duyệt → km_ngoai_ke_hoach; giá KM file sâu hơn kế hoạch → km_sau_hon_duyet; KM khớp kế hoạch không sinh mục; payload có nguồn (sha file/snapshot), không tiêu đề listing",
+    "T3 ca âm: dry-run không ghi; chạy lại cùng đầu vào không nhân bản; file kế hoạch lỗi → exit 1 trước connect; tắt → exit 2 0 mục",
+    T4],
+    "ca": [
+    c("C01", "Dry-run", "python -m agents.ceo_promo --plan P --running R --as-of 2026-10-23 --dry-run", "plan/running fixture + listing có Giá khuyến mãi", "exit 0, approval_queue không đổi"),
+    c("C02", "Chạy thật", "ceo_promo --plan P --running R --as-of 2026-10-23", "-", "exit 0; mục promo_deviation: km_ngoai_ke_hoach (saphraton-20v listing KM không kế hoạch), km_sau_hon_duyet (savina file giá KM < kế hoạch); khớp không sinh mục"),
+    c("C03", "Chạy lại", "lặp C02", "-", "exit 0, 0 mục mới"),
+    c("C04", "Kế hoạch lỗi", "ceo_promo --plan <bad.csv>", "loai_km lạ", "exit 1, không connect, 0 mục"),
+    c("C05", "Tắt", "rollout --disable ceo-04.5; ceo_promo --plan P --running R2", "-", "exit 2, 0 mục; bật lại"),
+]})
+
+items.append({"id": "ceo-04.6", "tieu_chi_cu_the": [
+    "T1 `python -m agents.bks_audit --report/--chain-alert` và `python -m agents.bks_recon --month` exit đúng",
+    "T2 bks-audit-<tháng>.md + audit_runs kind=inside_out (params.heads); chuỗi bị sửa → chain-alert exit 1 + red_alerts nguồn chain + báo cáo có chuoi_bi_sua; mất đuôi → mat_duoi_chuoi; bks-recon-<tháng>.md đối soát quyết toán ↔ đơn ↔ P&L ↔ cockpit có refs + audit_runs kind=recon",
+    "T3 ca âm: chuỗi sạch → exit 0 không cảnh báo; báo lặp cùng phát hiện không tạo cảnh báo mới; tháng chưa đóng → exit 2; tắt → không ghi audit_runs",
+    T4],
+    "ca": [
+    c("C01", "Chuỗi sạch", "python -m agents.bks_audit --chain-alert", "DB thử sau các ca khác", "exit 0, không red_alerts mới"),
+    c("C02", "Audit tháng + neo đuôi", "bks_audit --report --month 2026-09 --record --out-dir <scratch>", "-", "exit 0; file bks-audit-2026-09.md; audit_runs inside_out params.heads"),
+    c("C03", "Đối soát BKS", "python -m agents.bks_recon --month 2026-09 --seed 7 --record --out-dir <scratch>", "settlement CSV + order CSV + cockpit monthly fixture", "exit 0; file bks-recon-2026-09.md có khác biệt có refs (file dòng N / channel_snapshots#id) hoặc thieu_nguon; audit_runs recon"),
+    c("C04", "Tháng chưa đóng", "bks_recon --month 2026-11", "-", "exit 2"),
+    c("C05", "Tắt ceo-04.6", "rollout --disable ceo-04.6; bks_audit --report --month 2026-09 --record", "-", "exit 2, audit_runs không thêm; bật lại"),
+    c("C06", "Sửa nhật ký (giả lập tấn công trên DB thử)", "SQL owner tắt trigger UPDATE 1 dòng agent_action_log; bks_audit --chain-alert", "-", "exit 1; 1 red_alerts source chain có fp"),
+    c("C07", "Báo lặp", "chạy lại --chain-alert", "-", "exit 1 'đã báo trước đó', không red_alerts mới"),
+    c("C08", "Báo cáo sau sửa + mất đuôi", "SQL xóa dòng cuối agent_action_log; bks_audit --report --month 2026-09", "-", "báo cáo có chuoi_bi_sua và mat_duoi_chuoi"),
+]})
+
+items.append({"id": "ceo-05", "tieu_chi_cu_the": [
+    "T1 `python -m agents.hdtv_report --month 2026-09 --submit --record --out-dir <scratch>` exit 0",
+    "T2 hdtv-2026-09.md có 7 mục (cockpit, tiến độ & sổ quyết định, rủi ro, chi so ngân sách, P&L, ép trình QA, kiểm soát BKS); số không nguồn bị chặn bởi grounding (exit 0 = mọi số có nguồn); mục thiếu nguồn ghi 'chưa có dữ liệu'/'không đọc được' không bịa; 1 mục ceo/hdtv_pack pending + audit_runs hdtv_pack",
+    "T3 ca âm: chạy lại không nộp trùng; kỳ chưa đóng exit 2; tắt → exit 2 không file/mục",
+    T4, TRIAL],
+    "ca": [
+    c("C01", "Gói tháng", "hdtv_report --month 2026-09 --submit --record --out-dir <scratch>", "DB thử", "exit 0; 7 heading; mục hdtv_pack pending; audit_runs hdtv_pack"),
+    c("C02", "Chạy lại", "lặp C01 (không --record)", "-", "exit 0 '[skipped]', không mục thứ 2"),
+    c("C03", "Kỳ chưa đóng", "hdtv_report --month 2026-10", "-", "exit 2"),
+    c("C04", "Gói quý", "hdtv_report --quarter 2026-Q3 --out-dir <scratch>", "-", "exit 0 file hdtv-2026-Q3.md; số quý thiếu tháng → [chưa đủ dữ liệu]"),
+    c("C05", "Tắt", "rollout --disable ceo-05; hdtv_report --month 2026-08 --submit", "-", "exit 2, không file/mục; bật lại"),
+]})
+
+FEED = "RSS fixture phục vụ bởi http.server 127.0.0.1 (không internet)"
+items.append({"id": "intel-01.1", "tieu_chi_cu_the": [
+    "T1 `python -m crawler.intel --run --sources <fixture>` + `python scripts/intel_bulletin.py --period day` (wrapper đổi REPORTS_DIR sang scratch — FIXTURE) exit 0",
+    "T2 intel_items chỉ từ nguồn status=duyet; snippet ≤300 ký tự đã che SĐT; tin 0 chủ đề không lưu; bản tin intel-bulletin-day-<ngày>.md mỗi tin có link nguồn, nhóm theo chủ đề, có cảnh báo mở; nhãn CHẠY THỬ",
+    "T3 ca âm: chạy lại không trùng; nguồn tầng C/sàn bị chặn trước request (exit 2); nguồn chết → exit 1; tắt → không sinh bản tin",
+    "T4 không request ra internet (log [req] chỉ 127.0.0.1); không gửi bản tin"],
+    "ca": [
+    c("C01", "Thu tin nguồn đã duyệt", "python -m crawler.intel --run --sources <it_g1_sources.json>", FEED, "exit 0; intel_items = số tin có chủ đề của nguồn duyet; 0 tin từ nguồn cho_duyet; SĐT bị che; [req] chỉ 127.0.0.1"),
+    c("C02", "Thu lại", "lặp C01", "-", "exit 0, intel_items không tăng"),
+    c("C03", "Nguồn tầng C", "crawler.intel --run --source it-tier-c --sources <fixture>", "host shopee.vn", "exit 2 [blocked], 0 request"),
+    c("C04", "Nguồn chết", "crawler.intel --run --source it-dead --sources <fixture>", "127.0.0.1 cổng đóng", "exit 1, không crash"),
+    c("C05", "Bản tin ngày", "wrapper scripts/intel_bulletin.py --period day --date 2026-10-23", "-", "exit 0; file có link từng tin; nhãn CHẠY THỬ; report_outputs intel-01.1"),
+    c("C06", "Tắt intel-01.1", "rollout --disable intel-01.1; bulletin --period week", "-", "không sinh intel-bulletin-week-*; bật lại"),
+]})
+
+items.append({"id": "intel-01.2", "tieu_chi_cu_the": [
+    "T1 `scripts/intel_bulletin.py --suggest` exit 0",
+    "T2 mục intel/intel_topic pending cho chủ đề ≥2 tin, payload template không trích tiêu đề/link, không chủ đề phap_ly",
+    "T3 ca âm: chạy lại không nhân bản; tắt → không sinh mục (không crash)",
+    T4],
+    "ca": [
+    c("C01", "Gợi ý chủ đề", "wrapper intel_bulletin --period day --date 2026-10-23 --suggest", "intel_items C01 intel-01.1", "exit 0; mục intel_topic cho chủ đề ≥2 tin; payload không chứa URL/tiêu đề tin; không mục phap_ly"),
+    c("C02", "Chạy lại", "lặp C01", "-", "suggested_new=0, không mục mới"),
+    c("C03", "Tắt intel-01.2", "rollout --disable intel-01.2; --period week --suggest", "-", "không mục intel_topic mới; lệnh kết thúc có kiểm soát (không traceback); bật lại"),
+]})
+
+for fid, rules, rule_desc in (
+        ("intel-02.1", ["counterfeit"], "tin 'sâm giả/mạo danh Ngọc Linh' không nhắc Sâm Sâm"),
+        ("intel-02.2", ["regulation", "competitor_penalty"], "tin nghị định/thông tư TPBVSK + đối thủ bị xử phạt"),
+        ("intel-02.3", ["brand_negative"], "tin xấu nhắc Sâm Sâm")):
+    items.append({"id": fid, "tieu_chi_cu_the": [
+        "T1 `python -m pipelines.intel_alert --run` + `python -m pipelines.red_alert --escalate/--ack` exit đúng",
+        f"T2 red_alerts source_agent=intel_red_alert detail.rules ∋ {rules} cho {rule_desc}, có url/intel_item_id; leo thang 2 giờ: đúng 1 bản leo thang/cảnh báo gốc chưa xác nhận",
+        "T3 ca âm: thiếu người nhận → dòng vẫn ghi + exit 1 (fail-closed); chạy lại không trùng; ack bởi agent: bị từ chối; đã ack thì không leo thang; luật hỏng → exit 1; tính năng tắt → luật của nó không sinh cảnh báo (luật khác vẫn sinh)",
+        "T4 không gửi ra ngoài thật (DEPLOY tắt, RED_ALERT_NOTIFY tắt; gửi chỉ qua sender giả MOCK)"],
+        "ca": [
+        c("C01", "Quét cảnh báo", "python -m pipelines.intel_alert --run", "intel_items từ feed fixture", f"red_alerts có dòng rules ∋ {rules}; route_error thiếu người nhận; exit 1 (fail-closed)"),
+        c("C02", "Quét lại", "lặp C01", "-", "không red_alerts gốc mới"),
+        c("C03", "Leo thang sớm (chưa 2 giờ)", "python -m pipelines.red_alert --escalate", "-", "escalated=0 cho cảnh báo mới"),
+        c("C04", "Leo thang sau 2 giờ + chạy lại", "red_alert --escalate (thật nếu đã ≥2 giờ, nếu không: wrapper tiêm now=+2h05 — FIXTURE đồng hồ)", "-", "đúng 1 bản leo thang detail.escalation_of=<id gốc> cho cảnh báo chưa ack; chạy lại 0 bản mới"),
+        c("C05", "Xác nhận", "red_alert --ack <id> --by 'agent:x' ; --ack <id> --by 'Pháp chế Thử IT'", "-", "agent: bị từ chối exit 1; người → red_alert_acks có dòng; cảnh báo đã ack không leo thang"),
+        c("C06", "Luật hỏng", "wrapper intel_alert.RULES_FILE → JSON thiếu nhóm", "-", "exit 1, không quét"),
+        c("C07", "Tính năng tắt", f"rollout --disable {fid}; thu tin mới; intel_alert --run", "feed 2", f"tin chỉ khớp {rules} không sinh cảnh báo (off), tin luật khác vẫn sinh; bật lại"),
+        c("C08", "Gửi tới người nhận độc lập (MOCK)", "wrapper raise_alert routing fixture phap_che + sender giả", "-", "routed=True, red_alert_deliveries ok"),
+    ]})
+
+items.append({"id": "intel-03", "tieu_chi_cu_the": [
+    "T1 `python -m ingest.intel_import --competitor F` + `python scripts/intel_weekly.py --week 2026-10-19 --out-dir <scratch>` exit 0",
+    "T2 intel-doithu-2026-10-19.md: độ phủ K5/TRIMICO/KGC (số quan sát, số có KM), bảng lệch giá so golden kèm obs#/nguồn và price_list#/đã duyệt hay CHƯA, mục sản phẩm lần đầu ghi nhận",
+    "T3 ca âm: nạp lại → skip; file lỗi → exit 1 0 dòng; đối thủ thiếu quan sát → 'THIẾU dữ liệu'; tắt intel-03 không chặn báo cáo trend (intel-04.1)",
+    T4, TRIAL],
+    "ca": [
+    c("C01", "Nạp file đối thủ", "python -m ingest.intel_import --competitor <it_g1_competitor.csv>", "K5/TRIMICO/KGC 2026-10-19..21", "exit 0, competitor_observations +N"),
+    c("C02", "Nạp lại", "lặp C01", "-", "exit 0 [skip], không tăng"),
+    c("C03", "File lỗi", "intel_import --competitor <bad>", "gia_vnd chữ", "exit 1, 0 dòng"),
+    c("C04", "Báo cáo tuần", "python scripts/intel_weekly.py --week 2026-10-19 --out-dir <scratch>", "-", "exit 0; doithu có 3 đối thủ đủ, lệch % so golden, nguồn"),
+    c("C05", "Tuần thiếu đối thủ", "nạp file chỉ K5 tuần 2026-10-12; intel_weekly --week 2026-10-12 --out-dir", "-", "TRIMICO/KGC 'THIẾU dữ liệu tuần này'"),
+    c("C06", "Tắt intel-03", "rollout --disable intel-03; intel_weekly --week 2026-10-19 --out-dir <scratch2>", "-", "không doithu; intel-trend VẪN sinh; bật lại"),
+]})
+
+items.append({"id": "intel-04.1", "tieu_chi_cu_the": [
+    "T1 `intel_import --trend` + `intel_weekly --out-dir` exit 0",
+    "T2 intel-trend-<thứ Hai>.md: giá trị mới nhất từng từ khóa kèm query_id, dòng TĂNG ĐỘT BIẾN trong tuần, RISING file related mới nhất (rượu ghi chú riêng)",
+    "T3 ca âm: file không neo / chuỗi ngày → exit 1; tắt intel-04.1 không chặn doithu (intel-03)",
+    T4, TRIAL],
+    "ca": [
+    c("C01", "Nạp Trends tuần", "intel_import --trend <it_g1_multiTimeline.csv>", "chuỗi tuần, neo 'quà tết', 'sâm ngọc linh' tăng vọt tuần 2026-10-19", "exit 0"),
+    c("C02", "Nạp related", "intel_import --trend <it_g1_relatedQueries.csv> --seed 'sâm ngọc linh'", "TOP/RISING", "exit 0; dòng rượu có cờ ruou"),
+    c("C03", "File không neo / theo ngày", "intel_import --trend <no_anchor>, <daily>", "-", "exit 1 cả hai, 0 dòng"),
+    c("C04", "Báo cáo trend", "intel_weekly --week 2026-10-19 --out-dir <scratch>", "-", "file có 'TĂNG ĐỘT BIẾN sâm ngọc linh', RISING, ghi chú rượu"),
+    c("C05", "Tắt intel-04.1", "rollout --disable intel-04.1; intel_weekly --out-dir <scratch3>", "-", "không trend; doithu VẪN sinh; bật lại"),
+]})
+
+items.append({"id": "intel-04.2", "tieu_chi_cu_the": [
+    "T1 `python scripts/intel_weekly.py --suggest-keywords [--dry-run]` exit đúng",
+    "T2 mục intel/keyword_suggest created_by=agent:intel_keywords pending: danh sách đề xuất KHÔNG chứa từ khóa công dụng/bệnh/từ cấm/rượu/PII/chỉ dẫn địa lý chưa xác nhận; từ khóa bị loại chỉ ghi id + lý do (không chép); thương hiệu đối thủ khi danh sách chưa duyệt → CHỜ QUYẾT",
+    "T3 ca âm: dry-run không ghi; chạy lại skip; cấu hình đối thủ hỏng → exit 1; tắt → exit 2",
+    T4],
+    "ca": [
+    c("C01", "Dry-run", "intel_weekly.py --suggest-keywords --dry-run", "related fixture (C02 intel-04.1)", "exit 0, approval_queue không đổi"),
+    c("C02", "Gợi ý", "intel_weekly.py --suggest-keywords", "-", "exit 0; 1 mục keyword_suggest; safe không có 'chữa'/'tiểu đường'/'rượu'/SĐT; excluded chỉ id; từ có KGC/Cheong Kwan Jang vào CHỜ QUYẾT"),
+    c("C03", "Chạy lại", "lặp C02", "-", "[skip], không mục mới"),
+    c("C04", "Cấu hình đối thủ hỏng", "wrapper COMPETITORS_FILE → JSON hỏng", "-", "exit 1, không mục"),
+    c("C05", "Tắt", "rollout --disable intel-04.2; --suggest-keywords --import <id mới>", "-", "exit 2, 0 mục; bật lại"),
+]})
+
+items.append({"id": "intel-05.1", "tieu_chi_cu_the": [
+    "T1 `python scripts/persona_sim.py --dry-run` exit 0",
+    "T2 sim_runs có dòng dry_run=true của run_id, 0 lời gọi LLM thật; báo cáo khoảng p10/p50/p90 + cờ đối chứng",
+    "T3 ca âm: không --dry-run → exit 2 (DPIA chưa ký) 0 dòng; --config giả dpia true vẫn exit 2; tắt → không ghi",
+    "T4 không gọi LLM/dịch vụ ngoài; chạy thật chờ DPIA + provider (BI_CHAN EXTERNAL_INPUT)"],
+    "ca": [
+    c("C01", "Dry-run", "python scripts/persona_sim.py --dry-run", "data/sim_config.json + personas.json (repo)", "exit 0; sim_runs +N dòng dry_run=true"),
+    c("C02", "Chạy thật khi DPIA chưa ký", "persona_sim.py", "-", "exit 2, 0 dòng"),
+    c("C03", "--config giả dpia_signed=true", "persona_sim.py --config <scratch copy>", "-", "exit 2, 0 dòng"),
+    c("C04", "Tắt", "rollout --disable intel-05.1; --dry-run", "-", "exit ≠0, 0 dòng; bật lại"),
+]})
+
+items.append({"id": "intel-05.2", "tieu_chi_cu_the": [
+    "T1 `python -m agents.combo_price [--dry-run]` exit 0",
+    "T2 mục intel/combo_price_option created_by=agent:combo_price cho combo đủ dữ liệu: giá = ⌊Σlist×(1−p)⌋ làm tròn xuống 1000, đánh giá duoi_san/khong_tinh_duoc theo floor/giá vốn; combo có thành phần hạn chế → nhom_han_che không mục; thiếu giá list đã duyệt → thieu_du_lieu không mục",
+    "T3 ca âm: dry-run không ghi; chạy lại không nhân bản; tắt → exit 2",
+    T4],
+    "ca": [
+    c("C01", "Fixture golden + BOM", "golden_store --file <fixture golden self_declaration_ok food> ; --approve-price ; production bom --load", "combo IT-A (2 mật ong), IT-B (mật ong + savina), IT-C (mật ong 2 hũ chưa duyệt giá)", "exit 0"),
+    c("C02", "Dry-run", "python -m agents.combo_price --dry-run", "-", "exit 0; IT-A de_xuat, IT-B nhom_han_che, IT-C thieu_du_lieu; không ghi"),
+    c("C03", "Chạy", "combo_price", "-", "exit 0; đúng 1 mục cho IT-A; giá các mức đúng công thức"),
+    c("C04", "Chạy lại", "lặp C03", "-", "0 mục mới"),
+    c("C05", "Tắt", "rollout --disable intel-05.2; combo_price", "-", "exit 2; bật lại"),
+]})
+
+items.append({"id": "intel-06", "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.scenario --sku K --channel C --weeks N --start D --out-dir <scratch>` exit 0",
+    "T2 kich-ban-<sku>-<kênh>-<ngày>.md: mỗi tuần thấp ≤ cơ sở ≤ cao; tuần 11.11/12.12/Tết có sự kiện và cao hơn tuần thường (kênh online); offline không áp 11.11/12.12; dòng đầu nêu GIẢ ĐỊNH",
+    "T3 ca âm: rượu × kênh online = 0; SKU lạ exit 1; giả định hỏng exit 1; tắt → không file",
+    T4, TRIAL],
+    "ca": [
+    c("C01", "Kịch bản shopee 16 tuần", "scenario --sku mat-ong-sam-300ml --channel shopee --weeks 16 --start 2026-10-26 --out-dir <scratch>", "data/scenario_assumptions.json", "exit 0; file; low≤base≤high; tuần 2026-11-09, 2026-12-07, 2027-02-01 có sự kiện; nhãn CHẠY THỬ"),
+    c("C02", "JSON", "scenario ... --json", "-", "JSON hợp lệ khớp C01"),
+    c("C03", "Offline", "scenario --sku mat-ong-sam-300ml --channel offline --weeks 16 --start 2026-10-26 --json", "-", "tuần 11.11/12.12 không sự kiện; Tết có"),
+    c("C04", "Rượu online", "scenario --sku ruou-sam-chai-thuy-tinh-500ml --channel shopee --json", "-", "mọi tuần 0"),
+    c("C05", "SKU lạ", "scenario --sku khong-co --channel shopee", "-", "exit 1"),
+    c("C06", "Giả định hỏng", "wrapper ASSUMPTIONS_FILE → JSON thiếu trend", "-", "exit 1"),
+    c("C07", "Tắt", "rollout --disable intel-06; --out-dir", "-", "exit ≠0, không file; bật lại"),
+]})
+
+items.append({"id": "ceo-90", "tieu_chi_cu_the": [
+    "Kiểm phần tài liệu/công cụ: sổ nghĩa vụ docs/handover/so-nghia-vu-hop-dong.md có N01–N20, mỗi dòng có căn cứ + trạng thái; danh mục `rollout --catalog` thể hiện ceo-90 ngoài code",
+    "Phần nghĩa vụ thực hiện (nhân sự, đào tạo, trực, góp/hoàn trả, bảo hành, bàn giao/xóa bản sao) KHÔNG chứng minh được trên máy dev → BI_CHAN NON_SOFTWARE"],
+    "ca": [
+    c("C01", "Sổ nghĩa vụ đủ cấu trúc", "đọc/parse docs/handover/so-nghia-vu-hop-dong.md", "repo", "có N01..N20, mỗi dòng có căn cứ HĐ/PL + trạng thái"),
+    c("C02", "Danh mục thể hiện mục ngoài code", "python -m pipelines.rollout --catalog", "data/contract_features.json", "exit 0; ceo-90 / ngoai_code xuất hiện"),
+    c("C03", "Thực hiện nghĩa vụ", "—", "—", "NOT_RUN: ngoài phần mềm"),
+]})
+
+doc = {"_doc": "Tiêu chí cụ thể nhóm g1 (khối ceo + intel) — nghiệm thu KỸ THUẬT NỘI BỘ r10, viết TRƯỚC khi chạy ca. Ca bổ sung sau khóa ghi trong evidence item kèm lý do.",
+       "nhom": "g1", "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+       "items": items}
+OUT.write_bytes(json.dumps(doc, ensure_ascii=False, indent=1).encode("utf-8"))
+print(len(items), "items")

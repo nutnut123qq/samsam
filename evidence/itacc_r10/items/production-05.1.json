@@ -1,0 +1,178 @@
+{
+ "id": "production-05.1",
+ "ten": "Tra cứu tài liệu R&D",
+ "khoi": "production",
+ "giai_doan": "P2",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Sản xuất, R&D / Kho tài liệu R&D (P2): 'Tra cứu ... tài liệu về thành phần, chế biến, bảo quản'",
+ "tieu_chi": [
+  "C1 kb_internal nạp tài liệu R&D fixture vào chunks_internal internal:sx (embed qua fake ở biên)",
+  "C2 sx_tracuu --ask --out ghi sx-tracuu-<ngày>-<sha8>.md: nhãn NỘI BỘ, trích NGUYÊN VĂN có [n] + nguồn DOI/URL",
+  "C3 câu rượu / câu không liên quan → NO_DATA, không bịa; tắt → không ghi file",
+  "C4 không ghi bảng nào ngoài report_outputs; không gửi"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:52:19+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_prod; dev mode (AUTH_MODE trống); rollout seed chạy thử; fake ở biên: llm_gateway._client = client giả cục bộ (embedding băm bag-of-words; chat câu cố định) — cổng gateway/kill/llm_usage chạy thật, 0 gọi OpenRouter; báo cáo vá REPORTS_DIR/--out-dir → evidence/scratchpad",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g4/fixtures/rd_baoquan.md",
+   "sha256": "34e4d40d14e33218f1f38b3ea23f8e2fa8bae4ae6f7e51ce9f68affb65763f61",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "P051-1",
+   "mo_ta": "nạp tài liệu nội bộ (fake embed)",
+   "lenh": "[P051-1] python evidence/itacc_r10/g4/harness/run.py --fake-llm ok -- ingest.kb_internal --file evidence/itacc_r10/g4/fixtures/rd_baoquan.md --collection internal:sx --approved-by GĐ Sản xuất Thử IT --doc-id rd-baoquan-thu-it || [P051-1-q] python evidence/itacc_r10/g4/harness/q.py select collection, doc_id, chunk_index, approved_by, doc_version, left(content,80) from chunks_internal ; select agent_id, model, ok, feature_id, cost_usd from llm_usage order by id",
+   "expected": "chunks_internal ≥1 internal:sx",
+   "actual": "exit 0; chunks_internal internal:sx/rd-baoquan-thu-it 1 chunk approved_by 'GĐ Sản xuất Thử IT'; llm_usage ingest data_platform-03 (fake)",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P051-2",
+   "mo_ta": "tra cứu có kết quả",
+   "lenh": "[P051-2] python evidence/itacc_r10/g4/harness/run.py --fake-llm ok --reports-dir evidence/itacc_r10/g4/out/rep_rd -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --out || [P05-check] (script kiểm python inline — kết quả trong out/P05-check.txt)",
+   "expected": "sx-tracuu-*.md nhãn NỘI BỘ, trích nguyên văn, nguồn DOI",
+   "actual": "exit 0; sx-tracuu-2026-10-23-c4a63127.md: nhãn CHẠY THỬ + 'NỘI BỘ – không dùng cho truyền thông', Chế độ extract, đoạn [1] là chuỗi con nguyên văn của tài liệu (kiểm script), nguồn 'DOI: 10.1234/thu-it.2026.001'; report_outputs production-05.1",
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P051-3",
+   "mo_ta": "ÂM câu về rượu",
+   "lenh": "[P051-3] python evidence/itacc_r10/g4/harness/run.py --fake-llm ok --reports-dir evidence/itacc_r10/g4/out/rep_rd -- agents.sx_tracuu --ask rượu sâm ngâm bao lâu",
+   "expected": "NO_DATA, 0 embed",
+   "actual": "exit 0 no_data 'không tra cứu đồ uống có cồn'; llm_usage không thêm dòng",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P051-4",
+   "mo_ta": "ÂM câu không liên quan",
+   "lenh": "[P051-4] python evidence/itacc_r10/g4/harness/run.py --fake-llm ok --reports-dir evidence/itacc_r10/g4/out/rep_rd -- agents.sx_tracuu --ask giá vé máy bay tết",
+   "expected": "NO_DATA",
+   "actual": "exit 0 no_data 'không có tài liệu đủ liên quan'",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "P051-5",
+   "mo_ta": "ÂM tắt production-05.1 (chạy cuối)",
+   "lenh": "[TAT-production-05.1] python -m pipelines.rollout --disable production-05.1 --by Người Thử IT --note kiem nhanh tat IT r10 || [P051-5] python evidence/itacc_r10/g4/harness/run.py --fake-llm ok --reports-dir evidence/itacc_r10/g4/out/rep_rd_tat -- agents.sx_tracuu --ask bảo quản sâm khô độ ẩm --out",
+   "expected": "không ghi file",
+   "actual": "exit 1 traceback RolloutBlocked — rep_rd_tat rỗng (stdout vẫn in trích đoạn — xem lỗi thấp chung)",
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Embedding qua client giả cục bộ (MOCK) — chất lượng truy hồi với model thật chưa kiểm; tài liệu R&D thật do GĐ SX duyệt nạp chưa có (dữ liệu vận hành).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g4/out/P051-1.txt",
+   "sha256": "7c171d9fad79457bb89fa2c4f5c36843e8942c8e4450ba83bea40be846da43ea"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P051-1-q.txt",
+   "sha256": "ef47f4f6f5e3caae1de0442c30431d506725a6900d0a769e02312d2944397b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P051-2.txt",
+   "sha256": "9cf5a42ac9fb4143bfea9ab22675145df0e18c0e2a72ad474c1176c8a3a5e6fc"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P05-check.txt",
+   "sha256": "a69f71c9ac1c56644737c19f8e89b762909bc8e0994fe2b8547b45b04f7ab12e"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P051-3.txt",
+   "sha256": "14e2968a06a2be0ba55c81d536909b5fea00cc08c621e962c6db624e147900d5"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P051-4.txt",
+   "sha256": "134714899d3e131d7feb8e164d5dda72b544afc9ebcbe26bcc586d3b55ce451f"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/P051-5.txt",
+   "sha256": "4d9da0a7a6ae030745c12547bf53c669e666b37e42da3cda50d45c256b0a3182"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/TAT-production-05.1.txt",
+   "sha256": "e14614e3af45a9996581b7acedaa5fb87aff362ec16c8310b8e5dbe9a020b8ae"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/rep_rd/sx-tracuu-2026-10-23-c4a63127.md",
+   "sha256": "462af83d78221d9464820c1a900626d6f7cbac4bb61ca7b68b089e0f14158301"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/out/SETUP-seed-prod.txt",
+   "sha256": "602c88845811a35b82861c29168029e190441247d92c4c6f4f60caf7340c5824"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/runcase.py",
+   "sha256": "b5f2502b3c47af379b6b25a47971f672ac316e44e7a4c5716d6f0a512d4d82d0"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/run.py",
+   "sha256": "f95b2c6eecd77396da9e0556c8e72d60c5fa9613e6a620aa910a7edffab41e10"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/q.py",
+   "sha256": "d07cb129170b036f711a32d97c3f44db3fec2c7344523c6433416f0c45b8b890"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/gen_fixtures.py",
+   "sha256": "eebf2c64294b4f9dc64e327f3060968bcc47d0119cb7663724f7089d1379729c"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/harness/make_items.py",
+   "sha256": "622a2252fb2e2b33c69ab6062d249f56ee99efc044683c35e10dcab99e3af7db"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.json",
+   "sha256": "63030d50e4d0a246d6859980b22a5e88b093ecc1b63d84884e8c0ce08cebd45d"
+  },
+  {
+   "path": "evidence/itacc_r10/criteria/g4.lock.txt",
+   "sha256": "8d77e34e5390d88279db342c412719945bd52f5e99ec9afbea9bfbbb836a38ab"
+  },
+  {
+   "path": "evidence/itacc_r10/g4/fixtures_sha256.txt",
+   "sha256": "fa717229c7f54d4b3b7b47d14029681217aa2d2a2fc5468e610caacd9256207f"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "muc_do": "thấp",
+   "mo_ta": "Cổng tắt tính năng chỉ ở biên ghi file (write_report): fp_cash --forecast, sx_tracuu, production bulletin vẫn tính và IN toàn bộ nội dung ra stdout khi tính năng tắt (không nhãn giai đoạn); fp_pnl/sx_tracuu không bắt RolloutBlocked → traceback thô, exit 1.",
+   "tai_hien": "rollout --disable <id>; chạy CLI tương ứng với --out-dir/--out",
+   "expected": "không sinh nội dung, thông báo chặn gọn",
+   "actual": "stdout in nội dung / traceback",
+   "evidence": [
+    "evidence/itacc_r10/g4/out/F052-5.txt",
+    "evidence/itacc_r10/g4/out/P051-5.txt",
+    "evidence/itacc_r10/g4/out/F041-6.txt"
+   ]
+  }
+ ]
+}

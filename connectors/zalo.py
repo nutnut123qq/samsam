@@ -42,7 +42,8 @@ v13.7 (F06): hạn chót TỔNG 30 giây tính từ lúc nhận tin (gồm chờ
 luật kênh, rewrite/embed/chat, gửi): `answer()` chạy trong luồng riêng với
 hạn = nhận + 30 − 5 giây (`api.rag.CHAT_BUDGET_S`/`SEND_RESERVE_S`, truyền
 xuống từng lời gọi qua contextvar `api.rag.DEADLINE` → `timeout` client);
-quá hạn (kể cả lời gọi treo không chịu timeout) → gửi HANDOFF_TEXT, ghi
+quá hạn (kể cả lời gọi treo không chịu timeout) → gửi NO_HANDOFF_TEXT
+(r12-fix L3: hotline, không hứa nhân viên — lúc gửi chưa ghi handoff), ghi
 convlog `error` "deadline:<bước>" + mục `cskh_handoff` lý do `deadline`;
 kết quả về muộn bị bỏ (không gửi, không vào history). Send API timeout 5
 giây (`SEND_TIMEOUT_S`).
@@ -130,6 +131,20 @@ HANDOFF_TEXT = ("Sâm Sâm chưa đủ dữ liệu để trả lời câu này �
 HOLD_TEXT = ("Sâm Sâm đã nhận câu hỏi của Quý khách — nhân viên sẽ phản "
              "hồi sớm nhất. Quý khách cần gấp vui lòng gọi hotline "
              "1800577732 để được hỗ trợ.")
+# r12 L3 — hằng viết tay KHÔNG hứa "nhân viên sẽ phản hồi": gửi thay câu
+# hứa (HOLD_TEXT / template rượu–sức khỏe) khi KHÔNG ghi được mục
+# `cskh_handoff` (chatbot tắt, DB lỗi, thiếu muối) — không ai nhận việc thì
+# không được hẹn khách. Không qua check() (text viết tay).
+NO_HANDOFF_TEXT = ("Sâm Sâm đã nhận tin nhắn nhưng chưa trả lời tự động "
+                   "được câu này. Quý khách vui lòng gọi hotline 1800577732 "
+                   "để được hỗ trợ.")
+NO_HANDOFF_TEXTS = {
+    "health": ("Dạ, Sâm Sâm không tư vấn về tình trạng sức khỏe qua tin nhắn"
+               " tự động. Quý khách vui lòng hỏi ý kiến bác sĩ về tình trạng"
+               " của mình; cần hỗ trợ vui lòng gọi hotline 1800577732."),
+    "alcohol": ("Dạ, Sâm Sâm không tư vấn sản phẩm này qua tin nhắn tự động."
+                " Quý khách vui lòng gọi hotline 1800577732 để được hỗ trợ."),
+}
 # Hằng viết tay theo mẫu HANDOFF_TEXT — gửi khi event user_send_* không
 # phải text (ảnh/file/sticker/..., V1.4): khách có lối thoát thay vì bị
 # câm. Không qua check() (text viết tay).
@@ -948,11 +963,22 @@ def _reply_turn(user_id: str, question: str, msg_id: str = "", *,
         # cố -> khách vẫn được chuyển người, không nhận "hệ thống lỗi".
         from pipelines.llm_gateway import GatewayBlocked
         late = isinstance(e, DeadlineExceeded)
-        fallback = (HANDOFF_TEXT if late or isinstance(e, GatewayBlocked)
+        # r12-fix L3: quá 30 giây → câu hotline KHÔNG hứa (gửi ngay, ghi
+        # handoff SAU — ghi DB trước sẽ ăn phần ngân sách dành cho gửi, mà
+        # lúc gửi chưa có bằng chứng đã ghi nên không được hẹn nhân viên).
+        fallback = (NO_HANDOFF_TEXT if late
+                    else HANDOFF_TEXT if isinstance(e, GatewayBlocked)
                     else ERROR_FALLBACK)
         if late:
             print(f"[deadline] {channel}: quá 30 giây ({e.stage}) -> chuyển "
                   f"người (uh={_uhash(user_id)})", flush=True)
+        recorded = False
+        if fallback is HANDOFF_TEXT:
+            # r12 L3: gateway chặn — HANDOFF_TEXT hứa nhân viên → ghi handoff
+            # TRƯỚC.
+            fallback, recorded = (
+                _promise_or_hotline(inb, "rollout", msg_id, fallback)
+                if inb is not None else (NO_HANDOFF_TEXT, False))
         sent = send(user_id, fallback)
         slate = _send_late(sent)
         _log_conversation({
@@ -974,7 +1000,7 @@ def _reply_turn(user_id: str, question: str, msg_id: str = "", *,
             "channel": channel,
             **_provenance(send),
         })
-        if (late or slate) and inb is not None:
+        if (late or slate) and not recorded and inb is not None:
             # Có người nhận việc: mục cskh_handoff (DB down chỉ warn).
             channels.record_handoff(inb, "deadline", msg_id)
         return {"sent": sent, "text": fallback, "sources": [],
@@ -1017,6 +1043,11 @@ def _reply_turn(user_id: str, question: str, msg_id: str = "", *,
                 h = _history(user_id)
                 h.append({"role": "user", "content": question})
                 h.append({"role": "assistant", "content": raw})
+    reason = meta["handoff"] if guardrail_ok else None
+    if reason:
+        # r12 L3: NO_DATA/rượu/sức khỏe → câu hứa nhân viên chỉ khi đã ghi
+        # được handoff (ghi TRƯỚC khi gửi).
+        text, _ = _promise_or_hotline(inb, reason, msg_id, text)
     if gate.prefix:
         text = gate.prefix + "\n\n" + text
     sent = send(user_id, text)
@@ -1046,14 +1077,25 @@ def _reply_turn(user_id: str, question: str, msg_id: str = "", *,
         entry["error"] = f"deadline:{slate}"
     _log_conversation(entry)
     # Ghi DB SAU khi đã gửi — DB down chỉ warn, khách không câm.
-    reason = meta["handoff"] or ("deadline" if slate else None)
-    if reason:
-        channels.record_handoff(inb, reason, msg_id)
+    late_reason = (meta["handoff"] if not guardrail_ok else None) or (
+        "deadline" if slate and not reason else None)
+    if late_reason:
+        channels.record_handoff(inb, late_reason, msg_id)
     # `prompted` chỉ khi câu chào ĐÃ tới khách — gửi lỗi mà ghi thì bảng
     # append-only giữ bằng chứng "đã báo" sai, tin sau mất câu chào.
     if gate.prompted and sent:
         channels.record_consent(inb, "prompted", msg_id)
     return {"sent": sent, "text": text, "sources": res["sources"]}
+
+
+def _promise_or_hotline(inb, reason: str, msg_id: str,
+                        text: str) -> tuple[str, bool]:
+    """r12 L3: ghi `cskh_handoff` TRƯỚC khi chọn câu — ghi được (hoặc đã có
+    mục chờ) → giữ câu hứa `text`; không → câu hotline không hứa."""
+    from connectors import channels
+    if channels.record_handoff(inb, reason, msg_id) is not None:
+        return text, True
+    return NO_HANDOFF_TEXTS.get(reason, NO_HANDOFF_TEXT), False
 
 
 def _reply_held(user_id: str, question: str, msg_id: str, inb, md: str,
@@ -1073,6 +1115,10 @@ def _reply_held(user_id: str, question: str, msg_id: str, inb, md: str,
         bot, meta = channels.format_reply(inb.channel, res)
         if meta["handoff"] in ("alcohol", "health"):
             text = bot                     # template cố định, không phải AI
+    # r12 L3: câu hứa chỉ khi đã có người nhận việc (đổi thứ tự v14.6 cho
+    # riêng mục handoff — gợi ý cskh_reply vẫn ghi SAU khi gửi).
+    text, _ = _promise_or_hotline(inb, (meta or {}).get("handoff")
+                                  or "rollout", msg_id, text)
     if gate.prefix:
         text = gate.prefix + "\n\n" + text
     print(f"[rollout] {inb.channel}: chatbot {md} — không gửi câu bot "
@@ -1100,8 +1146,6 @@ def _reply_held(user_id: str, question: str, msg_id: str, inb, md: str,
         **_provenance(send),
         **({"error": f"deadline:{slate}"} if slate else {}),
     })
-    channels.record_handoff(inb, (meta or {}).get("handoff")
-                            or ("deadline" if slate else "rollout"), msg_id)
     if gate.prompted and sent:
         channels.record_consent(inb, "prompted", msg_id)
     return {"sent": sent, "text": text, "sources": [], "rollout": md}
@@ -1126,6 +1170,9 @@ def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
         if channels.record_consent(inb, "withdrawn", msg_id) is None:
             kind, text = ("consent_withdrawn_fail",
                           channels.template("consent_withdrawn_fail"))
+    if handoff:
+        # r12 L3: template rượu/sức khỏe hứa nhân viên → ghi handoff TRƯỚC.
+        text, _ = _promise_or_hotline(inb, handoff, msg_id, text)
     sent = send(user_id, text)
     slate = _send_late(sent)
     _log_conversation({
@@ -1147,9 +1194,8 @@ def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
         **_provenance(send),
         **({"error": f"deadline:{slate}"} if slate else {}),
     })
-    reason = handoff or ("deadline" if slate else None)
-    if reason:
-        channels.record_handoff(inb, reason, msg_id)
+    if slate and not handoff:
+        channels.record_handoff(inb, "deadline", msg_id)
     if kind == "consent_granted":
         channels.record_consent(inb, "granted", msg_id)
     elif prompted and sent:

@@ -1,0 +1,2945 @@
+# 2026-10-23T10:58:44+07:00 · HEAD 16b33fc9b4f0e0ff45dbeab78972100909ec0340 · fingerprint 97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001 · DB samsam_itacc_r10 (Docker 127.0.0.1:55432)
+
+## ruff check . --exclude .agents --exclude founder
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\feed_round.py:2:1
+  |
+1 | """FIXTURE: feed vòng R (kiểm tắt từng tính năng intel-02.x)."""
+2 | import sys
+  | ^^^^^^^^^^
+3 | sys.path.insert(0, r"D:\code\samsam\evidence\itacc_r10\g1\harness")
+4 | import mk_feed
+  |
+help: Organize imports
+  |
+2 | import sys
+3 +
+4 | sys.path.insert(0, r"D:\code\samsam\evidence\itacc_r10\g1\harness")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\feed_round.py:4:1
+  |
+2 | import sys
+3 | sys.path.insert(0, r"D:\code\samsam\evidence\itacc_r10\g1\harness")
+4 | import mk_feed
+  | ^^^^^^^^^^^^^^
+5 | r = sys.argv[1]
+6 | rows = [
+  |
+help: Organize imports
+  |
+4 | import mk_feed
+5 +
+6 | r = sys.argv[1]
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\force_vanhanh.py:3:1
+  |
+1 | """HARNESS/FIXTURE: ép pipelines.rollout._FORCE_MODE='van_hanh' rồi gọi main()
+2 | của module (argv sau tên module). CHỈ để kiểm nhánh van_hanh — brief luật 7."""
+3 | import importlib, sys
+  | ^^^^^^^^^^^^^^^^^^^^^
+4 | sys.path.insert(0, r"D:\code\samsam")
+5 | from pipelines import rollout
+  |
+help: Organize imports
+  |
+2 | của module (argv sau tên module). CHỈ để kiểm nhánh van_hanh — brief luật 7."""
+  - import importlib, sys
+3 + import importlib
+4 + import sys
+5 +
+6 | sys.path.insert(0, r"D:\code\samsam")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\force_vanhanh.py:5:1
+  |
+3 | import importlib, sys
+4 | sys.path.insert(0, r"D:\code\samsam")
+5 | from pipelines import rollout
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+6 | rollout._FORCE_MODE = "van_hanh"
+7 | mod = importlib.import_module(sys.argv[1])
+  |
+help: Organize imports
+  |
+5 | from pipelines import rollout
+6 +
+7 | rollout._FORCE_MODE = "van_hanh"
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\mk_drafts.py:3:1
+  |
+1 | """(lượt 2 — lượt 1 thiếu nhãn AI nên không duyệt được) HARNESS/FIXTURE ceo-04.3: tạo nháp bằng hàm sản phẩm pipelines.store.save_draft
+2 | (đường Content Studio dùng) — người tạo 'Biên tập Thử IT', is_ai=True."""
+3 | import sys, json
+  | ^^^^^^^^^^^^^^^^
+4 | sys.path.insert(0, r"D:\code\samsam")
+5 | from ingest.lead_store import connect
+  |
+help: Organize imports
+  |
+2 | (đường Content Studio dùng) — người tạo 'Biên tập Thử IT', is_ai=True."""
+  - import sys, json
+3 + import json
+4 + import sys
+5 +
+6 | sys.path.insert(0, r"D:\code\samsam")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\mk_drafts.py:5:1
+  |
+3 |   import sys, json
+4 |   sys.path.insert(0, r"D:\code\samsam")
+5 | / from ingest.lead_store import connect
+6 | | from pipelines import store, guardrail
+  | |______________________________________^
+7 |   conn = connect()
+8 |   out = {}
+  |
+help: Organize imports
+  |
+5 | from ingest.lead_store import connect
+  - from pipelines import store, guardrail
+6 + from pipelines import guardrail, store
+7 +
+8 | conn = connect()
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\mk_feed.py:2:1
+  |
+1 |   """FIXTURE: sinh RSS giả cho crawler.intel (phục vụ bởi http.server 127.0.0.1). Dùng: mk_feed.py <out.xml> <bộ>"""
+2 | / import sys
+3 | | from email.utils import format_datetime
+4 | | from datetime import datetime, timezone
+  | |_______________________________________^
+5 |   SETS = {
+6 |    "1": [
+  |
+help: Organize imports
+  |
+2 | import sys
+3 + from datetime import datetime, timezone
+4 | from email.utils import format_datetime
+  - from datetime import datetime, timezone
+5 +
+6 | SETS = {
+  |
+
+SIM115 Use a context manager for opening files
+  --> evidence\itacc_r10\g1\harness\mk_feed.py:25:5
+   |
+23 |     body = "".join(item(f"{key}-{i}", t, d) for i, (t, d) in enumerate(rows, 1))
+24 |     xml = f'<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Tin thử IT</title><link>https://tin-thu-it.exampl…
+25 |     open(out, "w", encoding="utf-8").write(xml)
+   |     ^^^^
+26 | if __name__ == "__main__":
+27 |     main(sys.argv[1], sys.argv[2])
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\mock_deliver.py:3:1
+  |
+1 |   """HARNESS MOCK ở biên: gửi lại cảnh báo đỏ chưa gửi được tới routing FIXTURE (1 người nhận
+2 |   phap_che, địa chỉ example.com) bằng sender GIẢ (không mở mạng) — ghi lời gọi vào file."""
+3 | / import json, sys
+4 | | from datetime import datetime, timezone
+  | |_______________________________________^
+5 |   sys.path.insert(0, r"D:\code\samsam")
+6 |   from ingest.lead_store import connect
+  |
+help: Organize imports
+  |
+2 | phap_che, địa chỉ example.com) bằng sender GIẢ (không mở mạng) — ghi lời gọi vào file."""
+  - import json, sys
+3 + import json
+4 + import sys
+5 | from datetime import datetime, timezone
+6 +
+7 | sys.path.insert(0, r"D:\code\samsam")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\mock_deliver.py:6:1
+  |
+4 |   from datetime import datetime, timezone
+5 |   sys.path.insert(0, r"D:\code\samsam")
+6 | / from ingest.lead_store import connect
+7 | | from pipelines import red_alert
+  | |_______________________________^
+8 |   calls = []
+9 |   def fake_sender(to, subject, body):
+  |
+help: Organize imports
+  |
+7 | from pipelines import red_alert
+8 +
+9 | calls = []
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g1\harness\patch_run.py:4:1
+  |
+2 |   Dùng: patch_run.py <module> <ATTR>=<giá trị đường dẫn> [...] -- <argv...>
+3 |   Giá trị bắt đầu 'path:' → Path; 'force:' → đặt rollout._FORCE_MODE. CHỈ trỏ file FIXTURE trong scratch/evidence."""
+4 | / import importlib, sys
+5 | | from pathlib import Path
+  | |________________________^
+6 |   sys.path.insert(0, r"D:\code\samsam")
+7 |   args = sys.argv[1:]
+  |
+help: Organize imports
+  |
+3 | Giá trị bắt đầu 'path:' → Path; 'force:' → đặt rollout._FORCE_MODE. CHỈ trỏ file FIXTURE trong scratch/evidence."""
+  - import importlib, sys
+4 + import importlib
+5 + import sys
+6 | from pathlib import Path
+7 +
+8 | sys.path.insert(0, r"D:\code\samsam")
+  |
+
+I001 Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g1\harness\patch_run.py:14:9
+   |
+12 |     k, v = p.split("=", 1)
+13 |     if k == "FORCE_MODE":
+14 |         from pipelines import rollout; rollout._FORCE_MODE = v; continue
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 |     tgt = mod
+16 |     if ":" in k:
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g2\harness\b2b_post.py:4:1
+  |
+2 |   connectors.b2b_form chạy riêng, 127.0.0.1). Dữ liệu GIẢ (tổ chức/ người
+3 |   liên hệ "Thử IT", SĐT 0900000xxx, example.com). Kết quả → out/S05-C03.json"""
+4 | / import json, re, sys
+5 | | from pathlib import Path
+6 | | from urllib.parse import urlencode
+7 | | import httpx
+  | |____________^
+8 |   sys.stdout.reconfigure(encoding="utf-8")
+9 |   url = sys.argv[1]
+  |
+help: Organize imports
+   |
+3  | liên hệ "Thử IT", SĐT 0900000xxx, example.com). Kết quả → out/S05-C03.json"""
+   - import json, re, sys
+4  + import json
+5  + import re
+6  + import sys
+7  | from pathlib import Path
+8  | from urllib.parse import urlencode
+9  +
+10 | import httpx
+11 +
+12 | sys.stdout.reconfigure(encoding="utf-8")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g2\harness\b2b_post2.py:2:1
+  |
+1 |   """HARNESS g2 — probe bổ sung sau khóa S05-X1: 1 yêu cầu B2B SKU mat-ong-sam-120ml-1hu (giá list price_list CHƯA duyệt)."""
+2 | / import sys
+3 | | from urllib.parse import urlencode
+4 | | import httpx
+  | |____________^
+5 |   sys.stdout.reconfigure(encoding="utf-8")
+6 |   f = {"org_name": "Công ty Thử IT G2 Probe", "org_type": "doanh_nghiep", "region": "Đà Nẵng",
+  |
+help: Organize imports
+  |
+3 | from urllib.parse import urlencode
+4 +
+5 | import httpx
+6 +
+7 | sys.stdout.reconfigure(encoding="utf-8")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g2\harness\case.py:5:1
+  |
+3 |     python case.py <ma> [--stdin FILE] [--env K=V ...] -- <argv...>
+4 |   Exit của case.py = exit của lệnh đo (đo NGAY sau khi process kết thúc)."""
+5 | / import hashlib, os, re, subprocess, sys
+6 | | from datetime import datetime, timezone, timedelta
+7 | | from pathlib import Path
+  | |________________________^
+8 |
+9 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+  |
+help: Organize imports
+   |
+4  | Exit của case.py = exit của lệnh đo (đo NGAY sau khi process kết thúc)."""
+   - import hashlib, os, re, subprocess, sys
+   - from datetime import datetime, timezone, timedelta
+5  + import hashlib
+6  + import os
+7  + import re
+8  + import subprocess
+9  + import sys
+10 + from datetime import datetime, timedelta, timezone
+11 | from pathlib import Path
+   |
+
+PLW1510 `subprocess.run` without explicit `check` argument
+  --> evidence\itacc_r10\g2\harness\case.py:40:9
+   |
+38 |     data = Path(stdin_f).read_bytes() if stdin_f else b""
+39 |     t0 = datetime.now(timezone(timedelta(hours=7)))
+40 |     p = subprocess.run(a, input=data, capture_output=True, env=env,
+   |         ^^^^^^^^^^^^^^
+41 |                        cwd=r"D:\code\samsam", timeout=900)
+42 |     rc = p.returncode
+   |
+help: Add explicit `check=False`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g2\harness\fake_llm.py:8:1
+   |
+ 6 |   Câu hỏi/messages chứa "[cham]" → fake chat ngủ IT_FAKE_SLEEP giây (mặc 6)
+ 7 |   để kiểm hạn chót. Vector embedding cố định 8 chiều (khớp chunk fixture)."""
+ 8 | / import json, os, time
+ 9 | | from types import SimpleNamespace
+   | |_________________________________^
+10 |
+11 |   VEC = [0.5, 0.1, 0.2, 0.3, 0.1, 0.4, 0.2, 0.1]
+   |
+help: Organize imports
+   |
+7  | để kiểm hạn chót. Vector embedding cố định 8 chiều (khớp chunk fixture)."""
+   - import json, os, time
+8  + import json
+9  + import os
+10 + import time
+11 | from types import SimpleNamespace
+   |
+
+SIM115 Use a context manager for opening files
+  --> evidence\itacc_r10\g2\harness\fake_llm.py:30:11
+   |
+28 |         time.sleep(float(os.environ.get("IT_FAKE_SLEEP", "6")))
+29 |     p = os.environ.get("IT_FAKE_CHAT")
+30 |     txt = open(p, encoding="utf-8").read().strip() if p else "Chưa đủ dữ liệu để trả lời."
+   |           ^^^^
+31 |     return SimpleNamespace(choices=[SimpleNamespace(
+32 |         message=SimpleNamespace(content=txt))], usage=None)
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g2\harness\fu_probe.py:4:1
+  |
+2 |   ghi) với `now` giả = 28/10/2026 09:00 VN để xem nhắc chốt đơn sẽ sinh khi đến
+3 |   hạn 24 giờ làm việc. Không thay entry point thật (C09a/b) — chỉ bổ trợ."""
+4 | / import json, os, sys
+5 | | from datetime import datetime
+  | |_____________________________^
+6 |   sys.path.insert(0, r"D:\code\samsam"); sys.stdout.reconfigure(encoding="utf-8")
+7 |   import psycopg
+  |
+help: Organize imports
+  |
+3 | hạn 24 giờ làm việc. Không thay entry point thật (C09a/b) — chỉ bổ trợ."""
+  - import json, os, sys
+4 + import json
+5 + import os
+6 + import sys
+7 | from datetime import datetime
+8 +
+9 | sys.path.insert(0, r"D:\code\samsam"); sys.stdout.reconfigure(encoding="utf-8")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g2\harness\fu_probe.py:7:1
+   |
+ 5 |   from datetime import datetime
+ 6 |   sys.path.insert(0, r"D:\code\samsam"); sys.stdout.reconfigure(encoding="utf-8")
+ 7 | / import psycopg
+ 8 | | from agents import kd_quote, sales_watch
+ 9 | | from pipelines import director
+   | |______________________________^
+10 |   c = psycopg.connect(os.environ["DATABASE_URL"])
+11 |   now = datetime.fromisoformat("2026-10-28T09:00:00+07:00")
+   |
+help: Organize imports
+   |
+7  | import psycopg
+8  +
+9  | from agents import kd_quote, sales_watch
+10 | from pipelines import director
+11 +
+12 | c = psycopg.connect(os.environ["DATABASE_URL"])
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g2\harness\make_golden_fixture.py:5:1
+  |
+3 |   bố — CHƯA có thật), mở kênh shopee/tiktok/web/zalo/facebook + giá list/floor
+4 |   các kênh mới (số GIẢ, provenance fixture thử IT). Không sửa data/ thật."""
+5 | / import json, shutil, sys
+6 | | from pathlib import Path
+  | |________________________^
+7 |   src = Path(r"D:\code\samsam\data")
+8 |   out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
+  |
+help: Organize imports
+   |
+4  | các kênh mới (số GIẢ, provenance fixture thử IT). Không sửa data/ thật."""
+   - import json, shutil, sys
+5  + import json
+6  + import shutil
+7  + import sys
+8  | from pathlib import Path
+9  +
+10 | src = Path(r"D:\code\samsam\data")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g2\harness\q.py:3:1
+  |
+1 |   """HARNESS g2 — truy vấn assert DB thử → evidence/itacc_r10/g2/out/<ten>.json
+2 |     python q.py <ten> "<SQL>" [...SQL]   (chỉ SELECT)"""
+3 | / import json, os, sys
+4 | | from pathlib import Path
+5 | | import psycopg
+  | |______________^
+6 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+7 |   name, sqls = sys.argv[1], sys.argv[2:]
+  |
+help: Organize imports
+   |
+2  |   python q.py <ten> "<SQL>" [...SQL]   (chỉ SELECT)"""
+   - import json, os, sys
+3  + import json
+4  + import os
+5  + import sys
+6  | from pathlib import Path
+7  +
+8  | import psycopg
+9  +
+10 | sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g2\harness\run_mod.py:11:1
+   |
+ 9 |   --reports-dir  : agents.report.REPORTS_DIR = DIR (báo cáo không rơi vào data/reports)
+10 |   """
+11 | / import runpy, sys
+12 | | from pathlib import Path
+   | |________________________^
+13 |
+14 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+   |
+help: Organize imports
+   |
+10 | """
+   - import runpy, sys
+11 + import runpy
+12 + import sys
+13 | from pathlib import Path
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g2\harness\seed_chunk.py:4:1
+  |
+2 | example.com) với embedding 8 chiều = vector fake_llm.VEC — để retrieve thật
+3 | chạy với embedding fake. Không phải dữ liệu thật."""
+4 | import os, sys, psycopg
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+5 | sys.path.insert(0, os.path.dirname(__file__))
+6 | from fake_llm import VEC
+  |
+help: Organize imports
+  |
+3 | chạy với embedding fake. Không phải dữ liệu thật."""
+  - import os, sys, psycopg
+4 + import os
+5 + import sys
+6 +
+7 + import psycopg
+8 +
+9 | sys.path.insert(0, os.path.dirname(__file__))
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g2\harness\seed_chunk.py:6:1
+  |
+4 | import os, sys, psycopg
+5 | sys.path.insert(0, os.path.dirname(__file__))
+6 | from fake_llm import VEC
+  | ^^^^^^^^^^^^^^^^^^^^^^^^
+7 | c = psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5)
+8 | c.execute("insert into chunks (doc_id, chunk_index, source_url, title, lang, content, embedding) values (%s,0,%s,%s,'vi',%s,%s) on conf…
+  |
+help: Organize imports
+  |
+6 | from fake_llm import VEC
+7 +
+8 | c = psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5)
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g2\harness\shift_orders.py:6:1
+  |
+4 | ts = lúc nạp). Chỉ để kiểm luật tuần ĐÃ ĐÓNG của kd_orders --watch; KHÔNG là
+5 | bằng chứng ngày chạy thử. Ghi số dòng đổi."""
+6 | import os, psycopg
+  | ^^^^^^^^^^^^^^^^^^
+7 | c = psycopg.connect(os.environ["DATABASE_URL"])
+8 | n = c.execute("update orders set ts = ts - interval '7 days' where source = 'market:shopee'").rowcount
+  |
+help: Organize imports
+   |
+5  | bằng chứng ngày chạy thử. Ghi số dòng đổi."""
+   - import os, psycopg
+6  + import os
+7  +
+8  + import psycopg
+9  +
+10 | c = psycopg.connect(os.environ["DATABASE_URL"])
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g2\harness\zalo_e2e.py:12:1
+   |
+10 |   Dùng: python zalo_e2e.py <scratch_dir> <case...>   (case: all|tat|...)
+11 |   Kết quả JSON: evidence/itacc_r10/g2/out/sales-01_<case>.json"""
+12 | / import hashlib, hmac, json, os, sys, threading, time
+13 | | from pathlib import Path
+   | |________________________^
+14 |
+15 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+   |
+help: Organize imports
+   |
+11 | Kết quả JSON: evidence/itacc_r10/g2/out/sales-01_<case>.json"""
+   - import hashlib, hmac, json, os, sys, threading, time
+12 + import hashlib
+13 + import hmac
+14 + import json
+15 + import os
+16 + import sys
+17 + import threading
+18 + import time
+19 | from pathlib import Path
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g2\harness\zalo_e2e.py:28:1
+   |
+26 | os.environ.pop("DEPLOY", None)
+27 |
+28 | import fake_llm  # noqa: E402
+   | ^^^^^^^^^^^^^^^
+29 | fake_llm.install()
+30 | import httpx  # noqa: E402
+   |
+help: Organize imports
+   |
+28 | import fake_llm  # noqa: E402
+29 +
+30 | fake_llm.install()
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g2\harness\zalo_e2e.py:28:18
+   |
+26 | os.environ.pop("DEPLOY", None)
+27 |
+28 | import fake_llm  # noqa: E402
+   |                  ^^^^^^^^^^^^
+29 | fake_llm.install()
+30 | import httpx  # noqa: E402
+   |
+help: Remove unused `noqa` directive
+   |
+27 |
+   - import fake_llm  # noqa: E402
+28 + import fake_llm
+29 | fake_llm.install()
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g2\harness\zalo_e2e.py:30:1
+   |
+28 |   import fake_llm  # noqa: E402
+29 |   fake_llm.install()
+30 | / import httpx  # noqa: E402
+31 | | import psycopg  # noqa: E402
+32 | | from connectors import messenger, zalo  # noqa: E402
+33 | | from api import rag  # noqa: E402
+34 | | from pipelines import rollout  # noqa: E402
+   | |_____________________________^
+35 |
+36 |   zalo.CONV_LOG = SCR / "conversations.jsonl"
+   |
+help: Organize imports
+   |
+31 | import psycopg  # noqa: E402
+   - from connectors import messenger, zalo  # noqa: E402
+32 +
+33 | from api import rag  # noqa: E402
+34 + from connectors import messenger, zalo  # noqa: E402
+35 | from pipelines import rollout  # noqa: E402
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g2\harness\zalo_e2e.py:30:15
+   |
+28 | import fake_llm  # noqa: E402
+29 | fake_llm.install()
+30 | import httpx  # noqa: E402
+   |               ^^^^^^^^^^^^
+31 | import psycopg  # noqa: E402
+32 | from connectors import messenger, zalo  # noqa: E402
+   |
+help: Remove unused `noqa` directive
+   |
+29 | fake_llm.install()
+   - import httpx  # noqa: E402
+30 + import httpx
+31 | import psycopg  # noqa: E402
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g2\harness\zalo_e2e.py:31:17
+   |
+29 | fake_llm.install()
+30 | import httpx  # noqa: E402
+31 | import psycopg  # noqa: E402
+   |                 ^^^^^^^^^^^^
+32 | from connectors import messenger, zalo  # noqa: E402
+33 | from api import rag  # noqa: E402
+   |
+help: Remove unused `noqa` directive
+   |
+30 | import httpx  # noqa: E402
+   - import psycopg  # noqa: E402
+31 + import psycopg
+32 | from connectors import messenger, zalo  # noqa: E402
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g2\harness\zalo_e2e.py:32:41
+   |
+30 | import httpx  # noqa: E402
+31 | import psycopg  # noqa: E402
+32 | from connectors import messenger, zalo  # noqa: E402
+   |                                         ^^^^^^^^^^^^
+33 | from api import rag  # noqa: E402
+34 | from pipelines import rollout  # noqa: E402
+   |
+help: Remove unused `noqa` directive
+   |
+31 | import psycopg  # noqa: E402
+   - from connectors import messenger, zalo  # noqa: E402
+32 + from connectors import messenger, zalo
+33 | from api import rag  # noqa: E402
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g2\harness\zalo_e2e.py:33:22
+   |
+31 | import psycopg  # noqa: E402
+32 | from connectors import messenger, zalo  # noqa: E402
+33 | from api import rag  # noqa: E402
+   |                      ^^^^^^^^^^^^
+34 | from pipelines import rollout  # noqa: E402
+   |
+help: Remove unused `noqa` directive
+   |
+32 | from connectors import messenger, zalo  # noqa: E402
+   - from api import rag  # noqa: E402
+33 + from api import rag
+34 | from pipelines import rollout  # noqa: E402
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g2\harness\zalo_e2e.py:34:32
+   |
+32 | from connectors import messenger, zalo  # noqa: E402
+33 | from api import rag  # noqa: E402
+34 | from pipelines import rollout  # noqa: E402
+   |                                ^^^^^^^^^^^^
+35 |
+36 | zalo.CONV_LOG = SCR / "conversations.jsonl"
+   |
+help: Remove unused `noqa` directive
+   |
+33 | from api import rag  # noqa: E402
+   - from pipelines import rollout  # noqa: E402
+34 + from pipelines import rollout
+35 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g3\harness\cap_probe.py:2:1
+  |
+1 |   """HARNESS g3: đọc trần FP&A (agents.mkt_ads.cap_for) — CHỈ ĐỌC."""
+2 | / import sys, json
+3 | | from datetime import date
+  | |_________________________^
+4 |   sys.path.insert(0, ".")
+5 |   from agents import mkt_ads as ma
+  |
+help: Organize imports
+  |
+1 | """HARNESS g3: đọc trần FP&A (agents.mkt_ads.cap_for) — CHỈ ĐỌC."""
+  - import sys, json
+2 + import json
+3 + import sys
+4 | from datetime import date
+5 +
+6 | sys.path.insert(0, ".")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g3\harness\cap_probe.py:5:1
+  |
+3 |   from datetime import date
+4 |   sys.path.insert(0, ".")
+5 | / from agents import mkt_ads as ma
+6 | | from ingest.lead_store import connect
+  | |_____________________________________^
+7 |   cfg, dcfg, why = ma.load_cfgs(); assert why is None, why
+8 |   c = connect()
+  |
+help: Organize imports
+  |
+6 | from ingest.lead_store import connect
+7 +
+8 | cfg, dcfg, why = ma.load_cfgs(); assert why is None, why
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g3\harness\guardrail_cases.py:18:1
+   |
+16 | for s in (sys.stdout, sys.stderr):
+17 |     s.reconfigure(encoding="utf-8", errors="replace")
+18 | from psycopg import conninfo  # noqa: E402
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+20 | assert d.get("host") == "127.0.0.1" and str(d.get("dbname", "")).startswith("samsam_itacc_r10")
+   |
+help: Organize imports
+   |
+18 | from psycopg import conninfo  # noqa: E402
+19 +
+20 | d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g3\harness\guardrail_cases.py:18:31
+   |
+16 | for s in (sys.stdout, sys.stderr):
+17 |     s.reconfigure(encoding="utf-8", errors="replace")
+18 | from psycopg import conninfo  # noqa: E402
+   |                               ^^^^^^^^^^^^
+19 | d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+20 | assert d.get("host") == "127.0.0.1" and str(d.get("dbname", "")).startswith("samsam_itacc_r10")
+   |
+help: Remove unused `noqa` directive
+   |
+17 |     s.reconfigure(encoding="utf-8", errors="replace")
+   - from psycopg import conninfo  # noqa: E402
+18 + from psycopg import conninfo
+19 | d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g3\harness\guardrail_cases.py:22:73
+   |
+20 | assert d.get("host") == "127.0.0.1" and str(d.get("dbname", "")).startswith("samsam_itacc_r10")
+21 |
+22 | from pipelines import guardrail, guardrail_llm, kb_filter, llm_gateway  # noqa: E402
+   |                                                                         ^^^^^^^^^^^^
+23 |
+24 | AI = "Nội dung có sử dụng AI"
+   |
+help: Remove unused `noqa` directive
+   |
+21 |
+   - from pipelines import guardrail, guardrail_llm, kb_filter, llm_gateway  # noqa: E402
+22 + from pipelines import guardrail, guardrail_llm, kb_filter, llm_gateway
+23 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g3\harness\q.py:4:1
+   |
+ 2 |   python q.py "SQL" [param ...]  → in JSON các dòng. Câu ghi phải có tiền tố
+ 3 |   '-- FIXTURE' (dữ liệu mồi, ghi rõ trong evidence)."""
+ 4 | / import json, os, sys
+ 5 | | from datetime import date, datetime
+ 6 | | from decimal import Decimal
+ 7 | | import psycopg
+ 8 | | from psycopg import conninfo
+   | |____________________________^
+ 9 |   for s in (sys.stdout, sys.stderr):
+10 |       s.reconfigure(encoding="utf-8", errors="replace")
+   |
+help: Organize imports
+   |
+3  | '-- FIXTURE' (dữ liệu mồi, ghi rõ trong evidence)."""
+   - import json, os, sys
+4  + import json
+5  + import os
+6  + import sys
+7  | from datetime import date, datetime
+8  | from decimal import Decimal
+9  +
+10 | import psycopg
+11 | from psycopg import conninfo
+12 +
+13 | for s in (sys.stdout, sys.stderr):
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g3\harness\run.py:11:1
+   |
+ 9 |     - --set: monkeypatch hằng của module (FIXTURE — ghi rõ trong evidence).
+10 |   """
+11 | / import json, os, runpy, socket, sys
+12 | | from pathlib import Path
+   | |________________________^
+13 |
+14 |   REPO = Path(__file__).resolve().parents[4]
+   |
+help: Organize imports
+   |
+10 | """
+   - import json, os, runpy, socket, sys
+11 + import json
+12 + import os
+13 + import runpy
+14 + import socket
+15 + import sys
+16 | from pathlib import Path
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g3\harness\run.py:20:1
+   |
+18 |     s.reconfigure(encoding="utf-8", errors="replace")
+19 |
+20 | from psycopg import conninfo  # noqa: E402
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+22 | if not (d.get("host") == "127.0.0.1" and str(d.get("port")) == "55432"
+   |
+help: Organize imports
+   |
+20 | from psycopg import conninfo  # noqa: E402
+21 +
+22 | d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g3\harness\run.py:20:31
+   |
+18 |     s.reconfigure(encoding="utf-8", errors="replace")
+19 |
+20 | from psycopg import conninfo  # noqa: E402
+   |                               ^^^^^^^^^^^^
+21 | d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+22 | if not (d.get("host") == "127.0.0.1" and str(d.get("port")) == "55432"
+   |
+help: Remove unused `noqa` directive
+   |
+19 |
+   - from psycopg import conninfo  # noqa: E402
+20 + from psycopg import conninfo
+21 | d = conninfo.conninfo_to_dict(os.environ.get("DATABASE_URL") or "host=none")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g3\harness\run.py:51:1
+   |
+49 | mod = argv.pop(0)
+50 |
+51 | import importlib  # noqa: E402
+   | ^^^^^^^^^^^^^^^^
+52 | for s in sets:
+53 |     lhs, val = s.split("=", 1)
+   |
+help: Organize imports
+   |
+51 | import importlib  # noqa: E402
+52 +
+53 | for s in sets:
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g3\harness\run.py:51:19
+   |
+49 | mod = argv.pop(0)
+50 |
+51 | import importlib  # noqa: E402
+   |                   ^^^^^^^^^^^^
+52 | for s in sets:
+53 |     lhs, val = s.split("=", 1)
+   |
+help: Remove unused `noqa` directive
+   |
+50 |
+   - import importlib  # noqa: E402
+51 + import importlib
+52 | for s in sets:
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g3\harness\run.py:63:5
+   |
+62 |   if fake is not None:
+63 | /     from types import SimpleNamespace as NS
+64 | |     from pipelines import llm_gateway as g
+   | |__________________________________________^
+65 |       resp = list(fake["responses"])
+66 |       calls = []
+   |
+help: Organize imports
+   |
+63 |     from types import SimpleNamespace as NS
+64 +
+65 |     from pipelines import llm_gateway as g
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g3\harness\verify_image.py:3:1
+  |
+1 |   """HARNESS g3: kiểm ĐỘC LẬP ảnh nháp image_studio (không dùng hàm kiểm của sản phẩm).
+2 |   argv: png packshot box_x box_y box_w box_h"""
+3 | / import hashlib, sys
+4 | | from PIL import Image
+  | |_____________________^
+5 |   png, pk, x, y, w, h = sys.argv[1], sys.argv[2], *map(int, sys.argv[3:7])
+6 |   raw = open(png, "rb").read()
+  |
+help: Organize imports
+  |
+2 | argv: png packshot box_x box_y box_w box_h"""
+  - import hashlib, sys
+3 + import hashlib
+4 + import sys
+5 +
+6 | from PIL import Image
+7 +
+8 | png, pk, x, y, w, h = sys.argv[1], sys.argv[2], *map(int, sys.argv[3:7])
+  |
+
+SIM115 Use a context manager for opening files
+ --> evidence\itacc_r10\g3\harness\verify_image.py:6:7
+  |
+4 | from PIL import Image
+5 | png, pk, x, y, w, h = sys.argv[1], sys.argv[2], *map(int, sys.argv[3:7])
+6 | raw = open(png, "rb").read()
+  |       ^^^^
+7 | print("sha256_file", hashlib.sha256(raw).hexdigest())
+8 | im = Image.open(png)
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g3\harness\verify_video.py:4:1
+  |
+2 |   trích khung tại các mốc và so vùng nhãn AI (label_box) giữa các khung + với ảnh nhãn
+3 |   tham chiếu dựng từ khung đầu. argv: mp4 x y w h t1 t2 ..."""
+4 | / import hashlib, re, subprocess, sys, tempfile
+5 | | from pathlib import Path
+6 | | import imageio_ffmpeg
+7 | | from PIL import Image, ImageChops, ImageStat
+  | |____________________________________________^
+8 |   mp4, x, y, w, h, *ts = sys.argv[1], *map(int, sys.argv[2:6]), *sys.argv[6:]
+9 |   ff = imageio_ffmpeg.get_ffmpeg_exe()
+  |
+help: Organize imports
+   |
+3  | tham chiếu dựng từ khung đầu. argv: mp4 x y w h t1 t2 ..."""
+   - import hashlib, re, subprocess, sys, tempfile
+4  + import hashlib
+5  + import re
+6  + import subprocess
+7  + import sys
+8  + import tempfile
+9  | from pathlib import Path
+10 +
+11 | import imageio_ffmpeg
+12 | from PIL import Image, ImageChops, ImageStat
+13 +
+14 | mp4, x, y, w, h, *ts = sys.argv[1], *map(int, sys.argv[2:6]), *sys.argv[6:]
+   |
+
+PLW1510 `subprocess.run` without explicit `check` argument
+  --> evidence\itacc_r10\g3\harness\verify_video.py:11:8
+   |
+ 9 | ff = imageio_ffmpeg.get_ffmpeg_exe()
+10 | print("sha256_file", hashlib.sha256(Path(mp4).read_bytes()).hexdigest())
+11 | info = subprocess.run([ff, "-hide_banner", "-i", mp4], capture_output=True, text=True).stderr
+   |        ^^^^^^^^^^^^^^
+12 | dur = re.search(r"Duration: (\d+):(\d+):([\d.]+)", info)
+13 | print("duration_s", int(dur[1]) * 3600 + int(dur[2]) * 60 + float(dur[3]))
+   |
+help: Add explicit `check=False`
+
+UP012 [*] Unnecessary UTF-8 `encoding` argument to `encode`
+   --> evidence\itacc_r10\g4\harness\gen_fixtures.py:191:38
+    |
+189 |   lech["danh_muc_ho_so_goc"][0]["so_cong_bo"] = "9999/2099/ĐKSP"
+190 |   wjson("dossier_lech.json", lech)
+191 |   (FX / "nhan_savina.txt").write_bytes((
+    |  ______________________________________^
+192 | |     "SAVINA THỬ IT - viên ngậm\n"
+193 | |     "Số ĐKSP: 1234/2021/ĐKSP\n"
+194 | |     "Quy cách: tuýp 12 viên\n"
+195 | |     "Thực phẩm bảo vệ sức khỏe\n"
+196 | |     "NSX: 01/06/2025  HSD: 01/12/2026\n"
+197 | |     "Số lô: IT-LOT-777\n").encode("utf-8"))
+    | |__________________________________________^
+198 |   (FX / "nhan_ruou.txt").write_bytes((
+199 |       "RƯỢU SÂM THỬ IT 500ml chai thủy tinh\n"
+    |
+help: Remove unnecessary `encoding` argument
+    |
+196 |     "NSX: 01/06/2025  HSD: 01/12/2026\n"
+    -     "Số lô: IT-LOT-777\n").encode("utf-8"))
+197 +     "Số lô: IT-LOT-777\n").encode())
+198 | (FX / "nhan_ruou.txt").write_bytes((
+    |
+
+UP012 [*] Unnecessary UTF-8 `encoding` argument to `encode`
+   --> evidence\itacc_r10\g4\harness\gen_fixtures.py:198:36
+    |
+196 |       "NSX: 01/06/2025  HSD: 01/12/2026\n"
+197 |       "Số lô: IT-LOT-777\n").encode("utf-8"))
+198 |   (FX / "nhan_ruou.txt").write_bytes((
+    |  ____________________________________^
+199 | |     "RƯỢU SÂM THỬ IT 500ml chai thủy tinh\n"
+200 | |     "Độ cồn 29%\n"
+201 | |     "NSX: 01/01/2026\n").encode("utf-8"))
+    | |________________________________________^
+202 |   (FX / "nhan_empty.txt").write_bytes(b"   \n")
+203 |   (FX / "nhan.png").write_bytes(bytes.fromhex("89504e470d0a1a0a") + b"FIXTURE")
+    |
+help: Remove unnecessary `encoding` argument
+    |
+200 |     "Độ cồn 29%\n"
+    -     "NSX: 01/01/2026\n").encode("utf-8"))
+201 +     "NSX: 01/01/2026\n").encode())
+202 | (FX / "nhan_empty.txt").write_bytes(b"   \n")
+    |
+
+UP012 [*] Unnecessary UTF-8 `encoding` argument to `encode`
+   --> evidence\itacc_r10\g4\harness\gen_fixtures.py:204:36
+    |
+202 |   (FX / "nhan_empty.txt").write_bytes(b"   \n")
+203 |   (FX / "nhan.png").write_bytes(bytes.fromhex("89504e470d0a1a0a") + b"FIXTURE")
+204 |   (FX / "rd_baoquan.md").write_bytes((
+    |  ____________________________________^
+205 | |     "DOI: 10.1234/thu-it.2026.001\n"
+206 | |     "# Tài liệu R&D Thử IT — bảo quản sâm khô\n\n"
+207 | |     "Sâm khô sau khi sấy cần bảo quản nơi khô ráo, độ ẩm dưới 12%, tránh "
+208 | |     "ánh nắng trực tiếp. Đóng gói kín trong túi hút chân không để hạn chế "
+209 | |     "hút ẩm. Kiểm tra độ ẩm định kỳ mỗi tháng bằng máy đo độ ẩm.\n\n"
+210 | |     "Nhiệt độ kho khuyến nghị từ 15 đến 25 độ C. Không để sâm khô gần nguồn "
+211 | |     "nhiệt hoặc hóa chất có mùi.\n").encode("utf-8"))
+    | |____________________________________________________^
+212 |   print("ok", sorted(p.name for p in FX.iterdir()))
+    |
+help: Remove unnecessary `encoding` argument
+    |
+210 |     "Nhiệt độ kho khuyến nghị từ 15 đến 25 độ C. Không để sâm khô gần nguồn "
+    -     "nhiệt hoặc hóa chất có mùi.\n").encode("utf-8"))
+211 +     "nhiệt hoặc hóa chất có mùi.\n").encode())
+212 | print("ok", sorted(p.name for p in FX.iterdir()))
+    |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> evidence\itacc_r10\g4\harness\make_items.py:39:41
+   |
+37 |         return None, None
+38 |     t = p.read_text(encoding="utf-8")
+39 |     m1 = re.search(r"^# lenh (.*)$", t, re.M)
+   |                                         ^^^^
+40 |     m2 = re.search(r"^# exit (-?\d+)$", t, re.M)
+41 |     if m1:
+   |
+help: Replace with `re.MULTILINE`
+   |
+38 |     t = p.read_text(encoding="utf-8")
+   -     m1 = re.search(r"^# lenh (.*)$", t, re.M)
+39 +     m1 = re.search(r"^# lenh (.*)$", t, re.MULTILINE)
+40 |     m2 = re.search(r"^# exit (-?\d+)$", t, re.M)
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> evidence\itacc_r10\g4\harness\make_items.py:40:44
+   |
+38 |     t = p.read_text(encoding="utf-8")
+39 |     m1 = re.search(r"^# lenh (.*)$", t, re.M)
+40 |     m2 = re.search(r"^# exit (-?\d+)$", t, re.M)
+   |                                            ^^^^
+41 |     if m1:
+42 |         return m1.group(1), int(m2.group(1))
+   |
+help: Replace with `re.MULTILINE`
+   |
+39 |     m1 = re.search(r"^# lenh (.*)$", t, re.M)
+   -     m2 = re.search(r"^# exit (-?\d+)$", t, re.M)
+40 +     m2 = re.search(r"^# exit (-?\d+)$", t, re.MULTILINE)
+41 |     if m1:
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> evidence\itacc_r10\g4\harness\make_items.py:43:37
+   |
+41 |     if m1:
+42 |         return m1.group(1), int(m2.group(1))
+43 |     m3 = re.findall(r"^> (.*)$", t, re.M)
+   |                                     ^^^^
+44 |     if not m3:
+45 |         return f"(script kiểm python inline — kết quả trong out/{ma}.txt)", 0
+   |
+help: Replace with `re.MULTILINE`
+   |
+42 |         return m1.group(1), int(m2.group(1))
+   -     m3 = re.findall(r"^> (.*)$", t, re.M)
+43 +     m3 = re.findall(r"^> (.*)$", t, re.MULTILINE)
+44 |     if not m3:
+   |
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:88:23
+    |
+ 86 |   ITEMS = {}
+ 87 |
+ 88 |   ITEMS["finance-01"] = dict(
+    |  _______________________^
+ 89 | |     db="fin", inputs=["orders_shopee.csv", "orders_tiktok.csv",
+ 90 | |                       "qt_shopee_s1.csv", "qt_shopee_s2.csv", "qt_tiktok.csv",
+ 91 | |                       "qt_shopee_bad.csv", "qt_shopee_bad2.csv"],
+ 92 | |     ca=[C("F01-1", "nạp file đơn sàn + kd_orders --sync",
+ 93 | |           "exit 0; 5 đơn shopee + 1 tiktok vào orders source market:%; cột PII bị bỏ",
+ 94 | |           "exit 0 cả 3 lệnh; orders 6 dòng market:shopee/tiktok, đơn hủy → status cancelled; market_rows 0 dòng chứa SĐT/tên người …
+ 95 | |           runs=["F01-1a", "F01-1b", "F01-1c", "F01-1-q"]),
+ 96 | |         C("F01-2", "nạp quyết toán shopee S1",
+ 97 | |           "khop=2 lech=1 (B -14000) hoan=2 thieu_chung_tu=1",
+ 98 | |           "exit 0; khop=2 (A,F), lech=1 (B thuc_nhan expected 264000 actual 250000), hoan=2 (C,D), thieu_chung_tu=1 (E); recon_resu…
+ 99 | |           runs=["F01-2", "F01-2-q"]),
+100 | |         C("F01-3", "nạp quyết toán tiktok", "exit 0 khop=1", "exit 0; khop=1"),
+101 | |         C("F01-4", "CSV cho kế toán (kd_orders --recon)",
+102 | |           "1 dòng/đơn, nhãn khớp, E=thieu_don, dòng TONG đúng, order_ref 8 ký tự",
+103 | |           "exit 0; doi-soat-2026-10-01-2026-10-31.csv: 7 dòng (6 đơn + E thieu_don), TONG shopee total 2.600.000/order_amount 2.750…
+104 | |         C("F01-5", "ÂM file lỗi (cột lạ) + bổ sung F01-5b (số sai/ngày sai/mã đơn trùng)",
+105 | |           "exit 1, không connect, settlement_rows không đổi",
+106 | |           "F01-5 exit 1 '[err] cột lạ'; F01-5b exit 1 nêu 3 lỗi dòng (order_amount, settled_on, mã đơn trùng); settlement_rows vẫn …
+107 | |           runs=["F01-5", "F01-5b"],
+108 | |           note="F01-5b bổ sung sau khóa: file F01-5 dừng ở lỗi header nên chưa chạm kiểm số/ngày/trùng mã"),
+109 | |         C("F01-6", "ÂM nạp lại S1", "[skip], không nhân dòng",
+110 | |           "exit 0 '[skip] file quyết toán đã nạp'; settlement_rows 7"),
+111 | |         C("F01-7", "file xuất lại S2 (A nguyên văn, B số khác)",
+112 | |           "[warn] trùng 1 lệch 1; tổng tính A 1 lần, B giữ cả hai",
+113 | |           "exit 0 [warn] chồng kỳ trùng 1, lệch 1; v_settlement_khoan shopee 7 khoản (thô 8 dòng): order_amount 3.050.000 vs thô 4.…
+114 | |           runs=["F01-7", "F01-7r", "F01-7-q"]),
+115 | |         C("F01-8", "ÂM tắt finance-01 (chạy cuối)", "exit 2 [blocked]; recon_results không đổi",
+116 | |           "exit 2 '[blocked] … finance-01 đang tắt … không đối soát'; recon_results 9 dòng, max(reconciled_at) không đổi",
+117 | |           runs=["TAT-finance-01", "F01-8", "TAT-fin-q2"])],
+118 | |     trang_thai="DAT", muc="LOCAL",
+119 | |     ev=["F01-1a", "F01-1b", "F01-1c", "F01-1-q", "F01-2", "F01-2-q", "F01-3",
+120 | |         "F01-4", "F01-5", "F01-5b", "F01-6", "F01-7", "F01-7r", "F01-7-q",
+121 | |         "F01-8", "TAT-finance-01", "TAT-fin-q2",
+122 | |         "doi-soat-2026-10-01-2026-10-31.csv"],
+123 | |     gioi_han=("Mapping cột Seller Center + biểu phí là GIẢ ĐỊNH (data/settlement_map.json, settlement_fees.json) — chưa xác minh vớ…
+124 | |     can_de_go="")
+    | |_________________^
+125 |
+126 |   ITEMS["finance-02"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:126:23
+    |
+124 |       can_de_go="")
+125 |
+126 |   ITEMS["finance-02"] = dict(
+    |  _______________________^
+127 | |     db="fin", inputs=["orders_shopee.csv", "orders_tiktok.csv", "yeucau_ok.csv",
+128 | |                       "yeucau_bad.csv", "orders_shopee_g.csv"],
+129 | |     ca=[C("F02-1", "ÂM MST sai trong file yêu cầu", "exit 1, không connect, 0 invoice_lines",
+130 | |           "exit 1 '[err] dòng 2: tax_code không phải MST'; invoice_lines 0"),
+131 | |         C("F02-2", "lập lô 2026-10-23 kèm yêu cầu MST",
+132 | |           "thường A,F,T1; can_mst B; loại hủy 1, chưa đạt mốc 1; 1 mục invoice_batch pending agent:acc_invoice; payload không tên n…
+133 | |           "exit 0; lô 2026-10-23-f74707095916: thường 3, cần MST 1, hủy 1, chưa đạt mốc 1 → approval_queue #1 finance/invoice_batch…
+134 | |           runs=["F02-2", "F02-2-q"]),
+135 | |         C("F02-3", "ÂM chạy lại khi lô pending", "[skip]", "exit 0 '[skip] … đã có lô chờ duyệt #1'"),
+136 | |         C("F02-4", "verify-draft mục pending", "exit 1 chưa duyệt", "exit 1 '[fail] mục #1 đang pending — chưa được duyệt'"),
+137 | |         C("F02-5", "người duyệt (dev) rồi verify-draft khi chạy thử", "approve 0; verify 1 (chạy thử chặn dùng)",
+138 | |           "approve exit 0 (cảnh báo CHẾ ĐỘ DEV); verify exit 1, stderr '[rollout] TỪ CHỐI DÙNG … finance-02 đang chạy thử'",
+139 | |           runs=["F02-5a", "F02-5b"],
+140 | |           note="stdout của verify ghi 'payload lệch bản đã duyệt' (thông điệp gây hiểu nhầm; lý do thật ở stderr rollout)"),
+141 | |         C("F02-6", "ép van_hanh (FIXTURE _FORCE_MODE) — file đúng / file sửa", "đúng 0; sửa 1",
+142 | |           "file đúng exit 0 '[ok] … khớp csv_sha256'; file thêm 1 byte exit 1 'sha256 lệch — không nhập'",
+143 | |           runs=["F02-6a", "F02-6b"]),
+144 | |         C("F02-7", "ÂM tắt finance-02 (chạy cuối)", "exit !=0; không thêm invoice_batch",
+145 | |           "lượt 2 (sau khi nạp đơn G mới): exit 1 'RolloutBlocked … finance-02 đang tắt'; invoice_batch vẫn 1, invoice_lines vẫn 4 …
+146 | |           runs=["TAT-finance-02", "F02-7-tienDe", "F02-7", "TAT-fin-q3"], note=L1)],
+147 | |     trang_thai="DAT", muc="LOCAL",
+148 | |     ev=["F02-1", "F02-2", "F02-2-q", "F02-3", "F02-4", "F02-5a", "F02-5b",
+149 | |         "F02-6a", "F02-6b", "F02-7-luot1-harness-hong", "F02-7-tienDe", "F02-7",
+150 | |         "TAT-finance-02", "TAT-fin-q3"],
+151 | |     gioi_han="Phát hành HĐĐT trên phần mềm nhà cung cấp do kế toán làm tay (external-dep, ngoài phần mềm); mốc lập hóa đơn + format…
+152 | |     can_de_go="")
+    | |_________________^
+153 |
+154 |   ITEMS["finance-03.1"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:154:25
+    |
+152 |       can_de_go="")
+153 |
+154 |   ITEMS["finance-03.1"] = dict(
+    |  _________________________^
+155 | |     db="fin", inputs=["ar_ok.csv", "ar_bad.csv"],
+156 | |     ca=[C("F031-1", "ÂM file công nợ lỗi", "exit 1, 0 dòng", "exit 1 (dealer_code sai mẫu, amount ≤0 với phat_sinh); dealer_ar 0"),
+157 | |         C("F031-2", "nạp sổ công nợ", "exit 0, 7 dòng", "exit 0 '[load] 7 dòng'"),
+158 | |         C("F031-3", "ÂM nạp lại", "[skip]", "exit 0 '[skip]'; dealer_ar 7"),
+159 | |         C("F031-4", "aging FIFO", "IT-DL01 14tr (0-30 2tr, 31-60 5tr, >90 7tr) quá hạn 12tr; IT-DL02 61-90 4tr; IT-DL03 0-30 1tr qu…
+160 | |           "khớp đúng từng số (cả IT-DL04 0-30 800.000 không quá hạn)"),
+161 | |         C("F031-5", "bản tin GĐ tài chính", "director-finance-*.md bảng quá hạn 3 đại lý, tổng 17tr, nhãn CHẠY THỬ, report_outputs …
+162 | |           "exit 0; file có nhãn CHẠY THỬ, bảng IT-DL01/02/03, 'Tổng quá hạn: 17.000.000đ — nguồn dealer_ar'; report_outputs finance…
+163 | |         C("F031-6", "bản tin thể hiện đủ 4 nhóm tuổi (0-30 của khoản quá hạn IT-DL03)",
+164 | |           "có cột/giá trị nhóm 0-30 trong bản tin",
+165 | |           "bảng bản tin chỉ có cột Quá hạn | 31-60 | 61-90 | >90 — KHÔNG có 0-30: IT-DL03 quá hạn 1.000.000đ hiện 0/0/0; 0-30 của I…
+166 | |           kq="FAIL", runs=["F031-5"]),
+167 | |         C("F031-7", "ÂM tắt finance-03.1 (chạy cuối)", "exit 2, không ghi file", "exit 2 '[blocked] báo cáo director-finance-…: fin…
+168 | |           runs=["TAT-finance-03.1", "F031-7"])],
+169 | |     trang_thai="BI_CHAN", muc="LOCAL", nn="CODE_FAIL",
+170 | |     ev=["F031-1", "F031-2", "F031-3", "F031-4", "F031-5", "F031-7",
+171 | |         "TAT-finance-03.1", "rep_f031/director-finance-2026-10-23.md"],
+172 | |     loi=[{"muc_do": "thấp", "mo_ta": "Bản tin GĐ tài chính (director-finance, mục 'Công nợ đại lý quá hạn' do agents.acc_ar.overdue…
+173 | |            "tai_hien": "acc_ar --load fixtures/ar_ok.csv; harness run.py --reports-dir D -- agents.acc_ar --bulletin --as-of 2026-1…
+174 | |            "expected": "bảng có nhóm 0-30 (và tuổi nợ 4 nhóm)", "actual": "chỉ Quá hạn/31-60/61-90/>90",
+175 | |            "evidence": ["evidence/itacc_r10/g4/out/rep_f031/director-finance-2026-10-23.md", "evidence/itacc_r10/g4/out/F031-4.txt"…
+176 | |     gioi_han="Sổ công nợ thật do Bên B nạp tay; term_days/chính sách hoa hồng MẪU.",
+177 | |     can_de_go="Thêm nhóm 0-30 (tuổi nợ đủ 4 nhóm) vào mục công nợ của bản tin — sửa sản phẩm, ngoài phạm vi kiểm nghiệm.")
+    | |__________________________________________________________________________________________________________________________^
+178 |
+179 |   ITEMS["finance-03.2"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:179:25
+    |
+177 |       can_de_go="Thêm nhóm 0-30 (tuổi nợ đủ 4 nhóm) vào mục công nợ của bản tin — sửa sản phẩm, ngoài phạm vi kiểm nghiệm.")
+178 |
+179 |   ITEMS["finance-03.2"] = dict(
+    |  _________________________^
+180 | |     db="fin", inputs=["orders_shopee.csv", "qt_shopee_s1.csv"],
+181 | |     ca=[C("F032-1", "fixture đại lý + mã affiliate active (SQL owner, FIXTURE)", "insert ok",
+182 | |           "dealers IT-DL01 (10%), IT-DL03; affiliate_codes SSQATEST2345 active", note="mã fixture đổi từ SSITTESTAAAA (ghi trong cr…
+183 | |         C("F032-2", "ghi nhận đơn qua mã", "mới 2 (A tinh, C huy), unknown 1; A 1.000.000×10%; C 0",
+184 | |           "exit 0 mới 2, mã không khớp 1; A sapentol amount 1.000.000 rate 10.00 hoa hồng 100.000 status tinh settled=true; C savig…
+185 | |           runs=["F032-2", "F032-q"]),
+186 | |         C("F032-3", "ÂM idempotent", "mới 0, không đổi 2", "exit 0 'mới 0 · không đổi 2'"),
+187 | |         C("F032-4", "báo cáo hoa hồng", "BẢN NHÁP — không phải lệnh chi", "exit 0; 'BẢN NHÁP — không phải lệnh chi'; IT-DL01 shopee…
+188 | |         C("F032-5", "ÂM tắt finance-03.2 (chạy cuối)", "exit 1 RolloutBlocked; số dòng không đổi",
+189 | |           "exit 1 '[error] RolloutBlocked … finance-03.2 đang tắt'; affiliate_attributions 2",
+190 | |           runs=["TAT-finance-03.2", "F032-5", "TAT-fin-q2"])],
+191 | |     trang_thai="DAT", muc="LOCAL",
+192 | |     ev=["F032-1", "F032-2", "F032-3", "F032-q", "F032-4", "F032-5", "TAT-finance-03.2"],
+193 | |     gioi_han="Tỷ lệ hoa hồng MẪU (dealers.commission_default fixture); mã affiliate/đại lý chèn bằng SQL owner làm dữ liệu mồi (luồ…
+194 | |     can_de_go="")
+    | |_________________^
+195 |
+196 |   ITEMS["finance-03.3"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:196:25
+    |
+194 |       can_de_go="")
+195 |
+196 |   ITEMS["finance-03.3"] = dict(
+    |  _________________________^
+197 | |     db="fin", inputs=["ar_ok.csv"],
+198 | |     ca=[C("F033-1", "dry-run", "in 2 nháp, 0 ghi", "exit 0; 2 nháp IT-DL01, IT-DL03; IT-DL02 skip ngoài sổ; ar_reminder 0"),
+199 | |         C("F033-2", "đẩy hàng duyệt", "2 mục ar_reminder pending agent:acc_ar; IT-DL02 skip",
+200 | |           "exit 0; #2 IT-DL01 12.000.000 (HD-IT-001 7tr quá 84 ngày, HD-IT-002 5tr quá 13 ngày), #3 IT-DL03 1.000.000; created_by a…
+201 | |           runs=["F033-2", "F033-q"]),
+202 | |         C("F033-3", "ÂM idempotent", "0 mới, skip", "exit 0; 0 nháp mới, 3 bỏ qua"),
+203 | |         C("F033-4", "ÂM tắt finance-03.3 (chạy cuối)", "exit 2 blocked",
+204 | |           "lượt 2 (--as-of 2026-11-20 → trạng thái nợ mới): exit 2 '[blocked] … finance-03.3 đang tắt'; ar_reminder vẫn 2",
+205 | |           runs=["TAT-finance-03.3", "F033-4", "TAT-fin-q3"], note=L1)],
+206 | |     trang_thai="DAT", muc="LOCAL",
+207 | |     ev=["F033-1", "F033-2", "F033-3", "F033-q", "F033-4-luot1-harness-hong", "F033-4", "TAT-finance-03.3", "TAT-fin-q3"],
+208 | |     gioi_han="Sổ dealers/dealer_ar là fixture; approvers GĐ tài chính rỗng (C04 — chế độ thực do điều phối viên kiểm); kế toán gửi …
+209 | |     can_de_go="")
+    | |_________________^
+210 |
+211 |   ITEMS["finance-04.1"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:211:25
+    |
+209 |       can_de_go="")
+210 |
+211 |   ITEMS["finance-04.1"] = dict(
+    |  _________________________^
+212 | |     db="fin", inputs=["qt_shopee_s1.csv", "qt_shopee_s2.csv", "qt_tiktok.csv", "orders_shopee.csv"],
+213 | |     ca=[C("F041-1", "lập giá vốn 4 SKU", "exit 0 chờ duyệt", "exit 0 ×4 (#1..#4 chờ duyệt)",
+214 | |           runs=["F041-1.1", "F041-1.2", "F041-1.3", "F041-1.4"]),
+215 | |         C("F041-2", "ÂM người lập tự duyệt", "exit 1 DB từ chối", "exit 1 'người duyệt trùng người lập'"),
+216 | |         C("F041-3", "người khác duyệt", "exit 0", "exit 0 ×4; cogs_versions approved_by 'GĐ Tài chính Thử IT'",
+217 | |           runs=["F041-3.1", "F041-3.2", "F041-3.3", "F041-3.4", "F041-q"]),
+218 | |         C("F041-4", "P&L 09/2026", "sapentol shopee thực nhận 880.000 giá vốn 400.000; savigout/saphraton 'chưa có giá vốn duyệt'; …
+219 | |           "exit 0; pnl-2026-09.md: sapentol shopee 1.000.000/120.000/880.000/giá vốn 400.000/lãi 480.000/48%; saphraton-20v & savig…
+220 | |         C("F041-5", "lọc kênh tiktok", "file riêng; bản toàn kênh không đổi", "exit 0; pnl-2026-09-tiktok.md riêng (1 ô sapentol ti…
+221 | |         C("F041-6", "ÂM tắt finance-04.1 (chạy cuối)", "exit !=0, không ghi file", "exit 1 (traceback RolloutBlocked không bắt) — k…
+222 | |           runs=["TAT-finance-04.1", "F041-6"], note="chặn đúng nhưng ném traceback thô thay vì thông báo — xem lỗi thấp chung")],
+223 | |     trang_thai="DAT", muc="LOCAL",
+224 | |     ev=["F041-1.1", "F041-2", "F041-3.1", "F041-q", "F041-4", "F041-5", "F041-6", "TAT-finance-04.1",
+225 | |         "rep_f041/pnl-2026-09.md", "rep_f041/pnl-2026-09-tiktok.md"],
+226 | |     gioi_han="Giá vốn là fixture (người lập ≠ người duyệt ở chế độ dev); P&L chỉ kênh sàn (doanh thu đại lý/B2B chưa có nguồn — ext…
+227 | |     can_de_go="")
+    | |_________________^
+228 |
+229 |   ITEMS["finance-04.2"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:229:25
+    |
+227 |       can_de_go="")
+228 |
+229 |   ITEMS["finance-04.2"] = dict(
+    |  _________________________^
+230 | |     db="fin", inputs=["golden_fin.json", "km_ok.csv", "km_bad.csv"],
+231 | |     ca=[C("F042-1", "golden fixture + duyệt giá + giá vốn", "v_promotable có 2 SKU mật ong shopee",
+232 | |           "golden_store exit 0 (sku_changed=2); --approve-price 24/30/23/29 exit 0; v_promotable = mat-ong-sam-120ml-1hu, mat-ong-s…
+233 | |           runs=["F042-1a", "F042-1b.24", "F042-1b.30", "F042-1-q"]),
+234 | |         C("F042-2", "ÂM file kế hoạch lỗi", "exit 1, không connect", "exit 1 'cột kenh, giam_pct không hợp lệ … không connect'"),
+235 | |         C("F042-3", "dry-run", "S1 biên âm + S2 chồng + promo_banned; 0 ghi", "exit 0; S1 3 (promo_banned KM-IT-03, biên âm KM-IT-0…
+236 | |         C("F042-4", "đẩy hàng duyệt", "promo_loss finance ≥1; promo_change sales ≥1",
+237 | |           "exit 0; sales: 3 market_alert_s1 + 1 promo_change (#7, chồng KM); finance: 2 promo_loss (#8 biên -73.600, #9 -174.920 — …
+238 | |           runs=["F042-4", "F042-4-q"]),
+239 | |         C("F042-5", "ÂM idempotent", "0 mục mới", "exit 0 'đẩy 0 … 0 mục KM lỗ'"),
+240 | |         C("F042-6", "đề xuất ngân sách ads", "1 budget_change agent:fp_ads; 120ml DE_XUAT; TPBVSK CHAN_XNQC; rerun skip",
+241 | |           "exit 0 #10 budget_change agent:fp_ads: mat-ong-sam-120ml-1hu DE_XUAT 83.200 (416.000×0,2), TPBVSK CHAN_XNQC, mat-ong-300…
+242 | |           runs=["F042-6a", "F042-6b", "F042-6-q"]),
+243 | |         C("F042-7", "ÂM tắt finance-04.2 (chạy cuối)", "không sinh mục mới", "exit 1 '[error] RolloutBlocked'; budget_change vẫn 1",
+244 | |           runs=["TAT-finance-04.2", "F042-7", "TAT-fin-q4"])],
+245 | |     trang_thai="DAT", muc="LOCAL",
+246 | |     ev=["F042-1a", "F042-1b.24", "F042-1b.30", "F042-1-q", "F042-2", "F042-3", "F042-4", "F042-4-q",
+247 | |         "F042-5", "F042-6a", "F042-6b", "F042-6-q", "F042-7", "TAT-finance-04.2"],
+248 | |     gioi_han="SKU mật ong được đặt self_declaration_ok=true trong golden FIXTURE (không phải dữ liệu thật) để có SKU quảng bá được;…
+249 | |     can_de_go="")
+    | |_________________^
+250 |
+251 |   ITEMS["finance-05.1"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:251:25
+    |
+249 |       can_de_go="")
+250 |
+251 |   ITEMS["finance-05.1"] = dict(
+    |  _________________________^
+252 | |     db="fin", inputs=["opex_ok.csv", "opex_bad.csv"],
+253 | |     ca=[C("F051-1", "ÂM file chi phí lỗi", "exit 1, 0 dòng", "exit 1 (category, amount_vnd); opex_entries 0"),
+254 | |         C("F051-2", "nạp chi phí + llm_usage fixture", "exit 0, 3 dòng", "exit 0 3 dòng (12.000.000); llm_usage fixture 168 USD (ch…
+255 | |           runs=["F051-2", "F051-2-q"]),
+256 | |         C("F051-3", "báo cáo trần", "cloud 87,5% cảnh báo 80%; saas 107% vượt; ai 4.200.000 84%",
+257 | |           "exit 0; ai 4.200.000đ 84,0% [CẢNH BÁO 80%]; cloud 87,5% [CẢNH BÁO 80%]; saas 107,1% [VƯỢT TRẦN 100%]; khoản > X: 1 chờ T…
+258 | |         C("F051-4", "đẩy khoản > X", "1 opex_over_x pending agent:fp_opscost", "exit 0; #11 finance/opex_over_x pending agent:fp_op…
+259 | |           runs=["F051-4", "F051-4-q"]),
+260 | |         C("F051-5", "ÂM idempotent", "0 mới", "exit 0 '0 mục mới'"),
+261 | |         C("F051-6", "ÂM người không phải TGĐ duyệt", "status cho_tgd_ky", "approve exit 0 (dev); --status: 'cho_tgd_ky — đã duyệt b…
+262 | |           runs=["F051-6a", "F051-6b"]),
+263 | |         C("F051-7", "bản tin tuần GĐ tài chính", "các mục công nợ/P&L/chi phí/dòng tiền/ads",
+264 | |           "exit 0; director-finance-2026-10-23.md có đủ 5 mục; mục chi phí nêu 3 cảnh báo + 1 khoản chờ TGĐ ký")],
+265 | |     trang_thai="DAT", muc="LOCAL",
+266 | |     ev=["F051-1", "F051-2", "F051-2-q", "F051-3", "F051-4", "F051-4-q", "F051-5", "F051-6a", "F051-6b", "F051-7",
+267 | |         "rep_f051/director-finance-2026-10-23.md"],
+268 | |     gioi_han="Trần ngân sách/ngưỡng X GIẢ ĐỊNH; chi phí AI lấy từ llm_usage fixture. Nhánh 'được chi' (TGĐ có vai trò tgd ký đúng m…
+269 | |     can_de_go="")
+    | |_________________^
+270 |
+271 |   ITEMS["finance-05.2"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:271:25
+    |
+269 |       can_de_go="")
+270 |
+271 |   ITEMS["finance-05.2"] = dict(
+    |  _________________________^
+272 | |     db="fin", inputs=["qt_shopee_s1.csv", "qt_tiktok.csv"],
+273 | |     ca=[C("F052-1", "dự báo không số dư đầu kỳ", "13 tuần; 'chưa có số dư đầu kỳ thật'; report_outputs",
+274 | |           "exit 0; dong-tien-2026-10-26.md 13 tuần × thấp/cơ sở/cao, chi cố định + nhập hàng Tết 300tr tuần 14/12; 'chưa có số dư đ…
+275 | |         C("F052-2", "có số dư đầu kỳ, json", "opening 500000000; low≤base≤high",
+276 | |           "exit 0; 13 tuần, opening 500000000, low≤base≤high mọi tuần (kiểm bằng script)", runs=["F052-2", "F052-2-check"]),
+277 | |         C("F052-2b", "bổ sung sau khóa: nhánh cảnh báo tuần âm (fixture không có tuần âm)", "liệt kê tuần âm",
+278 | |           "exit 0; --opening=-400000000 → 'Cảnh báo — tuần âm ở kịch bản thấp: 26/10 … 18/01', tuần âm gắn ⚠"),
+279 | |         C("F052-3", "ÂM tham số sai", "exit 2", "exit 2 '--opening phải là số nguyên VND'"),
+280 | |         C("F052-4", "ÂM DB down", "exit 0 + warn; không đếm", "exit 0; [warn] không kết nối Postgres — mặc định 'chưa xác minh'; [w…
+281 | |         C("F052-5", "ÂM tắt finance-05.2 (chạy cuối)", "exit 2, không ghi file", "exit 2 '[rollout] … finance-05.2 đang tắt'; không…
+282 | |           runs=["TAT-finance-05.2", "F052-5"])],
+283 | |     trang_thai="DAT", muc="LOCAL",
+284 | |     ev=["F052-1", "F052-2", "F052-2-check", "F052-2b", "F052-3", "F052-4", "F052-5", "TAT-finance-05.2",
+285 | |         "rep_f052/dong-tien-2026-10-26.md", "rep_f052_dbdown/dong-tien-2026-10-26.md"],
+286 | |     gioi_han="Số dư đầu kỳ thật + giả định fpa_config/scenario GIẢ ĐỊNH; tỷ lệ thực nhận đo trên fixture (gồm dòng hoàn + bản lệch …
+287 | |     can_de_go="")
+    | |_________________^
+288 |
+289 |   ITEMS["finance-06"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:289:23
+    |
+287 |       can_de_go="")
+288 |
+289 |   ITEMS["finance-06"] = dict(
+    |  _______________________^
+290 | |     db="fin", inputs=["qt_shopee_s1.csv", "qt_shopee_s2.csv", "qt_tiktok.csv", "orders_shopee.csv",
+291 | |                       "orders_tiktok.csv", "rev_share_fixture.json"],
+292 | |     ca=[C("F06-1", "đối soát Q3 trước file xuất lại", "shopee 2.600.000/288.000/200.000/400.000/1.712.000; tiktok 440.000; tổng 2.1…
+293 | |           "exit 0; khớp đúng từng số (hoàn của đơn hủy C không trừ lần 2); 'Tỷ lệ phí vận hành: chưa chốt', ngày ký/vận hành 'chưa …
+294 | |           runs=["F06-1", "F06-1-q"]),
+295 | |         C("F06-2", "ÂM quý không dữ liệu", "'chưa có dữ liệu' 2 kênh + tổng", "exit 0; mọi ô 'chưa có dữ liệu', ghi chú từng kênh"),
+296 | |         C("F06-3", "ÂM quý chưa đóng", "exit 2", "exit 2 'quý 2026-Q4 chưa đóng'"),
+297 | |         C("F06-4", "ÂM --year chưa chốt ngày ký", "exit 1", "exit 1 'chưa chốt ngay_ky_hop_dong'"),
+298 | |         C("F06-5", "sau file xuất lại", "A không cộng lần 2; B lệch → BẤT THƯỜNG; không phí; dòng sổ thứ 2",
+299 | |           "exit 0; shopee gộp 2.900.000 (+300.000 chỉ do bản B khác số; A không cộng lại); ghi chú BẤT THƯỜNG chồng kỳ trùng 1 lệch…
+300 | |           runs=["F06-5", "F06-5-q"]),
+301 | |         C("F06-5b", "bổ sung sau khóa: cấu hình FIXTURE có tỷ lệ 5% + ngày → phí vẫn không tính khi bất thường", "phí '—' lý do bất…
+302 | |           "exit 0; 'Tỷ lệ phí vận hành 5%' nhưng 'Phí vận hành — (có kênh bất thường — 2 bên giải trình)'",
+303 | |           note="thêm vì F06-5 không tách được lý do (tỷ lệ null che nhánh bất thường); config bản sao scratchpad qua --set CONFIG_F…
+304 | |         C("F06-6", "report_sha256 ↔ file", "khớp",
+305 | |           "KHÔNG khớp: revenue_quarters.report_sha256 = 34ec42db… (nội dung chưa có nhãn) ≠ sha file doi-soat-2026-Q3.md đã ghi db4…
+306 | |           kq="FAIL", runs=["F06-1-q", "F06-6-sha"]),
+307 | |         C("F06-7", "ÂM tắt finance-06 (chạy cuối)", "exit 2, không thêm sổ", "exit 2 '[blocked] … finance-06 đang tắt'; revenue_qua…
+308 | |           runs=["TAT-finance-06", "F06-7", "TAT-fin-q4"])],
+309 | |     trang_thai="BI_CHAN", muc="LOCAL", nn="CODE_FAIL",
+310 | |     ev=["F06-1", "F06-1-q", "F06-2", "F06-3", "F06-4", "F06-5", "F06-5-q", "F06-5b", "F06-6-sha", "F06-7",
+311 | |         "TAT-finance-06", "f06_run1/doi-soat-2026-Q3.md", "f06_run2/doi-soat-2026-Q3.md"],
+312 | |     loi=[{"muc_do": "thấp–trung bình", "mo_ta": "agents.rev_share.record ghi revenue_quarters.report_sha256 = sha256(text) TRƯỚC kh…
+313 | |            "tai_hien": "python -m agents.rev_share --quarter 2026-Q3 --record --out-dir D; so sha256(D/doi-soat-2026-Q3.md) với rev…
+314 | |            "expected": "bằng nhau", "actual": "db49e15f… (file) ≠ 34ec42db… (sổ) — sổ = sha bản bỏ dòng nhãn",
+315 | |            "evidence": ["evidence/itacc_r10/g4/out/F06-1-q.txt", "evidence/itacc_r10/g4/out/F06-6-sha.txt", "evidence/itacc_r10/g4/…
+316 | |     gioi_han="Tỷ lệ phí/mức thưởng/ngày ký/ngày vận hành null = chưa chốt (giữ nguyên, không điền thay; nhánh có tỷ lệ chỉ chạy bằn…
+317 | |     can_de_go="Ghi report_sha256 theo đúng nội dung file đã ghi (sau nhãn) hoặc lưu cả hai — sửa sản phẩm.")
+    | |____________________________________________________________________________________________________________^
+318 |
+319 |   ITEMS["production-01"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:319:26
+    |
+317 |       can_de_go="Ghi report_sha256 theo đúng nội dung file đã ghi (sau nhãn) hoặc lưu cả hai — sửa sản phẩm.")
+318 |
+319 |   ITEMS["production-01"] = dict(
+    |  __________________________^
+320 | |     db="prod", inputs=["inv_ok.csv", "inv_bad.csv", "lots_ok.json"],
+321 | |     ca=[C("P01-1", "ÂM file tồn lỗi", "exit 1, 0 dòng", "exit 1 (qty âm, sku lạ, ngày sai); inventory_snapshots 0"),
+322 | |         C("P01-2", "nạp tồn", "exit 0", "exit 0 4 dòng manual_export"),
+323 | |         C("P01-3", "đề xuất phân bổ", "allocation_proposals pending; rượu online 0",
+324 | |           "exit 0 run 0401169a5ab8: 91 dòng pending (13 SKU × 7 kênh) có tồn/nhu cầu thấp-cơ sở-cao/đề xuất/ghi chú; rượu × shopee/…
+325 | |           runs=["P01-3", "P01-3-q"]),
+326 | |         C("P01-4", "ÂM idempotent", "không thêm dòng", "exit 0 '[skip] run đã có (91 dòng)'"),
+327 | |         C("P01-5", "ÂM agent duyệt", "exit !=0", "exit 1 \"'agent:sx' không phải người\""),
+328 | |         C("P01-6", "người duyệt run", "approved, approvals ghi", "exit 0; 91 dòng approved decided_by 'GĐ Sản xuất Thử IT'; approva…
+329 | |           runs=["P01-6", "P01-6-q"]),
+330 | |         C("P01-7", "kế hoạch SX + bản tin", "sx-bantin-tuan-*.md có tồn/lô/tiến độ; report_outputs production-01",
+331 | |           "plan-add/plan-link exit 0; bulletin --date 2026-10-23 --out-dir: exit 1 CRASH 'TypeError: argument of type int is not it…
+332 | |           kq="FAIL", runs=["P01-7a", "P01-7b", "P01-7c", "P01-7c-lap", "P01-7d-chandoan"]),
+333 | |         C("P01-8", "ÂM tắt production-01 (chạy cuối)", "exit !=0 không ghi", "exit 1 '… production-01 đang tắt … không ghi'; alloca…
+334 | |           runs=["TAT-production-01", "P01-8", "TAT-prod-q"])],
+335 | |     trang_thai="BI_CHAN", muc="LOCAL", nn="CODE_FAIL",
+336 | |     ev=["P01-1", "P01-2", "P01-3", "P01-3-q", "P01-4", "P01-5", "P01-6", "P01-6-q", "P01-7a", "P01-7b",
+337 | |         "P01-7c", "P01-7c-lap", "P01-7d-chandoan", "P01-8", "TAT-production-01", "TAT-prod-q",
+338 | |         "rep_prod_diag/sx-bantin-tuan-2028-12-01.md"],
+339 | |     loi="BULLETIN",
+340 | |     gioi_han="Mốc production_config + kịch bản GIẢ ĐỊNH; tồn kho fixture.",
+341 | |     can_de_go="Sửa lỗi đè biến `stock` trong pipelines/production.collect (vòng allocation_proposals) — sửa sản phẩm.")
+    | |_______________________________________________________________________________________________________________________^
+342 |
+343 |   BULLETIN = {"muc_do": "cao", "mo_ta": "pipelines.production.collect: vòng đọc allocation_proposals dùng tên biến `stock` cho cột mi…
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:350:26
+    |
+348 |   ITEMS["production-01"]["loi"] = [BULLETIN]
+349 |
+350 |   ITEMS["production-02"] = dict(
+    |  __________________________^
+351 | |     db="prod", inputs=["golden_prod.json", "golden_bad.json", "golden_empty.json", "dossier_full.json", "dossier_lech.json"],
+352 | |     ca=[C("P02-1", "nạp golden fixture (savina-12v quy cách 12→10 viên)", "phiếu spec_mismatch; detail theo nguồn",
+353 | |           "exit 0 sku_changed=1 (version 2); golden_discrepancies +2 spec_mismatch pending, detail {web: 12 viên, golden: 10 viên} — không có trường đề xuất; price_list giữ 34 dòng chờ duyệt",
+354 | |           runs=["P02-0-q", "P02-1", "P02-1-q"]),
+355 | |         C("P02-2", "ÂM idempotent", "price_list không thêm", "exit 0 sku_changed=0 price_same=34; tổng không đổi"),
+356 | |         C("P02-3", "ÂM golden vi phạm R1 / rỗng", "exit 1, 0 ghi", "bad: exit 1 R1+R2 'không nạp gì'; empty: exit 1 'không connect, không ghi/xóa'; price_list 34, discrepancies 41, version max 2 không đổi",
+357 | |           runs=["P02-3a", "P02-3b"]),
+358 | |         C("P02-4", "report phiếu lệch", "liệt kê pending", "exit 0 '41 phiếu lệch pending (giá trị theo nguồn, agent không chọn)'"),
+359 | |         C("P02-5", "ÂM agent duyệt giá", "exit !=0", "exit 1 \"'agent:x' không phải người\"; price_list #2 approved_by vẫn null"),
+360 | |         C("P02-6", "hồ sơ gốc thật", "exit 2 BLOCKED 0/14 + SKU chưa gắn", "exit 2 '[blocked] danh mục hồ sơ gốc: 0/14', '[blocked] SKU golden đã gắn hồ sơ gốc: 0/13'"),
+361 | |         C("P02-7", "bộ kiểm trên fixture đủ / lệch", "đủ 0; lệch 1", "dossier_full exit 0 (13/13 — fixture GIẢ, chỉ để chạy bộ kiểm); dossier_lech exit 1 'số công bố lệch golden của savina-12v'",
+362 | |           runs=["P02-7a", "P02-7b"])],
+363 | |     trang_thai="BI_CHAN", muc="LOCAL", nn="EXTERNAL_INPUT",
+364 | |     ev=["P02-0-q", "P02-1", "P02-1-q", "P02-2", "P02-3a", "P02-3b", "P02-4", "P02-5", "P02-6", "P02-7a", "P02-7b"],
+365 | |     gioi_han="Phần con golden master + phiếu lệch + bộ kiểm hồ sơ chạy đúng trên fixture; đầu ra thiết yếu 'hồ sơ gốc 14 sản phẩm' chưa có dữ liệu. Chính sách cổng tắt loader chưa cấu hình (data/loader_gate.json…
+366 | |     can_de_go="Bên B cung cấp danh_muc_ho_so_goc 14 hồ sơ (tên, thành phần, quy cách, số công bố, xác nhận + căn cứ) và gắn mọi SKU golden vào data/product_dossiers.json → product_dossiers --check exit 0.")
+    | |______________________________________________________________________________________________________________________________________________________________________________________________________________^
+367 |
+368 |   ITEMS["production-03"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:368:26
+    |
+366 |       can_de_go="Bên B cung cấp danh_muc_ho_so_goc 14 hồ sơ (tên, thành phần, quy cách, số công bố, xác nhận + căn cứ) và gắn mọi SKU…
+367 |
+368 |   ITEMS["production-03"] = dict(
+    |  __________________________^
+369 | |     db="prod", inputs=["nhan_savina.txt", "nhan_ruou.txt", "nhan_empty.txt", "nhan.png", "listing_shopee.csv"],
+370 | |     ca=[C("P03-1", "nhãn savina-12v có lỗi (+ listing fixture nạp trước)", "ĐKSP lệch, thiếu khuyến cáo, lô không hồ sơ",
+371 | |           "exit 0 [dry] 6 điểm lệch: thiếu khuyến cáo phần 1+2, ĐKSP 1234 vs golden 8014, quy cách 12 vs golden 10 viên, lô IT-LOT-…
+372 | |           runs=["P03-0", "P03-1"]),
+373 | |         C("P03-2", "--submit", "1 label_check production agent:sx_label pending", "exit 0 #1 production/label_check pending agent:s…
+374 | |           runs=["P03-2", "P03-q"]),
+375 | |         C("P03-3", "ÂM idempotent", "[skip]", "exit 0 '[skip] đợt này đã có'"),
+376 | |         C("P03-4", "nhãn rượu → mã tra cứu", "chỉ H-xxxxxxxx", "exit 0 #2 title/payload 'SKU H-0e8929fd', không sku_key/tên rượu"),
+377 | |         C("P03-5", "đọc ẢNH nhãn (OCR none) — chặn an toàn", "exit 2 chưa cấu hình OCR",
+378 | |           "exit 2 'chưa cấu hình OCR … (external-dep, cần hợp đồng + DPA)' — PASS là nhánh CHẶN an toàn; đọc ảnh nhãn KHÔNG thực hi…
+379 | |         C("P03-6", "ÂM file rỗng / SKU lạ", "exit 1", "rỗng exit 1; SKU lạ exit 1; label_check vẫn 2", runs=["P03-6a", "P03-6b"])],
+380 | |     trang_thai="BI_CHAN", muc="LOCAL", nn="MISSING_ADAPTER",
+381 | |     ev=["P03-0", "P03-1", "P03-2", "P03-3", "P03-4", "P03-q", "P03-5", "P03-6a", "P03-6b"],
+382 | |     gioi_han="Phần con đối soát từ CHỮ nhãn (.txt) đạt trên fixture; luật nhãn GIẢ ĐỊNH (label_rules.json chờ pháp chế). Đầu ra thi…
+383 | |     can_de_go="Cắm provider OCR trong nước vào ingest.doc_intake.PROVIDERS (vendor + hợp đồng/DPA + key), đặt OCR_PROVIDER.")
+    | |_____________________________________________________________________________________________________________________________^
+384 |
+385 |   ITEMS["production-04.3"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:385:28
+    |
+383 |       can_de_go="Cắm provider OCR trong nước vào ingest.doc_intake.PROVIDERS (vendor + hợp đồng/DPA + key), đặt OCR_PROVIDER.")
+384 |
+385 |   ITEMS["production-04.3"] = dict(
+    |  ____________________________^
+386 | |     db="prod", inputs=["lots_ok.json", "lots_bad.json", "cert_a.pdf", "cert_b.pdf", "not_pdf.txt"],
+387 | |     ca=[C("P043-1", "ÂM lô HSD trước NSX", "exit 1, 0 dòng", "exit 1 'hạn dùng phải SAU ngày sản xuất … không connect'"),
+388 | |         C("P043-2", "nạp 4 lô", "4 pending", "exit 0 '4 lô mới (pending)'"),
+389 | |         C("P043-3", "intake", "3 passed 1 failed; intake lại từ chối", "exit 0 ×4 (approvals #2–#5); intake lại IT-LOT-001 exit 1 '…
+390 | |           runs=["P043-3.IT-LOT-001", "P043-3.IT-LOT-004", "P043-3.again", "P043-3-q"]),
+391 | |         C("P043-4", "phiếu kiểm nghiệm v1, v2", "v1 rồi v2", "exit 0: IT-LOT-001 v1 PKN-IT-001 rồi v2 PKN-IT-001-R1 (v1 giữ); IT-LO…
+392 | |           runs=["P043-4a", "P043-4b", "P043-4c", "P043-4-q"]),
+393 | |         C("P043-5", "ÂM phiếu sai loại / trùng tệp / kho trong repo", "exit !=0 cả 3", "not_pdf exit 1 (magic bytes); trùng tệp cùn…
+394 | |           runs=["P043-5a", "P043-5b", "P043-5c"]),
+395 | |         C("P043-6", "cert-verify", "ok / thieu_phieu; exit 1", "exit 1: IT-LOT-001 ok, 002 ok, 003 thieu_phieu; sau khi sửa tệp tro…
+396 | |           runs=["P043-6a", "P043-6b"]),
+397 | |         C("P043-7", "bản tin cận hạn", "sx-canhan-2026-10-23.md có lô HSD 01/12/2026 và lô hết hạn 01/10/2026",
+398 | |           "exit 1 CRASH TypeError trong production.collect (cùng lỗi P01-7) — KHÔNG ghi sx-canhan-2026-10-23.md; mục FEFO chỉ ra đư…
+399 | |           kq="FAIL", runs=["P01-7c", "P01-7c-lap", "P01-7d-chandoan"]),
+400 | |         C("P043-8", "ÂM tắt production-04.3 (chạy cuối)", "exit !=0; không ghi sx-canhan mới",
+401 | |           "exit 1 '[err] báo cáo sx-canhan-2028-12-01.md: production-04.3 đang tắt'; chỉ sx-bantin (production-01 còn chạy thử) đượ…
+402 | |           runs=["TAT-production-04.3", "P043-8"])],
+403 | |     trang_thai="BI_CHAN", muc="LOCAL", nn="CODE_FAIL",
+404 | |     ev=["P043-1", "P043-2", "P043-3-q", "P043-3.again", "P043-4a", "P043-4b", "P043-4c", "P043-4-q", "P043-5a",
+405 | |         "P043-5b", "P043-5c", "P043-6a", "P043-6b", "P01-7c", "P01-7c-lap", "P01-7d-chandoan", "P043-8",
+406 | |         "TAT-production-04.3", "rep_prod_diag/sx-canhan-2028-12-01.md"],
+407 | |     loi=[BULLETIN],
+408 | |     gioi_han="near_expiry_days GIẢ ĐỊNH 90; phiếu kiểm nghiệm là PDF giả. Quan sát: intake 'passed' cho lô đã quá HSD không cảnh bá…
+409 | |     can_de_go="Sửa lỗi đè biến `stock` trong production.collect (cùng lỗi production-01).")
+    | |___________________________________________________________________________________________^
+410 |
+411 |   ITEMS["production-05.1"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:411:28
+    |
+409 |       can_de_go="Sửa lỗi đè biến `stock` trong production.collect (cùng lỗi production-01).")
+410 |
+411 |   ITEMS["production-05.1"] = dict(
+    |  ____________________________^
+412 | |     db="prod", llm=True, inputs=["rd_baoquan.md"],
+413 | |     ca=[C("P051-1", "nạp tài liệu nội bộ (fake embed)", "chunks_internal ≥1 internal:sx", "exit 0; chunks_internal internal:sx/rd-b…
+414 | |           runs=["P051-1", "P051-1-q"]),
+415 | |         C("P051-2", "tra cứu có kết quả", "sx-tracuu-*.md nhãn NỘI BỘ, trích nguyên văn, nguồn DOI",
+416 | |           "exit 0; sx-tracuu-2026-10-23-c4a63127.md: nhãn CHẠY THỬ + 'NỘI BỘ – không dùng cho truyền thông', Chế độ extract, đoạn […
+417 | |           runs=["P051-2", "P05-check"]),
+418 | |         C("P051-3", "ÂM câu về rượu", "NO_DATA, 0 embed", "exit 0 no_data 'không tra cứu đồ uống có cồn'; llm_usage không thêm dòng…
+419 | |         C("P051-4", "ÂM câu không liên quan", "NO_DATA", "exit 0 no_data 'không có tài liệu đủ liên quan'"),
+420 | |         C("P051-5", "ÂM tắt production-05.1 (chạy cuối)", "không ghi file", "exit 1 traceback RolloutBlocked — rep_rd_tat rỗng (std…
+421 | |           runs=["TAT-production-05.1", "P051-5"])],
+422 | |     trang_thai="DAT", muc="MOCK",
+423 | |     ev=["P051-1", "P051-1-q", "P051-2", "P05-check", "P051-3", "P051-4", "P051-5", "TAT-production-05.1",
+424 | |         "rep_rd/sx-tracuu-2026-10-23-c4a63127.md"],
+425 | |     gioi_han="Embedding qua client giả cục bộ (MOCK) — chất lượng truy hồi với model thật chưa kiểm; tài liệu R&D thật do GĐ SX duy…
+426 | |     can_de_go="")
+    | |_________________^
+427 |
+428 |   ITEMS["production-05.2"] = dict(
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g4\harness\make_items.py:428:28
+    |
+426 |       can_de_go="")
+427 |
+428 |   ITEMS["production-05.2"] = dict(
+    |  ____________________________^
+429 | |     db="prod", llm=True, inputs=["rd_baoquan.md"],
+430 | |     ca=[C("P052-1", "tóm tắt sạch (fake LLM)", "sx-tomtat, mode llm, guardrail ok",
+431 | |           "exit 0; sx-tomtat-2026-10-23-c4a63127.md Chế độ llm, nhãn NỘI BỘ, guardrail.check ok=True (kiểm script); llm_usage sx_tracuu pro…
+432 | |           runs=["P052-1", "P05-check", "P052-q"]),
+433 | |         C("P052-2", "ÂM LLM vi phạm guardrail", "sx-tracuu, extract, lý do guardrail",
+434 | |           "exit 0; file sx-tracuu-… (không sx-tomtat), Chế độ extract, 'LLM bị loại: guardrail: banned_word,unverified_claim'"),
+435 | |         C("P052-3", "ÂM nút tắt LLM (LLM_KILL_FEATURES)", "extract, lý do gateway", "exit 0; Chế độ extract, 'LLM bị loại: gateway: Gateway…
+436 | |         C("P052-4", "ÂM tắt production-05.2 (chạy cuối)", "không ghi sx-tomtat mới", "exit 1 traceback RolloutBlocked; không ghi file (rep_…
+437 | |           runs=["TAT-production-05.2", "P052-4"]),
+438 | |         C("P052-5", "bổ sung sau khóa: tắt production-05.2 → không gọi LLM / không sinh tóm tắt",
+439 | |           "không có lời gọi LLM production-05.2 mới, không in tóm tắt",
+440 | |           "VẪN gọi LLM: llm_usage thêm dòng sx_tracuu/production-05.2 ok=true (chi phí ghi nhận) và stdout in nguyên bản tóm tắt 'Chế độ: l…
+441 | |           kq="FAIL", runs=["P052-4", "TAT-prod-q2"],
+442 | |           note="thêm sau khi quan sát P052-4: cổng giai đoạn chỉ đặt ở write_report, không ở biên sinh (rollout.check_generate) trước llm_g…
+443 | |     trang_thai="BI_CHAN", muc="MOCK", nn="CODE_FAIL",
+444 | |     ev=["P052-1", "P052-2", "P052-3", "P052-4", "P052-q", "P05-check", "TAT-production-05.2", "TAT-prod-q2",
+445 | |         "rep_rd52/sx-tomtat-2026-10-23-c4a63127.md", "rep_rd52b/sx-tracuu-2026-10-23-c4a63127.md"],
+446 | |     loi=[{"muc_do": "trung bình", "mo_ta": "agents.sx_tracuu --llm khi tính năng production-05.2 đang TẮT (rollout) vẫn gọi llm_gateway.cha…
+447 | |            "tai_hien": "rollout --disable production-05.2; harness run.py --fake-llm ok -- agents.sx_tracuu --ask '…' --llm --out",
+448 | |            "expected": "không gọi LLM, không sinh tóm tắt, thông báo bị chặn", "actual": "llm_usage +1 dòng production-05.2 ok; stdout 'Chế…
+449 | |            "evidence": ["evidence/itacc_r10/g4/out/P052-4.txt", "evidence/itacc_r10/g4/out/TAT-prod-q2.txt"]}],
+450 | |     gioi_han="LLM qua client giả (MOCK) — không gọi OpenRouter; chất lượng tóm tắt thật chưa kiểm; gửi dữ liệu R&D ra AI nước ngoài cần Bên…
+451 | |     can_de_go="Đặt rollout.check_generate(production-05.2) trước lời gọi LLM trong sx_tracuu (và bắt RolloutBlocked) — sửa sản phẩm.")
+    | |______________________________________________________________________________________________________________________________________^
+452 |
+453 |   COMMON_LOW = {"muc_do": "thấp", "mo_ta": "Cổng tắt tính năng chỉ ở biên ghi file (write_report): fp_cash --forecast, sx_tracuu, production …
+    |
+help: Rewrite as a literal
+
+PLW1510 `subprocess.run` without explicit `check` argument
+  --> evidence\itacc_r10\g4\harness\runcase.py:43:9
+   |
+41 |         cmd[0] = sys.executable
+42 |     ts = datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+43 |     p = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True)
+   |         ^^^^^^^^^^^^^^
+44 |     out = p.stdout.decode("utf-8", "replace")
+45 |     err = p.stderr.decode("utf-8", "replace")
+   |
+help: Add explicit `check=False`
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g5\harness\check_media.py:10:41
+   |
+ 8 | ROOT = Path(__file__).resolve().parents[4]
+ 9 | sys.path.insert(0, str(ROOT))
+10 | from scripts import garden_media as gm  # noqa: E402
+   |                                         ^^^^^^^^^^^^
+11 |
+12 | store = Path(sys.argv[1])
+   |
+help: Remove unused `noqa` directive
+   |
+9  | sys.path.insert(0, str(ROOT))
+   - from scripts import garden_media as gm  # noqa: E402
+10 + from scripts import garden_media as gm
+11 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\fake_llm_run.py:6:1
+   |
+ 4 |   được ghi vào --log (JSONL) để assert che PII.
+ 5 |     python fake_llm_run.py <module> [--log F] [--patch ATTR=PATH] -- <args>"""
+ 6 | / import hashlib, importlib, inspect, json, sys
+ 7 | | from pathlib import Path
+ 8 | | from types import SimpleNamespace as NS
+   | |_______________________________________^
+ 9 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+10 |   ROOT = Path(__file__).resolve().parents[4]
+   |
+help: Organize imports
+   |
+5  |   python fake_llm_run.py <module> [--log F] [--patch ATTR=PATH] -- <args>"""
+   - import hashlib, importlib, inspect, json, sys
+6  + import hashlib
+7  + import importlib
+8  + import inspect
+9  + import json
+10 + import sys
+11 | from pathlib import Path
+12 | from types import SimpleNamespace as NS
+13 +
+14 | sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\fake_llm_run.py:22:1
+   |
+20 |     elif opts[i] == "--patch": patches.append(opts[i + 1].split("=", 1)); i += 2
+21 |     else: raise SystemExit(f"opt lạ {opts[i]}")
+22 | from pipelines import llm_gateway as gw
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 | CALLS = []
+24 | def _rec(kind, kw):
+   |
+help: Organize imports
+   |
+22 | from pipelines import llm_gateway as gw
+23 +
+24 | CALLS = []
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\fake_llm_run.py:45:1
+   |
+43 |                   usage=NS(prompt_tokens=10, completion_tokens=5))
+44 | gw._client = lambda: NS(embeddings=_Emb(), chat=NS(completions=_Chat()))
+45 | import os
+   | ^^^^^^^^^
+46 | if not os.environ.get("OPENROUTER_API_KEY"):
+47 |     os.environ["OPENROUTER_API_KEY"] = "FAKE-KHONG-DUNG"  # chỉ qua load_env của loader; _client đã bị thay → không mạng
+   |
+help: Organize imports
+   |
+45 | import os
+46 +
+47 | if not os.environ.get("OPENROUTER_API_KEY"):
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\fake_shopee.py:5:1
+  |
+3 |   (tiến trình con) với SHOPEE_API_BASE trỏ server giả + key GIẢ. Không mạng ngoài.
+4 |   In nhật ký request server (path + có/không sign/token, KHÔNG in giá trị)."""
+5 | / import json, os, subprocess, sys, threading
+6 | | from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+7 | | from urllib.parse import urlsplit, parse_qs
+  | |___________________________________________^
+8 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+9 |   LOG = []
+  |
+help: Organize imports
+   |
+4  | In nhật ký request server (path + có/không sign/token, KHÔNG in giá trị)."""
+   - import json, os, subprocess, sys, threading
+5  + import json
+6  + import os
+7  + import subprocess
+8  + import sys
+9  + import threading
+10 | from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+   - from urllib.parse import urlsplit, parse_qs
+11 + from urllib.parse import parse_qs, urlsplit
+12 +
+13 | sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+   |
+
+PLW1510 `subprocess.run` without explicit `check` argument
+  --> evidence\itacc_r10\g5\harness\fake_shopee.py:37:5
+   |
+35 | if "--base" in sys.argv:
+36 |     env["SHOPEE_API_BASE"] = sys.argv[sys.argv.index("--base") + 1]
+37 | p = subprocess.run([sys.executable, "-m", "ingest.market_api", "--channel", "shopee", "--kind", "listing"],
+   |     ^^^^^^^^^^^^^^
+38 |                    env=env, capture_output=True, text=True, encoding="utf-8", timeout=120)
+39 | print(p.stdout + p.stderr)
+   |
+help: Add explicit `check=False`
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\gd_run.py:6:1
+  |
+4 |     --force-mode M  : pipelines.rollout._FORCE_MODE (FIXTURE, chỉ khi ghi rõ)
+5 |   Còn lại chuyển nguyên cho main()."""
+6 | / import sys
+7 | | from pathlib import Path
+  | |________________________^
+8 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+9 |   ROOT = Path(__file__).resolve().parents[4]
+  |
+help: Organize imports
+  |
+7 | from pathlib import Path
+8 +
+9 | sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\gd_run.py:16:1
+   |
+14 |           i = argv.index(flag); v = argv[i + 1]; del argv[i:i + 2]; return v
+15 |   staff, cfg, fm = pop("--staff"), pop("--remind-cfg"), pop("--force-mode")
+16 | / from connectors import zalo_garden
+17 | | from agents import garden_director as gd
+   | |________________________________________^
+18 |   if staff:
+19 |       zalo_garden.STAFF_FILE = Path(staff); print(f"[HARNESS] STAFF_FILE=fixture {Path(staff).name}")
+   |
+help: Organize imports
+   |
+15 | staff, cfg, fm = pop("--staff"), pop("--remind-cfg"), pop("--force-mode")
+16 + from agents import garden_director as gd
+17 | from connectors import zalo_garden
+   - from agents import garden_director as gd
+18 +
+19 | if staff:
+   |
+
+I001 Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\gd_run.py:23:5
+   |
+21 |     gd.load_remind_cfg.__defaults__ = (Path(cfg),); print(f"[HARNESS] remind cfg=fixture {Path(cfg).name}")
+22 | if fm:
+23 |     from pipelines import rollout; rollout._FORCE_MODE = fm; print(f"[FIXTURE] rollout._FORCE_MODE={fm}")
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 | raise SystemExit(gd.main(argv))
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\gw_probe.py:4:1
+  |
+2 |   transport ở biên (_client → FakeClient ghi payload) và CONFIG → bản sao scratchpad
+3 |   (FIXTURE trần/nút tắt). Không mạng/OpenRouter. In PASS/FAIL từng ca."""
+4 | / import json, os, sys
+5 | | from pathlib import Path
+6 | | from types import SimpleNamespace as NS
+  | |_______________________________________^
+7 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+8 |   ROOT = Path(__file__).resolve().parents[4]
+  |
+help: Organize imports
+   |
+3  | (FIXTURE trần/nút tắt). Không mạng/OpenRouter. In PASS/FAIL từng ca."""
+   - import json, os, sys
+4  + import json
+5  + import os
+6  + import sys
+7  | from pathlib import Path
+8  | from types import SimpleNamespace as NS
+9  +
+10 | sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\gw_probe.py:10:1
+   |
+ 8 |   ROOT = Path(__file__).resolve().parents[4]
+ 9 |   sys.path.insert(0, str(ROOT))
+10 | / import psycopg
+11 | | from pipelines import llm_gateway as gw
+   | |_______________________________________^
+12 |   SCR = Path(sys.argv[1]); SCR.mkdir(parents=True, exist_ok=True)
+13 |   SENT = []
+   |
+help: Organize imports
+   |
+10 | import psycopg
+11 +
+12 | from pipelines import llm_gateway as gw
+13 +
+14 | SCR = Path(sys.argv[1]); SCR.mkdir(parents=True, exist_ok=True)
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\hold_lock.py:2:1
+  |
+1 |   """Giữ khóa job (dùng chính job_runs._file_lock) rồi chạy THẬT `--run <job>` ở tiến trình con → mong exit 75."""
+2 | / import os, subprocess, sys
+3 | | from pathlib import Path
+  | |________________________^
+4 |   sys.stdout.reconfigure(encoding="utf-8")
+5 |   sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+  |
+help: Organize imports
+  |
+1 | """Giữ khóa job (dùng chính job_runs._file_lock) rồi chạy THẬT `--run <job>` ở tiến trình con → mong exit 75."""
+  - import os, subprocess, sys
+2 + import os
+3 + import subprocess
+4 + import sys
+5 | from pathlib import Path
+6 +
+7 | sys.stdout.reconfigure(encoding="utf-8")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\hold_lock.py:6:1
+  |
+4 | sys.stdout.reconfigure(encoding="utf-8")
+5 | sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+6 | from pipelines import job_runs
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7 | name = sys.argv[1]
+8 | with job_runs._file_lock(Path(os.environ["JOB_LOCK_DIR"]) / f"{name}.lock") as got:
+  |
+help: Organize imports
+  |
+6 | from pipelines import job_runs
+7 +
+8 | name = sys.argv[1]
+  |
+
+PLW1510 `subprocess.run` without explicit `check` argument
+  --> evidence\itacc_r10\g5\harness\hold_lock.py:10:9
+   |
+ 8 | with job_runs._file_lock(Path(os.environ["JOB_LOCK_DIR"]) / f"{name}.lock") as got:
+ 9 |     print("[HARNESS] giữ khóa:", got)
+10 |     p = subprocess.run([sys.executable, "-m", "pipelines.job_runs", "--run", name], capture_output=True, text=True, encoding="utf-8")
+   |         ^^^^^^^^^^^^^^
+11 |     print(p.stdout + p.stderr); print("CHILD_EXIT", p.returncode)
+12 | raise SystemExit(p.returncode)
+   |
+help: Add explicit `check=False`
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g5\harness\make_fixtures.py:28:24
+   |
+27 | # 1) ảnh JPEG có EXIF GPS
+28 | from PIL import Image  # noqa: E402
+   |                        ^^^^^^^^^^^^
+29 |
+30 | img = Image.new("RGB", (64, 48), (40, 120, 60))
+   |
+help: Remove unused `noqa` directive
+   |
+27 | # 1) ảnh JPEG có EXIF GPS
+   - from PIL import Image  # noqa: E402
+28 + from PIL import Image
+29 |
+   |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g5\harness\make_fixtures.py:45:24
+   |
+44 | # 2) video MP4 có metadata vị trí (ffmpeg của imageio-ffmpeg)
+45 | import imageio_ffmpeg  # noqa: E402
+   |                        ^^^^^^^^^^^^
+46 |
+47 | ff = imageio_ffmpeg.get_ffmpeg_exe()
+   |
+help: Remove unused `noqa` directive
+   |
+44 | # 2) video MP4 có metadata vị trí (ffmpeg của imageio-ffmpeg)
+   - import imageio_ffmpeg  # noqa: E402
+45 + import imageio_ffmpeg
+46 |
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> evidence\itacc_r10\g5\harness\make_items_g5.py:34:42
+   |
+32 |         return None, None, None
+33 |     t = p.read_text(encoding="utf-8", errors="replace")
+34 |     cmd = re.search(r"^# cmd: (.*)$", t, re.M)
+   |                                          ^^^^
+35 |     ex = re.search(r"^# exit: (-?\d+)", t, re.M)
+36 |     c = cmd.group(1).replace(SCR, "<scratch>").replace("/d/code/samsam/", "") if cmd else None
+   |
+help: Replace with `re.MULTILINE`
+   |
+33 |     t = p.read_text(encoding="utf-8", errors="replace")
+   -     cmd = re.search(r"^# cmd: (.*)$", t, re.M)
+34 +     cmd = re.search(r"^# cmd: (.*)$", t, re.MULTILINE)
+35 |     ex = re.search(r"^# exit: (-?\d+)", t, re.M)
+   |
+
+FURB167 [*] Use of regular expression alias `re.M`
+  --> evidence\itacc_r10\g5\harness\make_items_g5.py:35:44
+   |
+33 |     t = p.read_text(encoding="utf-8", errors="replace")
+34 |     cmd = re.search(r"^# cmd: (.*)$", t, re.M)
+35 |     ex = re.search(r"^# exit: (-?\d+)", t, re.M)
+   |                                            ^^^^
+36 |     c = cmd.group(1).replace(SCR, "<scratch>").replace("/d/code/samsam/", "") if cmd else None
+37 |     return c, int(ex.group(1)) if ex else None, p
+   |
+help: Replace with `re.MULTILINE`
+   |
+34 |     cmd = re.search(r"^# cmd: (.*)$", t, re.M)
+   -     ex = re.search(r"^# exit: (-?\d+)", t, re.M)
+35 +     ex = re.search(r"^# exit: (-?\d+)", t, re.MULTILINE)
+36 |     c = cmd.group(1).replace(SCR, "<scratch>").replace("/d/code/samsam/", "") if cmd else None
+   |
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+  --> evidence\itacc_r10\g5\harness\make_items_g5.py:75:19
+   |
+73 |   I = {}  # id -> dict
+74 |
+75 |   I["farming-01"] = dict(env=ENV_FARM + "; fake ở biên: CDN Zalo (FakeClient trả bytes fixture, _fetch gốc vẫn kiểm https/host/trần by…
+   |  ___________________^
+76 | |   muc="MOCK", tt="BI_CHAN", nn="MISSING_ADAPTER",
+77 | |   can="Vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS; đối chiếu eve…
+78 | |   gh="Chữ/ảnh/video/ghi âm qua webhook THẬT trên 127.0.0.1 với payload giả theo tài liệu OA; CDN Zalo giả; chưa đối chiếu event OA t…
+79 | |   dv=["anh_gps.jpg", "video_vitri.mp4", "ghi_am.wav", "garden_staff.json"],
+80 | |   ca=[C("F01-01", "Chữ nhân viên qua webhook → plot_logs", "HTTP 200; +1 plot_logs zalo:garden author zalo:IT-NV01 activity tưới, ro…
+81 | |       C("F01-02", "Ảnh có GPS qua webhook", "+1 garden_media jpg; tệp kho không EXIF/GPS", "garden_media #1 jpg IT-K01 zalo:garden; …
+82 | |       C("F01-02b", "Assert tệp kho ảnh/video sạch", "sha khớp, không EXIF/GPS/vị trí", "RESULT PASS (jpg exif 0, mp4 không ©xyz/khôn…
+83 | |       C("F01-03", "Video có metadata vị trí qua webhook", "+1 garden_media mp4 không hộp vị trí", "garden_media #2 mp4; video_has_gp…
+84 | |       C("F01-04a", "Ghi âm qua webhook → nháp", "+1 garden_voice_drafts cho_chep_loi", "draft #1 wav IT-NV01 IT-K01 cho_chep_loi zal…
+85 | |       C("F01-04b", "--pending", "liệt kê + [blocked] STT", "1 ghi âm chờ + [blocked] STT chưa cấu hình"),
+86 | |       C("F01-05", "STT none chặn an toàn", "exit 2 [blocked], không gửi audio", "exit 2 [blocked] chưa cấu hình STT (kiểm trước conn…
+87 | |       C("F01-06", "Âm: chữ ký sai", "HTTP 403, 0 ghi", "HTTP 403 bad signature, handled=False, plot_logs giữ 7"),
+88 | |       C("F01-07", "Âm: khoảnh không tồn tại", "0 dòng; hướng dẫn", "reply 'Không tìm thấy khoảnh KV-ZZ99 — CHƯA ghi', plot_logs giữ …
+89 | |       C("F01-08", "Âm: trùng msg_id", "đúng 1 dòng", "POST#2 200 nhưng handled=False (dedup); 1 dòng 'dedup'"),
+90 | |       C("F01-09", "Âm: tắt qua sổ triển khai", "FEATURE_OFF 0 ghi", "rollout --disable farming-01 → [TỪ CHỐI] chưa vào sổ (mot_phan …
+91 | |       C("F01-09x", "Bổ sung sau khóa: FIXTURE _FORCE_MODE='tat' — chữ", "FEATURE_OFF, 0 dòng", "reply 'Tính năng này đang TẮT...', p…
+92 | |       C("F01-09y", "Bổ sung sau khóa: FIXTURE _FORCE_MODE='tat' — ảnh", "FEATURE_OFF, 0 garden_media", "reply TẮT, garden_media giữ …
+93 | |       C("F01-10a", "Không sửa lén (owner UPDATE/DELETE)", "trigger chặn", "BLOCKED update + delete: 'nhật ký đã chain — ... bị chặn'…
+94 | |       C("F01-10b", "garden_director --verify", "exit 0 OK", "[verify] OK — chuỗi nhật ký nguyên vẹn")],
+95 | |   loi=[])
+   | |_________^
+96 |
+97 |   GD = "python <harness>/gd_run.py --staff garden_staff_v2.json --remind-cfg garden_remind_thucong.json"
+   |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:98:21
+    |
+ 97 |   GD = "python <harness>/gd_run.py --staff garden_staff_v2.json --remind-cfg garden_remind_thucong.json"
+ 98 |   I["farming-02.1"] = dict(env=ENV_FARM + "; FIXTURE: staff file (khoảnh phụ trách) + cấu hình kênh thu_cong bản sao scratchpad (harn…
+    |  _____________________^
+ 99 | |   muc="LOCAL", tt="DAT", nn=None, can="Bên B chọn kênh nhắc (data/garden_remind.json kenh, D-KH-09) + điền khoảnh phụ trách trong g…
+100 | |   gh="Kênh thu_cong và người phụ trách là FIXTURE; với cấu hình repo (kenh=null) mọi khoảnh → cho_kenh + báo thẳng GĐ (F021-06). Dữ…
+101 | |   dv=["garden_staff_v2.json", "garden_staff_v3.json", "garden_remind_thucong.json"],
+102 | |   ca=[C("F021-01", "Sinh sổ nhắc", "1 dòng/khoảnh/đợt, ma_nv, status theo kênh, is_sample", "garden_reminders: IT-K03 ma_nv IT-NV01…
+103 | |       C("F021-02", "Idempotent", "0 dòng mới", "garden_reminders giữ 4; 0 mục mới"),
+104 | |       C("F021-03", "Người đánh dấu đã nhắc", "exit 0; reminded_at", "[ok] #3 đã nhắc; reminded_at set, reminded_by 'Người Thử IT'; …
+105 | |       C("F021-03b", "--reminders", "liệt kê đợt mở", "4 đợt; #3 'đã nhắc'"),
+106 | |       C("F021-04", "Âm: agent ghi thay", "exit 1", "exit 1 'agent:garden_director' không phải người"),
+107 | |       C("F021-05", "Âm: đánh dấu lần 2", "exit 1", "exit 1 không ở trạng thái chờ"),
+108 | |       C("F021-06", "Kênh null (cấu hình repo)", "cho_kenh + [blocked]", "IT-K05 cho_kenh kenh null; in [blocked] chưa chọn kênh; bá…
+109 | |   loi=[])
+    | |_________^
+110 |
+111 |   I["farming-02.2"] = dict(env=ENV_FARM + "; FIXTURE staff/kênh như farming-02.1; báo cáo → scratchpad (--out-dir)",
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:111:21
+    |
+109 |     loi=[])
+110 |
+111 |   I["farming-02.2"] = dict(env=ENV_FARM + "; FIXTURE staff/kênh như farming-02.1; báo cáo → scratchpad (--out-dir)",
+    |  _____________________^
+112 | |   muc="LOCAL", tt="DAT", nn=None, can="—", gh="Ngưỡng/lịch data/garden_schedule.json GIẢ ĐỊNH; bản tin chỉ ghi file nội bộ (nhãn CH…
+113 | |   dv=["garden_staff_v3.json"],
+114 | |   ca=[C("F022-01", "Leo thang GĐ", "plot_log_gap pending agent:garden_director", "approval_queue #1 gap:IT-K02:none, #2 gap:IT-K04:…
+115 | |       C("F022-02", "Idempotent", "không thêm mục", "0 mục mới (2 mục giữ nguyên)", ev="F021-02"),
+116 | |       C("F022-03", "Bản tin tuần", "garden-week-2026-10-22.md, không tọa độ/người ghi", "exit 0; file 80 dòng, nhãn CHẠY THỬ; grep …
+117 | |       C("F022-04a", "rollout --disable farming-02.2", "tắt", "chạy thử → tắt"),
+118 | |       C("F022-04b", "Âm: tắt → không sinh", "exit 2 / 0 mục IT-K06", "exit 2 '[err] hàng duyệt farming/plot_log_gap: tính năng farm…
+119 | |       C("F022-04c", "promote tat→chay_thu", "chạy thử", "tắt → chạy thử")],
+120 | |   loi=[])
+    | |_________^
+121 |
+122 |   QR = "python -m pipelines.qr_trace"
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:123:21
+    |
+122 |   QR = "python -m pipelines.qr_trace"
+123 |   I["farming-03.1"] = dict(env=ENV_FARM + "; lô SX FIXTURE nạp qua production lots/intake",
+    |  _____________________^
+124 | |   muc="LOCAL", tt="BI_CHAN", nn="CODE_FAIL", can="Sửa BUG-G5-02: link/unlink chặn --by agent:/system: ở Python (auth.cli_gate như s…
+125 | |   gh="Lượt 1 (lô IT-LOT-G5-01 mfg 20/10) hỏng do dữ liệu mồi: nhật ký thu hoạch 23/10 sau ngày SX → function từ chối đúng; thay bằn…
+126 | |   dv=["lots.json", "lots2.json"],
+127 | |   ca=[C("F031-01a", "Nạp lô FIXTURE", "pending", "1 lô mới pending"),
+128 | |       C("F031-01b", "Kiểm nhập passed (người)", "passed", "lô IT-LOT-G5-01 → passed"),
+129 | |       C("F031-01c", "Nhật ký thu hoạch", "chain", "plot_logs #14 IT-K01 'thu hoạch' manual:garden row_hash"),
+130 | |       C("F031-01d", "Lô 2 (sửa dữ liệu mồi)", "pending", "1 lô mới"),
+131 | |       C("F031-01e", "Kiểm nhập lô 2", "passed", "IT-LOT-G5-02 → passed"),
+132 | |       C("F031-02", "Ánh xạ", "lot_origins có", "lot_origins #2 IT-LOT-G5-02 ↔ #14, media [ab5af589…], created_by 'GĐ SX Thử IT'"),
+133 | |       C("F031-03", "Âm: nhật ký không thu hoạch", "exit 1", "exit 1 'nhật ký #12 không phải thu hoạch'"),
+134 | |       C("F031-04", "Âm: agent", "exit 1", "exit 0 — ghi lot_origins created_by 'agent:qr' (BUG-G5-02)", kq="FAIL"),
+135 | |       C("F031-04b", "Dọn: người gỡ ánh xạ của agent", "exit 0", "gỡ ánh xạ #14 bởi GĐ SX Thử IT"),
+136 | |       C("F031-05", "Âm: log không tồn tại", "exit 1", "exit 1 'không có nhật ký #999999'"),
+137 | |       C("F031-06x", "Bổ sung sau khóa: sha video", "exit 1", "exit 1 'tư liệu 669b2e5f122c là video'")],
+138 | |   loi=[BUG2])
+    | |_____________^
+139 |
+140 |   QS = "python <harness>/qr_run.py --signers qr_signers.json(FIXTURE)"
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:141:21
+    |
+140 |   QS = "python <harness>/qr_run.py --signers qr_signers.json(FIXTURE)"
+141 |   I["farming-03.2"] = dict(env=ENV_FARM + "; FIXTURE: allowlist 3 người ký (bản sao scratchpad); site --out scratchpad; ca site van_h…
+    |  _____________________^
+142 | |   muc="LOCAL", tt="DAT", nn=None, can="Bên B cấp người ký thật (qr_signers.json) + domain công khai + nhà in tạo ảnh QR",
+143 | |   gh="Trang chỉ xuất được khi ép van_hanh (FIXTURE) — ở chạy thử bị chặn đúng; chưa có domain công khai/ảnh QR in thật; danh tính n…
+144 | |   dv=["qr_signers.json", "qr_signers_dup.json"],
+145 | |   ca=[C("F032-01", "Preview guardrail", "exit 0 guardrail OK", "guardrail kênh qr OK, chưa vai nào ký"),
+146 | |       C("F032-02", "Âm: issue khi 0 chữ ký", "exit 1", "exit 1 chưa đủ 3 chữ ký (0 vai)"),
+147 | |       C("F032-02b", "Âm: issue khi 2 chữ ký", "exit 1", "exit 1 (2 vai, 2 người)"),
+148 | |       C("F032-03a", "Ký GĐ SX", "ký", "approvals #3"), C("F032-03b", "Ký GĐ vùng trồng", "ký", "approvals #4"),
+149 | |       C("F032-03c", "Ký Pháp chế/QA", "ký", "approvals #5; 3 qr_signatures cùng snapshot/text sha"),
+150 | |       C("F032-04", "Âm: người sai vai", "exit 1", "exit 1 --by không thuộc người ký vai Pháp chế/QA"),
+151 | |       C("F032-04b", "Âm: allowlist repo rỗng", "exit 1", "exit 1 chưa cấu hình người ký (không connect)"),
+152 | |       C("F032-04c", "Âm: 1 người 2 vai", "exit 1", "exit 1 '1 người không được nằm ở 2 vai'"),
+153 | |       C("F032-05", "Phát hành", "qr_codes + [chạy thử]", "exit 0; qr_codes code 22 ký tự ngẫu nhiên, issued_by người; in [chạy thử]…
+154 | |       C("F032-06", "Site chạy thử bị chặn", "exit 1, 0 trang", "exit 1 [blocked] 1 mã KHÔNG xuất trang; 0 tệp"),
+155 | |       C("F032-07", "Site ép van_hanh (FIXTURE)", "index.html sạch", "1 trang + 1 ảnh; F032-07_assert: 0 'IT-K01'/'KV-'/tọa độ/tên n…
+156 | |       C("F032-08a", "Thu hồi", "revoked_at", "thu hồi bởi GĐ SX Thử IT"),
+157 | |       C("F032-08b", "Trang đã thu hồi", "trang 'đã thu hồi'", "trang 'Mã truy xuất này đã thu hồi'; ảnh không còn trang dùng bị gỡ"…
+158 | |   loi=[])
+    | |_________^
+159 |
+160 |   I["farming-04"] = dict(env=ENV_FARM + "; kho GARDEN_MEDIA_DIR/--store → scratchpad; ffmpeg của imageio-ffmpeg",
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:160:19
+    |
+158 |     loi=[])
+159 |
+160 |   I["farming-04"] = dict(env=ENV_FARM + "; kho GARDEN_MEDIA_DIR/--store → scratchpad; ffmpeg của imageio-ffmpeg",
+    |  ___________________^
+161 | |   muc="LOCAL", tt="BI_CHAN", nn="CODE_FAIL", can="Sửa BUG-G5-01 (thêm media_cap/media_thu_hoi vào auth.ACTIONS hoặc đổi tên hành độ…
+162 | |   gh="Gỡ GPS chỉ kiểm trên ảnh/video fixture sinh bằng Pillow/ffmpeg; luồng --get/sổ releases chỉ kiểm được bằng chẩn đoán gọi thẳn…
+163 | |   dv=["anh_gps2.jpg", "video_vitri2.mp4", "khong_phai_anh.jpg"],
+164 | |   ca=[C("F04-01", "Nạp ảnh GPS", "exit 0; row; sạch", "a515b6f33d03 gỡ 6 thẻ EXIF có GPS; garden_media #3 cli:garden_media"),
+165 | |       C("F04-01b", "Assert kho sạch", "PASS", "jpg exif 0 gps False; mp4 không vị trí"),
+166 | |       C("F04-02", "Nạp video vị trí", "exit 0", "238d2b7965d7 mp4 đã gỡ metadata"),
+167 | |       C("F04-03", "Âm: kho trong repo", "exit 2 không tạo thư mục", "exit 2 'thư mục kho nằm TRONG repo'; thư mục không tồn tại"),
+168 | |       C("F04-04", "Âm: tệp không phải ảnh", "exit !=0, 0 dòng", "exit 1 UnidentifiedImageError; garden_media giữ 4"),
+169 | |       C("F04-06", "Âm: agent cấp", "exit 1 (chặn vì agent)", "exit 1 nhưng lý do là 'media_cap không hợp lệ' (BUG-G5-01) — không ch…
+170 | |       C("F04-05a", "Cấp cho Marketing (người)", "exit 0; releases row", "exit 1 'hành động media_cap không hợp lệ' — BUG-G5-01", kq…
+171 | |       C("F04-05b", "--list", "có sha", "0 tư liệu đang được cấp (hệ quả F04-05a)", kq="FAIL"),
+172 | |       C("F04-05c", "--get", "tệp sạch", "exit 1 chưa được cấp (hệ quả F04-05a)", kq="FAIL"),
+173 | |       C("F04-07", "Thu hồi rồi get", "--get bị từ chối sau thu hồi", "--revoke exit 1 'media_thu_hoi không hợp lệ' — BUG-G5-01", kq…
+174 | |       C("F04-DIAG2", "Chẩn đoán: sau khi gọi thẳng function DB cấp, --get THẬT", "tệp sạch, sha khớp", "exit 0; sha_ok True; exif (…
+175 | |       C("F04-DIAG5", "Chẩn đoán: sau thu hồi (function DB), --get", "từ chối", "exit 1 chưa được cấp/đã thu hồi — chỉ chẩn đoán")],
+176 | |   loi=[BUG1])
+    | |_____________^
+177 |
+178 |   VT = "python <harness>/mod_run.py agents.vt_thuhoach --patch REPORTS_DIR=<scratch>/reports --"
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:179:21
+    |
+178 |   VT = "python <harness>/mod_run.py agents.vt_thuhoach --patch REPORTS_DIR=<scratch>/reports --"
+179 |   I["farming-05.2"] = dict(env=ENV_FARM + "; harness đổi REPORTS_DIR → scratchpad",
+    |  _____________________^
+180 | |   muc="LOCAL", tt="DAT", nn=None, can="GĐ vùng trồng chốt giả định năng suất (data/harvest_assumptions.json)",
+181 | |   gh="Giả định năng suất/giá GIẢ ĐỊNH; khoảnh mẫu gắn nhãn (MẪU). Quan sát OBS-G5-03 (traceback + file báo cáo vẫn ghi khi tắt) — c…
+182 | |   dv=[], ca=[C("F052-01", "Dự báo + submit", "harvest_forecast pending agent:VT", "approval_queue #4 harvest_forecast pending agent…
+183 | |       C("F052-02", "Idempotent", "không thêm", "[submit] skipped #4"),
+184 | |       C("F052-03", "Thiếu dữ liệu", "IT-K02 'thiếu'", "'IT-K02: thiếu dữ liệu (tree_count, planted_year) — không ước lượng'", ev="F…
+185 | |       C("F052-04a", "disable", "tắt", "chạy thử → tắt"),
+186 | |       C("F052-04b", "Âm: tắt", "không mục mới", "exit 1 RolloutBlocked (traceback — OBS-G5-03); harvest_forecast giữ 1 mục"),
+187 | |       C("F052-04c", "promote", "chạy thử", "tắt → chạy thử")],
+188 | |   loi=[OBS1])
+    | |_____________^
+189 |
+190 |   VW = "python <harness>/mod_run.py agents.vt_thoitiet --patch REPORTS_DIR=<scratch>/reports --"
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:191:21
+    |
+190 |   VW = "python <harness>/mod_run.py agents.vt_thoitiet --patch REPORTS_DIR=<scratch>/reports --"
+191 |   I["farming-05.3"] = dict(env=ENV_FARM + "; CSV dự báo nhập tay FIXTURE; harness đổi REPORTS_DIR → scratchpad",
+    |  _____________________^
+192 | |   muc="LOCAL", tt="DAT", nn=None, can="Xác minh điều khoản nhà cung cấp dự báo rồi bật fetch.enabled (job lịch vt_weather dùng --fe…
+193 | |   gh="Đầu ra đạt qua CSV nhập tay; nguồn tự động (--fetch, job vt_weather) BLOCKED exit 2 cho tới khi bật; vùng/ngưỡng GIẢ ĐỊNH.",
+194 | |   dv=["weather.csv", "weather_bad.csv"],
+195 | |   ca=[C("F053-01", "Digest từ CSV + submit", "weather_digest pending, không tọa độ", "approval_queue #5 weather_digest pending agen…
+196 | |       C("F053-02", "--fetch chưa bật", "exit 2", "exit 2 '--fetch chưa bật'"),
+197 | |       C("F053-03", "Âm: CSV lỗi", "exit 1 không xử lý", "exit 1 'vùng không có trong cấu hình' — không xử lý"),
+198 | |       C("F053-04", "Idempotent", "skipped", "[skipped] đã có mục chờ duyệt; vẫn 1 mục")],
+199 | |   loi=[])
+    | |_________^
+200 |
+201 |   I["farming-05.4"] = dict(env=ENV_FARM + "; nhật ký vườn FIXTURE qua agents.garden",
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:201:21
+    |
+199 |     loi=[])
+200 |
+201 |   I["farming-05.4"] = dict(env=ENV_FARM + "; nhật ký vườn FIXTURE qua agents.garden",
+    |  _____________________^
+202 | |   muc="LOCAL", tt="DAT", nn=None, can="Bật timer vt_pests trên server; nhật ký vườn thật",
+203 | |   gh="Từ khóa cờ = FLAG_KEYS hiện có (GĐ vùng trồng rà).", dv=[],
+204 | |   ca=[C("F054-00a", "Nhật ký có 'rệp' (FIXTURE)", "ghi", "plot_logs #16 IT-K01"),
+205 | |       C("F054-00b", "Nhật ký 'kiểm tra sâu bệnh' bình thường (không được cờ)", "ghi", "plot_logs #18 IT-K03"),
+206 | |       C("F054-01", "Cảnh báo sâu bệnh", "pest_alert pending; chỉ IT-K01", "approval_queue #7 pest_alert pending agent:VT; payload c…
+207 | |       C("F054-02", "Idempotent", "skipped", "[skipped]"),
+208 | |       C("F054-03", "Không cờ", "0 mục", "0 ghi nhận, không đẩy"),
+209 | |       C("F054-04a", "disable", "tắt", "chạy thử → tắt"),
+210 | |       C("F054-04b", "Âm: tắt", "exit 1 không mục", "exit 1 'không đẩy được hàng duyệt (RolloutBlocked)'; vẫn 1 mục"),
+211 | |       C("F054-04c", "promote", "chạy thử", "tắt → chạy thử")],
+212 | |   loi=[])
+    | |_________^
+213 |
+214 |   I["farming-06"] = dict(env=ENV_FARM + "; provider anchor 'none' (không gọi calendar OpenTimestamps)",
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:214:19
+    |
+212 |     loi=[])
+213 |
+214 |   I["farming-06"] = dict(env=ENV_FARM + "; provider anchor 'none' (không gọi calendar OpenTimestamps)",
+    |  ___________________^
+215 | |   muc="LOCAL", tt="BI_CHAN", nn="EXTERNAL_INPUT", can="Hai bên chọn chuỗi/provider/phí/tài khoản neo (data/anchor_config.json); chạ…
+216 | |   gh="Chỉ đối chiếu NỘI BỘ; chưa có biên nhận neo thật; không gọi calendar.", dv=[],
+217 | |   ca=[C("F06-02", "Dry-run", "không ghi", "6 lá, gốc 27076997…; anchor_batches = 0"),
+218 | |       C("F06-01", "Build", "1 anchor_batches", "lần gom #1: 6 lá (plot_logs_head:14, qr_issue, qr_revoke, qr_sig×3), merkle_root 27…
+219 | |       C("F06-03", "Build lại không đổi", "không dòng mới", "(không đổi), vẫn 1 dòng"),
+220 | |       C("F06-04", "Verify", "exit 0", "khớp DB — chưa neo"),
+221 | |       C("F06-05", "Export", "sha = manifest_sha256", "anchor-1.json sha256 f6a96706… = manifest_sha256"),
+222 | |       C("F06-06", "Submit provider none", "exit 2, 0 receipt", "exit 2 CHƯA NEO; anchor_receipts 0"),
+223 | |       C("F06-07", "Status", "liệt kê", "provider none; #1 chưa neo")],
+224 | |   loi=[])
+    | |_________^
+225 |
+226 |   I["data_platform-01"] = dict(env=ENV_DP, muc="LOCAL", tt="DAT", nn=None,
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:226:25
+    |
+224 |     loi=[])
+225 |
+226 |   I["data_platform-01"] = dict(env=ENV_DP, muc="LOCAL", tt="DAT", nn=None,
+    |  _________________________^
+227 | |   can="Server Bên B (data_platform-90); login thật in role svc_*/app_human/ben_a_reader; human_logins do Bên B điền; chính sách loa…
+228 | |   gh="Một cluster Docker thử, không phải server vật lý Bên B; login dịch vụ/người chế độ thực do điều phối viên kiểm.",
+229 | |   dv=["golden_hong.json"],
+230 | |   ca=[C("DP01-01a", "apply_schema chạy lại", "exit 0, số bảng không đổi", "exit 0; 100 bảng trước/sau; 92 function"),
+231 | |       C("DP01-01b", "apply_schema --roles", "exit 0", "exit 0; roles applied"),
+232 | |       C("DP01-02", "Role tồn tại", "đủ role", "agent_writer, app_human, ben_a_reader, bks_reader, svc_backup/job/loader/ui/webhook …
+233 | |       C("DP01-03a", "golden_store", "exit 0", "price_same=34, totals sku_master=13 sku_map=15 price_list=34"),
+234 | |       C("DP01-03b", "golden_store lần 2", "counts không đổi; 0 trùng giá hiệu lực", "y hệt; truy vấn trùng (sku,channel,kind) valid…
+235 | |       C("DP01-03c", "--report", "exit 0", "liệt kê giá chờ duyệt"),
+236 | |       C("DP01-04a", "core_store", "exit 0", "products=27 plots=3 plot_logs=6 orders=5 claims=22 assets=219"),
+237 | |       C("DP01-04b", "core_store lần 2", "counts ổn định", "không đổi"),
+238 | |       C("DP01-05a", "Âm: golden hỏng", "exit !=0, không xóa", "exit 1 'JSON hỏng — không connect, không ghi/xóa'; counts giữ"),
+239 | |       C("DP01-05b", "Âm: products.jsonl thiếu", "exit 1 không nạp", "exit 1 'thiếu products.jsonl'; counts giữ"),
+240 | |       C("DP01-06", "Âm: quyền role không cấp", "denied", "it_g5_noprv: DENIED price_list/sku_master/contacts/plot_logs; role đã DRO…
+241 | |   loi=[])
+    | |_________^
+242 |
+243 |   I["data_platform-02.1"] = dict(env=ENV_DP + "; DOC_INTAKE_DIR/DOC_ORIGINALS_DIR → scratchpad; OCR_PROVIDER không đặt (none)",
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:243:27
+    |
+241 |     loi=[])
+242 |
+243 |   I["data_platform-02.1"] = dict(env=ENV_DP + "; DOC_INTAKE_DIR/DOC_ORIGINALS_DIR → scratchpad; OCR_PROVIDER không đặt (none)",
+    |  ___________________________^
+244 | |   muc="LOCAL", tt="BI_CHAN", nn="MISSING_ADAPTER", can="Vendor OCR trong nước + hợp đồng/DPA + key cắm vào ingest.doc_intake.PROVID…
+245 | |   gh="Chỉ PDF có lớp chữ (fixture ASCII) trích được trường; ảnh scan ở cho_ocr.", dv=["gtn_thu_it.pdf", "scan_thu_it.png"],
+246 | |   ca=[C("DP021-01", "Intake PDF chữ + ảnh scan", "PDF pending_review + fields; ảnh cho_ocr + exit 2", "exit 2 [blocked]; af03f443 p…
+247 | |       C("DP021-01q", "Assert DB", "document_fields verified=false", "so_giay 123/2026/DKSP, ngay_cap 2026-10-15, ten_san_pham — ver…
+248 | |       C("DP021-02", "Ảnh scan → cho_ocr", "exit 2 [blocked]", "như DP021-01 (cùng lượt chạy)", ev="DP021-01"),
+249 | |       C("DP021-03", "Reprocess none", "exit 2", "exit 2 [blocked] OCR chưa cấu hình")],
+250 | |   loi=[])
+    | |_________^
+251 |
+252 |   I["data_platform-02.2"] = dict(env=ENV_DP + "; DOC_ORIGINALS_DIR → scratchpad", muc="LOCAL", tt="DAT", nn=None,
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:252:27
+    |
+250 |     loi=[])
+251 |
+252 |   I["data_platform-02.2"] = dict(env=ENV_DP + "; DOC_ORIGINALS_DIR → scratchpad", muc="LOCAL", tt="DAT", nn=None,
+    |  ___________________________^
+253 | |   can="Chính sách loader_gate; Pháp chế thật được ủy quyền", gh="Kho bản gốc trên đĩa máy dev (scratchpad).",
+254 | |   dv=["gtn_thu_it.pdf", "scan_thu_it.png"],
+255 | |   ca=[C("DP022-01", "Bản gốc + sha", "tên tệp = sha256(nội dung) = documents.sha256", "2 tệp MATCH", lenh="sha256sum <scratch>/orig…
+256 | |       C("DP022-02", "Idempotent", "dup", "new=0 dup=2"),
+257 | |       C("DP022-03", "Verify (người)", "verified", "af03f443 → verified bởi Pháp Chế Thử IT; 3 field verified True"),
+258 | |       C("DP022-04", "Âm: verify cho_ocr", "exit 1", "exit 1 không ở pending_review"),
+259 | |       C("DP022-05", "Âm: agent", "exit 1", "exit 1 agent không được reject"),
+260 | |       C("DP022-06a", "disable 02.2", "tắt", "chạy thử → tắt"),
+261 | |       C("DP022-06b", "Âm: tắt → loader chặn", "exit 2", "exit 2 [rollout] tính năng TẮT → KHÔNG nạp"),
+262 | |       C("DP022-06c", "promote", "chạy thử", "tắt → chạy thử")],
+263 | |   loi=[])
+    | |_________^
+264 |
+265 |   I["data_platform-03"] = dict(env=ENV_DP + "; fake ở biên: llm_gateway._client = FakeClient embeddings tất định 16 chiều (không mạng…
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:265:25
+    |
+263 |     loi=[])
+264 |
+265 |   I["data_platform-03"] = dict(env=ENV_DP + "; fake ở biên: llm_gateway._client = FakeClient embeddings tất định 16 chiều (không mạng…
+    |  _________________________^
+266 | |   muc="MOCK", tt="DAT", nn=None, can="Người duyệt tài liệu nội bộ được Bên B ủy quyền + login riêng; embedding thật qua OpenRouter …
+267 | |   gh="Vector embedding là giả (không đánh giá chất lượng truy hồi); corpus công khai = data/*.jsonl repo.",
+268 | |   dv=["quy_trinh_thu_it.md", "mat_thu_it.md"],
+269 | |   ca=[C("DP03-01", "Embed công khai", "chunks > 0, lọc rượu", "868 chunk/167 doc, 14 lời gọi embed qua gateway (llm_usage ingest/da…
+270 | |       C("DP03-02", "KB nội bộ", "chunks_internal approved_by", "internal:it_g5/quy-trinh-thu-it 1 chunk v1 approved_by 'Trưởng Phòn…
+271 | |       C("DP03-03", "Không đổi", "0 embed", "không đổi (0 embed), 0 lời gọi transport"),
+272 | |       C("DP03-04", "Âm: mật", "exit 2", "exit 2 tài liệu MẬT — 0 lời gọi"),
+273 | |       C("DP03-05", "Âm: agent duyệt", "exit 2", "exit 2 --approved-by phải là NGƯỜI"),
+274 | |       C("DP03-06", "kb_gaps", "exit 0", "exit 0 ghi kb_gaps.md (scratchpad)"),
+275 | |       C("DP03-07", "Bổ sung sau khóa: tách kho (tĩnh)", "answer() không đọc chunks_internal", "retrieve mặc định 'public' → chunks;…
+276 | |   loi=[])
+    | |_________^
+277 |
+278 |   I["data_platform-04"] = dict(env=ENV_DP + "; fake ở biên: llm_gateway._client = FakeClient ghi payload; CONFIG → bản sao scratchpad…
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:278:25
+    |
+276 |     loi=[])
+277 |
+278 |   I["data_platform-04"] = dict(env=ENV_DP + "; fake ở biên: llm_gateway._client = FakeClient ghi payload; CONFIG → bản sao scratchpad…
+    |  _________________________^
+279 | |   muc="MOCK", tt="DAT", nn=None, can="Quản lý AI (Bên B) chốt trần từng tính năng (feature_caps_usd)",
+280 | |   gh="Transport giả; không kiểm hành vi provider thật (zdr/allow_fallbacks chỉ kiểm có trong payload).", dv=[],
+281 | |   ca=[C("DP04", "Kịch bản gateway (12 ca con DP04-01a..07b)", "che PII, giữ hotline; llm_usage feature_id; trần tính năng/agent, nú…
+282 | |   loi=[])
+    | |_________^
+283 |
+284 |   I["data_platform-05"] = dict(env=ENV_DP, muc="LOCAL", tt="DAT", nn=None,
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:284:25
+    |
+282 |     loi=[])
+283 |
+284 |   I["data_platform-05"] = dict(env=ENV_DP, muc="LOCAL", tt="DAT", nn=None,
+    |  _________________________^
+285 | |   can="Mapping cột data/market_csv_map.json đối chiếu file xuất thật; chính sách loader_gate",
+286 | |   gh="CSV fixture theo mapping GIẢ ĐỊNH; chưa đối chiếu file Seller Center thật.",
+287 | |   dv=["listing_thu_it.csv", "order_thu_it.csv", "listing_hong.csv", "listing_thu_it_2.csv"],
+288 | |   ca=[C("DP05-01", "Nạp listing", "snapshot sha = sha file; alerts", "snapshot #1 4 dòng map 3; alerts alcohol_listed S1, price_mis…
+289 | |       C("DP05-02", "Nạp order bỏ PII", "không SĐT/tên", "snapshot #2; raw chỉ allowlist + order_id_hash; DP05-02q: 0 dòng chứa SĐT/…
+290 | |       C("DP05-02q", "Assert DB", "—", "file_sha256 0ba66307…/6e0bff77… khớp fixture"),
+291 | |       C("DP05-03", "Idempotent", "[skip]", "[skip] snapshot #1"),
+292 | |       C("DP05-04", "Âm: thiếu cột", "exit 1 0 snapshot", "exit 1 thiếu cột 'Giá' — không connect"),
+293 | |       C("DP05-05b", "Âm: tắt", "exit 2", "exit 2 [loader-gate] TẮT → KHÔNG nạp; snapshot giữ 2 (lượt 1 hỏng harness: truyền nhầm fi…
+294 | |       C("DP05-06", "--report", "exit 0", "3 cảnh báo mở S1 trước S2, snapshot mới nhất, cảnh báo thiếu ads")],
+295 | |   loi=[])
+    | |_________^
+296 |
+297 |   I["data_platform-06"] = dict(env=ENV_DP + "; fake ở biên: server Shopee GIẢ 127.0.0.1 (theo tài liệu công khai) + key GIẢ",
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:297:25
+    |
+295 |     loi=[])
+296 |
+297 |   I["data_platform-06"] = dict(env=ENV_DP + "; fake ở biên: server Shopee GIẢ 127.0.0.1 (theo tài liệu công khai) + key GIẢ",
+    |  _________________________^
+298 | |   muc="MOCK", tt="BI_CHAN", nn="EXTERNAL_INPUT", can="Bên B cấp app key/sandbox Shopee Open Platform/TikTok Shop (quyền chỉ đọc); x…
+299 | |   gh="Chỉ shopee listing với server giả; tiktok/order chưa chạy.", dv=[],
+300 | |   ca=[C("DP06-01", "Thiếu key", "exit 2 0 request", "exit 2 [external-dep] thiếu 4 biến — không connect"),
+301 | |       C("DP06-02", "Server giả", "snapshot api:shopee:listing", "snapshot #3 2 dòng map 2; request có sign/token/partner_id; đóng 1…
+302 | |       C("DP06-03", "Âm: base ngoài allowlist", "exit 2", "exit 2 SHOPEE_API_BASE không hợp lệ; 0 request"),
+303 | |       C("DP06-04", "Idempotent", "[skip]", "[skip] dữ liệu không đổi")],
+304 | |   loi=[])
+    | |_________^
+305 |
+306 |   I["data_platform-07.1"] = dict(env=ENV_DP + "; JOB_LOCK_DIR + báo cáo → scratchpad; webhook Zalo thật trên 127.0.0.1 (state scratch…
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:306:27
+    |
+304 |     loi=[])
+305 |
+306 |   I["data_platform-07.1"] = dict(env=ENV_DP + "; JOB_LOCK_DIR + báo cáo → scratchpad; webhook Zalo thật trên 127.0.0.1 (state scratch…
+    |  ___________________________^
+307 | |   muc="LOCAL", tt="DAT", nn=None, can="Máy giám sát NGOÀI server Bên B chạy webhook_probe theo lịch + kênh báo (runbook 10.6)",
+308 | |   gh="Giám sát chạy cùng máy dev; máy giám sát độc lập ngoài server không chứng minh được; --notify không kiểm.", dv=[],
+309 | |   ca=[C("DP071-01", "Bản tin sức khỏe", "health-*.md đủ mục", "health-2026-10-23.md: DB, Job 24h, Chi phí AI theo agent, Lỗi LLM 24…
+310 | |       C("DP071-02", "Lịch job", "exit 0", "liệt kê 34 job từ deploy/onprem/jobs.json"),
+311 | |       C("DP071-03", "Chạy job vt_pests", "job_runs job:vt_pests", "exit 0; job_runs 'job:vt_pests' ok"),
+312 | |       C("DP071-04", "Âm: khóa chồng", "exit 75", "exit 75; job_runs ok=false 'chạy chồng — bỏ lượt'"),
+313 | |       C("DP071-05", "Probe sống/chết", "0 / !=0", "/readyz HTTP 200 exit 0; cổng chết URLError exit 1; --dry-run 0 red_alerts")],
+314 | |   loi=[])
+    | |_________^
+315 |
+316 |   I["data_platform-07.2"] = dict(env=ENV_DP + "; BACKUP_DIR/offsite dir → scratchpad; PG_BIN PostgreSQL 17 máy dev",
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:316:27
+    |
+314 |     loi=[])
+315 |
+316 |   I["data_platform-07.2"] = dict(env=ENV_DP + "; BACKUP_DIR/offsite dir → scratchpad; PG_BIN PostgreSQL 17 máy dev",
+    |  ___________________________^
+317 | |   muc="LOCAL", tt="DAT", nn=None, can="Offsite/NAS ngoài server + lịch timer trên server Bên B; khóa mã hóa công ty",
+318 | |   gh="Offsite 'dir:' cùng máy dev; backup chưa mã hóa; DR Docker do điều phối viên chạy riêng.", dv=[],
+319 | |   ca=[C("DP072-01", "Backup", "dump+manifest+jsonl+evidence", "dump 929784 B, manifest sha khớp, 100 bảng row_counts, không host/us…
+320 | |       C("DP072-01q", "Assert DB/manifest", "—", "file_output_evidence 1 dòng backup_runs; sha_match True"),
+321 | |       C("DP072-02", "Restore drill", "100/100 khớp, DB tạm xóa", "samsam_drill_… 100/100 bảng khớp RTO 4.2s; không còn DB samsam_dr…
+322 | |       C("DP072-03", "Âm: BACKUP_DIR trong repo", "exit 2", "exit 2 [usage]; thư mục không tạo"),
+323 | |       C("DP072-04", "Offsite dir", "chép + kiểm sha", "[offsite] đã chép + kiểm sha256; evidence #2")],
+324 | |   loi=[])
+    | |_________^
+325 |
+326 |   I["data_platform-07.3"] = dict(env=ENV_DP + "; ca cho phép của cổng dùng FIXTURE: bản sao config (approvers giả) + 2 dòng eval_runs…
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:326:27
+    |
+324 |     loi=[])
+325 |
+326 |   I["data_platform-07.3"] = dict(env=ENV_DP + "; ca cho phép của cổng dùng FIXTURE: bản sao config (approvers giả) + 2 dòng eval_runs…
+    |  ___________________________^
+327 | |   muc="LOCAL", tt="DAT", nn=None, can="Bên B cử người duyệt deploy (approvers); frozen 22 suite",
+328 | |   gh="Tree bẩn → chỉ ghi '<sha>-dirty' (cổng không bao giờ khớp); nhánh cho phép chỉ bằng FIXTURE.", dv=["eval_config_fixture.json"…
+329 | |   ca=[C("DP073-02", "Âm: tree bẩn", "exit 1", "exit 1 working tree bẩn — không ghi"),
+330 | |       C("DP073-01", "Eval ghi --allow-dirty", "eval_runs -dirty", "guardrail v2 130/132 ≥0.95 PASS; eval_runs #1 16b33fc…-dirty"),
+331 | |       C("DP073-03", "Cổng từ chối", "exit 1", "deny: guardrail/chatbot chưa có eval cho SHA; approvers rỗng"),
+332 | |       C("DP073-04", "Cổng cho phép (FIXTURE)", "exit 0 in kế hoạch", "exit 0, in kế hoạch release/rollback — không chạy lệnh"),
+333 | |       C("DP073-05a", "Âm: đóng băng feature", "exit 1", "exit 1 đóng băng 21/12/2026–10/02/2027"),
+334 | |       C("DP073-05b", "Hotfix trong đóng băng", "exit 0", "exit 0 (cho qua kèm warn)"),
+335 | |       C("DP073-06", "Validate", "exit 0", "22/22 suite hợp lệ")],
+336 | |   loi=[])
+    | |_________^
+337 |
+338 |   I["data_platform-08"] = dict(env=ENV_DP + "; báo cáo → scratchpad; ca 'đủ điều kiện' dùng FIXTURE (mốc lùi qua hàm rollout + 50 doc…
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:338:25
+    |
+336 |     loi=[])
+337 |
+338 |   I["data_platform-08"] = dict(env=ENV_DP + "; báo cáo → scratchpad; ca 'đủ điều kiện' dùng FIXTURE (mốc lùi qua hàm rollout + 50 doc…
+    |  _________________________^
+339 | |   muc="LOCAL", tt="DAT", nn=None, can="Chốt lịch nghỉ (rollout_config.json holidays) + danh mục 89 mục",
+340 | |   gh="Nhánh đủ điều kiện CHỈ theo FIXTURE (không phải bằng chứng ngày chạy thử hợp đồng). Lượt 1 dựng fixture bằng approval_queue t…
+341 | |   dv=[], ca=[C("DP08-01", "Seed", "vào sổ", "84 vào sổ chay_thu, 12 bỏ qua (chưa co_code)"),
+342 | |       C("DP08-02", "Promote bị chặn", "exit 1", "data_platform-05: mới 0/5 ngày, 1/50 đầu ra, 1/5 ngày"),
+343 | |       C("DP08-02b", "Promote bị chặn (0 đầu ra)", "exit 1", "farming-05.4 0/50"),
+344 | |       C("DP08-03a", "Dựng FIXTURE lượt 2", "DB recount = Python", "DB rollout_recount_human: days 9, outputs 52, out_days 9; Python…
+345 | |       C("DP08-03b", "Promote đủ điều kiện", "exit 0 co_nguoi_duyet + event", "chạy thử → có người duyệt; event promote evidence {da…
+346 | |       C("DP08-04", "Promote →van_hanh chặn", "exit 1", "mới 0/10 ngày; chưa có đầu ra giai đoạn"),
+347 | |       C("DP08-05", "Severe", "chay_thu", "ghi 'Từ cấm' → chạy thử"),
+348 | |       C("DP08-06", "Dossier", "DỰ THẢO", "tiêu đề '... — DỰ THẢO do hệ thống dựng (... không phải biên bản)'"),
+349 | |       C("DP08-07", "Báo cáo tháng", "van-hanh-2026-10.md", "KPI PL02 mục 3, tiêu chí mục 2, tài sản; nhãn CHẠY THỬ; 'chưa có dữ liệ…
+350 | |       C("DP08-08", "Âm: agent", "exit 2", "exit 2 --by phải là NGƯỜI thật")],
+351 | |   loi=[])
+    | |_________^
+352 |
+353 |   I["data_platform-90"] = dict(env="Máy dev — kiểm tĩnh tài liệu/công cụ trong repo", muc="LOCAL", tt="BI_CHAN", nn="NON_SOFTWARE",
+    |
+help: Rewrite as a literal
+
+C408 Unnecessary `dict()` call (rewrite as a literal)
+   --> evidence\itacc_r10\g5\harness\make_items_g5.py:353:25
+    |
+351 |     loi=[])
+352 |
+353 |   I["data_platform-90"] = dict(env="Máy dev — kiểm tĩnh tài liệu/công cụ trong repo", muc="LOCAL", tt="BI_CHAN", nn="NON_SOFTWARE",
+    |  _________________________^
+354 | |   can="Bằng chứng server vật lý, UPS, mạng, NAS/offsite, máy giám sát độc lập, người giữ tài khoản quản trị cao nhất phía Bên B",
+355 | |   gh="Chỉ chứng minh tài liệu/công cụ có trong repo; hạ tầng vật lý ngoài phạm vi phần mềm.", dv=[],
+356 | |   ca=[C("DP90-01", "Tài liệu có", "README, jobs.json, systemd", "deploy/onprem/README.md (mục phân quyền, backup ngoài, diễn tập, g…
+357 | |       C("DP90-02", "jobs.json hợp lệ", "exit 0", "job_runs --list exit 0 (34 job)"),
+358 | |       C("DP90-03", "Bằng chứng vật lý", "—", "—", kq="NOT_RUN", lenh="—", ly="Ngoài phần mềm: không thể có trên máy dev")],
+359 | |   loi=[])
+    | |_________^
+360 |
+361 |   OUT.mkdir(parents=True, exist_ok=True)
+    |
+help: Rewrite as a literal
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\make_pdf.py:2:1
+  |
+1 |   """Sinh PDF 1 trang có lớp chữ ASCII (giấy tiếp nhận GIẢ — fixture thử IT) + ảnh PNG 'scan'."""
+2 | / import sys
+3 | | from pathlib import Path
+  | |________________________^
+4 |   out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
+5 |   lines = ["GIAY TIEP NHAN DANG KY BAN CONG BO SAN PHAM - FIXTURE THU IT G5",
+  |
+help: Organize imports
+  |
+3 | from pathlib import Path
+4 +
+5 | out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\make_pdf.py:22:1
+   |
+20 | d = out / "giay_tiep_nhan"; d.mkdir(exist_ok=True)
+21 | (d / "gtn_thu_it.pdf").write_bytes(bytes(pdf))
+22 | from PIL import Image
+   | ^^^^^^^^^^^^^^^^^^^^^
+23 | Image.new("RGB", (200, 100), (250, 250, 250)).save(d / "scan_thu_it.png")
+24 | import hashlib
+   |
+help: Organize imports
+   |
+22 | from PIL import Image
+23 +
+24 | Image.new("RGB", (200, 100), (250, 250, 250)).save(d / "scan_thu_it.png")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\make_pdf.py:24:1
+   |
+22 | from PIL import Image
+23 | Image.new("RGB", (200, 100), (250, 250, 250)).save(d / "scan_thu_it.png")
+24 | import hashlib
+   | ^^^^^^^^^^^^^^
+25 | for p in sorted(d.iterdir()): print(hashlib.sha256(p.read_bytes()).hexdigest(), p.name)
+   |
+help: Organize imports
+   |
+24 | import hashlib
+25 +
+26 | for p in sorted(d.iterdir()): print(hashlib.sha256(p.read_bytes()).hexdigest(), p.name)
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\mod_run.py:5:1
+  |
+3 |     python mod_run.py <module> [--patch ATTR=PATH ...] [--force-mode M] -- <args>
+4 |   --force-mode = FIXTURE pipelines.rollout._FORCE_MODE (ghi rõ trong evidence)."""
+5 | / import importlib
+6 | | import sys
+7 | | from pathlib import Path
+  | |________________________^
+8 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+9 |   ROOT = Path(__file__).resolve().parents[4]
+  |
+help: Organize imports
+  |
+7 | from pathlib import Path
+8 +
+9 | sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\mod_run.py:27:1
+   |
+25 |     else:
+26 |         raise SystemExit(f"opt lạ {opts[i]}")
+27 | import inspect
+   | ^^^^^^^^^^^^^^
+28 | raise SystemExit(mod.main(argv) if inspect.signature(mod.main).parameters else (sys.argv.__setitem__(slice(1, None), argv) or mod.main…
+   |
+help: Organize imports
+   |
+27 | import inspect
+28 +
+29 | raise SystemExit(mod.main(argv) if inspect.signature(mod.main).parameters else (sys.argv.__setitem__(slice(1, None), argv) or mod.main()))
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\probe_run.py:4:1
+  |
+2 |   127.0.0.1 cổng ngẫu nhiên; chạy THẬT scripts/webhook_probe.py --dry-run vào /readyz (sống) và
+3 |   vào cổng không có server (chết)."""
+4 | / import socket, subprocess, sys, threading
+5 | | from http.server import ThreadingHTTPServer
+6 | | from pathlib import Path
+  | |________________________^
+7 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+8 |   ROOT = Path(__file__).resolve().parents[4]; sys.path.insert(0, str(ROOT))
+  |
+help: Organize imports
+   |
+3  | vào cổng không có server (chết)."""
+   - import socket, subprocess, sys, threading
+4  + import socket
+5  + import subprocess
+6  + import sys
+7  + import threading
+8  | from http.server import ThreadingHTTPServer
+9  | from pathlib import Path
+10 +
+11 | sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\probe_run.py:9:1
+   |
+ 7 | sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+ 8 | ROOT = Path(__file__).resolve().parents[4]; sys.path.insert(0, str(ROOT))
+ 9 | from connectors import zalo
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+10 | st = Path(sys.argv[1]); st.mkdir(parents=True, exist_ok=True)
+11 | zalo.SEEN_DB, zalo.CONV_LOG, zalo.TOKEN_STORE = st / "zalo_seen.db", st / "conversations.jsonl", st / "zalo_tokens.json"
+   |
+help: Organize imports
+   |
+9  | from connectors import zalo
+10 +
+11 | st = Path(sys.argv[1]); st.mkdir(parents=True, exist_ok=True)
+   |
+
+PLW1510 `subprocess.run` without explicit `check` argument
+  --> evidence\itacc_r10\g5\harness\probe_run.py:16:9
+   |
+14 | rcs = []
+15 | for label, url in (("SONG", f"http://127.0.0.1:{srv.server_address[1]}/readyz"), ("CHET", f"http://127.0.0.1:{dead}/readyz")):
+16 |     p = subprocess.run([sys.executable, "scripts/webhook_probe.py", "--url", url, "--dry-run"], cwd=ROOT,
+   |         ^^^^^^^^^^^^^^
+17 |                        capture_output=True, text=True, encoding="utf-8", timeout=60)
+18 |     print(f"[{label}] exit={p.returncode}\n{(p.stdout + p.stderr).strip()}"); rcs.append(p.returncode)
+   |
+help: Add explicit `check=False`
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\qr_run.py:4:1
+  |
+2 |     --signers F    : qr_trace.SIGNERS_FILE = fixture 3 người (FIXTURE, không phải danh sách thật)
+3 |     --force-mode M : pipelines.rollout._FORCE_MODE (FIXTURE — chỉ ca site van_hanh)"""
+4 | / import sys
+5 | | from pathlib import Path
+  | |________________________^
+6 |   sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+7 |   ROOT = Path(__file__).resolve().parents[4]
+  |
+help: Organize imports
+  |
+5 | from pathlib import Path
+6 +
+7 | sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\qr_run.py:14:1
+   |
+12 |         i = argv.index(flag); v = argv[i + 1]; del argv[i:i + 2]; return v
+13 | sg, fm = pop("--signers"), pop("--force-mode")
+14 | from pipelines import qr_trace
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 | if sg:
+16 |     qr_trace.SIGNERS_FILE = Path(sg); print(f"[HARNESS] SIGNERS_FILE=fixture {Path(sg).name}")
+   |
+help: Organize imports
+   |
+14 | from pipelines import qr_trace
+15 +
+16 | if sg:
+   |
+
+I001 Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\qr_run.py:18:5
+   |
+16 |     qr_trace.SIGNERS_FILE = Path(sg); print(f"[HARNESS] SIGNERS_FILE=fixture {Path(sg).name}")
+17 | if fm:
+18 |     from pipelines import rollout; rollout._FORCE_MODE = fm; print(f"[FIXTURE] rollout._FORCE_MODE={fm}")
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | raise SystemExit(qr_trace.main(argv))
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\role_probe.py:3:1
+  |
+1 | """DP01-06: role thử it_g5_noprv (NOLOGIN, không quyền) qua SET ROLE trong phiên owner
+2 | → SELECT price_list/contacts phải bị từ chối. Role được DROP ở cuối."""
+3 | import os, sys, psycopg
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+4 | sys.stdout.reconfigure(encoding="utf-8")
+5 | c = psycopg.connect(os.environ["DATABASE_URL"], autocommit=True)
+  |
+help: Organize imports
+  |
+2 | → SELECT price_list/contacts phải bị từ chối. Role được DROP ở cuối."""
+  - import os, sys, psycopg
+3 + import os
+4 + import sys
+5 +
+6 + import psycopg
+7 +
+8 | sys.stdout.reconfigure(encoding="utf-8")
+  |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\rollout_fixture.py:8:1
+   |
+ 6 |        không mẫu) rải 8 ngày làm việc trong [T0, nay].
+ 7 |   Việc NÂNG giai đoạn sau đó chạy bằng CLI thật `rollout --promote` (DB tự đếm lại)."""
+ 8 | / import hashlib, json, os, sys
+ 9 | | from datetime import datetime, timedelta, timezone
+10 | | from pathlib import Path
+   | |________________________^
+11 |   sys.stdout.reconfigure(encoding="utf-8")
+12 |   sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+   |
+help: Organize imports
+   |
+7  | Việc NÂNG giai đoạn sau đó chạy bằng CLI thật `rollout --promote` (DB tự đếm lại)."""
+   - import hashlib, json, os, sys
+8  + import hashlib
+9  + import json
+10 + import os
+11 + import sys
+12 | from datetime import datetime, timedelta, timezone
+13 | from pathlib import Path
+14 +
+15 | sys.stdout.reconfigure(encoding="utf-8")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\rollout_fixture.py:13:1
+   |
+11 |   sys.stdout.reconfigure(encoding="utf-8")
+12 |   sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+13 | / import psycopg
+14 | | from pipelines import rollout
+   | |_____________________________^
+15 |   VN = timezone(timedelta(hours=7)); FID = "farming-05.4"; BY = "Người Thử IT"
+16 |   T0 = datetime(2026, 10, 12, 8, 0, tzinfo=VN)
+   |
+help: Organize imports
+   |
+13 | import psycopg
+14 +
+15 | from pipelines import rollout
+16 +
+17 | VN = timezone(timedelta(hours=7)); FID = "farming-05.4"; BY = "Người Thử IT"
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\rollout_fixture2.py:8:1
+   |
+ 6 |     2) 50 dòng documents GIẢ (filename fixture_thu_it_*, sha256 của chuỗi fixture) rải 8 ngày LV.
+ 7 |   Nâng giai đoạn sau đó bằng CLI thật `rollout --promote` (DB rollout_transition_human đếm lại)."""
+ 8 | / import hashlib, os, sys
+ 9 | | from datetime import datetime, timedelta, timezone
+10 | | from pathlib import Path
+   | |________________________^
+11 |   sys.stdout.reconfigure(encoding="utf-8")
+12 |   sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+   |
+help: Organize imports
+   |
+7  | Nâng giai đoạn sau đó bằng CLI thật `rollout --promote` (DB rollout_transition_human đếm lại)."""
+   - import hashlib, os, sys
+8  + import hashlib
+9  + import os
+10 + import sys
+11 | from datetime import datetime, timedelta, timezone
+12 | from pathlib import Path
+13 +
+14 | sys.stdout.reconfigure(encoding="utf-8")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> evidence\itacc_r10\g5\harness\rollout_fixture2.py:13:1
+   |
+11 |   sys.stdout.reconfigure(encoding="utf-8")
+12 |   sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+13 | / import psycopg
+14 | | from pipelines import rollout
+   | |_____________________________^
+15 |   VN = timezone(timedelta(hours=7)); FID = "data_platform-02.2"; BY = "Người Thử IT"
+16 |   T0 = datetime(2026, 10, 12, 8, 0, tzinfo=VN)
+   |
+help: Organize imports
+   |
+13 | import psycopg
+14 +
+15 | from pipelines import rollout
+16 +
+17 | VN = timezone(timedelta(hours=7)); FID = "data_platform-02.2"; BY = "Người Thử IT"
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> evidence\itacc_r10\g5\harness\tamper.py:2:1
+  |
+1 | """Thử sửa/xóa lén plot_logs bằng login OWNER (mạnh nhất) — mong đợi trigger chặn."""
+2 | import os, sys, psycopg
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+3 | sys.stdout.reconfigure(encoding="utf-8")
+4 | lid = int(sys.argv[1])
+  |
+help: Organize imports
+  |
+1 | """Thử sửa/xóa lén plot_logs bằng login OWNER (mạnh nhất) — mong đợi trigger chặn."""
+  - import os, sys, psycopg
+2 + import os
+3 + import sys
+4 +
+5 + import psycopg
+6 +
+7 | sys.stdout.reconfigure(encoding="utf-8")
+  |
+
+RUF100 [*] Unused `noqa` directive (non-enabled: `E402`)
+  --> evidence\itacc_r10\g5\harness\zalo_webhook.py:53:43
+   |
+51 |     os.environ["ZALO_OA_SECRET"] = "fixture-oa-secret-thu-it"   # GIẢ
+52 |     os.environ["ZALO_APP_ID"] = "fixture-app"
+53 | from connectors import zalo, zalo_garden  # noqa: E402
+   |                                           ^^^^^^^^^^^^
+54 |
+55 | st = Path(a.state)
+   |
+help: Remove unused `noqa` directive
+   |
+52 |     os.environ["ZALO_APP_ID"] = "fixture-app"
+   - from connectors import zalo, zalo_garden  # noqa: E402
+53 + from connectors import zalo, zalo_garden
+54 |
+   |
+
+Found 132 errors.
+[*] 82 fixable with the `--fix` option (38 hidden fixes can be enabled with the `--unsafe-fixes` option).
+EXIT 1
+
+## python scripts/agent_eval.py --deterministic --no-record
+[ok] chatbot v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] fin_qa v1 skeleton owner=finance qa=finance risk=high 3 ca
+[ok] guardrail v2 active owner=legal_hr qa=data_platform risk=high 132 ca
+[ok] intel_qa v1 skeleton owner=intel qa=intel risk=medium 3 ca
+[ok] kd_a1 v2 active owner=sales qa=sales risk=high 43 ca
+[ok] kd_a11 v1 skeleton owner=sales qa=sales risk=high 4 ca
+[ok] kd_a3 v2 active owner=sales qa=sales risk=high 20 ca
+[ok] kd_a5 v1 active owner=sales qa=data_platform risk=high 21 ca
+[ok] kd_a7 v1 active owner=sales qa=sales risk=high 10 ca
+[ok] kd_a9 v1 active owner=sales qa=sales risk=high 8 ca
+[ok] mkt02 v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] mkt03 v1 active owner=marketing qa=data_platform risk=high 15 ca
+[ok] mkt04 v1 active owner=marketing qa=data_platform risk=high 17 ca
+[ok] mkt12 v1 active owner=marketing qa=marketing risk=high 6 ca
+[ok] mkt_13 v1 skeleton owner=marketing qa=marketing risk=high 4 ca
+[ok] mkt_ads_ugc v2 active owner=marketing qa=data_platform risk=high 29 ca
+[ok] mkt_seo v1 active owner=marketing qa=data_platform risk=medium 14 ca
+[ok] pc_a9 v1 skeleton owner=legal_hr qa=legal_hr risk=high 3 ca
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sales_director v1 active owner=sales qa=data_platform risk=medium 26 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 22/22 suite hợp lệ
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=b530c2083697 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[done] kd_a1 v2 PASS 43/43 pass_rate=1.0 (ngưỡng 0.86) prompt_version=30aa7b5418e7 model=fake_gateway judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a3 v2 PASS 20/20 pass_rate=1.0 (ngưỡng 1.0) prompt_version=ebf6dca4eaa9 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a5 v1 PASS 21/21 pass_rate=1.0 (ngưỡng 1.0) prompt_version=045a5454d45d model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a7 v1 PASS 10/10 pass_rate=1.0 (ngưỡng 1.0) prompt_version=868cc021fc15 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a9 v1 PASS 8/8 pass_rate=1.0 (ngưỡng 1.0) prompt_version=f3a05615f04a model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] mkt02 v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=fa518d50bd93 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt03 v1 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=d1fc8962531c model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt04 v1 PASS 17/17 pass_rate=1.0 (ngưỡng 1.0) prompt_version=0968515bed74 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt12 v1 PASS 6/6 pass_rate=1.0 (ngưỡng 1.0) prompt_version=5a46022e493f model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt_ads_ugc v2 PASS 29/29 pass_rate=1.0 (ngưỡng 1.0) prompt_version=3d188a7f38b0 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt_seo v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=defbc0e5c3ab model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] sales_director v1 PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=f5fbd27fdd20 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+EXIT 0
+
+## python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-14
+EXIT 0
+
+## python scripts/redteam.py
+[redteam] bộ cố định 50 ca (luật thuần, không LLM)
+attack                tổng  chặn   lọt known-gap
+teencode                 6     6     0         0
+viet_tat                 4     4     0         0
+emoji                    5     5     0         0
+chen_khoang_trang        8     8     0         0
+homoglyph                5     5     0         0
+chia_cau                 4     4     0         0
+tieng_anh_xen            5     5     0         0
+an_y_ho_tro              6     6     0         0
+ruou_vong_vo             7     7     0         0
+tỷ lệ lọt: 0/50 = 0.0% (known-gap 0, lọt chưa xử lý 0)
+[done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+EXIT 0

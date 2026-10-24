@@ -1,0 +1,17 @@
+# ca P03-2
+# gio 2026-10-23T10:40:17+07:00
+# lenh python -m agents.sx_label --sku savina-12v --text evidence/itacc_r10/g4/fixtures/nhan_savina.txt --submit
+# exit 0
+--- stdout ---
+[label] luật nhãn: GIẢ ĐỊNH — chờ Chuyên viên pháp chế chốt
+[label] nhãn sha256 b5ade2c4c6fd · trích: ĐKSP 1234/2021/ĐKSP · quy cách 12 viên · NSX 01/06/2025 · HSD 01/12/2026 · lô IT-LOT-777
+  - [bat_buoc_thieu] nhãn thiếu: câu khuyến cáo TPBVSK (phần 1)
+  - [bat_buoc_thieu] nhãn thiếu: câu khuyến cáo TPBVSK (phần 2)
+  - [dang_ky_lech] số ĐKSP: nhãn ghi 1234/2021/ĐKSP; golden 8014/2021/ĐKSP
+  - [quy_cach_lech] quy cách: nhãn ghi 12 viên; golden 10 viên
+  - [lo_khong_ho_so] mã lô IT-LOT-777 trên nhãn chưa có hồ sơ lô
+  - [listing_quy_cach_lech] listing shopee mã IT-ITEM-01 ghi 8 viên; nhãn ghi 12 viên
+[submit] hàng duyệt #1 (label_check, khối production) — chờ GĐ sản xuất duyệt
+
+--- stderr ---
+

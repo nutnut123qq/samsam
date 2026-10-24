@@ -1,0 +1,253 @@
+{
+ "label": "dot4_sau",
+ "run_id": "20261024T080652-17ef",
+ "root": "D:\\code\\samsam",
+ "db": "samsam_itacc_r12_d4a1",
+ "fingerprint": null,
+ "probe_sha256": "1194cb81ae628dc7347ebe66b31dea65c075917785ae90da642c1f2e595405f1",
+ "ket_thuc": "2026-10-24T08:07:23+07:00",
+ "ket_qua": [
+  {
+   "loi": "G1-L5",
+   "ca": "list_in_cho_quyet_va_cho_ky",
+   "ket_qua": "PASS",
+   "expected": "--list in mục chờ quyết (#id hàng duyệt ceo pending) + mục chờ ký",
+   "actual": {
+    "exit": 0,
+    "qid": 1,
+    "moc_can_ky": 5,
+    "stdout_cuoi": "hục dữ liệu lần 1 — hạn 30/11/2026, phụ trách ben_a, chua_bat_dau\r\n- MOC-D · Mốc D — sẵn sàng đóng băng, diễn tập khôi phục lần 2 — hạn 18/12/2026, phụ trách ben_a, chua_bat_dau\r\n- TT3 · TT3 — nghiệm thu Mốc D (WP11 ký) — hạn 23/12/2026, phụ trách tgd, chua_bat_dau\r\n- NGHIEM-THU-P1 · Nghiệm thu P1 11/02–20/02/2027 — hai bên ký biên bản — hạn 20/02/2027, phụ trách hai_ben, chua_bat_dau\r\nChờ ký biên bản đối soát quý (số đề xuất đã ghi; sổ KHÔNG lưu chữ ký — nguồn `revenue_quarters`):\r\n- (không có)"
+   }
+  },
+  {
+   "loi": "G1-L6",
+   "ca": "thieu_gia_duyet_la_thieu_du_lieu",
+   "ket_qua": "PASS",
+   "expected": "300ml TP_THUONG, giá list chưa duyệt → thieu_du_lieu",
+   "actual": {
+    "exit": 0,
+    "trang_thai": {
+     "r12-c1-mat-ong-300-doi": "thieu_du_lieu",
+     "r12-c2-mat-ong-savina": "nhom_han_che"
+    }
+   }
+  },
+  {
+   "loi": "G1-L6",
+   "ca": "tpbvsk_chua_xnqc_van_nhom_han_che (positive control)",
+   "ket_qua": "PASS",
+   "expected": "kèm savina (TPBVSK chưa XNQC) → nhom_han_che",
+   "actual": {
+    "trang_thai": {
+     "r12-c1-mat-ong-300-doi": "thieu_du_lieu",
+     "r12-c2-mat-ong-savina": "nhom_han_che"
+    }
+   }
+  },
+  {
+   "loi": "G1-L6",
+   "ca": "duyet_gia_thi_de_xuat (positive control)",
+   "ket_qua": "PASS",
+   "expected": "giá đã duyệt → de_xuat",
+   "actual": {
+    "exit": 0,
+    "trang_thai": {
+     "r12-c1-mat-ong-300-doi": "de_xuat",
+     "r12-c2-mat-ong-savina": "nhom_han_che"
+    }
+   }
+  },
+  {
+   "loi": "D4",
+   "ca": "submit_lap_bo_qua_khong_loi",
+   "ket_qua": "PASS",
+   "expected": "lần 2 exit 0 + [skip], vẫn 1 mục",
+   "actual": {
+    "exit": [
+     0,
+     0
+    ],
+    "muc": [
+     1,
+     1
+    ],
+    "lan2_cuoi": "Tài liệu chứng minh nội dung quảng cáo (nếu nêu công dụng ngoài bản công bố)\r\n- [ ] Giấy ủy quyền (nếu người nộp không phải chủ sản phẩm)\r\n\r\nAgent chỉ soạn nháp — Pháp chế rà, hoàn thiện, nộp; ghi sổ bằng `python -m agents.xnqc --add/--set ... --by <tên>`.\r\n\r\n[ok] nháp hồ sơ → hàng duyệt legal_hr #2"
+   }
+  },
+  {
+   "loi": "D2",
+   "ca": "chan_sdt_email_ca_nhan_moi_kenh",
+   "ket_qua": "PASS",
+   "expected": "SĐT/email cá nhân → ok=False trên facebook/shopee/zalo/web",
+   "actual": {
+    "sdt_ca_nhan": {
+     "facebook": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ],
+     "shopee": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ],
+     "zalo": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ],
+     "web": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ]
+    },
+    "sdt_ca_nhan_84": {
+     "facebook": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ],
+     "shopee": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ],
+     "zalo": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ],
+     "web": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ]
+    },
+    "email_ca_nhan": {
+     "facebook": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ],
+     "shopee": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ],
+     "zalo": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ],
+     "web": [
+      false,
+      [
+       "pii_ca_nhan"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "loi": "D2",
+   "ca": "khong_gan_co_lien_he_cong_ty_gia_ngay (positive control)",
+   "ket_qua": "PASS",
+   "expected": "hotline/số-email công khai/giá/ngày/quy cách → ok=True",
+   "actual": {
+    "hotline": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    },
+    "showroom": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    },
+    "gia_ngay_quy_cach": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    },
+    "gia_lon": {
+     "facebook": [
+      true,
+      []
+     ],
+     "shopee": [
+      true,
+      []
+     ],
+     "zalo": [
+      true,
+      []
+     ],
+     "web": [
+      true,
+      []
+     ]
+    }
+   }
+  },
+  {
+   "loi": "D2",
+   "ca": "che_do_chat_khong_doi (positive control)",
+   "ket_qua": "PASS",
+   "expected": "check() chat không đổi (SĐT do lớp PII kênh che riêng)",
+   "actual": {
+    "chat_check": true
+   }
+  }
+ ]
+}

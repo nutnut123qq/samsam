@@ -553,8 +553,10 @@ def main(argv=None, now=None) -> int:
         path = write_report(text, a.out_dir, f"doi-soat-{label}.md",
                             sample=False)
         if a.record:
-            rid = record(conn, label, start, end, s, cfg["rate"], fee, text,
-                         cfg)
+            # r12 F06-6: sha của ĐÚNG byte trên đĩa (write_report có thể gắn
+            # nhãn giai đoạn) — không phải bản dựng trước nhãn.
+            rid = record(conn, label, start, end, s, cfg["rate"], fee,
+                         path.read_bytes().decode("utf-8"), cfg)
     except psycopg.Error as e:
         print(f"[error] lỗi DB: {type(e).__name__}", file=sys.stderr)
         return 2

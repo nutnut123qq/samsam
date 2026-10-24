@@ -1,0 +1,37 @@
+# Bản tin Sản xuất tuần — 2026-10-23
+
+Cấu hình mốc/SLA: GIẢ ĐỊNH — chờ GĐ sản xuất chốt
+KHÔNG phải doanh số cam kết — agent chỉ đề xuất; không chuyển kho, không đặt mua, không lệnh sản xuất.
+
+## Thiếu hàng theo mốc chốt
+Nguồn: `allocation_proposals` (run mới nhất mỗi mốc).
+không có
+
+## Lô chờ kiểm nhập
+Nguồn: `production_lots` (pending).
+- IT-LOT-002 · sapentol-30v · SX 2024-10-01 · HSD 2026-10-01 · 50
+- IT-LOT-003 · savina-12v · SX 2026-09-01 · HSD 2028-09-01 · 200
+- IT-LOT-004 · sapentol-30v · SX 2025-11-01 · HSD 2026-11-20 · 30
+
+## BOM lỗi
+Nguồn: `bom_combos` + `bom_items` × golden file hiện tại.
+không có
+
+## Mục chờ duyệt & SLA
+Nguồn: `allocation_proposals` + `production_lots` (nhắc ≥ 24h, SLA 48h — chỉ là chữ trong bản tin, không tự chuyển/duyệt thay).
+- lô IT-LOT-002 — chờ 0h — trong hạn
+- lô IT-LOT-003 — chờ 0h — trong hạn
+- lô IT-LOT-004 — chờ 0h — trong hạn
+
+## Tiến độ sản xuất
+Nguồn: `production_plans` (NGƯỜI khối sản xuất ghi) × `production_plan_lots` (lô gắn tường minh) × `production_lots`. % = số lượng lô ĐẠT kiểm nhập / kế hoạch.
+THIẾU DỮ LIỆU — chưa có kế hoạch sản xuất được ghi (`production plan-add`)
+
+## Phiếu kiểm nghiệm lô
+Nguồn: `lot_test_certificates` (phiên bản mới nhất) × `production_lots` chờ/đạt. Lô chưa có dòng phiếu = THIẾU phiếu — kiểm tệp/hash: `production cert-verify`.
+- IT-LOT-001 (passed) · THIẾU phiếu
+- IT-LOT-002 (pending) · THIẾU phiếu
+- IT-LOT-003 (pending) · THIẾU phiếu
+- IT-LOT-004 (pending) · THIẾU phiếu
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12\ext\20261024T113843-2a07\pb2\sx-bantin-tuan-2026-10-23.md
+[rollout] cảnh báo cận hạn: tính năng production-04.3 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra

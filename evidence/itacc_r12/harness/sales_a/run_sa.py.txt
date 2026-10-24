@@ -1,0 +1,108 @@
+"""HARNESS r12 nhóm sales_a — bản chuyển của r10 g2 `run_mod.py` + `fake_llm.py` sang quy ước r12 (wrap.py.txt):
+chạy module/tệp sản phẩm THẬT sau khi đặt FIXTURE ở biên.
+
+  python run_sa.py.txt [--force-mode M] [--fake-llm] [--data-dir DIR] (-m MODULE | --path FILE) args...
+
+--force-mode : pipelines.rollout._FORCE_MODE = M (FIXTURE ép giai đoạn, như r10)
+--fake-llm   : fake AI ở BIÊN CUỐI (khác r10: r10 thay llm_gateway.chat/embed; r12 thay `llm_gateway._client` như
+               wrap.py.txt — mọi cổng kill/trần/feature/rollout của gateway chạy thật). Trả lời chat = nội dung tệp
+               IT_FAKE_CHAT (như r10); embedding = vector cố định 8 chiều VEC (= r10 fake_llm.VEC, khớp chunk
+               seed_chunk_r12); messages chứa "[cham]" → chat ngủ IT_FAKE_SLEEP giây (mặc 6, như r10).
+               Mỗi lời gọi append 1 dòng JSON {kind, slow} vào IT_FAKE_LOG (tệp chỉ được tạo khi có lời gọi).
+--data-dir   : convlog đọc từ DIR (ingest.lead_store.DATA_DIR + default harvest/convlog_stats — như r10 run_mod)
+Luôn chặn socket ra ngoài localhost (như wrap.py.txt). Không đọc .env, không in secret."""
+import json
+import os
+import runpy
+import socket
+import sys
+import time
+from pathlib import Path
+from types import SimpleNamespace as NS
+
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+os.chdir(ROOT)
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+_orig = socket.socket.connect
+
+
+def _guard(self, addr):
+    host = addr[0] if isinstance(addr, tuple) else str(addr)
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        raise OSError(f"[run_sa] chặn kết nối mạng ngoài tới {host}")
+    return _orig(self, addr)
+
+
+socket.socket.connect = _guard
+VEC = [0.5, 0.1, 0.2, 0.3, 0.1, 0.4, 0.2, 0.1]
+
+
+def _log(kind, extra=None):
+    p = os.environ.get("IT_FAKE_LOG")
+    if p:
+        with open(p, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"kind": kind, **(extra or {})}, ensure_ascii=False) + "\n")
+
+
+class _Chat:
+    def create(self, **kw):
+        slow = "[cham]" in json.dumps(kw.get("messages"), ensure_ascii=False)
+        _log("chat", {"slow": slow})
+        if slow:
+            time.sleep(float(os.environ.get("IT_FAKE_SLEEP", "6")))
+        p = os.environ.get("IT_FAKE_CHAT")
+        txt = open(p, encoding="utf-8").read().strip() if p else "Chưa đủ dữ liệu để trả lời."
+        return NS(choices=[NS(message=NS(content=txt))], usage=NS(prompt_tokens=100, completion_tokens=50))
+
+
+class _Emb:
+    def create(self, **kw):
+        _log("embed")
+        n = len(kw["input"]) if isinstance(kw.get("input"), list) else 1
+        return NS(data=[NS(embedding=list(VEC)) for _ in range(n)], usage=NS(prompt_tokens=1, completion_tokens=0))
+
+
+a = sys.argv[1:]
+opts = {}
+while a and a[0] not in ("-m", "--path"):
+    k = a.pop(0)
+    if k == "--fake-llm":
+        opts["fake"] = True
+    else:
+        opts[k.lstrip("-")] = a.pop(0)
+if not a:
+    sys.exit("[run_sa] cần -m MODULE hoặc --path FILE")
+kind, target = a.pop(0), a.pop(0)
+if opts.get("fake"):
+    from pipelines import llm_gateway as g
+    g._client = lambda *x, **y: NS(chat=NS(completions=_Chat()), embeddings=_Emb())
+    os.environ.setdefault("OR_CHAT_MODEL", "openai/gpt-4o-mini")
+    os.environ.setdefault("OR_EMBED_MODEL", "openai/text-embedding-3-small")
+if "force-mode" in opts:
+    from pipelines import rollout
+    rollout._FORCE_MODE = opts["force-mode"]
+    print(f"[run_sa] FIXTURE rollout._FORCE_MODE = {opts['force-mode']}", file=sys.stderr)
+if "data-dir" in opts:
+    from ingest import lead_store
+    d = Path(opts["data-dir"])
+    lead_store.DATA_DIR = d
+    lead_store.harvest.__defaults__ = (d,)
+    lead_store.convlog_stats.__defaults__ = (d,)
+    print(f"[run_sa] FIXTURE lead_store.DATA_DIR = {d}", file=sys.stderr)
+
+if kind == "--path":
+    sys.argv = [target] + a
+    runpy.run_path(target, run_name="__main__")
+    sys.exit(0)
+sys.argv = [target] + a
+if target == "ingest.lead_store":
+    # như r10 run_mod: runpy sẽ định nghĩa lại DATA_DIR/harvest → chạy đúng khối __main__ trên module đã vá
+    from ingest import lead_store
+    from pipelines.job_runs import job_run
+    with job_run("ingest.lead_store") as run:
+        rc = lead_store.main()
+        run["ok"] = rc == 0
+    raise SystemExit(rc)
+runpy.run_module(target, run_name="__main__", alter_sys=True)

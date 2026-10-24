@@ -1,0 +1,69 @@
+[
+ {
+  "ma": "C1_readyz_db_ok_probe_exit0",
+  "ket_qua": "PASS",
+  "expected": "exit 0 khi config + DB ok",
+  "actual": {
+   "rc": 0,
+   "out": "[ok] http://127.0.0.1:63150/readyz — HTTP 200\n"
+  }
+ },
+ {
+  "ma": "C2_db_loi_probe_exit1_canh_bao",
+  "ket_qua": "PASS",
+  "expected": "exit 1 + 1 cảnh báo đỏ webhook_probe",
+  "actual": {
+   "rc": 1,
+   "alerts": [
+    0,
+    1
+   ],
+   "out": "[LỖI] http://127.0.0.1:63150/readyz — HTTP 503\n[RED-ALERT][warn] cảnh báo đỏ #5 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận\n[ALERT] cảnh báo đỏ #5\n"
+  }
+ },
+ {
+  "ma": "C3_cung_dot_khong_bao_lap",
+  "ket_qua": "PASS",
+  "expected": "exit 1, không thêm cảnh báo cùng đợt",
+  "actual": {
+   "rc": 1,
+   "alerts": 1
+  }
+ },
+ {
+  "ma": "C4_db_phuc_hoi_probe_exit0",
+  "ket_qua": "PASS",
+  "expected": "DB sống lại → exit 0",
+  "actual": {
+   "rc": 0
+  }
+ },
+ {
+  "ma": "C5_tien_trinh_tat_roi_khoi_dong_lai",
+  "ket_qua": "PASS",
+  "expected": "tắt → exit 1 (không kết nối); khởi động lại → exit 0",
+  "actual": {
+   "rc_tat": 1,
+   "rc_lai": 0
+  }
+ },
+ {
+  "ma": "D1_role_ung_dung_khong_owner_superuser",
+  "ket_qua": "PASS",
+  "expected": "mọi role ứng dụng: không superuser/createrole/createdb/bypassrls, không thành viên owner",
+  "actual": {
+   "roles": [
+    "agent_writer",
+    "app_human",
+    "ben_a_reader",
+    "bks_reader",
+    "svc_backup",
+    "svc_job",
+    "svc_loader",
+    "svc_ui",
+    "svc_webhook"
+   ],
+   "vi_pham": []
+  }
+ }
+]

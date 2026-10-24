@@ -1,0 +1,15 @@
+{
+ "ca": "d2_cases",
+ "argv": [
+  "python",
+  "-c",
+  "\nimport json, sys\nfrom pipelines import guardrail as g\nL = \"Nội dung có sử dụng AI.\"\ncases = {\n  \"sdt_ca_nhan\": \"Đặt quà Thử IT gọi 0900000123 nhé. \" + L,\n  \"sdt_ca_nhan_84\": \"Liên hệ +84 912 345 678 để đặt hàng Thử R12. \" + L,\n  \"email_ca_nhan\": \"Gửi đơn về ban.thu.r12@example.com nhé. \" + L,\n  \"hotline\": \"Gọi hotline 1800577732 để được tư vấn. \" + L,\n  \"showroom\": \"Showroom 0235 3699 899 — email vnsamsam@gmail.com. \" + L,\n  \"gia_ngay_quy_cach\": \"Giá 1.500.000 đ, giao từ 23/10/2026, hộp 10 củ, hũ 300ml. \" + L,\n  \"gia_lon\": \"Tổng giá trị 10.050.000.000 đ cho đơn doanh nghiệp. \" + L,\n}\nout = {}\nfor k, t in cases.items():\n    out[k] = {}\n    for ch in (\"facebook\", \"shopee\", \"zalo\", \"web\"):\n        r = g.check_publish(t, channel=ch)\n        out[k][ch] = [r[\"ok\"], sorted({v.get(\"code\") for v in r[\"violations\"]})]\nout[\"chat_check\"] = g.check(\"gọi 0900000123\")[\"ok\"]\nprint(json.dumps(out, ensure_ascii=False))\n"
+ ],
+ "env_doi": [],
+ "bat_dau": "2026-10-24T11:42:18+07:00",
+ "ket_thuc": "2026-10-24T11:42:21+07:00",
+ "exit": 0,
+ "llm_calls": null,
+ "stdout_sha256": "6dbf44855c0ca3af1b4429de013362566715b028761ae9d886f99d4a63d400f4",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

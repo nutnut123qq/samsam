@@ -1,0 +1,67 @@
+DB samsam_itacc_r12_up1 tạo mới (KHÔNG samsam) · nền before
+[run:nen] scripts/apply_schema.py --roles -> exit 0
+    [done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, ass
+    [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[run:nen] -m ingest.core_store -> exit 0
+    [load] assets: 219 rows
+    [done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[run:nen] -m ingest.golden_store -> exit 0
+    [disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+    [done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[run:nen] -m pipelines.rollout --seed --by Owner Nền R12 -> exit 0
+    [OK] vào sổ 84 · có sẵn 0 · bỏ qua (chưa co_code) 12
+trước: 100 bảng, 552 dòng, đuôi log []
+[run:repo] scripts/apply_schema.py --roles -> exit 0
+    [done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, ass
+    [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[run:repo] scripts/apply_schema.py --roles -> exit 0
+    [done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, ass
+    [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+sau ×2: 100 bảng, dòng đổi: không, đuôi log []
+feature_rollout / plot_logs (hash) / llm_usage giữ nguyên
+quyền THÊM (24):
+    ('app_human', 'function plot_log_add_human', 'EXECUTE')
+    ('svc_ui', 'chunks', 'SELECT')
+    ('svc_ui', 'chunks(chunk_index)', 'SELECT')
+    ('svc_ui', 'chunks(content)', 'SELECT')
+    ('svc_ui', 'chunks(doc_id)', 'SELECT')
+    ('svc_ui', 'chunks(doc_sha256)', 'SELECT')
+    ('svc_ui', 'chunks(doc_version)', 'SELECT')
+    ('svc_ui', 'chunks(embedding)', 'SELECT')
+    ('svc_ui', 'chunks(id)', 'SELECT')
+    ('svc_ui', 'chunks(ingested_at)', 'SELECT')
+    ('svc_ui', 'chunks(lang)', 'SELECT')
+    ('svc_ui', 'chunks(source)', 'SELECT')
+    ('svc_ui', 'chunks(source_url)', 'SELECT')
+    ('svc_ui', 'chunks(title)', 'SELECT')
+    ('svc_ui', 'plot_logs(activity)', 'SELECT')
+    ('svc_ui', 'plot_logs(author)', 'SELECT')
+    ('svc_ui', 'plot_logs(detail)', 'SELECT')
+    ('svc_ui', 'plot_logs(id)', 'SELECT')
+    ('svc_ui', 'plot_logs(plot_id)', 'SELECT')
+    ('svc_ui', 'plot_logs(source)', 'SELECT')
+    ('svc_ui', 'plot_logs(ts)', 'SELECT')
+    ('svc_ui', 'plots(id)', 'SELECT')
+    ('svc_ui', 'plots(location)', 'SELECT')
+    ('svc_ui', 'plots(status)', 'SELECT')
+quyền BỚT: []
+  ngoài tập r12 dự kiến: []
+  link_lot_origin: security_definer=True search_path=['search_path=public, pg_temp'] public_execute=False human_actor=True
+  plot_log_add_human: security_definer=True search_path=['search_path=public, pg_temp'] public_execute=False human_actor=True
+  unlink_lot_origin: security_definer=True search_path=['search_path=public, pg_temp'] public_execute=False human_actor=True
+[run:repo] -m pipelines.store --verify-log -> exit 0
+    [ok] chuỗi nguyên vẹn (0 dòng)
+[run:repo] -m agents.garden_director --verify -> exit 0
+    [verify] OK — chuỗi nhật ký nguyên vẹn
+  svc_ui đọc plot_logs=6, chunks=0 → được
+  svc_ui ghi thẳng plot_logs → 42501
+  svc_ui gọi plot_log_add_human → 42501
+  login người khối farming ghi qua function → #8 author='Vườn Nâng Cấp R12' hash=True
+  khối sales → 42501
+  ghi tên khác → 42501
+  tên agent → 42501
+[run:repo] -m agents.garden_director --verify -> exit 0
+    [verify] OK — chuỗi nhật ký nguyên vẹn
+[run:repo] -m pipelines.store --verify-log -> exit 0
+    [ok] chuỗi nguyên vẹn (2 dòng)
+UPGRADE OK

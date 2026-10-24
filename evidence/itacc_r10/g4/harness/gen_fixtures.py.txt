@@ -1,0 +1,212 @@
+"""HARNESS g4 — sinh fixture GIẢ (provenance "fixture thử IT") vào ../fixtures/.
+Không dữ liệu thật: mã đơn ITSP*/ITTK*, đại lý IT-DL*, SĐT 0900000xxx,
+domain example.com. Chạy lại cho cùng byte (tất định)."""
+import csv
+import io
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[4]
+FX = Path(__file__).resolve().parents[1] / "fixtures"
+FX.mkdir(parents=True, exist_ok=True)
+
+
+def wcsv(name, header, rows):
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator="\n")
+    w.writerow(header)
+    w.writerows(rows)
+    (FX / name).write_bytes(buf.getvalue().encode("utf-8"))
+
+
+def wjson(name, obj):
+    (FX / name).write_bytes(json.dumps(obj, ensure_ascii=False, indent=1)
+                            .encode("utf-8"))
+
+
+V = "SSQATEST2345"      # mã affiliate fixture (bảng mã không có I/O/0/1)
+# ---------------- finance: đơn sàn (cột PII giả để kiểm bị bỏ)
+wcsv("orders_shopee.csv",
+     ["Mã đơn hàng", "Trạng thái đơn hàng", "Tên sản phẩm", "Số lượng",
+      "Giá ưu đãi", "SKU phân loại hàng", "Mã giảm giá của Shop",
+      "Tên người nhận", "Số điện thoại"],
+     [["ITSPA001", "Hoàn thành", "Sapentol Thử IT", "2", "500000",
+       "sapentol-30v", V, "Người Nhận Thử IT", "0900000101"],
+      ["ITSPB002", "Hoàn thành", "Savina Thử IT", "1", "300000",
+       "savina-12v", "SSZZZZZZZZZZ", "Người Nhận Thử IT", "0900000102"],
+      ["ITSPC003", "Đã hủy", "Savigout Thử IT", "1", "200000",
+       "savigout-30v", V, "Người Nhận Thử IT", "0900000103"],
+      ["ITSPD004", "Trả hàng/Hoàn tiền", "Saphraton Thử IT", "1", "400000",
+       "saphraton-20v", "", "Người Nhận Thử IT", "0900000104"],
+      ["ITSPF006", "Hoàn thành", "Mật ong Thử IT", "1", "700000",
+       "mat-ong-sam-120ml-1hu", "", "Người Nhận Thử IT", "0900000106"]])
+wcsv("orders_tiktok.csv",
+     ["Order ID", "Order Status", "Product Name", "Quantity",
+      "SKU Unit Original Price", "Seller SKU", "Buyer Username", "Phone #"],
+     [["ITTK0001", "Completed", "Sapentol Thử IT", "2", "250000",
+       "sapentol-30v", "nguoimua_thu_it", "0900000201"]])
+# ---------------- finance: quyết toán (khấu trừ ghi ÂM — fees_negative)
+SH = ["Mã đơn hàng", "Giá sản phẩm", "Phí cố định", "Phí thanh toán",
+      "Phí dịch vụ", "Tổng tiền đã thanh toán", "Số tiền hoàn lại",
+      "Phí hoa hồng Tiếp thị liên kết", "Ngày hoàn thành thanh toán",
+      "Số điện thoại"]
+A = ["ITSPA001", "1000000", "-40000", "-50000", "-30000", "880000", "0", "0",
+     "2026-09-10", "0900000101"]
+B = ["ITSPB002", "300000", "-12000", "-15000", "-9000", "250000", "0", "0",
+     "2026-09-11", ""]
+wcsv("qt_shopee_s1.csv", SH, [
+    A, B,
+    ["ITSPC003", "200000", "0", "0", "0", "0", "-200000", "0", "2026-09-12", ""],
+    ["ITSPD004", "400000", "-16000", "-20000", "-12000", "-48000", "-400000",
+     "0", "2026-09-13", ""],
+    ["ITSPE005", "150000", "-6000", "-7500", "-4500", "132000", "0", "0",
+     "2026-10-05", ""],
+    ["ITSPF006", "700000", "-28000", "-35000", "-21000", "616000", "0", "0",
+     "2026-09-14", ""]])
+wcsv("qt_shopee_s2.csv", SH, [
+    A, ["ITSPB002", "300000", "-12000", "-15000", "-9000", "264000", "0", "0",
+        "2026-09-11", ""]])
+wcsv("qt_shopee_bad.csv", SH + ["Cột lạ"], [
+    A + ["x"], ["ITSPB002", "ba trăm", "-12000", "-15000", "-9000", "250000",
+                "0", "0", "2026-09-11", "", ""],
+    A + [""]])
+wcsv("qt_tiktok.csv",
+     ["Order/adjustment ID", "Total revenue", "Platform commission",
+      "Transaction fee", "Service fee", "Total settlement amount",
+      "Order settled time"],
+     [["ITTK0001", "500000", "-25000", "-25000", "-10000", "440000",
+       "2026-09-15"]])
+# ---------------- finance-02 yêu cầu xuất hóa đơn
+YC = ["Mã đơn hàng", "Tên đơn vị mua", "Mã số thuế", "Địa chỉ xuất hóa đơn",
+      "Email nhận hóa đơn"]
+wcsv("yeucau_ok.csv", YC, [["ITSPB002", "Công ty TNHH Thử IT", "0100000001",
+                            "Số 1 Đường Thử IT, Đà Nẵng",
+                            "it-test@example.com"]])
+wcsv("yeucau_bad.csv", YC, [["ITSPB002", "Công ty TNHH Thử IT", "12345", "",
+                             ""]])
+# ---------------- finance-03 công nợ
+ARH = ["dealer_code", "dealer_type", "kind", "doc_ref", "doc_date",
+       "due_date", "amount_vnd", "sku_key", "channel"]
+wcsv("ar_ok.csv", ARH, [
+    ["IT-DL01", "doanh_nghiep", "phat_sinh", "HD-IT-001", "2026-07-01",
+     "2026-07-31", "10000000", "sapentol-30v", "offline"],
+    ["IT-DL01", "doanh_nghiep", "thanh_toan", "PT-IT-001", "2026-08-15", "",
+     "-3000000", "", ""],
+    ["IT-DL01", "doanh_nghiep", "phat_sinh", "HD-IT-002", "2026-09-10",
+     "2026-10-10", "5000000", "savina-12v", "offline"],
+    ["IT-DL01", "doanh_nghiep", "phat_sinh", "HD-IT-003", "2026-10-15",
+     "2026-11-14", "2000000", "savina-12v", "offline"],
+    ["IT-DL02", "ho_kinh_doanh", "phat_sinh", "HD-IT-004", "2026-08-01",
+     "2026-08-31", "4000000", "sapentol-30v", "offline"],
+    ["IT-DL03", "ca_nhan", "phat_sinh", "HD-IT-005", "2026-10-05",
+     "2026-10-15", "1000000", "savina-12v", "offline"],
+    ["IT-DL04", "doanh_nghiep", "phat_sinh", "HD-IT-006", "2026-10-20",
+     "2026-11-19", "800000", "savina-12v", "offline"]])
+wcsv("ar_bad.csv", ARH, [
+    ["it-dl01", "doanh_nghiep", "phat_sinh", "HD-IT-001", "2026-07-01",
+     "2026-07-31", "10000000", "", ""],
+    ["IT-DL02", "ho_kinh_doanh", "phat_sinh", "HD-IT-004", "2026-08-01",
+     "2026-08-31", "-5", "", ""]])
+# ---------------- finance-04.2 golden fixture + kế hoạch KM
+g = json.loads((ROOT / "data" / "golden_skus.json").read_bytes()
+               .decode("utf-8"))
+for s in g["skus"]:
+    if s["sku_key"] in ("mat-ong-sam-300ml", "mat-ong-sam-120ml-1hu"):
+        s["self_declaration_ok"] = True
+        s["note"] = "FIXTURE thử IT: self_declaration_ok=true (không phải dữ liệu thật)"
+g["_doc"] = "FIXTURE thử IT r10 g4 — bản sao data/golden_skus.json, chỉ đổi self_declaration_ok 2 SKU mật ong."
+wjson("golden_fin.json", g)
+KM = ["program_id", "kenh", "sku_key", "loai_km", "ngay_bat_dau",
+      "ngay_ket_thuc", "giam_pct", "gia_km_vnd"]
+wcsv("km_ok.csv", KM, [
+    ["KM-IT-01", "shopee", "mat-ong-sam-300ml", "giam_gia", "2026-10-25",
+     "2026-11-05", "20", ""],
+    ["KM-IT-02", "shopee", "mat-ong-sam-300ml", "voucher", "2026-11-01",
+     "2026-11-10", "5", ""],
+    ["KM-IT-03", "shopee", "saphraton-20v", "giam_gia", "2026-10-25",
+     "2026-10-30", "10", ""]])
+wcsv("km_bad.csv", KM, [["KM-IT-09", "lazada", "mat-ong-sam-300ml",
+                         "giam_gia", "2026-10-25", "2026-11-05", "150", ""]])
+# ---------------- finance-05.1 chi phí
+OH = ["month", "category", "service", "amount_vnd", "doc_ref"]
+wcsv("opex_ok.csv", OH, [["2026-10", "cloud", "vps-it", "3500000", "HD-C-IT1"],
+                         ["2026-10", "saas", "tool-it", "7500000", "HD-S-IT1"],
+                         ["2026-10", "khac", "misc-it", "1000000", "HD-K-IT1"]])
+wcsv("opex_bad.csv", OH, [["2026-10", "xang", "vps-it", "abc", ""]])
+
+# ---------------- production
+wcsv("inv_ok.csv", ["sku_key", "kho", "qty", "captured_at"], [
+    ["savina-12v", "kho-da-nang", "120", "2026-10-22"],
+    ["sapentol-30v", "kho-da-nang", "60", "2026-10-22"],
+    ["ruou-sam-chai-thuy-tinh-500ml", "kho-da-nang", "40", "2026-10-22"],
+    ["mat-ong-sam-300ml", "kho-quang-nam", "15", "2026-10-22"]])
+wcsv("inv_bad.csv", ["sku_key", "kho", "qty", "captured_at"], [
+    ["savina-12v", "kho-da-nang", "-3", "2026-10-22"],
+    ["khong-co-sku", "kho-da-nang", "5", "22/13/2026"]])
+wjson("lots_ok.json", {"_doc": "FIXTURE thử IT r10 g4", "lots": [
+    {"lot_code": "IT-LOT-001", "sku_key": "savina-12v",
+     "mfg_date": "2025-06-01", "exp_date": "2026-12-01", "qty": 100},
+    {"lot_code": "IT-LOT-002", "sku_key": "sapentol-30v",
+     "mfg_date": "2024-10-01", "exp_date": "2026-10-01", "qty": 50},
+    {"lot_code": "IT-LOT-003", "sku_key": "savina-12v",
+     "mfg_date": "2026-09-01", "exp_date": "2028-09-01", "qty": 200},
+    {"lot_code": "IT-LOT-004", "sku_key": "sapentol-30v",
+     "mfg_date": "2025-11-01", "exp_date": "2026-11-20", "qty": 30}]})
+wjson("lots_bad.json", {"_doc": "FIXTURE thử IT r10 g4", "lots": [
+    {"lot_code": "IT-LOT-099", "sku_key": "savina-12v",
+     "mfg_date": "2026-06-01", "exp_date": "2026-05-01", "qty": 10}]})
+(FX / "cert_a.pdf").write_bytes(b"%PDF-1.4\n% FIXTURE thu IT phieu kiem nghiem A\n%%EOF\n")
+(FX / "cert_b.pdf").write_bytes(b"%PDF-1.4\n% FIXTURE thu IT phieu kiem nghiem B (ban sua)\n%%EOF\n")
+(FX / "not_pdf.txt").write_bytes(b"FIXTURE thu IT - khong phai PDF\n")
+g2 = json.loads((ROOT / "data" / "golden_skus.json").read_bytes()
+                .decode("utf-8"))
+for s in g2["skus"]:
+    if s["sku_key"] == "savina-12v":
+        s["pack_spec"] = "10 viên ngậm (tuýp PP)"
+        s["note"] = "FIXTURE thử IT: đổi quy cách để tạo phiếu lệch"
+g2["_doc"] = "FIXTURE thử IT r10 g4 — bản sao golden, savina-12v đổi quy cách 12→10 viên."
+wjson("golden_prod.json", g2)
+g3 = json.loads(json.dumps(g2))
+for s in g3["skus"]:
+    if s["sku_key"] == "savina-12v":
+        s["prices"]["shopee"]["list"] = 999000      # vi phạm R1 list ≤ 149% floor
+wjson("golden_bad.json", g3)
+wjson("golden_empty.json", {"_doc": "FIXTURE rỗng", "skus": []})
+gs = g2["skus"]
+full = {"_doc": "FIXTURE thử IT — hồ sơ GIẢ chỉ để chạy bộ kiểm, KHÔNG phải hồ sơ thật",
+        "so_ho_so_hop_dong": len(gs),
+        "danh_muc_ho_so_goc": [
+            {"ma_ho_so": f"HS-IT-{i:02d}", "ten": f"Hồ sơ Thử IT {i}",
+             "thanh_phan": ["thành phần thử IT"], "quy_cach": s["pack_spec"],
+             "so_cong_bo": s.get("receipt_no") or f"TCB-IT-{i:02d}",
+             "loai": s["category"], "sku_keys": [s["sku_key"]],
+             "xac_nhan_boi": "Người Thử IT", "can_cu": "biên bản thử IT"}
+            for i, s in enumerate(gs, 1)],
+        "sku": [{"sku_key": s["sku_key"], "ho_so_goc": f"HS-IT-{i:02d}"}
+                for i, s in enumerate(gs, 1)]}
+wjson("dossier_full.json", full)
+lech = json.loads(json.dumps(full))
+lech["danh_muc_ho_so_goc"][0]["so_cong_bo"] = "9999/2099/ĐKSP"
+wjson("dossier_lech.json", lech)
+(FX / "nhan_savina.txt").write_bytes((
+    "SAVINA THỬ IT - viên ngậm\n"
+    "Số ĐKSP: 1234/2021/ĐKSP\n"
+    "Quy cách: tuýp 12 viên\n"
+    "Thực phẩm bảo vệ sức khỏe\n"
+    "NSX: 01/06/2025  HSD: 01/12/2026\n"
+    "Số lô: IT-LOT-777\n").encode("utf-8"))
+(FX / "nhan_ruou.txt").write_bytes((
+    "RƯỢU SÂM THỬ IT 500ml chai thủy tinh\n"
+    "Độ cồn 29%\n"
+    "NSX: 01/01/2026\n").encode("utf-8"))
+(FX / "nhan_empty.txt").write_bytes(b"   \n")
+(FX / "nhan.png").write_bytes(bytes.fromhex("89504e470d0a1a0a") + b"FIXTURE")
+(FX / "rd_baoquan.md").write_bytes((
+    "DOI: 10.1234/thu-it.2026.001\n"
+    "# Tài liệu R&D Thử IT — bảo quản sâm khô\n\n"
+    "Sâm khô sau khi sấy cần bảo quản nơi khô ráo, độ ẩm dưới 12%, tránh "
+    "ánh nắng trực tiếp. Đóng gói kín trong túi hút chân không để hạn chế "
+    "hút ẩm. Kiểm tra độ ẩm định kỳ mỗi tháng bằng máy đo độ ẩm.\n\n"
+    "Nhiệt độ kho khuyến nghị từ 15 đến 25 độ C. Không để sâm khô gần nguồn "
+    "nhiệt hoặc hóa chất có mùi.\n").encode("utf-8"))
+print("ok", sorted(p.name for p in FX.iterdir()))

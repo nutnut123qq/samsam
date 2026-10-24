@@ -1,0 +1,127 @@
+{
+ "_doc": "FIXTURE thử IT g1 — nguồn trỏ http.server 127.0.0.1 (không internet); topics chép nguyên từ data/intel_sources.json",
+ "llm": {
+  "enabled": false
+ },
+ "topics": {
+  "sam": [
+   "sâm ngọc linh",
+   "nhân sâm",
+   "hồng sâm",
+   "sâm hàn quốc",
+   "sâm giả",
+   "sâm lai châu",
+   "sâm việt nam",
+   "củ sâm",
+   "rượu sâm",
+   "trà sâm",
+   "cao sâm",
+   "ginseng",
+   "KGC",
+   "Panax"
+  ],
+  "tpbvsk": [
+   "thực phẩm chức năng",
+   "thực phẩm bảo vệ sức khỏe",
+   "thực phẩm bảo vệ sức khoẻ",
+   "thực phẩm bổ sung",
+   "tự công bố sản phẩm",
+   "bản công bố sản phẩm",
+   "an toàn thực phẩm",
+   "Cục An toàn thực phẩm",
+   "TPBVSK",
+   "TPCN",
+   "ATTP"
+  ],
+  "gioi_tre": [
+   "giới trẻ",
+   "người trẻ",
+   "trà sữa",
+   "đồ ăn vặt",
+   "đồ uống",
+   "xu hướng ăn uống",
+   "Gen Z",
+   "healthy",
+   "eat clean"
+  ],
+  "quang_cao": [
+   "quảng cáo",
+   "xác nhận nội dung quảng cáo",
+   "luật quảng cáo",
+   "quảng cáo sai sự thật",
+   "người có ảnh hưởng",
+   "XNQC",
+   "KOL",
+   "KOC",
+   "livestream"
+  ],
+  "doi_thu": [
+   "sâm ngọc linh trimico",
+   "chính quan trang",
+   "KGC",
+   "Cheong Kwan Jang",
+   "Trimico",
+   "sâm K5"
+  ],
+  "chuong_trinh": [
+   "hội chợ",
+   "triển lãm",
+   "xúc tiến thương mại",
+   "phiên chợ",
+   "OCOP",
+   "kết nối cung cầu",
+   "kết nối giao thương",
+   "chương trình hỗ trợ doanh nghiệp",
+   "hỗ trợ nông sản",
+   "tuần lễ nông sản",
+   "đăng ký tham gia",
+   "hạn đăng ký",
+   "gian hàng",
+   "VIETRADE"
+  ],
+  "phap_ly": [
+   "nghị định",
+   "thông tư",
+   "dự thảo",
+   "văn bản hợp nhất",
+   "quyết định số",
+   "luật an toàn thực phẩm",
+   "luật quảng cáo",
+   "tác hại của rượu, bia"
+  ]
+ },
+ "sources": [
+  {
+   "id": "it-a",
+   "name": "Nguồn A thử IT",
+   "tier": "A",
+   "url": "http://127.0.0.1:18741/feed.xml",
+   "kind": "rss",
+   "status": "duyet"
+  },
+  {
+   "id": "it-b",
+   "name": "Nguồn B thử IT (chờ duyệt)",
+   "tier": "B",
+   "url": "http://127.0.0.1:18741/feed_b.xml",
+   "kind": "rss",
+   "status": "cho_duyet"
+  },
+  {
+   "id": "it-tier-c",
+   "name": "Sàn (tầng C — phải chặn)",
+   "tier": "C",
+   "url": "https://shopee.vn/thu-it",
+   "kind": "rss",
+   "status": "cho_duyet"
+  },
+  {
+   "id": "it-dead",
+   "name": "Nguồn chết thử IT",
+   "tier": "B",
+   "url": "http://127.0.0.1:18799/feed.xml",
+   "kind": "rss",
+   "status": "cho_duyet"
+  }
+ ]
+}

@@ -1,0 +1,88 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\ceo-01\\20261024T111150-76dc\\scratch/rep/ceo-2026-W42.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/ceo-01/20261024T111150-76dc/scratch/rep/ceo-2026-W42.md",
+    "sha256": "0a684efea27286a6037c339474676f985f0fe9749dcb38b51372fe4f31f85195"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\ceo-01\\20261024T111150-76dc\\scratch/rep/ceo-2026-W42.md",
+  "re": "\\A> \\*\\*CHẠY THỬ — KHÔNG GỬI\\.\\*\\* Tính năng ceo-01 ",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('| shopee | 12.500.000 đ | 10.000.000 đ |' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('| shopee | 42 đơn | 35 đơn |' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('| tiktok_shop | 3.000.000 đ |' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('manual_export · it_g1_cockpit.csv#sha256:90476ba534e4 · chụp ' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('Đơn hủy (sales.orders_cancelled) | — | [chưa có dữ liệu]' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('## Tiến độ & Sổ quyết định' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('## Rủi ro pháp lý mở' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('## Audit outside-in' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where block = 'ceo' and object_type = 'weekly_report' and object_id = '2026-W42' and created_by = 'agent:ceo_report' and status = 'pending' and position('**ĐỎ — chưa có người nhận cảnh báo độc lập**' in payload) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

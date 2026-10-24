@@ -180,6 +180,47 @@ def add_log(conn, plot_id, ts, activity, detail=None, author=None,
     return (row[0] if row else None), warns
 
 
+def add_log_human(conn, plot_id, ts, activity, detail, by
+                  ) -> tuple[int | None, list[str]]:
+    """r12 UI-01: ghi nhật ký NHẬP TAY bằng login Postgres RIÊNG của người
+    (UI chế độ thực) qua function `plot_log_add_human` — người ghi = người
+    của login (DB `human_actor`, khối farming), không phải tên tự gõ. Chuẩn
+    hóa/cảnh báo như `add_log`. DB từ chối DANH TÍNH/QUYỀN (42501: sai
+    người/khối, login không ánh xạ người) → raise `auth.HumanDenied` (như
+    `auth.call_human`); lỗi dữ liệu (khoảnh không active, trùng) → (None,
+    [lý do])."""
+    pid = (plot_id or "").strip()
+    if not pid:
+        return None, ["thiếu khoảnh"]
+    when = _coerce_ts(ts)
+    if when is None:
+        return None, [f"ts không hợp lệ: {ts!r}"]
+    act, known = normalize_activity(activity)
+    warns = [] if known else [(f"hoạt động '{act}' chưa có trong vocab — "
+                               "ghi nguyên văn")]
+    if when > datetime.now(timezone.utc) + timedelta(days=1):
+        warns.append("ts ở tương lai — kiểm tra lại ngày nhật ký")
+    warns += [f"nhật ký có dấu hiệu cần chú ý: '{k}'"
+              for k in flags_for(act, detail)]
+    try:
+        with conn.transaction():
+            row = conn.execute(
+                "select plot_log_add_human(%s, %s, %s, %s, %s)",
+                (pid, when, act, detail or None, by)).fetchone()
+        conn.commit()
+    except psycopg.errors.UniqueViolation:
+        return None, [(f"đã có nhật ký trùng: {pid} "
+                       f"{when:%Y-%m-%d %H:%M} '{act}'")]
+    except psycopg.Error as e:
+        prim = getattr(getattr(e, "diag", None), "message_primary", None)
+        why = (prim or type(e).__name__)[:200]
+        if getattr(e, "sqlstate", None) == "42501":
+            from pipelines.auth import HumanDenied
+            raise HumanDenied(why) from None
+        return None, [f"DB từ chối ghi: {why}"]
+    return (row[0] if row else None), warns
+
+
 def active_plots(conn) -> list:
     """(id, location) các khoảnh status='active' — data cho form
     selectbox."""

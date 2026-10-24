@@ -1,0 +1,46 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r12\\runs\\finance-06\\20261024T112307-bd29\\finance-06__F06-1\\out/doi-soat-2026-Q3.md",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r12/runs/finance-06/20261024T112307-bd29/finance-06__F06-1/out/doi-soat-2026-Q3.md",
+    "sha256": "49fac678dec67b7f887affd8d1351cea3bcc8ca0b4384dee984ed6278ed8c8b8"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r12\\runs\\finance-06\\20261024T112307-bd29\\finance-06__F06-1\\out/doi-soat-2026-Q3.md",
+  "re": "(?s)\\A(?=.*\\| shopee \\| 2\\.600\\.000đ \\| 288\\.000đ \\| 200\\.000đ \\| 400\\.000đ \\| \\*\\*1\\.712\\.000đ\\*\\* \\|)(?=.*\\| tiktok \\|[^\\n]*\\| \\*\\*440\\.000đ\\*\\* \\|)(?=.*\\| \\*\\*Tổng\\*\\* \\|[^\\n]*\\| \\*\\*2\\.152\\.000đ\\*\\* \\|)(?=.*\\| Tỷ lệ phí vận hành \\| chưa chốt \\|)(?=.*\\| \\(ký, ghi rõ họ tên\\) \\| \\(ký, ghi rõ họ tên\\) \\|\\n\\| \\| \\|)",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from revenue_quarters",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select net_vnd from revenue_quarters order by id limit 1",
+  "expect": 2152000,
+  "actual": 2152000,
+  "dat": true
+ },
+ {
+  "sql": "select recorded_by from revenue_quarters order by id limit 1",
+  "expect": "agent:rev_share",
+  "actual": "agent:rev_share",
+  "dat": true
+ },
+ {
+  "sql": "select ops_fee_vnd is null from revenue_quarters order by id limit 1",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

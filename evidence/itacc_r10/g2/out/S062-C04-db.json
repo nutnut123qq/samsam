@@ -1,0 +1,17 @@
+[
+ {
+  "sql": "select id, object_type, object_id, created_by, status, risk, title, payload from approval_queue where object_type='order_anomaly'",
+  "rows": [
+   {
+    "id": 56,
+    "object_type": "order_anomaly",
+    "object_id": "ow:shopee:cancel:2026-10-12:5",
+    "created_by": "agent:kd_orders",
+    "status": "pending",
+    "risk": "medium",
+    "title": "Tỷ lệ đơn hủy/hoàn bất thường — đơn hủy, kênh shopee, tuần 12/10–18/10/2026",
+    "payload": "Cảnh báo đơn hủy bất thường (A6, NHÁP): kênh shopee, tuần 12/10–18/10/2026. Số liệu: 12 đơn, hủy 5 (41.7%); nền 4 tuần trước 0 đơn, hủy 0 (—). Lý do: vượt ngưỡng 15% (ngưỡng GIẢ ĐỊNH). Ghi chú: ngày đơn = ngày nạp file đầu tiên (GIẢ ĐỊNH). Đơn trễ: CHƯA ĐO — file xuất Seller Center chưa có cột ngày đặt/hạn giao (không suy từ ngày nạp file). Việc cần làm: GĐ bán hàng rà lý do trên Seller Center và quyết xử lý. Agent không xử lý đơn, không liên hệ khách."
+   }
+  ]
+ }
+]

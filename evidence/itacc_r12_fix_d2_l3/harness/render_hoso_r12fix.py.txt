@@ -1,0 +1,152 @@
+"""HARNESS r12-fix — cập nhật docs/handover/nghiem-thu-ky-thuat-noi-bo.md: thêm mục 0 checkpoint r12-fix (đầu tài liệu),
+giữ nguyên văn mục 0 r12 (đổi tiêu đề thành lịch sử + ghi chú controller bác D2/L3), cập nhật mục 3/4 theo tổng hợp
+r12-fix, ghi chú mục 9/10. Số liệu ĐỌC từ evidence (probes/*/ban_ghi.json, items/, tong_hop.json, gate/*.txt) — không
+gõ tay. Chạy 1 lần (dừng nếu đã có mục r12-fix).  python -I render_hoso_r12fix.py.txt"""
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = Path(__file__).resolve().parents[3]
+EV = ROOT / "evidence" / "itacc_r12_fix_d2_l3"
+DOC = ROOT / "docs" / "handover" / "nghiem-thu-ky-thuat-noi-bo.md"
+s = DOC.read_bytes().decode("utf-8")
+CRLF = "\r\n" in s           # tài liệu CRLF — sửa trên LF rồi trả lại đúng kiểu dòng
+s = s.replace("\r\n", "\n")
+assert "Checkpoint r12-fix" not in s, "đã render"
+T = json.loads((EV / "tong_hop.json").read_text(encoding="utf-8"))
+ts = T["tom_tat"]
+tot = ts["tong"]
+P = {k: json.loads((EV / "probes" / k / "ban_ghi.json").read_text(encoding="utf-8"))
+     for k in ("d2_truoc", "d2_sau", "l3_truoc", "l3_sau")}
+for k in ("d2", "l3"):
+    assert P[f"{k}_truoc"]["probe_sha256"] == P[f"{k}_sau"]["probe_sha256"]
+IT = {p.stem: json.loads(p.read_text(encoding="utf-8")) for p in sorted((EV / "items").glob("*.json"))}
+G = EV / "gate"
+
+
+def gl(name, pat):
+    t = (G / name).read_text(encoding="utf-8")
+    m = re.search(pat, t)
+    return (m.group(1) if m else "?"), re.findall(r"^EXIT (\d+)", t, re.M)[-1]
+
+
+full_res, full_exit = gl("full_chot_f1.txt", r"(?m)^(=*\s*\d+ (?:passed|failed)[^\n]*)")
+full_res = full_res.strip("= ")
+fpc = re.search(r"# fp code = (\w+)", (G / "full_chot_f1.txt").read_text(encoding="utf-8")).group(1)
+fpf = re.search(r"# fp full = (\w+)", (G / "full_chot_f1.txt").read_text(encoding="utf-8")).group(1)
+_, ruff_x = gl("ruff_v2.txt", r"(.*)")
+ev_res, ev_x = gl("eval.txt", r"(\[done\] guardrail[^\n]*)")
+_, dpia_x = gl("dpia.txt", r"(.*)")
+rt_res, rt_x = gl("redteam.txt", r"(tỷ lệ lọt[^\n]*)")
+sc = (G / "secret_scan.txt").read_text(encoding="utf-8")
+sc_res = re.search(r"(giá trị bí mật kiểm[^\n]*)", sc).group(1)
+sc_x = re.findall(r"^EXIT (\d+)", sc, re.M)[-1]
+dr = "3 ca DR Docker PASSED" if re.search(r"test_dr_drill", (G / "full_chot_f1.txt").read_text(encoding="utf-8")) is None \
+    else "xem log (có dòng test_dr_drill trong tóm tắt -ra)"
+
+
+def pr(k):
+    b = P[k]
+    return (f"{b['tong']['PASS']} PASS / {b['tong']['FAIL']} FAIL · exit {b['exit']} · fp code {b['fp_code'][:12]}… "
+            f"(`probes/{k}/`)")
+
+
+rows = []
+for iid, r in IT.items():
+    kq = {x: sum(c["ket_qua"] == x for c in r["ca"]) for x in ("PASS", "FAIL", "NOT_RUN")}
+    rows.append(f"| {iid} | {r['muc_kiem']} | {r['ly_do_chay_lai']} | {kq['PASS']}/{kq['FAIL']}/{kq['NOT_RUN']} | "
+                f"**{ {'DAT': 'ĐẠT', 'CHUA_KIEM': 'CHƯA KIỂM', 'BI_CHAN': 'BỊ CHẶN'}[r['trang_thai']] }** | "
+                f"`items/{iid}.json` (thay `{r['supersedes']['path']}`) |")
+SEC = f"""## 0. Checkpoint r12-fix — vá ĐÚNG hai lỗi controller bác ở r12: D2, L3 (24/10/2026)
+
+- **Kết luận r12 "20/20 FIXED" là kết luận LỊCH SỬ** — controller bác cho D2 (SĐT dạng ngoặc lọt guardrail đăng bài) và L3
+  (nhánh quá 30 giây vẫn hứa "nhân viên sẽ phản hồi" trước khi có bằng chứng đã ghi handoff). Lượt này chỉ vá hai lỗi đó;
+  18 lỗi còn lại giữ kết luận r12. Evidence controller lưu tại `evidence/itacc_r12_fix_d2_l3/controller/` (SHA256SUMS).
+- **Vá D2** (`pipelines/pii.py`, `pipelines/guardrail.py`): tách bước phẳng hóa ngoặc của `_mask_pii` thành
+  `_flatten_paren` (cùng luật chống nối khoảng giá, ngân sách tuyến tính; đầu ra `_mask_pii` không đổi — test đông cứng
+  giá trị baseline); luật 8 `pii_ca_nhan` quét thêm bản phẳng, cạn ngân sách (đuôi ngoặc không kiểm hết) → chặn
+  (fail-closed); khóa so `pii_allow` chuẩn hóa đầu 84 → 0. Giữ: pii_allow, hotline, giá, ngày, mã SP; `check()` chat và
+  `internal_note` giữ phạm vi. **Luật D2 vẫn CHỜ PHÁP CHẾ xác nhận phạm vi** — không coi là Pháp chế đã duyệt.
+- **Vá L3** (`connectors/zalo.py`): quá 30 giây → gửi NGAY câu hotline không hứa (`NO_HANDOFF_TEXT`), rồi ghi `cskh_handoff`
+  lý do `deadline` đúng 1 lần SAU khi gửi (DB lỗi/rollout chặn → `record_handoff` trả None, không crash); ngân sách 30 s +
+  phần dự trữ gửi giữ nguyên, không đưa việc DB chậm lên trước khi gửi. Messenger đi chung `zalo._reply_turn`. Các template
+  khác (NO_DATA, gateway chặn, sức khỏe, rượu, chạy thử) giữ hành vi r12 (ghi trước rồi mới chọn câu).
+- **Probe trước/sau** (cùng mã, input, assertion, đồng hồ điều khiển; baseline = snapshot working tree r12
+  `D:\\code\\samsam_itacc_r12fix_baseline`, fp code {P['d2_truoc']['fp_code'][:12]}…, KHÔNG phải bản trước r12):
+
+| Probe | sha256 | Baseline | Bản sửa |
+|---|---|---|---|
+| D2 (SĐT ngoặc ×4 kênh, bệnh lý, đối chứng giữ/chặn, phạm vi) | `{P['d2_truoc']['probe_sha256'][:16]}…` | {pr('d2_truoc')} | {pr('d2_sau')} |
+| L3 (quá hạn Zalo/Messenger × DB down/lỗi/rollout/ghi được + đối chứng) | `{P['l3_truoc']['probe_sha256'][:16]}…` | {pr('l3_truoc')} | {pr('l3_sau')} |
+
+  Baseline FAIL đúng lỗi nghiệp vụ: D2 `{', '.join(P['d2_truoc']['fail'])}` (ok=True, không mã); L3 mọi ca quá hạn gửi câu
+  hứa nhân viên (`hua: true`) — không lỗi thư viện/DB/cấu hình. Test hồi quy bền: `tests/test_r12fix_d2_l3.py`; 2 test hạn
+  chót cũ (`tests/test_v13_c07_ops.py`) đổi kỳ vọng HANDOFF_TEXT → NO_HANDOFF_TEXT, giữ assertion handoff/convlog/kết quả muộn.
+- **Kiểm lại {len(IT)} mục** (tiêu chí MỚI `criteria/r12fix_v1.json` khóa sha `{IT['sales-01']['tieu_chi_sha256'][:12]}…` TRƯỚC
+  khi chạy; chép nguyên ca r12 + ca mới; tiêu chí/evidence r12 giữ nguyên — sha evidence r12 trước/sau lượt khớp). Chỉ một
+  kỳ vọng cũ đổi: sales-01 C07 `sent_last_is_handoff_text=true` (chính là hành vi L3 bị bác) → không hứa + hotline + handoff
+  đúng 1 mục + transport giả không provenance live (siết, không nới). Container mới `samsam-itacc-r12fix` (127.0.0.1:55452),
+  DB mới mỗi mục.
+
+| Mục | Mức | Lý do kiểm lại | Ca P/F/N | Kết quả | Bản ghi |
+|---|---|---|---|---|---|
+{chr(10).join(rows)}
+
+  Lô `runs/batch/lo1` (marketing-01.1 dựng DB lỗi: 3 `apply_schema --roles` song song trên cluster mới tranh `create role` —
+  lỗi môi trường harness, không ca nào chạy, giữ log) → chạy lại tuần tự `lo2`. Mức: LOCAL/MOCK như r12; KHÔNG chạy lại UI
+  (app không đổi) — ca UI02 của sales-01 kế thừa lượt UI thật r12. Mục khác: kế thừa nguồn hiện hành r12 (không chạy lại).
+- **Tổng hiện hành (code sinh `evidence/itacc_r12_fix_d2_l3/tong_hop.json`):** {tot.get('DAT', 0)} ĐẠT /
+  {tot.get('CHUA_KIEM', 0)} CHƯA KIỂM / {tot.get('BI_CHAN', 0)} BỊ CHẶN trên 96 (r12: {ts['checkpoint_r12'].get('DAT', 0)}/
+  {ts['checkpoint_r12'].get('CHUA_KIEM', 0)}/{ts['checkpoint_r12'].get('BI_CHAN', 0)} — tổng không đổi; khác ở chỗ legal_hr-01 và
+  sales-01 nay ĐẠT theo tiêu chí phủ đúng D2/L3). Nguồn: {', '.join(f'{k} {v}' for k, v in sorted(ts['nguon'].items()))};
+  {ts['so_tham_chieu_evidence']} tham chiếu evidence khớp file/hash, {len(ts['loi_nhat_quan'])} vi phạm nhất quán. 12 BỊ CHẶN
+  ngoài code giữ nguyên: {', '.join(f'{k} {v}' for k, v in sorted(ts['nguyen_nhan_bi_chan'].items()))}.
+- **Full/gate trên mã cuối** (fp code `{fpc}`, fp đầy đủ lúc full `{fpf[:16]}…`): full pytest DB mới
+  `samsam_itacc_r12fix_full1` — **{full_res}**, EXIT {full_exit} (`gate/full_chot_f1.txt`; script mới dừng khi dựng
+  DB/preflight lỗi, exit truyền qua ống log, che URL DSN + libpq `password=`); ruff (phạm vi gate r12, loại `.agents`/`founder`)
+  EXIT {ruff_x} (`gate/ruff_v2.txt`; lượt `gate/ruff.txt` không exclude EXIT 1 — 115 lỗi đều trong `.agents/` của user, giữ); eval tất định --no-record
+  `{ev_res}` EXIT {ev_x}; DPIA --check EXIT {dpia_x}; red-team `{rt_res}` EXIT {rt_x}; quét secret `{sc_res}` EXIT {sc_x}.
+- **Giới hạn:** LOCAL/MOCK trên máy dev, fixture giả, AI/transport giả ở biên; không chạy UI lượt này; không gửi tin thật,
+  không provider, không lịch. Đây là **nghiệm thu kỹ thuật nội bộ, KHÔNG phải nghiệm thu hợp đồng**; không đổi
+  `acceptance_status` (vẫn 0/96). CHƯA commit/merge/push/deploy.
+
+"""
+old0 = "## 0. Checkpoint r12 — vá 20 lỗi r10, kiểm lại 48 mục (24/10/2026)"
+assert s.count(old0) == 1
+s = s.replace(old0, SEC + "## 0b. Checkpoint r12 (LỊCH SỬ) — vá 20 lỗi r10, kiểm lại 48 mục (24/10/2026)\n\n"
+              "> r12-fix: các verdict \"FIXED\"/\"20/20 FIXED\" dưới đây giữ nguyên văn làm lịch sử; controller BÁC kết luận đó"
+              " cho D2 và L3 — trạng thái hiện hành của hai lỗi ở mục 0.", 1)
+t_old = s.splitlines()[0]
+s = s.replace(t_old, "# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r12-fix (vá D2/L3, kiểm lại 5 mục,"
+              " 24/10/2026)", 1)
+h3 = "## 3. Kết quả tổng HIỆN HÀNH (r12) — mẫu số 96"
+assert s.count(h3) == 1
+s = s.replace(h3, "## 3. Kết quả tổng HIỆN HÀNH (r12-fix) — mẫu số 96")
+n4 = "Lượt = nguồn bản ghi hiện hành (`evidence/itacc_r12/source_map.json`)"
+assert s.count(n4) == 1
+s = s.replace(n4, "Lượt = nguồn bản ghi hiện hành (`evidence/itacc_r12_fix_d2_l3/source_map.json`; r12fix = kiểm lại lượt"
+              " r12-fix, còn lại kế thừa)")
+for iid, r in IT.items():
+    kq = {x: sum(c["ket_qua"] == x for c in r["ca"]) for x in ("PASS", "FAIL", "NOT_RUN")}
+    m = re.search(rf"(?m)^\| {re.escape(iid)} \|(?:[^|]*\|){{3}} r12 \| \*\*ĐẠT\*\* \| (\w+) \| \d+/\d+/\d+ \|", s)
+    assert m, iid
+    seg = m.group(0)
+    new = re.sub(r"\| r12 \| \*\*ĐẠT\*\* \| (\w+) \| \d+/\d+/\d+ \|",
+                 f"| r12fix | **ĐẠT** | {r['muc_kiem']} | {kq['PASS']}/{kq['FAIL']}/{kq['NOT_RUN']} |", seg)
+    s = s.replace(seg, new, 1)
+d9 = "- **D2:** luật `pii_ca_nhan` chặn SĐT/email cá nhân trong nội dung công khai — mặc định an toàn, `trang_thai: chờ Pháp chế duyệt`."
+assert s.count(d9) == 1
+s = s.replace(d9, d9 + " r12-fix: phủ thêm SĐT dạng ngoặc (cùng chuẩn hóa `pipelines.pii`) — phạm vi luật VẪN chờ Pháp chế.")
+l9 = "- **L3:** khi chatbot TẮT"
+assert s.count(l9) == 1
+s = s.replace(l9, "- **L3 (r12-fix):** quá 30 giây → câu hotline không hứa + mục handoff ghi sau khi gửi (khách không nhận lời"
+              " hẹn nhân viên ở nhánh này dù mục ghi được) — nếu Bên B muốn câu hứa khi đã ghi được thì cần đổi thứ tự (ghi"
+              " trước, ăn vào ngân sách gửi) — quyết định nghiệp vụ.\n" + l9)
+r10 = "## 10. Giới hạn và tài nguyên (r12)\n"
+assert s.count(r10) == 1
+s = s.replace(r10, r10 + "\n- r12-fix: container `samsam-itacc-r12fix` + DB `samsam_itacc_r12fix_*`, scratchpad r12fix, snapshot"
+              " `D:\\code\\samsam_itacc_r12fix_baseline` — dọn khi kết thúc lượt (ghi ở DONE.md).\n")
+DOC.write_bytes((s.replace("\n", "\r\n") if CRLF else s).encode("utf-8"))
+print("ok", tot, full_res, full_exit)

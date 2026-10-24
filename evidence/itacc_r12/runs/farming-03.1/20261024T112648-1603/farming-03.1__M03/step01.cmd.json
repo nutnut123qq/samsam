@@ -1,0 +1,28 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import os,psycopg\nfor lab,sql,args in (('unlink_agent','select unlink_lot_origin(%s,%s,%s)',('IT-LOT-G5-02',int(os.environ['HV']),'agent:qr')),('link_system','select link_lot_origin(%s,%s,%s,%s)',('IT-LOT-G5-02',int(os.environ['HV']),None,'system:qr'))):\n    try:\n        with psycopg.connect(os.environ['DATABASE_URL']) as c: c.execute(sql,args); c.commit(); print('NOT_BLOCKED',lab)\n    except psycopg.Error as e: print('BLOCKED',lab,e.sqlstate)\n"
+ ],
+ "env_doi": [
+  "HV"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:27:39+07:00",
+ "ket_thuc": "2026-10-24T11:27:42+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "^(?![\\s\\S]*NOT_BLOCKED)[\\s\\S]*BLOCKED unlink_agent 42501[\\s\\S]*BLOCKED link_system 42501",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "dd61ca37a150274f3e0ae01bccfdad60f135e7dcb60bf934fdb796bc2fac19c4",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

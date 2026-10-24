@@ -1,0 +1,264 @@
+"""PROBE r12 đợt 3 — L2 (+RB kd_quote), L1, F06-6, F031-6, G1-L3, G1-L4. Cùng input/assertion trên snapshot baseline
+và working tree.  python -I probe_dot3.py.txt <ROOT> <envfile> <label>
+
+Tiêu chí đóng (viết TRƯỚC khi vá):
+- L2: báo giá/catalog B2B chỉ dùng giá `price_list` ĐÃ duyệt, đúng kênh/loại của ma trận, hiệu lực ngày lập —
+  giá chưa duyệt KHÔNG xuất hiện (không fallback data/golden_skus.json); catalog loại SKU readiness CAM (view DB).
+  Đối chứng dương: giá đã duyệt (KHÁC giá JSON) → báo giá/catalog in đúng giá DB.
+- RB kd_quote: sales-05 TẮT → exit 2 '[rollout] … sales-05', 0 file báo giá, 0 mục hàng duyệt.
+- L1: bộ đếm đầu ra sales-04.2 KHÔNG đếm lần chuyển lead khi khách chưa đồng ý dai_ly (pii_included=false);
+  đối chứng dương: đồng ý + chuyển → được đếm.
+- F06-6: revenue_quarters.report_sha256 = sha256 đúng byte file doi-soat-<kỳ>.md trên đĩa (bản có nhãn).
+- F031-6: bảng nợ quá hạn có cột 0-30; mỗi dòng: tổng các cột tuổi = cột Quá hạn.
+- G1-L3: gói HĐTV không in số 0 cho phạm vi chi KHÔNG có nguồn (hiện [chưa có dữ liệu]); có nguồn → in số thật.
+- G1-L4: ceo-<kỳ>.md / hdtv-<kỳ>.md mang nhãn giai đoạn (CHẠY THỬ), vào report_outputs đúng tính năng
+  (ceo-01 / ceo-05); tính năng TẮT → exit 2, 0 file."""
+import hashlib
+import importlib.machinery
+import importlib.util
+import json
+import os
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+H = Path(__file__).resolve().parent
+_l = importlib.machinery.SourceFileLoader("plib", str(H / "plib.py.txt"))
+plib = importlib.util.module_from_spec(importlib.util.spec_from_loader("plib", _l))
+_l.exec_module(plib)
+ROOT, ENVF, LABEL = sys.argv[1], sys.argv[2], sys.argv[3]
+p = plib.P(ROOT, ENVF, LABEL)
+F = plib.FIX
+EXT = Path(os.environ["PROBE_EXT_DIR"]) / p.run_id
+EXT.mkdir(parents=True, exist_ok=False)
+BY = "Người Thử R12"
+GD = "GĐ Bán Hàng Thử R12"
+PY = "python"
+
+
+def tat(fid):
+    assert p.run(f"tat_{fid}", [PY, "-m", "pipelines.rollout", "--disable", fid, "--by", BY])[0] == 0, fid
+
+
+def files(d, pre=""):
+    d = Path(d)
+    return sorted(f.name for f in d.glob(f"{pre}*")) if d.exists() else []
+
+
+def blocked_ok(rc, so, se, fid):
+    return {"exit_2": rc == 2, "rollout_msg": "[rollout]" in so and fid in so, "khong_traceback": "Traceback" not in se}
+
+
+assert p.run("s_seed", [PY, "-m", "pipelines.rollout", "--seed", "--by", BY])[0] == 0
+assert p.run("s_golden_l2", [PY, "-m", "ingest.golden_store", "--file", F / "golden_fixture_l2.json"])[0] == 0
+
+# ================================================================ L2 + RB kd_quote
+INTAKE = r"""
+import json, sys
+from datetime import date
+from connectors import b2b_form
+from ingest import crm
+from ingest.lead_store import connect
+from urllib.parse import urlencode
+sku, qty, org, phone = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+f = {"org_name": org, "org_type": "doanh_nghiep", "region": "Đà Nẵng", "contact_name": "Người Liên Hệ Thử R12",
+     "phone": phone, "email": "", "need_by": "", "consent": "b2b", "policy_version": "b2b-v0-nhap", "website": "",
+     "sku1": sku, "qty1": qty}
+form, code = b2b_form.parse_form(urlencode(f).encode(), [sku], date(2026, 10, 23))
+assert form is not None, code
+conn = connect()
+rid, new = b2b_form.intake(conn, form, crm.load_vault_key(), today=date(2026, 10, 23))
+print(json.dumps({"rid": rid, "new": new}))
+"""
+
+
+def intake(tag, sku, qty, org, phone):
+    rc, so, se, _ = p.run(f"s_b2b_{tag}", [PY, "-c", INTAKE, sku, qty, org, phone])
+    assert rc == 0, se[-400:]
+    return json.loads(so.strip().splitlines()[-1])["rid"]
+
+
+def approve_prices(sku):
+    for pid, in p.rows("select id from price_list where sku_key = %s and channel = 'shopee' and approved_by is null"
+                       " and valid_to is null order by id", (sku,)):
+        assert p.run(f"s_duyet_gia_{pid}", [PY, "-m", "ingest.golden_store", "--approve-price", pid, "--by",
+                                            "Người Duyệt Giá Thử R12"])[0] == 0
+
+
+try:
+    r_cho = intake("120", "mat-ong-sam-120ml-1hu", "50", "Công ty Thử R12 Giá Chưa Duyệt", "0900001201")
+    rc, so, se, _ = p.run("l2_quote_gia_chua_duyet", [PY, "-m", "agents.kd_quote", "--quote", r_cho, "--dry-run",
+                                                      "--date", "2026-10-23"])
+    p.check("L2", "quote_khong_dung_gia_chua_duyet", "685.000" not in so and "745.000" not in so
+            and "thieu_gia_niem_yet" in so and "Traceback" not in se,
+            "giá list shopee chưa duyệt → không có đơn giá suy từ JSON (745.000 → 685.000), lý do thieu_gia_niem_yet",
+            {"exit": rc, "stdout": so.strip()[-400:]})
+    approve_prices("mat-ong-sam-300ml")
+    r_ok = intake("300", "mat-ong-sam-300ml", "50", "Công ty Thử R12 Giá Đã Duyệt", "0900001202")
+    rc, so, se, _ = p.run("l2_quote_gia_da_duyet", [PY, "-m", "agents.kd_quote", "--quote", r_ok, "--dry-run",
+                                                    "--date", "2026-10-23"])
+    m = re.search(r"CK (\d+)% · đơn giá ([\d.]+)đ", so)
+    rnd = json.loads((Path(ROOT) / "data" / "b2b_pricing.json").read_text(encoding="utf-8"))["rounding_vnd"]
+    exp = None
+    if m:
+        ck = int(m.group(1))
+        exp = 3100000 * (100 - ck) // (100 * rnd) * rnd
+    got = int(m.group(2).replace(".", "")) if m else None
+    p.check("L2", "quote_gia_db_da_duyet (positive control)", got is not None and got == exp,
+            "đơn giá = giá list price_list ĐÃ duyệt (3.100.000, khác JSON 2.980.000) × (1 − CK)",
+            {"exit": rc, "don_gia": got, "ky_vong": exp, "stdout": so.strip()[-300:]})
+    rc, so, se, _ = p.run("l2_catalog", [PY, "-m", "agents.kd_catalog", "--build", "--date", "2026-10-23",
+                                         "--out-dir", EXT / "cat"])
+    md = (EXT / "cat" / "catalog-tet-2026-10-23.md")
+    txt = md.read_text(encoding="utf-8") if md.exists() else ""
+    p.check("L2", "catalog_loai_CAM_gia_db (positive control)", rc == 0 and "3.100.000" in txt,
+            "catalog có SKU TP_THUONG với giá DB đã duyệt", {"exit": rc, "co_3100": "3.100.000" in txt})
+    p.check("L2", "catalog_khong_co_sku_CAM_va_gia_chua_duyet", "745.000" not in txt and "1.340.000" not in txt
+            and "2.980.000" not in txt,
+            "không SKU readiness CAM (120ml), không giá JSON/chưa duyệt", {"exit": rc, "files": files(EXT / "cat"),
+                                                                          "stdout": so.strip()[-300:]})
+    q0 = p.q("select count(*) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix')")
+    tat("sales-05")
+    rc, so, se, _ = p.run("rb_kd_quote_tat", [PY, "-m", "agents.kd_quote", "--quote", r_ok, "--submit", "--date",
+                                              "2026-10-23", "--out-dir", EXT / "q_tat"])
+    q1 = p.q("select count(*) from approval_queue where block = 'sales' and object_type in ('b2b_quote', 'b2b_quote_matrix')")
+    b = blocked_ok(rc, so, se, "sales-05")
+    p.check("RB", "kd_quote_tat_khong_file_khong_muc", all(b.values()) and not files(EXT / "q_tat") and q1 == q0,
+            "exit 2 + [rollout] sales-05, 0 file, 0 mục", {**b, "exit": rc, "files": files(EXT / "q_tat"), "muc": [q0, q1],
+                                                         "stderr_cuoi": se.strip()[-200:]})
+except Exception as e:  # noqa: BLE001
+    p.error("L2", "setup", e)
+
+# ================================================================ L1 sales-04.2
+STATUS_RE = re.compile(r"^sales-04\.2\s.*?·\s*(\d+)\s*\(", re.M)
+
+
+def count_042(tag):
+    rc, so, se, _ = p.run(f"l1_status_{tag}", [PY, "-m", "pipelines.rollout", "--status"])
+    m = STATUS_RE.search(so)
+    return int(m.group(1)) if m else None
+
+
+try:
+    assert p.run("s_dealers", [PY, "-m", "ingest.crm", "--load-dealers", F / "s042_dealer_regions_r10.json", "--by", GD])[0] == 0
+    p.exec_admin("insert into leads (dedup_key, ts, channel, user_hash, question, intent, source) values"
+                 " ('manual:r12-l1', now(), 'zalo', 'uh-r12-l1', 'Mua mật ong sâm ở đâu Thử R12', 'order', 'manual')")
+    lead = p.q("select id from leads where dedup_key = 'manual:r12-l1'")
+    rc, so, se, _ = p.run("s_contact", [PY, "-m", "ingest.crm", "--add-contact", "-", "--lead", lead, "--by", "CSKH Thử R12"],
+                          stdin=F / "s042_contact_r10.json")
+    assert rc == 0, se[-300:]
+    cid = p.q("select contact_id from leads where id = %s", (lead,))
+    assert p.run("s_assign", [PY, "-m", "ingest.crm", "--assign", lead, "--dealer", "DLTHU01", "--province", "Đà Nẵng",
+                              "--by", GD])[0] == 0
+    n0 = count_042("truoc")
+    rc, so, se, _ = p.run("l1_handoff_chua_dong_y", [PY, "-m", "ingest.crm", "--handoff", lead, "--dealer", "DLTHU01", "--by", GD])
+    pii = p.q("select detail->>'pii_included' from agent_action_log where action = 'crm_handoff' order by id desc limit 1")
+    n1 = count_042("sau_chua_dong_y")
+    p.check("L1", "handoff_chua_dong_y_khong_dem", rc == 0 and pii == "false" and n1 == n0,
+            "chuyển lead khi chưa đồng ý dai_ly (pii_included=false) → đếm không đổi", {"exit": rc, "pii": pii, "dem": [n0, n1]})
+    assert p.run("s_consent", [PY, "-m", "ingest.crm", "--consent", cid, "--purpose", "dai_ly", "--grant", "--dealer", "DLTHU01",
+                               "--source", "zalo", "--evidence", "BB-THU-R12-001", "--policy-version", "nhap-2026-10",
+                               "--by", "CSKH Thử R12"])[0] == 0
+    n2 = count_042("sau_dong_y")
+    rc, so, se, _ = p.run("l1_handoff_da_dong_y", [PY, "-m", "ingest.crm", "--handoff", lead, "--dealer", "DLTHU01", "--by", GD])
+    pii = p.q("select detail->>'pii_included' from agent_action_log where action = 'crm_handoff' order by id desc limit 1")
+    n3 = count_042("sau_chuyen_dong_y")
+    p.check("L1", "handoff_da_dong_y_duoc_dem (positive control)", rc == 0 and pii == "true" and n3 == n2 + 1,
+            "đồng ý + chuyển (pii_included=true) → +1", {"exit": rc, "pii": pii, "dem": [n2, n3]})
+except Exception as e:  # noqa: BLE001
+    p.error("L1", "setup", e)
+
+# ================================================================ F06-6
+try:
+    rc, so, se, _ = p.run("f066_record", [PY, "-m", "agents.rev_share", "--quarter", "2026-Q3", "--record", "--out-dir", EXT / "f06"])
+    f = EXT / "f06" / "doi-soat-2026-Q3.md"
+    disk = hashlib.sha256(f.read_bytes()).hexdigest() if f.exists() else None
+    sha = p.q("select report_sha256 from revenue_quarters order by id desc limit 1")
+    lab = f.read_text(encoding="utf-8").startswith("> **CHẠY THỬ") if f.exists() else None
+    p.check("F06-6", "report_sha256_khop_file_tren_dia", rc == 0 and disk is not None and sha == disk,
+            "sha trong sổ = sha byte file đã ghi (bản có nhãn)", {"exit": rc, "file": disk, "so": sha, "co_nhan": lab,
+                                                              "stderr_cuoi": se.strip()[-200:]})
+except Exception as e:  # noqa: BLE001
+    p.error("F06-6", "setup", e)
+
+# ================================================================ F031-6
+try:
+    assert p.run("s_ar_load", [PY, "-m", "agents.acc_ar", "--load", F / "ar_ok_r10.csv"])[0] == 0
+    env = {"PROBE_SET": f"agents.report:REPORTS_DIR={EXT / 'ar'}", "PROBE_CALL_MAIN": "1"}
+    rc, so, se, _ = p.run("f0316_bulletin", [PY, "-m", "agents.acc_ar", "--bulletin", "--as-of", "2026-10-23"], env=env, wrap=True)
+    fs = files(EXT / "ar", "director-finance-")
+    txt = (EXT / "ar" / fs[0]).read_text(encoding="utf-8") if fs else ""
+    sec = txt.split("## Công nợ đại lý quá hạn", 1)[-1].split("\n## ", 1)[0] if txt else ""
+    head = next((ln for ln in sec.splitlines() if ln.startswith("| Đại lý")), "")
+    cols = [c.strip() for c in head.strip("|").split("|")]
+    num = lambda s: int(s.strip().strip("`").replace(".", "").replace("đ", "") or 0)  # noqa: E731
+    bad, nrow = [], 0
+    for ln in sec.splitlines():
+        if ln.startswith("| `"):
+            cells = [c.strip() for c in ln.strip("|").split("|")]
+            row = dict(zip(cols, cells))
+            ages = [num(row[k]) for k in cols if k in ("0-30", "31-60", "61-90", ">90")]
+            nrow += 1
+            if sum(ages) != num(row["Quá hạn"]):
+                bad.append(ln)
+    p.check("F031-6", "co_cot_0_30_va_cong_khop", rc == 0 and "0-30" in cols and nrow > 0 and not bad,
+            "có cột 0-30; mỗi dòng tổng cột tuổi = Quá hạn", {"exit": rc, "cot": cols, "so_dong": nrow, "dong_lech": bad[:3]})
+except Exception as e:  # noqa: BLE001
+    p.error("F031-6", "setup", e)
+
+# ================================================================ G1-L3 + G1-L4 (hdtv)
+OPS_HEAD = "## Chi so ngân sách vận hành"
+
+
+def ops_section(txt):
+    return txt.split(OPS_HEAD, 1)[-1].split("\n## ", 1)[0] if OPS_HEAD in txt else ""
+
+
+try:
+    rc, so, se, _ = p.run("g1l3_hdtv_khong_nguon", [PY, "-m", "agents.hdtv_report", "--month", "2026-09", "--out-dir", EXT / "hd1"])
+    f = EXT / "hd1" / "hdtv-2026-09.md"
+    txt = f.read_text(encoding="utf-8") if f.exists() else ""
+    sec = ops_section(txt)
+    rows = [ln for ln in sec.splitlines() if ln.startswith("| 2026-09")]
+    zero = [ln for ln in rows if re.search(r"\|\s*0đ\s*\|", ln) or "0.0%" in ln]
+    p.check("G1-L3", "khong_nguon_khong_in_so_0", rc == 0 and bool(rows) and not zero and all("[chưa có dữ liệu]" in ln for ln in rows),
+            "0 dòng opex + 0 llm_usage → [chưa có dữ liệu], không '0đ'/'0.0%'", {"exit": rc, "dong": rows[:7]})
+    p.check("G1-L4", "hdtv_co_nhan_chay_thu", txt.startswith("> **CHẠY THỬ") and "ceo-05" in txt.splitlines()[0] if txt else False,
+            "hdtv-<kỳ>.md mang nhãn CHẠY THỬ của ceo-05", {"dong_dau": txt.splitlines()[0][:120] if txt else None})
+    ro = p.q("select count(*) from report_outputs where feature_id = 'ceo-05' and name = 'hdtv-2026-09.md'")
+    p.check("G1-L4", "hdtv_vao_report_outputs", ro == 1, "1 dòng report_outputs ceo-05", {"report_outputs": ro})
+    assert p.run("s_opex", [PY, "-m", "agents.fp_opscost", "--load", F / "opex_r12_09.csv"])[0] == 0
+    rc, so, se, _ = p.run("g1l3_hdtv_co_nguon", [PY, "-m", "agents.hdtv_report", "--month", "2026-09", "--out-dir", EXT / "hd2"])
+    f = EXT / "hd2" / "hdtv-2026-09.md"
+    sec = ops_section(f.read_text(encoding="utf-8") if f.exists() else "")
+    cloud = next((ln for ln in sec.splitlines() if "`cloud`" in ln), "")
+    p.check("G1-L3", "co_nguon_in_so_that (positive control)", rc == 0 and "3.500.000đ" in cloud,
+            "opex cloud 3.500.000 → in đúng số", {"exit": rc, "cloud": cloud})
+    tat("ceo-05")
+    rc, so, se, _ = p.run("g1l4_hdtv_tat", [PY, "-m", "agents.hdtv_report", "--month", "2026-08", "--out-dir", EXT / "hd3"])
+    b = blocked_ok(rc, so, se, "ceo-05")
+    p.check("G1-L4", "hdtv_tat_exit2_khong_file", all(b.values()) and not files(EXT / "hd3"),
+            "exit 2 + [rollout] ceo-05, 0 file", {**b, "exit": rc, "files": files(EXT / "hd3"), "stderr_cuoi": se.strip()[-200:]})
+except Exception as e:  # noqa: BLE001
+    p.error("G1-L3/L4", "hdtv", e)
+
+# ================================================================ G1-L4 (ceo_report)
+try:
+    rc, so, se, _ = p.run("g1l4_ceo_report", [PY, "-m", "agents.ceo_report", "--period", "week", "--ref", "2026-10-12",
+                                              "--out-dir", EXT / "ceo1"])
+    fs = files(EXT / "ceo1", "ceo-")
+    txt = (EXT / "ceo1" / fs[0]).read_text(encoding="utf-8") if fs else ""
+    p.check("G1-L4", "ceo_report_co_nhan_chay_thu", bool(txt) and txt.startswith("> **CHẠY THỬ") and "ceo-01" in txt.splitlines()[0],
+            "ceo-<kỳ>.md mang nhãn CHẠY THỬ của ceo-01", {"exit": rc, "files": fs, "dong_dau": txt.splitlines()[0][:120] if txt else None})
+    ro = p.q("select count(*) from report_outputs where feature_id = 'ceo-01' and name like 'ceo-%%'")
+    p.check("G1-L4", "ceo_report_vao_report_outputs", ro >= 1, "≥1 dòng report_outputs ceo-01", {"report_outputs": ro})
+    tat("ceo-01")
+    rc, so, se, _ = p.run("g1l4_ceo_report_tat", [PY, "-m", "agents.ceo_report", "--period", "week", "--ref", "2026-10-05",
+                                                  "--out-dir", EXT / "ceo2"])
+    b = blocked_ok(rc, so, se, "ceo-01")
+    p.check("G1-L4", "ceo_report_tat_exit2_khong_file", all(b.values()) and not files(EXT / "ceo2"),
+            "exit 2 + [rollout] ceo-01, 0 file", {**b, "exit": rc, "files": files(EXT / "ceo2"), "stderr_cuoi": se.strip()[-200:]})
+except Exception as e:  # noqa: BLE001
+    p.error("G1-L4", "ceo_report", e)
+p.finish(__file__)

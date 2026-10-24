@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from contacts c where row_to_json(c)::text like '%0900000101%' or row_to_json(c)::text ilike '%khach.thu.it@example.com%' or row_to_json(c)::text like '%Khách Thử IT%' or row_to_json(c)::text like '%Đường Thử IT%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from leads where dedup_key = 'convlog:it-g2-lead-m2' and contact_id is not null",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

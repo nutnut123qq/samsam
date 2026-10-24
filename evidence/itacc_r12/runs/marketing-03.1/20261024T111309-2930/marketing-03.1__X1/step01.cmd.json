@@ -1,0 +1,36 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "agents.mkt_ads",
+  "--plan",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/marketing-03.1/plan_ok.json",
+  "--by",
+  "Người Thử IT",
+  "--month",
+  "2026-11"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:14:29+07:00",
+ "ket_thuc": "2026-10-24T11:14:30+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[rollout\\][^\\n]*marketing-03\\.1",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "2622d8330a02e82ee61b66777c97090ab6af6a08d3fd73ea6d231fb8a12413fc",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

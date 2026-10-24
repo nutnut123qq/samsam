@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from decision_log where entry_kind = 'quyet_dinh' and topic = 'Chốt lịch thử IT' and recorded_by = 'Thư ký Thử IT' and decided_by = 'TGĐ Thử IT' and basis_kind = 'van_ban' and due_date = '2026-10-30'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from decision_log",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

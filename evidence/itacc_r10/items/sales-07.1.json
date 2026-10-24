@@ -1,0 +1,220 @@
+{
+ "id": "sales-07.1",
+ "ten": "Kịch bản và giỏ hàng livestream",
+ "khoi": "sales",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Kinh doanh TMĐT / Livestream, sau bán, dự báo: 'Kịch bản và giỏ hàng livestream'",
+ "tieu_chi": [
+  "`agents.kd_live` (fake chat ở biên — MOCK) → content_drafts livestream_script pending created_by agent:kd_a9; giỏ + giá do code từ v_promotable (giá list ĐÃ duyệt); câu LLM chạm số/giá bị bỏ; câu hỏi sức khỏe → template",
+  "Giỏ có rượu / SKU không promotable → từ chối trước LLM (0 lời gọi, 0 ghi)",
+  "--dry-run không lưu; vượt trần phiên/tuần → từ chối",
+  "LLM không khả dụng (key rỗng) → exit 1 không nháp",
+  "Tắt → không sinh"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T10:59:27+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_sales; dev mode (AUTH_MODE trống); DEPLOY tắt; OPENROUTER_API_KEY rỗng; fake ở biên: chat LLM fake ở biên (harness fake_llm.py, JSON fixture fake_live.json); golden FIXTURE mat-ong-sam-300ml promotable tiktok",
+ "dau_vao": [
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/fake_live.json",
+   "sha256": "ba84456a52a38da6e6a0f5cd2c17352713ff6d1aa35e62ce2f780663d9992455",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "evidence/itacc_r10/g2/fixtures/golden_fixture.json",
+   "sha256": "2f33ddde4bec5f1d828a0b82fdadd5f00a05f3fbb3486580e06475be6106bc4e",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "S071-C01",
+   "mo_ta": "Kịch bản livestream (fake LLM)",
+   "lenh": "IT_FAKE_CHAT=evidence/itacc_r10/g2/fixtures/fake_live.json IT_FAKE_LOG=C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/s071_calls.jsonl python evidence/itacc_r10/g2/harness/run_mod.py --fake-llm --guardrail-data C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/gdata -m agents.kd_live --channel tiktok --cart mat-ong-sam-300ml --day 2026-10-27 --brief Phiên live thử IT giới thiệu mật ong sâm",
+   "expected": "exit 0; nháp pending agent:kd_a9; giá = price_list duyệt; câu số bị bỏ; Q sức khỏe → template",
+   "actual": "exit 0; nháp #3 livestream_script pending created_by agent:kd_a9 prompt livestream_script@1 guardrail ok; giỏ 'Mật ong sâm 300ml — Giá: 2.980.000 đ' (price_list tiktok đã duyệt); câu LLM '...giá chỉ 2.500.000đ' bị bỏ; câu hỏi 'chữa tiểu đường' → placeholder + template sức khỏe; nhãn Quảng cáo + AI",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S071-C02",
+   "mo_ta": "Giỏ rượu",
+   "lenh": "IT_FAKE_CHAT=evidence/itacc_r10/g2/fixtures/fake_live.json IT_FAKE_LOG=C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/s071_calls.jsonl python evidence/itacc_r10/g2/harness/run_mod.py --fake-llm --guardrail-data C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/gdata -m agents.kd_live --channel tiktok --cart ruou-sam-chai-thuy-tinh-500ml --day 2026-10-27 --brief Phiên live thử IT",
+   "expected": "refuse ruou 0 lời gọi",
+   "actual": "exit 1 '[refuse] ruou ... (LLM 0 lời gọi)'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S071-C03",
+   "mo_ta": "SKU không promotable",
+   "lenh": "IT_FAKE_CHAT=evidence/itacc_r10/g2/fixtures/fake_live.json IT_FAKE_LOG=C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/s071_calls.jsonl python evidence/itacc_r10/g2/harness/run_mod.py --fake-llm --guardrail-data C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/gdata -m agents.kd_live --channel shopee --cart saphraton-20v --day 2026-10-27 --brief Phiên live thử IT",
+   "expected": "khong_promotable",
+   "actual": "exit 1 '[refuse] khong_promotable: saphraton-20v ... (LLM 0 lời gọi)'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S071-C04",
+   "mo_ta": "dry-run",
+   "lenh": "IT_FAKE_CHAT=evidence/itacc_r10/g2/fixtures/fake_live.json IT_FAKE_LOG=C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/s071_calls.jsonl python evidence/itacc_r10/g2/harness/run_mod.py --fake-llm --guardrail-data C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/gdata -m agents.kd_live --channel tiktok --cart mat-ong-sam-300ml --day 2026-10-28 --brief Phiên live thử IT --dry-run",
+   "expected": "0 nháp",
+   "actual": "exit 0 'dry-run, KHÔNG lưu'; không có nháp phiên 28/10 từ lệnh này",
+   "exit": 0,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S071-C05",
+   "mo_ta": "Trần phiên/tuần",
+   "lenh": "IT_FAKE_CHAT=evidence/itacc_r10/g2/fixtures/fake_live.json IT_FAKE_LOG=C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/s071_calls.jsonl python evidence/itacc_r10/g2/harness/run_mod.py --fake-llm --guardrail-data C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/gdata -m agents.kd_live --channel tiktok --cart mat-ong-sam-300ml --day 2026-10-28 --brief Phiên live thử IT lần 2 ;; IT_FAKE_CHAT=evidence/itacc_r10/g2/fixtures/fake_live.json IT_FAKE_LOG=C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/s071_calls.jsonl python evidence/itacc_r10/g2/harness/run_mod.py --fake-llm --guardrail-data C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/gdata -m agents.kd_live --channel tiktok --cart mat-ong-sam-300ml --day 2026-10-29 --brief Phiên live thử IT lần 3",
+   "expected": "lần vượt bị từ chối",
+   "actual": "phiên 2 (28/10) → nháp #4; phiên 3 (29/10) exit 1 'vuot_tran_phien ... (LLM 0 lời gọi)'",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S071-C06",
+   "mo_ta": "LLM không khả dụng",
+   "lenh": "python evidence/itacc_r10/g2/harness/run_mod.py --guardrail-data C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/gdata -m agents.kd_live --channel tiktok --cart mat-ong-sam-300ml --day 2026-11-03 --brief Phiên live thử IT không fake",
+   "expected": "exit 1; 0 nháp",
+   "actual": "exit 1 'llm: GatewayError: thiếu OPENROUTER_API_KEY'; không nháp mới",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  },
+  {
+   "ma": "S071-C07",
+   "mo_ta": "Tắt",
+   "lenh": "python -m pipelines.rollout --disable sales-07.1 --by Người Thử IT --note kiểm nhánh tắt r10 g2 ;; IT_FAKE_CHAT=evidence/itacc_r10/g2/fixtures/fake_live.json IT_FAKE_LOG=C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/s071_tat_calls.jsonl python evidence/itacc_r10/g2/harness/run_mod.py --fake-llm --guardrail-data C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g2/gdata -m agents.kd_live --channel tiktok --cart mat-ong-sam-300ml --day 2026-11-04 --brief Phiên live thử IT khi tắt",
+   "expected": "không sinh nháp",
+   "actual": "exit 1 '[error] RolloutBlocked: nháp livestream_script ... đang tắt'; 0 nháp (fake log ghi 1 lời gọi trước khi chặn — L5 Thấp)",
+   "exit": 1,
+   "ket_qua": "PASS",
+   "ly_do_not_run": null
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": null,
+ "can_de_go": "",
+ "gioi_han": "Lời dẫn do fake LLM; golden thật không có SKU nào promotable (TPBVSK chưa XNQC, thực phẩm chưa tự công bố) → dùng golden FIXTURE; tài khoản live sàn = external-dep (không lên sóng).",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post.py",
+   "sha256": "09d71906afc3419051c2a7e3bfca166a96497b75be67087efc4640c102e6d9cf"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/b2b_post2.py",
+   "sha256": "1ab72f65b0881f3e20f7da54403a360f526728a95638f6dce6c6cf6ab872314e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/case.py",
+   "sha256": "0d5e5ea91967bf225c4ff3c733a5817c1ff87bb36095d808aa546fa8186b1340"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fake_llm.py",
+   "sha256": "adbc2f9799ed0ac98bf5ca1f83c7c11c2900579da8dc9bc2aa4ca3e91481cc81"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/fu_probe.py",
+   "sha256": "cd000fe41aa6172cf25198596a21d765938df14d3d1c2c9721812bc926b84953"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_golden_fixture.py",
+   "sha256": "82dcec52b25e0cb39b9111a0d2031d75c3d2b1c72ef60fcc71ebd747fdf0abb1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/make_items.py",
+   "sha256": "dfe2f77d4674e3134ba3fe9b26b320d6e1f8c54bebff43405b10cc98357b72c2"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/q.py",
+   "sha256": "1f522e8a212386aa99f6b6b44c4831b6aface0ecf34266af1c39eff527f274c1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/run_mod.py",
+   "sha256": "a5e9c3d3fdf5ad9706b50d5c01e7f1a66d8ab94ca05f8d449d57e6648519391b"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/seed_chunk.py",
+   "sha256": "e2c8e72b3c8bd29336aa00af4138a19700aa0721aa993ef1286d2b235ad47b29"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/shift_orders.py",
+   "sha256": "b630f0394d2543a79471f4174f56d87461bb4c687718ff5d3da83a0d16791afe"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/harness/zalo_e2e.py",
+   "sha256": "f6f1700f4569219eff9446fce3724d65f259fbddaba0930cc0ccc876ee416ae4"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S071-C01.txt",
+   "sha256": "c7b7ef6085638e1bc0ce65e35bac4e86936130e801bfe21171343c154ae22fad"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S071-C02.txt",
+   "sha256": "3d7a816013acf27dd77137fbd45b39eadbe0493eea0d0bd572dd2d3b53c392a1"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S071-C03.txt",
+   "sha256": "2cef8b665ca6c8106b746dc25ebca6cedcb3cec89fa9ed49bf02c4ad66ee5b8e"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S071-C04.txt",
+   "sha256": "82b1a8723fc85a7c89680576c1969ef9116840d16c7261e9f361d13404a94877"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S071-C05a.txt",
+   "sha256": "4318ee264b406a435dbe3181185cc9ff8414aa1b464ca50af23d0ece5e9a2c3d"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S071-C05b.txt",
+   "sha256": "dd562afa3aec4585418134300d8665548514c0bfdcc29bd4aaf04f6686b51260"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S071-C06.txt",
+   "sha256": "0582c1af31a2fdd34e499d093d4e8f8667417f955889f0fb8bdd99e5347c6fce"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S071-C07.txt",
+   "sha256": "39ea0ffbebc7370009577ed63a626f942ff87b93370a51bcb0020252fed3c97f"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/S071-db.json",
+   "sha256": "5a0343b4fd42eef4aaf6c9db48cc955e966b6dc7b5bc31d727dbaea883043924"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-golden-fixture.txt",
+   "sha256": "6318bbc062812637309bbc78e092657139921c2ff309792bd10b70bd6a306179"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/SETUP-rollout-seed.txt",
+   "sha256": "0627f43797cc5b00090dcdaddc96bf287ec3a0575fe234785a105ab05814f01c"
+  },
+  {
+   "path": "evidence/itacc_r10/g2/out/TAT-disable-sales-07.1.txt",
+   "sha256": "1a69c2cc382251ec465528457ded5889e4bc6208bf5fc3ae12ab87d0ff1f8b0b"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "L5",
+   "muc_do": "Thấp",
+   "tom_tat": "kd_live khi sales-07.1 TẮT vẫn gọi LLM (1 lời gọi, tốn phí khi chạy thật) rồi mới bị chặn ở save_draft.",
+   "tai_hien": "rollout --disable sales-07.1; kd_live (fake LLM) → IT_FAKE_LOG ghi 1 lời gọi; exit 1 RolloutBlocked",
+   "expected": "kiểm giai đoạn trước LLM (0 lời gọi) như content --daily",
+   "actual": "1 lời gọi chat feature sales-07.1, sau đó [error] RolloutBlocked",
+   "evidence": [
+    "evidence/itacc_r10/g2/out/S071-C07.txt"
+   ],
+   "vi_tri_code": "agents/kd_live.py write_script/generate"
+  }
+ ],
+ "criteria_lock": "evidence/itacc_r10/criteria/g2.lock.txt (sha256 c9b8896e…, khóa 2026-10-23T10:16:25+07:00)"
+}

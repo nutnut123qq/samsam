@@ -1,0 +1,49 @@
+{
+ "case": "C07_deadline",
+ "http": 200,
+ "giay_toi_khi_co_convlog": 4.8,
+ "fixture": "CHAT_BUDGET_S=4 SEND_RESERVE_S=1 (rút ngắn), fake chat ngủ 6s",
+ "convlog_new": [
+  {
+   "ts": "2026-10-23T03:22:01Z",
+   "msg_id": "it-g2-m7",
+   "user_hash": "c379aa4de6d5b3cd",
+   "question": "Mật ong sâm 300ml [cham] bảo quản ra sao?",
+   "answer": "",
+   "sources": [],
+   "guardrail_ok": null,
+   "latency_ms": 3014,
+   "reply_ms": 3014,
+   "answered": false,
+   "sent": false,
+   "error": "deadline:tra_loi",
+   "channel": "zalo",
+   "provenance": "live"
+  }
+ ],
+ "fake_calls_new": [
+  {
+   "kind": "embed",
+   "agent": "chatbot",
+   "feature": "sales-01"
+  },
+  {
+   "kind": "chat",
+   "agent": "chatbot",
+   "feature": "sales-01",
+   "slow": true
+  }
+ ],
+ "queue_new": [
+  {
+   "id": 9,
+   "block": "sales",
+   "object_type": "cskh_handoff",
+   "object_id": "zalo:dbaa010ea8f3d6c8c266d69b09539e91",
+   "created_by": "agent:kd_a1",
+   "status": "pending",
+   "title": "Handoff qua_han_tra_loi — zalo",
+   "payload": "kênh=zalo; lý do=qua_han_tra_loi; user_hash=dbaa010ea8f3d6c8c266d69b09539e91; msg_ref=d6ff3ec2077ebe55; ts=2026-10-23T03:21:58Z; sla=72h"
+  }
+ ]
+}

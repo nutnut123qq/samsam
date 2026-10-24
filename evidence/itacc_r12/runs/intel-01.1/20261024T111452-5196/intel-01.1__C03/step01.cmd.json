@@ -1,0 +1,34 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "crawler.intel",
+  "--run",
+  "--source",
+  "it-tier-c",
+  "--sources",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/intel-01.1/it_g1_sources.json"
+ ],
+ "env_doi": [
+  "PROBE_ROOT"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T11:15:12+07:00",
+ "ket_thuc": "2026-10-24T11:15:17+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "out_re": "\\A(?=[\\s\\S]*\\[blocked\\] \\{[^\\n]*\"source\": \"it-tier-c\"[^\\n]*\"reason\": \"tier_c\")(?![\\s\\S]*\\[req\\])",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "4d2abbcd24ccabb02c5236e80d2a62fbb53f8eec20be30bc6df35e400325269d",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

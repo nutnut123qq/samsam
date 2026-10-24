@@ -1,0 +1,228 @@
+{
+ "id": "intel-01.1",
+ "ten": "Bản tin thị trường 7h",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Bản tin thị trường: 'Bản tin 7h sáng mỗi ngày, mọi tin có nguồn'",
+ "tieu_chi": [
+  "T1 `python -m crawler.intel --run --sources <fixture>` + `python scripts/intel_bulletin.py --period day` (wrapper đổi REPORTS_DIR sang scratch — FIXTURE) exit 0",
+  "T2 intel_items chỉ từ nguồn status=duyet; snippet ≤300 ký tự đã che SĐT; tin 0 chủ đề không lưu; bản tin intel-bulletin-day-<ngày>.md mỗi tin có link nguồn, nhóm theo chủ đề, có cảnh báo mở; nhãn CHẠY THỬ",
+  "T3 ca âm: chạy lại không trùng; nguồn tầng C/sàn bị chặn trước request (exit 2); nguồn chết → exit 1; tắt → không sinh bản tin",
+  "T4 không request ra internet (log [req] chỉ 127.0.0.1); không gửi bản tin"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:04:05+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_intel; dev mode (AUTH_MODE trống, login owner thử); rollout --seed chạy thử; fake ở biên: RSS fixture qua http.server 127.0.0.1:18741 (không internet), REPORTS_DIR→scratch (harness/patch_run.py)",
+ "dau_vao": [
+  {
+   "ten": "it_g1_sources.json",
+   "sha256": "66287f496686b58ea97a17288333c413ffd66c9efdbe92176ed6268fe21cbbf6",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "mk_feed.py",
+   "sha256": "5b7aa0d79423299aab0467227cd08ee40b546f2dbd6744966d17b252ce363f58",
+   "provenance": "fixture thử IT"
+  },
+  {
+   "ten": "feed/feed_b.xml",
+   "sha256": "7dd18066d87840ce27264aaa426b9e7ff120138bfc0774aca2cdab1c09737e89",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "C01",
+   "mo_ta": "Thu tin nguồn đã duyệt",
+   "lenh": "python -m crawler.intel --run --sources evidence/itacc_r10/g1/harness/it_g1_sources.json",
+   "expected": "exit 0; intel_items = số tin có chủ đề của nguồn duyet; 0 tin từ nguồn cho_duyet; SĐT bị che; [req] chỉ 127.0.0.1",
+   "actual": "nguồn it-a (duyet): 8 tin, 7 đúng chủ đề → intel_items 7 (tin 'giá vàng' 0 chủ đề không lưu); SĐT 0900000123 → '***'; 0 tin từ it-b (cho_duyet); [req] chỉ host 127.0.0.1 (robots 404 → cho phép, nhịp gap 1.0s)",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C02",
+   "mo_ta": "Thu lại",
+   "lenh": "python -m crawler.intel --run --sources evidence/itacc_r10/g1/harness/it_g1_sources.json",
+   "expected": "exit 0, intel_items không tăng",
+   "actual": "new=0 dup_url=7; intel_items vẫn 7",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C03",
+   "mo_ta": "Nguồn tầng C",
+   "lenh": "python -m crawler.intel --run --source it-tier-c --sources evidence/itacc_r10/g1/harness/it_g1_sources.json",
+   "expected": "exit 2 [blocked], 0 request",
+   "actual": "[blocked] host shopee.vn reason tier_c, exit 2, 0 dòng [req]",
+   "exit": "2",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C04",
+   "mo_ta": "Nguồn chết",
+   "lenh": "python -m crawler.intel --run --source it-dead --sources evidence/itacc_r10/g1/harness/it_g1_sources.json",
+   "expected": "exit 1, không crash",
+   "actual": "robots ConnectError → bỏ host, ok=0 → exit 1, không traceback",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C05",
+   "mo_ta": "Bản tin ngày",
+   "lenh": "python evidence/itacc_r10/g1/harness/patch_run.py scripts.intel_bulletin REPORTS_DIR=<scratch>/repi -- --period day --date 2026-10-23",
+   "expected": "exit 0; file có link từng tin; nhãn CHẠY THỬ; report_outputs intel-01.1",
+   "actual": "HARNESS REPORTS_DIR→scratch: intel-bulletin-day-2026-10-23.md, 7 tin nhóm 6 chủ đề, MỖI tin có link <https://tin-thu-it.example.com/...> + nguồn + ngày; mục cảnh báo đỏ đang mở (#1,#2,#4); nguồn lỗi it-dead; nhãn CHẠY THỬ intel-01.1",
+   "exit": "0",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C06",
+   "mo_ta": "Tắt intel-01.1",
+   "lenh": "python evidence/itacc_r10/g1/harness/patch_run.py scripts.intel_bulletin REPORTS_DIR=<scratch>/repiw -- --period week --date 2026-10-23",
+   "expected": "không sinh intel-bulletin-week-*; bật lại",
+   "actual": "tắt intel-01.1 → không sinh intel-bulletin-week-*; traceback RolloutBlocked không bắt (exit 1); bật lại",
+   "exit": "1",
+   "ket_qua": "PASS",
+   "ly_do_not_run": ""
+  },
+  {
+   "ma": "C07",
+   "mo_ta": "bổ sung sau khóa",
+   "lenh": "python evidence/itacc_r10/g1/harness/patch_run.py scripts.intel_bulletin REPORTS_DIR=<scratch>/repiw -- --period week --date 2026-10-23 --suggest",
+   "expected": "(bổ sung sau khóa — xem actual)",
+   "actual": "BỔ SUNG SAU KHÓA (lý do: phát hiện ở intel-01.2 C03): khi CHỈ intel-01.2 tắt mà chạy đúng lệnh của job 7h ('--period … --suggest'), suggest() gọi enqueue → RolloutBlocked không bắt → tiến trình chết TRƯỚC write_report → bản tin intel-01.1 (đang chạy thử) KHÔNG được sinh",
+   "exit": "1",
+   "ket_qua": "FAIL",
+   "ly_do_not_run": ""
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "CODE_FAIL",
+ "can_de_go": "Sửa intel_bulletin để intel-01.2 tắt không làm mất bản tin (bắt RolloutBlocked trong suggest). Ngoài code: BGĐ/Quản lý MXH duyệt nguồn data/intel_sources.json (17/17 chờ duyệt); Pháp chế xem điều khoản RSS",
+ "gioi_han": "Không thu nguồn thật; bản tin không có --out-dir (phải patch REPORTS_DIR); LLM tóm tắt không kiểm (tắt)",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g1/harness/feed/feed_b.xml",
+   "sha256": "7dd18066d87840ce27264aaa426b9e7ff120138bfc0774aca2cdab1c09737e89"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/force_vanhanh.py",
+   "sha256": "42304afadf3054d5231247009f75c95904f032a32aefc7f177be18d9542df56e"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/it_g1_sources.json",
+   "sha256": "66287f496686b58ea97a17288333c413ffd66c9efdbe92176ed6268fe21cbbf6"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/mk_feed.py",
+   "sha256": "5b7aa0d79423299aab0467227cd08ee40b546f2dbd6744966d17b252ce363f58"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/harness/patch_run.py",
+   "sha256": "3803db46d9a80c82a0136f73ac2edaee8b6879b7064fe2750346847d03dcc482"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel011_C01.txt",
+   "sha256": "fcaf0cfa8f8ef6d9f89eef702afc209d7170371c500aef34bab86248d9f7a565"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel011_C02.txt",
+   "sha256": "607e3ec692c86e586678bec43a1a8f5922e8dac23d55b17277299c656353391c"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel011_C03.txt",
+   "sha256": "a220aeaace3d4932167df92c94f7ac2628aa74e51e5e553b9c8be9dffec84767"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel011_C04.txt",
+   "sha256": "e8aca7d10eaa1e269814af48f5a0daeb0e1d33c523b9036facee79a174000591"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel011_C05.txt",
+   "sha256": "59ae55dea6f292584834c1004127403ac2a6a6d80a954cc95ae977d8cee2c623"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel011_C06.txt",
+   "sha256": "6661d42eeb93e0cf3b2dae41f421c53844f2cc6b9186c76ac4a17cec822ec7f9"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel011_C06a.txt",
+   "sha256": "62027dcbd01f56c64dee00418d7f8238477bc55529742edf1aa25edb5376a6a4"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel011_C06b.txt",
+   "sha256": "b75f160ff8978f8ec6c4a6aa3d3a92fc3ca0fd957d741386a635f8b735847784"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel012_C03.txt",
+   "sha256": "2763fc05c45c5f90342ec26e0adc7ec21b7b8cb6612d755954ba0dca67298da9"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel012_C03a.txt",
+   "sha256": "6c1a468c8456e7789b515bae5244d86906a81c8aa3fd744793ac04af73e9f035"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel012_C03b.txt",
+   "sha256": "93e3c511cf5341db69c44bc5afbf691de625610826f0b4eabed74d5d3c58bc6f"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel_httpd_requests.txt",
+   "sha256": "5dcce131c64ea572718033d04fbf842ca623fbdd1f1478cf007903ccd02c5ab4"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/out/intel_seed_rollout.txt",
+   "sha256": "f25764bb5779cae983d60dd5637843510f635f4923e6e4d098c7f69756067af3"
+  },
+  {
+   "path": "evidence/itacc_r10/g1/reports/intel-bulletin-day-2026-10-23.md",
+   "sha256": "859ea1e08c94fb2836873e5525f9a1dcb43757ac2de6c676a9068097f29fa7ee"
+  }
+ ],
+ "loi_san_pham": [
+  {
+   "ma": "g1-L1",
+   "muc_do": "TRUNG BÌNH",
+   "tieu_de": "Tắt 1 tính năng chặn đầu ra của tính năng KHÁC trong cùng lệnh (vi phạm độc lập giai đoạn theo tính năng HĐ 6.7)",
+   "tai_hien": [
+    "rollout --disable ceo-04.3 → python -m agents.ceo_audit --report → không sinh ceo-gia-<ngày>.md của ceo-04.4 (out/ceo043_C04.txt)",
+    "rollout --disable intel-03 → python scripts/intel_weekly.py --out-dir → không sinh intel-trend của intel-04.1 (out/intel03_C06.txt)",
+    "rollout --disable intel-01.2 → scripts/intel_bulletin.py --period week --suggest (đúng lệnh job 7h) → không sinh bản tin intel-01.1 (out/intel012_C03.txt)"
+   ],
+   "expected": "chỉ đầu ra của tính năng tắt bị chặn; tính năng còn lại (chạy thử) vẫn sinh",
+   "actual": "RolloutBlocked của đầu ra đầu tiên dừng cả tiến trình → đầu ra kế tiếp không được ghi",
+   "evidence": [
+    "out/ceo043_C04.txt",
+    "out/intel03_C06.txt",
+    "out/intel012_C03.txt"
+   ]
+  },
+  {
+   "ma": "g1-L2",
+   "muc_do": "THẤP",
+   "tieu_de": "RolloutBlocked không được bắt ở một số CLI → traceback Python, exit 1 (job_runs ghi lỗi chung)",
+   "tai_hien": [
+    "da_pmo --board --submit khi ceo-02.1 tắt (out/ceo021_C10.txt)",
+    "ceo_audit --report khi ceo-04.3/04.4 tắt (out/ceo043_C04.txt, out/ceo044_C03.txt)",
+    "ceo_risk --report khi ceo-03 tắt (out/ceo03_C05.txt)",
+    "intel_bulletin --suggest / bản tin khi intel-01.2/01.1 tắt (out/intel012_C03.txt, out/intel011_C06.txt)"
+   ],
+   "expected": "thông điệp [rollout]/[blocked] + exit code có chủ đích như ceo_promo/combo_price/hdtv_report",
+   "actual": "traceback pipelines.rollout.RolloutBlocked, exit 1",
+   "evidence": [
+    "out/ceo021_C10.txt",
+    "out/ceo03_C05.txt",
+    "out/intel011_C06.txt"
+   ]
+  }
+ ],
+ "nhom": "g1",
+ "tieu_chi_khoa": "evidence/itacc_r10/criteria/g1.json (sha256 trong g1.lock.txt)"
+}

@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from project_milestones where due_date is not null",
+  "expect": 15,
+  "actual": 15,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from project_milestones where sign_required",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ }
+]

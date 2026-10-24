@@ -1,0 +1,160 @@
+{
+ "id": "legal_hr-05.2",
+ "ten": "Mẫu xin đồng ý của khách",
+ "khoi": "legal_hr",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Pháp chế – nhân sự / Hợp đồng, dữ liệu cá nhân: 'mẫu xin đồng ý của khách'",
+ "tieu_chi": [
+  "T1 `python -m ingest.crm --add-contact/--consent` (CONTACT_VAULT_KEY thử) và `python scripts/dpia_draft.py --out-dir <thử>` exit 0",
+  "T2 contacts chỉ ciphertext; consents append-only ghi grant/withdraw theo mục đích + nguồn + bằng chứng; can_contact True sau grant, False sau withdraw; DPIA/TIA NHÁP sinh tất định (2 lần byte y hệt)",
+  "T3 consent thiếu bằng chứng/phiên bản chính sách (nếu bắt buộc) → từ chối; map hỏng → exit 2 không ghi file; --check lệch → exit 1",
+  "T4 không gửi liên hệ; PII không in ra"
+ ],
+ "fingerprint": "97051e55c1191625638de98047c896b6b2bc893e63e90e6695915b580c388001",
+ "thoi_gian": "2026-10-23T11:10:14+07:00",
+ "moi_truong": "Docker postgres:17 127.0.0.1:55432 DB samsam_itacc_r10_legal; dev mode (AUTH_MODE trống — hành vi dev, chưa đối chiếu ủy quyền); rollout --seed trên DB thử (tính năng = chạy thử); fake ở biên: không cần (tất định, 0 LLM); CONTACT_VAULT_KEY = key Fernet thử (scratchpad, không in); DPIA --out-dir scratchpad (bản sao vào media/)",
+ "dau_vao": [
+  {
+   "ten": "data/data_flow_map.json",
+   "sha256": "cd38f99f1b082c7ae31fea1cedca4163ddfce2adfdf3622ad191327ba1860830",
+   "provenance": "file repo (đọc, không sửa)"
+  },
+  {
+   "ten": "harness/fixtures/data_flow_map_broken.json",
+   "sha256": "21ec4f92f947f5b38a0d7cea2a5906a94a6b29e79cfcfc6c657dccff3510983a",
+   "provenance": "fixture thử IT"
+  }
+ ],
+ "ca": [
+  {
+   "ma": "05.2-C1",
+   "mo_ta": "thêm liên hệ giả",
+   "lenh": "sh -c python -m ingest.crm --add-contact - --by 'Người Thử IT' < C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/contact_legal.json",
+   "expected": "ciphertext",
+   "actual": "contact #1; hàng contacts chỉ *_enc/phone_hmac — không SĐT/tên/email thô",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C2",
+   "mo_ta": "grant marketing",
+   "lenh": "python -m ingest.crm --consent 1 --purpose marketing --grant --source web --evidence form-thu-it-02 --policy-version v1-thu-it --by Người Thử IT",
+   "expected": "can_contact True",
+   "actual": "consent #1 granted (web, evidence, policy v1-thu-it); can_contact marketing True, cskh False",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C3",
+   "mo_ta": "withdraw",
+   "lenh": "python -m ingest.crm --consent 1 --purpose marketing --withdraw --source web --by Người Thử IT",
+   "expected": "False, append-only",
+   "actual": "consent #2 rút; can_contact False; UPDATE consents bị trigger chặn 'append-only'",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C4",
+   "mo_ta": "grant thiếu evidence",
+   "lenh": "python -m ingest.crm --consent 1 --purpose marketing --grant --source web --by Người Thử IT",
+   "expected": "từ chối",
+   "actual": "exit 2 '--grant cần --evidence và --policy-version', không ghi",
+   "exit": 2,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C5",
+   "mo_ta": "DPIA/TIA 2 lần + --check (+ --check lệch)",
+   "lenh": "python scripts/dpia_draft.py --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/dpia1 --check",
+   "expected": "byte y hệt",
+   "actual": "2 lần sha giống hệt (56ff9e…/88a923…); --check exit 0; file sửa tay → --check exit 1",
+   "exit": 0,
+   "ket_qua": "PASS"
+  },
+  {
+   "ma": "05.2-C6",
+   "mo_ta": "map hỏng",
+   "lenh": "python scripts/dpia_draft.py --map evidence/itacc_r10/g3/harness/fixtures/data_flow_map_broken.json --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g3/dpia3",
+   "expected": "exit 2, 0 file",
+   "actual": "exit 2 JSONDecodeError, 0 file",
+   "exit": 2,
+   "ket_qua": "PASS"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "can_de_go": "",
+ "gioi_han": "DPIA chưa ký; mẫu văn bản đồng ý chờ Pháp chế; DPIA/TIA là NHÁP.",
+ "evidence": [
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C1.txt",
+   "sha256": "ad60fc1855fbb6be107324c40d2c6867de7f1912fd5e0e873d78ce57fc902452"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C1.pii_check.txt",
+   "sha256": "a742f7cbf7e2f4039d4094f487bb854f4eddd5035976215d1a03afbdb6247e7c"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C2.txt",
+   "sha256": "c6e84758c9db0c1b88c6ca744f4cf3567828e1d48be5133730d924a8a9407c21"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C2.probe.txt",
+   "sha256": "c217e1c9bcb62054263e3a2ff9de1b24501a4803c9e05a4b635ef5bda53daa8a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C3.txt",
+   "sha256": "4eca9bb93f43628c314af7600924684f0e24508675e35f964b75990afd291dfd"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C3.probe.txt",
+   "sha256": "dd13e33722cffde13066f14bc1790f3ea99bbff372bd36aecc2c343ff0ca299b"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C3.appendonly.txt",
+   "sha256": "2992114f5619c08d3eaa26a5275ecc49ae1b020dd93f79c915861f66066c35f1"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C4.txt",
+   "sha256": "5e920320af52d9f583735df93c55791d70fd81e23f800966fc368e6289306112"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C5a.txt",
+   "sha256": "bf4c5bb78118a277d61d78991850ed0dbd0a24d03edca6abb08403fbaac5405a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C5b.txt",
+   "sha256": "bf4c5bb78118a277d61d78991850ed0dbd0a24d03edca6abb08403fbaac5405a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C5.sha.txt",
+   "sha256": "aaee01abbc21e286ea0345ec95e044ad5dae0f2feed00bdd1cec599243ba7a72"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C5c.txt",
+   "sha256": "b53dc8f0bac4172d9b25860c5845e97f5f084bc42bfcf977cb728432f1f6de89"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C5d.txt",
+   "sha256": "b7bd80870d9df737295dc6fa5c410e64e1ce3106354e63f286a8bfbd3ce9c2f6"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/out/L-05.2-C6.txt",
+   "sha256": "5744093d335df77cd8af0f593abbb3dab6cfa971702c78d19121a6162b8cc8ef"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/media/05.2-DPIA-nhap.md",
+   "sha256": "56ff9e661a7bc3a7b31c4fda947ca4a29506c012569d66f8ff82b46bf090ee0b"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/media/05.2-TIA-nhap.md",
+   "sha256": "88a92326af75d33bba45c8651627d37576fdf5516548bfcd6e5198d48b23f34a"
+  },
+  {
+   "path": "evidence/itacc_r10/g3/harness/can_contact_probe.py",
+   "sha256": "15d83ec010bdc4b9788bafa53d37c9f57652ca34af401770c3f54957f9e04e93"
+  }
+ ],
+ "loi_san_pham": []
+}

@@ -1,0 +1,173 @@
+[
+ {
+  "case": "1 svc_ui decide_item tên tự khai → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS",
+  "status": "pending",
+  "ghi_do": false
+ },
+ {
+  "case": "2 svc_ui approve_draft mang tên người THẬT khác → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "3 svc_ui schedule_draft (draft đã duyệt hợp lệ) tên tự khai → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "3b người marketing xếp lịch draft đã duyệt khối mình → được",
+  "got": [
+   "ok",
+   [
+    [
+     ""
+    ]
+   ]
+  ],
+  "expect": "ok",
+  "verdict": "PASS"
+ },
+ {
+  "case": "4 người sales tự quyết mục khối sales → được",
+  "got": [
+   "ok",
+   [
+    [
+     4
+    ]
+   ]
+  ],
+  "expect": "ok",
+  "verdict": "PASS"
+ },
+ {
+  "case": "5 người marketing duyệt draft khối marketing → được",
+  "got": [
+   "ok",
+   [
+    [
+     5
+    ]
+   ]
+  ],
+  "expect": "ok",
+  "verdict": "PASS"
+ },
+ {
+  "case": "6 người sales quyết mục khối marketing → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "7 người sales duyệt draft khối marketing (gọi thẳng function) → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS",
+  "ghi_do": false,
+  "draft_status": "pending"
+ },
+ {
+  "case": "8 login sales ghi tên người khác → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "9 login người ghi tên agent → chặn",
+  "got": [
+   "denied",
+   "P0001"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "10 người tự duyệt mục mình tạo → chặn",
+  "got": [
+   "denied",
+   "P0001"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "11 login người chưa ánh xạ human_logins → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "12 login agent_writer → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "13 login dịch vụ svc_job → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "14 svc_ui INSERT thẳng log quyết định tên người → chặn",
+  "got": [
+   "denied",
+   "42501"
+  ],
+  "expect": "denied",
+  "verdict": "PASS"
+ },
+ {
+  "case": "15 auth.person_connect: login người mở được; svc_ui/chưa ánh xạ/sai mật khẩu bị từ chối",
+  "got": {
+   "ok": [
+    "Marketing Giả S04",
+    [
+     "marketing"
+    ]
+   ],
+   "ui": "từ chối PersonSessionError",
+   "unmapped": "từ chối PersonSessionError",
+   "sai_mk": "từ chối PersonSessionError"
+  },
+  "verdict": "PASS"
+ },
+ {
+  "case": "16 login UI không superuser/createrole/createdb",
+  "got": false,
+  "verdict": "PASS"
+ }
+]

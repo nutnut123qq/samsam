@@ -1,0 +1,18 @@
+# ca: DP073-05b
+# env: DB thử khối dp (DSN che)
+# cmd: python /d/code/samsam/evidence/itacc_r10/g5/harness/mod_run.py scripts.deploy_gate --patch CONFIG=C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r10/g5/fixtures/eval_config_fixture.json -- --sha f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1 --approved-by Người Thử IT --today 2026-12-25 --hotfix
+# exit: 0
+# thoi_gian: 2026-10-23T10:51:40+0700
+[HARNESS] scripts.deploy_gate.CONFIG -> scratchpad eval_config_fixture.json
+[warn] đang đóng băng 21/12/2026–10/02/2027 (Tết Đinh Mùi 2027) — 'hotfix' được phép — deploy cho qua TRONG đóng băng, ghi lại phiếu/lý do
+[plan] deploy f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1 (HOTFIX) — duyệt bởi 'Người Thử IT'. KHÔNG chạy gì — người vận hành làm tay:
+  0. PREV=$(readlink -f /opt/samsam/current)  (release đang chạy; lần đầu: đặt .env thật vào /opt/samsam/shared/.env)
+  1. git clone/fetch rồi checkout f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1 vào /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1
+  2. python3.12 -m venv /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1/.venv && /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1/.venv/bin/pip install -r /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1/requirements.txt  (cài sạch, không dùng lại venv cũ)
+  3. ln -sfn /opt/samsam/shared/.env /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1/.env  (.env dùng chung — unit EnvironmentFile=/opt/samsam/current/.env vẫn đúng sau khi đổi symlink)
+  4. systemctl stop zalo-webhook && mv $PREV/data/zalo_tokens.json $PREV/data/zalo_seen.db* $PREV/data/conversations.jsonl* /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1/data/  (state runtime: refresh token rotate, dedup, convlog — file chưa có thì bỏ qua)
+  5. ln -sfn /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1 /opt/samsam/current && systemctl start zalo-webhook
+  6. smoke: curl -fsS http://127.0.0.1:8788/healthz && cd /opt/samsam/current && .venv/bin/python scripts/agent_eval.py --agent chatbot --no-record  (FAIL -> Rollback ngay)
+  7. ghi guardrail_ver=f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1 (hậu kiểm F17.5 dùng đúng bản này)
+  8. giữ 10 release mới nhất trong /opt/samsam/releases, xoá bản cũ hơn (state đã chuyển sang release đang chạy, bản cũ không còn token/convlog)
+  Rollback: systemctl stop zalo-webhook && mv /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1/data/zalo_tokens.json /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1/data/zalo_seen.db* /opt/samsam/releases/f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1/data/conversations.jsonl* $PREV/data/ && ln -sfn $PREV /opt/samsam/current && systemctl start zalo-webhook  (mang state theo — refresh token cũ đã vô hiệu sau rotate)
