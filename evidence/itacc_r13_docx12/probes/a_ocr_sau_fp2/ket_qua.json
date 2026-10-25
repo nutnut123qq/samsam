@@ -1,0 +1,100 @@
+{
+ "probe": "a_ocr_v1",
+ "root": "D:\\code\\samsam",
+ "ca": [
+  {
+   "nhom": "LOI",
+   "ca": "nhan_png_ocr_trich_truong",
+   "ket_qua": "PASS",
+   "actual": {
+    "src": "ocr",
+    "dksp": [
+     "15/2026/ĐKSP"
+    ],
+    "nsx": [
+     "2026-10-12"
+    ],
+    "hsd": [
+     "2028-10-12"
+    ],
+    "lots": [
+     "L2026-1012"
+    ],
+    "qty": [
+     "300 ml"
+    ]
+   }
+  },
+  {
+   "nhom": "LOI",
+   "ca": "sx_label_read_image",
+   "ket_qua": "PASS",
+   "actual": {
+    "len": 108
+   }
+  },
+  {
+   "nhom": "LOI",
+   "ca": "pdf_scan_2_trang",
+   "ket_qua": "PASS",
+   "actual": {
+    "src": "ocr",
+    "pages": 2,
+    "fields": {
+     "so_giay": "123/2026/DKSP",
+     "ngay_cap": "2026-10-05"
+    }
+   }
+  },
+  {
+   "nhom": "LOI",
+   "ca": "anh_trang_none",
+   "ket_qua": "PASS",
+   "actual": {
+    "src": "none"
+   }
+  },
+  {
+   "nhom": "LOI",
+   "ca": "anh_hong_docerror",
+   "ket_qua": "PASS",
+   "actual": "DocError: ảnh hỏng/không đọc được: UnidentifiedImageError"
+  },
+  {
+   "nhom": "LOI",
+   "ca": "pdf_qua_trang_docerror",
+   "ket_qua": "PASS",
+   "actual": "DocError: PDF 31 trang > OCR_MAX_PAGES=30"
+  },
+  {
+   "nhom": "LOI",
+   "ca": "thieu_model_tu_choi",
+   "ket_qua": "PASS",
+   "actual": "DocError: thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR · net+0"
+  },
+  {
+   "nhom": "LOI",
+   "ca": "engine_truy_vet",
+   "ket_qua": "PASS",
+   "actual": {
+    "paddle_local": "paddleocr-2.x/latin_PP-OCRv3"
+   }
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "provider_none_giu_cho_ocr",
+   "ket_qua": "PASS",
+   "actual": "none"
+  },
+  {
+   "nhom": "DOI_CHUNG",
+   "ca": "khong_mo_mang",
+   "ket_qua": "PASS",
+   "actual": []
+  }
+ ],
+ "tong": {
+  "PASS": 10,
+  "FAIL": 0
+ }
+}

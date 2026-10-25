@@ -1,0 +1,74 @@
+{
+ "probe": "b_stt_v1",
+ "root": "D:\\code\\samsam_r13_baseline\\tree",
+ "ca": [
+  {
+   "ca": "thieu_model_exit2_truoc_db",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 2,
+    "db": 0,
+    "err": "[blocked] GARDEN_STT_PROVIDER='whisper_local' chưa tích hợp — chưa cấu hình STT: BLOCKED — cần vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn),"
+   }
+  },
+  {
+   "ca": "chep_loi_nhap_che_pii",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": "EXC KeyError: 'whisper_local'",
+    "out": "",
+    "model_nhan": {},
+    "err": ""
+   }
+  },
+  {
+   "ca": "model_nap_mot_lan",
+   "ket_qua": "FAIL",
+   "actual": {
+    "init": 0,
+    "rc": "EXC KeyError: 'whisper_local'"
+   }
+  },
+  {
+   "ca": "loi_rong_exit1",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": "EXC KeyError: 'whisper_local'",
+    "err": ""
+   }
+  },
+  {
+   "ca": "tep_hong_khong_goi_model",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": "EXC KeyError: 'whisper_local'",
+    "err": ""
+   }
+  },
+  {
+   "ca": "qua_tran_do_dai_khong_goi_model",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": "EXC KeyError: 'whisper_local'",
+    "err": ""
+   }
+  },
+  {
+   "ca": "qua_timeout_exit1",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": "EXC KeyError: 'whisper_local'",
+    "err": ""
+   }
+  },
+  {
+   "ca": "khong_mo_mang",
+   "ket_qua": "PASS",
+   "actual": []
+  }
+ ],
+ "tong": {
+  "PASS": 1,
+  "FAIL": 7
+ }
+}

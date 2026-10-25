@@ -1,0 +1,29 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import json,sys; m=json.load(open(sys.argv[1],encoding='utf-8')); print({k:m.get(k) for k in ('sku','channel','draft_id','gia_id','gia_vnd','transform')}); ok=(m.get('draft_id')==1 and str(m.get('gia_id'))==sys.argv[2] and str(m.get('gia_vnd'))==sys.argv[3] and m.get('sku')=='mat-ong-sam-300ml' and m.get('channel')=='shopee'); print('MANIFEST_KHOP' if ok else 'MANIFEST_LECH'); sys.exit(0 if ok else 1)",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-03\\20261024T202144-1d08\\scratch/s03_export/listing-shopee-mat-ong-sam-300ml-d1.manifest.json",
+  "30",
+  "2980000"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:22:38+07:00",
+ "ket_thuc": "2026-10-24T20:22:38+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "MANIFEST_KHOP",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "552fe73297a95179a673ef9fc022da59b5175e9ad32e11847ccfbafd0135a253",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

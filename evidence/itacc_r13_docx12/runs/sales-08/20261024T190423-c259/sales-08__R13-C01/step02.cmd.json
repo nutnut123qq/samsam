@@ -1,0 +1,35 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T190423-c259\\scratch/gdata",
+  "van_hanh",
+  "agents.listing_export",
+  "--verify",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T190423-c259\\scratch/s08_feed/feed.manifest.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T19:04:58+07:00",
+ "ket_thuc": "2026-10-24T19:05:02+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A(?![\\s\\S]*\\[LỆCH\\])[\\s\\S]*\\[done\\] khớp bản đã duyệt",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "7431977e3277d80e4aa40c3f3a3c87d88b697be2da043a2a5ba0d584656f2f15",
+ "stderr_sha256": "6742609bf8f71d83d15d9f52e04d156f80c5c0e91501d8b3c4c36e6aefbc673b"
+}

@@ -372,6 +372,9 @@ grant select on approval_queue, approvals, decisions, decision_log,
   to svc_job;
 grant select, insert on invoice_lines, chat_kpi_facts, anchor_batches
   to svc_job;
+-- r13: `pipelines.anchor --upgrade` (job, agent:anchor) ghi dòng `da_nang_cap`
+-- append-only (trigger chặn sửa/xóa).
+grant insert on anchor_receipts to svc_job;
 grant execute on function qr_lot_snapshot_sha(text), verify_plot_logs()
   to svc_job;
 -- Đợt hợp đồng (PL01 Ban TGĐ "báo khi nhật ký bị sửa"): job `chain_watch`

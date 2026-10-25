@@ -1,0 +1,35 @@
+"""HARNESS r13-fix4 — sinh mk_criteria_r13fix4_v2.py.txt từ bản v1 (giữ v1 + log lô k1 nguyên vẹn). Lý do v2: lô k1, 2 mục
+data_platform-90 / data_platform-07.2 FAIL ở ca FIX4-* vì LỖI TIÊU CHÍ — runner chỉ thay placeholder `{sql:…}` khi nó là
+NGUYÊN chuỗi; v1 ghép `"dir:" + {sql:…}` và `{sql:…} + "/bk"` nên chuỗi không được thay, đường dẫn còn chứa {SCR} (trong
+repo) → preflight/db_backup từ chối đúng "nằm trong repo" (hành vi sản phẩm đúng). v2: đưa tiền tố/hậu tố VÀO trong câu SQL
+(như ca r13 data_platform-07.2 DP072-04), không đổi exit/regex/kỳ vọng nào; chỉ chứa 2 mục bị ảnh hưởng.
+  python -I mk_criteria_r13fix4_v2_from_v1.py.txt"""
+from pathlib import Path
+
+H = Path(__file__).resolve().parent
+s = (H / "mk_criteria_r13fix4.py.txt").read_text(encoding="utf-8")
+reps = [
+    ('def ext(item_short, sub):\n    return "{sql:select \'" + SPX',
+     'def ext(item_short, sub, pre=""):\n    return "{sql:select \'" + pre + SPX'),
+    ('"BACKUP_OFFSITE": "dir:" + off, "DRILL_DATABASE_URL": ""}',
+     '"BACKUP_OFFSITE": ext(short, "off_fix4", "dir:"), "DRILL_DATABASE_URL": ""}'),
+    ('"env": {**PRE, "BACKUP_DIR": fake + "/bk", "BACKUP_PASSPHRASE_FILE": fake + "/khoa.txt",\n'
+     '                  "BACKUP_REQUIRE_ENCRYPTION": "1", "BACKUP_OFFSITE": "dir:" + fake + "/off"},',
+     '"env": {**PRE, "BACKUP_DIR": ext("dp90", "fake/bk"), "BACKUP_PASSPHRASE_FILE": ext("dp90", "fake/khoa.txt"),\n'
+     '                  "BACKUP_REQUIRE_ENCRYPTION": "1", "BACKUP_OFFSITE": ext("dp90", "fake/off", "dir:")},'),
+    ('OUT = EV / "criteria" / "r13fix4_v1.json"\nLOCK = OUT.with_name("r13fix4_v1.lock.txt")',
+     'OUT = EV / "criteria" / "r13fix4_v2.json"\nLOCK = OUT.with_name("r13fix4_v2.lock.txt")'),
+    ('LOCK.open("x", encoding="utf-8").write(f"r13fix4_v1.json {h}',
+     'LOCK.open("x", encoding="utf-8").write(f"r13fix4_v2.json {h}'),
+    ('       "items": items}',
+     '       "items": [i for i in items if i["id"] in ("data_platform-90", "data_platform-07.2")]}'),
+    ('print("OK", h, {i["id"]: len(i["ca"]) for i in items})',
+     'print("OK", h, {i["id"]: len(i["ca"]) for i in doc["items"]})'),
+]
+for a, b in reps:
+    assert s.count(a) == 1, a[:70]
+    s = s.replace(a, b)
+s = s.replace('"""HARNESS r13-fix4 — dựng tiêu chí', '"""HARNESS r13-fix4 — v2 (sinh bởi mk_criteria_r13fix4_v2_from_v1: '
+              'ghép đường ngoài repo vào TRONG {sql:…}, chỉ 2 mục backup; còn lại như v1) — dựng tiêu chí', 1)
+(H / "mk_criteria_r13fix4_v2.py.txt").open("x", encoding="utf-8", newline="\n").write(s)
+print("ok")

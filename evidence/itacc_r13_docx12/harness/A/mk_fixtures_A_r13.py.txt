@@ -1,0 +1,99 @@
+"""HARNESS r13 nhóm A — dựng fixture cho production-02, production-03, data_platform-02.1, data_platform-02.2 dưới
+evidence/itacc_r13_docx12/fixtures/items/<id>/ (CHỈ ghi thư mục mới; không sửa tệp r10).
+  1) CHÉP NGUYÊN BYTE fixture r10 (kiểm sha256 = sha ghi trong bản ghi r10 `dau_vao` TRƯỚC khi chép; lệch → dừng):
+     - evidence/itacc_r10/g4/fixtures/* (production-02/03)
+     - gtn_thu_it.pdf / scan_thu_it.png: r10 KHÔNG lưu trong evidence — sinh bằng evidence/itacc_r10/g5/harness/make_pdf.py.txt
+       vào scratchpad r10 (…/scratchpad/r10/g5/intake/giay_tiep_nhan/); tệp còn nguyên ở đó, sha khớp r10 → chép từ đó.
+  2) SINH fixture DẪN XUẤT (production-02, dữ liệu GIẢ, ghi rõ trong NGUON.txt):
+     - dossier_full_r13.json = dossier_full.json r10 + mỗi hồ sơ thêm `phien_ban` + `tep_sha256` (64 hex GIẢ) — cập nhật
+       ĐỊNH DẠNG bắt buộc bởi luật r13 của ingest/product_dossiers.py (REQUIRED thêm 2 trường), KHÔNG nới: mọi trường/giá trị
+       r10 giữ nguyên, so_ho_so_hop_dong 13 giữ nguyên.
+     - dossier_mau_r13.json = dossier_full_r13.json, hồ sơ [0] (HS-IT-01) thêm `"mau": true` (ca MOI_R13: hồ sơ mẫu là lỗi,
+       không tính).
+  python -I mk_fixtures_A_r13.py.txt   (mkdir exist_ok=False — chạy 1 lần)"""
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+
+REPO = Path(__file__).resolve().parents[4]
+R10G4 = REPO / "evidence" / "itacc_r10" / "g4" / "fixtures"
+R10G5_SCR = Path(r"C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0"
+                 r"\scratchpad\r10\g5\intake\giay_tiep_nhan")
+OUT = REPO / "evidence" / "itacc_r13_docx12" / "fixtures" / "items"
+
+SHA_R10 = {  # sha256 theo evidence/itacc_r10/items/<id>.json `dau_vao` + g4/fixtures_sha256.txt
+    "golden_prod.json": "4db38d4adf991dc769ffe1079054aa491969d33479217698c34d5dfa7d013061",
+    "golden_bad.json": "7d16337df7126532530c725bcac3a95c67b1c17c946743ab45b1a40caafa0274",
+    "golden_empty.json": "ea03cb0485d8f69e5559fb6fbb90800d013201d029f96b0dc445e32e9f0bd040",
+    "dossier_full.json": "f15ebfa2250ffcd105b4abe397030096bf310da38df402dc6fe0de7c968c3390",
+    "dossier_lech.json": "b5d56d12c437266e909806c5fed1112377b711be657d3c48d6354fcab89d8669",
+    "nhan_savina.txt": "b5ade2c4c6fd939c459b258534f0864b384274d535cbb34b2254b1ce7e73df74",
+    "nhan_ruou.txt": "5b561aeaed70f75007487c0f33ea6fa7d2b8c7371e82ba9a5b2f8da7f802c4cf",
+    "nhan_empty.txt": "2106c36011520fe73876d45bfb9ef8bf7b2e9f4362096a320376d8ee9b27ef12",
+    "nhan.png": "18bb3115c818dcdf372baab195641545f920e6f6fcb2b61a13fec6d9183a6fad",
+    "listing_shopee.csv": "1a6f0e83a637b404802cba96d8d1d44192c4e721b160e4bae299e89339d8fa97",
+    "gtn_thu_it.pdf": "af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1",
+    "scan_thu_it.png": "472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c",
+}
+PLAN = {
+    "production-02": [(R10G4, n) for n in ("golden_prod.json", "golden_bad.json", "golden_empty.json",
+                                           "dossier_full.json", "dossier_lech.json")],
+    "production-03": [(R10G4, n) for n in ("listing_shopee.csv", "nhan_savina.txt", "nhan_ruou.txt",
+                                           "nhan_empty.txt", "nhan.png", "golden_prod.json")],
+    "data_platform-02.1": [(R10G5_SCR, n) for n in ("gtn_thu_it.pdf", "scan_thu_it.png")],
+    "data_platform-02.2": [(R10G5_SCR, n) for n in ("gtn_thu_it.pdf", "scan_thu_it.png")],
+}
+NGUON = {
+    "production-02": "chép nguyên byte từ evidence/itacc_r10/g4/fixtures/ (r10 production-02 P02-1..P02-7)",
+    "production-03": ("chép nguyên byte từ evidence/itacc_r10/g4/fixtures/ (r10 production-03 P03-0..P03-6); "
+                      "golden_prod.json = fixture của production-02 P02-1 — r10 chạy CHUNG DB samsam_itacc_r10_prod nên "
+                      "P03 thấy golden savina-12v '10 viên' do P02-1 nạp; r13 DB riêng → ca MOI production-03__S01 nạp lại"),
+    "data_platform-02.1": ("chép nguyên byte từ scratchpad r10 …/scratchpad/r10/g5/intake/giay_tiep_nhan/ (sinh bởi "
+                           "evidence/itacc_r10/g5/harness/make_pdf.py.txt; r10 không lưu tệp trong evidence); sha256 khớp "
+                           "evidence/itacc_r10/items/data_platform-02.1.json dau_vao"),
+    "data_platform-02.2": ("chép nguyên byte từ scratchpad r10 …/scratchpad/r10/g5/intake/giay_tiep_nhan/ (như "
+                           "data_platform-02.1); sha256 khớp evidence/itacc_r10/items/data_platform-02.2.json dau_vao"),
+}
+
+
+def sha(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+for item, files in PLAN.items():
+    d = OUT / item
+    d.mkdir(parents=True, exist_ok=False)
+    lines, sums = [f"# {item} — {NGUON[item]}"], []
+    for src_dir, name in files:
+        b = (src_dir / name).read_bytes()
+        assert sha(b) == SHA_R10[name], f"sha lệch r10: {src_dir / name}"
+        (d / name).write_bytes(b)
+        sums.append(f"{sha(b)}  {name}")
+        lines.append(f"{name}: chép nguyên byte từ {src_dir.as_posix()}/{name} (sha256 = r10)")
+    if item == "production-02":
+        doc = json.loads((d / "dossier_full.json").read_bytes().decode("utf-8"))
+        for i, hs in enumerate(doc["danh_muc_ho_so_goc"], 1):
+            hs["phien_ban"] = "v1-thu-r13"
+            hs["tep_sha256"] = sha(f"HS-IT-{i:02d} tệp hồ sơ GIẢ thử r13".encode("utf-8"))
+        doc["_doc"] += " | r13: thêm phien_ban + tep_sha256 GIẢ (định dạng bắt buộc r13), giá trị r10 giữ nguyên"
+        for name, obj in (("dossier_full_r13.json", doc),):
+            b = json.dumps(obj, ensure_ascii=False, indent=1).encode("utf-8")
+            (d / name).write_bytes(b)
+            sums.append(f"{sha(b)}  {name}")
+        mau = json.loads(json.dumps(doc))
+        mau["danh_muc_ho_so_goc"][0]["mau"] = True
+        mau["_doc"] += " | r13 MOI: hồ sơ [0] HS-IT-01 đánh dấu mau=true"
+        b = json.dumps(mau, ensure_ascii=False, indent=1).encode("utf-8")
+        (d / "dossier_mau_r13.json").write_bytes(b)
+        sums.append(f"{sha(b)}  dossier_mau_r13.json")
+        lines += ["dossier_full_r13.json: DẪN XUẤT từ dossier_full.json — thêm phien_ban='v1-thu-r13' + tep_sha256 = sha256 "
+                  "chuỗi GIẢ 'HS-IT-NN tệp hồ sơ GIẢ thử r13' cho mỗi hồ sơ (định dạng bắt buộc r13, không nới; mọi giá trị "
+                  "r10 giữ nguyên) — dùng ở production-02__P02-7 (7a)",
+                  "dossier_mau_r13.json: DẪN XUẤT từ dossier_full_r13.json — hồ sơ [0] thêm mau=true (ca MOI_R13)",
+                  "sinh bằng evidence/itacc_r13_docx12/harness/A/mk_fixtures_A_r13.py.txt"]
+    (d / "SHA256SUMS.txt").write_bytes(("\n".join(sums) + "\n").encode("utf-8"))  # LF, không CRLF Windows
+    (d / "NGUON.txt").write_bytes(("\n".join(lines) + "\n").encode("utf-8"))
+    print(item, len(sums), "tệp")

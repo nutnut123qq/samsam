@@ -1,0 +1,22 @@
+[
+ {
+  "sql": "select count(*) from sim_runs",
+  "expect": 180,
+  "actual": 180,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from llm_usage",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "file_re": "D:\\code\\samsam/data/sim_config.json",
+  "re": "\\\"dpia_signed\\\": false",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ }
+]

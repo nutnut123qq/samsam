@@ -466,7 +466,8 @@ def _dossier(**over):
     d = {"ma_ho_so": "HS-01", "ten": "SP A", "thanh_phan": ["sâm", "mật ong"],
          "quy_cach": "hộp 10 gói", "so_cong_bo": "11/2024/ĐKSP",
          "loai": "tpbvsk", "sku_keys": ["sku-a"], "xac_nhan_boi": "GĐ Sản Xuất",
-         "can_cu": "Biên bản giao hồ sơ số ..."}
+         "can_cu": "Biên bản giao hồ sơ số ...", "phien_ban": "v1",
+         "tep_sha256": "a" * 64}
     d.update(over)
     return d
 
@@ -497,7 +498,9 @@ def test_dossier_complete_ok():
     ({"quy_cach": " "}, "quy_cach"), ({"loai": "x"}, "loai"),
     ({"xac_nhan_boi": "agent:sx"}, "NGƯỜI"),
     ({"so_cong_bo": "99/2020/ĐKSP"}, "lệch golden"),
-    ({"sku_keys": ["sku-z"]}, "không có trong golden")])
+    ({"sku_keys": ["sku-z"]}, "không có trong golden"),
+    ({"phien_ban": ""}, "phien_ban"), ({"tep_sha256": "xyz"}, "tep_sha256"),
+    ({"mau": True}, "MẪU")])
 def test_dossier_errors(over, msg):
     r = pdo.check(_doc([_dossier(**over)], need=1,
                        rows=[{"sku_key": "sku-a", "ho_so_goc": "HS-01"},
@@ -510,3 +513,4 @@ def test_dossier_incomplete_is_blocked_not_error():
         {"sku_key": "sku-a", "ho_so_goc": "HS-01"},
         {"sku_key": "sku-b", "ho_so_goc": None}]), GOLD)
     assert r["errors"] == [] and len(r["missing"]) == 2
+    assert r["missing"][1].endswith("chưa gắn: sku-b")      # r13: nêu đích danh

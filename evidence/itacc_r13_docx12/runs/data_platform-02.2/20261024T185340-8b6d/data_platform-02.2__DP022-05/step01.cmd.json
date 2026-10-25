@@ -1,0 +1,38 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.doc_intake",
+  "--reject",
+  "af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1",
+  "--by",
+  "agent:doc"
+ ],
+ "env_doi": [
+  "DOC_INTAKE_DIR",
+  "DOC_ORIGINALS_DIR",
+  "OCR_PROVIDER"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:53:51+07:00",
+ "ket_thuc": "2026-10-24T18:53:53+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "không đổi gì",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "c2193c5e43b0bc2e85a5596cda93810978222039c0c812e7609871a60f086d3a",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

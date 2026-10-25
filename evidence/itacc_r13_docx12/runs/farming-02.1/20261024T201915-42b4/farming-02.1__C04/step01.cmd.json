@@ -1,0 +1,33 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r10/g5/harness/gd_run.py.txt",
+  "--staff",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\fixtures/items/farming-02.1/garden_staff_v2.json",
+  "--remind-cfg",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\fixtures/items/farming-02.1/garden_remind_thucong.json",
+  "--mark-reminded",
+  "5",
+  "--by",
+  "agent:garden_director"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:19:31+07:00",
+ "ket_thuc": "2026-10-24T20:19:33+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "out_re": "'agent:garden_director' không phải người",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "91c07496e240cdee0eff5224b1d463fa468ac133daeebb306d540603883522ba",
+ "stderr_sha256": "4fb089271a7a3515462a47259b140e1ed668aaf14de68728cb49bbff6472f7b9"
+}

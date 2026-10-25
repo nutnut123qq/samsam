@@ -1,0 +1,46 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/image_run.py.txt",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\marketing-02.1\\20261024T185520-9b66\\marketing-02.1__R13-03\\out/image_http.json",
+  "--sku",
+  "mat-ong-sam-300ml",
+  "--channel",
+  "tiktok",
+  "--headline",
+  "Quà quê Quảng Nam Thử R13",
+  "--scene",
+  "vườn sâm buổi sáng"
+ ],
+ "env_doi": [
+  "IMAGE_MODEL",
+  "IMAGE_OUT_DIR",
+  "IMAGE_PROVIDER",
+  "LLM_CAP_DEFAULT_USD",
+  "LLM_KILL",
+  "LLM_KILL_FEATURES",
+  "PACKSHOT_DIR"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:56:04+07:00",
+ "ket_thuc": "2026-10-24T18:56:09+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × tiktok × 1:1: refused provider: IMAGE_MODEL chưa đặt)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0)",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\[image_run\\] requests=0\\b",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "16e6916fbd2afca8256e8b7accee4b877c370896da08d4ee2fe21e76eae84a05",
+ "stderr_sha256": "acd15c1a08786d72756d6f27c3e0849f19a7901068b520ce6b0997829c8559d5"
+}

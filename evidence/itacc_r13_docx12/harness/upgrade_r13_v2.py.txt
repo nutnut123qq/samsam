@@ -1,0 +1,118 @@
+"""HARNESS r13 v2 (v1 lỗi harness: anchor_batches.leaves rỗng vi phạm check — log runs/upgrade_up1.txt) — nâng cấp schema/roles từ baseline 1ad90df (D:/code/samsam_r13_baseline/tree) CÓ DỮ LIỆU → working tree ×2.
+DB riêng samsam_itacc_r13_<mã> trên container r13 (127.0.0.1:55453, KHÔNG samsam). Không in DSN/mật khẩu.
+  python -I upgrade_r13.py.txt <base_tree> <repo> <admin_env> <db>
+Kiểm: (1) nền baseline có 1 anchor_batches + 1 anchor_receipts `da_gui` + 1 documents (ghi qua SQL owner — dữ liệu THỬ) +
+chuỗi agent_action_log; sau nâng cấp ×2: dữ liệu + đuôi hash chain không đổi, verify_action_log() 0 vấn đề;
+(2) anchor_receipts: đúng 1 ràng buộc tên `anchor_receipts_status_r13` + 1 `anchor_receipts_receipt_r13`, KHÔNG còn ràng buộc tự
+đặt tên cũ chứa 'da_gui'; chèn `da_nang_cap` có receipt OK, `da_nang_cap` thiếu receipt bị chặn, status lạ bị chặn, append-only
+vẫn chặn UPDATE; (3) documents.ocr_engine có, dữ liệu cũ null; (4) quyền chỉ THÊM: svc_job INSERT anchor_receipts; không BỚT
+quyền nào so với baseline."""
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import psycopg
+from psycopg import conninfo
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+BASE, REPO, ADM, DB = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), sys.argv[4]
+assert DB.startswith("samsam_itacc_r13_")
+d = conninfo.conninfo_to_dict(ADM.read_text().split("'")[1])
+assert d["host"] == "127.0.0.1" and str(d["port"]) == "55453"
+d["dbname"] = "postgres"
+with psycopg.connect(conninfo.make_conninfo(**d), autocommit=True, connect_timeout=5) as c:
+    if c.execute("select 1 from pg_database where datname = %s", (DB,)).fetchone():
+        raise SystemExit(f"DB {DB} đã có — không ghi đè")
+    c.execute(f"create database {DB}")
+d["dbname"] = DB
+DSN = conninfo.make_conninfo(**d)
+ENV = {k: v for k, v in os.environ.items() if not k.endswith("DATABASE_URL") and not k.startswith("PG")
+       and k not in ("AUTH_MODE", "DEPLOY", "APPROVAL_ENFORCE", "ITACC_ADMIN")}
+ENV.update(DATABASE_URL=DSN, OPENROUTER_API_KEY="", PYTHONIOENCODING="utf-8")
+print(f"DB {DB} tạo mới (KHÔNG samsam) · nền {BASE}")
+fails = []
+
+
+def run(tree, *args):
+    p = subprocess.run([sys.executable, *args], cwd=tree, env=ENV, capture_output=True, encoding="utf-8",
+                       errors="replace", timeout=900, check=False)
+    tail = [x for x in (p.stdout + p.stderr).splitlines() if x.strip()][-2:]
+    print(f"## [{tree.name}] python {' '.join(args)} → exit {p.returncode} · {' | '.join(tail)[:300]}")
+    if p.returncode:
+        fails.append(f"{' '.join(args)} exit {p.returncode}")
+
+
+def check(name, cond, info=""):
+    print(f"[{'PASS' if cond else 'FAIL'}] {name} {info}")
+    if not cond:
+        fails.append(name)
+
+
+def grants(c):
+    return set(c.execute("select grantee, table_name, privilege_type from information_schema.role_table_grants"
+                         " where table_schema = 'public'").fetchall())
+
+
+run(BASE, "scripts/apply_schema.py", "--roles")
+run(BASE, "scripts/apply_schema.py", "--roles")
+with psycopg.connect(DSN, connect_timeout=5) as c:
+    c.execute("insert into documents (sha256, filename, doc_type, pages, text_source, pii_flag, status)"
+              " values (%s, 'thu-r13.pdf', 'khac', 1, 'pdf_text', false, 'pending_review')", ("d" * 64,))
+    bid = c.execute("insert into anchor_batches (as_of, leaves, merkle_root, manifest_sha256, created_by) values"
+                    " (now(), '[{"k": "thu_r13", "d": {}, "h": "00"}]'::jsonb, %s, %s, 'agent:anchor') returning id", ("1" * 64, "2" * 64)).fetchone()[0]
+    c.execute("insert into anchor_receipts (batch_id, provider, status, calendar, receipt, created_by) values"
+              " (%s, 'opentimestamps', 'da_gui', 'https://cal.test', %s, 'agent:anchor')", (bid, b"thu-r13"))
+    c.execute("insert into agent_action_log (actor, action, object_type, object_id, detail) values"
+              " ('agent:thu_r13', 'thu', 'thu', '1', '{}'::jsonb)")
+    c.commit()
+    before = {"docs": c.execute("select sha256, status, text_source from documents order by 1").fetchall(),
+              "rec": c.execute("select id, status, receipt from anchor_receipts order by id").fetchall(),
+              "tail": c.execute("select max(id) from agent_action_log").fetchone()[0],
+              "grants": grants(c)}
+run(REPO, "scripts/apply_schema.py", "--roles")
+run(REPO, "scripts/apply_schema.py", "--roles")
+with psycopg.connect(DSN, connect_timeout=5) as c:
+    check("documents giữ nguyên", c.execute("select sha256, status, text_source from documents order by 1")
+          .fetchall() == before["docs"])
+    check("documents.ocr_engine có, dòng cũ null",
+          c.execute("select count(*) from documents where ocr_engine is null").fetchone()[0] == len(before["docs"]))
+    check("anchor_receipts giữ nguyên", c.execute("select id, status, receipt from anchor_receipts order by id")
+          .fetchall() == before["rec"])
+    check("đuôi agent_action_log không đổi", c.execute("select max(id) from agent_action_log").fetchone()[0]
+          == before["tail"])
+    probs = c.execute("select count(*) from verify_action_log()").fetchone()[0]
+    check("verify_action_log 0 vấn đề", probs == 0, f"({probs})")
+    cons = dict(c.execute("select conname, pg_get_constraintdef(oid) from pg_constraint where conrelid ="
+                          " 'anchor_receipts'::regclass and contype = 'c'").fetchall())
+    old = [n for n, df in cons.items() if "da_gui" in df and not n.endswith("_r13")]
+    check("ràng buộc r13 đúng 1 lần, ràng buộc cũ đã bỏ", "anchor_receipts_status_r13" in cons
+          and "anchor_receipts_receipt_r13" in cons and old == [], f"{sorted(cons)}")
+    bid = c.execute("select min(batch_id) from anchor_receipts").fetchone()[0]
+    c.execute("insert into anchor_receipts (batch_id, provider, status, calendar, receipt, created_by) values"
+              " (%s, 'opentimestamps', 'da_nang_cap', 'https://cal.test', %s, 'agent:anchor')",
+              (bid, b"thu-r13-nang-cap"))
+    c.commit()
+    check("chèn da_nang_cap có receipt OK", True)
+    for name, sql_, args in (
+            ("da_nang_cap thiếu receipt bị chặn", "insert into anchor_receipts (batch_id, provider, status,"
+             " created_by) values ((select min(batch_id) from anchor_receipts), 'opentimestamps', 'da_nang_cap',"
+             " 'agent:anchor')", ()),
+            ("status lạ bị chặn", "insert into anchor_receipts (batch_id, provider, status, calendar, receipt,"
+             " created_by) values ((select min(batch_id) from anchor_receipts), 'opentimestamps', 'da_xac_minh',"
+             " 'https://cal.test', 'x', 'agent:anchor')", ()),
+            ("append-only vẫn chặn UPDATE", "update anchor_receipts set status = 'loi', error = 'x'", ())):
+        try:
+            c.execute(sql_, args)
+            c.commit()
+            check(name, False, "không bị chặn")
+        except psycopg.Error as e:
+            c.rollback()
+            check(name, True, type(e).__name__)
+    after = grants(c)
+    check("quyền không BỚT", before["grants"] <= after, f"bớt {sorted(before['grants'] - after)[:5]}")
+    added = after - before["grants"]
+    check("quyền THÊM đúng svc_job INSERT anchor_receipts", ("svc_job", "anchor_receipts", "INSERT") in added,
+          f"thêm {sorted(added)}")
+print("KET_QUA", "FAIL " + "; ".join(fails) if fails else "PASS")
+sys.exit(1 if fails else 0)

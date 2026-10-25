@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from garden_voice_drafts where source = 'fixture:r13_stt'",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from garden_voice_drafts where status <> 'cho_chep_loi'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from plot_logs where detail like '%0912345678%' or detail like '%gọi ***%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

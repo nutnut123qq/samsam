@@ -1,0 +1,34 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.doc_intake"
+ ],
+ "env_doi": [
+  "DOC_INTAKE_DIR",
+  "DOC_ORIGINALS_DIR",
+  "OCR_PROVIDER"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:19:00+07:00",
+ "ket_thuc": "2026-10-24T20:19:01+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*\\[rollout\\] .*data_platform-02\\.2 → KHÔNG nạp)",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "8833398094051963e20068afb7655e7e05fbde23355a8a866d116c339ba986db",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,38 @@
+# Từ/cụm từ CẤM trong nội dung TPBVSK — guardrail load file này.
+# Quy tắc: TPBVSK chỉ "hỗ trợ", không được claim chữa/trị bệnh.
+chữa
+chữa khỏi
+điều trị
+trị bệnh
+thuốc
+khỏi bệnh
+chống ung thư
+ung thư
+đặc trị
+tiêu diệt
+giải độc gan
+hạ đường huyết
+chữa tiểu đường
+thuốc bổ
+thần dược
+bách bệnh
+# v4.2 red-team PC-A9: biến thể teencode KHÔNG mơ hồ (chờ Pháp chế duyệt)
+khỏi bịnh
+trị bịnh
+chữa bịnh
+thuốk
+đìu trị
+# v13.1 red-team F07: viết tắt "điều trị" bỏ vần (dạng "đ.trị" nén ký tự chèn -> "đtrị") — không mơ hồ (chờ Pháp chế duyệt)
+đtrị
+# v14.1 red-team F07 (p1): từ tiếng Anh đồng nghĩa "thuốc/chữa/điều trị/ung thư" — TPBVSK không được gọi là thuốc/chữa bệnh ở mọi ngôn ngữ; khớp nguyên từ (không ăn "secure"/"manicure"). Ảnh hưởng cả câu trả lời chatbot (câu tiếng Anh có các từ này -> fallback) — chờ Pháp chế duyệt
+medicine
+medicines
+cure
+cures
+cured
+curing
+treatment
+treatments
+anti-cancer
+anticancer
+cancer

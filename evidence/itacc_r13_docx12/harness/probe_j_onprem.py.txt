@@ -1,0 +1,93 @@
+"""PROBE r13 J v1 — data_platform-90 hạ tầng on-prem: preflight ĐO điều kiện tại máy chạy (`scripts/onprem_preflight.py`) +
+sao lưu bắt buộc mã hóa / offsite khác thiết bị (`scripts/db_backup.py`). Không DB, không dịch vụ: thư mục tạm, sổ backup giả
+lập đúng định dạng. Cùng mã baseline (1ad90df) và bản sửa.  python -I probe_j_onprem.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước):
+- BACKUP_REQUIRE_ENCRYPTION=1 không có tệp khóa → db_backup từ chối (UsageError) — không bao giờ ghi bản rõ.
+- offsite dir: cùng thiết bị với BACKUP_DIR + BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1 → từ chối.
+- preflight khi chưa cấu hình gì → exit 1 "CHƯA SẴN SÀNG", liệt kê mục Bên B phải xác nhận, 0 kết nối DB.
+- preflight đọc sổ backup THẬT trong BACKUP_DIR: bản mới + mã hóa + offsite → DAT; quá tuổi → CHUA_DAT."""
+import contextlib
+import io
+import json
+import os
+import sys
+import tempfile
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith(("PG", "BACKUP_")):
+        os.environ.pop(k, None)
+import psycopg  # noqa: E402
+
+CONN = []
+psycopg.connect = lambda *a, **k: CONN.append(1) or (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+from scripts import db_backup  # noqa: E402
+
+TMP = Path(tempfile.mkdtemp(prefix="r13op-"))
+rows = []
+
+
+def case(ma, fn):
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def refused(env, word):
+    def f():
+        try:
+            db_backup.read_config(env)
+            return False, "không từ chối"
+        except db_backup.UsageError as e:
+            return word in str(e), str(e)
+    return f
+
+
+def c_preflight_empty():
+    from scripts import onprem_preflight as op
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        rc = op.main([])
+    t = out.getvalue()
+    return rc == 1 and "CHƯA SẴN SÀNG" in t and "CHUA_XAC_NHAN" in t and CONN == [], {"rc": rc, "tail": t[-200:]}
+
+
+def c_preflight_backup():
+    from scripts import onprem_preflight as op
+    b = TMP / "b"
+    b.mkdir()
+    kf = TMP / "khoa.txt"
+    kf.write_text("mot-khoa-thu-du-dai-123\n", encoding="utf-8")
+    env = {"BACKUP_DIR": str(b), "BACKUP_PASSPHRASE_FILE": str(kf), "BACKUP_REQUIRE_ENCRYPTION": "1"}
+    now = datetime.now(timezone.utc)
+    (b / ("x.dump.enc" + db_backup.MANIFEST_SUFFIX)).write_text(json.dumps({"encrypted": True}), encoding="utf-8")
+    (b / "backup_runs.jsonl").write_text(json.dumps({"ts": (now - timedelta(hours=3)).isoformat(), "status": "ok",
+                                                     "file": "x.dump.enc", "offsite": {"dir": "o"}}) + "\n",
+                                         encoding="utf-8")
+    fresh = {k: st for k, st, _n in op.check_backup(env, 0.0, 26.0, now)}
+    old = {k: st for k, st, _n in op.check_backup(env, 0.0, 1.0, now)}
+    return fresh["sao_luu:ban_gan_nhat"] == "DAT" and old["sao_luu:ban_gan_nhat"] == "CHUA_DAT", \
+        {"fresh": fresh, "old": old}
+
+
+case("bat_buoc_ma_hoa_thieu_khoa_tu_choi",
+     refused({"BACKUP_DIR": str(TMP / "b1"), "BACKUP_REQUIRE_ENCRYPTION": "1"}, "BACKUP_REQUIRE_ENCRYPTION"))
+case("offsite_cung_thiet_bi_tu_choi",
+     refused({"BACKUP_DIR": str(TMP / "b2"), "BACKUP_OFFSITE": f"dir:{TMP / 'o2'}",
+              "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "1"}, "thiết bị"))
+case("preflight_chua_cau_hinh_chua_san_sang", c_preflight_empty)
+case("preflight_doc_so_backup_that", c_preflight_backup)
+out = {"probe": "j_onprem_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

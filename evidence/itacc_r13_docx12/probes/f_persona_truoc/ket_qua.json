@@ -1,0 +1,43 @@
+{
+ "probe": "f_persona_v1",
+ "root": "D:\\code\\samsam_r13_baseline\\tree",
+ "ca": [
+  {
+   "ca": "mot_nha_cung_cap_bi_chan_0_goi",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": "OPENED",
+    "calls": [
+     "gateway_chat"
+    ],
+    "err": ""
+   }
+  },
+  {
+   "ca": "ba_nha_cung_cap_toi_loi_goi",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": "OPENED",
+    "calls": [
+     "gateway_chat"
+    ]
+   }
+  },
+  {
+   "ca": "dpia_chua_ky_chan",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 2
+   }
+  },
+  {
+   "ca": "file_chuan_khong_doi",
+   "ket_qua": "PASS",
+   "actual": "dpia_signed=false"
+  }
+ ],
+ "tong": {
+  "PASS": 3,
+  "FAIL": 1
+ }
+}

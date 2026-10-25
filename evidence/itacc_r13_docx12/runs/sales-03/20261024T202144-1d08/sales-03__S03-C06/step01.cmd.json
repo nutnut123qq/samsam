@@ -1,0 +1,37 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "agents.listing_export",
+  "--sku",
+  "mat-ong-sam-300ml",
+  "--channel",
+  "shopee",
+  "--out",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-03\\20261024T202144-1d08\\scratch/export_trial"
+ ],
+ "env_doi": [
+  "PROBE_LLM_LOG",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:22:30+07:00",
+ "ket_thuc": "2026-10-24T20:22:33+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stderr_re": "\\[từ chối\\][^\\n]*sales-03[^\\n]*chạy thử[^\\n]*không ghi tệp",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "8b5f7aea7c4073574dcfa58eff28ee364b47a6dc613154716a7e3cb8cb0a2846"
+}

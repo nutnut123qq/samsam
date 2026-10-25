@@ -1,0 +1,61 @@
+{
+ "probe": "d_dossier_v1",
+ "root": "D:\\code\\samsam",
+ "ca": [
+  {
+   "ca": "so_that_neu_dich_danh_sku",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 2,
+    "out": "gắn: da-an-sam-30v, mat-ong-sam-120ml-1hu, mat-ong-sam-120ml-2hu, mat-ong-sam-300ml, ruou-sam-binh-su-do-500ml, ruou-sam-chai-thuy-tinh-500ml, sapentol-30v, saphraton-20v, saphraton-40v, saphraton-80v, saphraton-combo-2x20v, savigout-30v, savina-12v\n[done] hồ sơ 0 · SKU golden 13 · đã gắn 0 · lỗi 0\n"
+   }
+  },
+  {
+   "ca": "thieu_phien_ban_loi",
+   "ket_qua": "PASS",
+   "actual": [
+    "danh_muc_ho_so_goc[0].phien_ban: thiếu/rỗng"
+   ]
+  },
+  {
+   "ca": "thieu_tep_sha256_loi",
+   "ket_qua": "PASS",
+   "actual": [
+    "danh_muc_ho_so_goc[0].tep_sha256: thiếu/rỗng"
+   ]
+  },
+  {
+   "ca": "ho_so_mau_khong_tinh",
+   "ket_qua": "PASS",
+   "actual": {
+    "errors": [
+     "danh_muc_ho_so_goc[0]: hồ sơ MẪU (mau=true) — không tính là hồ sơ gốc thật",
+     "sku[sku-a].ho_so_goc: 'HS-01' không có trong danh mục",
+     "sku[sku-b].ho_so_goc: 'HS-02' không có trong danh mục"
+    ],
+    "missing": [
+     "danh mục hồ sơ gốc: 0/1 (Bên B cung cấp tên, thành phần, quy cách, số công bố + căn cứ)",
+     "SKU golden đã gắn hồ sơ gốc: 0/2 — chưa gắn: sku-a, sku-b"
+    ],
+    "dossiers": 0,
+    "mapped": 0,
+    "skus": 2
+   }
+  },
+  {
+   "ca": "du_truong_khong_loi",
+   "ket_qua": "PASS",
+   "actual": {
+    "errors": [],
+    "missing": [],
+    "dossiers": 2,
+    "mapped": 2,
+    "skus": 2
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 5,
+  "FAIL": 0
+ }
+}

@@ -112,6 +112,12 @@ DEFAULT_BASE = {"shopee": "https://partner.shopeemobile.com",
 LOCAL_HOSTS = ("127.0.0.1", "localhost")
 
 TIMEOUT_S = 15
+# r13: HTTP 429/5xx → thử lại tối đa RETRY_MAX lần, chờ Retry-After (giây, trần
+# RETRY_WAIT_MAX) hoặc lũy thừa 1,2,4…; GET/POST ở đây đều CHỈ ĐỌC nên lặp an toàn.
+RETRY_STATUS = (429, 500, 502, 503, 504)
+RETRY_MAX = 3
+RETRY_WAIT_MAX = 30.0
+FEATURE = "data_platform-06"
 MAX_RESP_BYTES = 10 * 1024 * 1024
 MAX_PAGES = 50
 PAGE_SIZE = 100
@@ -213,6 +219,10 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 _OPENER = urllib.request.build_opener(_NoRedirect)
 
 
+def _sleep(s: float) -> None:      # test thay để không chờ thật
+    time.sleep(s)
+
+
 def _request(channel: str, method: str, path: str, params: dict | None,
              body: dict | None = None, *, creds: dict | None = None,
              base: str | None = None, timestamp: int | None = None) -> dict:
@@ -249,15 +259,26 @@ def _request(channel: str, method: str, path: str, params: dict | None,
     req = urllib.request.Request(url, data=data, headers=headers,
                                  method=method)
     where = f"{channel} {path}"
-    try:
-        with _OPENER.open(req, timeout=TIMEOUT_S) as resp:
-            status = resp.status
-            raw = resp.read(MAX_RESP_BYTES + 1)
-    except urllib.error.HTTPError as e:
-        e.close()
-        raise ApiError(f"{where}: HTTP {e.code}") from None
-    except (urllib.error.URLError, OSError, ValueError) as e:
-        raise ApiError(f"{where}: lỗi mạng ({type(e).__name__})") from None
+    for attempt in range(RETRY_MAX + 1):
+        try:
+            with _OPENER.open(req, timeout=TIMEOUT_S) as resp:
+                status = resp.status
+                raw = resp.read(MAX_RESP_BYTES + 1)
+            break
+        except urllib.error.HTTPError as e:
+            ra = e.headers.get("Retry-After", "") if e.headers else ""
+            e.close()
+            if e.code not in RETRY_STATUS or attempt == RETRY_MAX:
+                raise ApiError(f"{where}: HTTP {e.code}"
+                               + (f" sau {attempt + 1} lần" if attempt else "")
+                               ) from None
+            wait = float(ra) if ra.strip().isdigit() else float(2 ** attempt)
+            print(f"[retry] {where}: HTTP {e.code} — chờ "
+                  f"{min(wait, RETRY_WAIT_MAX):g}s ({attempt + 1}/{RETRY_MAX})",
+                  flush=True)
+            _sleep(min(wait, RETRY_WAIT_MAX))
+        except (urllib.error.URLError, OSError, ValueError) as e:
+            raise ApiError(f"{where}: lỗi mạng ({type(e).__name__})") from None
     if status != 200:
         raise ApiError(f"{where}: HTTP {status}")
     if len(raw) > MAX_RESP_BYTES:
@@ -635,6 +656,10 @@ def main(argv: list[str] | None = None) -> int:
     except ConfigError as e:
         print(f"[err] {e}", flush=True)
         return 2
+    # r13: tính năng TẮT (sổ triển khai, HĐ 6.7) → 0 request ra sàn, không nạp.
+    from pipelines import rollout
+    if why := rollout.blocked(None, "kéo dữ liệu API sàn chỉ đọc", FEATURE):
+        return rollout.say_blocked(why)
     try:
         smap = load_status_map()
     except ConfigError as e:

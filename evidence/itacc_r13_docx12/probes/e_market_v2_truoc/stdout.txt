@@ -1,0 +1,6 @@
+FAIL 429_retry_after_roi_200 ApiError: shopee /api/v2/product/get_item_list: HTTP 429
+FAIL 503_het_luot_thu_lai {'req': 1, 'waits': [], 'err': 'shopee /api/v2/product/get_item_list: HTTP 503'}
+PASS 400_khong_thu_lai {'req': 1, 'err': 'shopee /api/v2/product/get_item_list: HTTP 400'}
+FAIL tinh_nang_tat_0_request {'rc': 0, 'req': 1, 'out': '[warn] API shopee/listing trả 0 dòng — không nạp gì.\n[job-runs] không có DATABASE_URL — bỏ ghi job_runs\n'}
+PASS endpoint_ghi_bi_chan ScopeError
+TONG {'PASS': 2, 'FAIL': 3}

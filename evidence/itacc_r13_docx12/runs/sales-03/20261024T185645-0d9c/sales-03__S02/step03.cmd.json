@@ -1,0 +1,32 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.market_csv",
+  "--file",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/sales-03/s03_listing_shopee.csv",
+  "--channel",
+  "shopee",
+  "--kind",
+  "listing"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:57:21+07:00",
+ "ket_thuc": "2026-10-24T18:57:22+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "snapshot #\\d+ shopee/listing s03_listing_shopee\\.csv: 3 dòng",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "6bad735dfb097e5956767663c171d238942784f9f71f6d37022b40a349fd3892",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

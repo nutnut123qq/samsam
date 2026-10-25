@@ -1,0 +1,44 @@
+[
+ {
+  "sql": "select count(*) from content_drafts where content_type = 'image' and created_by = 'agent:mkt03' and status = 'pending'",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from image_assets",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from image_assets where provider = 'openrouter_images' and ai_generated and model = 'thu-r13/model-anh-gia' and prompt_sha256 ~ '^[0-9a-f]{64}$' and prompt_version = 'image_background@1' and label_text like 'Nội dung có sử dụng AI%' and meta->>'ai_generated' = 'true' and meta->'background'->>'provider' = 'openrouter_images' and meta->'background'->>'model' = 'thu-r13/model-anh-gia' and created_by = 'agent:mkt03' and channel = 'facebook' and sku = 'mat-ong-sam-300ml'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from llm_usage",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from llm_usage where agent_id = 'image' and feature_id = 'marketing-02.1' and ok and cost_usd = 0.04 and model = 'thu-r13/model-anh-gia'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r13_docx12\\runs\\marketing-02.1\\20261024T185520-9b66\\scratch/img_ai/*.png",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r13_docx12/runs/marketing-02.1/20261024T185520-9b66/scratch/img_ai/ee6d0ebebb319b687092fcf8c96a36b8abf48f9b2803688f733743f56f3a3c41.png",
+    "sha256": "ee6d0ebebb319b687092fcf8c96a36b8abf48f9b2803688f733743f56f3a3c41"
+   }
+  ],
+  "dat": true
+ }
+]

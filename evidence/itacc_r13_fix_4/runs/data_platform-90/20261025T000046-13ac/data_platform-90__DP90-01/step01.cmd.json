@@ -1,0 +1,27 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import json,sys; from pathlib import Path; r=Path(sys.argv[1]); o=r/'deploy'/'onprem'; t=sorted(p.name for p in (o/'systemd').glob('*.timer')); s=sorted(p.name for p in (o/'systemd').glob('*.service')); j=json.loads((o/'jobs.json').read_bytes().decode('utf-8')); jobs=[k for k in j['jobs'] if not k.startswith('_')]; h=[l for l in (o/'README.md').read_bytes().decode('utf-8').split(chr(10)) if l.startswith('## ')]; rb=(r/'docs'/'handover'/'runbook-ha-tang.md').stat().st_size; print('timer',len(t),'service',s,'job',len(jobs),'muc README',len(h),'runbook bytes',rb); ok=len(t)>=1 and 'samsam-job@.service' in s and len(jobs)>=1 and len(h)>=1 and rb>0; print('TAI_LIEU_DU' if ok else 'TAI_LIEU_THIEU'); sys.exit(0 if ok else 1)",
+  "D:\\code\\samsam"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:00:49+07:00",
+ "ket_thuc": "2026-10-25T00:00:50+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "TAI_LIEU_DU",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e92e2274771c4c95134b026489b5d4b1f98f49bb4aadf756cc13650b48cd85fc",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

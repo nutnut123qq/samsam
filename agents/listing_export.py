@@ -329,6 +329,49 @@ def website_feed(conn, out_dir, readiness=None, now=None) -> Path:
     return mp
 
 
+FEED_KEYS = ("gia_vnd", "gia_id", "an_gia", "gio_hang", "approved_sha256")
+
+
+def verify_feed(conn, man: dict, mp: Path, readiness=None,
+                now=None) -> list[str]:
+    """r13 (sales-08, biên repo website): kiểm 1 nguồn dữ liệu website đã
+    xuất trước khi bên website nạp → danh sách lệch (rỗng = dùng được): tệp
+    còn đúng sha manifest; mỗi SKU tính lại HÔM NAY (giờ VN) từ giá web ĐÃ
+    duyệt còn hiệu lực + mô tả đã duyệt vẫn trùng giá/phiên bản giá/ẩn giá/
+    giỏ hàng/sha mô tả trong tệp — giá đổi/hết hiệu lực/bị gỡ duyệt → lệch."""
+    from datetime import datetime, timedelta, timezone
+    f = mp.with_name(man.get("file") or "")
+    if not man.get("file") or not f.is_file():
+        return ["thiếu tệp nguồn dữ liệu website"]
+    raw = f.read_bytes()
+    bad = []
+    if hashlib.sha256(raw).hexdigest() != man.get("file_sha256"):
+        bad.append("tệp nguồn dữ liệu đã bị sửa (sha lệch manifest)")
+    try:
+        rows = json.loads(raw.decode("utf-8"))["rows"]
+    except (ValueError, KeyError, TypeError):
+        return bad + ["tệp nguồn dữ liệu hỏng"]
+    if readiness is None:
+        readiness = store.readiness_from_db(conn)
+    golden = content._cfg()[0]["golden"]
+    vn = (now or datetime.now(timezone.utc)).astimezone(
+        timezone(timedelta(hours=7)))
+    prices = web_prices(conn, vn.date())
+    for r in rows:
+        k = r.get("sku_key")
+        if k not in golden:
+            bad.append(f"{k}: không còn trong golden")
+            continue
+        cur = website_row(conn, k, golden[k], readiness, prices)
+        for key in FEED_KEYS:
+            if cur[key] != r.get(key):
+                bad.append(f"{k}: {key} lệch (tệp {r.get(key)!r}, hiện "
+                           f"{cur[key]!r})")
+    if sorted(r.get("sku_key") for r in rows) != sorted(golden):
+        bad.append("danh sách SKU khác golden hiện hành")
+    return bad
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m agents.listing_export")
     ap.add_argument("--website-feed", action="store_true")
@@ -349,7 +392,14 @@ def main(argv=None) -> int:
         return 2
     try:
         if a.verify is not None:
-            bad = verify(conn, a.verify)
+            try:
+                man = json.loads(a.verify.read_bytes().decode("utf-8"))
+            except (OSError, ValueError) as e:
+                print(f"[error] không đọc được manifest ({type(e).__name__})",
+                      file=sys.stderr)
+                return 1
+            bad = (verify_feed(conn, man, a.verify) if "gia_phien_ban" in man
+                   else verify(conn, a.verify))
             for b in bad:
                 print(f"[LỆCH] {b}")
             print("[done] khớp bản đã duyệt" if not bad else

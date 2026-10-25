@@ -2,6 +2,32 @@
 
 Bản phát hành mã nguồn 22/10/2026 gồm đợt hoàn thiện DOCX và vá F1/F2. Các checkpoint dưới ghi trạng thái lúc kiểm trước commit; chưa triển khai/nghiệm thu. Biên bản quét: `evidence/contract_g45_release_scan.log`.
 
+## Checkpoint mới — Vòng r13-fix4 (25/10/2026): vá 4 lỗi controller của r13 — CHƯA commit/merge/push/deploy
+
+Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ blocker. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Kết luận r13 bên dưới là LỊCH SỬ — sai ở F1–F4.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| F1 OCR tự tải model khi thiếu pdiparams | vá: đòi đủ pdmodel + pdiparams cả 3 bộ; probe cùng sha 2/5 → 7/0 | `evidence/itacc_r13_fix_4/probes/k_ocr_models_v2_*` |
+| F2 ảnh hỏng mất chi phí | vá: ghi chi phí đã báo 1 lần, ok=false; 3/6 → 9/0 | `probes/l_image_cost_*`, `tests/test_r13_fix4.py` |
+| F3 preflight backup tin sổ/manifest | vá: đo dump + offsite thật theo manifest; 4/10 → 14/0 | `probes/m_backup_files_*` |
+| F4 `--upgrade` bỏ cổng triển khai | vá: cổng trước HTTP/INSERT (hàm + CLI); 4/5 → 9/0 | `probes/n_anchor_gate_*` |
+| Kiểm lại 6 mục | production-03 BỊ CHẶN 11/0/0, data_platform-02.1 BỊ CHẶN 13/0/0, marketing-02.1 BỊ CHẶN 11/0/0, data_platform-90 BỊ CHẶN 9/0/1, data_platform-07.2 ĐẠT 12/0/0, farming-06 BỊ CHẶN 24/0/1 | `items/`, `runs/`, `criteria/r13fix4_v1.json`, `r13fix4_v2.json` |
+| Tổng 96 | **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (r13 84/0/12) | `tong_hop.json`, `source_map.json` |
+| Gate (fp mã `38c4852b68bd…`) | full 6855 passed, 103 warnings in 3124.71s (0:52:04) EXIT 0; ruff 0; eval 0; DPIA 0; red-team 0; không đổi schema | `gate/` |
+
+## Checkpoint (LỊCH SỬ — 4 lỗi F1–F4 vá ở r13-fix4) — Vòng r13 (24/10/2026): 12 mục DOCX bị chặn — làm phần code có thể làm — CHƯA commit/merge/push/deploy
+
+Nhánh `codex/remaining-docx-12` từ `main` `1ad90df`. Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ chặn vì adapter/mock. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; chờ bên ngoài: `dau-vao-va-quyet-dinh.md` mục G.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| Code 12 mục | OCR/STT/ảnh AI adapter, hồ sơ gốc, API sàn (429 + cổng), persona ≥3 nhà cung cấp, OTS parse + upgrade, verify feed web, incident_compare, onprem_preflight + backup bắt buộc mã hóa/offsite khác thiết bị | `evidence/itacc_r13_docx12/BANG_VIEC.md` |
+| Probe trước/sau (cùng sha) | 10/10 probe: baseline FAIL → bản cuối PASS | `probes/` |
+| Kiểm lại 17 mục (12 + 5 ảnh hưởng) | mọi ca chạy được PASS; NOT_RUN chỉ ca cần thật (UI, model/vendor, repo riêng, hạ tầng) | `items/`, `runs/`, `criteria/r13_v1.json`, `r13_v2.json` |
+| Tổng 96 | **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (r12-fix 84/0/12); BỊ CHẶN EXTERNAL_INPUT 8, NON_SOFTWARE 2, SEPARATE_REPO 2 | `tong_hop.json`, `source_map.json` |
+| Gate (fp mã `1975775dab1b…`) | full 6816 passed, 103 warnings in 3185.96s (0:53:05) EXIT 0; ruff 0; eval 0; DPIA 0; red-team 0; secret 0; nâng cấp schema ×2 PASS | `gate/`, `runs/upgrade_up4.txt` |
+
 ## Checkpoint mới — Vòng r12-fix (24/10/2026): vá ĐÚNG D2 + L3 (controller bác "20/20 FIXED" của r12) — CHƯA commit/merge/push/deploy
 
 Không dùng DB `samsam`; không đổi `acceptance_status` (0/96 nghiệm thu hợp đồng); không mở việc ngoài hai lỗi. Postgres Docker riêng `samsam-itacc-r12fix` (127.0.0.1:55452). Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Kết luận "20/20 FIXED" của r12 bên dưới là LỊCH SỬ — sai ở D2/L3.

@@ -1,0 +1,122 @@
+"""PROBE r13-fix4 M v1 — F3: `scripts/onprem_preflight.check_backup` mục `sao_luu:ban_gan_nhat` chỉ ĐẠT khi tệp dump THẬT
+tồn tại khớp manifest (định dạng `db_backup.load_manifest`: size_bytes + sha256) VÀ bản sao ở offsite `dir:` cấu hình tồn
+tại khớp (dump + manifest), mã hóa, đủ mới, không ở tương lai. Không DB, không mạng: thư mục tạm, tệp tổng hợp theo đúng
+định dạng `db_backup.run_backup`/`_offsite_copy`. "Khác thiết bị" được GIẢ LẬP (same_device → False) chỉ để cô lập phần
+kiểm tệp — KHÔNG phải bằng chứng offsite thật. Cùng mã/input/assertion snapshot r13 chưa vá + bản vá.
+  python -I probe_m_backup_files.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước khi vá): mỗi ca so trạng thái `sao_luu:ban_gan_nhat`:
+- bộ tệp hợp lệ (dump + manifest local, dump + manifest offsite, log ok, 2 giờ trước) → DAT.
+- tái hiện controller (log ok + offsite khác null, manifest chỉ {"encrypted":true}, KHÔNG dump, offsite rỗng) → CHUA_DAT.
+- mất dump / sai hash dump (cùng cỡ) / sai cỡ dump / thiếu dump offsite / dump offsite sai hash / thiếu manifest offsite /
+  manifest hỏng / manifest không mã hóa / quá hạn / log ở tương lai (+5 giờ) / log status fail / chưa cấu hình offsite
+  → CHUA_DAT."""
+import hashlib
+import json
+import os
+import shutil
+import sys
+import tempfile
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith(("PG", "BACKUP_")):
+        os.environ.pop(k, None)
+import psycopg  # noqa: E402
+
+psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+from scripts import db_backup  # noqa: E402
+from scripts import onprem_preflight as op  # noqa: E402
+
+db_backup.same_device = lambda a, b: False      # GIẢ LẬP khác thiết bị (mock) — chỉ cô lập phần kiểm tệp
+TMP = Path(tempfile.mkdtemp(prefix="r13fix4m-"))
+NOW = datetime.now(timezone.utc)
+NAME = "probe_db_20261024_101010_vn.dump.enc"
+DUMP = b"Salted__" + bytes(range(256)) * 8
+rows = []
+
+
+def setup(tag, *, local_dump=True, dump_bytes=None, off_dump=True, off_bytes=None, off_manifest=True,
+          manifest=None, age_h=2.0, status="ok", offsite_cfg=True, encrypted=True):
+    base = TMP / tag
+    b, o = base / "b", base / "o"
+    b.mkdir(parents=True)
+    o.mkdir()
+    kf = base / "khoa.txt"
+    kf.write_text("mot-khoa-thu-du-dai-123\n", encoding="utf-8")
+    m = manifest if manifest is not None else {
+        "format": 1, "created_at": (NOW - timedelta(hours=age_h)).isoformat(), "db_name": "probe_db",
+        "server_version": "17.0", "pg_dump_version": "17.0", "tool": "local", "file": NAME,
+        "size_bytes": len(DUMP), "sha256": hashlib.sha256(DUMP).hexdigest(), "encrypted": encrypted,
+        "cipher": db_backup.CIPHER if encrypted else None, "row_counts": {"t": 1}}
+    mtxt = json.dumps(m)
+    if local_dump:
+        (b / NAME).write_bytes(DUMP if dump_bytes is None else dump_bytes)
+    (b / (NAME + db_backup.MANIFEST_SUFFIX)).write_text(mtxt, encoding="utf-8")
+    if off_dump:
+        (o / NAME).write_bytes(DUMP if off_bytes is None else off_bytes)
+    if off_manifest:
+        (o / (NAME + db_backup.MANIFEST_SUFFIX)).write_text(mtxt, encoding="utf-8")
+    rec = {"ts": (NOW - timedelta(hours=age_h)).isoformat(), "status": status, "file": NAME,
+           "size_bytes": len(DUMP), "sha256": hashlib.sha256(DUMP).hexdigest(), "offsite": "dir", "error": None}
+    (b / "backup_runs.jsonl").write_text(json.dumps(rec) + "\n", encoding="utf-8")
+    env = {"BACKUP_DIR": str(b), "BACKUP_PASSPHRASE_FILE": str(kf), "BACKUP_REQUIRE_ENCRYPTION": "1"}
+    if offsite_cfg:
+        env["BACKUP_OFFSITE"] = f"dir:{o}"
+    return env
+
+
+def case(ma, want, env, max_age_h=26.0):
+    try:
+        got = {k: (st, note) for k, st, note in op.check_backup(env, 0.0, max_age_h, NOW)}
+        st, note = got["sao_luu:ban_gan_nhat"]
+        ok, actual = st == want, {"ban_gan_nhat": st, "chi_tiet": note,
+                                  "offsite": got.get("sao_luu:offsite", ("?",))[0]}
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "mong_doi": want, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def controller_env():
+    base = TMP / "controller"
+    b, o = base / "b", base / "o"
+    b.mkdir(parents=True)
+    o.mkdir()
+    kf = base / "khoa.txt"
+    kf.write_text("synthetic-only-passphrase-1234567890", encoding="utf-8")
+    fn = "missing.dump.enc"
+    (b / "backup_runs.jsonl").write_text(json.dumps({"ts": NOW.isoformat(), "status": "ok", "file": fn,
+                                                     "offsite": {"dir": str(o)}}) + "\n", encoding="utf-8")
+    (b / (fn + db_backup.MANIFEST_SUFFIX)).write_text(json.dumps({"encrypted": True}), encoding="utf-8")
+    return {"BACKUP_DIR": str(b), "BACKUP_PASSPHRASE_FILE": str(kf), "BACKUP_REQUIRE_ENCRYPTION": "1",
+            "BACKUP_OFFSITE": f"dir:{o}"}
+
+
+bad = bytearray(DUMP)
+bad[100] ^= 0xFF
+case("bo_tep_hop_le", "DAT", setup("ok"))
+case("tai_hien_controller_khong_dump_offsite_rong", "CHUA_DAT", controller_env())
+case("mat_dump_local", "CHUA_DAT", setup("nodump", local_dump=False))
+case("dump_sai_hash_cung_co", "CHUA_DAT", setup("badhash", dump_bytes=bytes(bad)))
+case("dump_sai_kich_thuoc", "CHUA_DAT", setup("badsize", dump_bytes=DUMP + b"x"))
+case("thieu_dump_offsite", "CHUA_DAT", setup("nooff", off_dump=False))
+case("dump_offsite_sai_hash", "CHUA_DAT", setup("offbad", off_bytes=bytes(bad)))
+case("thieu_manifest_offsite", "CHUA_DAT", setup("offnoman", off_manifest=False))
+case("manifest_hong_toi_gian", "CHUA_DAT", setup("manbad", manifest={"encrypted": True}))
+case("manifest_khong_ma_hoa", "CHUA_DAT", setup("plain", encrypted=False))
+case("qua_han", "CHUA_DAT", setup("old", age_h=3.0), max_age_h=1.0)
+case("thoi_diem_tuong_lai", "CHUA_DAT", setup("future", age_h=-5.0))
+case("log_status_fail", "CHUA_DAT", setup("fail", status="fail"))
+case("chua_cau_hinh_offsite", "CHUA_DAT", setup("nooffcfg", offsite_cfg=False))
+shutil.rmtree(TMP, ignore_errors=True)
+out = {"probe": "m_backup_files_v1", "root": ROOT, "khac_thiet_bi": "GIẢ LẬP (mock same_device=False)", "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

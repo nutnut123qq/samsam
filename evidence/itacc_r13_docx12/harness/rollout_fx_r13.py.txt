@@ -1,0 +1,33 @@
+"""HARNESS/FIXTURE r13 (MỚI, nhóm C — data_platform-06): chạy THẬT `pipelines.rollout.main(argv)` nhưng trong tiến
+trình coi `code_status` của MỘT mã tính năng là `co_code`.
+
+  python rollout_fx_r13.py.txt <mã_tính_năng> <đối số rollout...>
+
+Lý do: data/contract_features.json ghi data_platform-06 `mot_phan` → `rollout --seed` bỏ qua, `--disable` từ chối "chưa vào
+sổ", `--promote` từ chối code_status — không thể đưa tính năng về `tat` bằng CLI thật để kiểm cổng rollout r13 của
+ingest.market_api. Harness CHỈ đổi danh mục trong bộ nhớ (load_features bọc lại), không sửa tệp danh mục; seed/promote/ghi
+sổ đi qua đúng hàm sản phẩm (function DB rollout_transition_human). Dùng: `--seed` (đưa mã vào sổ `chay_thu`) và
+`--promote` (bật lại tắt → chạy thử). `--disable` chạy bằng CLI THẬT (không cần harness). In `[harness] FIXTURE …`."""
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO))
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+from pipelines import rollout  # noqa: E402
+
+FID, ARGS = sys.argv[1], sys.argv[2:]
+_orig = rollout.load_features
+
+
+def _patched(*a, **k):
+    feats = _orig(*a, **k)
+    hit = [f for f in feats if f["id"] == FID]
+    assert len(hit) == 1, f"không thấy {FID} trong danh mục"
+    return [dict(f, code_status="co_code") if f["id"] == FID else f for f in feats]
+
+
+rollout.load_features = _patched
+print(f"[harness] FIXTURE {FID}: code_status → co_code (chỉ trong tiến trình)", file=sys.stderr, flush=True)
+sys.exit(rollout.main(ARGS))

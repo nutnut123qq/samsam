@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and program_id is null and valid_to is null and price_vnd = 3100000 and approved_by = 'GĐ Bán Hàng Thử IT'",
+  "expect": 1,
+  "actual": 0,
+  "dat": false
+ },
+ {
+  "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and program_id is null and valid_to is not null and price_vnd = 2980000 and approved_by = 'GĐ Bán Hàng Thử IT'",
+  "expect": 1,
+  "actual": 0,
+  "dat": false
+ }
+]

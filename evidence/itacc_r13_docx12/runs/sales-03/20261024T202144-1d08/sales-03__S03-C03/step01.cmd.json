@@ -1,0 +1,39 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "pipelines.content",
+  "--listing",
+  "--sku",
+  "ruou-sam-chai-thuy-tinh-500ml",
+  "--sku",
+  "saphraton-40v",
+  "--channel",
+  "shopee",
+  "--no-llm"
+ ],
+ "env_doi": [
+  "PROBE_LLM_LOG",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:22:06+07:00",
+ "ket_thuc": "2026-10-24T20:22:10+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*ruou-sam-chai-thuy-tinh-500ml × shopee: refused ruou)(?=.*saphraton-40v × shopee: refused readiness)(?=.*created 0, skipped 0, refused 2)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "a0d9654ab1f4c153dafb38bd2d218c86b9dd158013f1da13d4cd073708d7173f",
+ "stderr_sha256": "fd9536db9b20e6bbaeb4f4181a6f11bed4cc9055e0a0e171033f8ef47e2b8e62"
+}

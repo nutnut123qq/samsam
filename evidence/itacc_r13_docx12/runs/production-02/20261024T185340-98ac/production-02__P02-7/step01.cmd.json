@@ -1,0 +1,35 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.product_dossiers",
+  "--check",
+  "--file",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\fixtures/items/production-02/dossier_full_r13.json",
+  "--golden",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_prod.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:53:56+07:00",
+ "ket_thuc": "2026-10-24T18:53:56+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\[done\\] hồ sơ 13 · SKU golden 13 · đã gắn 13 · lỗi 0",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "b57318c12d3d7ae20c1ab27cd68cf6aa5b9d25f8102ac5a8377547bcde106cc1",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,38 @@
+[
+ {
+  "sql": "select count(*) >= 1 from approval_queue where created_by = 'agent:kd_listing' and object_type = 'listing_sync' and object_id like 'a4:price_drift:%'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) >= 1 from approval_queue where created_by = 'agent:kd_listing' and object_type = 'listing_sync' and object_id like 'a4:title_drift:%'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) >= 1 from approval_queue where created_by = 'agent:kd_listing' and object_type = 'market_alert_s1'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where created_by = 'agent:kd_listing' and (payload::text like '%fixture Thử IT%' or title like '%fixture Thử IT%')",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) = count(distinct object_id) from approval_queue where created_by = 'agent:kd_listing'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where created_by = 'agent:kd_listing' and status <> 'pending'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

@@ -1,0 +1,34 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "scripts/db_backup.py"
+ ],
+ "env_doi": [
+  "BACKUP_DIR",
+  "BACKUP_KEEP",
+  "BACKUP_OFFSITE",
+  "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE",
+  "BACKUP_PASSPHRASE_FILE",
+  "BACKUP_REQUIRE_ENCRYPTION",
+  "DRILL_DATABASE_URL",
+  "PG_BIN"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:57:11+07:00",
+ "ket_thuc": "2026-10-24T18:57:12+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[usage\\] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR — không phải bản sao ngoài máy",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "19c9581113bf3df45c6bf05a0a27d62e6a5a6310610611953763bc4354a7f1c7",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

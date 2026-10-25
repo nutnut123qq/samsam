@@ -1,0 +1,1124 @@
+{
+ "id": "data_platform-07.2",
+ "ten": "Backup hằng ngày",
+ "khoi": "data_platform",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Hạ tầng dữ liệu và AI / Vận hành hệ thống: 'backup hằng ngày'",
+ "luot": "r13",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/data_platform-07.2.json",
+  "sha256": "64eaaa19d2ad2ab732d41596c3d68d3b6375907b2507707cdf3f8f0ef3292a15"
+ },
+ "trang_thai_truoc": {
+  "luot": "r10",
+  "trang_thai": "DAT",
+  "nguyen_nhan": ""
+ },
+ "ly_do_chay_lai": "mô-đun của mục đổi ở r13 (ảnh hưởng trực tiếp)",
+ "fingerprint_code_luc_khoa": "2be3eb728f34c542859ae4e32c366024af7690f2ec6ba8b43a7ce98fd211d98b",
+ "tieu_chi_file": "evidence/itacc_r13_docx12/criteria/r13_v1.json",
+ "tieu_chi_sha256": "920bbe0bcc4d988cfdc7cebcfedc5ad6872ef833dd7f8674963019d5d7678513",
+ "tieu_chi_khoa": "r13_v1.json 920bbe0bcc4d988cfdc7cebcfedc5ad6872ef833dd7f8674963019d5d7678513 2026-10-24T18:51:39+07:00",
+ "tieu_chi": [
+  "T1 db_backup BACKUP_DIR ngoài repo → dump + manifest (sha256, row_counts, không host/user) + backup_runs.jsonl status ok + file_output_evidence bk:<sha>",
+  "T2 db_restore_drill → khôi phục vào DB tạm, đối chiếu số dòng mọi bảng khớp, tự xóa DB tạm",
+  "T3 Ca âm: BACKUP_DIR trong repo → exit 2 không tạo thư mục; offsite dir: chép + kiểm sha (giới hạn: cùng máy — offsite/NAS ngoài máy không chứng minh được)",
+  "T4 không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+  "T5 (MỚI r13) BACKUP_REQUIRE_ENCRYPTION=1 thiếu BACKUP_PASSPHRASE_FILE → exit 2 '[usage]' trước connect, không tạo thư mục, 0 bằng chứng mới",
+  "T6 (MỚI r13) offsite cùng thiết bị với BACKUP_DIR: có BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1 → exit 2 '[usage]', không chép; không cờ → '[warn] … cùng thiết bị' rồi vẫn chép + kiểm sha, exit 0",
+  "T7 (MỚI r13) passphrase file ngoài repo (≥16 ký tự) + BACKUP_REQUIRE_ENCRYPTION=1 → chỉ còn bản .dump.enc (8 byte đầu 'Salted__', không bản rõ), manifest encrypted true cipher openssl-aes-256-cbc-pbkdf2, sha khớp, bằng chứng DB ghi"
+ ],
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r13 (127.0.0.1:55453), DB mới mỗi mục dựng bằng working tree (schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài DB samsam_itacc_r13_dp072.",
+ "run_id": "20261024T202136-4483",
+ "ca": [
+  {
+   "ma": "data_platform-07.2__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout (r10 DB samsam_itacc_r10_dp đã seed — có dữ liệu sổ trong bản backup)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ \\d+"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ \\d+",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:36+07:00",
+      "ket_thuc": "2026-10-24T20:21:38+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__S01"
+  },
+  {
+   "ma": "data_platform-07.2__DP072-01",
+   "nguon_r10": "DP072-01",
+   "mo_ta": "Backup — BACKUP_DIR ngoài repo (scratchpad r13/ext_dp072/<md5 SCR>/bk); mọi BACKUP_* khác đặt rỗng để .env không lấp",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[warn\\] backup CHƯA mã hóa)(?=[\\s\\S]*\\[warn\\] chưa cấu hình offsite \\(BACKUP_OFFSITE\\))(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*_vn.dump'}",
+      "count": 1
+     },
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*.manifest.json'}",
+      "count": 1
+     },
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*.partial'}",
+      "count": 0
+     },
+     {
+      "file_re": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/backup_runs.jsonl'}",
+      "re": "\\\"status\\\": \\\"ok\\\"",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/db_backup.py",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[warn\\] backup CHƯA mã hóa)(?=[\\s\\S]*\\[warn\\] chưa cấu hình offsite \\(BACKUP_OFFSITE\\))(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:38+07:00",
+      "ket_thuc": "2026-10-24T20:21:40+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/*_vn.dump",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/samsam_itacc_r13_dp072_20261024_202139_vn.dump",
+        "sha256": "0eb52597b1cda945f8a94ab8548495734fdc71705b95f5743a0ab545ed21a915"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/*.manifest.json",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/samsam_itacc_r13_dp072_20261024_202139_vn.dump.manifest.json",
+        "sha256": "db3cdd222e58145d284f7d1f53602827dd9b3ae48c446a72cd138ea1eca5a8b8"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/*.partial",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "file_re": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/backup_runs.jsonl",
+      "re": "\\\"status\\\": \\\"ok\\\"",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01"
+  },
+  {
+   "ma": "data_platform-07.2__DP072-01q",
+   "nguon_r10": "DP072-01q",
+   "mo_ta": "Assert DB/manifest — kiểm độc lập ({H}/bk_check_r13.py.txt thay q.py r10 + đối chiếu tay)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*keys_ok True)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*encrypted False cipher None)(?=[\\s\\S]*magic PGDMP)(?=[\\s\\S]*host_user_in_manifest False)(?=[\\s\\S]*row_counts_tables [1-9]\\d*)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs' and output_key ~ '^bk:[0-9a-f]{64}$' and not is_sample",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/bk_check_r13.py.txt C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*keys_ok True)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*encrypted False cipher None)(?=[\\s\\S]*magic PGDMP)(?=[\\s\\S]*host_user_in_manifest False)(?=[\\s\\S]*row_counts_tables [1-9]\\d*)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:40+07:00",
+      "ket_thuc": "2026-10-24T20:21:41+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01q/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01q/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs' and output_key ~ '^bk:[0-9a-f]{64}$' and not is_sample",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01q"
+  },
+  {
+   "ma": "data_platform-07.2__DP072-02",
+   "nguon_r10": "DP072-02",
+   "mo_ta": "Restore drill (DRILL_DATABASE_URL rỗng → server của DATABASE_URL = Postgres thử)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[drill\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump → samsam_drill_[0-9a-z_]+: (\\d+)/\\1 bảng khớp, RTO"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from pg_database where datname like 'samsam\\_drill%'",
+      "expect": 0
+     },
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/drill_runs.jsonl'}",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/db_restore_drill.py",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[drill\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump → samsam_drill_[0-9a-z_]+: (\\d+)/\\1 bảng khớp, RTO",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:41+07:00",
+      "ket_thuc": "2026-10-24T20:21:55+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from pg_database where datname like 'samsam\\_drill%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/drill_runs.jsonl",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/drill_runs.jsonl",
+        "sha256": "9fda122893fe091c22928b0ea89124406a416fbabedfbd7bae28da7269d04efe"
+       }
+      ],
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-02"
+  },
+  {
+   "ma": "data_platform-07.2__DP072-03",
+   "nguon_r10": "DP072-03",
+   "mo_ta": "Âm: BACKUP_DIR trong repo ({OUT}/bk_trong_repo)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[usage\\] BACKUP_DIR nằm trong repo — phải đặt NGOÀI repo"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{OUT}/bk_trong_repo",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/db_backup.py",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[usage\\] BACKUP_DIR nằm trong repo — phải đặt NGOÀI repo",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:55+07:00",
+      "ket_thuc": "2026-10-24T20:21:56+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "evidence\\itacc_r13_docx12\\runs\\data_platform-07.2\\20261024T202136-4483\\data_platform-07.2__DP072-03\\out/bk_trong_repo",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-03"
+  },
+  {
+   "ma": "data_platform-07.2__DP072-04",
+   "nguon_r10": "DP072-04",
+   "mo_ta": "Offsite dir: ngoài repo (cùng máy — giới hạn r10 giữ nguyên)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[offsite\\] đã chép \\+ kiểm sha256)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite/*_vn.dump'}",
+      "count": 1
+     },
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite/*.manifest.json'}",
+      "count": 1
+     },
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*_vn.dump'}",
+      "count": 2
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/db_backup.py",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[offsite\\] đã chép \\+ kiểm sha256)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:56+07:00",
+      "ket_thuc": "2026-10-24T20:21:59+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/bk_check_r13.py.txt C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/offsite",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:59+07:00",
+      "ket_thuc": "2026-10-24T20:22:00+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/offsite/*_vn.dump",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/offsite/samsam_itacc_r13_dp072_20261024_202157_vn.dump",
+        "sha256": "f3833750e2d82974271d979ef790e9009534e70814b8b77c9c280196510abdbf"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/offsite/*.manifest.json",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/offsite/samsam_itacc_r13_dp072_20261024_202157_vn.dump.manifest.json",
+        "sha256": "6b04fb1697360fe7a0aa2b1a243aa8558c37393dc6e0f07dbac5b0936567884b"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/*_vn.dump",
+      "count": 2,
+      "actual": 2,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/samsam_itacc_r13_dp072_20261024_202139_vn.dump",
+        "sha256": "0eb52597b1cda945f8a94ab8548495734fdc71705b95f5743a0ab545ed21a915"
+       },
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/samsam_itacc_r13_dp072_20261024_202157_vn.dump",
+        "sha256": "f3833750e2d82974271d979ef790e9009534e70814b8b77c9c280196510abdbf"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04"
+  },
+  {
+   "ma": "data_platform-07.2__R13-01",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "BACKUP_REQUIRE_ENCRYPTION=1 nhưng không có BACKUP_PASSPHRASE_FILE",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[usage\\] BACKUP_REQUIRE_ENCRYPTION=1 nhưng chưa có BACKUP_PASSPHRASE_FILE — không ghi bản chưa mã hóa"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_req'}",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/db_backup.py",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[usage\\] BACKUP_REQUIRE_ENCRYPTION=1 nhưng chưa có BACKUP_PASSPHRASE_FILE — không ghi bản chưa mã hóa",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:22:00+07:00",
+      "ket_thuc": "2026-10-24T20:22:00+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk_req",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-01"
+  },
+  {
+   "ma": "data_platform-07.2__R13-02",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "offsite cùng thiết bị với BACKUP_DIR (cả hai trong scratchpad ổ C:) + BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[usage\\] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR — không phải bản sao ngoài máy"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite_flag'}",
+      "count": 0
+     },
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*_vn.dump'}",
+      "count": 2
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/db_backup.py",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[usage\\] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR — không phải bản sao ngoài máy",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:22:01+07:00",
+      "ket_thuc": "2026-10-24T20:22:01+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/offsite_flag",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/*_vn.dump",
+      "count": 2,
+      "actual": 2,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/samsam_itacc_r13_dp072_20261024_202139_vn.dump",
+        "sha256": "0eb52597b1cda945f8a94ab8548495734fdc71705b95f5743a0ab545ed21a915"
+       },
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk/samsam_itacc_r13_dp072_20261024_202157_vn.dump",
+        "sha256": "f3833750e2d82974271d979ef790e9009534e70814b8b77c9c280196510abdbf"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-02"
+  },
+  {
+   "ma": "data_platform-07.2__R13-03",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "offsite cùng thiết bị KHÔNG cờ → cảnh báo rồi vẫn chép + kiểm sha",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*\\[warn\\] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR \\(st_dev\\) — chưa phải offsite thật)(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[offsite\\] đã chép \\+ kiểm sha256)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite_warn/*_vn.dump'}",
+      "count": 1
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 3
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/db_backup.py",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*\\[warn\\] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR \\(st_dev\\) — chưa phải offsite thật)(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[offsite\\] đã chép \\+ kiểm sha256)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:22:01+07:00",
+      "ket_thuc": "2026-10-24T20:22:04+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/offsite_warn/*_vn.dump",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/offsite_warn/samsam_itacc_r13_dp072_20261024_202203_vn.dump",
+        "sha256": "4262562c33640314ecf0440665a35d5843b8615040f07d9d7763946226ea6ee6"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 3,
+      "actual": 3,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-03"
+  },
+  {
+   "ma": "data_platform-07.2__R13-04",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "backup mã hóa: passphrase file NGOÀI repo (giá trị thử R13, ≥16 ký tự, UTF-8 + LF) + BACKUP_REQUIRE_ENCRYPTION=1; openssl tìm qua PATH hoặc C:/Program Files/Git/usr|mingw64/bin (có trên máy)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "PASSFILE (?:1[6-9]|[2-9]\\d)\\b"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?![\\s\\S]*CHƯA mã hóa)(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump\\.enc — \\d+ bytes)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*keys_ok True)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*encrypted True cipher openssl-aes-256-cbc-pbkdf2)(?=[\\s\\S]*magic Salted__)(?=[\\s\\S]*host_user_in_manifest False)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_enc/*_vn.dump'}",
+      "count": 0
+     },
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_enc/*_vn.dump.enc'}",
+      "count": 1
+     },
+     {
+      "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_enc/*.partial'}",
+      "count": 0
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 4
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(sys.argv[2].encode('utf-8')+b'\\n'); print('PASSFILE', len(sys.argv[2])) C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/pass/thu_r13.pass ThuR13-passphrase-fixture-khong-phai-khoa-that",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "PASSFILE (?:1[6-9]|[2-9]\\d)\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:22:04+07:00",
+      "ket_thuc": "2026-10-24T20:22:04+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step01.stderr.txt"
+     },
+     {
+      "argv": "python scripts/db_backup.py",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?![\\s\\S]*CHƯA mã hóa)(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump\\.enc — \\d+ bytes)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:22:04+07:00",
+      "ket_thuc": "2026-10-24T20:22:07+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/bk_check_r13.py.txt C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk_enc",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*keys_ok True)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*encrypted True cipher openssl-aes-256-cbc-pbkdf2)(?=[\\s\\S]*magic Salted__)(?=[\\s\\S]*host_user_in_manifest False)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:22:07+07:00",
+      "ket_thuc": "2026-10-24T20:22:08+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk_enc/*_vn.dump",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk_enc/*_vn.dump.enc",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk_enc/samsam_itacc_r13_dp072_20261024_202205_vn.dump.enc",
+        "sha256": "e6f0d31a00445b364b2f893915e53c8213ecd1ed7d4def6fdcd6a07bf9e69654"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/4e992b0abdf60b36895cabf08cea6594/bk_enc/*.partial",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04"
+  }
+ ],
+ "trang_thai": "DAT",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "",
+ "can_de_go": "",
+ "gioi_han": " Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r13), fixture/dữ liệu THỬ, AI/HTTP/model giả ở biên nơi ghi MOCK — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [
+  {
+   "lot": "lo1",
+   "criteria": "r13_v1.json",
+   "run_id": "20261024T185642-2f9b",
+   "thu_muc": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T185642-2f9b",
+   "ly_do": "chạy lại trên fp mã cuối 1975775d… sau khi đổi DDL anchor_receipts sang lệnh tường minh (drift-guard) + văn bản catalog/data_flow_map; cùng tiêu chí, kết quả lo1 đều PASS"
+  }
+ ],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01/asserts.json",
+   "sha256": "2f2f658df3205b9a95ac3112070a8184f29d9e2a7de7dea41ebf15f28e58a2e8"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01/case.json",
+   "sha256": "10594b225d94e045bb443cd49906d1c30a2675907b2a8e659c17524a04ebe2aa"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01/step01.cmd.json",
+   "sha256": "22779eff1dcfb4a04d1ec9aafbb4a8212e305eef0b043d0408a6925301742480"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01/step01.stdout.txt",
+   "sha256": "c35d2b5e5307d36210f6f05bf82bd0bb1c4c350e18b54ac65fdd5609866a6f9f"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01q/asserts.json",
+   "sha256": "c6ccdf86eb3b28e076db20d8f32cd853cb4d8c59783eb563bc511aacfe2eb73f"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01q/case.json",
+   "sha256": "859c61c20a096e0085d6922ad19ac149fe267eaaf38cab2fb56f1d968050b898"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01q/step01.cmd.json",
+   "sha256": "26c70f649e81bae46db1bbfd2676419343fdc0181a6a9b43a87485d85b261cc3"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01q/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-01q/step01.stdout.txt",
+   "sha256": "4e558e1afeb838a316b5e02f4238ae338c05eae7ce07498989c65002fd28f464"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-02/asserts.json",
+   "sha256": "816b5b6f854cf76acd31fd9a911f349418e2f3a4be672f2485e57108944c84bd"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-02/case.json",
+   "sha256": "bf53c4b5be8538b1dc8af757bb35aceb19004afe2c9edf547a87d958f37670c4"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-02/step01.cmd.json",
+   "sha256": "fe958d8e7b375d01d943241226f74f4c8ee2cea8b3538bcc695989b05aa83df9"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-02/step01.stdout.txt",
+   "sha256": "7e0bd3bdf6015d04b0b1887c1e409c8f6e23e3a8fa73081397c7c70fc5781396"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-03/asserts.json",
+   "sha256": "4ea3713098fd1f6f51605d0e2d42c440a9b80139abc1ef5959191f899de90253"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-03/case.json",
+   "sha256": "e434edbfe805c466d519b45fca71ed19468e9af5bf20c04da4025736b822b8de"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-03/step01.cmd.json",
+   "sha256": "dee4f64a594be5999bedc8d91b61d3139165debd1494414a92f298f57d0ca135"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-03/step01.stdout.txt",
+   "sha256": "e05b6530d89cd9e52b2c9de7e9ddaa2468f34b66d0f1037d49d6c33ddad83961"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/asserts.json",
+   "sha256": "3fc1c69b02d533e8fa8050fd436d863fff11223acabfbea97874016760145699"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/case.json",
+   "sha256": "9d64281d1cd1c1206c09186b3c7a3279d5ef2ad85708522eea603a62ec577181"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step01.cmd.json",
+   "sha256": "f889470d5fc70592d88310de27c0f63cf82d43bf01454c30f00c027caabf30de"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step01.stdout.txt",
+   "sha256": "94b69bea3370821b4316668f319fe6417a757767a8d8584378e232dfc3167d89"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step02.cmd.json",
+   "sha256": "c75b8039b8adfc4967ffe3183e96434ddccd9081954de5485c5185c70230ed6a"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__DP072-04/step02.stdout.txt",
+   "sha256": "5ebc3c1d877efc8ca708eb2ab45a2fffd521605bc14904df893c2d0cd07e172c"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-01/asserts.json",
+   "sha256": "db22be39f5285c9b7b4d93325122d38474d8759c0d88b7058f7589c5b5006ead"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-01/case.json",
+   "sha256": "7bc96db7caf3522292ae2a191526d7f9c278832eafbaa062dfa717e829a37d35"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-01/step01.cmd.json",
+   "sha256": "2b845a8c253c272a349c1545ae057988795b85b1c1fdd2cd2d1b555c80e51e02"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-01/step01.stdout.txt",
+   "sha256": "6b90d85800ac3ee446eb06ece1a5c65a82365dac2fb8a25d814db6eefe09d4ee"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-02/asserts.json",
+   "sha256": "69a209d5dd83a17fcb569227fda5de69a9544861aa2bcc561d0c5ddb940082e2"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-02/case.json",
+   "sha256": "1a5a93792c35590daf11fc8eabad1c69a068516862460b3de29632a39a09b598"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-02/step01.cmd.json",
+   "sha256": "41d6041ee475a2fb4dd19af824ca033fc6ec7bd7ff8790e16a1a9697d024f7e5"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-02/step01.stdout.txt",
+   "sha256": "19c9581113bf3df45c6bf05a0a27d62e6a5a6310610611953763bc4354a7f1c7"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-03/asserts.json",
+   "sha256": "142e9473a37784d261cfd181dca4ffb712c32ab53d86a820941e51891246fa71"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-03/case.json",
+   "sha256": "0e1e7c0426c0afbf007a38868d33f1ca936f02cfaa8841780cb5452049285b37"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-03/step01.cmd.json",
+   "sha256": "2dac11301804acfda1bad7050b028e35eb4243d5ffee5a021ba10221e42945ee"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-03/step01.stdout.txt",
+   "sha256": "20839b9d6ee3b14eed6f1036d68bfdfc242dd65bb4fdb874c4ca378feeca699c"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/asserts.json",
+   "sha256": "8734f84c5a0f8fb21e718235e7e628ee3f55ddd695a7befb3ffdd800209603fe"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/case.json",
+   "sha256": "d79c269fe4ee565239eb6d2e8b184a749cabbf388e9fefedf621d67bdebfd2c1"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step01.cmd.json",
+   "sha256": "8fecb5e0890dbbf72ac3ac8a87020252f0a1482376c789c0acc5e596d050fed4"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step01.stdout.txt",
+   "sha256": "6aad6aa035fc7e842a804baa98435db59510a88eca32757a051f0cd6e9bbcad3"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step02.cmd.json",
+   "sha256": "94fd8aa7243dd42c4a4f699af3a26ddcaea59619692ac5da8449cbe4c8051bec"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step02.stdout.txt",
+   "sha256": "8e6bbb58452620d338272dc1715889e97e77f413bbab10e12b04fb4484781ad6"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step03.cmd.json",
+   "sha256": "e48a7fe9b207644bfa069b1926f5eb39756546614f605bbc933cd320e6427b37"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__R13-04/step03.stdout.txt",
+   "sha256": "40228354e1465050f90222c92e599b407ddcc5482198c388f0535950cddc814f"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__S01/asserts.json",
+   "sha256": "8181bcf2c927525f5ddbc849c0a662f3cbb8537a6d857eeb923ea216f383c0e2"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__S01/case.json",
+   "sha256": "221e8525189ec32e6f26fbd49ccb6a174d5a2440245a66af226fce096044a9c0"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__S01/step01.cmd.json",
+   "sha256": "79d82e4f2232955cca4fc7ad0f28a736ac00303bb45a2f52f774988b1c9f43a8"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/data_platform-07.2__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/data_platform-07.2/20261024T202136-4483/ket_qua.json",
+   "sha256": "964d12245b6b68203c4682b881d4388b3b88db14ee577d5514d2787f15e51a42"
+  }
+ ],
+ "loi_san_pham": []
+}

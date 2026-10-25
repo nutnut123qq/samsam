@@ -1,0 +1,235 @@
+"""HARNESS r13-fix4 — dựng tiêu chí kiểm lại 6 mục bị 4 bản vá ảnh hưởng trực tiếp: production-03, data_platform-02.1 (F1
+OCR), marketing-02.1 (F2 chi phí ảnh), data_platform-90 + data_platform-07.2 (F3 preflight/backup), farming-06 (F4 neo).
+Nguồn: tiêu chí r13 ĐÃ KHÓA (CHỈ ĐỌC, không sửa): `itacc_r13_docx12/criteria/r13_v2.json` cho data_platform-02.1, r13_v1.json
+cho 5 mục còn lại. Biến đổi DUY NHẤT trên ca kế thừa: tên DB/tên tệp dump `samsam_itacc_r13_` → `samsam_itacc_r13fix4_`
+(DB mới của lượt) và thư mục ngoài repo `scratchpad/r13/` → `scratchpad/r13fix4/`. Placeholder {H}/{FX13} vẫn trỏ harness/
+fixture r13; {HX} = harness r13-fix4.
+Thay thế có lý do (ghi `thay_the` + `ly_do_thay`): farming-06 R03/R05/R06/R08 r13 chạy `--upgrade` KHÔNG ép giai đoạn
+(farming-06 chưa vào sổ → chạy thử fail-closed) và kỳ vọng đi tới calendar — tức tiêu chí r13 đã mã hóa chính lỗi F4. Bản
+thay chỉ thêm `--force-mode van_hanh` (như R04 submit r13), giữ nguyên exit/regex/kiểm; ca chặn khi chưa ép là ca MỚI
+F06-FIX4-01..03. Mọi ca khác giữ nguyên + thêm ca MỚI `*__FIX4-*` cho từng lỗi. Khóa TRƯỚC khi chạy.
+  python -I mk_criteria_r13fix4.py.txt   → criteria/r13fix4_v1.json + .lock.txt (từ chối nếu đã có)"""
+import copy
+import hashlib
+import json
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+H = Path(__file__).resolve().parent
+EV, EV13 = H.parent, H.parents[1] / "itacc_r13_docx12"
+OUT = EV / "criteria" / "r13fix4_v1.json"
+LOCK = OUT.with_name("r13fix4_v1.lock.txt")
+assert not OUT.exists() and not LOCK.exists(), "tiêu chí đã có — không ghi đè"
+v1 = json.loads((EV13 / "criteria" / "r13_v1.json").read_text(encoding="utf-8"))
+v2 = json.loads((EV13 / "criteria" / "r13_v2.json").read_text(encoding="utf-8"))
+SP13 = "scratchpad/r13/"
+SPX = "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/"
+
+
+def remap(obj):
+    s = json.dumps(obj, ensure_ascii=False)
+    s = s.replace("samsam_itacc_r13_", "samsam_itacc_r13fix4_").replace(SP13, "scratchpad/r13fix4/")
+    return json.loads(s)
+
+
+def pick(src, iid):
+    return remap(copy.deepcopy(next(i for i in src["items"] if i["id"] == iid)))
+
+
+def ext(item_short, sub):
+    return "{sql:select '" + SPX + "ext_" + item_short + "/' || md5('{SCR}') || '/" + sub + "'}"
+
+
+GUARD0 = r"\[guard\] mang=0 "
+NEW = "MOI_R13FIX4"
+
+
+def ins_after(item, after_ma, cases):
+    i = next(k for k, c in enumerate(item["ca"]) if c["ma"] == after_ma) + 1
+    item["ca"][i:i] = cases
+
+
+items = []
+
+# ---- production-03 (F1) ---------------------------------------------------------------
+p03 = pick(v1, "production-03")
+p03["ca"].append({
+    "ma": "production-03__FIX4-01", "nguon_r10": NEW,
+    "mo_ta": "F1: bộ model OCR cục bộ có inference.pdmodel nhưng THIẾU inference.pdiparams (cả 3 bộ, ca controller) → "
+             "sx_label --image từ chối rõ trước đường tự tải của PaddleOCR; chạy qua {HX}/guard_run (chặn+đếm socket "
+             "ngoài localhost) → 0 kết nối mạng",
+    "buoc": [
+        {"argv": ["python", "{HX}/mk_models_thieu.py.txt", "{SCR}/models_thieu"], "expect_exit": 0,
+         "stdout_re": r"\[models\] thieu_pdiparams 3 bo"},
+        {"argv": ["python", "{HX}/guard_run.py.txt", "-m", "agents.sx_label", "--sku", "mat-ong-sam-300ml", "--image",
+                  "{FX13}/ocr/nhan_mat_ong.png"],
+         "env": {"OCR_PROVIDER": "paddle_local", "OCR_PADDLE_MODEL_DIR": "{SCR}/models_thieu", "OCR_MAX_PAGES": None,
+                 "OCR_TIMEOUT_S": None},
+         "expect_exit": 1,
+         "stderr_re": r"(?s)(?=.*\[error\] thiếu model OCR cục bộ \(det, rec, cls\) ở OCR_PADDLE_MODEL_DIR — không "
+                      r"connect)(?=.*" + GUARD0 + r")(?!.*Traceback)"}]})
+items.append(p03)
+
+# ---- data_platform-02.1 (F1) ----------------------------------------------------------
+dp021 = pick(v2, "data_platform-02.1")
+ins_after(dp021, "data_platform-02.1__R13-01", [{
+    "ma": "data_platform-02.1__FIX4-01", "nguon_r10": NEW,
+    "mo_ta": "F1: model cục bộ thiếu inference.pdiparams (3 bộ) → doc_intake [err] 'thiếu model OCR cục bộ (det, rec, "
+             "cls)', error=1, exit 1, 0 dòng documents, 0 kết nối mạng ({HX}/guard_run). Chạy TRƯỚC R13-02 (lỗi không tạo "
+             "dòng nên ảnh nhãn ở R13-02 vẫn là tài liệu mới)",
+    "buoc": [
+        {"argv": ["python", "{HX}/mk_models_thieu.py.txt", "{SCR}/models_thieu"], "expect_exit": 0,
+         "stdout_re": r"\[models\] thieu_pdiparams 3 bo"},
+        {"argv": ["python", "{H}/A/prep_r13.py.txt", "{SCR}/intake_thieu/nhan", "{FX13}/ocr/nhan_mat_ong.png"],
+         "expect_exit": 0, "stdout_re": r"\[prep\] ok"},
+        {"argv": ["python", "{HX}/guard_run.py.txt", "-m", "ingest.doc_intake"],
+         "env": {"OCR_PROVIDER": "paddle_local", "OCR_PADDLE_MODEL_DIR": "{SCR}/models_thieu", "OCR_MAX_PAGES": None,
+                 "OCR_TIMEOUT_S": None, "DOC_INTAKE_DIR": "{SCR}/intake_thieu", "DOC_ORIGINALS_DIR": "{SCR}/originals"},
+         "expect_exit": 1,
+         "stdout_re": r"(?s)(?=.*\[err\] #1 thiếu model OCR cục bộ \(det, rec, cls\) ở OCR_PADDLE_MODEL_DIR)"
+                      r"(?=.*\[done\] new=0 dup=0 cho_ocr=0 skipped=0 error=1)",
+         "stderr_re": r"(?s)(?=.*" + GUARD0 + r")(?!.*Traceback)"}],
+    "kiem": [{"sql": "select count(*) from documents where filename = 'nhan_mat_ong.png'", "expect": 0}]}])
+items.append(dp021)
+
+# ---- marketing-02.1 (F2) --------------------------------------------------------------
+m021 = pick(v1, "marketing-02.1")
+IMG_ENV = {"PACKSHOT_DIR": "{SCR}/packshots", "IMAGE_PROVIDER": "openrouter_images", "IMAGE_MODEL": "thu-r13/model-anh-gia",
+           "LLM_KILL_FEATURES": "", "LLM_KILL": "", "LLM_CAP_DEFAULT_USD": ""}
+SPEND = ("from pipelines import llm_gateway as gw; print('SPEND_TINH_NANG', round(gw._month_spend('marketing-02.1', "
+         "gw._FEATURE_SPEND_SQL), 2), 'SPEND_AGENT', round(gw._month_spend('image'), 2))")
+for n, (payload, ch) in enumerate((("bad_b64", "web"), ("not_image", "shopee")), 1):
+    m021["ca"].append({
+        "ma": f"marketing-02.1__FIX4-0{n}", "nguon_r10": NEW,
+        "mo_ta": f"F2: HTTP 200 + usage.cost 0.40 nhưng ảnh hỏng ({payload}) → image_studio từ chối (refused 1), sổ "
+                 "llm_usage thật nhận ĐÚNG 1 dòng mới cost 0.40 ok=false feature marketing-02.1; chi tiêu tháng mà cổng "
+                 "_gate đọc (`_month_spend`) cộng khoản đó (0.04 của R13-01 + 0.40/lần lỗi). HTTP = MockTransport",
+        "buoc": [
+            {"argv": ["python", "{HX}/image_run_fix4.py.txt", "{OUT}/image_http.json", "--sku", "mat-ong-sam-300ml",
+                      "--channel", ch, "--headline", "Quà quê Quảng Nam Thử R13", "--scene", "vườn sâm buổi sáng"],
+             "env": {**IMG_ENV, "IMAGE_OUT_DIR": f"{{SCR}}/img_{payload}", "IMAGE_RUN_PAYLOAD": payload},
+             "expect_exit": 0,
+             "stdout_re": r"\[done\] 1 ảnh — created 0, skipped 0, refused 1, failed 0",
+             "stderr_re": r"\[image_run\] requests=1\b"},
+            {"argv": ["python", "-c", SPEND], "expect_exit": 0,
+             "stdout_re": r"SPEND_TINH_NANG {v} SPEND_AGENT {v}\b".format(v=f"{0.04 + 0.40 * n:.2f}".replace(".", r"\."))}],
+        "kiem": [
+            {"sql": "select count(*) from llm_usage where agent_id = 'image' and not ok and cost_usd = 0.40 and "
+                    "feature_id = 'marketing-02.1'", "expect": n},
+            {"sql": "select round(sum(cost_usd)::numeric, 2)::text from llm_usage where feature_id = 'marketing-02.1'",
+             "expect": f"{0.04 + 0.40 * n:.2f}"}]})
+items.append(m021)
+
+# ---- data_platform-90 (F3) ------------------------------------------------------------
+PRE = {"PG_BIN": "C:/Program Files/PostgreSQL/17/bin", "WEBHOOK_DATABASE_URL": None, "JOB_DATABASE_URL": None,
+       "LOADER_DATABASE_URL": None, "BACKUP_DATABASE_URL": None, "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": None,
+       "BACKUP_KEEP": None}
+PASS_W = ("import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True); "
+          "p.write_bytes(sys.argv[2].encode('utf-8')+b'\\n'); print('PASSFILE', len(sys.argv[2]))")
+
+
+def real_backup_cases(iid, short):
+    bk, off, pf = ext(short, "bk_fix4"), ext(short, "off_fix4"), ext(short, "pass/fix4.pass")
+    env = {**PRE, "BACKUP_DIR": bk, "BACKUP_PASSPHRASE_FILE": pf, "BACKUP_REQUIRE_ENCRYPTION": "1",
+           "BACKUP_OFFSITE": "dir:" + off, "DRILL_DATABASE_URL": ""}
+    pre = lambda: {"argv": ["python", "scripts/onprem_preflight.py"], "env": dict(env), "expect_exit": 1}  # noqa: E731
+    c1 = {"ma": f"{iid}__FIX4-B1", "nguon_r10": NEW,
+          "mo_ta": "F3 ca dương LOCAL: backup THẬT (pg_dump DB thử, mã hóa openssl, offsite dir: ngoài repo — CÙNG thiết "
+                   "bị máy dev nên hàng offsite CHUA_DAT đúng sự thật) → preflight đo tệp: `sao_luu:ban_gan_nhat` DAT "
+                   "(dump local + offsite khớp size/sha256 manifest), mã hóa DAT, offsite CHUA_DAT cùng thiết bị",
+          "buoc": [
+              {"argv": ["python", "-c", PASS_W, pf, "ThuR13fix4-passphrase-fixture-khong-phai-khoa-that"],
+               "expect_exit": 0, "stdout_re": r"PASSFILE (?:1[6-9]|[2-9]\d)\b"},
+              {"argv": ["python", "scripts/db_backup.py"], "env": {k: v for k, v in env.items() if k != "BACKUP_KEEP"},
+               "expect_exit": 0,
+               "stdout_re": r"(?s)(?!.*CHƯA mã hóa)(?=.*\[done\] samsam_itacc_r13fix4_\w+_\d{8}_\d{6}_vn\.dump\.enc — "
+                            r"\d+ bytes)(?=.*\[offsite\] đã chép \+ kiểm sha256)"},
+              {**pre(), "stdout_re": r"(?s)(?=.*\| sao_luu:ban_gan_nhat \| DAT \| status=ok; [^|\n]*dump local \+ "
+                                     r"offsite đo khớp size/sha256 manifest \|)(?=.*\| sao_luu:ma_hoa_bat_buoc \| DAT \|)"
+                                     r"(?=.*\| sao_luu:offsite \| CHUA_DAT \| offsite CÙNG thiết bị)",
+               "stderr_re": r"\A(?![\s\S]*Traceback)"}]}
+    return c1, env, bk, off, pre
+
+
+dp90 = pick(v1, "data_platform-90")
+fake = ext("dp90", "fake")
+c1, env90, bk90, off90, pre90 = real_backup_cases("data_platform-90", "dp90")
+dp90["ca"] += [
+    {"ma": "data_platform-90__FIX4-01", "nguon_r10": NEW,
+     "mo_ta": "F3 tái hiện controller qua CLI: sổ backup_runs mới status=ok + offsite khác null, manifest CHỈ "
+              "{encrypted:true}, KHÔNG dump, offsite rỗng → `sao_luu:ban_gan_nhat` CHUA_DAT (manifest hỏng), exit 1",
+     "buoc": [
+         {"argv": ["python", "{HX}/mk_backup_fake.py.txt", fake], "expect_exit": 0, "stdout_re": r"\[fake\] ok"},
+         {"argv": ["python", "scripts/onprem_preflight.py"],
+          "env": {**PRE, "BACKUP_DIR": fake + "/bk", "BACKUP_PASSPHRASE_FILE": fake + "/khoa.txt",
+                  "BACKUP_REQUIRE_ENCRYPTION": "1", "BACKUP_OFFSITE": "dir:" + fake + "/off"},
+          "expect_exit": 1,
+          "stdout_re": r"\| sao_luu:ban_gan_nhat \| CHUA_DAT \| [^|\n]*manifest local thiếu/hỏng",
+          "stderr_re": r"\A(?![\s\S]*Traceback)"}]},
+    c1,
+    {"ma": "data_platform-90__FIX4-B2", "nguon_r10": NEW,
+     "mo_ta": "F3: xóa tệp dump ở offsite (giữ manifest) → `ban_gan_nhat` CHUA_DAT 'offsite: thiếu tệp dump'",
+     "buoc": [
+         {"argv": ["python", "-c", "import glob,os,sys; f=glob.glob(sys.argv[1]+'/*_vn.dump.enc'); [os.remove(x) for x "
+                   "in f]; print('XOA', len(f))", off90], "expect_exit": 0, "stdout_re": r"XOA 1\b"},
+         {**pre90(), "stdout_re": r"\| sao_luu:ban_gan_nhat \| CHUA_DAT \| [^|\n]*offsite: thiếu tệp dump"}]},
+    {"ma": "data_platform-90__FIX4-B3", "nguon_r10": NEW,
+     "mo_ta": "F3: lật 1 byte tệp dump local (cùng cỡ) → `ban_gan_nhat` CHUA_DAT 'local: sha256 tệp dump lệch manifest'",
+     "buoc": [
+         {"argv": ["python", "-c", "import glob,sys; f=glob.glob(sys.argv[1]+'/*_vn.dump.enc')[0]; b=bytearray(open(f,"
+                   "'rb').read()); b[len(b)//2]^=1; open(f,'wb').write(b); print('LAT', len(b))", bk90],
+          "expect_exit": 0, "stdout_re": r"LAT \d+"},
+         {**pre90(), "stdout_re": r"\| sao_luu:ban_gan_nhat \| CHUA_DAT \| [^|\n]*local: sha256 tệp dump lệch manifest"}]}]
+items.append(dp90)
+
+# ---- data_platform-07.2 (F3, backup) ---------------------------------------------------
+dp072 = pick(v1, "data_platform-07.2")
+c1b, env72, bk72, off72, pre72 = real_backup_cases("data_platform-07.2", "dp072")
+dp072["ca"] += [c1b, {
+    "ma": "data_platform-07.2__FIX4-B2", "nguon_r10": NEW,
+    "mo_ta": "F3: xóa tệp dump LOCAL sau backup thật (sổ + manifest còn) → `ban_gan_nhat` CHUA_DAT 'local: thiếu tệp dump'",
+    "buoc": [
+        {"argv": ["python", "-c", "import glob,os,sys; f=glob.glob(sys.argv[1]+'/*_vn.dump.enc'); [os.remove(x) for x in"
+                  " f]; print('XOA', len(f))", bk72], "expect_exit": 0, "stdout_re": r"XOA 1\b"},
+        {**pre72(), "stdout_re": r"\| sao_luu:ban_gan_nhat \| CHUA_DAT \| [^|\n]*local: thiếu tệp dump"}]}]
+items.append(dp072)
+
+# ---- farming-06 (F4) ------------------------------------------------------------------
+f06 = pick(v1, "farming-06")
+LY = ("tiêu chí r13 chạy --upgrade KHÔNG ép giai đoạn (farming-06 chưa vào sổ → chạy thử fail-closed) và kỳ vọng đi tới "
+      "calendar = mã hóa lỗi F4; bản thay chỉ thêm --force-mode van_hanh như R04, giữ exit/regex/kiểm")
+for k, c in enumerate(f06["ca"]):
+    if c["ma"] in ("farming-06__R03", "farming-06__R05", "farming-06__R06", "farming-06__R08"):
+        nc = copy.deepcopy(c)
+        nc["thay_the"], nc["ly_do_thay"], nc["ma"] = c["ma"], LY, c["ma"] + "v"
+        argv = nc["buoc"][0]["argv"]
+        assert argv[1] == "{H}/anchor_ots_run.py.txt" and "--force-mode" not in argv
+        argv[2:2] = ["--force-mode", "van_hanh"]
+        f06["ca"][k] = nc
+BLK = [("01", None, "chạy thử fail-closed (chưa vào sổ)"), ("02", "tat", "TẮT"),
+       ("03", "co_nguoi_duyet", "có người duyệt — job agent:anchor không phải người")]
+new_f06 = []
+for n, mode, what in BLK:
+    argv = ["python", "{H}/anchor_ots_run.py.txt", "--fake-get", "none"] + (["--force-mode", mode] if mode else []) + [
+        "--upgrade", "latest"]
+    new_f06.append({
+        "ma": f"farming-06__FIX4-{n}", "nguon_r10": NEW,
+        "mo_ta": f"F4: đã có biên nhận da_gui (sau R04) nhưng giai đoạn {what} → CLI --upgrade bị cổng triển khai chặn "
+                 "TRƯỚC mọi HTTP: exit 1, 0 GET calendar, 0 kết nối mạng, 0 dòng biên nhận mới",
+        "buoc": [{"argv": argv, "expect_exit": 1,
+                  "stdout_re": r"^(?![\s\S]*KHÔNG ĐƯỢC GỌI)[\s\S]*\[FAKE\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+                  "stderr_re": r"\[err\] nâng cấp biên nhận lần gom #\d+: tính năng farming-06 đang"}],
+        "kiem": [{"sql": "select count(*) from anchor_receipts", "expect": 1}]})
+ins_after(f06, "farming-06__R04", new_f06)
+items.append(f06)
+
+doc = {"_doc": __doc__, "nguon": {"r13_v1": hashlib.sha256((EV13 / "criteria" / "r13_v1.json").read_bytes()).hexdigest(),
+                                  "r13_v2": hashlib.sha256((EV13 / "criteria" / "r13_v2.json").read_bytes()).hexdigest()},
+       "moi_truong": "Postgres Docker riêng samsam-itacc-r13fix4 (127.0.0.1:55454), DB mới mỗi mục dựng bằng working tree "
+                     "(schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài",
+       "items": items}
+OUT.parent.mkdir(exist_ok=True)
+OUT.open("x", encoding="utf-8").write(json.dumps(doc, ensure_ascii=False, indent=1))
+h = hashlib.sha256(OUT.read_bytes()).hexdigest()
+LOCK.open("x", encoding="utf-8").write(f"r13fix4_v1.json {h} {datetime.now(timezone(timedelta(hours=7))).isoformat(timespec='seconds')}\n")
+print("OK", h, {i["id"]: len(i["ca"]) for i in items})

@@ -1,0 +1,54 @@
+"""HARNESS r13 — sinh fixture OCR TẤT ĐỊNH (chữ GIẢ, không dữ liệu thật) vào evidence/itacc_r13_docx12/fixtures/ocr/:
+  nhan_mat_ong.png      ảnh nhãn có chữ thật (font Arial Windows): tên SP, số ĐKSP, NSX/HSD, LOT
+  tiep_nhan_scan.pdf    PDF 2 trang CHỈ có ảnh (không lớp chữ) — giấy tiếp nhận + trang 2
+  trang.png             ảnh trắng (OCR rỗng)
+  hong.jpg              byte rác có đầu JPEG (ảnh hỏng)
+  qua_trang.pdf         PDF 31 trang ảnh nhỏ (> OCR_MAX_PAGES=30)
+Chạy lại cho cùng byte trừ PDF (PyMuPDF ghi ngày tạo) — sha256 ghi SHA256SUMS.txt lúc sinh, probe đọc tệp đã sinh.
+  python -I mk_fixtures_ocr.py.txt"""
+import hashlib
+import io
+from pathlib import Path
+
+import fitz
+from PIL import Image, ImageDraw, ImageFont
+
+OUT = Path(__file__).resolve().parents[1] / "fixtures" / "ocr"
+OUT.mkdir(parents=True, exist_ok=False)
+FONT = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 34)
+
+
+def card(lines, size=(1200, 70)):
+    im = Image.new("RGB", (size[0], 40 + size[1] * len(lines)), "white")
+    d = ImageDraw.Draw(im)
+    for i, t in enumerate(lines):
+        d.text((40, 20 + size[1] * i), t, fill="black", font=FONT)
+    return im
+
+
+card(["Mật ong sâm 300ml", "Số ĐKSP: 15/2026/ĐKSP", "NSX: 12/10/2026", "HSD: 12/10/2028",
+      "LOT: L2026-1012", "Thể tích thực: 300ml"]).save(OUT / "nhan_mat_ong.png")
+Image.new("RGB", (800, 600), "white").save(OUT / "trang.png")
+(OUT / "hong.jpg").write_bytes(b"\xff\xd8\xff\xe0" + bytes(range(256)) * 8)
+
+
+def img_pdf(path, images):
+    doc = fitz.open()
+    for im in images:
+        buf = io.BytesIO()
+        im.save(buf, "PNG")
+        page = doc.new_page(width=im.width * 0.75, height=im.height * 0.75)
+        page.insert_image(page.rect, stream=buf.getvalue())
+    doc.save(path)
+
+
+img_pdf(OUT / "tiep_nhan_scan.pdf",
+        [card(["GIẤY TIẾP NHẬN BẢN TỰ CÔNG BỐ", "Số: 123/2026/ĐKSP", "Ngày cấp: 05/10/2026",
+               "Tên sản phẩm: Mật ong sâm 300ml"]),
+         card(["Trang 2 - Cơ quan tiếp nhận", "Ghi chú: hồ sơ thử nghiệm r13"])])
+img_pdf(OUT / "qua_trang.pdf", [Image.new("RGB", (60, 60), "white")] * 31)
+with open(OUT / "SHA256SUMS.txt", "w", encoding="utf-8") as fh:
+    for p in sorted(OUT.iterdir()):
+        if p.name != "SHA256SUMS.txt":
+            fh.write(f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n")
+print(open(OUT / "SHA256SUMS.txt", encoding="utf-8").read())

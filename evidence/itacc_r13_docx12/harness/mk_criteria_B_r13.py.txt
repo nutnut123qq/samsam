@@ -1,0 +1,608 @@
+"""Sinh nháp tiêu chí r13 nhóm B (farming-01, farming-02.1, farming-02.2, farming-06) →
+evidence/itacc_r13_docx12/criteria/drafts/r13_B.json. Chỉ đọc evidence/itacc_r12/criteria/r12_farming_v3.json (farming-01
+đã khóa) + ghi tệp nháp; KHÔNG chạm DB, KHÔNG chạy lệnh sản phẩm.  python -I mk_criteria_B_r13.py.txt"""
+import copy
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+R12 = json.loads((REPO / "evidence/itacc_r12/criteria/r12_farming_v3.json").read_text(encoding="utf-8"))
+OUT = REPO / "evidence/itacc_r13_docx12/criteria/drafts/r13_B.json"
+SP = "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad"
+
+
+def ext(item, sub):
+    """Kho/thư mục NGOÀI repo, duy nhất theo lượt chạy ({SCR} nằm TRONG repo → sản phẩm từ chối kho media ở đó)."""
+    return "{sql:select '" + SP + "/r13/ext_farming/" + item + "-' || md5('{SCR}') || '/" + sub + "'}"
+
+
+SEED = {"argv": ["python", "-m", "pipelines.rollout", "--seed", "--by", "Người Thử R13"], "expect_exit": 0,
+        "stdout_re": "\\[OK\\] vào sổ"}
+PLOTS = {"argv": ["python", "-c", "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')"],
+         "expect_exit": 0}
+PLOTS_KIEM = [{"sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'", "expect": 4}]
+
+
+def extra_plots(ids):
+    vals = ",".join(f"('{i}','Sâm Thử IT',200,2022,'active','fixture:it_g5')" for i in ids)
+    return {"argv": ["python", "-c", "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values " + vals + "\"); c.commit(); print('seeded', " + repr(" ".join(ids)) + ")"],
+            "expect_exit": 0}
+
+
+# =========================================================== farming-01 (chép r12 đã khóa + MOI_R13)
+f01 = copy.deepcopy(next(i for i in R12["items"] if i["id"] == "farming-01"))
+s = json.dumps(f01, ensure_ascii=False)
+assert "{H}" not in s and "{FX}" not in s
+s = s.replace("samsam_itacc_r12_farm01", "samsam_itacc_r13_f01").replace(SP + "/r12/ext_farming/", SP + "/r13/ext_farming/")
+f01 = json.loads(s)
+for ca in f01["ca"]:
+    ca["nguon_r10_cua_r12"] = ca["nguon_r10"]   # mã r10 mà ca r12 trỏ tới (truy vết)
+    ca["nguon_r10"] = ca["ma"]               # = mã ca r12 đã khóa (bản ghi hiện hành của farming-01)
+    if ca["ma"] == "farming-01__S01":
+        ca["buoc"][0]["argv"][-1] = "Người Thử R13"
+        ca["mo_ta"] += " (r13: --by 'Người Thử R13')"
+f01["db"] = "samsam_itacc_r13_f01"
+f01["tieu_chi_cu_the"].append(
+    "T5 (MOI_R13) STT `whisper_local` (faster-whisper TẠI CHỖ): thiếu GARDEN_STT_MODEL_DIR / thư mục không có model.bin → "
+    "`--transcribe` exit 2 [blocked] nêu GARDEN_STT_MODEL_DIR TRƯỚC khi kết nối DB (DATABASE_URL chết vẫn không thấy lỗi kết nối); "
+    "có model (GIẢ, MOCK tại biên WhisperModel): WhisperModel(model_dir, device cpu, local_files_only=True), audio giải mã PyAV "
+    "float32 16 kHz (~32000 mẫu cho 2 giây), language vi → in [nhap] NHÁP đã che SĐT (***), nháp vẫn cho_chep_loi, không ghi "
+    "plot_logs, 0 lời gọi mạng Python; audio hỏng → exit 1 không gọi model; bản chép rỗng → exit 1; quá GARDEN_STT_MAX_SECONDS "
+    "→ exit 1 không gọi model; quá GARDEN_STT_TIMEOUT_S → exit 1 không in nháp. Chép lời THẬT = NOT_RUN (không có model Whisper)")
+f01["muc_kiem_de_xuat"] = "MOCK"
+f01["muc_kiem_ghi_chu"] = ("ca r12 chép nguyên = LOCAL (webhook thật 127.0.0.1, DEPLOY tắt, CDN giả của harness r10); STT "
+                           "whisper_local = MOCK tại biên WhisperModel (máy dev không có model Whisper — chạy thật BỊ CHẶN)")
+
+STT = "{H}/stt_run.py.txt"
+MEDIA, MODEL = ext("farming-01", "stt_media"), ext("farming-01", "stt_model")
+DEAD = "postgresql://itacc_r13@127.0.0.1:1/khong_co_db_r13"
+NOMODEL_RE = ("^(?![\\s\\S]*không kết nối)[\\s\\S]*\\[blocked\\] whisper_local cần model cục bộ đã duyệt: đặt "
+              "GARDEN_STT_MODEL_DIR tới thư mục có model\\.bin")
+NONET = "[\\s\\S]*FACT NET_CALLS 0"
+
+
+def stt_step(mode, env_extra=None, exit_=0, stdout_re=None, stderr_re=None):
+    st = {"argv": ["python", STT, "--mode", mode, "--model-dir", MODEL],
+          "env": {"GARDEN_MEDIA_DIR": MEDIA, "GARDEN_STT_PROVIDER": None, "GARDEN_STT_MODEL_DIR": None,
+                  "GARDEN_STT_MAX_SECONDS": None, "GARDEN_STT_TIMEOUT_S": None, **(env_extra or {})},
+          "expect_exit": exit_}
+    if stdout_re:
+        st["stdout_re"] = stdout_re
+    if stderr_re:
+        st["stderr_re"] = stderr_re
+    return st
+
+
+DRAFT_KIEM = [{"sql": "select count(*) from garden_voice_drafts where status <> 'cho_chep_loi'", "expect": 0},
+              {"sql": "select count(*) from plot_logs where detail like '%0912345678%' or detail like '%gọi ***%'",
+               "expect": 0}]
+f01["ca"] += [
+    {"ma": "farming-01__R01", "nguon_r10": "MOI_R13",
+     "mo_ta": "whisper_local thiếu model: (1) không đặt GARDEN_STT_MODEL_DIR, (2) thư mục không có model.bin → exit 2 [blocked] "
+              "nêu GARDEN_STT_MODEL_DIR; DATABASE_URL của bước trỏ cổng 1 (từ chối kết nối) — stderr KHÔNG có 'không kết nối' "
+              "⇒ kiểm model diễn ra TRƯỚC khi kết nối DB; DB thử không đổi",
+     "buoc": [{"argv": ["python", "-m", "connectors.zalo_garden", "--transcribe", "1"],
+               "env": {"GARDEN_STT_PROVIDER": "whisper_local", "GARDEN_STT_MODEL_DIR": None, "DATABASE_URL": DEAD},
+               "expect_exit": 2, "stderr_re": NOMODEL_RE},
+              {"argv": ["python", "-m", "connectors.zalo_garden", "--transcribe", "1"],
+               "env": {"GARDEN_STT_PROVIDER": "whisper_local", "GARDEN_STT_MODEL_DIR": "{SCR}/khong_co_model",
+                       "DATABASE_URL": DEAD},
+               "expect_exit": 2, "stderr_re": NOMODEL_RE}],
+     "kiem": [{"sql": "select count(*) from garden_voice_drafts", "expect": 1},
+              {"sql": "select count(*) from garden_voice_drafts where status = 'cho_chep_loi'", "expect": 1}]},
+    {"ma": "farming-01__R02", "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK biên WhisperModel (harness r13 stt_run.py.txt): WAV 2 s tất định → kho NGOÀI repo + nháp cho_chep_loi → "
+              "`--transcribe ID` exit 0, [nhap] NHÁP 'Khoảnh KV-A01 tưới 30 phút gọi ***' (SĐT che), model khởi tạo 1 lần với "
+              "thư mục model GIẢ + device cpu + local_files_only=True, audio float32 ~32000 mẫu, language vi, nháp vẫn "
+              "cho_chep_loi, 0 lời gọi mạng",
+     "buoc": [stt_step("ok", stdout_re=(
+         "^(?![\\s\\S]*0912345678)[\\s\\S]*\\[nhap\\] #\\d+ \\(whisper_local\\) — NHÁP[\\s\\S]*Khoảnh KV-A01 tưới 30 phút gọi "
+         "\\*\\*\\*[\\s\\S]*FACT RC 0[\\s\\S]*FACT NHAP_PRESENT True[\\s\\S]*FACT TEXT_PRESENT True[\\s\\S]*FACT PHONE_MASKED "
+         "True[\\s\\S]*FACT MODEL_INIT 1[\\s\\S]*FACT TRANSCRIBE_CALLS 1[\\s\\S]*FACT MODEL_PATH_OK True[\\s\\S]*FACT "
+         "LOCAL_FILES_ONLY True[\\s\\S]*FACT DEVICE cpu[\\s\\S]*FACT AUDIO_OK True[\\s\\S]*FACT AUDIO_DTYPE float32[\\s\\S]*"
+         "FACT LANGUAGE vi[\\s\\S]*FACT DRAFT_STATUS cho_chep_loi" + NONET),
+         stderr_re="^(?![\\s\\S]*0912345678)")],
+     "kiem": [{"sql": "select count(*) from garden_voice_drafts where source = 'fixture:r13_stt' and status = 'cho_chep_loi'",
+               "expect": 1}] + DRAFT_KIEM},
+    {"ma": "farming-01__R03", "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK: ghi âm hỏng (magic RIFF/WAVE đúng, thân rác) → PyAV không giải mã được → exit 1, KHÔNG khởi tạo/gọi model",
+     "buoc": [stt_step("corrupt", exit_=1,
+                       stdout_re=("^(?![\\s\\S]*\\[nhap\\])[\\s\\S]*FACT RC 1[\\s\\S]*FACT MODEL_INIT 0[\\s\\S]*FACT "
+                                  "TRANSCRIBE_CALLS 0[\\s\\S]*FACT DRAFT_STATUS cho_chep_loi" + NONET),
+                       stderr_re="\\[err\\] STT whisper_local: (không giải mã được ghi âm|ghi âm rỗng)")],
+     "kiem": [{"sql": "select count(*) from garden_voice_drafts where source = 'fixture:r13_stt'", "expect": 2}]
+     + DRAFT_KIEM},
+    {"ma": "farming-01__R04", "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK: model trả bản chép rỗng → exit 1 'không ra chữ — người nghe ghi tay', không in nháp",
+     "buoc": [stt_step("empty", exit_=1,
+                       stdout_re=("^(?![\\s\\S]*\\[nhap\\])[\\s\\S]*FACT RC 1[\\s\\S]*FACT MODEL_INIT 1[\\s\\S]*FACT "
+                                  "TRANSCRIBE_CALLS 1[\\s\\S]*FACT DRAFT_STATUS cho_chep_loi" + NONET),
+                       stderr_re="\\[err\\] STT whisper_local không ra chữ — người nghe ghi tay")],
+     "kiem": [{"sql": "select count(*) from garden_voice_drafts where source = 'fixture:r13_stt'", "expect": 3}]
+     + DRAFT_KIEM},
+    {"ma": "farming-01__R05", "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK: GARDEN_STT_MAX_SECONDS=1 với ghi âm 2 s (cùng tệp R02 → cùng nháp) → exit 1 'ghi âm …s > 1s', KHÔNG "
+              "khởi tạo/gọi model",
+     "buoc": [stt_step("ok", env_extra={"GARDEN_STT_MAX_SECONDS": "1"}, exit_=1,
+                       stdout_re=("^(?![\\s\\S]*\\[nhap\\])[\\s\\S]*FACT RC 1[\\s\\S]*FACT MODEL_INIT 0[\\s\\S]*FACT "
+                                  "TRANSCRIBE_CALLS 0[\\s\\S]*FACT DRAFT_STATUS cho_chep_loi" + NONET),
+                       stderr_re="\\[err\\] STT whisper_local: ghi âm \\d+\\.\\ds > 1s")],
+     "kiem": [{"sql": "select count(*) from garden_voice_drafts where source = 'fixture:r13_stt'", "expect": 3}]
+     + DRAFT_KIEM},
+    {"ma": "farming-01__R06", "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK: GARDEN_STT_TIMEOUT_S=1, model giả ngủ 3 s → exit 1 'STT quá 1 giây — bỏ', kết quả muộn không in nháp",
+     "buoc": [stt_step("slow", env_extra={"GARDEN_STT_TIMEOUT_S": "1"}, exit_=1,
+                       stdout_re=("^(?![\\s\\S]*\\[nhap\\])[\\s\\S]*FACT RC 1[\\s\\S]*FACT MODEL_INIT 1[\\s\\S]*FACT "
+                                  "TRANSCRIBE_CALLS 1[\\s\\S]*FACT DRAFT_STATUS cho_chep_loi" + NONET),
+                       stderr_re="\\[err\\] STT whisper_local: STT quá 1 giây — bỏ")],
+     "kiem": [{"sql": "select count(*) from garden_voice_drafts where source = 'fixture:r13_stt'", "expect": 4}]
+     + DRAFT_KIEM},
+    {"ma": "farming-01__R07", "nguon_r10": "MOI_R13",
+     "mo_ta": "Chép lời THẬT bằng faster-whisper + model Whisper được duyệt (chất lượng tiếng Việt giọng vùng)",
+     "not_run": "Máy dev KHÔNG có model Whisper cục bộ (GARDEN_STT_MODEL_DIR chứa model.bin) và không được tự tải "
+                "(local_files_only) — chạy thật BỊ CHẶN tới khi model được duyệt + tải về server Bên B; R02–R06 chỉ là MOCK "
+                "tại biên WhisperModel"},
+]
+
+# =========================================================== farming-02.1
+FX = "{{FX13}}/items/{}"
+GD = "{FX10}/g5/harness/gd_run.py.txt"
+
+
+def gd(item, staff, cfg=True, extra=("--remind", "--submit")):
+    a = ["python", GD, "--staff", FX.format(item) + "/" + staff]
+    if cfg:
+        a += ["--remind-cfg", FX.format(item) + "/garden_remind_thucong.json"]
+    return a + list(extra)
+
+
+IT_LOG = {"argv": ["python", "-m", "agents.garden", "--plot", "IT-K01", "--activity", "tưới", "--detail",
+                   "tưới thử R13 (thay nhật ký Zalo F01 r10 trên DB chung)", "--author", "Người Thử R13"],
+          "expect_exit": 0, "stdout_re": "\\[done\\] nhật ký #\\d+: IT-K01"}
+K03_ID = "{sql:select id from garden_reminders where plot_id = 'IT-K03' and dot_key = 'none'}"
+STAGE = "select stage from feature_rollout where feature_id = '{}'"
+
+
+def seeds(item):
+    return [
+        {"ma": f"{item}__S01", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "seed sổ triển khai — farming-02.1/02.2 code_status co_code → chạy thử", "buoc": [SEED],
+         "kiem": [{"sql": STAGE.format("farming-02.1"), "expect": "chay_thu"},
+                  {"sql": STAGE.format("farming-02.2"), "expect": "chay_thu"}]},
+        {"ma": f"{item}__S02", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "khoảnh FIXTURE IT-K01..K04 (owner, đúng giá trị evidence/itacc_r10/g5/seed_farm_plots.txt) — DB r13 riêng mục",
+         "buoc": [PLOTS], "kiem": PLOTS_KIEM},
+        {"ma": f"{item}__S03", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "1 nhật ký IT-K01 lúc chạy (r10: IT-K01 đã có nhật ký từ ca Zalo F01 trên DB chung → không bỏ trống; "
+                  "gioi_han r10 ghi 'ca có người dùng IT-K03')",
+         "buoc": [IT_LOG],
+         "kiem": [{"sql": "select count(*) from plot_logs where plot_id = 'IT-K01' and row_hash is not null", "expect": 1}]},
+    ]
+
+
+REM_KIEM = [
+    {"sql": "select count(*) from garden_reminders where plot_id = 'IT-K03' and dot_key = 'none' and kind = 'no-logs' and "
+            "ma_nv = 'IT-NV01' and status = 'cho_gui' and kenh = 'thu_cong' and not is_sample and reminded_at is null",
+     "expect": 1},
+    {"sql": "select count(*) from garden_reminders where plot_id in ('IT-K02', 'IT-K04') and dot_key = 'none' and kind = "
+            "'no-logs' and ma_nv is null and status = 'khong_nguoi_nhan' and kenh = 'thu_cong' and not is_sample",
+     "expect": 2},
+    {"sql": "select count(*) from garden_reminders where plot_id = 'IT-K01'", "expect": 0},
+    {"sql": "select count(*) from garden_reminders where plot_id like 'KV-%' and not is_sample", "expect": 0},
+    {"sql": "select count(*) from garden_reminders where plot_id like 'KV-%' and is_sample and kind = 'gap'", "expect": 3},
+    {"sql": "select count(*) from garden_reminders where closed_at is null", "expect": 6},
+]
+F021_01_RE = ("^(?![\\s\\S]*\\[no-logs\\] IT-K01)(?![\\s\\S]*\\[blocked\\] chưa chọn kênh)[\\s\\S]*\\[HARNESS\\] "
+              "STAFF_FILE=fixture garden_staff_v2\\.json[\\s\\S]*\\[HARNESS\\] remind cfg=fixture "
+              "garden_remind_thucong\\.json[\\s\\S]*\\[no-logs\\] IT-K02[\\s\\S]*\\[no-logs\\] IT-K03[\\s\\S]*\\[no-logs\\] "
+              "IT-K04[\\s\\S]*\\[remind\\] báo GĐ vùng trồng: \\d+ mục mới \\(plot_log_gap\\)")
+f021 = {
+    "id": "farming-02.1", "db": "samsam_itacc_r13_f021",
+    "tieu_chi_cu_the": [
+        "T1 `agents.garden_director --remind --submit` (harness r10 gd_run.py.txt: STAFF_FILE/remind cfg = FIXTURE) ghi "
+        "garden_reminders 1 dòng/khoảnh/đợt (dot_key), ma_nv từ staff fixture, status theo kênh (null→cho_kenh; thu_cong→cho_gui;"
+        " không người→khong_nguoi_nhan), is_sample đúng (khoảnh mẫu KV-* = true, IT-* = false)",
+        "T2 Người đánh dấu đã nhắc `--mark-reminded ID --by` (kênh thu_cong FIXTURE) → reminded_at/reminded_by + "
+        "agent_action_log garden_reminder_done, chỉ 1 lần; `--reminders` liệt kê đợt mở",
+        "T3 Ca âm: chạy lại không nhân dòng; --by agent: bị chặn (0 đổi); đánh dấu lần 2 → exit 1; cấu hình repo kenh=null → "
+        "cho_kenh + [blocked] + báo GĐ",
+        "T4 Không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+    ],
+    "muc_kiem_de_xuat": "LOCAL",
+    "ca": seeds("farming-02.1") + [
+        {"ma": "farming-02.1__C01", "nguon_r10": "F021-01", "mo_ta": "Sinh sổ nhắc (staff_v2 + kênh thu_cong FIXTURE)",
+         "buoc": [{"argv": gd("farming-02.1", "garden_staff_v2.json"), "expect_exit": 0, "stdout_re": F021_01_RE}],
+         "kiem": REM_KIEM},
+        {"ma": "farming-02.1__C02", "nguon_r10": "F021-02", "mo_ta": "Idempotent — chạy lại 0 dòng/mục mới",
+         "buoc": [{"argv": gd("farming-02.1", "garden_staff_v2.json"), "expect_exit": 0,
+                   "stdout_re": "\\[remind\\] báo GĐ vùng trồng: 0 mục mới \\(plot_log_gap\\)"}],
+         "kiem": [{"sql": "select count(*) from garden_reminders", "expect": 6},
+                  {"sql": "select count(*) from garden_reminders where closed_at is null", "expect": 6}]},
+        {"ma": "farming-02.1__C04", "nguon_r10": "F021-04",
+         "mo_ta": "Âm: agent ghi thay (chạy TRƯỚC F021-03 như thứ tự thực tế r10 10:22:52 < 10:22:55) → exit 1, 0 đổi",
+         "buoc": [{"argv": ["python", GD, "--staff", FX.format("farming-02.1") + "/garden_staff_v2.json", "--remind-cfg",
+                            FX.format("farming-02.1") + "/garden_remind_thucong.json", "--mark-reminded", K03_ID, "--by",
+                            "agent:garden_director"],
+                   "expect_exit": 1, "out_re": "'agent:garden_director' không phải người"}],
+         "kiem": [{"sql": "select count(*) from garden_reminders where plot_id = 'IT-K03' and reminded_at is null and "
+                          "reminded_by is null", "expect": 1},
+                  {"sql": "select count(*) from agent_action_log where action = 'garden_reminder_done'", "expect": 0}]},
+        {"ma": "farming-02.1__C03", "nguon_r10": "F021-03", "mo_ta": "Người đánh dấu đã nhắc (id đợt IT-K03 lấy từ DB thay hằng #3 r10)",
+         "buoc": [{"argv": ["python", GD, "--staff", FX.format("farming-02.1") + "/garden_staff_v2.json", "--remind-cfg",
+                            FX.format("farming-02.1") + "/garden_remind_thucong.json", "--mark-reminded", K03_ID, "--by",
+                            "Người Thử IT"],
+                   "expect_exit": 0, "stdout_re": "\\[ok\\] #\\d+ đã nhắc — Người Thử IT"}],
+         "kiem": [{"sql": "select count(*) from garden_reminders where plot_id = 'IT-K03' and reminded_at is not null and "
+                          "reminded_by = 'Người Thử IT' and status = 'cho_gui'", "expect": 1},
+                  {"sql": "select count(*) from agent_action_log where action = 'garden_reminder_done' and object_type = "
+                          "'garden_reminder' and actor = 'Người Thử IT' and object_id = (select id::text from "
+                          "garden_reminders where plot_id = 'IT-K03' and dot_key = 'none')", "expect": 1}]},
+        {"ma": "farming-02.1__C05", "nguon_r10": "F021-05", "mo_ta": "Âm: đánh dấu lần 2 → exit 1",
+         "buoc": [{"argv": ["python", GD, "--staff", FX.format("farming-02.1") + "/garden_staff_v2.json", "--remind-cfg",
+                            FX.format("farming-02.1") + "/garden_remind_thucong.json", "--mark-reminded", K03_ID, "--by",
+                            "Người Thử IT"],
+                   "expect_exit": 1, "out_re": "không ở trạng thái chờ nhắc thủ công"}],
+         "kiem": [{"sql": "select count(*) from agent_action_log where action = 'garden_reminder_done'", "expect": 1}]},
+        {"ma": "farming-02.1__C06", "nguon_r10": "F021-03b", "mo_ta": "--reminders liệt kê đợt mở (r10 '4 đợt' — DB riêng r13: "
+                                                                      "3 khoảnh mẫu KV-* bỏ trống > 14 ngày từ 23/10 + IT-K02/K03/K04 = 6)",
+         "buoc": [{"argv": gd("farming-02.1", "garden_staff_v2.json", extra=("--reminders",)), "expect_exit": 0,
+                   "stdout_re": ("#\\d+ khoảnh IT-K02 đợt none · người phụ trách — · khong_nguoi_nhan · kênh thu_cong"
+                                 "[\\s\\S]*#\\d+ khoảnh IT-K03 đợt none · người phụ trách IT-NV01 · đã nhắc · kênh thu_cong"
+                                 "[\\s\\S]*\\[reminders\\] 6 đợt đang mở")}]},
+        {"ma": "farming-02.1__M01", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "khoảnh FIXTURE IT-K05 (r10 có sẵn trên DB chung trước F021-06, không có bản ghi tạo) — owner",
+         "buoc": [extra_plots(["IT-K05"])],
+         "kiem": [{"sql": "select count(*) from plots where id = 'IT-K05' and status = 'active'", "expect": 1}]},
+        {"ma": "farming-02.1__C07", "nguon_r10": "F021-06", "mo_ta": "Kênh null (cấu hình repo data/garden_remind.json) + staff_v3",
+         "buoc": [{"argv": gd("farming-02.1", "garden_staff_v3.json", cfg=False), "expect_exit": 0,
+                   "stdout_re": ("\\[no-logs\\] IT-K05[\\s\\S]*\\[blocked\\] chưa chọn kênh nhắc nhân viên "
+                                 "\\(data/garden_remind\\.json kenh=null — D-KH-09\\)[\\s\\S]*\\[remind\\] báo GĐ vùng trồng: "
+                                 "\\d+ mục mới \\(plot_log_gap\\)")}],
+         "kiem": [{"sql": "select count(*) from garden_reminders where plot_id = 'IT-K05' and status = 'cho_kenh' and kenh is "
+                          "null and ma_nv = 'IT-NV01' and not is_sample", "expect": 1},
+                  {"sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and object_id = "
+                          "'gap:IT-K05:none' and block = 'farming' and created_by = 'agent:garden_director' and status = "
+                          "'pending'", "expect": 1},
+                  {"sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and object_id like "
+                          "'gap:IT-%'", "expect": 3},
+                  {"sql": "select count(*) from garden_reminders where plot_id = 'IT-K03' and status = 'cho_gui' and "
+                          "reminded_by = 'Người Thử IT'", "expect": 1}]},
+    ],
+}
+
+# =========================================================== farming-02.2
+GAP_K = ("select count(*) from approval_queue where block = 'farming' and object_type = 'plot_log_gap' and created_by = "
+         "'agent:garden_director' and status = 'pending' and decided_by is null and decided_at is null and object_id in "
+         "('gap:IT-K02:none', 'gap:IT-K04:none') and payload like '%CHƯA gán người phụ trách%'")
+f022 = {
+    "id": "farming-02.2", "db": "samsam_itacc_r13_f022",
+    "tieu_chi_cu_the": [
+        "T1 Khoảnh bỏ trống không nhắc được (khong_nguoi_nhan/cho_kenh) → mục approval_queue block farming object_type "
+        "plot_log_gap created_by agent:garden_director, payload nêu khoảnh + lý do, pending (không tự duyệt)",
+        "T2 Bản tin tuần `--bulletin --until --out-dir` → garden-week-<until>.md nhãn CHẠY THỬ — KHÔNG GỬI (không tọa độ/vị "
+        "trí/diện tích/người ghi)",
+        "T3 Ca âm: chạy lại không nhân mục; tính năng 02.2 tắt → exit 2, không sinh mục; promote tắt → chạy thử",
+        "T4 Không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+    ],
+    "muc_kiem_de_xuat": "LOCAL",
+    "ca": seeds("farming-02.2") + [
+        {"ma": "farming-02.2__C01", "nguon_r10": "F022-01", "mo_ta": "Leo thang GĐ (cùng lệnh F021-01 như r10)",
+         "buoc": [{"argv": gd("farming-02.2", "garden_staff_v2.json"), "expect_exit": 0,
+                   "stdout_re": "\\[remind\\] báo GĐ vùng trồng: \\d+ mục mới \\(plot_log_gap\\)"}],
+         "kiem": [{"sql": GAP_K, "expect": 2},
+                  {"sql": "select count(*) from approval_queue where object_id = 'gap:IT-K02:none' and payload like "
+                          "'Khoảnh IT-K02: chưa có nhật ký nào. Nhắc người phụ trách (chưa gán): khoảnh CHƯA gán người phụ "
+                          "trách%'", "expect": 1},
+                  {"sql": "select count(*) from approval_queue where object_id like 'gap:IT-K01%' or object_id like "
+                          "'gap:IT-K03%'", "expect": 0},
+                  {"sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and status <> 'pending'",
+                   "expect": 0}]},
+        {"ma": "farming-02.2__C02", "nguon_r10": "F022-02", "mo_ta": "Idempotent — không thêm mục",
+         "buoc": [{"argv": gd("farming-02.2", "garden_staff_v2.json"), "expect_exit": 0,
+                   "stdout_re": "\\[remind\\] báo GĐ vùng trồng: 0 mục mới \\(plot_log_gap\\)"}],
+         "kiem": [{"sql": GAP_K, "expect": 2},
+                  {"sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and object_id like "
+                          "'gap:IT-%'", "expect": 2}]},
+        {"ma": "farming-02.2__C03", "nguon_r10": "F022-03", "mo_ta": "Bản tin tuần → {OUT}/garden-week-2026-10-22.md (r10: --out-dir scratchpad)",
+         "buoc": [{"argv": ["python", "-m", "agents.garden_director", "--bulletin", "--until", "2026-10-22", "--out-dir",
+                            "{OUT}"],
+                   "expect_exit": 0, "stdout_re": "\\[done\\] .*garden-week-2026-10-22\\.md"}],
+         "kiem": [{"file_glob": "{OUT}/garden-week-2026-10-22.md", "count": 1},
+                  {"file_re": "{OUT}/garden-week-2026-10-22.md", "re": "CHẠY THỬ — KHÔNG GỬI", "expect": True},
+                  {"file_re": "{OUT}/garden-week-2026-10-22.md", "re": "# Bản tin vùng trồng — 2026-10-16 → 2026-10-22",
+                   "expect": True},
+                  {"file_re": "{OUT}/garden-week-2026-10-22.md",
+                   "re": "zalo:IT-NV01|Người Thử|area_m2|Trà My|Nam Giang|\\b1[45]\\.\\d{3,}|\\b10[78]\\.\\d{3,}",
+                   "expect": False}]},
+        {"ma": "farming-02.2__C04", "nguon_r10": "F022-04a", "mo_ta": "rollout --disable farming-02.2",
+         "buoc": [{"argv": ["python", "-m", "pipelines.rollout", "--disable", "farming-02.2", "--by", "Người Thử IT",
+                            "--note", "ca âm thử IT g5"],
+                   "expect_exit": 0, "stdout_re": "\\[OK\\] farming-02\\.2: chạy thử → tắt"}],
+         "kiem": [{"sql": STAGE.format("farming-02.2"), "expect": "tat"}]},
+        {"ma": "farming-02.2__M01", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "khoảnh FIXTURE IT-K05 + IT-K06 (r10 có sẵn trên DB chung trước F022-04b) — owner",
+         "buoc": [extra_plots(["IT-K05", "IT-K06"])],
+         "kiem": [{"sql": "select count(*) from plots where id in ('IT-K05', 'IT-K06') and status = 'active'", "expect": 2}]},
+        {"ma": "farming-02.2__C05", "nguon_r10": "F022-04b",
+         "mo_ta": "Âm: 02.2 tắt → exit 2, 0 mục IT-K06 (r13 DB riêng: IT-K05 cũng chưa từng leo thang → 0 mục IT-K05)",
+         "buoc": [{"argv": gd("farming-02.2", "garden_staff_v3.json", cfg=False), "expect_exit": 2,
+                   "out_re": "\\[no-logs\\] IT-K06[\\s\\S]*tính năng farming-02\\.2 đang tắt"}],
+         "kiem": [{"sql": "select count(*) from approval_queue where object_id like 'gap:IT-K06%'", "expect": 0},
+                  {"sql": "select count(*) from approval_queue where object_id like 'gap:IT-K05%'", "expect": 0},
+                  {"sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and object_id like "
+                          "'gap:IT-%'", "expect": 2}]},
+        {"ma": "farming-02.2__C06", "nguon_r10": "F022-04c", "mo_ta": "promote tắt → chạy thử",
+         "buoc": [{"argv": ["python", "-m", "pipelines.rollout", "--promote", "farming-02.2", "--by", "Người Thử IT"],
+                   "expect_exit": 0, "stdout_re": "\\[OK\\] farming-02\\.2: tắt → chạy thử"}],
+         "kiem": [{"sql": STAGE.format("farming-02.2"), "expect": "chay_thu"}]},
+    ],
+}
+
+# =========================================================== farming-06
+FX12_32 = "{FX12}/items/farming-03.2"
+QR = "{FX10}/g5/harness/qr_run.py.txt"
+HV = "{sql:select max(id) from plot_logs where activity = 'thu hoạch'}"
+ANC = "{H}/anchor_ots_run.py.txt"
+LEAVES = "select count(*) from anchor_batches b, jsonb_array_elements(b.leaves) e where e->>'k' like '{}'"
+NREC = "select count(*) from anchor_receipts"
+RELATION = ("select jsonb_array_length(leaves) = 1 + (select count(*) from qr_signatures)::int + (select count(*) from "
+            "qr_codes)::int + (select count(*) from qr_codes where revoked_at is not null)::int from anchor_batches order by "
+            "id desc limit 1")
+SHA_CHECK = ("import glob,hashlib,sys\nf=glob.glob(sys.argv[1]); print('N', len(f))\n"
+             "print('SHA_OK', len(f) == 1 and hashlib.sha256(open(f[0], 'rb').read()).hexdigest() == sys.argv[2])\n")
+
+
+def qr(*a):
+    return {"argv": ["python", QR, "--signers", FX12_32 + "/qr_signers.json", *a], "expect_exit": 0}
+
+
+def anc(*a, post=None, get=None, force=None, exit_=0, stdout_re=None, stderr_re=None):
+    argv = ["python", ANC]
+    if post:
+        argv += ["--fake-post", post]
+    if get:
+        argv += ["--fake-get", get]
+    if force:
+        argv += ["--force-mode", force]
+    st = {"argv": argv + list(a), "expect_exit": exit_}
+    if stdout_re:
+        st["stdout_re"] = stdout_re
+    if stderr_re:
+        st["stderr_re"] = stderr_re
+    return st
+
+
+NOT_CALLED = "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)"
+f06 = {
+    "id": "farming-06", "db": "samsam_itacc_r13_f06",
+    "tieu_chi_cu_the": [
+        "T1 `pipelines.anchor --build` gom lá (đầu chuỗi plot_logs + chữ ký/phát hành/thu hồi QR lô không mẫu) → "
+        "anchor_batches (merkle_root, manifest_sha256, created_by agent:anchor); lá không có tên người ký/mã khoảnh",
+        "T2 --verify OK (đối chiếu nội bộ); --export --out → anchor-<id>.json sha256 = manifest_sha256; --submit provider none "
+        "→ exit 2 không ghi receipt; --status liệt kê",
+        "T3 Ca âm: build lại không đổi → không dòng mới; --dry-run không ghi; neo thật = EXTERNAL_INPUT (không gọi calendar "
+        "thật)",
+        "T4 Không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+        "T5 (MOI_R13) provider repo vẫn none: `--upgrade` CLI → exit 2 không ghi. Calendar GIẢ đúng định dạng OTS (MOCK, harness "
+        "anchor_ots_run.py.txt): biên DÙNG rollout (farming-06 chạy thử) chặn submit trước mọi POST; upgrade khi chưa gửi → exit 1; "
+        "submit chỉ gửi 32 byte digest = manifest_sha256, calendar trả rác bị bỏ, calendar hợp lệ → 1 dòng anchor_receipts da_gui "
+        "(biên nhận = header OTS ‖ digest ‖ cây); upgrade 404 → 'cho' 0 dòng mới, GET đúng <calendar trong cấu hình>/timestamp/"
+        "<commitment>; upgrade có attestation Bitcoin → dòng MỚI da_nang_cap (append-only, da_gui giữ nguyên), trạng thái nói "
+        "'CHƯA xác minh bên thứ ba'; verify 0 vấn đề; upgrade lại → 0 GET, 0 dòng mới; export .ots = biên nhận da_nang_cap. "
+        "Neo/xác minh Bitcoin THẬT = NOT_RUN",
+    ],
+    "muc_kiem_de_xuat": "MOCK",
+    "muc_kiem_ghi_chu": "ca r10 = LOCAL (provider none); ca MOI_R13 opentimestamps = MOCK (calendar giả theo định dạng OTS)",
+    "ca": [
+        {"ma": "farming-06__S01", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "seed sổ triển khai (farming-06 mot_phan → KHÔNG vào sổ → chạy thử fail-closed)", "buoc": [SEED],
+         "kiem": [{"sql": "select count(*) from feature_rollout where feature_id = 'farming-06'", "expect": 0}]},
+        {"ma": "farming-06__S02", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "khoảnh FIXTURE IT-K01..K04 (như r12 farming-03.x S02)", "buoc": [PLOTS], "kiem": PLOTS_KIEM},
+        {"ma": "farming-06__S03", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "tiền đề hồ sơ lô — đúng bước r12 farming-03.2__S03 (ảnh IT-K01 kho NGOÀI repo, nhật ký thu hoạch ts cố định, "
+                  "lô IT-LOT-G5-02 source manual + kiểm nhập passed, ánh xạ có 1 ảnh); fixture đọc từ {FX12}/items/farming-03.2",
+         "buoc": [
+             {"argv": ["python", "scripts/garden_media.py", "--file", FX12_32 + "/anh_gps.jpg", "--plot", "IT-K01", "--date",
+                       "2026-10-22", "--by", "Người Thử IT", "--store", ext("farming-06", "media")], "expect_exit": 0},
+             {"argv": ["python", "-m", "agents.garden", "--plot", "IT-K01", "--activity", "thu hoạch", "--detail",
+                       "Thu hoạch thử IT 5kg", "--author", "Người Thử IT", "--ts", "2026-10-23T03:24:00Z"], "expect_exit": 0},
+             {"argv": ["python", "-m", "pipelines.production", "lots", "--load", FX12_32 + "/lots2.json", "--source",
+                       "manual"], "expect_exit": 0},
+             {"argv": ["python", "-m", "pipelines.production", "intake", "--lot", "IT-LOT-G5-02", "--result", "passed",
+                       "--by", "GĐ SX Thử IT"], "expect_exit": 0},
+             {"argv": ["python", "-m", "pipelines.qr_trace", "link", "--lot", "IT-LOT-G5-02", "--log", HV, "--media",
+                       "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+                       "--by", "GĐ SX Thử IT"], "expect_exit": 0}],
+         "kiem": [{"sql": "select count(*) from lot_origins where lot_code = 'IT-LOT-G5-02' and cardinality(media_sha256) = 1",
+                   "expect": 1}]},
+        {"ma": "farming-06__S04", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "3 vai ký + phát hành + thu hồi mã (đúng lệnh r12 farming-03.2 C04/C05/C06/C10/C13, harness r10 qr_run.py.txt, "
+                  "allowlist FIXTURE) — r10 F06 chạy trên DB farm chung đã có qr_sig×3 + qr_issue + qr_revoke",
+         "buoc": [
+             {**qr("sign", "--lot", "IT-LOT-G5-02", "--role", "gd_san_xuat", "--by", "GĐ SX Thử IT"),
+              "stdout_re": "vai GĐ Sản xuất đã ký"},
+             {**qr("sign", "--lot", "IT-LOT-G5-02", "--role", "gd_vung_trong", "--by", "GĐ Vùng Trồng Thử IT"),
+              "stdout_re": "vai GĐ vùng trồng đã ký"},
+             {**qr("sign", "--lot", "IT-LOT-G5-02", "--role", "phap_che_qa", "--by", "Pháp Chế Thử IT"),
+              "stdout_re": "vai Pháp chế/QA đã ký"},
+             {**qr("issue", "--lot", "IT-LOT-G5-02", "--by", "GĐ SX Thử IT"),
+              "stdout_re": "đã phát hành mã — người phát hành: GĐ SX Thử IT"},
+             {**qr("revoke", "--code", "{sql:select code from qr_codes where lot_code = 'IT-LOT-G5-02' and revoked_at is "
+                                       "null}", "--by", "GĐ SX Thử IT", "--reason", "Thu hồi thử IT g5"),
+              "stdout_re": "đã thu hồi mã [A-Za-z0-9_-]{22,} — người thu hồi: GĐ SX Thử IT"}],
+         "kiem": [{"sql": "select count(*) from qr_signatures where lot_code = 'IT-LOT-G5-02'", "expect": 3},
+                  {"sql": "select count(*) from qr_codes where lot_code = 'IT-LOT-G5-02' and revoked_at is not null",
+                   "expect": 1},
+                  {"sql": "select count(*) from qr_codes", "expect": 1}]},
+        {"ma": "farming-06__S05", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "chờ 330 giây: anchor gom tại now() − 5 phút (LAG) — bản ghi vừa seed phải cũ hơn mốc gom (r10 gom sau ~12 "
+                  "phút)",
+         "buoc": [{"argv": ["python", "-c", "import time; time.sleep(330); print('WAITED 330')"], "expect_exit": 0,
+                   "stdout_re": "WAITED 330"}],
+         "kiem": [{"sql": "select count(*) from plot_logs where created_at > now() - interval '5 minutes'", "expect": 0},
+                  {"sql": "select count(*) from qr_codes where revoked_at > now() - interval '5 minutes'", "expect": 0}]},
+        {"ma": "farming-06__C01", "nguon_r10": "F06-02",
+         "mo_ta": "Dry-run: 6 lá = plot_logs_head (1) + qr_sig×3 + qr_issue + qr_revoke (dẫn xuất từ collect() + seed S03/S04, "
+                  "trùng r10), không ghi",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--build", "--dry-run"], "expect_exit": 0,
+                   "stdout_re": "\\[ok\\] lần gom #None \\(dry-run\\): 6 lá, gốc [0-9a-f]{64}[\\s\\S]*\\[external-dep\\] "
+                                "provider 'none'"}],
+         "kiem": [{"sql": "select count(*) from anchor_batches", "expect": 0}]},
+        {"ma": "farming-06__C02", "nguon_r10": "F06-01", "mo_ta": "Build → 1 anchor_batches, 6 lá đúng loại, created_by agent:anchor",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--build"], "expect_exit": 0,
+                   "stdout_re": "\\[ok\\] lần gom #\\d+ \\(mới\\): 6 lá, gốc [0-9a-f]{64}[\\s\\S]*\\[external-dep\\] provider "
+                                "'none' — lần gom CHƯA NEO"}],
+         "kiem": [{"sql": "select count(*) from anchor_batches where created_by = 'agent:anchor' and jsonb_array_length(leaves) "
+                          "= 6 and merkle_root ~ '^[0-9a-f]{64}$' and manifest_sha256 ~ '^[0-9a-f]{64}$'", "expect": 1},
+                  {"sql": LEAVES.format("plot_logs_head:%"), "expect": 1},
+                  {"sql": LEAVES.format("qr_sig:%"), "expect": 3},
+                  {"sql": LEAVES.format("qr_issue:%"), "expect": 1},
+                  {"sql": LEAVES.format("qr_revoke:%"), "expect": 1},
+                  {"sql": RELATION, "expect": True},
+                  {"sql": "select count(*) from anchor_batches where leaves::text ~ 'GĐ|Thử IT|Pháp Chế|Vùng Trồng|IT-K0'",
+                   "expect": 0}]},
+        {"ma": "farming-06__C03", "nguon_r10": "F06-03", "mo_ta": "Build lại không đổi → không dòng mới",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--build"], "expect_exit": 0,
+                   "stdout_re": "\\[ok\\] lần gom #\\d+ \\(không đổi\\): 6 lá"}],
+         "kiem": [{"sql": "select count(*) from anchor_batches", "expect": 1}]},
+        {"ma": "farming-06__C04", "nguon_r10": "F06-04", "mo_ta": "Verify (đối chiếu nội bộ)",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--verify", "latest"], "expect_exit": 0,
+                   "stdout_re": "^(?![\\s\\S]*\\[lệch\\])[\\s\\S]*\\[ok\\] lần gom #\\d+: khớp DB — chưa neo"}]},
+        {"ma": "farming-06__C05", "nguon_r10": "F06-05",
+         "mo_ta": "Export → {OUT}/anchor_out/anchor-<id>.json, sha256 = manifest_sha256 (so bằng python -c), chưa có .ots",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--export", "latest", "--out", "{OUT}/anchor_out"],
+                   "expect_exit": 0, "stdout_re": "\\[ok\\] .*anchor-\\d+\\.json"},
+                  {"argv": ["python", "-c", SHA_CHECK, "{OUT}/anchor_out/anchor-*.json",
+                            "{sql:select manifest_sha256 from anchor_batches order by id desc limit 1}"],
+                   "expect_exit": 0, "stdout_re": "N 1[\\s\\S]*SHA_OK True"}],
+         "kiem": [{"file_glob": "{OUT}/anchor_out/anchor-*.json", "count": 1},
+                  {"file_glob": "{OUT}/anchor_out/anchor-*.json.ots", "count": 0}]},
+        {"ma": "farming-06__C06", "nguon_r10": "F06-06", "mo_ta": "Submit provider none → exit 2, 0 receipt",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--submit", "latest"], "expect_exit": 2,
+                   "stderr_re": "\\[external-dep\\] provider 'none' — CHƯA NEO"}],
+         "kiem": [{"sql": NREC, "expect": 0}]},
+        {"ma": "farming-06__C07", "nguon_r10": "F06-07", "mo_ta": "Status",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--status"], "expect_exit": 0,
+                   "stdout_re": "provider: none[\\s\\S]*#\\d+ \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}Z 6 lá [0-9a-f]{16}… — chưa "
+                                "neo"}]},
+        # ---------------- MOI_R13
+        {"ma": "farming-06__R01", "nguon_r10": "MOI_R13", "mo_ta": "--upgrade với provider repo none → exit 2, không ghi",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--upgrade", "latest"], "expect_exit": 2,
+                   "stderr_re": "\\[external-dep\\] provider 'none' — CHƯA NEO"}],
+         "kiem": [{"sql": NREC, "expect": 0}]},
+        {"ma": "farming-06__R02", "nguon_r10": "MOI_R13",
+         "mo_ta": "MOCK, KHÔNG ép giai đoạn: farming-06 chạy thử → biên DÙNG chặn submit (exit 1) TRƯỚC mọi POST, 0 receipt",
+         "buoc": [anc("--submit", "latest", post="none", exit_=1,
+                      stdout_re="^(?![\\s\\S]*\\[FAKE\\] POST https)[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+                      stderr_re="\\[err\\] neo lần gom #\\d+: tính năng farming-06 đang chạy thử — HĐ 6\\.7/PL02 mục 1 — đầu "
+                                "ra chỉ ghi nội bộ, không dùng")],
+         "kiem": [{"sql": NREC, "expect": 0}]},
+        {"ma": "farming-06__R03", "nguon_r10": "MOI_R13", "mo_ta": "MOCK: --upgrade khi chưa có biên nhận đã gửi → exit 1, 0 GET",
+         "buoc": [anc("--upgrade", "latest", get="none", exit_=1,
+                      stdout_re="\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+                      stderr_re="\\[err\\] lần gom #\\d+: chưa có biên nhận đã gửi")],
+         "kiem": [{"sql": NREC, "expect": 0}]},
+        {"ma": "farming-06__R04", "nguon_r10": "MOI_R13",
+         "mo_ta": "MOCK (FIXTURE _FORCE_MODE=van_hanh): submit — cal-a trả rác (bị bỏ), cal-b hợp lệ → 1 dòng da_gui; thân POST "
+                  "= đúng 32 byte manifest_sha256; biên nhận = header OTS ‖ digest ‖ cây",
+         "buoc": [anc("--submit", "latest", post="valid", force="van_hanh",
+                      stdout_re=(NOT_CALLED + "[\\s\\S]*\\[FIXTURE\\] rollout\\._FORCE_MODE=van_hanh[\\s\\S]*\\[FAKE\\] POST "
+                                 "https://cal-a\\.test/digest 32B timeout=5 body_khop_manifest=True[\\s\\S]*\\[FAKE\\] POST "
+                                 "https://cal-b\\.test/digest 32B timeout=5 body_khop_manifest=True[\\s\\S]*\\[ok\\] lần gom "
+                                 "#\\d+: đã gửi calendar cal-b\\.test — chờ xác nhận Bitcoin[\\s\\S]*\\[FAKE\\] POST_CALLS 2 "
+                                 "GET_CALLS 0 NET_CALLS 0"))],
+         "kiem": [{"sql": NREC, "expect": 1},
+                  {"sql": "select count(*) from anchor_receipts r join anchor_batches b on b.id = r.batch_id where r.status = "
+                          "'da_gui' and r.provider = 'opentimestamps' and r.calendar = 'https://cal-b.test' and r.created_by = "
+                          "'agent:anchor' and substr(r.receipt, 1, 33) = decode('004f70656e54696d657374616d7073000050726f6f6600"
+                          "bf89e2e884e892940108', 'hex') and substr(r.receipt, 34, 32) = decode(b.manifest_sha256, 'hex') and "
+                          "position(decode('83dfe30d2ef90c8e', 'hex') in r.receipt) > 0", "expect": 1},
+                  {"sql": "select count(*) from anchor_receipts where status = 'loi'", "expect": 0}]},
+        {"ma": "farming-06__R05", "nguon_r10": "MOI_R13",
+         "mo_ta": "MOCK: --upgrade, calendar 404 → [cho], 0 dòng mới; GET đúng https://cal-b.test/timestamp/<sha256(digest‖nonce)>",
+         "buoc": [anc("--upgrade", "latest", get="404",
+                      stdout_re=(NOT_CALLED + "[\\s\\S]*\\[FAKE\\] GET https://cal-b\\.test/timestamp/[0-9a-f]{64} timeout=5 "
+                                 "khop_commitment=True[\\s\\S]*\\[cho\\] lần gom #\\d+: calendar chưa có attestation Bitcoin"
+                                 "[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0"))],
+         "kiem": [{"sql": NREC, "expect": 1}]},
+        {"ma": "farming-06__R06", "nguon_r10": "MOI_R13",
+         "mo_ta": "MOCK: --upgrade, calendar trả attestation Bitcoin (khối 850001) → dòng MỚI da_nang_cap (da_gui giữ nguyên), "
+                  "trạng thái 'CHƯA xác minh bên thứ ba'",
+         "buoc": [anc("--upgrade", "latest", get="bitcoin",
+                      stdout_re=(NOT_CALLED + "[\\s\\S]*khop_commitment=True[\\s\\S]*\\[ok\\] lần gom #\\d+: calendar "
+                                 "cal-b\\.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba[\\s\\S]*· khối \\[850001\\]"
+                                 "[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0"))],
+         "kiem": [{"sql": "select string_agg(status, ',' order by id) from anchor_receipts", "expect": "da_gui,da_nang_cap"},
+                  {"sql": "select count(*) from anchor_receipts r join anchor_batches b on b.id = r.batch_id where r.status = "
+                          "'da_nang_cap' and r.calendar = 'https://cal-b.test' and r.created_by = 'agent:anchor' and "
+                          "substr(r.receipt, 34, 32) = decode(b.manifest_sha256, 'hex') and position(decode("
+                          "'0588960d73d71901', 'hex') in r.receipt) > 0 and position(decode('83dfe30d2ef90c8e', 'hex') in "
+                          "r.receipt) = 0", "expect": 1}]},
+        {"ma": "farming-06__R07", "nguon_r10": "MOI_R13",
+         "mo_ta": "--verify (CLI thật, không giả) sau nâng cấp → 0 vấn đề (phân tích cả 2 biên nhận .ots), trạng thái 'CHƯA xác "
+                  "minh bên thứ ba'",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--verify", "latest"], "expect_exit": 0,
+                   "stdout_re": "^(?![\\s\\S]*\\[lệch\\])[\\s\\S]*\\[ok\\] lần gom #\\d+: khớp DB — calendar cal-b\\.test đã "
+                                "trả attestation Bitcoin — CHƯA xác minh bên thứ ba"}]},
+        {"ma": "farming-06__R08", "nguon_r10": "MOI_R13", "mo_ta": "MOCK: --upgrade lần nữa → [ok] không hỏi calendar (0 GET), 0 dòng mới",
+         "buoc": [anc("--upgrade", "latest", get="none",
+                      stdout_re=(NOT_CALLED + "[\\s\\S]*\\[ok\\] lần gom #\\d+: calendar cal-b\\.test đã trả attestation "
+                                 "Bitcoin — CHƯA xác minh bên thứ ba[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0"))],
+         "kiem": [{"sql": NREC, "expect": 2}]},
+        {"ma": "farming-06__R09", "nguon_r10": "MOI_R13",
+         "mo_ta": "--export (CLI thật) sau nâng cấp → anchor-<id>.json + .json.ots; .ots = đúng biên nhận da_nang_cap",
+         "buoc": [{"argv": ["python", "-m", "pipelines.anchor", "--export", "latest", "--out", "{OUT}/anchor_out"],
+                   "expect_exit": 0, "stdout_re": "anchor-\\d+\\.json[\\s\\S]*anchor-\\d+\\.json\\.ots"},
+                  {"argv": ["python", "-c", SHA_CHECK, "{OUT}/anchor_out/anchor-*.json.ots",
+                            "{sql:select encode(sha256(receipt), 'hex') from anchor_receipts where status = 'da_nang_cap' "
+                            "order by id desc limit 1}"],
+                   "expect_exit": 0, "stdout_re": "N 1[\\s\\S]*SHA_OK True"},
+                  {"argv": ["python", "-c", SHA_CHECK, "{OUT}/anchor_out/anchor-*.json",
+                            "{sql:select manifest_sha256 from anchor_batches order by id desc limit 1}"],
+                   "expect_exit": 0, "stdout_re": "N 1[\\s\\S]*SHA_OK True"}],
+         "kiem": [{"file_glob": "{OUT}/anchor_out/anchor-*.json.ots", "count": 1}]},
+        {"ma": "farming-06__R10", "nguon_r10": "MOI_R13",
+         "mo_ta": "Neo THẬT: gửi digest tới calendar OpenTimestamps thật + `ots upgrade`/`ots verify` với header khối Bitcoin",
+         "not_run": "EXTERNAL_INPUT: hai bên chưa chọn chuỗi/provider/phí (data/anchor_config.json provider 'none' — không được "
+                    "đổi); không gọi calendar/mạng thật trong kiểm nội bộ; R02–R09 chỉ là calendar GIẢ theo định dạng OTS"},
+    ],
+}
+
+doc = {
+    "_doc": (
+        "NHÁP r13 nhóm B (24/10/2026) — farming-01, farming-02.1, farming-02.2, farming-06; người viết nháp KHÔNG khóa. Sinh bởi "
+        "evidence/itacc_r13_docx12/harness/mk_criteria_B_r13.py.txt. Lý do kiểm lại: connectors/zalo_garden.py (STT whisper_local; "
+        "farming-01, 02.1/02.2 qua plot_owners/STAFF_FILE) và pipelines/anchor.py (parse_receipt, --upgrade, da_nang_cap; "
+        "farming-06) đổi. "
+        "farming-01: chép NGUYÊN mục farming-01 của evidence/itacc_r12/criteria/r12_farming_v3.json (đã khóa) — mỗi ca giữ `ma`, "
+        "`nguon_r10` = mã ca r12; chỉ đổi: db, `--by` seed 'Người Thử R13', thư mục ngoài repo …/scratchpad/r12/ext_farming → "
+        "…/scratchpad/r13/ext_farming (vẫn duy nhất theo md5({SCR})); không có {H} trong bản r12 nên không cần đổi {H}→{H12}; "
+        "ca UI M07 giữ not_run. Thêm R01–R07 MOI_R13 (STT whisper_local). "
+        "farming-02.1/02.2: từ evidence/itacc_r10/items/<id>.json; harness r10 gd_run.py.txt chạy NGUYÊN từ {FX10} (ROOT = "
+        "parents[4], không đường scratchpad cố định); fixture garden_staff_v2/v3 + garden_remind_thucong chép nguyên byte từ "
+        "scratchpad r10 vào {FX13}/items/<id>/ (sha256 = dau_vao r10). r10 chạy trên DB farm CHUNG → ca MOI dựng lại: seed sổ, "
+        "khoảnh IT-K01..K04, 1 nhật ký IT-K01 (r10 có từ ca Zalo F01), IT-K05 (02.1) / IT-K05+K06 (02.2). Id đợt nhắc lấy bằng "
+        "{sql:...} thay hằng #3. Thứ tự theo giờ chạy THỰC TẾ r10 (F021-04 trước F021-03). Số đếm phụ thuộc NGÀY: 3 khoảnh mẫu KV-* "
+        "(nhật ký mẫu cuối 07/10, 08/10, 09/10) đều quá gap 14 ngày kể từ 2026-10-23T16:00Z → '6 đợt'; leo thang GĐ của khoảnh MẪU "
+        "chỉ xảy ra khi ≥ 28 ngày (từ 2026-11-05T09:00Z) → stdout 'báo GĐ … N mục mới' dùng \\d+ ở lần đầu, còn SQL chỉ đếm mục "
+        "gap:IT-* (không phụ thuộc ngày). "
+        "farming-06: r10 có sẵn plot_logs + chữ ký/phát hành/thu hồi QR trên DB chung → ca MOI S03/S04 = đúng lệnh r12 "
+        "farming-03.2 (S03, C04/C05/C06/C10/C13) với fixture {FX12}/items/farming-03.2 (chỉ đọc); S05 chờ 330 s vì collect() "
+        "lấy bản ghi created_at/signed_at/issued_at/revoked_at ≤ now()−5 phút. Số lá 6 DẪN XUẤT: plot_logs_head luôn 1 + qr_sig 3 "
+        "+ qr_issue 1 + qr_revoke 1 (lô source manual ≠ sample) — kèm SQL quan hệ (số lá = 1 + chữ ký + mã + mã thu hồi). Ca "
+        "MOI_R13 dùng harness r13 anchor_ots_run.py.txt (MOCK calendar giả OTS, thay load_config + __defaults__ post/get trong "
+        "tiến trình; data/anchor_config.json KHÔNG sửa) và FIXTURE rollout._FORCE_MODE=van_hanh (farming-06 mot_phan không vào "
+        "sổ); R02 không ép để chứng minh biên DÙNG chặn. "
+        "Kho media/model STT ngoài repo: đề bài ghi 'GARDEN_MEDIA_DIR dưới {SCR}' nhưng {SCR} = evidence/…/runs/…/scratch nằm "
+        "TRONG repo → zalo_garden._store_dir từ chối; dùng …/scratchpad/r13/ext_farming/<id>-md5({SCR})/… như r12."),
+    "moi_truong": ("Postgres thử 127.0.0.1:55453; mỗi mục DB mới samsam_itacc_r13_<mã> (schema/roles ×2 + core + golden); dev "
+                   "mode (AUTH_MODE trống), DEPLOY tắt, OPENROUTER_API_KEY rỗng; webhook Zalo/CDN = harness r10; STT = fake "
+                   "faster_whisper (stt_run.py.txt); calendar OTS = fake (anchor_ots_run.py.txt)."),
+    "items": [f01, f021, f022, f06],
+}
+OUT.parent.mkdir(parents=True, exist_ok=True)
+OUT.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+print("wrote", OUT.relative_to(REPO), {i["id"]: len(i["ca"]) for i in doc["items"]})

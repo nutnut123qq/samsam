@@ -1,0 +1,1649 @@
+{
+ "_doc": "NHÁP r13 nhóm D (người viết nháp KHÔNG khóa — điều phối viên duyệt/sửa/khóa). Sinh bằng evidence/itacc_r13_docx12/harness/mk_criteria_r13_D.py.txt. sales-03: chép NGUYÊN ca r12-fix (r12fix_v1.json sha 559aa67d…) bằng code, đổi db + `{H}`→`{H12}`, nguon_r10 = mã ca r12-fix. sales-08/09, ceo-90, data_platform-90: mỗi ca r10 ↔ 1 ca r13 (nguon_r10 = mã r10); ca MOI = tiền đề dựng lại trạng thái r10 có từ DB chung; MOI_R13 = mã mới r13 (listing_export verify_feed, scripts/incident_compare.py, scripts/onprem_preflight.py). LAUNCH sales-08 = chuỗi python -c của sales-03__S03-C07 r12-fix (guardrail.DATA_DIR + rollout._FORCE_MODE + runpy), tương đương run_mod.py r10 --guardrail-data/--force-mode. Fixture: dùng thẳng {FX12}/items/sales-03/golden_fixture.json (trùng byte r10 g2, sha 2f33ddde…) — không chép fixture mới; FIXTURE phái sinh sinh trong {SCR} lúc chạy.",
+ "nhom": "D",
+ "harness_moi": {
+  "incident_run.py.txt": "0c203725c641f6f1fcc49fd1e7732ca67396e3ef29acdefc9df4966f18e75d33",
+  "s09_entry_scan.py.txt": "ad9c78f99e4a234987a29d23a0e3420674a27312c630fceb683cfd0c54541cf0",
+  "s08_feed_check.py.txt": "08d296ed0820c8d42bd4cab1e2ec1379de92da33e6aa06b1fe4257ec8bef0ea8"
+ },
+ "items": [
+  {
+   "id": "sales-03",
+   "db": "samsam_itacc_r13_s03",
+   "muc_kiem_de_xuat": "LOCAL",
+   "tieu_chi_cu_the": [
+    "T1 golden FIXTURE (r10 golden_fixture.json: mat-ong-sam-300ml giả lập đã tự công bố, mở web/tiktok/zalo/facebook) nạp qua `ingest.golden_store --file` + 10 dòng giá duyệt qua `--approve-price --by` như r10; guardrail đọc bản sao data ở {SCR}/gdata (golden FIXTURE) như r10 `--guardrail-data`",
+    "T2 `pipelines.content --listing --no-llm` → 2 content_drafts listing pending created_by agent:mkt02, 'Giá: 2.980.000 đ' = golden kênh; chạy lại = skipped 2/created 0; rượu → refused ruou, saphraton-40v (CAM) → refused readiness, 0 ghi",
+    "T3 `ingest.market_csv` listing fixture + `agents.kd_listing --run` → approval_queue listing_sync (price_drift + title_drift) + market_alert_s1 created_by agent:kd_listing; payload/title không chép tiêu đề sàn; chạy lại 0 mới; --dry-run 0 dòng",
+    "T4 `agents.listing_export` chạy thử → [từ chối] sales-03 chạy thử, không tạo thư mục; ép van_hanh (FIXTURE `_FORCE_MODE`) → CSV+manifest (draft_id 1, gia_id = price_list shopee list ĐÃ duyệt, CSV không dòng 'Giá:'); --verify khớp exit 0; CSV bị sửa → [LỆCH] exit 1; SKU chưa có mô tả duyệt → exit 1 không tệp",
+    "T5 (r12 RB) tắt sales-03 → content --listing exit 2 + stdout '[rollout] … sales-03', không traceback, 0 nháp; kd_listing --run không thêm mục"
+   ],
+   "ca": [
+    {
+     "ma": "sales-03__S01",
+     "nguon_r10": "sales-03__S01",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề (r10 SETUP-rollout-seed + SETUP-golden-fixture + SETUP-approve-price-4/5/29/30/35–40 trên DB chung khối sales; r12 DB riêng): seed sổ rollout, golden FIXTURE, duyệt 10 dòng giá; dựng {SCR}/gdata = bản sao data/{banned_words,claims_whitelist,guardrail_rules,llm_gateway} + golden FIXTURE (r10 make_golden_fixture; r12 thêm llm_gateway.json vì guardrail r12 đọc pii_allow cùng thư mục)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R12"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/sales-03/golden_fixture.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ saphraton-20v shopee floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ saphraton-20v shopee list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml shopee floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml shopee list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml tiktok floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml tiktok list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml web floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml web list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'zalo' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml zalo floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'zalo' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml zalo list"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,shutil,sys; s,d,g=sys.argv[1:4]; os.makedirs(d); [shutil.copyfile(os.path.join(s,n),os.path.join(d,n)) for n in ('banned_words.txt','claims_whitelist.json','guardrail_rules.json','llm_gateway.json')]; shutil.copyfile(g,os.path.join(d,'golden_skus.json')); print('gdata ok',sorted(os.listdir(d)))",
+        "{REPO}/data",
+        "{SCR}/gdata",
+        "{FX12}/items/sales-03/golden_fixture.json"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel in ('shopee','tiktok','web','zalo') and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 8
+      },
+      {
+       "sql": "select count(*) from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 2
+      },
+      {
+       "sql": "select readiness from sku_readiness where sku_key = 'mat-ong-sam-300ml' and channel = 'web'",
+       "expect": "TP_THUONG"
+      },
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'sales-03'",
+       "expect": "chay_thu"
+      }
+     ],
+     "nguon_r10_r12fix": "MOI"
+    },
+    {
+     "ma": "sales-03__S03-C01",
+     "nguon_r10": "sales-03__S03-C01",
+     "mo_ta": "Sinh nháp listing web+shopee (no-llm, guardrail data FIXTURE)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--listing",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "web",
+        "--channel",
+        "shopee",
+        "--no-llm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*mat-ong-sam-300ml × web: created #\\d+)(?=.*mat-ong-sam-300ml × shopee: created #\\d+)(?=.*created 2, skipped 0, refused 0, failed 0)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'listing' and created_by = 'agent:mkt02' and status = 'pending' and sku = 'mat-ong-sam-300ml' and channel in ('web','shopee') and text like '%Giá: 2.980.000 đ%' and (guardrail->>'ok')::boolean",
+       "expect": 2
+      },
+      {
+       "sql": "select id from content_drafts where content_type = 'listing' and channel = 'web' and sku = 'mat-ong-sam-300ml'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from content_drafts",
+       "expect": 2
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C01"
+    },
+    {
+     "ma": "sales-03__S03-C02",
+     "nguon_r10": "sales-03__S03-C02",
+     "mo_ta": "Chạy lại idempotent",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--listing",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "web",
+        "--channel",
+        "shopee",
+        "--no-llm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*web: skipped #\\d+)(?=.*shopee: skipped #\\d+)(?=.*created 0, skipped 2)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'listing'",
+       "expect": 2
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C02"
+    },
+    {
+     "ma": "sales-03__S03-C03",
+     "nguon_r10": "sales-03__S03-C03",
+     "mo_ta": "SKU rượu / CAM",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--listing",
+        "--sku",
+        "ruou-sam-chai-thuy-tinh-500ml",
+        "--sku",
+        "saphraton-40v",
+        "--channel",
+        "shopee",
+        "--no-llm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*ruou-sam-chai-thuy-tinh-500ml × shopee: refused ruou)(?=.*saphraton-40v × shopee: refused readiness)(?=.*created 0, skipped 0, refused 2)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts",
+       "expect": 2
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C03"
+    },
+    {
+     "ma": "sales-03__S02",
+     "nguon_r10": "sales-03__S02",
+     "tien_quyet": true,
+     "mo_ta": "phần dựng của S03-C05 r10 (S03-SETUP-approve-draft1/2 10:25:21–26 + S03-SETUP-market-listing 10:25:30) — r10 chạy TRƯỚC S03-C04 (10:25:40); tách ra ca tiền đề giữ đúng thứ tự thời gian, cùng lệnh",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "1",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] draft #1 → approved"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "2",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] draft #2 → approved"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/sales-03/s03_listing_shopee.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "listing"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "snapshot #\\d+ shopee/listing s03_listing_shopee\\.csv: 3 dòng"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where id in (1,2) and status = 'approved'",
+       "expect": 2
+      }
+     ],
+     "nguon_r10_r12fix": "MOI"
+    },
+    {
+     "ma": "sales-03__S03-C04",
+     "nguon_r10": "sales-03__S03-C04",
+     "mo_ta": "kd_listing dry-run",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "KHÔNG ghi DB"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from approval_queue where created_by = 'agent:kd_listing'",
+       "expect": 0
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C04"
+    },
+    {
+     "ma": "sales-03__S03-C05",
+     "nguon_r10": "sales-03__S03-C05",
+     "mo_ta": "kd_listing run ×2, nạp listing v2, run ×2 (approve 1/2 + market_csv v1 đã chạy ở sales-03__S02)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[run\\] đẩy [1-9]\\d* mục mới"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[run\\] đẩy 0 mục mới"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_csv",
+        "--file",
+        "{FX12}/items/sales-03/s03_listing_shopee_v2.csv",
+        "--channel",
+        "shopee",
+        "--kind",
+        "listing"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "s03_listing_shopee_v2\\.csv: 4 dòng"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[run\\] đẩy \\d+ mục mới"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[run\\] đẩy 0 mục mới"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) >= 1 from approval_queue where created_by = 'agent:kd_listing' and object_type = 'listing_sync' and object_id like 'a4:price_drift:%'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) >= 1 from approval_queue where created_by = 'agent:kd_listing' and object_type = 'listing_sync' and object_id like 'a4:title_drift:%'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) >= 1 from approval_queue where created_by = 'agent:kd_listing' and object_type = 'market_alert_s1'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from approval_queue where created_by = 'agent:kd_listing' and (payload::text like '%fixture Thử IT%' or title like '%fixture Thử IT%')",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) = count(distinct object_id) from approval_queue where created_by = 'agent:kd_listing'",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from approval_queue where created_by = 'agent:kd_listing' and status <> 'pending'",
+       "expect": 0
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C05"
+    },
+    {
+     "ma": "sales-03__S03-C06",
+     "nguon_r10": "sales-03__S03-C06",
+     "mo_ta": "listing_export chạy thử → từ chối, không tệp",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "agents.listing_export",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "shopee",
+        "--out",
+        "{SCR}/export_trial"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 1,
+       "stderr_re": "\\[từ chối\\][^\\n]*sales-03[^\\n]*chạy thử[^\\n]*không ghi tệp"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/export_trial",
+       "count": 0
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C06"
+    },
+    {
+     "ma": "sales-03__S03-C07",
+     "nguon_r10": "sales-03__S03-C07",
+     "mo_ta": "listing_export ép van_hanh (FIXTURE rollout._FORCE_MODE như r10 --force-mode) → CSV+manifest gia_id duyệt; verify",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "shopee",
+        "--out",
+        "{SCR}/s03_export"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] listing-shopee-mat-ong-sam-300ml-d1\\.manifest\\.json"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import json,sys; m=json.load(open(sys.argv[1],encoding='utf-8')); print({k:m.get(k) for k in ('sku','channel','draft_id','gia_id','gia_vnd','transform')}); ok=(m.get('draft_id')==1 and str(m.get('gia_id'))==sys.argv[2] and str(m.get('gia_vnd'))==sys.argv[3] and m.get('sku')=='mat-ong-sam-300ml' and m.get('channel')=='shopee'); print('MANIFEST_KHOP' if ok else 'MANIFEST_LECH'); sys.exit(0 if ok else 1)",
+        "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.manifest.json",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null}",
+        "{sql:select price_vnd from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "MANIFEST_KHOP"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--verify",
+        "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.manifest.json"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] khớp bản đã duyệt"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.csv",
+       "count": 1
+      },
+      {
+       "file_glob": "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.manifest.json",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/s03_export/listing-shopee-mat-ong-sam-300ml-d1.csv",
+       "re": "Giá:",
+       "expect": false
+      },
+      {
+       "sql": "select price_vnd from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null",
+       "expect": 2980000
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C07"
+    },
+    {
+     "ma": "sales-03__S03-C08",
+     "nguon_r10": "sales-03__S03-C08",
+     "mo_ta": "verify tệp bị sửa (FIXTURE: chép thư mục xuất C07 sang {SCR}/export_tamper, nối 1 byte vào CSV — r10 export_tamper)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import shutil,sys; s,d=sys.argv[1:3]; shutil.copytree(s,d); p=d+'/listing-shopee-mat-ong-sam-300ml-d1.csv'; open(p,'ab').write(b'x'); print('FIXTURE sửa', p)",
+        "{SCR}/s03_export",
+        "{SCR}/export_tamper"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--verify",
+        "{SCR}/export_tamper/listing-shopee-mat-ong-sam-300ml-d1.manifest.json"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "\\[LỆCH\\] tệp CSV đã bị sửa"
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C08"
+    },
+    {
+     "ma": "sales-03__S03-C09",
+     "nguon_r10": "sales-03__S03-C09",
+     "mo_ta": "Export SKU chưa có mô tả duyệt (ép van_hanh)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--sku",
+        "saphraton-20v",
+        "--channel",
+        "shopee",
+        "--out",
+        "{SCR}/export_x"
+       ],
+       "expect_exit": 1,
+       "stderr_re": "\\[từ chối\\] saphraton-20v"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/export_x",
+       "count": 0
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C09"
+    },
+    {
+     "ma": "sales-03__S03-C10",
+     "nguon_r10": "sales-03__S03-C10",
+     "mo_ta": "Tắt sales-03 → content --listing không sinh (r12 RB: exit 2 + [rollout], không traceback — kỳ vọng r10 'không sinh nháp' giữ nguyên, siết thêm theo bảng lỗi mục 5 L4/RB); kd_listing --run không thêm mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "sales-03",
+        "--by",
+        "Người Thử R12",
+        "--note",
+        "kiểm nhánh tắt r12 sales_b"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import sys; open(sys.argv[1],'w',encoding='utf-8').write(sys.argv[2]); print('snap',sys.argv[2])",
+        "{OUT}/kdl_truoc.txt",
+        "{sql:select count(*) from approval_queue where created_by = 'agent:kd_listing'}"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--listing",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "tiktok",
+        "--no-llm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[rollout\\][^\\n]*sales-03",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.kd_listing",
+        "--run"
+       ],
+       "expect_exit": [
+        0,
+        2
+       ],
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import sys; a=open(sys.argv[1],encoding='utf-8').read(); b=sys.argv[2]; print('truoc',a,'sau',b); sys.exit(0 if a==b else 1)",
+        "{OUT}/kdl_truoc.txt",
+        "{sql:select count(*) from approval_queue where created_by = 'agent:kd_listing'}"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'listing' and channel = 'tiktok'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from content_drafts",
+       "expect": 2
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ],
+     "nguon_r10_r12fix": "S03-C10"
+    }
+   ],
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r12_fix_d2_l3/criteria/r12fix_v1.json",
+    "sha256": "559aa67d5715dfb9f4bb52f992322261257d7086eb57c76800f42a05b57aef12",
+    "muc": "sales-03 (db cũ samsam_itacc_r12fix_s03)",
+    "nguon_goc": {
+     "tep": "evidence/itacc_r12/criteria/r12_sales_b.json",
+     "sha256": "e2a05423306d3768771d3aa8b78132b1a7138775f6c5230eae04c1e5bfbc6f17"
+    }
+   },
+   "ly_do_kiem_lai": "agents/listing_export.py đổi ở r13 (main --verify rẽ nhánh verify_feed khi manifest có gia_phien_ban) — kiểm lại toàn bộ ca sales-03 đã khóa, không đổi kỳ vọng"
+  },
+  {
+   "id": "sales-08",
+   "db": "samsam_itacc_r13_s08",
+   "muc_kiem_de_xuat": "LOCAL",
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r10/items/sales-08.json",
+    "sha256": "0bcbff17dc3308cfffc10e7d12fa0e4191864666ba20add1bfc06e5fe82427d2"
+   },
+   "ly_do_kiem_lai": "agents/listing_export.py đổi (r13: --verify nhận manifest nguồn dữ liệu website → verify_feed)",
+   "tieu_chi_cu_the": [
+    "T1 (r10) Phần nội bộ: `listing_export --website-feed --out` là NGUỒN DỮ LIỆU (không phải website): chạy thử → từ chối; ép van_hanh (FIXTURE) → JSON+manifest; rượu an_gia=true gio_hang=false; SKU không đủ điều kiện có ly_do, không bịa giá",
+    "T2 (r10) Website (trang SP/giỏ/thanh toán) không ở repo này → BI_CHAN SEPARATE_REPO",
+    "T3 (r13 MỚI) `listing_export --verify <manifest feed>` (manifest có `gia_phien_ban` → verify_feed): vừa xuất → exit 0 '[done] khớp bản đã duyệt', không [LỆCH]; tệp feed bị sửa 1 byte → exit 1 '[LỆCH] … sha lệch manifest'; giá web list ĐÃ duyệt đổi phiên bản (golden_store đóng dòng cũ + dòng mới, người duyệt qua --approve-price) → exit 1 '[LỆCH] mat-ong-sam-300ml: gia_id lệch' + gia_vnd lệch"
+   ],
+   "ca": [
+    {
+     "ma": "sales-08__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề (r10 S08 chạy trên DB chung khối sales SAU các ca S03 — đã có seed, golden FIXTURE, 10 dòng giá duyệt, gdata; r13 DB riêng): chép NGUYÊN các bước sales-03__S01 r12-fix (seed sổ rollout, golden FIXTURE r10 g2 = {FX12}/items/sales-03/golden_fixture.json sha 2f33ddde… trùng byte evidence/itacc_r10/g2/fixtures/golden_fixture.json, duyệt 10 dòng giá, dựng {SCR}/gdata); chỉ đổi --by của seed sang 'Người Thử R13'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX12}/items/sales-03/golden_fixture.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ saphraton-20v shopee floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ saphraton-20v shopee list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml shopee floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml shopee list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml tiktok floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'tiktok' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml tiktok list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml web floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml web list"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'zalo' and kind = 'floor' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml zalo floor"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'zalo' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml zalo list"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,shutil,sys; s,d,g=sys.argv[1:4]; os.makedirs(d); [shutil.copyfile(os.path.join(s,n),os.path.join(d,n)) for n in ('banned_words.txt','claims_whitelist.json','guardrail_rules.json','llm_gateway.json')]; shutil.copyfile(g,os.path.join(d,'golden_skus.json')); print('gdata ok',sorted(os.listdir(d)))",
+        "{REPO}/data",
+        "{SCR}/gdata",
+        "{FX12}/items/sales-03/golden_fixture.json"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel in ('shopee','tiktok','web','zalo') and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 8
+      },
+      {
+       "sql": "select count(*) from price_list where sku_key = 'saphraton-20v' and channel = 'shopee' and kind in ('floor','list') and valid_to is null and program_id is null and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 2
+      },
+      {
+       "sql": "select readiness from sku_readiness where sku_key = 'mat-ong-sam-300ml' and channel = 'web'",
+       "expect": "TP_THUONG"
+      },
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'sales-03'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "sales-08__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề: mô tả chuẩn ĐÃ duyệt của mat-ong-sam-300ml kênh web (r10: draft #1 web do ca S03-C01 sinh + S03-SETUP-approve-draft1 duyệt trên DB chung — S08-C02 r10 dùng nó). Dựng lại tối thiểu: chỉ kênh web, cùng lệnh sales-03__S03-C01/S02 (wrap r12 + guardrail data FIXTURE, store --approve 1)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.content",
+        "--listing",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "web",
+        "--no-llm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PROBE_SET": "pipelines.guardrail:DATA_DIR={SCR}/gdata",
+        "PROBE_LLM_LOG": "{OUT}/llm.json"
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*mat-ong-sam-300ml × web: created #1\\b)(?=.*created 1, skipped 0, refused 0, failed 0)"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.store",
+        "--approve",
+        "1",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] draft #1 → approved"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where id = 1 and content_type = 'listing' and channel = 'web' and sku = 'mat-ong-sam-300ml' and status = 'approved'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from content_drafts",
+       "expect": 1
+      },
+      {
+       "file_re": "{OUT}/llm.json",
+       "re": "\\A\\[\\]\\Z",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "sales-08__S08-C01",
+     "nguon_r10": "S08-C01",
+     "mo_ta": "Feed chạy thử — r10 `run_mod.py --guardrail-data gdata -m agents.listing_export --website-feed --out feed_trial` (không --force-mode) → LAUNCH r12-fix chế độ '-' (_FORCE_MODE=None); kỳ vọng r10: exit 1 từ chối rollout",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "-",
+        "agents.listing_export",
+        "--website-feed",
+        "--out",
+        "{SCR}/s08_feed_trial"
+       ],
+       "expect_exit": 1,
+       "stderr_re": "\\[từ chối\\] xuất nguồn dữ liệu website[^\\n]*sales-03[^\\n]*chạy thử[^\\n]*không ghi tệp"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/s08_feed_trial",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "sales-08__S08-C02",
+     "nguon_r10": "S08-C02",
+     "mo_ta": "Feed ép van_hanh (FIXTURE) — r10 `run_mod.py --guardrail-data gdata --force-mode van_hanh -m agents.listing_export --website-feed --out s08_feed`; kỳ vọng r10 'rượu ẩn giá + không giỏ; SKU thiếu điều kiện có ly_do' + T1 'không bịa giá' kiểm bằng {H}/s08_feed_check.py.txt (r10 đọc tay JSON)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--website-feed",
+        "--out",
+        "{SCR}/s08_feed"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] website-feed-\\d{4}-\\d{2}-\\d{2}\\.manifest\\.json — 1/13 SKU bán được trên web"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/s08_feed_check.py.txt",
+        "{SCR}/s08_feed",
+        "{FX12}/items/sales-03/golden_fixture.json",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null}",
+        "{sql:select price_vnd from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "FEED_KHOP"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{SCR}/s08_feed/website-feed-????-??-??.json",
+       "count": 1
+      },
+      {
+       "file_glob": "{SCR}/s08_feed/website-feed-????-??-??.manifest.json",
+       "count": 1
+      },
+      {
+       "sql": "select price_vnd from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null",
+       "expect": 2980000
+      }
+     ]
+    },
+    {
+     "ma": "sales-08__R13-C01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "--verify manifest feed vừa xuất (ép van_hanh như S03-C07 r12-fix — verify_feed không gọi cổng rollout, ép chỉ để cùng điều kiện với lúc xuất) → exit 0 khớp. FIXTURE: chép manifest sang tên cố định feed.manifest.json cùng thư mục (nguyên byte; verify đọc tệp feed theo khóa `file`) vì tên chứa ngày",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,hashlib,shutil,sys; d=sys.argv[1]; m=glob.glob(d+'/website-feed-????-??-??.manifest.json'); assert len(m)==1,m; shutil.copyfile(m[0],d+'/feed.manifest.json'); h=lambda p: hashlib.sha256(open(p,'rb').read()).hexdigest(); print('FIXTURE chép manifest', m[0].replace(chr(92),'/').split('/')[-1], 'trùng byte', h(m[0])==h(d+'/feed.manifest.json'))",
+        "{SCR}/s08_feed"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "trùng byte True"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--verify",
+        "{SCR}/s08_feed/feed.manifest.json"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?![\\s\\S]*\\[LỆCH\\])[\\s\\S]*\\[done\\] khớp bản đã duyệt",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ]
+    },
+    {
+     "ma": "sales-08__R13-C02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "--verify feed bị sửa 1 byte (FIXTURE: chép thư mục xuất sang {SCR}/s08_feed_tamper, nối 1 dấu cách vào tệp feed — JSON vẫn đọc được nên chỉ còn lệch sha) → exit 1 '[LỆCH] … sha lệch manifest', 1 điểm lệch",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,shutil,sys; s,d=sys.argv[1:3]; shutil.copytree(s,d); f=glob.glob(d+'/website-feed-????-??-??.json'); assert len(f)==1,f; open(f[0],'ab').write(b' '); print('FIXTURE sửa 1 byte', f[0])",
+        "{SCR}/s08_feed",
+        "{SCR}/s08_feed_tamper"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--verify",
+        "{SCR}/s08_feed_tamper/feed.manifest.json"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "(?s)\\A(?!.*gia_id lệch)(?=.*\\[LỆCH\\] tệp nguồn dữ liệu đã bị sửa \\(sha lệch manifest\\))(?=.*\\[done\\] 1 điểm lệch)",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ]
+    },
+    {
+     "ma": "sales-08__R13-C03",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "giá web list ĐÃ duyệt đổi phiên bản: FIXTURE {SCR}/golden_gia_web_moi.json = golden fixture với mat-ong-sam-300ml web list 3.100.000 → `golden_store --file` (đường đổi giá thật: đóng valid_to dòng cũ + dòng mới chờ duyệt, trigger append-only) → NGƯỜI duyệt `--approve-price` → `--verify` manifest gốc (tệp không sửa) → exit 1, gia_id + gia_vnd lệch, đúng 2 điểm lệch",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import json,sys; s,d=sys.argv[1:3]; g=json.loads(open(s,'rb').read().decode('utf-8')); k=[x for x in g['skus'] if x['sku_key']=='mat-ong-sam-300ml']; assert len(k)==1; assert k[0]['prices']['web']['list']==2980000; k[0]['prices']['web']['list']=3100000; open(d,'w',encoding='utf-8').write(json.dumps(g,ensure_ascii=False,indent=1)); print('FIXTURE golden giá web mới 3100000 (Thử R13) ->', d)",
+        "{FX12}/items/sales-03/golden_fixture.json",
+        "{SCR}/golden_gia_web_moi.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{SCR}/golden_gia_web_moi.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--approve-price",
+        "{sql:select id from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and valid_to is null and program_id is null}",
+        "--by",
+        "GĐ Bán Hàng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[done\\] đã duyệt id=\\d+ mat-ong-sam-300ml web list"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+        "{SCR}/gdata",
+        "van_hanh",
+        "agents.listing_export",
+        "--verify",
+        "{SCR}/s08_feed/feed.manifest.json"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "(?s)\\A(?!.*sha lệch)(?=.*\\[LỆCH\\] mat-ong-sam-300ml: gia_id lệch \\(tệp \\d+, hiện \\d+\\))(?=.*\\[LỆCH\\] mat-ong-sam-300ml: gia_vnd lệch \\(tệp 2980000, hiện 3100000\\))(?=.*\\[done\\] 2 điểm lệch)",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and program_id is null and valid_to is null and price_vnd = 3100000 and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and program_id is null and valid_to is not null and price_vnd = 2980000 and approved_by = 'GĐ Bán Hàng Thử IT'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "sales-08__S08-C03",
+     "nguon_r10": "S08-C03",
+     "mo_ta": "Website thật (trang SP/giỏ/thanh toán)",
+     "not_run": "Website ở repo riêng chưa được giao (SEPARATE_REPO) — r10 S08-C03 NOT_RUN cùng lý do"
+    }
+   ]
+  },
+  {
+   "id": "sales-09",
+   "db": "samsam_itacc_r13_s09",
+   "muc_kiem_de_xuat": "LOCAL",
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r10/items/sales-09.json",
+    "sha256": "baf6537e3da71651ada81f998a9de91885d6bca038c0af0ca232065f8fe334b1"
+   },
+   "ly_do_kiem_lai": "đổi mã liên quan kênh/website ở đợt r13 — kiểm lại không có entry point chatbot website",
+   "tieu_chi_cu_the": [
+    "T1 (r10) Không có module/entry point chatbot website trong repo (danh mục modules rỗng) → không có gì để chạy; BI_CHAN SEPARATE_REPO",
+    "T2 (r10) Phần nội bộ liên quan: luật kênh chung (rượu/sức khỏe) đã kiểm ở sales-01 — không tính thay chatbot website"
+   ],
+   "ca": [
+    {
+     "ma": "sales-09__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề hình thức: runner r13 cần DB của mục — seed sổ rollout (ca S09-C01 không đọc DB)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "sales-09__S09-C01",
+     "nguon_r10": "S09-C01",
+     "mo_ta": "Rà entry point — bản chuyển tất định {H}/s09_entry_scan.py.txt của lệnh r10 (ls connectors/ api/; grep mẫu website chat trong connectors/api/app; CHAT_CHANNELS) — xem docstring harness về grep r10 thiếu -E",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/s09_entry_scan.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*## dòng khớp mẫu website chat \\(rỗng = không có\\): \\[\\])(?=.*## tên tệp web chat \\(rỗng = không có\\): \\[\\])(?=.*'CHAT_CHANNELS': \\('zalo', 'messenger'\\))(?=.*'modules': \\[\\])(?=.*KHONG_CO_CHATBOT_WEBSITE)"
+      }
+     ]
+    },
+    {
+     "ma": "sales-09__S09-C02",
+     "nguon_r10": "S09-C02",
+     "mo_ta": "Chatbot website thật",
+     "not_run": "Chatbot website ở repo riêng chưa được giao (SEPARATE_REPO) — r10 S09-C02 NOT_RUN cùng lý do"
+    }
+   ]
+  },
+  {
+   "id": "ceo-90",
+   "db": "samsam_itacc_r13_c90",
+   "muc_kiem_de_xuat": "LOCAL",
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r10/items/ceo-90.json",
+    "sha256": "c3b610656ff1c0d0908d6b1909f95b20b4ce6821c4fce77c2549f9217601948f"
+   },
+   "ly_do_kiem_lai": "r13 thêm scripts/incident_compare.py (N22 — đối soát sự cố 20/10 trên bản sao cô lập)",
+   "tieu_chi_cu_the": [
+    "T1 (r10) Kiểm phần tài liệu/công cụ: sổ nghĩa vụ docs/handover/so-nghia-vu-hop-dong.md có N01–N20, mỗi dòng có căn cứ + trạng thái; danh mục `rollout --catalog` thể hiện ceo-90 ngoài code",
+    "T2 (r10) Phần nghĩa vụ thực hiện (nhân sự, đào tạo, trực, góp/hoàn trả, bảo hành, bàn giao/xóa bản sao) KHÔNG chứng minh được trên máy dev → BI_CHAN NON_SOFTWARE",
+    "T3 (r13 MỚI) `scripts/incident_compare.py` chỉ đọc, DSN CHỈ qua INCIDENT_BASELINE_URL/INCIDENT_NOW_URL: thiếu một → exit 2 [UNVERIFIED], 0 kết nối; dbname `samsam` hoặc thiếu dbname → exit 2 [từ chối], 0 kết nối; cùng bản sao đọc 2 lần → exit 0 'Khác biệt: 0'; thêm 1 dòng job_runs trong khung 2026-10-20 03:03:38–03:28:30 UTC → exit 1, báo job_runs + khung"
+   ],
+   "ca": [
+    {
+     "ma": "ceo-90__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề: seed sổ rollout trên DB mục (C01/C02 không đọc DB; ca incident dùng DB mục làm 'bản sao cô lập')",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-90__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Sổ nghĩa vụ đủ cấu trúc — harness r10 NGUYÊN {FX10}/g1/harness/parse_so_nghia_vu.py.txt (sha c3b6917d…; đọc D:\\code\\samsam\\docs\\handover\\so-nghia-vu-hop-dong.md = chính repo trên máy này). Kỳ vọng r10: có N01..N20, mỗi dòng căn cứ HĐ/PL + trạng thái (sổ hiện có thêm N21–N22, vẫn đủ N01..N20)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g1/harness/parse_so_nghia_vu.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*đủ N01\\.\\.N20: True \\| thiếu: \\[\\])(?=.*mỗi dòng 8 cột: True \\[\\])(?=.*căn cứ có HĐ/PL hoặc ghi rõ không có điều khoản: True)(?=.*trạng thái: \\{'[a-z_]+': \\d+(?:, '[a-z_]+': \\d+)*\\})"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-90__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Danh mục thể hiện mục ngoài code — `rollout --catalog` exit 0 + dòng ngoài 89/code_status (r10 ceo90_C02) + mục ceo-90 trong data/contract_features.json (r10 ceo90_C02b)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--catalog"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*ngoài 89: [^\\n]*nghia_vu_hd [1-9])(?=.*code_status: [^\\n]*ngoai_code [1-9])"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import json,sys; f=[x for x in json.loads(open(sys.argv[1],'rb').read().decode('utf-8'))['features'] if x.get('id')=='ceo-90']; print([{k:x.get(k) for k in ('id','pham_vi','code_status','acceptance_status')} for x in f]); ok=len(f)==1 and f[0].get('code_status')=='ngoai_code' and f[0].get('pham_vi')=='nghia_vu_hd'; print('CEO90_NGOAI_CODE' if ok else 'CEO90_LECH'); sys.exit(0 if ok else 1)",
+        "{REPO}/data/contract_features.json"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "CEO90_NGOAI_CODE"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-90__R13-C01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "incident_compare thiếu INCIDENT_BASELINE_URL (NOW = DB mục) → exit 2 [UNVERIFIED], 0 kết nối",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/incident_run.py.txt",
+        "thieu"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "\\[UNVERIFIED\\] thiếu INCIDENT_BASELINE_URL",
+       "stdout_re": "\\[harness\\] mode=thieu rc=2 so_ket_noi=0\\b"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-90__R13-C02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "incident_compare từ chối DB thật: NOW dbname=samsam (host 127.0.0.1 port 1 — giả, không bao giờ kết nối) → exit 2 [từ chối], 0 kết nối; NOW thiếu dbname → exit 2 [từ chối], 0 kết nối",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/incident_run.py.txt",
+        "tu_choi_samsam"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "\\[từ chối\\] hiện tại: trỏ DB `samsam` thật[^\\n]*0 kết nối",
+       "stdout_re": "\\[harness\\] mode=tu_choi_samsam rc=2 so_ket_noi=0\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/incident_run.py.txt",
+        "tu_choi_thieu_dbname"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "\\[từ chối\\] hiện tại: thiếu dbname tường minh[^\\n]*0 kết nối",
+       "stdout_re": "\\[harness\\] mode=tu_choi_thieu_dbname rc=2 so_ket_noi=0\\b"
+      }
+     ]
+    },
+    {
+     "ma": "ceo-90__R13-C03",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "cùng 1 bản sao (DB mục) đọc qua 2 handle → exit 0 'Khác biệt: 0'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/incident_run.py.txt",
+        "cung_ban"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*- Bản trước: `samsam_itacc_r13_c90` · bản hiện tại: `samsam_itacc_r13_c90`)(?=.*- Khác biệt: 0\\s)(?=.*\\[harness\\] mode=cung_ban rc=0 so_ket_noi=2\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from job_runs where started_at between '2026-10-20 03:03:38+00' and '2026-10-20 03:28:30+00'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "ceo-90__R13-C04",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "FIXTURE: thêm 1 dòng job_runs (job 'thu_r13_su_co', started_at 2026-10-20 03:10:00 UTC — trong khung sự cố) vào DB mục bằng psycopg → incident_compare cùng bản → exit 1, báo job_runs 1 dòng trong khung + khung",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],autocommit=True,connect_timeout=5); r=c.execute(\"insert into job_runs (job, started_at, finished_at, ok, detail, host) values ('thu_r13_su_co', '2026-10-20 03:10:00+00', '2026-10-20 03:10:05+00', true, 'Thử R13 — dòng giả lập trong khung sự cố', 'thu-r13') returning id\").fetchone(); print('FIXTURE job_runs id', r[0]); c.close()"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/incident_run.py.txt",
+        "cung_ban"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "(?s)(?=.*- Khung sự cố: 2026-10-20 03:03:38\\+00 → 2026-10-20 03:28:30\\+00)(?=.*- Khác biệt: 1\\s)(?=.*- bảng job_runs: 1 dòng có thời điểm trong khung sự cố ở bản hiện tại)(?=.*\\[harness\\] mode=cung_ban rc=1 so_ket_noi=2\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from job_runs where started_at between '2026-10-20 03:03:38+00' and '2026-10-20 03:28:30+00' and job = 'thu_r13_su_co'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "ceo-90__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "Thực hiện nghĩa vụ",
+     "not_run": "Thực hiện nghĩa vụ (nhân sự toàn thời gian, bàn giao đầu vào, đào tạo, trực, góp/hoàn trả bằng sản phẩm, bảo hành, bàn giao/xóa bản sao khi chấm dứt) là hành vi ngoài phần mềm của hai bên — không chứng minh được trên máy dev (r10 C03 NOT_RUN cùng lý do); đối soát N22 trên bản sao THẬT (backup trước sự cố) là việc DBA Bên B"
+    }
+   ]
+  },
+  {
+   "id": "data_platform-90",
+   "db": "samsam_itacc_r13_dp90",
+   "muc_kiem_de_xuat": "LOCAL",
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r10/items/data_platform-90.json",
+    "sha256": "692bda3b69d76f6fc6f040dc4e3197bd43eded86d00002e16a0bd4d860bcceb3"
+   },
+   "ly_do_kiem_lai": "r13 thêm scripts/onprem_preflight.py (đo sẵn sàng on-prem trên máy chạy lệnh)",
+   "tieu_chi_cu_the": [
+    "T1 (r10) Tài liệu/công cụ hạ tầng on-prem có trong repo: deploy/onprem/README.md, jobs.json đọc được, unit systemd, runbook hạ tầng",
+    "T2 (r10) Bằng chứng server vật lý/UPS/NAS/monitor độc lập/tài khoản cao nhất KHÔNG thể có trên máy dev → BI_CHAN NON_SOFTWARE",
+    "T3 (r10 'T4') không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+    "T4 (r13 MỚI) `scripts/onprem_preflight.py` chỉ đo trên máy chạy, chỉ đọc env tiến trình: thiếu DATABASE_URL/4 URL dịch vụ/BACKUP_* → exit 1 'CHƯA SẴN SÀNG', không mục nào DAT; DATABASE_URL = DB mục + PG_BIN PG17 → dòng `db` DAT, 4 dòng dịch vụ CHUA_DAT (thiếu biến), `lich:systemd` KHONG_AP_DUNG trên Windows, exit 1; mục vật lý luôn CHUA_XAC_NHAN (không bao giờ báo sẵn sàng)"
+   ],
+   "ca": [
+    {
+     "ma": "data_platform-90__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề hình thức: seed sổ rollout trên DB mục (DP90-01/02 không đọc DB; R13-C02 chỉ kết nối DB mục)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__DP90-01",
+     "nguon_r10": "DP90-01",
+     "mo_ta": "Tài liệu có — r10 `ls/grep deploy/onprem + runbook` (kỳ vọng README, jobs.json, systemd/*) → tệp tồn tại + jobs.json đọc được + có unit systemd (timer + samsam-job@.service) + README có mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import json,sys; from pathlib import Path; r=Path(sys.argv[1]); o=r/'deploy'/'onprem'; t=sorted(p.name for p in (o/'systemd').glob('*.timer')); s=sorted(p.name for p in (o/'systemd').glob('*.service')); j=json.loads((o/'jobs.json').read_bytes().decode('utf-8')); jobs=[k for k in j['jobs'] if not k.startswith('_')]; h=[l for l in (o/'README.md').read_bytes().decode('utf-8').split(chr(10)) if l.startswith('## ')]; rb=(r/'docs'/'handover'/'runbook-ha-tang.md').stat().st_size; print('timer',len(t),'service',s,'job',len(jobs),'muc README',len(h),'runbook bytes',rb); ok=len(t)>=1 and 'samsam-job@.service' in s and len(jobs)>=1 and len(h)>=1 and rb>0; print('TAI_LIEU_DU' if ok else 'TAI_LIEU_THIEU'); sys.exit(0 if ok else 1)",
+        "{REPO}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "TAI_LIEU_DU"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{REPO}/deploy/onprem/README.md",
+       "count": 1
+      },
+      {
+       "file_glob": "{REPO}/deploy/onprem/jobs.json",
+       "count": 1
+      },
+      {
+       "file_glob": "{REPO}/deploy/onprem/systemd/samsam-job@.service",
+       "count": 1
+      },
+      {
+       "file_glob": "{REPO}/docs/handover/runbook-ha-tang.md",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__DP90-02",
+     "nguon_r10": "DP90-02",
+     "mo_ta": "jobs.json hợp lệ — `job_runs --list` exit 0",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.job_runs",
+        "--list"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?m)^backup: [^\\n]*\\(hạn \\d+h\\)",
+       "out_re": "\\A(?![\\s\\S]*(?:Traceback|\\[err\\]))"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__R13-C01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "preflight khi chưa cấu hình gì: DATABASE_URL/4 URL dịch vụ/BACKUP_*/PG_BIN xóa khỏi env (runner null; mã preflight + auth/db_backup không nạp .env — đã đọc import) → exit 1, 6 mục đo được CHUA_DAT, không mục nào DAT, mục vật lý CHUA_XAC_NHAN",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "DATABASE_URL": null,
+        "PG_BIN": null,
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_DIR": null,
+        "BACKUP_PASSPHRASE_FILE": null,
+        "BACKUP_REQUIRE_ENCRYPTION": null,
+        "BACKUP_OFFSITE": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null
+       },
+       "expect_exit": 1,
+       "stdout_re": "(?s)\\A(?!.*\\| DAT \\|)(?=.*\\| db \\| CHUA_DAT \\| thiếu DATABASE_URL \\|)(?=.*\\| dich_vu:webhook \\| CHUA_DAT \\| thiếu WEBHOOK_DATABASE_URL \\|)(?=.*\\| dich_vu:job \\| CHUA_DAT \\| thiếu JOB_DATABASE_URL \\|)(?=.*\\| dich_vu:loader \\| CHUA_DAT \\| thiếu LOADER_DATABASE_URL \\|)(?=.*\\| dich_vu:backup \\| CHUA_DAT \\| thiếu BACKUP_DATABASE_URL \\|)(?=.*\\| sao_luu:cau_hinh \\| CHUA_DAT \\| thiếu BACKUP_DIR \\|)(?=.*\\| lich:systemd \\| KHONG_AP_DUNG \\|)(?=.*Không đo được từ trong máy — CHUA_XAC_NHAN \\(Bên B ký biên bản\\): may chu vat ly \\+ UPS; may giam sat DOC LAP \\(ngoai server\\); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat)(?=.*KẾT LUẬN: CHƯA SẴN SÀNG — 6 mục đo được chưa đạt)",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__R13-C02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "preflight với DATABASE_URL = DB mục (runner) + PG_BIN=C:/Program Files/PostgreSQL/17/bin, dịch vụ/BACKUP_* không đặt → `db` DAT; 4 dịch vụ CHUA_DAT thiếu biến; lich:systemd KHONG_AP_DUNG (Windows); exit 1 (5 mục chưa đạt); mục vật lý CHUA_XAC_NHAN",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_DIR": null,
+        "BACKUP_PASSPHRASE_FILE": null,
+        "BACKUP_REQUIRE_ENCRYPTION": null,
+        "BACKUP_OFFSITE": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null
+       },
+       "expect_exit": 1,
+       "stdout_re": "(?s)(?=.*\\| db \\| DAT \\| server PG \\d+; pg_dump: [^|\\n]*17.bin.pg_dump)(?=.*\\| dich_vu:webhook \\| CHUA_DAT \\| thiếu WEBHOOK_DATABASE_URL \\|)(?=.*\\| dich_vu:job \\| CHUA_DAT \\| thiếu JOB_DATABASE_URL \\|)(?=.*\\| dich_vu:loader \\| CHUA_DAT \\| thiếu LOADER_DATABASE_URL \\|)(?=.*\\| dich_vu:backup \\| CHUA_DAT \\| thiếu BACKUP_DATABASE_URL \\|)(?=.*\\| sao_luu:cau_hinh \\| CHUA_DAT \\| thiếu BACKUP_DIR \\|)(?=.*\\| lich:systemd \\| KHONG_AP_DUNG \\| hệ điều hành Windows)(?=.*Không đo được từ trong máy — CHUA_XAC_NHAN \\(Bên B ký biên bản\\): may chu vat ly \\+ UPS; may giam sat DOC LAP \\(ngoai server\\); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat)(?=.*KẾT LUẬN: CHƯA SẴN SÀNG — 5 mục đo được chưa đạt)",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__DP90-03",
+     "nguon_r10": "DP90-03",
+     "mo_ta": "Bằng chứng vật lý",
+     "not_run": "Ngoài phần mềm: server vật lý/UPS/NAS-offsite/máy giám sát độc lập/người giữ tài khoản cao nhất không thể có trên máy dev (r10 DP90-03 NOT_RUN cùng lý do); preflight R13 chỉ đo máy dev Windows, không thay biên bản Bên B"
+    }
+   ]
+  }
+ ]
+}

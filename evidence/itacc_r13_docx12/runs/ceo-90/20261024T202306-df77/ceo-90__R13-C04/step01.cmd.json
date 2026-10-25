@@ -1,0 +1,21 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],autocommit=True,connect_timeout=5); r=c.execute(\"insert into job_runs (job, started_at, finished_at, ok, detail, host) values ('thu_r13_su_co', '2026-10-20 03:10:00+00', '2026-10-20 03:10:05+00', true, 'Thử R13 — dòng giả lập trong khung sự cố', 'thu-r13') returning id\").fetchone(); print('FIXTURE job_runs id', r[0]); c.close()"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:23:14+07:00",
+ "ket_thuc": "2026-10-24T20:23:15+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "783aa1ad2f2b0b2dc3e73a02ae1d86e80bc27376d45f02919ffc4d01d022e89a",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

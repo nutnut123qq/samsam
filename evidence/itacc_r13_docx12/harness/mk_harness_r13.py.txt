@@ -1,0 +1,53 @@
+"""HARNESS r13 — sinh runner/mkdb/run_batch cho lượt r13 TỪ bản r12-fix (không sửa tệp cũ).
+Đổi: thư mục evidence/itacc_r13_docx12, cổng 55453, tiền tố DB samsam_itacc_r13_, scratchpad r13; placeholder:
+  {REPO} repo · {FX10} evidence/itacc_r10 · {FX12} evidence/itacc_r12/fixtures · {H12} evidence/itacc_r12/harness
+  {FXF} evidence/itacc_r12_fix_d2_l3/fixtures · {HF} evidence/itacc_r12_fix_d2_l3/harness
+  {FX13} evidence/itacc_r13_docx12/fixtures · {H} evidence/itacc_r13_docx12/harness · {OUT} {SCR} {sql:...}
+run_batch: mục ĐẦU TIÊN dựng DB tuần tự (tạo role cụm), các mục sau mới song song (tránh race create role của r12-fix).
+  python -I mk_harness_r13.py.txt"""
+from pathlib import Path
+
+H = Path(__file__).resolve().parent
+F = H.parents[1] / "itacc_r12_fix_d2_l3" / "harness"
+SPF = r"C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r12fix"
+SP13 = r"C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\86c80dd1-dfb9-4a98-ba2d-8954bd0353d0\scratchpad\r13"
+
+
+def conv(src, dst, reps, head):
+    s = (F / src).read_bytes().decode("utf-8")
+    for a, b in reps:
+        assert s.count(a) == 1, (src, a)
+        s = s.replace(a, b)
+    with open(H / dst, "xb") as fh:
+        fh.write((head + s).encode("utf-8"))
+
+
+conv("mkdb_r12fix.sh.txt", "mkdb_r13.sh.txt", [
+    ("samsam_itacc_r12fix_*) ;;", "samsam_itacc_r13_*) ;;"),
+    ('str(d["port"]) == "55452"', 'str(d["port"]) == "55453"'),
+], "# r13: bản sao mkdb_r12fix.sh.txt — tiền tố DB samsam_itacc_r13_, cổng 55453.\n")
+conv("runner_r12fix.py.txt", "runner_r13.py.txt", [
+    ('EV = REPO / "evidence" / "itacc_r12_fix_d2_l3"\nEV12 = REPO / "evidence" / "itacc_r12"\n',
+     'EV = REPO / "evidence" / "itacc_r13_docx12"\nEV12 = REPO / "evidence" / "itacc_r12"\n'
+     'EVF = REPO / "evidence" / "itacc_r12_fix_d2_l3"\n'),
+    ('str(d.get("port")) == "55452"', 'str(d.get("port")) == "55453"'),
+    ('FX, H = EV12 / "fixtures", EV12 / "harness"\nFXF, HF = EV / "fixtures", EV / "harness"\n',
+     'FX, H12 = EV12 / "fixtures", EV12 / "harness"\nFXF, HF = EVF / "fixtures", EVF / "harness"\n'
+     'FX13, H = EV / "fixtures", EV / "harness"\n'),
+    ('.replace("{FXF}", str(FXF)).replace("{HF}", str(HF)).replace("{H}", str(H))',
+     '.replace("{FXF}", str(FXF)).replace("{HF}", str(HF)).replace("{FX13}", str(FX13))'
+     '.replace("{H12}", str(H12)).replace("{H}", str(H))'),
+], '"""r13: bản sao runner_r12fix.py.txt — thư mục evidence/itacc_r13_docx12 (runs/), cổng 55453; placeholder {H} = harness\n'
+   'r13, {H12} = harness r12, {FX13} = fixture r13, {FX12}/{FXF}/{HF}/{FX10} chỉ đọc (xem mk_harness_r13)."""\n')
+conv("run_batch_r12fix.py.txt", "run_batch_r13.py.txt", [
+    ('EV = REPO / "evidence" / "itacc_r12_fix_d2_l3"\n', 'EV = REPO / "evidence" / "itacc_r13_docx12"\n'),
+    ('SP = Path(r"' + SPF + '")', 'SP = Path(r"' + SP13 + '")'),
+    ('"mkdb_r12fix.sh.txt"', '"mkdb_r13.sh.txt"'),
+    ('"runner_r12fix.py.txt"', '"runner_r13.py.txt"'),
+    ('with concurrent.futures.ThreadPoolExecutor(n) as ex:\n    for fut in concurrent.futures.as_completed([ex.submit(one, c, f) for c, f in jobs]):',
+     '# r13: mục đầu chạy MỘT MÌNH (dựng DB đầu tiên tạo role cụm), sau đó mới song song.\n'
+     'if jobs:\n    fid0, res0 = one(*jobs[0])\n    print(fid0, res0, flush=True)\n'
+     'with concurrent.futures.ThreadPoolExecutor(n) as ex:\n'
+     '    for fut in concurrent.futures.as_completed([ex.submit(one, c, f) for c, f in jobs[1:]]):'),
+], "# r13: bản sao run_batch_r12fix.py.txt — evidence/itacc_r13_docx12, scratchpad r13, mkdb/runner r13; mục đầu tuần tự.\n")
+print("ok")

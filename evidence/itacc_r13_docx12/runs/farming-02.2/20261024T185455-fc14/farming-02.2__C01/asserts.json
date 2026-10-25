@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'plot_log_gap' and created_by = 'agent:garden_director' and status = 'pending' and decided_by is null and decided_at is null and object_id in ('gap:IT-K02:none', 'gap:IT-K04:none') and payload like '%CHƯA gán người phụ trách%'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_id = 'gap:IT-K02:none' and payload like 'Khoảnh IT-K02: chưa có nhật ký nào. Nhắc người phụ trách (chưa gán): khoảnh CHƯA gán người phụ trách%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_id like 'gap:IT-K01%' or object_id like 'gap:IT-K03%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and status <> 'pending'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

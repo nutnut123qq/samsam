@@ -1,0 +1,28 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(sys.argv[2].encode('utf-8')+b'\\n'); print('PASSFILE', len(sys.argv[2]))",
+  "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/b3e26e46876f3cb7bfb27c18dfb6dcf6/pass/fix4.pass",
+  "ThuR13fix4-passphrase-fixture-khong-phai-khoa-that"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:00:55+07:00",
+ "ket_thuc": "2026-10-25T00:00:55+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "PASSFILE (?:1[6-9]|[2-9]\\d)\\b",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "b3233e3868b9af9fd31e408682bfaeb6bd4d216643c3c8dcb53d3dc4e85df4aa",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

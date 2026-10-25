@@ -1,0 +1,35 @@
+"""HARNESS r13 — preflight DB test trước full pytest: DATABASE_URL đặt tường minh, đúng 127.0.0.1:55453, dbname bắt
+đầu samsam_itacc_r13_ (KHÔNG phải samsam), kết nối được, đủ bảng lõi đã dựng (schema/roles + core + golden).
+Không in DSN. exit 0 = đạt; khác 0 = dừng.  python -I preflight_db_r13.py.txt"""
+import os
+import sys
+
+import psycopg
+from psycopg import conninfo
+
+sys.stdout.reconfigure(encoding="utf-8")
+dsn = os.environ.get("DATABASE_URL", "")
+if not dsn:
+    sys.exit("[preflight] thiếu DATABASE_URL")
+d = conninfo.conninfo_to_dict(dsn)
+db = d.get("dbname") or ""
+print(f"# DB {db} @ {d.get('host')} {d.get('port')} (KHÔNG phải samsam)")
+if db == "samsam" or not db.startswith("samsam_itacc_r13_") or d.get("host") != "127.0.0.1" \
+        or str(d.get("port")) != "55453":
+    sys.exit("[preflight] DB không phải DB test của lượt — dừng")
+NEED = ("approval_queue", "content_drafts", "feature_rollout", "products", "sku_master", "price_list",
+        "agent_action_log", "chat_consents", "human_logins", "file_output_evidence")
+try:
+    with psycopg.connect(dsn, connect_timeout=5) as c:
+        have = {r[0] for r in c.execute("select table_name from information_schema.tables where table_schema='public'")}
+        miss = [t for t in NEED if t not in have]
+        n_prod = c.execute("select count(*) from products").fetchone()[0]
+        n_sku = c.execute("select count(*) from sku_master").fetchone()[0]
+        roles = {r[0] for r in c.execute("select rolname from pg_roles where rolname in "
+                                         "('agent_writer','app_human','svc_ui','svc_job','svc_webhook')")}
+except psycopg.Error as e:
+    sys.exit(f"[preflight] lỗi DB {type(e).__name__}")
+print(f"# bảng public {len(have)} · thiếu {miss} · products {n_prod} · sku_master {n_sku} · roles {sorted(roles)}")
+if miss or not n_prod or not n_sku or len(roles) < 5:
+    sys.exit("[preflight] DB chưa dựng đủ — dừng")
+print("# preflight OK")

@@ -1,0 +1,41 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "scripts/onprem_preflight.py"
+ ],
+ "env_doi": [
+  "BACKUP_DATABASE_URL",
+  "BACKUP_DIR",
+  "BACKUP_KEEP",
+  "BACKUP_OFFSITE",
+  "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE",
+  "BACKUP_PASSPHRASE_FILE",
+  "BACKUP_REQUIRE_ENCRYPTION",
+  "JOB_DATABASE_URL",
+  "LOADER_DATABASE_URL",
+  "PG_BIN",
+  "WEBHOOK_DATABASE_URL"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:58:28+07:00",
+ "ket_thuc": "2026-10-24T18:58:29+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*\\| db \\| DAT \\| server PG \\d+; pg_dump: [^|\\n]*17.bin.pg_dump)(?=.*\\| dich_vu:webhook \\| CHUA_DAT \\| thiếu WEBHOOK_DATABASE_URL \\|)(?=.*\\| dich_vu:job \\| CHUA_DAT \\| thiếu JOB_DATABASE_URL \\|)(?=.*\\| dich_vu:loader \\| CHUA_DAT \\| thiếu LOADER_DATABASE_URL \\|)(?=.*\\| dich_vu:backup \\| CHUA_DAT \\| thiếu BACKUP_DATABASE_URL \\|)(?=.*\\| sao_luu:cau_hinh \\| CHUA_DAT \\| thiếu BACKUP_DIR \\|)(?=.*\\| lich:systemd \\| KHONG_AP_DUNG \\| hệ điều hành Windows)(?=.*Không đo được từ trong máy — CHUA_XAC_NHAN \\(Bên B ký biên bản\\): may chu vat ly \\+ UPS; may giam sat DOC LAP \\(ngoai server\\); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat)(?=.*KẾT LUẬN: CHƯA SẴN SÀNG — 5 mục đo được chưa đạt)",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "2d9633dc6d1778c9b34bc05237130d13164c0569daa6429304196af3f4cb2118",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,34 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "scripts/db_backup.py"
+ ],
+ "env_doi": [
+  "BACKUP_DIR",
+  "BACKUP_KEEP",
+  "BACKUP_OFFSITE",
+  "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE",
+  "BACKUP_PASSPHRASE_FILE",
+  "BACKUP_REQUIRE_ENCRYPTION",
+  "DRILL_DATABASE_URL",
+  "PG_BIN"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:03:50+07:00",
+ "ket_thuc": "2026-10-25T00:03:52+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*\\[done\\] samsam_itacc_r13fix4_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[offsite\\] đã chép \\+ kiểm sha256)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "01e5ef9f7d77eec1a371d65379cd34a24dc7ae9ccfda3d87059fc05dcbe17faa",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,22 @@
+#!/bin/bash
+# HARNESS r13 — gate sau full: ruff, eval tất định --no-record, DPIA --check, red-team. Mỗi lệnh 1 log gate/<tên>.txt
+# (mở mới, không ghi đè), exit lấy NGAY sau lệnh qua PIPESTATUS, che URL DSN + libpq password=. Không DB (xóa PG*/DSN).
+#   bash run_gates_r13.sh.txt
+H="/d/code/samsam/evidence/itacc_r13_docx12/harness"; G="/d/code/samsam/evidence/itacc_r13_docx12/gate"
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY
+export PYTHONIOENCODING=utf-8 OPENROUTER_API_KEY=""
+cd /d/code/samsam
+FPC=$(bash "$H/fp_r13.sh.txt" /d/code/samsam code "$H/new_files_r13.txt")
+worst=0
+for spec in "ruff|ruff check . --exclude .agents --exclude founder" "eval|python scripts/agent_eval.py --deterministic --no-record" \
+            "dpia|python scripts/dpia_draft.py --check" "redteam|python scripts/redteam.py"; do
+  name=${spec%%|*}; cmd=${spec#*|}; log="$G/$name.txt"
+  [ -e "$log" ] && { echo "$log đã có — bỏ qua"; worst=2; continue; }
+  { echo "# fp_code=$FPC"; echo "## $cmd"; $cmd 2>&1; rc=$?; echo "EXIT $rc"; exit $rc; } \
+    | sed -E -e 's#(postgres(ql)?://[^:/@[:space:]]+:)[^@[:space:]]+@#\1***@#g' -e 's/(password=)[^[:space:]]+/\1***/g' > "$log"
+  rc=${PIPESTATUS[0]}
+  echo "$name EXIT $rc"
+  [ $rc -gt $worst ] && worst=$rc
+done
+exit $worst

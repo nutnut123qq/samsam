@@ -1,0 +1,60 @@
+"""HARNESS r13 ceo-90 (MOI_R13) — chạy `scripts/incident_compare.py` main() THẬT trên DB THỬ của mục (DATABASE_URL do runner
+r13 đặt: 127.0.0.1:55453 samsam_itacc_r13_*). Không in DSN. Đếm số lần psycopg.connect (vẫn gọi hàm thật) để chứng minh
+"0 kết nối" ở nhánh từ chối.
+  python incident_run.py.txt thieu | tu_choi_samsam | tu_choi_thieu_dbname | cung_ban
+- thieu               : INCIDENT_BASELINE_URL KHÔNG đặt, INCIDENT_NOW_URL = DB mục → script phải exit 2 [UNVERIFIED], 0 kết nối.
+- tu_choi_samsam      : BASELINE = DB mục, NOW = host=127.0.0.1 port=1 dbname=samsam (giả, cổng 1 — không bao giờ kết nối)
+                        → exit 2 [từ chối], 0 kết nối.
+- tu_choi_thieu_dbname: BASELINE = DB mục, NOW không có dbname → exit 2 [từ chối], 0 kết nối.
+- cung_ban            : BASELINE/NOW = CÙNG DB mục, hai handle khác application_name (DSN khác chuỗi, không phải "hai DSN
+                        giống hệt") → so 2 lần đọc của cùng 1 bản sao cô lập.
+In: báo cáo của script (stdout/stderr nguyên văn) + dòng `[harness] mode=… rc=… so_ket_noi=…`; exit = rc của script.
+Nạp script theo đường dẫn tệp (importlib) — không phụ thuộc gói `scripts` trên sys.path."""
+import importlib.util
+import os
+import sys
+from pathlib import Path
+
+for _s in (sys.stdout, sys.stderr):
+    _s.reconfigure(encoding="utf-8", errors="replace")
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT))
+os.chdir(ROOT)
+import psycopg  # noqa: E402
+from psycopg import conninfo  # noqa: E402
+
+mode = sys.argv[1]
+db = os.environ["DATABASE_URL"]
+d = conninfo.conninfo_to_dict(db)
+if not (d.get("host") == "127.0.0.1" and str(d.get("port")) == "55453"
+        and (d.get("dbname") or "").startswith("samsam_itacc_r13_")):
+    sys.exit("[harness] DATABASE_URL không phải DB thử r13 — dừng")
+N = []
+_real = psycopg.connect
+
+
+def _count(*a, **k):
+    N.append(1)
+    return _real(*a, **k)
+
+
+psycopg.connect = _count
+base = conninfo.make_conninfo(db, application_name="r13_incident_baseline")
+now = conninfo.make_conninfo(db, application_name="r13_incident_now")
+pair = {"thieu": (None, now),
+        "tu_choi_samsam": (base, "host=127.0.0.1 port=1 dbname=samsam user=thu_r13 connect_timeout=1"),
+        "tu_choi_thieu_dbname": (base, "host=127.0.0.1 port=1 user=thu_r13 connect_timeout=1"),
+        "cung_ban": (base, now)}[mode]
+for k, v in zip(("INCIDENT_BASELINE_URL", "INCIDENT_NOW_URL"), pair):
+    if v is None:
+        os.environ.pop(k, None)
+    else:
+        os.environ[k] = v
+spec = importlib.util.spec_from_file_location("incident_compare", ROOT / "scripts" / "incident_compare.py")
+ic = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ic)
+rc = ic.main([])
+sys.stdout.flush()
+sys.stderr.flush()
+print(f"[harness] mode={mode} rc={rc} so_ket_noi={len(N)}")
+sys.exit(rc)

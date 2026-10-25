@@ -1,0 +1,30 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/incident_run.py.txt",
+  "tu_choi_thieu_dbname"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:23:11+07:00",
+ "ket_thuc": "2026-10-24T20:23:12+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[harness\\] mode=tu_choi_thieu_dbname rc=2 so_ket_noi=0\\b",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\[từ chối\\] hiện tại: thiếu dbname tường minh[^\\n]*0 kết nối",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "722d60b6182e5bc2092a249383e1ae6ed11ae63e9d87e84c113e4846a246ca06",
+ "stderr_sha256": "e6a88a35a92295fe492fa502999905efab560446e5f9931a6ec249f54fb59326"
+}

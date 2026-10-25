@@ -1,0 +1,146 @@
+"""PROBE r13-fix4 K v1 — F1: OCR `paddle_local` KHÔNG được để PaddleOCR (bản đã cài) tự tải model khi bộ model cục bộ thiếu
+tệp. Dùng PaddleOCR THẬT; chặn downloader (`download_with_progressbar` của ppocr) + mọi socket connect TRƯỚC khi có mạng —
+không mock toàn bộ PaddleOCR. Không DB. Cùng mã/input/assertion cho snapshot r13 CHƯA vá và bản vá.
+  python -I probe_k_ocr_models.py.txt <ROOT> <FIXTURE_DIR> <MODEL_DIR_DAY_DU> <out.json>
+Tiêu chí (khóa trước khi vá):
+- det/rec/cls (từng bộ, 2 bộ còn lại đủ): có inference.pdmodel nhưng THIẾU inference.pdiparams → DocError nêu tên bộ thiếu,
+  0 lần gọi downloader, 0 kết nối mạng, PaddleOCR không được khởi tạo.
+- cả 3 bộ thiếu pdiparams (ca controller) → như trên.
+- pdiparams RỖNG 0 byte (rec) → từ chối như thiếu.
+- thiếu pdmodel (rec) → DocError, 0 downloader (đã đạt trước vá — ca đối chứng).
+- ca dương: bộ model cục bộ ĐẦY ĐỦ (MODEL_DIR_DAY_DU) → engine khởi tạo, OCR thật ảnh PNG nhãn + PDF chỉ ảnh 2 trang ra
+  chữ (ĐKSP/LOT/123/2026), 0 downloader, 0 mạng; OCR_ENGINES ghi engine; ảnh trắng → source none."""
+import importlib
+import json
+import os
+import shutil
+import socket
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT, FX, FULL, OUT = sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3]), sys.argv[4]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG") or k in ("OPENROUTER_API_KEY", "OCR_PADDLE_MODEL_DIR"):
+        os.environ.pop(k, None)
+NET, DL, CTOR = [], [], []
+
+
+def _no_net(self, addr):
+    NET.append(str(addr)[:60])
+    raise OSError("probe: chặn mạng")
+
+
+socket.socket.connect = _no_net
+socket.create_connection = lambda *a, **k: _no_net(None, a[0] if a else None)
+import psycopg  # noqa: E402
+
+psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+
+pm = importlib.import_module("paddleocr.paddleocr")      # nạp PaddleOCR thật (thêm ppocr vào sys.path)
+
+
+def _block_dl(url, dest, *a, **k):
+    DL.append(str(url)[:120])
+    raise RuntimeError("probe: chặn tự tải model (không có mạng)")
+
+
+for name in ("ppocr.utils.network", "paddleocr.ppocr.utils.network"):
+    try:
+        importlib.import_module(name).download_with_progressbar = _block_dl
+    except ImportError:
+        pass
+_RealOCR = pm.PaddleOCR
+
+
+class _CountOCR(_RealOCR):
+    def __init__(self, *a, **k):
+        CTOR.append(1)
+        super().__init__(*a, **k)
+
+
+pm.PaddleOCR = _CountOCR
+import paddleocr  # noqa: E402
+
+paddleocr.PaddleOCR = _CountOCR
+from ingest import doc_intake as di  # noqa: E402
+
+TMP = Path(tempfile.mkdtemp(prefix="r13fix4k-"))
+rows = []
+
+
+def case(ma, fn):
+    DL.clear()
+    NET.clear()
+    CTOR.clear()
+    di._paddle = None
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual,
+                 "downloader": list(DL), "mang": list(NET), "khoi_tao_paddle": len(CTOR)})
+
+
+def mk(name, bad: dict):
+    """Bộ model giả: bad = {bo: 'no_params'|'empty_params'|'no_model'}; bộ khác đủ 2 tệp (byte giả)."""
+    root = TMP / name
+    for k, parts in di._PADDLE_SUBDIRS.items():
+        d = root.joinpath(*parts)
+        d.mkdir(parents=True)
+        how = bad.get(k)
+        if how != "no_model":
+            (d / "inference.pdmodel").write_bytes(b"synthetic-model")
+        if how == "empty_params":
+            (d / "inference.pdiparams").write_bytes(b"")
+        elif how not in ("no_params",):
+            (d / "inference.pdiparams").write_bytes(b"synthetic-params")
+    return root
+
+
+def refused(name, bad, want):
+    def f():
+        os.environ["OCR_PADDLE_MODEL_DIR"] = str(mk(name, bad))
+        try:
+            di._paddle_engine()
+            got = "trả engine"
+        except di.DocError as e:
+            got = f"DocError: {e}"
+        except Exception as e:  # noqa: BLE001 — downloader bị chặn ném RuntimeError = đã định tải
+            got = f"{type(e).__name__}: {e}"
+        ok = got.startswith("DocError") and all(w in got for w in want) and not DL and not NET and not CTOR
+        return ok, got[:200]
+    return f
+
+
+for bo in ("det", "rec", "cls"):
+    case(f"thieu_pdiparams_{bo}", refused(f"np_{bo}", {bo: "no_params"}, [bo]))
+case("thieu_pdiparams_ca_3_bo", refused("np_all", {b: "no_params" for b in ("det", "rec", "cls")},
+                                        ["det", "rec", "cls"]))
+case("pdiparams_rong_rec", refused("ep_rec", {"rec": "empty_params"}, ["rec"]))
+case("thieu_pdmodel_rec_doi_chung", refused("nm_rec", {"rec": "no_model"}, ["rec"]))
+
+
+def c_full():
+    os.environ["OCR_PADDLE_MODEL_DIR"] = str(FULL)
+    t1, p1, s1 = di.extract_text(FX / "nhan_mat_ong.png", "paddle_local", ".png")
+    t2, p2, s2 = di.extract_text(FX / "tiep_nhan_scan.pdf", "paddle_local", ".pdf")
+    t3, _p3, s3 = di.extract_text(FX / "trang.png", "paddle_local", ".png")
+    ok = (s1 == "ocr" and "LOT" in t1.upper() and s2 == "ocr" and p2 == 2 and "123/2026" in t2 and s3 == "none"
+          and di.OCR_ENGINES.get("paddle_local") and not DL and not NET and len(CTOR) == 1)
+    return ok, {"nhan": [s1, p1, t1[:80]], "pdf": [s2, p2, t2[:80]], "trang": s3,
+                "engine": di.OCR_ENGINES.get("paddle_local")}
+
+
+case("du_model_cuc_bo_ocr_that", c_full)
+shutil.rmtree(TMP, ignore_errors=True)
+out = {"probe": "k_ocr_models_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160], "dl=", len(r["downloader"]), "net=", len(r["mang"]))
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

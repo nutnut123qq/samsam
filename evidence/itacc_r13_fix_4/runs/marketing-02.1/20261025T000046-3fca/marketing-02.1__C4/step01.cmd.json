@@ -1,0 +1,40 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "pipelines.image_studio",
+  "--sku",
+  "saphraton-20v",
+  "--sku",
+  "ruou-sam-chai-thuy-tinh-500ml",
+  "--channel",
+  "shopee",
+  "--headline",
+  "Quà quê Quảng Nam Thử IT"
+ ],
+ "env_doi": [
+  "IMAGE_OUT_DIR",
+  "IMAGE_PROVIDER",
+  "PACKSHOT_DIR",
+  "PROBE_ROOT"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:01:15+07:00",
+ "ket_thuc": "2026-10-25T00:01:20+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*saphraton-20v × shopee × 1:1: refused maket_xnqc)(?=[\\s\\S]*ruou-sam-chai-thuy-tinh-500ml × shopee × 1:1: refused ruou)(?=[\\s\\S]*\\[done\\] 2 ảnh — created 0, skipped 0, refused 2, failed 0)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "ccd2bea4666e62787415bb3f7c5942fc3e132c8504794c51da15ffda9724d2f3",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

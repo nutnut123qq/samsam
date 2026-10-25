@@ -1,0 +1,41 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "scripts/onprem_preflight.py"
+ ],
+ "env_doi": [
+  "BACKUP_DATABASE_URL",
+  "BACKUP_DIR",
+  "BACKUP_KEEP",
+  "BACKUP_OFFSITE",
+  "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE",
+  "BACKUP_PASSPHRASE_FILE",
+  "BACKUP_REQUIRE_ENCRYPTION",
+  "JOB_DATABASE_URL",
+  "LOADER_DATABASE_URL",
+  "PG_BIN",
+  "WEBHOOK_DATABASE_URL"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:03:25+07:00",
+ "ket_thuc": "2026-10-25T00:03:26+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*manifest local thiếu/hỏng",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "23e251b18a6ce31414ff41a575f7d4e42794f0c56379116fabfebb828371ea1a",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

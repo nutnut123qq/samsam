@@ -38,6 +38,10 @@ Contract:
     công); có provider → in bản chép (qua `_mask_pii`) làm NHÁP cho người
     nghe đối chiếu rồi tự ghi nhật ký + `--done` — agent không tự ghi.
     Webhook không bao giờ gọi STT.
+    r13: provider `whisper_local` = STT TẠI CHỖ (faster-whisper, model
+    cục bộ `GARDEN_STT_MODEL_DIR`, không tự tải; giải mã PyAV; trần
+    GARDEN_STT_MAX_SECONDS/GARDEN_STT_TIMEOUT_S). Thiếu model → exit 2 trước
+    khi đọc audio. Bản chép vẫn chỉ là NHÁP in ra (đã che PII).
   - Trả lời xác nhận ngắn — text viết tay, không LLM. stdout chỉ `uh=`.
   - KHÔNG import `connectors.zalo`: `python -m connectors.zalo` sẽ nạp 2 bản
     module (2 bộ token/lock/dedup) — zalo truyền `send` vào `handle`.
@@ -322,9 +326,88 @@ def audio_kind(data: bytes) -> str:
     raise ValueError("tệp ghi âm không đúng định dạng (magic bytes)")
 
 
+# r13: STT TẠI CHỖ bằng faster-whisper (CTranslate2) — audio KHÔNG rời máy
+# chủ nên `domestic=True` đúng nghĩa. Lựa chọn kỹ thuật THỬ (không phải chọn
+# vendor); chất lượng tiếng Việt giọng vùng CHƯA đánh giá. Model CHỈ đọc từ
+# thư mục cục bộ GARDEN_STT_MODEL_DIR (`local_files_only` — không tự tải mạng).
+STT_MAX_SECONDS = float(os.environ.get("GARDEN_STT_MAX_SECONDS", "600"))
+STT_TIMEOUT_S = float(os.environ.get("GARDEN_STT_TIMEOUT_S", "300"))
+_whisper = None   # model nạp 1 lần / tiến trình
+
+
+def _whisper_model():
+    global _whisper
+    if _whisper is None:
+        d = os.environ.get("GARDEN_STT_MODEL_DIR", "").strip()
+        if not d or not (Path(d) / "model.bin").is_file():
+            raise RuntimeError("thiếu model Whisper cục bộ (GARDEN_STT_MODEL_DIR"
+                               " phải chứa model.bin) — không tự tải")
+        try:
+            from faster_whisper import WhisperModel
+        except ImportError:
+            raise RuntimeError("chưa cài faster-whisper") from None
+        _whisper = WhisperModel(d, device="cpu", compute_type="int8",
+                                local_files_only=True)
+    return _whisper
+
+
+def _decode_16k(path: Path):
+    """Ghi âm → float32 mono 16 kHz bằng PyAV (cùng cách faster-whisper giải
+    mã, nhưng KHÔNG import ctranslate2 — trên Windows ctranslate2 không nạp
+    được sau PaddleOCR trong cùng tiến trình)."""
+    import av
+    import numpy as np
+    chunks = []
+    with av.open(str(path)) as c:
+        rs = av.AudioResampler(format="s16", layout="mono", rate=16000)
+        for frame in c.decode(c.streams.audio[0]):
+            chunks += [f.to_ndarray().reshape(-1) for f in rs.resample(frame)]
+        chunks += [f.to_ndarray().reshape(-1) for f in rs.resample(None)]
+    if not chunks:
+        return np.zeros(0, dtype=np.float32)
+    return np.concatenate(chunks).astype(np.float32) / 32768.0
+
+
+def _stt_whisper_local(path: Path) -> str:
+    """Chép lời tiếng Việt TẠI CHỖ → text (đoạn nối bằng khoảng trắng). Giải
+    mã bằng PyAV; hỏng → lỗi; dài quá STT_MAX_SECONDS hoặc chạy quá
+    STT_TIMEOUT_S → lỗi (kết quả muộn bị bỏ)."""
+    import threading
+    try:
+        audio = _decode_16k(path)
+    except Exception as e:  # noqa: BLE001 — PyAV raise đủ loại trên tệp hỏng
+        raise RuntimeError(f"không giải mã được ghi âm ({type(e).__name__})"
+                           ) from None
+    secs = len(audio) / 16000
+    if secs <= 0:
+        raise RuntimeError("ghi âm rỗng")
+    if secs > STT_MAX_SECONDS:
+        raise RuntimeError(f"ghi âm {secs:.1f}s > {STT_MAX_SECONDS:g}s")
+    model = _whisper_model()
+    box: dict = {}
+
+    def work():
+        try:
+            segs, _info = model.transcribe(audio, language="vi", beam_size=5,
+                                           vad_filter=True)
+            box["text"] = " ".join(s.text.strip() for s in segs
+                                   if s.text and s.text.strip())
+        except Exception as e:  # noqa: BLE001 — chuyển về luồng gọi
+            box["err"] = e
+    th = threading.Thread(target=work, name="stt-whisper", daemon=True)
+    th.start()
+    th.join(STT_TIMEOUT_S)
+    if th.is_alive():
+        raise RuntimeError(f"STT quá {STT_TIMEOUT_S:g} giây — bỏ")
+    if "err" in box:
+        raise RuntimeError(f"STT lỗi ({type(box['err']).__name__})")
+    return box.get("text", "")
+
+
 # name -> (callable(path) -> text, domestic). `none` = chưa có STT. Vendor
-# thật là external-dep (xem STT_HELP) — KHÔNG viết adapter trước khi chọn.
-STT_PROVIDERS = {"none": (None, True)}
+# có phí là external-dep (xem STT_HELP).
+STT_PROVIDERS = {"none": (None, True),
+                 "whisper_local": (_stt_whisper_local, True)}
 
 
 def stt_provider() -> tuple[str, str | None]:
@@ -340,6 +423,12 @@ def stt_provider() -> tuple[str, str | None]:
     if not domestic:
         return name, ("provider STT nước ngoài bị từ chối (giọng nói nhân "
                       "viên là dữ liệu cá nhân) — " + STT_HELP)
+    if name == "whisper_local":
+        d = os.environ.get("GARDEN_STT_MODEL_DIR", "").strip()
+        if not d or not (Path(d) / "model.bin").is_file():
+            return name, ("whisper_local cần model cục bộ đã duyệt: đặt "
+                          "GARDEN_STT_MODEL_DIR tới thư mục có model.bin "
+                          "(không tự tải mạng) — " + STT_HELP)
     return name, None
 
 
@@ -521,6 +610,9 @@ def _transcribe(conn, draft_id: int, name: str) -> int:
     fn, _domestic = STT_PROVIDERS[name]
     try:
         text = unicodedata.normalize("NFC", str(fn(path) or "")).strip()
+    except RuntimeError as e:  # lỗi đã mô tả (định dạng/độ dài/timeout)
+        print(f"[err] STT {name}: {_mask_pii(str(e))[:200]}", file=sys.stderr)
+        return 1
     except Exception as e:  # noqa: BLE001 — lỗi provider bất kỳ
         print(f"[err] STT {name} lỗi ({type(e).__name__})", file=sys.stderr)
         return 1

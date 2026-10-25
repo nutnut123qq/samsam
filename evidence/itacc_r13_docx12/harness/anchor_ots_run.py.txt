@@ -1,0 +1,119 @@
+"""r13 HARNESS (MOCK) farming-06 — `pipelines.anchor.main` THẬT với provider OpenTimestamps và calendar GIẢ.
+
+Viết mới cho r13 (không chuyển từ r10). data/anchor_config.json của repo vẫn `provider: none` (KHÔNG sửa); harness chỉ thay
+trong tiến trình:
+  - `anchor.load_config` → {"provider": "opentimestamps", "calendars": ["https://cal-a.test", "https://cal-b.test"],
+    "timeout_s": 5} (đúng dạng đầu ra của load_config);
+  - đối số mặc định `post=` của `anchor.submit` và `get=` của `anchor.upgrade` (main() gọi không truyền post/get nên phải
+    thay `__defaults__` — thay `anchor.http_post/http_get` KHÔNG đủ vì mặc định đã gắn lúc định nghĩa hàm; hai hàm đó
+    cũng bị thay bằng hàm báo lỗi để chắc chắn không mở mạng) bằng calendar giả đúng định dạng OTS (như
+    tests/test_r13_batch_b.py): POST /digest → cal-a trả rác `f0 'junk'`, cal-b trả
+    `f0 varbytes(nonce 16×0x22) 08 00 83dfe30d2ef90c8e varbytes(varbytes("https://cal-b.test"))`;
+    GET /timestamp/<commitment> → `404` (None) | `08 00 0588960d73d71901 varbytes(varuint(850001))`;
+  - `--force-mode M` → pipelines.rollout._FORCE_MODE (FIXTURE: farming-06 code_status mot_phan không vào sổ triển khai
+    → giai đoạn chạy thử fail-closed, biên DÙNG chặn submit; ép `van_hanh` chỉ để đi tới calendar giả — ca không ép
+    kiểm đúng việc bị chặn);
+  - chặn mạng Python (socket.create_connection) — đếm NET_CALLS.
+Calendar giả in `[FAKE] POST/GET …` kèm đối chiếu với DB thử (DATABASE_URL, chỉ đọc): thân POST = đúng 32 byte
+sha256 bản kê lần gom mới nhất; URL GET = https://cal-b.test/timestamp/<sha256(digest ‖ nonce)>.
+Dùng: python anchor_ots_run.py.txt [--fake-post valid|none] [--fake-get 404|bitcoin|none] [--force-mode M] <đối số anchor>
+  (`none` = không được gọi: gọi tới → in [FAKE] … KHÔNG ĐƯỢC GỌI và ném OSError). Exit = mã trả về của anchor.main."""
+import hashlib
+import os
+import socket
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT))
+argv = sys.argv[1:]
+
+
+def pop(flag):
+    if flag in argv:
+        i = argv.index(flag)
+        v = argv[i + 1]
+        del argv[i:i + 2]
+        return v
+    return None
+
+
+post_mode, get_mode, force = pop("--fake-post") or "none", pop("--fake-get") or "none", pop("--force-mode")
+NET, CALLS = [0], {"POST": 0, "GET": 0}
+
+
+def _no_net(*_a, **_k):
+    NET[0] += 1
+    raise OSError("[HARNESS] mạng bị chặn")
+
+
+socket.create_connection = _no_net
+
+from pipelines import anchor as an  # noqa: E402
+
+CFG = {"provider": "opentimestamps", "calendars": ["https://cal-a.test", "https://cal-b.test"], "timeout_s": 5}
+an.load_config = lambda path=None: {**CFG, "calendars": list(CFG["calendars"])}
+NONCE = b"\x22" * 16
+CAL_B = "https://cal-b.test"
+
+
+def vb(b: bytes) -> bytes:
+    return an._put_varuint(len(b)) + b
+
+
+RESP_B = b"\xf0" + vb(NONCE) + b"\x08" + b"\x00" + an.ATT_PENDING + vb(vb(CAL_B.encode()))
+BTC = b"\x08" + b"\x00" + an.ATT_BITCOIN + vb(an._put_varuint(850001))
+
+
+def latest_sha():
+    import psycopg
+    with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5) as c:
+        r = c.execute("select manifest_sha256 from anchor_batches order by id desc limit 1").fetchone()
+    return r[0] if r else None
+
+
+def fake_post(url, body, timeout):
+    CALLS["POST"] += 1
+    sha = latest_sha()
+    print(f"[FAKE] POST {url} {len(body)}B timeout={timeout} body_khop_manifest="
+          f"{bool(sha) and len(body) == 32 and body.hex() == sha}")
+    if post_mode == "valid":
+        if url == "https://cal-a.test/digest":
+            return b"\xf0junk"            # rác: varbytes dài hơn dữ liệu → OtsError
+        if url == CAL_B + "/digest":
+            return RESP_B
+    print("[FAKE] POST KHÔNG ĐƯỢC GỌI ở chế độ này")
+    raise OSError("[FAKE] post không được gọi")
+
+
+def fake_get(url, timeout):
+    CALLS["GET"] += 1
+    sha = latest_sha()
+    want = f"{CAL_B}/timestamp/{hashlib.sha256(bytes.fromhex(sha) + NONCE).hexdigest()}" if sha else None
+    print(f"[FAKE] GET {url} timeout={timeout} khop_commitment={url == want}")
+    if get_mode == "404":
+        return None
+    if get_mode == "bitcoin":
+        return BTC
+    print("[FAKE] GET KHÔNG ĐƯỢC GỌI ở chế độ này")
+    raise OSError("[FAKE] get không được gọi")
+
+
+def _forbidden(*_a, **_k):
+    raise OSError("[HARNESS] http thật bị cấm")
+
+
+an.submit.__defaults__ = (an.CREATED_BY, fake_post)
+an.upgrade.__defaults__ = (fake_get,)
+an.http_post = an.http_get = _forbidden
+print(f"[HARNESS] provider=opentimestamps (giả) calendars={CFG['calendars']} post={post_mode} get={get_mode}")
+if force:
+    from pipelines import rollout
+    rollout._FORCE_MODE = force
+    print(f"[FIXTURE] rollout._FORCE_MODE={force}")
+sys.stdout.flush()
+rc = an.main(argv)
+sys.stdout.flush()
+print(f"[FAKE] POST_CALLS {CALLS['POST']} GET_CALLS {CALLS['GET']} NET_CALLS {NET[0]}")
+raise SystemExit(rc)

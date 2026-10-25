@@ -1,0 +1,45 @@
+{
+ "probe": "g_anchor_v1",
+ "root": "D:\\code\\samsam_r13_baseline\\tree",
+ "ca": [
+  {
+   "ca": "bien_nhan_rac_bi_phat_hien",
+   "ket_qua": "FAIL",
+   "actual": "AttributeError: module 'pipelines.anchor' has no attribute 'parse_receipt'"
+  },
+  {
+   "ca": "submit_bo_qua_calendar_tra_rac",
+   "ket_qua": "FAIL",
+   "actual": {
+    "r": {
+     "id": 7,
+     "status": "da_gui",
+     "calendar": "https://cal-a.test",
+     "new": true
+    },
+    "calls": [
+     "https://cal-a.test/digest"
+    ]
+   }
+  },
+  {
+   "ca": "upgrade_404_cho_khong_ghi",
+   "ket_qua": "FAIL",
+   "actual": "AttributeError: module 'pipelines.anchor' has no attribute 'upgrade'"
+  },
+  {
+   "ca": "upgrade_bitcoin_da_nang_cap",
+   "ket_qua": "FAIL",
+   "actual": "AttributeError: module 'pipelines.anchor' has no attribute 'upgrade'"
+  },
+  {
+   "ca": "upgrade_khong_hoi_calendar_la",
+   "ket_qua": "FAIL",
+   "actual": "AttributeError: module 'pipelines.anchor' has no attribute 'upgrade'"
+  }
+ ],
+ "tong": {
+  "PASS": 0,
+  "FAIL": 5
+ }
+}

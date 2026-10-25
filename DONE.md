@@ -23,6 +23,39 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Vòng r13-fix4 (25/10/2026) — vá 4 lỗi controller phát hiện ở r13 — CHƯA commit/merge/push/deploy
+
+Không DB `samsam`; không đổi `acceptance_status`; không gỡ blocker. fp mã cuối `38c4852b68bd8fc04646f543bc6ad46fcc327550510ea0112f50453ab333a19b` (snapshot r13 chưa vá
+`D:\code\samsam_r13fix_baseline` = fp `1975775d…`). Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0.
+
+1. F1 `ingest/doc_intake.py`: model OCR cục bộ phải đủ `inference.pdmodel` + `inference.pdiparams` (không rỗng) cả 3 bộ, thiếu →
+   từ chối trước PaddleOCR (r13 chỉ kiểm pdmodel → PaddleOCR tự tải). Probe 2/5 → 7/0.
+2. F2 `pipelines/image_provider_openrouter.py`: HTTP 200 ảnh hỏng vẫn ghi chi phí đã báo 1 lần, `ok=false`. Probe
+   3/6 → 9/0.
+3. F3 `scripts/onprem_preflight.py`: bản gần nhất chỉ ĐẠT khi dump + manifest thật khớp ở local và offsite, không ở tương lai.
+   Probe 4/10 → 14/0; test cũ chấp nhận dump `b"x"` + manifest tối giản đã sửa.
+4. F4 `pipelines/anchor.py`: `--upgrade` qua cổng triển khai trước HTTP/INSERT. Probe 4/5 → 9/0.
+5. Kiểm lại 6 mục ảnh hưởng: production-03 BỊ CHẶN 11/0/0, data_platform-02.1 BỊ CHẶN 13/0/0, marketing-02.1 BỊ CHẶN 11/0/0, data_platform-90 BỊ CHẶN 9/0/1, data_platform-07.2 ĐẠT 12/0/0, farming-06 BỊ CHẶN 24/0/1. Tổng 96: **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (không đổi). Không đổi schema/roles.
+6. Gate: full 6855 passed, 103 warnings in 3124.71s (0:52:04), EXIT 0; ruff/eval/DPIA/red-team EXIT 0. Evidence `evidence/itacc_r13_fix_4/`.
+   Đính chính r13: 4 claim về OCR không tự tải / chi phí ảnh / preflight backup / upgrade chưa đúng trước bản vá này.
+
+## Vòng r13 (24/10/2026) — 12 mục DOCX bị chặn: làm phần code có thể làm — CHƯA commit/merge/push/deploy (4 lỗi F1–F4 đính chính ở r13-fix4 trên)
+
+Nhánh `codex/remaining-docx-12` từ `main` `1ad90df`; không DB `samsam`; không đổi `acceptance_status`. fp mã cuối `1975775dab1bdca0e76e43f8458ca0c31847406dc3fd057119b272ffa187db0a`.
+
+1. OCR tại chỗ `paddle_local` (doc_intake + sx_label; model cục bộ det/rec/cls, không tự tải; trần trang/thời gian;
+   `documents.ocr_engine`; OCR rỗng exit 2), STT tại chỗ `whisper_local` (zalo_garden; model cục bộ; giải mã PyAV),
+   ảnh nền `openrouter_images` (module riêng, cổng llm_gateway, `usage.cost` → llm_usage).
+2. Hồ sơ gốc: nêu đích danh SKU thiếu, bắt buộc `phien_ban`/`tep_sha256`, hồ sơ mẫu không tính. API sàn: thử lại 429/5xx
+   giới hạn + cổng data_platform-06. Persona: lượt thật ≥3 nhà cung cấp. Neo: phân tích .ots, submit bỏ phản hồi sai,
+   `--upgrade` → `da_nang_cap` (≠ xác minh bên thứ ba). Feed website `--verify`. `scripts/incident_compare.py` (N22, chỉ
+   đọc). `scripts/onprem_preflight.py` + `BACKUP_REQUIRE_ENCRYPTION` / `BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE`.
+3. Schema/roles: `documents.ocr_engine`, ràng buộc anchor_receipts r13, `svc_job` INSERT anchor_receipts — nâng cấp ×2 PASS (`runs/upgrade_up4.txt`).
+4. Probe 10/10 trước FAIL → sau PASS; kiểm lại 17 mục (tiêu chí v1 + v2 có lý do): mọi ca chạy được PASS. Tổng 96:
+   **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** — 12 mục vẫn BỊ CHẶN bởi đầu vào ngoài code (bảng `dau-vao-va-quyet-dinh.md` mục G).
+5. Gate: full 6816 passed, 103 warnings in 3185.96s (0:53:05), EXIT 0; ruff/eval/DPIA/red-team/secret EXIT 0/0/0/0/0.
+   Evidence `evidence/itacc_r13_docx12/`.
+
 ## Vòng r12-fix (24/10/2026) — vá ĐÚNG hai lỗi D2/L3 controller bác ở r12 — CHƯA commit/merge/push/deploy
 
 Không truy cập DB `samsam`, không đổi `acceptance_status`, không mở việc ngoài D2/L3. Postgres Docker riêng

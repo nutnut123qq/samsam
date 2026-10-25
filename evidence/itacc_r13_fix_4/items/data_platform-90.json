@@ -1,0 +1,905 @@
+{
+ "id": "data_platform-90",
+ "ten": "Hạ tầng độc lập trên server Bên B",
+ "khoi": "data_platform",
+ "giai_doan": "P1",
+ "pham_vi": "nghia_vu_hd",
+ "can_cu": "PL01 mục 8 — Yêu cầu hạ tầng độc lập: 'Hệ thống lõi chạy trên server vật lý của Bên B'",
+ "luot": "r13fix4",
+ "supersedes": {
+  "path": "evidence/itacc_r13_docx12/items/data_platform-90.json",
+  "sha256": "353791a9f54e28eec2090eb3606ba4cc63a917072e5a3b728a3e560370f8c857"
+ },
+ "trang_thai_truoc": {
+  "luot": "r13",
+  "trang_thai": "BI_CHAN",
+  "nguyen_nhan": "NON_SOFTWARE: chưa có bằng chứng server vật lý/UPS/NAS-offsite/monitor độc lập/người giữ tài khoản cao nhất (r13: scripts/onprem_preflight.py + db_backup bắt buộc mã hóa/offsite khác thiết bị)"
+ },
+ "ly_do_chay_lai": "mô-đun của mục đổi ở bản vá r13-fix4 F3 (preflight đo tệp dump + bản offsite thật theo manifest) (ảnh hưởng trực tiếp)",
+ "tieu_chi_file": "evidence/itacc_r13_fix_4/criteria/r13fix4_v2.json",
+ "tieu_chi_sha256": "1de18f046576817b9d4497037b506ad38d5ea9bd8b6e8acee154a50da00ce500",
+ "tieu_chi_khoa": "r13fix4_v2.json 1de18f046576817b9d4497037b506ad38d5ea9bd8b6e8acee154a50da00ce500 2026-10-25T00:03:02+07:00",
+ "tieu_chi": [
+  "T1 (r10) Tài liệu/công cụ hạ tầng on-prem có trong repo: deploy/onprem/README.md, jobs.json đọc được, unit systemd, runbook hạ tầng",
+  "T2 (r10) Bằng chứng server vật lý/UPS/NAS/monitor độc lập/tài khoản cao nhất KHÔNG thể có trên máy dev → BI_CHAN NON_SOFTWARE",
+  "T3 (r10 'T4') không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+  "T4 (r13 MỚI) `scripts/onprem_preflight.py` chỉ đo trên máy chạy, chỉ đọc env tiến trình: thiếu DATABASE_URL/4 URL dịch vụ/BACKUP_* → exit 1 'CHƯA SẴN SÀNG', không mục nào DAT; DATABASE_URL = DB mục + PG_BIN PG17 → dòng `db` DAT, 4 dòng dịch vụ CHUA_DAT (thiếu biến), `lich:systemd` KHONG_AP_DUNG trên Windows, exit 1; mục vật lý luôn CHUA_XAC_NHAN (không bao giờ báo sẵn sàng)"
+ ],
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r13fix4 (127.0.0.1:55454), DB mới mỗi mục dựng bằng working tree (schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài DB samsam_itacc_r13fix4_dp90.",
+ "run_id": "20261025T000322-4dd9",
+ "ca": [
+  {
+   "ma": "data_platform-90__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "tiền đề hình thức: seed sổ rollout trên DB mục (DP90-01/02 không đọc DB; R13-C02 chỉ kết nối DB mục)",
+   "tien_quyet": true,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\]"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:22+07:00",
+      "ket_thuc": "2026-10-25T00:03:23+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__S01"
+  },
+  {
+   "ma": "data_platform-90__DP90-01",
+   "nguon_r10": "DP90-01",
+   "mo_ta": "Tài liệu có — r10 `ls/grep deploy/onprem + runbook` (kỳ vọng README, jobs.json, systemd/*) → tệp tồn tại + jobs.json đọc được + có unit systemd (timer + samsam-job@.service) + README có mục",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "TAI_LIEU_DU"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "{REPO}/deploy/onprem/README.md",
+      "count": 1
+     },
+     {
+      "file_glob": "{REPO}/deploy/onprem/jobs.json",
+      "count": 1
+     },
+     {
+      "file_glob": "{REPO}/deploy/onprem/systemd/samsam-job@.service",
+      "count": 1
+     },
+     {
+      "file_glob": "{REPO}/docs/handover/runbook-ha-tang.md",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import json,sys; from pathlib import Path; r=Path(sys.argv[1]); o=r/'deploy'/'onprem'; t=sorted(p.name for p in (o/'systemd').glob('*.timer')); s=sorted(p.name for p in (o/'systemd').glob('*.service')); j=json.loads((o/'jobs.json').read_bytes().decode('utf-8')); jobs=[k for k in j['jobs'] if not k.startswith('_')]; h=[l for l in (o/'README.md').read_bytes().decode('utf-8').split(chr(10)) if l.startswith('## ')]; rb=(r/'docs'/'handover'/'runbook-ha-tang.md').stat().st_size; print('timer',len(t),'service',s,'job',len(jobs),'muc README',len(h),'runbook bytes',rb); ok=len(t)>=1 and 'samsam-job@.service' in s and len(jobs)>=1 and len(h)>=1 and rb>0; print('TAI_LIEU_DU' if ok else 'TAI_LIEU_THIEU'); sys.exit(0 if ok else 1) D:\\code\\samsam",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "TAI_LIEU_DU",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:23+07:00",
+      "ket_thuc": "2026-10-25T00:03:23+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "file_glob": "D:\\code\\samsam/deploy/onprem/README.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "deploy/onprem/README.md",
+        "sha256": "445b20a8f47276596e597d01efc3ebbe80f62e00a1ca736a66931ee9f6538e20"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "D:\\code\\samsam/deploy/onprem/jobs.json",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "deploy/onprem/jobs.json",
+        "sha256": "62ff34d6fc9b175ba290e72a82179d2691dd120ca7f88268806a6e38fb095d8a"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "D:\\code\\samsam/deploy/onprem/systemd/samsam-job@.service",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "deploy/onprem/systemd/samsam-job@.service",
+        "sha256": "3f7e23aabf5df4f29129d8fd0c7acc83cb18a45d6342c5f19225c6f2190dfb1f"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "D:\\code\\samsam/docs/handover/runbook-ha-tang.md",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "docs/handover/runbook-ha-tang.md",
+        "sha256": "7989a5698f2fbf8c83d67cc991b04facdd6f6e22e9ec628e4913b5b8627419ab"
+       }
+      ],
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-01"
+  },
+  {
+   "ma": "data_platform-90__DP90-02",
+   "nguon_r10": "DP90-02",
+   "mo_ta": "jobs.json hợp lệ — `job_runs --list` exit 0",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?m)^backup: [^\\n]*\\(hạn \\d+h\\)",
+      "out_re": "\\A(?![\\s\\S]*(?:Traceback|\\[err\\]))"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.job_runs --list",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?m)^backup: [^\\n]*\\(hạn \\d+h\\)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*(?:Traceback|\\[err\\]))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:23+07:00",
+      "ket_thuc": "2026-10-25T00:03:24+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-02/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-02"
+  },
+  {
+   "ma": "data_platform-90__R13-C01",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "preflight khi chưa cấu hình gì: DATABASE_URL/4 URL dịch vụ/BACKUP_*/PG_BIN xóa khỏi env (runner null; mã preflight + auth/db_backup không nạp .env — đã đọc import) → exit 1, 6 mục đo được CHUA_DAT, không mục nào DAT, mục vật lý CHUA_XAC_NHAN",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)\\A(?!.*\\| DAT \\|)(?=.*\\| db \\| CHUA_DAT \\| thiếu DATABASE_URL \\|)(?=.*\\| dich_vu:webhook \\| CHUA_DAT \\| thiếu WEBHOOK_DATABASE_URL \\|)(?=.*\\| dich_vu:job \\| CHUA_DAT \\| thiếu JOB_DATABASE_URL \\|)(?=.*\\| dich_vu:loader \\| CHUA_DAT \\| thiếu LOADER_DATABASE_URL \\|)(?=.*\\| dich_vu:backup \\| CHUA_DAT \\| thiếu BACKUP_DATABASE_URL \\|)(?=.*\\| sao_luu:cau_hinh \\| CHUA_DAT \\| thiếu BACKUP_DIR \\|)(?=.*\\| lich:systemd \\| KHONG_AP_DUNG \\|)(?=.*Không đo được từ trong máy — CHUA_XAC_NHAN \\(Bên B ký biên bản\\): may chu vat ly \\+ UPS; may giam sat DOC LAP \\(ngoai server\\); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat)(?=.*KẾT LUẬN: CHƯA SẴN SÀNG — 6 mục đo được chưa đạt)",
+      "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/onprem_preflight.py",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)\\A(?!.*\\| DAT \\|)(?=.*\\| db \\| CHUA_DAT \\| thiếu DATABASE_URL \\|)(?=.*\\| dich_vu:webhook \\| CHUA_DAT \\| thiếu WEBHOOK_DATABASE_URL \\|)(?=.*\\| dich_vu:job \\| CHUA_DAT \\| thiếu JOB_DATABASE_URL \\|)(?=.*\\| dich_vu:loader \\| CHUA_DAT \\| thiếu LOADER_DATABASE_URL \\|)(?=.*\\| dich_vu:backup \\| CHUA_DAT \\| thiếu BACKUP_DATABASE_URL \\|)(?=.*\\| sao_luu:cau_hinh \\| CHUA_DAT \\| thiếu BACKUP_DIR \\|)(?=.*\\| lich:systemd \\| KHONG_AP_DUNG \\|)(?=.*Không đo được từ trong máy — CHUA_XAC_NHAN \\(Bên B ký biên bản\\): may chu vat ly \\+ UPS; may giam sat DOC LAP \\(ngoai server\\); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat)(?=.*KẾT LUẬN: CHƯA SẴN SÀNG — 6 mục đo được chưa đạt)",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:24+07:00",
+      "ket_thuc": "2026-10-25T00:03:24+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C01"
+  },
+  {
+   "ma": "data_platform-90__R13-C02",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "preflight với DATABASE_URL = DB mục (runner) + PG_BIN=C:/Program Files/PostgreSQL/17/bin, dịch vụ/BACKUP_* không đặt → `db` DAT; 4 dịch vụ CHUA_DAT thiếu biến; lich:systemd KHONG_AP_DUNG (Windows); exit 1 (5 mục chưa đạt); mục vật lý CHUA_XAC_NHAN",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)(?=.*\\| db \\| DAT \\| server PG \\d+; pg_dump: [^|\\n]*17.bin.pg_dump)(?=.*\\| dich_vu:webhook \\| CHUA_DAT \\| thiếu WEBHOOK_DATABASE_URL \\|)(?=.*\\| dich_vu:job \\| CHUA_DAT \\| thiếu JOB_DATABASE_URL \\|)(?=.*\\| dich_vu:loader \\| CHUA_DAT \\| thiếu LOADER_DATABASE_URL \\|)(?=.*\\| dich_vu:backup \\| CHUA_DAT \\| thiếu BACKUP_DATABASE_URL \\|)(?=.*\\| sao_luu:cau_hinh \\| CHUA_DAT \\| thiếu BACKUP_DIR \\|)(?=.*\\| lich:systemd \\| KHONG_AP_DUNG \\| hệ điều hành Windows)(?=.*Không đo được từ trong máy — CHUA_XAC_NHAN \\(Bên B ký biên bản\\): may chu vat ly \\+ UPS; may giam sat DOC LAP \\(ngoai server\\); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat)(?=.*KẾT LUẬN: CHƯA SẴN SÀNG — 5 mục đo được chưa đạt)",
+      "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/onprem_preflight.py",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\| db \\| DAT \\| server PG \\d+; pg_dump: [^|\\n]*17.bin.pg_dump)(?=.*\\| dich_vu:webhook \\| CHUA_DAT \\| thiếu WEBHOOK_DATABASE_URL \\|)(?=.*\\| dich_vu:job \\| CHUA_DAT \\| thiếu JOB_DATABASE_URL \\|)(?=.*\\| dich_vu:loader \\| CHUA_DAT \\| thiếu LOADER_DATABASE_URL \\|)(?=.*\\| dich_vu:backup \\| CHUA_DAT \\| thiếu BACKUP_DATABASE_URL \\|)(?=.*\\| sao_luu:cau_hinh \\| CHUA_DAT \\| thiếu BACKUP_DIR \\|)(?=.*\\| lich:systemd \\| KHONG_AP_DUNG \\| hệ điều hành Windows)(?=.*Không đo được từ trong máy — CHUA_XAC_NHAN \\(Bên B ký biên bản\\): may chu vat ly \\+ UPS; may giam sat DOC LAP \\(ngoai server\\); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat)(?=.*KẾT LUẬN: CHƯA SẴN SÀNG — 5 mục đo được chưa đạt)",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:24+07:00",
+      "ket_thuc": "2026-10-25T00:03:25+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C02"
+  },
+  {
+   "ma": "data_platform-90__DP90-03",
+   "nguon_r10": "DP90-03",
+   "mo_ta": "Bằng chứng vật lý",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": []
+   },
+   "exit": [],
+   "ket_qua": "NOT_RUN",
+   "ly_do_not_run": "Ngoài phần mềm: server vật lý/UPS/NAS-offsite/máy giám sát độc lập/người giữ tài khoản cao nhất không thể có trên máy dev (r10 DP90-03 NOT_RUN cùng lý do); preflight R13 chỉ đo máy dev Windows, không thay biên bản Bên B",
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-03"
+  },
+  {
+   "ma": "data_platform-90__FIX4-01",
+   "nguon_r10": "MOI_R13FIX4",
+   "mo_ta": "F3 tái hiện controller qua CLI: sổ backup_runs mới status=ok + offsite khác null, manifest CHỈ {encrypted:true}, KHÔNG dump, offsite rỗng → `sao_luu:ban_gan_nhat` CHUA_DAT (manifest hỏng), exit 1",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[fake\\] ok"
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*manifest local thiếu/hỏng",
+      "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_fix_4\\harness/mk_backup_fake.py.txt C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/c1dafaed3295c2087cc2adbd2a3ad72e/fake",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[fake\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:25+07:00",
+      "ket_thuc": "2026-10-25T00:03:25+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step01.stderr.txt"
+     },
+     {
+      "argv": "python scripts/onprem_preflight.py",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*manifest local thiếu/hỏng",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:25+07:00",
+      "ket_thuc": "2026-10-25T00:03:26+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step02.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01"
+  },
+  {
+   "ma": "data_platform-90__FIX4-B1",
+   "nguon_r10": "MOI_R13FIX4",
+   "mo_ta": "F3 ca dương LOCAL: backup THẬT (pg_dump DB thử, mã hóa openssl, offsite dir: ngoài repo — CÙNG thiết bị máy dev nên hàng offsite CHUA_DAT đúng sự thật) → preflight đo tệp: `sao_luu:ban_gan_nhat` DAT (dump local + offsite khớp size/sha256 manifest), mã hóa DAT, offsite CHUA_DAT cùng thiết bị",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "PASSFILE (?:1[6-9]|[2-9]\\d)\\b"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)(?!.*CHƯA mã hóa)(?=.*\\[done\\] samsam_itacc_r13fix4_\\w+_\\d{8}_\\d{6}_vn\\.dump\\.enc — \\d+ bytes)(?=.*\\[offsite\\] đã chép \\+ kiểm sha256)"
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)(?=.*\\| sao_luu:ban_gan_nhat \\| DAT \\| status=ok; [^|\\n]*dump local \\+ offsite đo khớp size/sha256 manifest \\|)(?=.*\\| sao_luu:ma_hoa_bat_buoc \\| DAT \\|)(?=.*\\| sao_luu:offsite \\| CHUA_DAT \\| offsite CÙNG thiết bị)",
+      "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(sys.argv[2].encode('utf-8')+b'\\n'); print('PASSFILE', len(sys.argv[2])) C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/c1dafaed3295c2087cc2adbd2a3ad72e/pass/fix4.pass ThuR13fix4-passphrase-fixture-khong-phai-khoa-that",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "PASSFILE (?:1[6-9]|[2-9]\\d)\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:26+07:00",
+      "ket_thuc": "2026-10-25T00:03:26+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step01.stderr.txt"
+     },
+     {
+      "argv": "python scripts/db_backup.py",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?!.*CHƯA mã hóa)(?=.*\\[done\\] samsam_itacc_r13fix4_\\w+_\\d{8}_\\d{6}_vn\\.dump\\.enc — \\d+ bytes)(?=.*\\[offsite\\] đã chép \\+ kiểm sha256)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:27+07:00",
+      "ket_thuc": "2026-10-25T00:03:29+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step02.stderr.txt"
+     },
+     {
+      "argv": "python scripts/onprem_preflight.py",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\| sao_luu:ban_gan_nhat \\| DAT \\| status=ok; [^|\\n]*dump local \\+ offsite đo khớp size/sha256 manifest \\|)(?=.*\\| sao_luu:ma_hoa_bat_buoc \\| DAT \\|)(?=.*\\| sao_luu:offsite \\| CHUA_DAT \\| offsite CÙNG thiết bị)",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:29+07:00",
+      "ket_thuc": "2026-10-25T00:03:30+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step03.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0,
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1"
+  },
+  {
+   "ma": "data_platform-90__FIX4-B2",
+   "nguon_r10": "MOI_R13FIX4",
+   "mo_ta": "F3: xóa tệp dump ở offsite (giữ manifest) → `ban_gan_nhat` CHUA_DAT 'offsite: thiếu tệp dump'",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "XOA 1\\b"
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*offsite: thiếu tệp dump"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import glob,os,sys; f=glob.glob(sys.argv[1]+'/*_vn.dump.enc'); [os.remove(x) for x in f]; print('XOA', len(f)) C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/c1dafaed3295c2087cc2adbd2a3ad72e/off_fix4",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "XOA 1\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:30+07:00",
+      "ket_thuc": "2026-10-25T00:03:31+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step01.stderr.txt"
+     },
+     {
+      "argv": "python scripts/onprem_preflight.py",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*offsite: thiếu tệp dump",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:31+07:00",
+      "ket_thuc": "2026-10-25T00:03:32+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step02.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2"
+  },
+  {
+   "ma": "data_platform-90__FIX4-B3",
+   "nguon_r10": "MOI_R13FIX4",
+   "mo_ta": "F3: lật 1 byte tệp dump local (cùng cỡ) → `ban_gan_nhat` CHUA_DAT 'local: sha256 tệp dump lệch manifest'",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "LAT \\d+"
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*local: sha256 tệp dump lệch manifest"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import glob,sys; f=glob.glob(sys.argv[1]+'/*_vn.dump.enc')[0]; b=bytearray(open(f,'rb').read()); b[len(b)//2]^=1; open(f,'wb').write(b); print('LAT', len(b)) C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/c1dafaed3295c2087cc2adbd2a3ad72e/bk_fix4",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "LAT \\d+",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:32+07:00",
+      "ket_thuc": "2026-10-25T00:03:32+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step01.stderr.txt"
+     },
+     {
+      "argv": "python scripts/onprem_preflight.py",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*local: sha256 tệp dump lệch manifest",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:03:32+07:00",
+      "ket_thuc": "2026-10-25T00:03:33+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step02.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "NON_SOFTWARE: chưa có bằng chứng server vật lý/UPS/NAS-offsite/monitor độc lập/người giữ tài khoản cao nhất (r13: scripts/onprem_preflight.py + db_backup bắt buộc mã hóa/offsite khác thiết bị)",
+ "can_de_go": "Bên B dựng server + UPS + offsite + monitor độc lập; chạy onprem_preflight trên server + biên bản ký",
+ "gioi_han": " Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r13fix4), fixture/dữ liệu THỬ, AI/HTTP/model giả ở biên nơi ghi MOCK; 'khác thiết bị' offsite KHÔNG đo được trên máy dev — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [
+  {
+   "lot": "k1",
+   "criteria": "r13fix4_v1.json",
+   "run_id": "20261025T000046-13ac",
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000046-13ac",
+   "ly_do": "lô k1 (r13fix4_v1): ca FIX4-* FAIL vì LỖI TIÊU CHÍ — `{sql:…}` ghép tiền tố/hậu tố nên runner không thay, đường dẫn còn trong repo → preflight/db_backup từ chối đúng 'nằm trong repo'; v2 đưa tiền tố/hậu tố vào trong SQL, kỳ vọng giữ nguyên"
+  }
+ ],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-01/asserts.json",
+   "sha256": "fd91061f8f354767b0b49e04600554ea49e3b44617ac7889d2fd0e76d6c28e7a"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-01/case.json",
+   "sha256": "57d4a2664a0eaeea1568e23586a82cd6a149ebddbf6d54afcd0e173ea0d3a966"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-01/step01.cmd.json",
+   "sha256": "2f57f26fc3d9aa0b863f8a5a2d0d27af21417d737da8cdc8685280582beeb762"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-01/step01.stdout.txt",
+   "sha256": "e92e2274771c4c95134b026489b5d4b1f98f49bb4aadf756cc13650b48cd85fc"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-02/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-02/case.json",
+   "sha256": "7110c5a78311bcd8738b5d58f9c78a39bb5e6843cd04ae37ce8683040b633dd3"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-02/step01.cmd.json",
+   "sha256": "00944e7594bfd9063026506dae88de6318bc12271961c06890c92efb62ddebe3"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-02/step01.stdout.txt",
+   "sha256": "3eeeeacaea7059c3da5c4e2b593b5e22d5b816208bd40ba51df0db916f01619c"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__DP90-03/case.json",
+   "sha256": "9fd0ead5cff1f0ee2deb9eb301e94444d3e6246d672e944e002bf27f809daec3"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/case.json",
+   "sha256": "94bea2e43fd21b7d13a317781b9f482fa333c6283fb42d862c846a0eb9ad8160"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step01.cmd.json",
+   "sha256": "068e640e69ee4bc6e0253e1c2df92ed80597d9d256ae0ad0c5ad392c67ae4eb0"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step01.stdout.txt",
+   "sha256": "b1b666409b644f481565c20f4727706e64abbcf150a704e71d4c6529935c3691"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step02.cmd.json",
+   "sha256": "1f93c8a6abae065ea90e1d1a4b5ecaa90a94629c34225c8bbaa46579edfc0a27"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-01/step02.stdout.txt",
+   "sha256": "23e251b18a6ce31414ff41a575f7d4e42794f0c56379116fabfebb828371ea1a"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/case.json",
+   "sha256": "99b0794b489d696fa3fcbcbd8f85269c05eb843e2073a063708d8b8611592c14"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step01.cmd.json",
+   "sha256": "e15d170e4f8a88b1f731fc9c5a5c376ad5bf22b49a28ec2e34484abeb02c31e9"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step01.stdout.txt",
+   "sha256": "b3233e3868b9af9fd31e408682bfaeb6bd4d216643c3c8dcb53d3dc4e85df4aa"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step02.cmd.json",
+   "sha256": "5a1c9a966eb55594cb2464ac7bc4aecb61e035495a12b1f03ced7200fb085f76"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step02.stdout.txt",
+   "sha256": "8040d1017abbede47f465264e9f0497b8a9820bbbe60fb8a161712f15597a94e"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step03.cmd.json",
+   "sha256": "d1370239f7dfbc4dc0b87a52bedb6588b3bbe2cf4b1fa1ceabc2bd66e32dfaff"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B1/step03.stdout.txt",
+   "sha256": "a9fef9a9a5eba46c47f08f754371f5f061bc34dedd449f5628099d22fa846672"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/case.json",
+   "sha256": "be1c65e8073ad4c598999ae70fd9588498257375f559f727cab3dc4a915f74ae"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step01.cmd.json",
+   "sha256": "b6ff4a3411e46809eca57a3f457dd91d5cf3e59de2cd475c97db82477f2f0e6e"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step01.stdout.txt",
+   "sha256": "9649bc7a12d58ef5e0b16171e5d66dac38e9de4b55c43d6b87b54e54bd9d06b7"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step02.cmd.json",
+   "sha256": "e9fa4150ebf51302a2faa2f05d4a0a5ed05240cdd2de7c5dc7cde6229c4277e3"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B2/step02.stdout.txt",
+   "sha256": "5902d774b461503466e643874d663715f52b1ee1ea7c9fa6bd258c7b03b8d212"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/case.json",
+   "sha256": "ac3f6f8d6865cc59efb6d55863ed872f6ef69590a8c37fdf2612c3f2def8e882"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step01.cmd.json",
+   "sha256": "6ad1237d489f9d169c6158120075332dfc960190ad432b58bb03ea490b6ae3f5"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step01.stdout.txt",
+   "sha256": "5cf02850e864fa114a1282ff8dd75ab3901e03bdedc7ceec87f823625a72dab4"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step02.cmd.json",
+   "sha256": "efda5e7c4e7347ddff5b31b06809494afd8b67f9198cba7805fce5788a78e1cc"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__FIX4-B3/step02.stdout.txt",
+   "sha256": "b2564aad1e3b80a615535988e80c6f63f6af90a59fbd9a55cee8efa7803c578a"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C01/case.json",
+   "sha256": "67cc0c28a9446134531fac27d82e91be5f64adbd93c9017750e63ec3957db688"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C01/step01.cmd.json",
+   "sha256": "b6667197aeaccfd0257a9f0461a316ea52f5f63eea7ebce4c7e3d81ab8ebfe73"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C01/step01.stdout.txt",
+   "sha256": "38d181c3b3914316789248261180993d32f36de1ccf74512871925d5ba37486f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C02/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C02/case.json",
+   "sha256": "3df6d67c976680c5d3086572b0c38fe0587405824d181807e131e43f8b9560d9"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C02/step01.cmd.json",
+   "sha256": "8f9b02be820bb389dcc0492faf51ee5b9bfc244058ee1202c49b85769379ea05"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__R13-C02/step01.stdout.txt",
+   "sha256": "3f91766805930ef28ce5d9b55701b09aa01be1c27c60670ad7a39dad2f8f6ed1"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__S01/case.json",
+   "sha256": "73a61405abcf9825a66393c09bfdfb255492623d7e957674b3de7192a3cbf60e"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__S01/step01.cmd.json",
+   "sha256": "48f4d5c4e4e79e4ebab0d56c9d6b19fd0aa9dd2a134943681161cc967b7a712b"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/data_platform-90__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-90/20261025T000322-4dd9/ket_qua.json",
+   "sha256": "8ed4fb41c96b2dff4c75c8649ca8009855dcbdcf3a53b76527ca2d8dc2536114"
+  }
+ ],
+ "loi_san_pham": []
+}

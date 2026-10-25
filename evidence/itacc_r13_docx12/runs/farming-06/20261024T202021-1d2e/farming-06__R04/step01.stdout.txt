@@ -1,0 +1,6 @@
+[HARNESS] provider=opentimestamps (giả) calendars=['https://cal-a.test', 'https://cal-b.test'] post=valid get=none
+[FIXTURE] rollout._FORCE_MODE=van_hanh
+[FAKE] POST https://cal-a.test/digest 32B timeout=5 body_khop_manifest=True
+[FAKE] POST https://cal-b.test/digest 32B timeout=5 body_khop_manifest=True
+[ok] lần gom #1: đã gửi calendar cal-b.test — chờ xác nhận Bitcoin (--upgrade; bên thứ ba: ots verify)
+[FAKE] POST_CALLS 2 GET_CALLS 0 NET_CALLS 0

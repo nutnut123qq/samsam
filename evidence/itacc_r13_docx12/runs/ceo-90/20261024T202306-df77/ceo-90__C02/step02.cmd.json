@@ -1,0 +1,27 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import json,sys; f=[x for x in json.loads(open(sys.argv[1],'rb').read().decode('utf-8'))['features'] if x.get('id')=='ceo-90']; print([{k:x.get(k) for k in ('id','pham_vi','code_status','acceptance_status')} for x in f]); ok=len(f)==1 and f[0].get('code_status')=='ngoai_code' and f[0].get('pham_vi')=='nghia_vu_hd'; print('CEO90_NGOAI_CODE' if ok else 'CEO90_LECH'); sys.exit(0 if ok else 1)",
+  "D:\\code\\samsam/data/contract_features.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:23:09+07:00",
+ "ket_thuc": "2026-10-24T20:23:09+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "CEO90_NGOAI_CODE",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "0ad38dafd2dbb78d156b1d6d9522c5c26e0316fbbabb49d71941d6d7e9529a1a",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

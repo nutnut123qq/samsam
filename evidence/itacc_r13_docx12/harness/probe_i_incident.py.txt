@@ -1,0 +1,102 @@
+"""PROBE r13 I v1 — ceo-90/N22 gói kiểm CHỈ ĐỌC sự cố 20/10 (`scripts/incident_compare.py`, su-co-db-samsam.md mục 5). Không DB:
+psycopg.connect bị chặn và ghi lại; phần so sánh chạy trên ảnh chụp số đếm dựng tay. Cùng mã baseline (1ad90df) và bản sửa.
+  python -I probe_i_incident.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước):
+- thiếu DSN bản trước (backup trước sự cố) → exit 2 + UNVERIFIED, 0 kết nối (không kết luận "không mất dữ liệu").
+- DSN trỏ dbname `samsam` (URL hoặc keyword, không phân biệt hoa thường) hoặc thiếu dbname → exit 2, 0 kết nối.
+- so sánh 2 ảnh chụp: khác count/max id, dòng trong khung sự cố, vấn đề chuỗi hash, quyền chỉ có ở 1 bản → liệt kê đủ, chỉ
+  tên/số (không dữ liệu dòng); 2 ảnh giống nhau → 0 khác biệt."""
+import contextlib
+import io
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+import psycopg  # noqa: E402
+
+CONN = []
+psycopg.connect = lambda *a, **k: CONN.append(1) or (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+rows = []
+
+
+def case(ma, fn):
+    CONN.clear()
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def load():
+    sys.path.insert(0, str(Path(ROOT) / "scripts"))
+    import incident_compare as ic
+    return ic
+
+
+def run(base, now):
+    ic = load()
+    for k, v in (("INCIDENT_BASELINE_URL", base), ("INCIDENT_NOW_URL", now)):
+        if v is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = v
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+        rc = ic.main([])
+    return rc, err.getvalue()
+
+
+def c_missing():
+    rc, err = run(None, "host=127.0.0.1 dbname=ban_sao_hien_tai user=x")
+    return rc == 2 and "UNVERIFIED" in err and CONN == [], {"rc": rc, "err": err[:120]}
+
+
+def c_samsam(dsn):
+    def f():
+        rc, err = run("host=127.0.0.1 dbname=ban_sao_truoc user=x", dsn)
+        return rc == 2 and CONN == [], {"rc": rc, "err": err[:120]}
+    return f
+
+
+def snap(**over):
+    s = {"tables": ["job_runs", "agent_action_log"], "cols": {"job_runs": {"id": ("bigint", "NO")},
+                                                              "agent_action_log": {"id": ("bigint", "NO")}},
+         "stats": {"job_runs": (3, "3", "2026-10-19"), "agent_action_log": (10, "10", "2026-10-19")},
+         "window": {"job_runs": 0, "agent_action_log": 0}, "chain": 0,
+         "grants": {("bang", "svc_job", "job_runs", "INSERT")}, "roles": {"svc_job": (False,) * 6},
+         "members": {("svc_job", "job_login")}}
+    s.update(over)
+    return s
+
+
+def c_compare():
+    ic = load()
+    same = ic.compare(snap(), snap())
+    d = ic.compare(snap(), snap(stats={"job_runs": (5, "5", "2026-10-20"), "agent_action_log": (10, "10", "2026-10-19")},
+                                window={"job_runs": 2, "agent_action_log": 0}, chain=1,
+                                grants={("bang", "svc_job", "job_runs", "INSERT"),
+                                        ("bang", "public", "job_runs", "DELETE")}))
+    t = "\n".join(d)
+    ok = (same == [] and "job_runs" in t and "2 dòng" in t and "verify_action_log" in t and "public" in t
+          and "agent_action_log: (count" not in t)
+    return ok, d
+
+
+case("thieu_ban_truoc_unverified", c_missing)
+case("tu_choi_samsam_url", c_samsam("postgresql://u:p@127.0.0.1:5432/samsam"))
+case("tu_choi_samsam_keyword_hoa", c_samsam("host=127.0.0.1 dbname=SamSam user=u"))
+case("tu_choi_thieu_dbname", c_samsam("host=127.0.0.1 user=u"))
+case("so_sanh_liet_ke_khac_biet", c_compare)
+out = {"probe": "i_incident_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

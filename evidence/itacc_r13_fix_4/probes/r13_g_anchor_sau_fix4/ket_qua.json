@@ -1,0 +1,73 @@
+{
+ "probe": "g_anchor_v1",
+ "root": "D:\\code\\samsam",
+ "ca": [
+  {
+   "ca": "bien_nhan_rac_bi_phat_hien",
+   "ket_qua": "PASS",
+   "actual": "varbytes cụt/quá cỡ"
+  },
+  {
+   "ca": "submit_bo_qua_calendar_tra_rac",
+   "ket_qua": "PASS",
+   "actual": {
+    "r": {
+     "id": 7,
+     "status": "da_gui",
+     "calendar": "https://cal-b.test",
+     "new": true
+    },
+    "calls": [
+     "https://cal-a.test/digest",
+     "https://cal-b.test/digest"
+    ]
+   }
+  },
+  {
+   "ca": "upgrade_404_cho_khong_ghi",
+   "ket_qua": "PASS",
+   "actual": {
+    "r": {
+     "id": 7,
+     "status": "cho",
+     "errors": []
+    },
+    "gets": [
+     "https://cal-b.test/timestamp/ff3c98b62aabc3f2b584406b736af20d2dfefbb6a59d663cf9bf50603ac404f2"
+    ]
+   }
+  },
+  {
+   "ca": "upgrade_bitcoin_da_nang_cap",
+   "ket_qua": "PASS",
+   "actual": {
+    "r": {
+     "id": 7,
+     "status": "da_nang_cap",
+     "new": true,
+     "heights": [
+      850001
+     ]
+    },
+    "n_insert": 1
+   }
+  },
+  {
+   "ca": "upgrade_khong_hoi_calendar_la",
+   "ket_qua": "PASS",
+   "actual": {
+    "r": {
+     "id": 7,
+     "status": "cho",
+     "errors": [
+      "calendar ngoài cấu hình — không hỏi"
+     ]
+    }
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 5,
+  "FAIL": 0
+ }
+}

@@ -1,0 +1,27 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import glob,sys; f=glob.glob(sys.argv[1]+'/*_vn.dump.enc')[0]; b=bytearray(open(f,'rb').read()); b[len(b)//2]^=1; open(f,'wb').write(b); print('LAT', len(b))",
+  "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/c1dafaed3295c2087cc2adbd2a3ad72e/bk_fix4"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:03:32+07:00",
+ "ket_thuc": "2026-10-25T00:03:32+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "LAT \\d+",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "5cf02850e864fa114a1282ff8dd75ab3901e03bdedc7ceec87f823625a72dab4",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

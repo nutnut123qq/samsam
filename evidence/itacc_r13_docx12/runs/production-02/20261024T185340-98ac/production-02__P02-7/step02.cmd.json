@@ -1,0 +1,35 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.product_dossiers",
+  "--check",
+  "--file",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\fixtures/items/production-02/dossier_lech.json",
+  "--golden",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_prod.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:53:56+07:00",
+ "ket_thuc": "2026-10-24T18:53:57+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "\\[err\\] danh_muc_ho_so_goc\\[0\\]: số công bố lệch golden của savina-12v",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "7b451ac808a355c9658af2f19278fb4e35d2f3393f7e9c9938a363a01094b895",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

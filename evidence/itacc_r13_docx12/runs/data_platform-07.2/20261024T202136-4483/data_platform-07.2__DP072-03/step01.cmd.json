@@ -1,0 +1,34 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "scripts/db_backup.py"
+ ],
+ "env_doi": [
+  "BACKUP_DIR",
+  "BACKUP_KEEP",
+  "BACKUP_OFFSITE",
+  "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE",
+  "BACKUP_PASSPHRASE_FILE",
+  "BACKUP_REQUIRE_ENCRYPTION",
+  "DRILL_DATABASE_URL",
+  "PG_BIN"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:21:55+07:00",
+ "ket_thuc": "2026-10-24T20:21:56+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[usage\\] BACKUP_DIR nằm trong repo — phải đặt NGOÀI repo",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e05b6530d89cd9e52b2c9de7e9ddaa2468f34b66d0f1037d49d6c33ddad83961",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

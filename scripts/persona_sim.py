@@ -62,6 +62,7 @@ PERSONAS_FILE = ROOT / "data" / "personas.json"
 GOLDEN_FILE = golden_store.GOLDEN_FILE
 CONNECT_TIMEOUT_S = 5
 MIN_REPEATS, MIN_MODELS, MIN_PROMPTS = 5, 3, 3
+MIN_PROVIDERS = 3   # r13: lượt thật — số nhà cung cấp (tiền tố provider/model) khác nhau
 N_PERSONAS = (6, 10)
 CONTROL_LAST_MIN = 0.8
 MAX_RESP_CHARS = 20000   # phản hồi dài hơn = parse lỗi (điểm null)
@@ -596,6 +597,14 @@ def main(argv: list[str] | None = None) -> int:
               file=sys.stderr)
         return 2
 
+    vendors = sorted({m["id"].split("/", 1)[0] for m in cfg["models"]})
+    if not args.dry_run and len(vendors) < MIN_PROVIDERS:
+        # r13: lượt THẬT cần ≥3 NHÀ CUNG CẤP khác nhau (không chỉ 3 model) —
+        # chặn TRƯỚC mọi lời gọi; ai được dùng = quyết định DPIA/TIA/DPA.
+        print(f"[refuse] lượt thật cần >= {MIN_PROVIDERS} nhà cung cấp khác "
+              f"nhau trong sim_config.models (hiện: {', '.join(vendors)}) — "
+              "0 lời gọi LLM", file=sys.stderr)
+        return 2
     off = _feature_off()
     if off:
         print(f"[blocked] {off}", file=sys.stderr)

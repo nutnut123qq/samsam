@@ -1,0 +1,35 @@
+{
+ "buoc": 4,
+ "argv": [
+  "python",
+  "-c",
+  "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T185729-51da\\scratch/gdata",
+  "van_hanh",
+  "agents.listing_export",
+  "--verify",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T185729-51da\\scratch/s08_feed/feed.manifest.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:58:11+07:00",
+ "ket_thuc": "2026-10-24T18:58:15+07:00",
+ "exit": 0,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "(?s)\\A(?!.*sha lệch)(?=.*\\[LỆCH\\] mat-ong-sam-300ml: gia_id lệch \\(tệp \\d+, hiện \\d+\\))(?=.*\\[LỆCH\\] mat-ong-sam-300ml: gia_vnd lệch \\(tệp 2980000, hiện 3100000\\))(?=.*\\[done\\] 2 điểm lệch)",
+   "khop": false
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": false,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "7431977e3277d80e4aa40c3f3a3c87d88b697be2da043a2a5ba0d584656f2f15",
+ "stderr_sha256": "031d1037d7c355351a5b098f6dd9db0969766a53ff2ca2e51d18612435cf8282"
+}

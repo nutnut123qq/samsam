@@ -1,0 +1,43 @@
+{
+ "probe": "h_feed_v1",
+ "root": "D:\\code\\samsam",
+ "ca": [
+  {
+   "ca": "vua_xuat_khop",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "out": "[done] khớp bản đã duyệt\n"
+   }
+  },
+  {
+   "ca": "gia_doi_phien_ban_lech",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "out": "[LỆCH] mat-ong-sam-300ml: gia_id lệch (tệp 11, hiện 12)\n[done] 1 điểm lệch\n"
+   }
+  },
+  {
+   "ca": "tep_bi_sua_lech",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "out": "[LỆCH] tệp nguồn dữ liệu đã bị sửa (sha lệch manifest)\n[done] 1 điểm lệch\n"
+   }
+  },
+  {
+   "ca": "ruou_an_gia_khong_gio",
+   "ket_qua": "PASS",
+   "actual": [
+    "kênh web: ruou-sam-chai-thuy-tinh-500ml là rượu — cấm quảng cáo/khuyến mại rượu (Luật 44/2019), không sinh nội dung/listing online",
+    "chưa có mô tả listing kênh web đã duyệt",
+    "rượu: ẩn giá + không giỏ hàng (PL01 mục 3a)"
+   ]
+  }
+ ],
+ "tong": {
+  "PASS": 4,
+  "FAIL": 0
+ }
+}

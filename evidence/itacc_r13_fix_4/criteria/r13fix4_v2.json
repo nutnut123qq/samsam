@@ -1,0 +1,851 @@
+{
+ "_doc": "HARNESS r13-fix4 — v2 (sinh bởi mk_criteria_r13fix4_v2_from_v1: ghép đường ngoài repo vào TRONG {sql:…}, chỉ 2 mục backup; còn lại như v1) — dựng tiêu chí kiểm lại 6 mục bị 4 bản vá ảnh hưởng trực tiếp: production-03, data_platform-02.1 (F1\nOCR), marketing-02.1 (F2 chi phí ảnh), data_platform-90 + data_platform-07.2 (F3 preflight/backup), farming-06 (F4 neo).\nNguồn: tiêu chí r13 ĐÃ KHÓA (CHỈ ĐỌC, không sửa): `itacc_r13_docx12/criteria/r13_v2.json` cho data_platform-02.1, r13_v1.json\ncho 5 mục còn lại. Biến đổi DUY NHẤT trên ca kế thừa: tên DB/tên tệp dump `samsam_itacc_r13_` → `samsam_itacc_r13fix4_`\n(DB mới của lượt) và thư mục ngoài repo `scratchpad/r13/` → `scratchpad/r13fix4/`. Placeholder {H}/{FX13} vẫn trỏ harness/\nfixture r13; {HX} = harness r13-fix4.\nThay thế có lý do (ghi `thay_the` + `ly_do_thay`): farming-06 R03/R05/R06/R08 r13 chạy `--upgrade` KHÔNG ép giai đoạn\n(farming-06 chưa vào sổ → chạy thử fail-closed) và kỳ vọng đi tới calendar — tức tiêu chí r13 đã mã hóa chính lỗi F4. Bản\nthay chỉ thêm `--force-mode van_hanh` (như R04 submit r13), giữ nguyên exit/regex/kiểm; ca chặn khi chưa ép là ca MỚI\nF06-FIX4-01..03. Mọi ca khác giữ nguyên + thêm ca MỚI `*__FIX4-*` cho từng lỗi. Khóa TRƯỚC khi chạy.\n  python -I mk_criteria_r13fix4.py.txt   → criteria/r13fix4_v1.json + .lock.txt (từ chối nếu đã có)",
+ "nguon": {
+  "r13_v1": "920bbe0bcc4d988cfdc7cebcfedc5ad6872ef833dd7f8674963019d5d7678513",
+  "r13_v2": "db115d77899c083b2c101d0c47aeb66ee2e181f1e6430ce11d61b30a4bafa155"
+ },
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r13fix4 (127.0.0.1:55454), DB mới mỗi mục dựng bằng working tree (schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài",
+ "items": [
+  {
+   "id": "data_platform-90",
+   "db": "samsam_itacc_r13fix4_dp90",
+   "muc_kiem_de_xuat": "LOCAL",
+   "nguon_tieu_chi": {
+    "tep": "evidence/itacc_r10/items/data_platform-90.json",
+    "sha256": "692bda3b69d76f6fc6f040dc4e3197bd43eded86d00002e16a0bd4d860bcceb3"
+   },
+   "ly_do_kiem_lai": "r13 thêm scripts/onprem_preflight.py (đo sẵn sàng on-prem trên máy chạy lệnh)",
+   "tieu_chi_cu_the": [
+    "T1 (r10) Tài liệu/công cụ hạ tầng on-prem có trong repo: deploy/onprem/README.md, jobs.json đọc được, unit systemd, runbook hạ tầng",
+    "T2 (r10) Bằng chứng server vật lý/UPS/NAS/monitor độc lập/tài khoản cao nhất KHÔNG thể có trên máy dev → BI_CHAN NON_SOFTWARE",
+    "T3 (r10 'T4') không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+    "T4 (r13 MỚI) `scripts/onprem_preflight.py` chỉ đo trên máy chạy, chỉ đọc env tiến trình: thiếu DATABASE_URL/4 URL dịch vụ/BACKUP_* → exit 1 'CHƯA SẴN SÀNG', không mục nào DAT; DATABASE_URL = DB mục + PG_BIN PG17 → dòng `db` DAT, 4 dòng dịch vụ CHUA_DAT (thiếu biến), `lich:systemd` KHONG_AP_DUNG trên Windows, exit 1; mục vật lý luôn CHUA_XAC_NHAN (không bao giờ báo sẵn sàng)"
+   ],
+   "ca": [
+    {
+     "ma": "data_platform-90__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề hình thức: seed sổ rollout trên DB mục (DP90-01/02 không đọc DB; R13-C02 chỉ kết nối DB mục)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\]"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__DP90-01",
+     "nguon_r10": "DP90-01",
+     "mo_ta": "Tài liệu có — r10 `ls/grep deploy/onprem + runbook` (kỳ vọng README, jobs.json, systemd/*) → tệp tồn tại + jobs.json đọc được + có unit systemd (timer + samsam-job@.service) + README có mục",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import json,sys; from pathlib import Path; r=Path(sys.argv[1]); o=r/'deploy'/'onprem'; t=sorted(p.name for p in (o/'systemd').glob('*.timer')); s=sorted(p.name for p in (o/'systemd').glob('*.service')); j=json.loads((o/'jobs.json').read_bytes().decode('utf-8')); jobs=[k for k in j['jobs'] if not k.startswith('_')]; h=[l for l in (o/'README.md').read_bytes().decode('utf-8').split(chr(10)) if l.startswith('## ')]; rb=(r/'docs'/'handover'/'runbook-ha-tang.md').stat().st_size; print('timer',len(t),'service',s,'job',len(jobs),'muc README',len(h),'runbook bytes',rb); ok=len(t)>=1 and 'samsam-job@.service' in s and len(jobs)>=1 and len(h)>=1 and rb>0; print('TAI_LIEU_DU' if ok else 'TAI_LIEU_THIEU'); sys.exit(0 if ok else 1)",
+        "{REPO}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "TAI_LIEU_DU"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{REPO}/deploy/onprem/README.md",
+       "count": 1
+      },
+      {
+       "file_glob": "{REPO}/deploy/onprem/jobs.json",
+       "count": 1
+      },
+      {
+       "file_glob": "{REPO}/deploy/onprem/systemd/samsam-job@.service",
+       "count": 1
+      },
+      {
+       "file_glob": "{REPO}/docs/handover/runbook-ha-tang.md",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__DP90-02",
+     "nguon_r10": "DP90-02",
+     "mo_ta": "jobs.json hợp lệ — `job_runs --list` exit 0",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.job_runs",
+        "--list"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?m)^backup: [^\\n]*\\(hạn \\d+h\\)",
+       "out_re": "\\A(?![\\s\\S]*(?:Traceback|\\[err\\]))"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__R13-C01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "preflight khi chưa cấu hình gì: DATABASE_URL/4 URL dịch vụ/BACKUP_*/PG_BIN xóa khỏi env (runner null; mã preflight + auth/db_backup không nạp .env — đã đọc import) → exit 1, 6 mục đo được CHUA_DAT, không mục nào DAT, mục vật lý CHUA_XAC_NHAN",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "DATABASE_URL": null,
+        "PG_BIN": null,
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_DIR": null,
+        "BACKUP_PASSPHRASE_FILE": null,
+        "BACKUP_REQUIRE_ENCRYPTION": null,
+        "BACKUP_OFFSITE": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null
+       },
+       "expect_exit": 1,
+       "stdout_re": "(?s)\\A(?!.*\\| DAT \\|)(?=.*\\| db \\| CHUA_DAT \\| thiếu DATABASE_URL \\|)(?=.*\\| dich_vu:webhook \\| CHUA_DAT \\| thiếu WEBHOOK_DATABASE_URL \\|)(?=.*\\| dich_vu:job \\| CHUA_DAT \\| thiếu JOB_DATABASE_URL \\|)(?=.*\\| dich_vu:loader \\| CHUA_DAT \\| thiếu LOADER_DATABASE_URL \\|)(?=.*\\| dich_vu:backup \\| CHUA_DAT \\| thiếu BACKUP_DATABASE_URL \\|)(?=.*\\| sao_luu:cau_hinh \\| CHUA_DAT \\| thiếu BACKUP_DIR \\|)(?=.*\\| lich:systemd \\| KHONG_AP_DUNG \\|)(?=.*Không đo được từ trong máy — CHUA_XAC_NHAN \\(Bên B ký biên bản\\): may chu vat ly \\+ UPS; may giam sat DOC LAP \\(ngoai server\\); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat)(?=.*KẾT LUẬN: CHƯA SẴN SÀNG — 6 mục đo được chưa đạt)",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__R13-C02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "preflight với DATABASE_URL = DB mục (runner) + PG_BIN=C:/Program Files/PostgreSQL/17/bin, dịch vụ/BACKUP_* không đặt → `db` DAT; 4 dịch vụ CHUA_DAT thiếu biến; lich:systemd KHONG_AP_DUNG (Windows); exit 1 (5 mục chưa đạt); mục vật lý CHUA_XAC_NHAN",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_DIR": null,
+        "BACKUP_PASSPHRASE_FILE": null,
+        "BACKUP_REQUIRE_ENCRYPTION": null,
+        "BACKUP_OFFSITE": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null
+       },
+       "expect_exit": 1,
+       "stdout_re": "(?s)(?=.*\\| db \\| DAT \\| server PG \\d+; pg_dump: [^|\\n]*17.bin.pg_dump)(?=.*\\| dich_vu:webhook \\| CHUA_DAT \\| thiếu WEBHOOK_DATABASE_URL \\|)(?=.*\\| dich_vu:job \\| CHUA_DAT \\| thiếu JOB_DATABASE_URL \\|)(?=.*\\| dich_vu:loader \\| CHUA_DAT \\| thiếu LOADER_DATABASE_URL \\|)(?=.*\\| dich_vu:backup \\| CHUA_DAT \\| thiếu BACKUP_DATABASE_URL \\|)(?=.*\\| sao_luu:cau_hinh \\| CHUA_DAT \\| thiếu BACKUP_DIR \\|)(?=.*\\| lich:systemd \\| KHONG_AP_DUNG \\| hệ điều hành Windows)(?=.*Không đo được từ trong máy — CHUA_XAC_NHAN \\(Bên B ký biên bản\\): may chu vat ly \\+ UPS; may giam sat DOC LAP \\(ngoai server\\); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat)(?=.*KẾT LUẬN: CHƯA SẴN SÀNG — 5 mục đo được chưa đạt)",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__DP90-03",
+     "nguon_r10": "DP90-03",
+     "mo_ta": "Bằng chứng vật lý",
+     "not_run": "Ngoài phần mềm: server vật lý/UPS/NAS-offsite/máy giám sát độc lập/người giữ tài khoản cao nhất không thể có trên máy dev (r10 DP90-03 NOT_RUN cùng lý do); preflight R13 chỉ đo máy dev Windows, không thay biên bản Bên B"
+    },
+    {
+     "ma": "data_platform-90__FIX4-01",
+     "nguon_r10": "MOI_R13FIX4",
+     "mo_ta": "F3 tái hiện controller qua CLI: sổ backup_runs mới status=ok + offsite khác null, manifest CHỈ {encrypted:true}, KHÔNG dump, offsite rỗng → `sao_luu:ban_gan_nhat` CHUA_DAT (manifest hỏng), exit 1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{HX}/mk_backup_fake.py.txt",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/fake'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[fake\\] ok"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null,
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/fake/bk'}",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/fake/khoa.txt'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/fake/off'}"
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*manifest local thiếu/hỏng",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__FIX4-B1",
+     "nguon_r10": "MOI_R13FIX4",
+     "mo_ta": "F3 ca dương LOCAL: backup THẬT (pg_dump DB thử, mã hóa openssl, offsite dir: ngoài repo — CÙNG thiết bị máy dev nên hàng offsite CHUA_DAT đúng sự thật) → preflight đo tệp: `sao_luu:ban_gan_nhat` DAT (dump local + offsite khớp size/sha256 manifest), mã hóa DAT, offsite CHUA_DAT cùng thiết bị",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(sys.argv[2].encode('utf-8')+b'\\n'); print('PASSFILE', len(sys.argv[2]))",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/pass/fix4.pass'}",
+        "ThuR13fix4-passphrase-fixture-khong-phai-khoa-that"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "PASSFILE (?:1[6-9]|[2-9]\\d)\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/bk_fix4'}",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/pass/fix4.pass'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/off_fix4'}",
+        "DRILL_DATABASE_URL": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?!.*CHƯA mã hóa)(?=.*\\[done\\] samsam_itacc_r13fix4_\\w+_\\d{8}_\\d{6}_vn\\.dump\\.enc — \\d+ bytes)(?=.*\\[offsite\\] đã chép \\+ kiểm sha256)"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null,
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/bk_fix4'}",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/pass/fix4.pass'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/off_fix4'}",
+        "DRILL_DATABASE_URL": ""
+       },
+       "expect_exit": 1,
+       "stdout_re": "(?s)(?=.*\\| sao_luu:ban_gan_nhat \\| DAT \\| status=ok; [^|\\n]*dump local \\+ offsite đo khớp size/sha256 manifest \\|)(?=.*\\| sao_luu:ma_hoa_bat_buoc \\| DAT \\|)(?=.*\\| sao_luu:offsite \\| CHUA_DAT \\| offsite CÙNG thiết bị)",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__FIX4-B2",
+     "nguon_r10": "MOI_R13FIX4",
+     "mo_ta": "F3: xóa tệp dump ở offsite (giữ manifest) → `ban_gan_nhat` CHUA_DAT 'offsite: thiếu tệp dump'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,os,sys; f=glob.glob(sys.argv[1]+'/*_vn.dump.enc'); [os.remove(x) for x in f]; print('XOA', len(f))",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/off_fix4'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "XOA 1\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null,
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/bk_fix4'}",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/pass/fix4.pass'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/off_fix4'}",
+        "DRILL_DATABASE_URL": ""
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*offsite: thiếu tệp dump"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-90__FIX4-B3",
+     "nguon_r10": "MOI_R13FIX4",
+     "mo_ta": "F3: lật 1 byte tệp dump local (cùng cỡ) → `ban_gan_nhat` CHUA_DAT 'local: sha256 tệp dump lệch manifest'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,sys; f=glob.glob(sys.argv[1]+'/*_vn.dump.enc')[0]; b=bytearray(open(f,'rb').read()); b[len(b)//2]^=1; open(f,'wb').write(b); print('LAT', len(b))",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/bk_fix4'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "LAT \\d+"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null,
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/bk_fix4'}",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/pass/fix4.pass'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp90/' || md5('{SCR}') || '/off_fix4'}",
+        "DRILL_DATABASE_URL": ""
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*local: sha256 tệp dump lệch manifest"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "data_platform-07.2",
+   "db": "samsam_itacc_r13fix4_dp072",
+   "muc_kiem_de_xuat": "LOCAL",
+   "tieu_chi_cu_the": [
+    "T1 db_backup BACKUP_DIR ngoài repo → dump + manifest (sha256, row_counts, không host/user) + backup_runs.jsonl status ok + file_output_evidence bk:<sha>",
+    "T2 db_restore_drill → khôi phục vào DB tạm, đối chiếu số dòng mọi bảng khớp, tự xóa DB tạm",
+    "T3 Ca âm: BACKUP_DIR trong repo → exit 2 không tạo thư mục; offsite dir: chép + kiểm sha (giới hạn: cùng máy — offsite/NAS ngoài máy không chứng minh được)",
+    "T4 không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+    "T5 (MỚI r13) BACKUP_REQUIRE_ENCRYPTION=1 thiếu BACKUP_PASSPHRASE_FILE → exit 2 '[usage]' trước connect, không tạo thư mục, 0 bằng chứng mới",
+    "T6 (MỚI r13) offsite cùng thiết bị với BACKUP_DIR: có BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1 → exit 2 '[usage]', không chép; không cờ → '[warn] … cùng thiết bị' rồi vẫn chép + kiểm sha, exit 0",
+    "T7 (MỚI r13) passphrase file ngoài repo (≥16 ký tự) + BACKUP_REQUIRE_ENCRYPTION=1 → chỉ còn bản .dump.enc (8 byte đầu 'Salted__', không bản rõ), manifest encrypted true cipher openssl-aes-256-cbc-pbkdf2, sha khớp, bằng chứng DB ghi"
+   ],
+   "ca": [
+    {
+     "ma": "data_platform-07.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (r10 DB samsam_itacc_r10_dp đã seed — có dữ liệu sổ trong bản backup)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ \\d+"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-01",
+     "nguon_r10": "DP072-01",
+     "mo_ta": "Backup — BACKUP_DIR ngoài repo (scratchpad r13/ext_dp072/<md5 SCR>/bk); mọi BACKUP_* khác đặt rỗng để .env không lấp",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk'}",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[done\\] samsam_itacc_r13fix4_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[warn\\] backup CHƯA mã hóa)(?=[\\s\\S]*\\[warn\\] chưa cấu hình offsite \\(BACKUP_OFFSITE\\))(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk/*_vn.dump'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk/*.manifest.json'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk/*.partial'}",
+       "count": 0
+      },
+      {
+       "file_re": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk/backup_runs.jsonl'}",
+       "re": "\\\"status\\\": \\\"ok\\\"",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-01q",
+     "nguon_r10": "DP072-01q",
+     "mo_ta": "Assert DB/manifest — kiểm độc lập ({H}/bk_check_r13.py.txt thay q.py r10 + đối chiếu tay)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/bk_check_r13.py.txt",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*keys_ok True)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*encrypted False cipher None)(?=[\\s\\S]*magic PGDMP)(?=[\\s\\S]*host_user_in_manifest False)(?=[\\s\\S]*row_counts_tables [1-9]\\d*)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs' and output_key ~ '^bk:[0-9a-f]{64}$' and not is_sample",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-02",
+     "nguon_r10": "DP072-02",
+     "mo_ta": "Restore drill (DRILL_DATABASE_URL rỗng → server của DATABASE_URL = Postgres thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_restore_drill.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk'}",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[drill\\] samsam_itacc_r13fix4_dp072_\\d{8}_\\d{6}_vn\\.dump → samsam_drill_[0-9a-z_]+: (\\d+)/\\1 bảng khớp, RTO"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from pg_database where datname like 'samsam\\_drill%'",
+       "expect": 0
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk/drill_runs.jsonl'}",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-03",
+     "nguon_r10": "DP072-03",
+     "mo_ta": "Âm: BACKUP_DIR trong repo ({OUT}/bk_trong_repo)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{OUT}/bk_trong_repo",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[usage\\] BACKUP_DIR nằm trong repo — phải đặt NGOÀI repo"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/bk_trong_repo",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-04",
+     "nguon_r10": "DP072-04",
+     "mo_ta": "Offsite dir: ngoài repo (cùng máy — giới hạn r10 giữ nguyên)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk'}",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/offsite'}",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[done\\] samsam_itacc_r13fix4_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[offsite\\] đã chép \\+ kiểm sha256)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/bk_check_r13.py.txt",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/offsite'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/offsite/*_vn.dump'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/offsite/*.manifest.json'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk/*_vn.dump'}",
+       "count": 2
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__R13-01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "BACKUP_REQUIRE_ENCRYPTION=1 nhưng không có BACKUP_PASSPHRASE_FILE",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_req'}",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[usage\\] BACKUP_REQUIRE_ENCRYPTION=1 nhưng chưa có BACKUP_PASSPHRASE_FILE — không ghi bản chưa mã hóa"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_req'}",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__R13-02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "offsite cùng thiết bị với BACKUP_DIR (cả hai trong scratchpad ổ C:) + BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk'}",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/offsite_flag'}",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "1",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[usage\\] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR — không phải bản sao ngoài máy"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/offsite_flag'}",
+       "count": 0
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk/*_vn.dump'}",
+       "count": 2
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__R13-03",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "offsite cùng thiết bị KHÔNG cờ → cảnh báo rồi vẫn chép + kiểm sha",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_warn'}",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/offsite_warn'}",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[warn\\] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR \\(st_dev\\) — chưa phải offsite thật)(?=[\\s\\S]*\\[done\\] samsam_itacc_r13fix4_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[offsite\\] đã chép \\+ kiểm sha256)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/offsite_warn/*_vn.dump'}",
+       "count": 1
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 3
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__R13-04",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "backup mã hóa: passphrase file NGOÀI repo (giá trị thử R13, ≥16 ký tự, UTF-8 + LF) + BACKUP_REQUIRE_ENCRYPTION=1; openssl tìm qua PATH hoặc C:/Program Files/Git/usr|mingw64/bin (có trên máy)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(sys.argv[2].encode('utf-8')+b'\\n'); print('PASSFILE', len(sys.argv[2]))",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/pass/thu_r13.pass'}",
+        "ThuR13-passphrase-fixture-khong-phai-khoa-that"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "PASSFILE (?:1[6-9]|[2-9]\\d)\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_enc'}",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/pass/thu_r13.pass'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?![\\s\\S]*CHƯA mã hóa)(?=[\\s\\S]*\\[done\\] samsam_itacc_r13fix4_dp072_\\d{8}_\\d{6}_vn\\.dump\\.enc — \\d+ bytes)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/bk_check_r13.py.txt",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_enc'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*keys_ok True)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*encrypted True cipher openssl-aes-256-cbc-pbkdf2)(?=[\\s\\S]*magic Salted__)(?=[\\s\\S]*host_user_in_manifest False)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_enc/*_vn.dump'}",
+       "count": 0
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_enc/*_vn.dump.enc'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_enc/*.partial'}",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 4
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__FIX4-B1",
+     "nguon_r10": "MOI_R13FIX4",
+     "mo_ta": "F3 ca dương LOCAL: backup THẬT (pg_dump DB thử, mã hóa openssl, offsite dir: ngoài repo — CÙNG thiết bị máy dev nên hàng offsite CHUA_DAT đúng sự thật) → preflight đo tệp: `sao_luu:ban_gan_nhat` DAT (dump local + offsite khớp size/sha256 manifest), mã hóa DAT, offsite CHUA_DAT cùng thiết bị",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(sys.argv[2].encode('utf-8')+b'\\n'); print('PASSFILE', len(sys.argv[2]))",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/pass/fix4.pass'}",
+        "ThuR13fix4-passphrase-fixture-khong-phai-khoa-that"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "PASSFILE (?:1[6-9]|[2-9]\\d)\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_fix4'}",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/pass/fix4.pass'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/off_fix4'}",
+        "DRILL_DATABASE_URL": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?!.*CHƯA mã hóa)(?=.*\\[done\\] samsam_itacc_r13fix4_\\w+_\\d{8}_\\d{6}_vn\\.dump\\.enc — \\d+ bytes)(?=.*\\[offsite\\] đã chép \\+ kiểm sha256)"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null,
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_fix4'}",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/pass/fix4.pass'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/off_fix4'}",
+        "DRILL_DATABASE_URL": ""
+       },
+       "expect_exit": 1,
+       "stdout_re": "(?s)(?=.*\\| sao_luu:ban_gan_nhat \\| DAT \\| status=ok; [^|\\n]*dump local \\+ offsite đo khớp size/sha256 manifest \\|)(?=.*\\| sao_luu:ma_hoa_bat_buoc \\| DAT \\|)(?=.*\\| sao_luu:offsite \\| CHUA_DAT \\| offsite CÙNG thiết bị)",
+       "stderr_re": "\\A(?![\\s\\S]*Traceback)"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__FIX4-B2",
+     "nguon_r10": "MOI_R13FIX4",
+     "mo_ta": "F3: xóa tệp dump LOCAL sau backup thật (sổ + manifest còn) → `ban_gan_nhat` CHUA_DAT 'local: thiếu tệp dump'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,os,sys; f=glob.glob(sys.argv[1]+'/*_vn.dump.enc'); [os.remove(x) for x in f]; print('XOA', len(f))",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_fix4'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "XOA 1\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/onprem_preflight.py"
+       ],
+       "env": {
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin",
+        "WEBHOOK_DATABASE_URL": null,
+        "JOB_DATABASE_URL": null,
+        "LOADER_DATABASE_URL": null,
+        "BACKUP_DATABASE_URL": null,
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": null,
+        "BACKUP_KEEP": null,
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/bk_fix4'}",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/pass/fix4.pass'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13fix4/ext_dp072/' || md5('{SCR}') || '/off_fix4'}",
+        "DRILL_DATABASE_URL": ""
+       },
+       "expect_exit": 1,
+       "stdout_re": "\\| sao_luu:ban_gan_nhat \\| CHUA_DAT \\| [^|\\n]*local: thiếu tệp dump"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

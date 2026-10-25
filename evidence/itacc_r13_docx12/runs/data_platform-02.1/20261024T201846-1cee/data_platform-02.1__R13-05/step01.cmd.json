@@ -1,0 +1,38 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.doc_intake",
+  "--reprocess-pending"
+ ],
+ "env_doi": [
+  "DOC_INTAKE_DIR",
+  "DOC_ORIGINALS_DIR",
+  "OCR_MAX_PAGES",
+  "OCR_PADDLE_MODEL_DIR",
+  "OCR_PROVIDER",
+  "OCR_TIMEOUT_S"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:19:30+07:00",
+ "ket_thuc": "2026-10-24T20:19:52+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*\\[ocr\\] [0-9a-f]{12} giay_tiep_nhan → pending_review fields=[1-3])(?=.*\\[done\\] done=\\d+ still=\\d+ error=0)",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "f8172f33bb8edd9f239085df1ed65bda0cb630d66e28897f5523eebe08ef0a38",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

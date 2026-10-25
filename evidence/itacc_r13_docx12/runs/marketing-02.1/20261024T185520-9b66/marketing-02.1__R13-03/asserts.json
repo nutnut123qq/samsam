@@ -1,0 +1,35 @@
+[
+ {
+  "sql": "select count(*) from content_drafts where content_type = 'image'",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from image_assets",
+  "expect": 5,
+  "actual": 5,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from llm_usage",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r13_docx12\\runs\\marketing-02.1\\20261024T185520-9b66\\scratch/img_nomodel/*",
+  "count": 0,
+  "actual": 0,
+  "files": [],
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r13_docx12\\runs\\marketing-02.1\\20261024T185520-9b66\\marketing-02.1__R13-03\\out/image_http.json",
+  "re": "\\\"requests\\\": 0,",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ }
+]

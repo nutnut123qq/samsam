@@ -1,0 +1,32 @@
+[
+ {
+  "file_glob": "evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T202217-1a01\\scratch/s08_feed/website-feed-????-??-??.json",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r13_docx12/runs/sales-08/20261024T202217-1a01/scratch/s08_feed/website-feed-2026-10-24.json",
+    "sha256": "590db2733bd2ed62862d3371bfa6f9a8f4a2cdf8dd8fde97ed1ff964e083095a"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T202217-1a01\\scratch/s08_feed/website-feed-????-??-??.manifest.json",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r13_docx12/runs/sales-08/20261024T202217-1a01/scratch/s08_feed/website-feed-2026-10-24.manifest.json",
+    "sha256": "b58cbc297f431b1583a48ccedf6fac3362b4c4365683ec6d102bca74b88c57d5"
+   }
+  ],
+  "dat": true
+ },
+ {
+  "sql": "select price_vnd from price_list where sku_key = 'mat-ong-sam-300ml' and channel = 'web' and kind = 'list' and valid_to is null and program_id is null and approved_by is not null",
+  "expect": 2980000,
+  "actual": 2980000,
+  "dat": true
+ }
+]

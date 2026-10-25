@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from plot_logs where plot_id = 'KV-ZZ99'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

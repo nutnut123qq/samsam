@@ -1,0 +1,74 @@
+"""HARNESS r13 — kiểm cấu trúc nháp tiêu chí TRƯỚC khi khóa (điều phối viên): mỗi ca của nguồn hiện hành ↔ đúng 1 ca r13
+(`nguon_r10`), DB duy nhất, mã ca duy nhất, placeholder đã biết, tệp harness/fixture tham chiếu tồn tại, regex biên dịch được,
+`kiem` đúng dạng.  python -I validate_drafts_r13.py.txt <draft.json> [...]"""
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+PH = {"{REPO}": REPO, "{H}": REPO / "evidence/itacc_r13_docx12/harness", "{FX13}": REPO / "evidence/itacc_r13_docx12/fixtures",
+      "{H12}": REPO / "evidence/itacc_r12/harness", "{FX12}": REPO / "evidence/itacc_r12/fixtures",
+      "{HF}": REPO / "evidence/itacc_r12_fix_d2_l3/harness", "{FXF}": REPO / "evidence/itacc_r12_fix_d2_l3/fixtures",
+      "{FX10}": REPO / "evidence/itacc_r10"}
+SRC = {"farming-01": ("evidence/itacc_r12/criteria/r12_farming_v3.json", "r12"),
+       "sales-03": ("evidence/itacc_r12_fix_d2_l3/criteria/r12fix_v1.json", "r12")}
+errs, dbs, mas = [], {}, set()
+for f in sys.argv[1:]:
+    d = json.loads(Path(f).read_text(encoding="utf-8"))
+    for it in d["items"]:
+        iid = it["id"]
+        if it["db"] in dbs:
+            errs.append(f"{iid}: db trùng {it['db']}")
+        dbs[it["db"]] = iid
+        if not re.fullmatch(r"samsam_itacc_r13_[a-z0-9_]+", it["db"]):
+            errs.append(f"{iid}: db sai tiền tố")
+        if iid in SRC:
+            src = json.loads((REPO / SRC[iid][0]).read_text(encoding="utf-8"))
+            old = [c["ma"] for c in next(x for x in src["items"] if x["id"] == iid)["ca"]]
+        else:
+            old = [c["ma"] for c in json.loads((REPO / f"evidence/itacc_r10/items/{iid}.json").read_text(
+                encoding="utf-8"))["ca"]]
+        got = [c.get("nguon_r10") for c in it["ca"]]
+        for o in old:
+            if got.count(o) != 1:
+                errs.append(f"{iid}: ca nguồn {o} xuất hiện {got.count(o)} lần")
+        extra = [g for g in got if g not in old and g not in ("MOI", "MOI_R13")]
+        if extra:
+            errs.append(f"{iid}: nguon_r10 lạ {extra}")
+        for c in it["ca"]:
+            if c["ma"] in mas:
+                errs.append(f"mã ca trùng {c['ma']}")
+            mas.add(c["ma"])
+            blob = json.dumps(c, ensure_ascii=False)
+            for ph in set(re.findall(r"\{[A-Z][A-Z0-9]*\}", blob)):
+                if ph not in PH and ph not in ("{OUT}", "{SCR}"):
+                    errs.append(f"{c['ma']}: placeholder lạ {ph}")
+            for m in re.finditer(r"\{(H|FX13|H12|FX12|HF|FXF|FX10|REPO)\}([^\s\"',;)]*)", blob):
+                p = PH["{" + m.group(1) + "}"] / m.group(2).lstrip("/").replace("\\\\", "/")
+                if m.group(2) and not p.exists() and "*" not in m.group(2):
+                    errs.append(f"{c['ma']}: tệp không tồn tại {m.group(0)[:120]}")
+            for st in c.get("buoc", []):
+                for k in ("stdout_re", "stderr_re", "out_re"):
+                    if st.get(k):
+                        try:
+                            re.compile(st[k])
+                        except re.error as e:
+                            errs.append(f"{c['ma']}: regex {k} lỗi {e}")
+            for a in c.get("kiem", []):
+                if not any(k in a for k in ("sql", "file_glob", "file_re", "file_glob_dq", "file_re_dq")):
+                    errs.append(f"{c['ma']}: kiem sai dạng {a}")
+                if "re" in a:
+                    try:
+                        re.compile(a["re"])
+                    except re.error as e:
+                        errs.append(f"{c['ma']}: regex kiem lỗi {e}")
+            if not c.get("buoc") and not c.get("kiem") and not c.get("not_run"):
+                errs.append(f"{c['ma']}: không bước, không not_run")
+        print(f"{iid}: {len(it['ca'])} ca, nguồn {len(old)}, MOI {got.count('MOI')}, MOI_R13 {got.count('MOI_R13')}, "
+              f"not_run {sum(bool(c.get('not_run')) for c in it['ca'])}")
+print("LOI:", len(errs))
+for e in errs:
+    print(" ", e)
+sys.exit(1 if errs else 0)

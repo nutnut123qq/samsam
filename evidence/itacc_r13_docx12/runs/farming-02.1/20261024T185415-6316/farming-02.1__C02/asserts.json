@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from garden_reminders",
+  "expect": 6,
+  "actual": 6,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from garden_reminders where closed_at is null",
+  "expect": 6,
+  "actual": 6,
+  "dat": true
+ }
+]

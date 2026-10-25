@@ -11,6 +11,10 @@ repo KHÔNG bịa thành phần/số hồ sơ). Module này chỉ KIỂM, không
   - đối chiếu golden: mỗi SKU golden đúng 1 dòng `sku`; `ho_so_goc` null
     hoặc mã có trong danh mục; SKU đã gắn hồ sơ phải cùng số công bố;
   - đủ số: `so_ho_so_hop_dong` (14) hồ sơ + mọi SKU đã gắn.
+  r13: thêm trường bắt buộc `phien_ban` (phiên bản hồ sơ) + `tep_sha256`
+  (sha256 tệp hồ sơ gốc Bên B giao — truy vết đúng bản); hồ sơ `mau: true`
+  (fixture/thử) KHÔNG tính là hồ sơ thật; báo thiếu nêu ĐÍCH DANH SKU chưa
+  gắn hồ sơ và số hồ sơ còn thiếu (không chỉ "chưa cấu hình").
 
   python -m ingest.product_dossiers --check [--file F] [--golden G]
 Exit: 0 đủ + khớp · 1 sai cấu trúc/lệch (không dùng được) · 2 CHƯA ĐỦ dữ
@@ -30,7 +34,9 @@ ROOT = Path(__file__).resolve().parent.parent
 DOSSIER_FILE = ROOT / "data" / "product_dossiers.json"
 GOLDEN_FILE = ROOT / "data" / "golden_skus.json"
 REQUIRED = ("ma_ho_so", "ten", "thanh_phan", "quy_cach", "so_cong_bo",
-            "loai", "sku_keys", "xac_nhan_boi", "can_cu")
+            "loai", "sku_keys", "xac_nhan_boi", "can_cu", "phien_ban",
+            "tep_sha256")
+_SHA_HEX = frozenset("0123456789abcdef")
 LOAI = ("tpbvsk", "food", "alcohol")
 
 
@@ -69,12 +75,17 @@ def check(doc: dict, golden_skus: list[dict]) -> dict:
                 ok = as_list
             elif k == "thanh_phan":        # chuỗi hoặc danh sách thành phần
                 ok = as_list or _txt(v)
+            elif k == "tep_sha256":
+                ok = isinstance(v, str) and len(v) == 64 and set(v) <= _SHA_HEX
             else:
                 ok = _txt(v)
             if not ok:
                 errs.append(f"{w}.{k}: thiếu/rỗng")
         mid = d.get("ma_ho_so")
-        if _txt(mid):
+        if d.get("mau") is True:       # fixture/thử: không bao giờ tính là thật
+            errs.append(f"{w}: hồ sơ MẪU (mau=true) — không tính là hồ sơ gốc"
+                        " thật")
+        elif _txt(mid):
             if mid in by_id:
                 errs.append(f"{w}.ma_ho_so: trùng {mid}")
             by_id[mid] = d
@@ -114,7 +125,10 @@ def check(doc: dict, golden_skus: list[dict]) -> dict:
         miss.append(f"danh mục hồ sơ gốc: {len(by_id)}/{need} (Bên B cung "
                     "cấp tên, thành phần, quy cách, số công bố + căn cứ)")
     if mapped < len(gold):
-        miss.append(f"SKU golden đã gắn hồ sơ gốc: {mapped}/{len(gold)}")
+        done = {r.get("sku_key") for r in rows if isinstance(r, dict)
+                and r.get("ho_so_goc") in by_id}
+        miss.append(f"SKU golden đã gắn hồ sơ gốc: {mapped}/{len(gold)} — "
+                    "chưa gắn: " + ", ".join(sorted(set(gold) - done)))
     return {"errors": errs, "missing": miss, "dossiers": len(by_id),
             "mapped": mapped, "skus": len(gold)}
 

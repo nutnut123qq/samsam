@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select approved_by is null and approved_at is null from price_list where id = (select id from price_list where sku_key = 'savina-12v' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null)",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

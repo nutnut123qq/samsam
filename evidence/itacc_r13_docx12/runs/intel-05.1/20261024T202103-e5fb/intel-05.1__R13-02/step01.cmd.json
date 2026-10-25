@@ -1,0 +1,32 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/persona_run.py.txt",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\fixtures/items/intel-05.1/sim_config_dpia_true.json",
+  "three",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\intel-05.1\\20261024T202103-e5fb\\scratch/ps_three"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:21:24+07:00",
+ "ket_thuc": "2026-10-24T20:21:28+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "FACTS \\{\\\"rc\\\": 1, \\\"calls\\\": 1, \\\"canon_dpia_signed\\\": false\\}",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*\\[refuse\\])[\\s\\S]*\\[err\\] dừng \\(GatewayError: SENTINEL r13",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "d5fbd36ef2db6e34c85b1e2810b486a7226b46f8c587fa5e7de353c0e46ff509",
+ "stderr_sha256": "9537811d8957cdeb03621071778f8f1e1eb16c0c2c3d58a3dda656087cd85b83"
+}

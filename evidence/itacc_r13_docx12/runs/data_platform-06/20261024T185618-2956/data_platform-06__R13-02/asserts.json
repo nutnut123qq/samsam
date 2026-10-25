@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select stage from feature_rollout where feature_id = 'data_platform-06'",
+  "expect": "chay_thu",
+  "actual": "chay_thu",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from feature_rollout_events where feature_id = 'data_platform-06' and kind = 'disable'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

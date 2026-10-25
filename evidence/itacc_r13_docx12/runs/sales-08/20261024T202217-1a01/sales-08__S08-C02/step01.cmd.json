@@ -1,0 +1,32 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T202217-1a01\\scratch/gdata",
+  "van_hanh",
+  "agents.listing_export",
+  "--website-feed",
+  "--out",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T202217-1a01\\scratch/s08_feed"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:22:40+07:00",
+ "ket_thuc": "2026-10-24T20:22:43+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\[done\\] website-feed-\\d{4}-\\d{2}-\\d{2}\\.manifest\\.json — 1/13 SKU bán được trên web",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "4d9a8419fd5af4cffef0742702465c0223c6776a87091e9cdf140993f0feb76e",
+ "stderr_sha256": "8c645ea61de8a7565928c6e27ecb99ae08e87c2041d858f9f62d62fb5aa64962"
+}

@@ -1,0 +1,38 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_fix_4\\harness/guard_run.py.txt",
+  "-m",
+  "ingest.doc_intake"
+ ],
+ "env_doi": [
+  "DOC_INTAKE_DIR",
+  "DOC_ORIGINALS_DIR",
+  "OCR_MAX_PAGES",
+  "OCR_PADDLE_MODEL_DIR",
+  "OCR_PROVIDER",
+  "OCR_TIMEOUT_S"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:00:59+07:00",
+ "ket_thuc": "2026-10-25T00:01:02+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*\\[err\\] #1 thiếu model OCR cục bộ \\(det, rec, cls\\) ở OCR_PADDLE_MODEL_DIR)(?=.*\\[done\\] new=0 dup=0 cho_ocr=0 skipped=0 error=1)",
+   "khop": true
+  },
+  {
+   "stderr_re": "(?s)(?=.*\\[guard\\] mang=0 )(?!.*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "f0f272d2e1dfcc9b55f03863e8220cd7c2424fa822346ecab0099997a59ff7fb",
+ "stderr_sha256": "51b44bd6023a46740573dc983be158f72deed21cad2cf82643665e430a90c5cf"
+}

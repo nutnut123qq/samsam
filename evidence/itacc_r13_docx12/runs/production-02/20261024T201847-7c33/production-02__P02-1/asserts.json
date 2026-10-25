@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select pack_spec || '|' || version || '|' || source from sku_master where sku_key = 'savina-12v'",
+  "expect": "10 viên ngậm (tuýp PP)|2|golden_prod.json",
+  "actual": "10 viên ngậm (tuýp PP)|2|golden_prod.json",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) > 0 and bool_and(status = 'pending') and bool_and(detail ? 'golden' and detail ? 'web') from golden_discrepancies where kind = 'spec_mismatch' and sku_key = 'savina-12v'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from golden_discrepancies where kind = 'spec_mismatch' and detail::text ~* '(de_xuat|đề xuất|proposed|suggest)'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from price_list where approved_by is not null",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

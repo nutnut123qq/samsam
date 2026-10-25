@@ -40,6 +40,12 @@ Contract:
     nạp; lỗi file vẫn exit 1). Provider nước ngoài trong registry → từ
     chối ngay (exit 2 / ValueError), không âm thầm trả "".
     BLOCKED: vendor OCR trong nước + hợp đồng/DPA + key (Bên B/Pháp chế).
+    r13: thêm `paddle_local` = OCR TẠI CHỖ (PaddleOCR, model latin cục bộ,
+    không mạng, không tự tải model) — PDF scan render từng trang (PyMuPDF),
+    ≤ OCR_MAX_PAGES trang, quá OCR_TIMEOUT_S → lỗi; engine ghi
+    `documents.ocr_engine`. Là lựa chọn kỹ thuật THỬ (chữ Việt mất một phần
+    dấu thanh) — Bên B/Pháp chế vẫn quyết engine/vendor dùng thật; kết quả
+    luôn `pending_review` chờ người `--verify`.
   - Không lưu full text vào DB, không in filename/nội dung ra stdout —
     chỉ `sha256[:12]`, `doc_type`, `status`, số đếm.
   - Đợt hợp đồng (G3): `--reprocess-pending` — khi đã cắm provider TRONG
@@ -103,9 +109,120 @@ def _ocr_none(path: Path) -> str:
     return ""
 
 
-# name -> (callable(path) -> text, domestic). Thêm provider thật
-# (FPT.AI Reader) là external-dep: hợp đồng + DPA trước khi cắm.
-PROVIDERS = {"none": (_ocr_none, True)}
+# r13: OCR CHẠY TẠI CHỖ (PaddleOCR 2.x, model nhận dạng latin — chữ Việt mất
+# một phần dấu thanh) — ảnh/PDF KHÔNG rời máy chủ nên `domestic=True` đúng
+# nghĩa (xử lý trên server Sâm Sâm). Lựa chọn kỹ thuật THỬ, không phải quyết
+# định chọn vendor. Model chỉ đọc từ thư mục cục bộ đã có (KHÔNG tự tải):
+# OCR_PADDLE_MODEL_DIR (mặc định ~/.paddleocr/whl) phải chứa det/en/
+# en_PP-OCRv3_det_infer + rec/latin/latin_PP-OCRv3_rec_infer.
+OCR_MAX_PAGES = int(os.environ.get("OCR_MAX_PAGES", "30"))
+OCR_TIMEOUT_S = float(os.environ.get("OCR_TIMEOUT_S", "300"))
+OCR_PDF_DPI = 200
+_PADDLE_SUBDIRS = {"det": ("det", "en", "en_PP-OCRv3_det_infer"),
+                   "rec": ("rec", "latin", "latin_PP-OCRv3_rec_infer"),
+                   # PaddleOCR 2.x luôn tải model cls nếu thiếu thư mục, kể cả
+                   # use_angle_cls=False → phải có sẵn + truyền tường minh.
+                   "cls": ("cls", "ch_ppocr_mobile_v2.0_cls_infer")}
+# PaddleOCR 2.x (`maybe_download`) tự tải bộ model khi thiếu pdiparams HOẶC
+# pdmodel → cổng phải đòi đủ cả hai (rỗng 0 byte = thiếu: engine nạp sẽ chết).
+_PADDLE_FILES = ("inference.pdmodel", "inference.pdiparams")
+_paddle = None   # engine nạp 1 lần / tiến trình (nạp model ~10 s)
+
+
+def _paddle_engine():
+    global _paddle
+    if _paddle is None:
+        root = Path(os.environ.get("OCR_PADDLE_MODEL_DIR", "").strip()
+                    or Path.home() / ".paddleocr" / "whl")
+        dirs = {k: root.joinpath(*v) for k, v in _PADDLE_SUBDIRS.items()}
+        missing = [k for k, d in dirs.items()
+                   if not all((d / f).is_file() and (d / f).stat().st_size
+                              for f in _PADDLE_FILES)]
+        if missing:  # thiếu model → từ chối, KHÔNG để PaddleOCR tự tải mạng
+            raise DocError("thiếu model OCR cục bộ ("
+                           + ", ".join(missing) + ") ở OCR_PADDLE_MODEL_DIR")
+        try:
+            from paddleocr import PaddleOCR
+        except ImportError:
+            raise DocError("chưa cài paddleocr — provider paddle_local"
+                           " không dùng được") from None
+        logging.getLogger("ppocr").setLevel(logging.ERROR)
+        _paddle = PaddleOCR(lang="vi", use_angle_cls=False, show_log=False,
+                            det_model_dir=str(dirs["det"]),
+                            rec_model_dir=str(dirs["rec"]),
+                            cls_model_dir=str(dirs["cls"]))
+    return _paddle
+
+
+def _page_images(path: Path) -> list:
+    """Ảnh RGB (numpy) từng trang: PDF → render PyMuPDF ở OCR_PDF_DPI;
+    JPG/PNG → Pillow (kiểm định dạng theo nội dung). Quá OCR_MAX_PAGES /
+    hỏng → DocError."""
+    import numpy as np
+    from PIL import Image, UnidentifiedImageError
+    with open(path, "rb") as f:
+        head = f.read(8)
+    if head.startswith(b"%PDF"):
+        import fitz
+        try:
+            doc = fitz.open(path)
+        except Exception as e:  # noqa: BLE001 — PDF hỏng
+            raise DocError(f"PDF hỏng: {type(e).__name__}") from None
+        with doc:
+            if doc.needs_pass:
+                raise DocError("PDF mã hoá")
+            if doc.page_count > OCR_MAX_PAGES:
+                raise DocError(f"PDF {doc.page_count} trang > OCR_MAX_PAGES"
+                               f"={OCR_MAX_PAGES}")
+            out = []
+            for page in doc:
+                pix = page.get_pixmap(dpi=OCR_PDF_DPI, alpha=False)
+                out.append(np.frombuffer(pix.samples, dtype=np.uint8)
+                           .reshape(pix.height, pix.width, pix.n)[:, :, :3])
+            return out
+    try:
+        with Image.open(path) as im:
+            if im.format not in ("JPEG", "PNG"):
+                raise DocError(f"ảnh định dạng {im.format} không nhận")
+            return [np.asarray(im.convert("RGB"))]
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError,
+            SyntaxError) as e:
+        raise DocError(f"ảnh hỏng/không đọc được: {type(e).__name__}") from None
+
+
+def _ocr_paddle_local(path: Path) -> str:
+    """OCR tại chỗ từng trang → text (dòng theo thứ tự engine trả). Quá
+    OCR_TIMEOUT_S → DocError (luồng OCR bị bỏ, không ghi kết quả muộn)."""
+    import threading
+    pages = _page_images(path)
+    engine = _paddle_engine()
+    box: dict = {}
+
+    def work():
+        try:
+            lines = []
+            for img in pages:
+                for res in engine.ocr(img, cls=False) or []:
+                    lines += [ln[1][0] for ln in res or [] if ln and ln[1]]
+            box["text"] = "\n".join(lines)
+        except Exception as e:  # noqa: BLE001 — chuyển về luồng gọi
+            box["err"] = e
+    th = threading.Thread(target=work, name="ocr-paddle", daemon=True)
+    th.start()
+    th.join(OCR_TIMEOUT_S)
+    if th.is_alive():
+        raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — bỏ")
+    if "err" in box:
+        raise DocError(f"OCR lỗi ({type(box['err']).__name__})")
+    return box.get("text", "")
+
+
+# name -> (callable(path) -> text, domestic). Vendor có phí (FPT.AI Reader…)
+# là external-dep: hợp đồng + DPA trước khi cắm.
+PROVIDERS = {"none": (_ocr_none, True),
+             "paddle_local": (_ocr_paddle_local, True)}
+# Ghi vào documents.ocr_engine (truy vết engine/model tạo text OCR).
+OCR_ENGINES = {"paddle_local": "paddleocr-2.x/latin_PP-OCRv3"}
 OCR_BLOCKED = ("OCR_PROVIDER chưa cấu hình — BLOCKED: vendor OCR trong nước "
                "+ hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào "
                "ingest.doc_intake.PROVIDERS; tạm thời người đọc bản gốc rồi "
@@ -303,6 +420,9 @@ def _process(path: Path, intake_dir: Path, originals_dir: Path, conn,
     if cur.rowcount != 1:  # process khác vừa insert cùng sha
         conn.rollback()
         return "dup", sha, "trùng — bỏ qua"
+    if source == "ocr" and OCR_ENGINES.get(provider):   # cùng giao dịch
+        conn.execute("update documents set ocr_engine = %s where sha256 = %s",
+                     (OCR_ENGINES[provider], sha))
     for field, (value, conf) in fields.items():
         conn.execute(
             "insert into document_fields (sha256, field, value, confidence,"
@@ -390,9 +510,10 @@ def reprocess_pending(conn, originals_dir: Path, provider: str) -> dict:
             fields = extract_fields(text) if dtype == "giay_tiep_nhan" else {}
             cur = conn.execute(
                 "update documents set text_source = %s, pii_flag = %s,"
-                " pages = %s, status = 'pending_review' where sha256 = %s"
-                " and status = 'cho_ocr'",
-                (source, has_pii(text), pages, sha))
+                " pages = %s, ocr_engine = %s, status = 'pending_review'"
+                " where sha256 = %s and status = 'cho_ocr'",
+                (source, has_pii(text), pages, OCR_ENGINES.get(provider),
+                 sha))
             if cur.rowcount != 1:      # process khác vừa xử lý
                 conn.rollback()
                 continue
@@ -559,6 +680,12 @@ def main(argv: list[str] | None = None) -> int:
             # Không báo thành công câm: tài liệu scan/ảnh CHƯA có chữ.
             print(f"[blocked] {counts['cho_ocr']} tài liệu scan/ảnh ở "
                   f"cho_ocr — {OCR_BLOCKED}")
+            return 2
+        if counts["cho_ocr"]:
+            # r13: có provider mà OCR không ra chữ (ảnh trắng/mờ) — vẫn không
+            # báo thành công câm.
+            print(f"[cho_ocr] {counts['cho_ocr']} tài liệu OCR ({provider}) "
+                  "không ra chữ — giữ cho_ocr; người đọc bản gốc hoặc quét lại")
             return 2
         return 0
     finally:

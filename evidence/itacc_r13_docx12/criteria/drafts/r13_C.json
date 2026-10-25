@@ -1,0 +1,1421 @@
+{
+ "_doc": "Nháp tiêu chí r13 nhóm C (24/10/2026, người viết nháp — CHƯA khóa; điều phối viên duyệt/sửa/khóa) — 4 mục: marketing-02.1, intel-05.1, data_platform-06, data_platform-07.2 (bản ghi hiện hành r10: evidence/itacc_r10/items/<id>.json; ca khóa r10: evidence/itacc_r10/criteria/g3.json, g1.json, g5.json). Mỗi ca r10 ↔ đúng 1 ca r13 (`nguon_r10` = mã ca r10); `MOI` = ca tiền đề dựng lại trạng thái DB chung r10 (seed rollout, golden fixture, packshot MẪU); `MOI_R13` = ca cho mã r13. Fixture chép nguyên byte: {FX13}/items/marketing-02.1/golden_fixture_food.json (r10 g3 1f54d03c…), {FX13}/items/intel-05.1/sim_config_dpia_true.json (r10 g1 972d206d…) — SHA256SUMS.txt + NGUON.txt từng thư mục. Harness MỚI dưới {H} (nguồn/sha: harness/NGUON_r13_C.txt, SHA256SUMS_r13_C.txt): image_run.py.txt (MockTransport biên _image_http, gateway/DB thật), verify_img_r13.py.txt (chạy NGUYÊN verify_image.py.txt r10 với box từ meta DB), persona_run.py.txt (cfg TẠM dưới {SCR}, CONFIG_FILE trỏ bản tạm trong tiến trình, gateway_chat = canh), fake_shopee_retry_r13.py.txt (chuyển từ fake_shopee r10: 429 Retry-After 1 lần đầu, giá khác, vá ma._sleep), rollout_fx_r13.py.txt (FIXTURE code_status co_code trong tiến trình cho mã mot_phan), bk_check_r13.py.txt (kiểm độc lập manifest/sha/magic/bằng chứng DB). Harness r10 dùng NGUYÊN (chạy độc lập được, không trỏ scratchpad r10): {FX10}/g5/harness/fake_shopee.py.txt, {FX10}/g3/harness/verify_image.py.txt; harness r12: {H12}/wrap.py.txt (chặn socket ngoài localhost, AI giả ở biên _client — image_studio không gọi chat), {H12}/mk_packshot.py.txt. Lệch so với đề bài (đã cân nhắc): (1) data_platform-07.2: {SCR} nằm TRONG repo (evidence/itacc_r13_docx12/runs/…/scratch) nên db_backup/db_restore_drill từ chối BACKUP_DIR/offsite/passphrase ở đó (dir_outside_repo) — dùng đường NGOÀI repo scratchpad r13/ext_dp072/<md5({SCR})>/… qua placeholder {sql:…} (tiền lệ r12 GARDEN_MEDIA_DIR); (2) data_platform-06 code_status mot_phan → `rollout --seed` bỏ qua, `--disable`/`--promote` CLI thật từ chối → seed/promote qua rollout_fx_r13 (chỉ đổi danh mục trong bộ nhớ), --disable vẫn CLI thật; (3) biến có thể bị .env lấp (load_dotenv không ghi đè biến ĐÃ có) đặt RỖNG thay vì null: IMAGE_PROVIDER, IMAGE_MODEL, LLM_KILL(_FEATURES), LLM_CAP_DEFAULT_USD, SHOPEE_*, BACKUP_*, DRILL_DATABASE_URL — LLM_PROVIDER_ONLY không đặt được rỗng (rỗng = whitelist rỗng) nên body.provider.only so với provider_only gateway tính lúc chạy. Kỳ vọng dịch từ r10 không nới; số id nháp/snapshot r10 (#3…, closed=1) phụ thuộc DB chung r10 → r13 dùng \\d+ và đếm SQL tương đối trên DB riêng. marketing-02.1 mot_phan → không vào sổ, không kiểm được nhánh rollout tắt (như giới hạn r10). Không có ca UI/not_run.",
+ "fingerprint_code": null,
+ "moi_truong": "Docker postgres:17-alpine 127.0.0.1:55453, DB riêng samsam_itacc_r13_m021/i051/dp06/dp072 dựng bằng mkdb_r13.sh.txt (schema/roles ×2 + core + golden, working tree); dev mode (AUTH_MODE/DEPLOY trống); OPENROUTER_API_KEY rỗng (image_run đặt khóa GIẢ trong tiến trình); pg_dump/pg_restore PostgreSQL 17 tại C:/Program Files/PostgreSQL/17/bin (PG_BIN); openssl Git for Windows.",
+ "items": [
+  {
+   "id": "marketing-02.1",
+   "db": "samsam_itacc_r13_m021",
+   "muc_kiem_de_xuat": "MOCK",
+   "tieu_chi_cu_the": [
+    "T1 `python -m pipelines.image_studio` chạy được; IMAGE_PROVIDER none + --scene vẫn bị chặn exit 2 '[blocked]' trước mọi provider; provider lạ (dalle) → exit 2 'chưa cắm', 0 dòng (r13: danh sách hỗ trợ có thêm openrouter_images)",
+    "T2 (provider none) nháp ảnh: content_drafts content_type='image' created_by='agent:mkt03' pending + image_assets sha256 = sha file PNG; nhãn 'Nội dung có sử dụng AI' trong text_layer/sidecar; pixel packshot alpha 255 khớp tuyệt đối; PNG không EXIF/text chunk; ai_generated=false",
+    "T3 SKU TPBVSK → maket_xnqc, rượu → ruou, 0 file/0 dòng; chạy lại → skipped",
+    "T4 không gọi mạng ngoài (socket ngoài localhost bị chặn; HTTP provider chỉ qua MockTransport); không đăng/gửi",
+    "T5 (MỚI r13) IMAGE_PROVIDER=openrouter_images + IMAGE_MODEL + key GIẢ + --scene: đúng 1 POST {BASE_URL}/images body {model, prompt (có mô tả nền), size '1080x1080', output_format png, n 1, provider{only = whitelist gateway, allow_fallbacks false}} — không ảnh sản phẩm trong body; nháp image pending agent:mkt03 + image_assets provider openrouter_images ai_generated=true model/prompt_sha256/prompt_version ghi đủ, meta ai_generated true; packshot vẫn nguyên vẹn (kiểm độc lập); llm_usage đúng 1 dòng agent 'image' feature 'marketing-02.1' cost 0.04 ok",
+    "T6 (MỚI r13) LLM_KILL_FEATURES=marketing-02.1 → 'refused provider' (nút tắt khẩn), 0 request, 0 file, 0 dòng content_drafts/image_assets/llm_usage mới; IMAGE_MODEL rỗng → 'refused provider' IMAGE_MODEL chưa đặt, 0 request, 0 dòng"
+   ],
+   "ca": [
+    {
+     "ma": "marketing-02.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (r10 DB chung samsam_itacc_r10_mkt đã seed) + golden FIXTURE r10 (mat-ong-sam-300ml self_declaration_ok=true, chép {FX13}/items/marketing-02.1) qua ingest.golden_store --file + packshot MẪU (make_sample_packshot qua {H12}/mk_packshot.py.txt) ở {SCR}/packshots",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ \\d+"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.golden_store",
+        "--file",
+        "{FX13}/items/marketing-02.1/golden_fixture_food.json"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "{H12}/mk_packshot.py.txt",
+        "{SCR}/packshots",
+        "mat-ong-sam-300ml"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[packshot\\] MẪU mat-ong-sam-300ml\\.png"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from image_assets",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.1__C1",
+     "nguon_r10": "02.1-C1",
+     "mo_ta": "--scene khi IMAGE_PROVIDER none (đặt rỗng = none, chặn .env lấp) — chặn an toàn, KHÔNG phải đầu ra ảnh AI",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.image_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "facebook",
+        "--headline",
+        "Quà quê Quảng Nam Thử IT",
+        "--scene",
+        "vườn sâm trong sương sớm"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/img_c1",
+        "IMAGE_PROVIDER": ""
+       },
+       "expect_exit": 2,
+       "stderr_re": "\\[blocked\\] --scene cần nền AI nhưng IMAGE_PROVIDER chưa cấu hình"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from image_assets",
+       "expect": 0
+      },
+      {
+       "file_glob": "{SCR}/img_c1/*",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.1__C2",
+     "nguon_r10": "02.1-C2",
+     "mo_ta": "IMAGE_PROVIDER=dalle (vendor lạ)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.image_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "facebook",
+        "--headline",
+        "Quà quê Quảng Nam Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/img_c2",
+        "IMAGE_PROVIDER": "dalle"
+       },
+       "expect_exit": 2,
+       "stderr_re": "\\[error\\] IMAGE_PROVIDER='dalle' chưa cắm — API sinh ảnh là external-dep; hỗ trợ: none"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from image_assets",
+       "expect": 0
+      },
+      {
+       "file_glob": "{SCR}/img_c2/*",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.1__C3",
+     "nguon_r10": "02.1-C3",
+     "mo_ta": "phần con: ghép packshot MẪU + nền gradient, 4 kênh như lệnh r10 (facebook/shopee/tiktok/web); kiểm độc lập bằng verify_image.py.txt r10 (box từ meta DB)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.image_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "facebook",
+        "--channel",
+        "shopee",
+        "--channel",
+        "tiktok",
+        "--channel",
+        "web",
+        "--headline",
+        "Quà quê Quảng Nam Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/image_assets",
+        "IMAGE_PROVIDER": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*mat-ong-sam-300ml × shopee × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*mat-ong-sam-300ml × tiktok × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*mat-ong-sam-300ml × web × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 4 ảnh — created 4, skipped 0, refused 0, failed 0)"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/verify_img_r13.py.txt",
+        "{SCR}/image_assets",
+        "{SCR}/packshots/mat-ong-sam-300ml.png",
+        "{FX10}/g3/harness/verify_image.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*SHA_DB 4 [0-9a-f]{64})(?=[\\s\\S]*AI_META False none\\b)(?=[\\s\\S]*format PNG mode RGB size \\(1080, 1080\\))(?=[\\s\\S]*info_keys \\[\\] exif_len 0)(?=[\\s\\S]*chunks \\['IDAT', 'IEND', 'IHDR'\\])(?=[\\s\\S]*alpha255_pixels [1-9]\\d* mismatch 0\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image' and created_by = 'agent:mkt03' and status = 'pending' and sku = 'mat-ong-sam-300ml' and channel in ('facebook', 'shopee', 'tiktok', 'web')",
+       "expect": 4
+      },
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image' and text like '%Nội dung có sử dụng AI%'",
+       "expect": 4
+      },
+      {
+       "sql": "select count(*) from image_assets",
+       "expect": 4
+      },
+      {
+       "sql": "select count(distinct file_sha256) from image_assets",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from image_assets where ai_generated = false and provider = 'none' and label_text like 'Nội dung có sử dụng AI%' and created_by = 'agent:mkt03' and meta->>'ai_generated' = 'false' and draft_id in (select id from content_drafts where content_type = 'image')",
+       "expect": 4
+      },
+      {
+       "file_glob": "{SCR}/image_assets/*.png",
+       "count": 1
+      },
+      {
+       "file_glob": "{SCR}/image_assets/*.json",
+       "count": 1
+      },
+      {
+       "file_re": "{SCR}/image_assets/*.json",
+       "re": "Nội dung có sử dụng AI",
+       "expect": true
+      },
+      {
+       "file_re": "{SCR}/image_assets/*.json",
+       "re": "\\\"ai_generated\\\": false",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.1__C4",
+     "nguon_r10": "02.1-C4",
+     "mo_ta": "SKU TPBVSK (saphraton-20v) và rượu",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.image_studio",
+        "--sku",
+        "saphraton-20v",
+        "--sku",
+        "ruou-sam-chai-thuy-tinh-500ml",
+        "--channel",
+        "shopee",
+        "--headline",
+        "Quà quê Quảng Nam Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/image_assets",
+        "IMAGE_PROVIDER": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*saphraton-20v × shopee × 1:1: refused maket_xnqc)(?=[\\s\\S]*ruou-sam-chai-thuy-tinh-500ml × shopee × 1:1: refused ruou)(?=[\\s\\S]*\\[done\\] 2 ảnh — created 0, skipped 0, refused 2, failed 0)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image'",
+       "expect": 4
+      },
+      {
+       "sql": "select count(*) from image_assets",
+       "expect": 4
+      },
+      {
+       "file_glob": "{SCR}/image_assets/*.png",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.1__C5",
+     "nguon_r10": "02.1-C5",
+     "mo_ta": "chạy lại (facebook như lệnh r10)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H12}/wrap.py.txt",
+        "-m",
+        "pipelines.image_studio",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "facebook",
+        "--headline",
+        "Quà quê Quảng Nam Thử IT"
+       ],
+       "env": {
+        "PROBE_ROOT": "{REPO}",
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/image_assets",
+        "IMAGE_PROVIDER": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: skipped [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 1, refused 0, failed 0)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image'",
+       "expect": 4
+      },
+      {
+       "sql": "select count(*) from image_assets",
+       "expect": 4
+      },
+      {
+       "file_glob": "{SCR}/image_assets/*.png",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.1__R13-01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "provider openrouter_images + --scene: HTTP qua MockTransport ({H}/image_run.py.txt, PNG đúng cỡ, usage.cost 0.04), cổng llm_gateway/llm_usage/DB thật; kiểm body request + kiểm độc lập packshot",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/image_run.py.txt",
+        "{OUT}/image_http.json",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "facebook",
+        "--headline",
+        "Quà quê Quảng Nam Thử R13",
+        "--scene",
+        "vườn sâm buổi sáng"
+       ],
+       "env": {
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/img_ai",
+        "IMAGE_PROVIDER": "openrouter_images",
+        "IMAGE_MODEL": "thu-r13/model-anh-gia",
+        "LLM_KILL_FEATURES": "",
+        "LLM_KILL": "",
+        "LLM_CAP_DEFAULT_USD": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 1, skipped 0, refused 0, failed 0)",
+       "stderr_re": "\\[image_run\\] requests=1\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/verify_img_r13.py.txt",
+        "{SCR}/img_ai",
+        "{SCR}/packshots/mat-ong-sam-300ml.png",
+        "{FX10}/g3/harness/verify_image.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*SHA_DB 1 [0-9a-f]{64})(?=[\\s\\S]*AI_META True openrouter_images\\b)(?=[\\s\\S]*format PNG mode RGB size \\(1080, 1080\\))(?=[\\s\\S]*info_keys \\[\\] exif_len 0)(?=[\\s\\S]*chunks \\['IDAT', 'IEND', 'IHDR'\\])(?=[\\s\\S]*alpha255_pixels [1-9]\\d* mismatch 0\\b)"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); r=d['reqs']; b=r[0]['body'] if r else {}; ok=(d['requests']==1 and r[0]['method']=='POST' and r[0]['url']=='https://openrouter.ai/api/v1/images' and set(b)=={'model','prompt','size','output_format','n','provider'} and b['model']=='thu-r13/model-anh-gia' and b['size']=='1080x1080' and b['output_format']=='png' and b['n']==1 and b['provider']=={'only':d['provider_only_cfg'],'allow_fallbacks':False} and isinstance(d['provider_only_cfg'],list) and len(d['provider_only_cfg'])>0 and 'vườn sâm buổi sáng' in b['prompt']); print('BODY_OK', ok, d['requests'], sorted(b), flush=True)",
+        "{OUT}/image_http.json"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "BODY_OK True 1 "
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image' and created_by = 'agent:mkt03' and status = 'pending'",
+       "expect": 5
+      },
+      {
+       "sql": "select count(*) from image_assets",
+       "expect": 5
+      },
+      {
+       "sql": "select count(*) from image_assets where provider = 'openrouter_images' and ai_generated and model = 'thu-r13/model-anh-gia' and prompt_sha256 ~ '^[0-9a-f]{64}$' and prompt_version = 'image_background@1' and label_text like 'Nội dung có sử dụng AI%' and meta->>'ai_generated' = 'true' and meta->'background'->>'provider' = 'openrouter_images' and meta->'background'->>'model' = 'thu-r13/model-anh-gia' and created_by = 'agent:mkt03' and channel = 'facebook' and sku = 'mat-ong-sam-300ml'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from llm_usage",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from llm_usage where agent_id = 'image' and feature_id = 'marketing-02.1' and ok and cost_usd = 0.04 and model = 'thu-r13/model-anh-gia'",
+       "expect": 1
+      },
+      {
+       "file_glob": "{SCR}/img_ai/*.png",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.1__R13-02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "LLM_KILL_FEATURES=marketing-02.1 (nút tắt khẩn theo tính năng) → refused provider TRƯỚC mọi request",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/image_run.py.txt",
+        "{OUT}/image_http.json",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "shopee",
+        "--headline",
+        "Quà quê Quảng Nam Thử R13",
+        "--scene",
+        "vườn sâm buổi sáng"
+       ],
+       "env": {
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/img_kill",
+        "IMAGE_PROVIDER": "openrouter_images",
+        "IMAGE_MODEL": "thu-r13/model-anh-gia",
+        "LLM_KILL_FEATURES": "marketing-02.1",
+        "LLM_KILL": "",
+        "LLM_CAP_DEFAULT_USD": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × shopee × 1:1: refused provider: cổng chi phí/tắt chặn: tính năng 'marketing-02\\.1' đang bị nút tắt khẩn)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0)",
+       "stderr_re": "\\[image_run\\] requests=0\\b"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image'",
+       "expect": 5
+      },
+      {
+       "sql": "select count(*) from image_assets",
+       "expect": 5
+      },
+      {
+       "sql": "select count(*) from llm_usage",
+       "expect": 1
+      },
+      {
+       "file_glob": "{SCR}/img_kill/*",
+       "count": 0
+      },
+      {
+       "file_re": "{OUT}/image_http.json",
+       "re": "\\\"requests\\\": 0,",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "marketing-02.1__R13-03",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "IMAGE_MODEL rỗng (chưa chọn model) → refused provider, 0 request",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/image_run.py.txt",
+        "{OUT}/image_http.json",
+        "--sku",
+        "mat-ong-sam-300ml",
+        "--channel",
+        "tiktok",
+        "--headline",
+        "Quà quê Quảng Nam Thử R13",
+        "--scene",
+        "vườn sâm buổi sáng"
+       ],
+       "env": {
+        "PACKSHOT_DIR": "{SCR}/packshots",
+        "IMAGE_OUT_DIR": "{SCR}/img_nomodel",
+        "IMAGE_PROVIDER": "openrouter_images",
+        "IMAGE_MODEL": "",
+        "LLM_KILL_FEATURES": "",
+        "LLM_KILL": "",
+        "LLM_CAP_DEFAULT_USD": ""
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × tiktok × 1:1: refused provider: IMAGE_MODEL chưa đặt)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0)",
+       "stderr_re": "\\[image_run\\] requests=0\\b"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from content_drafts where content_type = 'image'",
+       "expect": 5
+      },
+      {
+       "sql": "select count(*) from image_assets",
+       "expect": 5
+      },
+      {
+       "sql": "select count(*) from llm_usage",
+       "expect": 1
+      },
+      {
+       "file_glob": "{SCR}/img_nomodel/*",
+       "count": 0
+      },
+      {
+       "file_re": "{OUT}/image_http.json",
+       "re": "\\\"requests\\\": 0,",
+       "expect": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "intel-05.1",
+   "db": "samsam_itacc_r13_i051",
+   "muc_kiem_de_xuat": "LOCAL",
+   "tieu_chi_cu_the": [
+    "T1 `python scripts/persona_sim.py --dry-run` exit 0",
+    "T2 sim_runs có 180 dòng dry_run=true của 1 run_id (3 model × 3 prompt × 5 lần × 4 phương án), 0 lời gọi LLM thật (llm_usage 0); báo cáo khoảng p10–p90/p50 + cờ đối chứng",
+    "T3 ca âm: không --dry-run → exit 2 (DPIA chưa ký) 0 dòng; --config giả dpia true vẫn exit 2; tắt → [blocked] không ghi, bật lại",
+    "T4 không gọi LLM/dịch vụ ngoài; data/sim_config.json giữ dpia_signed=false; chạy thật chờ DPIA + provider (BI_CHAN EXTERNAL_INPUT)",
+    "T5 (MỚI r13) lượt THẬT với cấu hình TẠM dpia_signed=true (CONFIG_FILE trỏ bản tạm trong tiến trình): 3 model cùng nhà cung cấp openai → exit 2 '[refuse] … nhà cung cấp', 0 lời gọi, sim_runs không đổi; 3 nhà cung cấp khác nhau → đi tới lời gọi LLM thật (canh đếm 1 lời gọi, harness chặn → exit 1, 0 dòng ghi)"
+   ],
+   "ca": [
+    {
+     "ma": "intel-05.1__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (r10 DB samsam_itacc_r10_intel đã seed trước khi chạy)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ \\d+"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from sim_runs",
+       "expect": 0
+      },
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'intel-05.1'",
+       "expect": "chay_thu"
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.1__C01",
+     "nguon_r10": "C01",
+     "mo_ta": "Dry-run",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/persona_sim.py",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[DRY-RUN)(?=[\\s\\S]*45 lời gọi, 45 hợp lệ)(?=[\\s\\S]*khoảng p10–p90 \\| p50)(?=[\\s\\S]*doi-chung-yeu \\(đối chứng yếu\\))(?=[\\s\\S]*Đối chứng yếu thấp nhất ở \\d+/45 lời gọi hợp lệ)(?=[\\s\\S]*\\[ok\\] 180 dòng sim_runs \\(45 lời gọi\\) run_id=dry-\\d{8}-[0-9a-f]{8})"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from sim_runs",
+       "expect": 180
+      },
+      {
+       "sql": "select count(*) from sim_runs where dry_run",
+       "expect": 180
+      },
+      {
+       "sql": "select count(distinct run_id) from sim_runs",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from llm_usage",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.1__C02",
+     "nguon_r10": "C02",
+     "mo_ta": "Chạy thật khi DPIA chưa ký",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/persona_sim.py"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "\\[refuse\\] DPIA chưa ký"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from sim_runs",
+       "expect": 180
+      },
+      {
+       "sql": "select count(*) from llm_usage",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.1__C03",
+     "nguon_r10": "C03",
+     "mo_ta": "--config bản sao dpia_signed=true (fixture r10 chép {FX13}) — cờ đọc từ file chuẩn nên vẫn refuse",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/persona_sim.py",
+        "--config",
+        "{FX13}/items/intel-05.1/sim_config_dpia_true.json"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "\\[refuse\\] DPIA chưa ký"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from sim_runs",
+       "expect": 180
+      },
+      {
+       "file_re": "{REPO}/data/sim_config.json",
+       "re": "\\\"dpia_signed\\\": false",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.1__C04",
+     "nguon_r10": "C04",
+     "mo_ta": "Tắt intel-05.1 → --dry-run bị chặn, 0 dòng; bật lại (--promote)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "intel-05.1",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] intel-05\\.1: chạy thử → tắt"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/persona_sim.py",
+        "--dry-run"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "\\[blocked\\][^\\n]*intel-05\\.1[^\\n]*tắt"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--promote",
+        "intel-05.1",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] intel-05\\.1: tắt → chạy thử"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from sim_runs",
+       "expect": 180
+      },
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'intel-05.1'",
+       "expect": "chay_thu"
+      },
+      {
+       "sql": "select count(*) from feature_rollout_events where feature_id = 'intel-05.1' and kind = 'disable'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.1__R13-01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "lượt thật, cấu hình TẠM dpia true + 3 model cùng nhà cung cấp openai ({H}/persona_run.py.txt one)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/persona_run.py.txt",
+        "{FX13}/items/intel-05.1/sim_config_dpia_true.json",
+        "one",
+        "{SCR}/ps_one"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "\\[refuse\\] lượt thật cần >= 3 nhà cung cấp khác nhau trong sim_config\\.models \\(hiện: openai\\) — 0 lời gọi LLM",
+       "stdout_re": "FACTS \\{\\\"rc\\\": 2, \\\"calls\\\": 0, \\\"canon_dpia_signed\\\": false\\}"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from sim_runs",
+       "expect": 180
+      },
+      {
+       "sql": "select count(*) from llm_usage",
+       "expect": 0
+      },
+      {
+       "file_re": "{REPO}/data/sim_config.json",
+       "re": "\\\"dpia_signed\\\": false",
+       "expect": true
+      }
+     ]
+    },
+    {
+     "ma": "intel-05.1__R13-02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "đối chứng dương: cấu hình TẠM dpia true + 3 nhà cung cấp khác nhau → cổng không chặn nhầm, tới lời gọi thật (canh raise GatewayError → exit 1, 0 dòng)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/persona_run.py.txt",
+        "{FX13}/items/intel-05.1/sim_config_dpia_true.json",
+        "three",
+        "{SCR}/ps_three"
+       ],
+       "expect_exit": 1,
+       "stderr_re": "\\A(?![\\s\\S]*\\[refuse\\])[\\s\\S]*\\[err\\] dừng \\(GatewayError: SENTINEL r13",
+       "stdout_re": "FACTS \\{\\\"rc\\\": 1, \\\"calls\\\": 1, \\\"canon_dpia_signed\\\": false\\}"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from sim_runs",
+       "expect": 180
+      },
+      {
+       "sql": "select count(*) from llm_usage",
+       "expect": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "data_platform-06",
+   "db": "samsam_itacc_r13_dp06",
+   "muc_kiem_de_xuat": "MOCK",
+   "tieu_chi_cu_the": [
+    "T1 market_api thiếu key → [external-dep] exit 2, 0 request",
+    "T2 Server giả 127.0.0.1 + key FIXTURE → listing vào market_snapshots cùng staging (request có sign/token/partner_id); base URL ngoài allowlist → exit 2, 0 request; chạy lại → [skip]",
+    "T3 Sandbox/app key thật chưa có → BI_CHAN EXTERNAL_INPUT",
+    "T4 không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+    "T5 (MỚI r13) HTTP 429 + Retry-After: 1 ở request đầu → thử lại (chờ đúng 1 s qua `_sleep` vá được, không chờ thật), đúng 2 request get_item_list, snapshot vẫn ghi",
+    "T6 (MỚI r13) tính năng data_platform-06 TẮT trong sổ → exit 2 '[rollout] … data_platform-06' TRƯỚC mọi request (server giả 0 request), 0 snapshot; bật lại"
+   ],
+   "ca": [
+    {
+     "ma": "data_platform-06__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (r10 DB samsam_itacc_r10_dp đã seed); data_platform-06 mot_phan nên KHÔNG vào sổ (mode = chạy thử fail-closed)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ \\d+"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__DP06-01",
+     "nguon_r10": "DP06-01",
+     "mo_ta": "Thiếu key (SHOPEE_* đặt rỗng — chặn .env lấp)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_api",
+        "--channel",
+        "shopee",
+        "--kind",
+        "listing"
+       ],
+       "env": {
+        "SHOPEE_PARTNER_ID": "",
+        "SHOPEE_PARTNER_KEY": "",
+        "SHOPEE_SHOP_ID": "",
+        "SHOPEE_ACCESS_TOKEN": "",
+        "SHOPEE_API_BASE": ""
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[external-dep\\] thiếu SHOPEE_PARTNER_ID, SHOPEE_PARTNER_KEY, SHOPEE_SHOP_ID, SHOPEE_ACCESS_TOKEN[^\\n]*0 request, không connect DB"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__DP06-02",
+     "nguon_r10": "DP06-02",
+     "mo_ta": "Server giả (harness r10 nguyên bản, chạy độc lập được)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/fake_shopee.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*\\[done\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from market_rows r join market_snapshots s on s.id = r.snapshot_id where s.file_name like 'api:shopee:listing:%' and r.sku_key in ('savina-12v', 'savigout-30v')",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__DP06-03",
+     "nguon_r10": "DP06-03",
+     "mo_ta": "Âm: base ngoài allowlist",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/fake_shopee.py.txt",
+        "--base",
+        "http://example.com"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[err\\] SHOPEE_API_BASE không hợp lệ)(?=[\\s\\S]*SERVER_LOG:\\s*\\(0 request\\))"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__DP06-04",
+     "nguon_r10": "DP06-04",
+     "mo_ta": "Idempotent (chạy lại DP06-02)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/fake_shopee.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[skip\\] dữ liệu không đổi: snapshot #\\d+ shopee/listing — không ghi gì"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__R13-01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "429 + Retry-After: 1 ở request đầu rồi bình thường ({H}/fake_shopee_retry_r13.py.txt, giá khác → không bị [skip])",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/fake_shopee_retry_r13.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[retry\\] shopee /api/v2/product/get_item_list: HTTP 429 — chờ 1s \\(1/3\\))(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*SLEEPS: \\[1\\.0\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=429)(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=200)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True status=200)(?=[\\s\\S]*N_ITEM_LIST=2\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from market_rows r join market_snapshots s on s.id = r.snapshot_id where s.file_name like 'api:shopee:listing:%' and r.price_vnd in (165000, 445000)",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__R13-02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "tắt data_platform-06 → market_api exit 2 '[rollout]', 0 request; bật lại. FIXTURE: tính năng mot_phan không vào sổ bằng --seed thật → {H}/rollout_fx_r13.py.txt (code_status co_code CHỈ trong tiến trình) cho --seed/--promote; --disable bằng CLI thật",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/rollout_fx_r13.py.txt",
+        "data_platform-06",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ 1 ·"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "data_platform-06",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] data_platform-06: chạy thử → tắt"
+      },
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/fake_shopee.py.txt"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[rollout\\][^\\n]*data_platform-06)(?=[\\s\\S]*SERVER_LOG:\\s*\\(0 request\\))",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/rollout_fx_r13.py.txt",
+        "data_platform-06",
+        "--promote",
+        "data_platform-06",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] data_platform-06: tắt → chạy thử"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 2
+      },
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'data_platform-06'",
+       "expect": "chay_thu"
+      },
+      {
+       "sql": "select count(*) from feature_rollout_events where feature_id = 'data_platform-06' and kind = 'disable'",
+       "expect": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "data_platform-07.2",
+   "db": "samsam_itacc_r13_dp072",
+   "muc_kiem_de_xuat": "LOCAL",
+   "tieu_chi_cu_the": [
+    "T1 db_backup BACKUP_DIR ngoài repo → dump + manifest (sha256, row_counts, không host/user) + backup_runs.jsonl status ok + file_output_evidence bk:<sha>",
+    "T2 db_restore_drill → khôi phục vào DB tạm, đối chiếu số dòng mọi bảng khớp, tự xóa DB tạm",
+    "T3 Ca âm: BACKUP_DIR trong repo → exit 2 không tạo thư mục; offsite dir: chép + kiểm sha (giới hạn: cùng máy — offsite/NAS ngoài máy không chứng minh được)",
+    "T4 không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+    "T5 (MỚI r13) BACKUP_REQUIRE_ENCRYPTION=1 thiếu BACKUP_PASSPHRASE_FILE → exit 2 '[usage]' trước connect, không tạo thư mục, 0 bằng chứng mới",
+    "T6 (MỚI r13) offsite cùng thiết bị với BACKUP_DIR: có BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1 → exit 2 '[usage]', không chép; không cờ → '[warn] … cùng thiết bị' rồi vẫn chép + kiểm sha, exit 0",
+    "T7 (MỚI r13) passphrase file ngoài repo (≥16 ký tự) + BACKUP_REQUIRE_ENCRYPTION=1 → chỉ còn bản .dump.enc (8 byte đầu 'Salted__', không bản rõ), manifest encrypted true cipher openssl-aes-256-cbc-pbkdf2, sha khớp, bằng chứng DB ghi"
+   ],
+   "ca": [
+    {
+     "ma": "data_platform-07.2__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (r10 DB samsam_itacc_r10_dp đã seed — có dữ liệu sổ trong bản backup)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ \\d+"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-01",
+     "nguon_r10": "DP072-01",
+     "mo_ta": "Backup — BACKUP_DIR ngoài repo (scratchpad r13/ext_dp072/<md5 SCR>/bk); mọi BACKUP_* khác đặt rỗng để .env không lấp",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk'}",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[warn\\] backup CHƯA mã hóa)(?=[\\s\\S]*\\[warn\\] chưa cấu hình offsite \\(BACKUP_OFFSITE\\))(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*_vn.dump'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*.manifest.json'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*.partial'}",
+       "count": 0
+      },
+      {
+       "file_re": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/backup_runs.jsonl'}",
+       "re": "\\\"status\\\": \\\"ok\\\"",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-01q",
+     "nguon_r10": "DP072-01q",
+     "mo_ta": "Assert DB/manifest — kiểm độc lập ({H}/bk_check_r13.py.txt thay q.py r10 + đối chiếu tay)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/bk_check_r13.py.txt",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*keys_ok True)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*encrypted False cipher None)(?=[\\s\\S]*magic PGDMP)(?=[\\s\\S]*host_user_in_manifest False)(?=[\\s\\S]*row_counts_tables [1-9]\\d*)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs' and output_key ~ '^bk:[0-9a-f]{64}$' and not is_sample",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-02",
+     "nguon_r10": "DP072-02",
+     "mo_ta": "Restore drill (DRILL_DATABASE_URL rỗng → server của DATABASE_URL = Postgres thử)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_restore_drill.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk'}",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\[drill\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump → samsam_drill_[0-9a-z_]+: (\\d+)/\\1 bảng khớp, RTO"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from pg_database where datname like 'samsam\\_drill%'",
+       "expect": 0
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/drill_runs.jsonl'}",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-03",
+     "nguon_r10": "DP072-03",
+     "mo_ta": "Âm: BACKUP_DIR trong repo ({OUT}/bk_trong_repo)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{OUT}/bk_trong_repo",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[usage\\] BACKUP_DIR nằm trong repo — phải đặt NGOÀI repo"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/bk_trong_repo",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__DP072-04",
+     "nguon_r10": "DP072-04",
+     "mo_ta": "Offsite dir: ngoài repo (cùng máy — giới hạn r10 giữ nguyên)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk'}",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite'}",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[offsite\\] đã chép \\+ kiểm sha256)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/bk_check_r13.py.txt",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite/*_vn.dump'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite/*.manifest.json'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*_vn.dump'}",
+       "count": 2
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__R13-01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "BACKUP_REQUIRE_ENCRYPTION=1 nhưng không có BACKUP_PASSPHRASE_FILE",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_req'}",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[usage\\] BACKUP_REQUIRE_ENCRYPTION=1 nhưng chưa có BACKUP_PASSPHRASE_FILE — không ghi bản chưa mã hóa"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_req'}",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__R13-02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "offsite cùng thiết bị với BACKUP_DIR (cả hai trong scratchpad ổ C:) + BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk'}",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite_flag'}",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "1",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[usage\\] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR — không phải bản sao ngoài máy"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite_flag'}",
+       "count": 0
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk/*_vn.dump'}",
+       "count": 2
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__R13-03",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "offsite cùng thiết bị KHÔNG cờ → cảnh báo rồi vẫn chép + kiểm sha",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_warn'}",
+        "BACKUP_OFFSITE": "{sql:select 'dir:C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite_warn'}",
+        "BACKUP_PASSPHRASE_FILE": "",
+        "BACKUP_REQUIRE_ENCRYPTION": "",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[warn\\] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR \\(st_dev\\) — chưa phải offsite thật)(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump — \\d+ bytes, sha256 [0-9a-f]{16}…, tool (?:native|docker):[^\\n]*, \\d+ bảng)(?=[\\s\\S]*\\[offsite\\] đã chép \\+ kiểm sha256)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/offsite_warn/*_vn.dump'}",
+       "count": 1
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 3
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-07.2__R13-04",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "backup mã hóa: passphrase file NGOÀI repo (giá trị thử R13, ≥16 ký tự, UTF-8 + LF) + BACKUP_REQUIRE_ENCRYPTION=1; openssl tìm qua PATH hoặc C:/Program Files/Git/usr|mingw64/bin (có trên máy)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(sys.argv[2].encode('utf-8')+b'\\n'); print('PASSFILE', len(sys.argv[2]))",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/pass/thu_r13.pass'}",
+        "ThuR13-passphrase-fixture-khong-phai-khoa-that"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "PASSFILE (?:1[6-9]|[2-9]\\d)\\b"
+      },
+      {
+       "argv": [
+        "python",
+        "scripts/db_backup.py"
+       ],
+       "env": {
+        "BACKUP_DIR": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_enc'}",
+        "BACKUP_OFFSITE": "",
+        "BACKUP_PASSPHRASE_FILE": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/pass/thu_r13.pass'}",
+        "BACKUP_REQUIRE_ENCRYPTION": "1",
+        "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "",
+        "BACKUP_KEEP": "",
+        "DRILL_DATABASE_URL": "",
+        "PG_BIN": "C:/Program Files/PostgreSQL/17/bin"
+       },
+       "expect_exit": 0,
+       "stdout_re": "\\A(?![\\s\\S]*CHƯA mã hóa)(?=[\\s\\S]*\\[done\\] samsam_itacc_r13_dp072_\\d{8}_\\d{6}_vn\\.dump\\.enc — \\d+ bytes)(?=[\\s\\S]*\\[evidence\\] đã ghi bằng chứng đầu ra vào DB)"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/bk_check_r13.py.txt",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_enc'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*manifests 1\\b)(?=[\\s\\S]*keys_ok True)(?=[\\s\\S]*sha_match True)(?=[\\s\\S]*encrypted True cipher openssl-aes-256-cbc-pbkdf2)(?=[\\s\\S]*magic Salted__)(?=[\\s\\S]*host_user_in_manifest False)(?=[\\s\\S]*evidence_rows_for_sha 1\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_enc/*_vn.dump'}",
+       "count": 0
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_enc/*_vn.dump.enc'}",
+       "count": 1
+      },
+      {
+       "file_glob": "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_dp072/' || md5('{SCR}') || '/bk_enc/*.partial'}",
+       "count": 0
+      },
+      {
+       "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs'",
+       "expect": 4
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

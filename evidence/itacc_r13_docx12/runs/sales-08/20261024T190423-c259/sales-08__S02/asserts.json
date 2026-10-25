@@ -1,0 +1,22 @@
+[
+ {
+  "sql": "select count(*) from content_drafts where id = 1 and content_type = 'listing' and channel = 'web' and sku = 'mat-ong-sam-300ml' and status = 'approved'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from content_drafts",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T190423-c259\\sales-08__S02\\out/llm.json",
+  "re": "\\A\\[\\]\\Z",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ }
+]

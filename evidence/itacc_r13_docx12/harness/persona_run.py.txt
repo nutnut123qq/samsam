@@ -1,0 +1,67 @@
+"""HARNESS r13 (MỚI, nhóm C — intel-05.1): kiểm nhánh r13 "lượt THẬT cần >= 3 nhà cung cấp" của
+`scripts/persona_sim.py` trên DB thử của mục (DATABASE_URL do runner đặt) mà KHÔNG sửa data/sim_config.json.
+
+  python persona_run.py.txt <cfg_gốc.json> one|three <thư_mục_tạm>
+
+- Đọc cfg gốc (fixture r10 sim_config_dpia_true.json — dpia_signed=true, 3 model openai), ghi bản TẠM vào
+  <thư_mục_tạm> (đặt dưới {SCR}): `one` = giữ nguyên 3 model cùng nhà cung cấp openai; `three` = đổi id 3 model thành
+  openai/gpt-4o-mini, anthropic/model-gia-thu-r13, google/model-gia-thu-r13 (3 nhà cung cấp khác nhau).
+- Trong tiến trình: persona_sim.CONFIG_FILE = bản tạm (cổng DPIA đọc "file chuẩn" = bản tạm) — tệp chuẩn của repo
+  KHÔNG đổi; gọi persona_sim.main(["--config", <bản tạm>]) (lượt THẬT, không --dry-run).
+- persona_sim.gateway_chat → canh (sentinel): đếm lời gọi rồi raise llm_gateway.GatewayError("SENTINEL r13 …") —
+  chứng minh đường gọi LLM thật đã mở mà không gọi gì ra ngoài (main bắt GatewayError → exit 1, 0 dòng sim_runs).
+- Chặn socket ra ngoài localhost. In 1 dòng `FACTS {"rc", "calls", "canon_dpia_signed"}`; thoát = rc của main."""
+import json
+import os
+import socket
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(REPO / "scripts"))
+os.chdir(REPO)
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+_orig = socket.socket.connect
+
+
+def _guard(self, addr):
+    host = addr[0] if isinstance(addr, tuple) else str(addr)
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        raise OSError(f"[persona_run] chặn kết nối mạng ngoài tới {host}")
+    return _orig(self, addr)
+
+
+socket.socket.connect = _guard
+base, variant, tmpdir = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
+assert variant in ("one", "three"), variant
+cfg = json.loads(base.read_text(encoding="utf-8"))
+cfg["dpia_signed"] = True
+if variant == "three":
+    for m, mid in zip(cfg["models"], ["openai/gpt-4o-mini", "anthropic/model-gia-thu-r13",
+                                      "google/model-gia-thu-r13"]):
+        m["id"] = mid
+tmpdir.mkdir(parents=True, exist_ok=True)
+tmp = tmpdir / f"sim_config_{variant}_thu_r13.json"
+tmp.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+
+import persona_sim as ps  # noqa: E402
+
+from pipelines import llm_gateway  # noqa: E402
+
+CALLS = []
+
+
+def sentinel(*a, **k):
+    CALLS.append(a[0] if a else None)
+    raise llm_gateway.GatewayError("SENTINEL r13 — đã tới lời gọi LLM thật (harness chặn, không gửi)")
+
+
+ps.gateway_chat = sentinel
+canon_path = REPO / "data" / "sim_config.json"
+ps.CONFIG_FILE = tmp
+rc = ps.main(["--config", str(tmp)])
+canon = json.loads(canon_path.read_text(encoding="utf-8")).get("dpia_signed")
+print("FACTS " + json.dumps({"rc": rc, "calls": len(CALLS), "canon_dpia_signed": canon}), flush=True)
+sys.exit(rc)

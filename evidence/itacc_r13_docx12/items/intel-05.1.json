@@ -1,0 +1,771 @@
+{
+ "id": "intel-05.1",
+ "ten": "Thử thông điệp trên khách hàng giả lập",
+ "khoi": "intel",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Tình báo thị trường / Giả lập khách hàng: 'Thử thông điệp ... trên khách hàng giả lập'",
+ "luot": "r13",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/intel-05.1.json",
+  "sha256": "39b45e8eacc3b7f20db40fab382af17b4f8cf5d3678a17d4e3d6e77c7b084be6"
+ },
+ "trang_thai_truoc": {
+  "luot": "r10",
+  "trang_thai": "BI_CHAN",
+  "nguyen_nhan": "EXTERNAL_INPUT"
+ },
+ "ly_do_chay_lai": "12 mục DOCX bị chặn — kiểm lại toàn bộ ca + ca mã r13",
+ "fingerprint_code_luc_khoa": "2be3eb728f34c542859ae4e32c366024af7690f2ec6ba8b43a7ce98fd211d98b",
+ "tieu_chi_file": "evidence/itacc_r13_docx12/criteria/r13_v1.json",
+ "tieu_chi_sha256": "920bbe0bcc4d988cfdc7cebcfedc5ad6872ef833dd7f8674963019d5d7678513",
+ "tieu_chi_khoa": "r13_v1.json 920bbe0bcc4d988cfdc7cebcfedc5ad6872ef833dd7f8674963019d5d7678513 2026-10-24T18:51:39+07:00",
+ "tieu_chi": [
+  "T1 `python scripts/persona_sim.py --dry-run` exit 0",
+  "T2 sim_runs có 180 dòng dry_run=true của 1 run_id (3 model × 3 prompt × 5 lần × 4 phương án), 0 lời gọi LLM thật (llm_usage 0); báo cáo khoảng p10–p90/p50 + cờ đối chứng",
+  "T3 ca âm: không --dry-run → exit 2 (DPIA chưa ký) 0 dòng; --config giả dpia true vẫn exit 2; tắt → [blocked] không ghi, bật lại",
+  "T4 không gọi LLM/dịch vụ ngoài; data/sim_config.json giữ dpia_signed=false; chạy thật chờ DPIA + provider (BI_CHAN EXTERNAL_INPUT)",
+  "T5 (MỚI r13) lượt THẬT với cấu hình TẠM dpia_signed=true (CONFIG_FILE trỏ bản tạm trong tiến trình): 3 model cùng nhà cung cấp openai → exit 2 '[refuse] … nhà cung cấp', 0 lời gọi, sim_runs không đổi; 3 nhà cung cấp khác nhau → đi tới lời gọi LLM thật (canh đếm 1 lời gọi, harness chặn → exit 1, 0 dòng ghi)"
+ ],
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r13 (127.0.0.1:55453), DB mới mỗi mục dựng bằng working tree (schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài DB samsam_itacc_r13_i051.",
+ "run_id": "20261024T202103-e5fb",
+ "ca": [
+  {
+   "ma": "intel-05.1__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout (r10 DB samsam_itacc_r10_intel đã seed trước khi chạy)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ \\d+"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 0
+     },
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'intel-05.1'",
+      "expect": "chay_thu"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ \\d+",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:03+07:00",
+      "ket_thuc": "2026-10-24T20:21:04+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'intel-05.1'",
+      "expect": "chay_thu",
+      "actual": "chay_thu",
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__S01"
+  },
+  {
+   "ma": "intel-05.1__C01",
+   "nguon_r10": "C01",
+   "mo_ta": "Dry-run",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*\\[DRY-RUN)(?=[\\s\\S]*45 lời gọi, 45 hợp lệ)(?=[\\s\\S]*khoảng p10–p90 \\| p50)(?=[\\s\\S]*doi-chung-yeu \\(đối chứng yếu\\))(?=[\\s\\S]*Đối chứng yếu thấp nhất ở \\d+/45 lời gọi hợp lệ)(?=[\\s\\S]*\\[ok\\] 180 dòng sim_runs \\(45 lời gọi\\) run_id=dry-\\d{8}-[0-9a-f]{8})"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180
+     },
+     {
+      "sql": "select count(*) from sim_runs where dry_run",
+      "expect": 180
+     },
+     {
+      "sql": "select count(distinct run_id) from sim_runs",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/persona_sim.py --dry-run",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*\\[DRY-RUN)(?=[\\s\\S]*45 lời gọi, 45 hợp lệ)(?=[\\s\\S]*khoảng p10–p90 \\| p50)(?=[\\s\\S]*doi-chung-yeu \\(đối chứng yếu\\))(?=[\\s\\S]*Đối chứng yếu thấp nhất ở \\d+/45 lời gọi hợp lệ)(?=[\\s\\S]*\\[ok\\] 180 dòng sim_runs \\(45 lời gọi\\) run_id=dry-\\d{8}-[0-9a-f]{8})",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:04+07:00",
+      "ket_thuc": "2026-10-24T20:21:08+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180,
+      "actual": 180,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from sim_runs where dry_run",
+      "expect": 180,
+      "actual": 180,
+      "dat": true
+     },
+     {
+      "sql": "select count(distinct run_id) from sim_runs",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C01"
+  },
+  {
+   "ma": "intel-05.1__C02",
+   "nguon_r10": "C02",
+   "mo_ta": "Chạy thật khi DPIA chưa ký",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stderr_re": "\\[refuse\\] DPIA chưa ký"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/persona_sim.py",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "\\[refuse\\] DPIA chưa ký",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:08+07:00",
+      "ket_thuc": "2026-10-24T20:21:11+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180,
+      "actual": 180,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C02"
+  },
+  {
+   "ma": "intel-05.1__C03",
+   "nguon_r10": "C03",
+   "mo_ta": "--config bản sao dpia_signed=true (fixture r10 chép {FX13}) — cờ đọc từ file chuẩn nên vẫn refuse",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stderr_re": "\\[refuse\\] DPIA chưa ký"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180
+     },
+     {
+      "file_re": "{REPO}/data/sim_config.json",
+      "re": "\\\"dpia_signed\\\": false",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python scripts/persona_sim.py --config evidence\\itacc_r13_docx12\\fixtures/items/intel-05.1/sim_config_dpia_true.json",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "\\[refuse\\] DPIA chưa ký",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:11+07:00",
+      "ket_thuc": "2026-10-24T20:21:15+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180,
+      "actual": 180,
+      "dat": true
+     },
+     {
+      "file_re": "D:\\code\\samsam/data/sim_config.json",
+      "re": "\\\"dpia_signed\\\": false",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C03"
+  },
+  {
+   "ma": "intel-05.1__C04",
+   "nguon_r10": "C04",
+   "mo_ta": "Tắt intel-05.1 → --dry-run bị chặn, 0 dòng; bật lại (--promote)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] intel-05\\.1: chạy thử → tắt"
+     },
+     {
+      "expect_exit": 2,
+      "stderr_re": "\\[blocked\\][^\\n]*intel-05\\.1[^\\n]*tắt"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] intel-05\\.1: tắt → chạy thử"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180
+     },
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'intel-05.1'",
+      "expect": "chay_thu"
+     },
+     {
+      "sql": "select count(*) from feature_rollout_events where feature_id = 'intel-05.1' and kind = 'disable'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --disable intel-05.1 --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] intel-05\\.1: chạy thử → tắt",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:15+07:00",
+      "ket_thuc": "2026-10-24T20:21:16+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step01.stderr.txt"
+     },
+     {
+      "argv": "python scripts/persona_sim.py --dry-run",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "\\[blocked\\][^\\n]*intel-05\\.1[^\\n]*tắt",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:16+07:00",
+      "ket_thuc": "2026-10-24T20:21:20+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.rollout --promote intel-05.1 --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] intel-05\\.1: tắt → chạy thử",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:20+07:00",
+      "ket_thuc": "2026-10-24T20:21:21+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180,
+      "actual": 180,
+      "dat": true
+     },
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'intel-05.1'",
+      "expect": "chay_thu",
+      "actual": "chay_thu",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from feature_rollout_events where feature_id = 'intel-05.1' and kind = 'disable'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04"
+  },
+  {
+   "ma": "intel-05.1__R13-01",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "lượt thật, cấu hình TẠM dpia true + 3 model cùng nhà cung cấp openai ({H}/persona_run.py.txt one)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "FACTS \\{\\\"rc\\\": 2, \\\"calls\\\": 0, \\\"canon_dpia_signed\\\": false\\}",
+      "stderr_re": "\\[refuse\\] lượt thật cần >= 3 nhà cung cấp khác nhau trong sim_config\\.models \\(hiện: openai\\) — 0 lời gọi LLM"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0
+     },
+     {
+      "file_re": "{REPO}/data/sim_config.json",
+      "re": "\\\"dpia_signed\\\": false",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/persona_run.py.txt evidence\\itacc_r13_docx12\\fixtures/items/intel-05.1/sim_config_dpia_true.json one evidence\\itacc_r13_docx12\\runs\\intel-05.1\\20261024T202103-e5fb\\scratch/ps_one",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "FACTS \\{\\\"rc\\\": 2, \\\"calls\\\": 0, \\\"canon_dpia_signed\\\": false\\}",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\[refuse\\] lượt thật cần >= 3 nhà cung cấp khác nhau trong sim_config\\.models \\(hiện: openai\\) — 0 lời gọi LLM",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:21+07:00",
+      "ket_thuc": "2026-10-24T20:21:24+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180,
+      "actual": 180,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "file_re": "D:\\code\\samsam/data/sim_config.json",
+      "re": "\\\"dpia_signed\\\": false",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-01"
+  },
+  {
+   "ma": "intel-05.1__R13-02",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "đối chứng dương: cấu hình TẠM dpia true + 3 nhà cung cấp khác nhau → cổng không chặn nhầm, tới lời gọi thật (canh raise GatewayError → exit 1, 0 dòng)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stdout_re": "FACTS \\{\\\"rc\\\": 1, \\\"calls\\\": 1, \\\"canon_dpia_signed\\\": false\\}",
+      "stderr_re": "\\A(?![\\s\\S]*\\[refuse\\])[\\s\\S]*\\[err\\] dừng \\(GatewayError: SENTINEL r13"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/persona_run.py.txt evidence\\itacc_r13_docx12\\fixtures/items/intel-05.1/sim_config_dpia_true.json three evidence\\itacc_r13_docx12\\runs\\intel-05.1\\20261024T202103-e5fb\\scratch/ps_three",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "FACTS \\{\\\"rc\\\": 1, \\\"calls\\\": 1, \\\"canon_dpia_signed\\\": false\\}",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\A(?![\\s\\S]*\\[refuse\\])[\\s\\S]*\\[err\\] dừng \\(GatewayError: SENTINEL r13",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:21:24+07:00",
+      "ket_thuc": "2026-10-24T20:21:28+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from sim_runs",
+      "expect": 180,
+      "actual": 180,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-02"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "EXTERNAL_INPUT: DPIA/TIA chưa ký (dpia_signed=false), DPA, provider/model ≥3 nhà cung cấp chưa duyệt, key, ngân sách — r13 chặn lượt thật khi <3 nhà cung cấp",
+ "can_de_go": "Pháp chế + TGĐ ký DPIA/TIA → người thật đổi dpia_signed; chọn ≥3 nhà cung cấp + mở whitelist + key + trần; chạy persona_sim lượt thật nhỏ",
+ "gioi_han": " Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r13), fixture/dữ liệu THỬ, AI/HTTP/model giả ở biên nơi ghi MOCK — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [
+  {
+   "lot": "lo1",
+   "criteria": "r13_v1.json",
+   "run_id": "20261024T185604-b454",
+   "thu_muc": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T185604-b454",
+   "ly_do": "chạy lại trên fp mã cuối 1975775d… sau khi đổi DDL anchor_receipts sang lệnh tường minh (drift-guard) + văn bản catalog/data_flow_map; cùng tiêu chí, kết quả lo1 đều PASS"
+  }
+ ],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C01/asserts.json",
+   "sha256": "73c3e5e82a295385aaebde27690ddfdac8449d1baabc26ac63f93e8337050846"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C01/case.json",
+   "sha256": "5b6c20d8f593748672915aa4a08d08742d1bbe13c50834bbd5c1cb6b37eee449"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C01/step01.cmd.json",
+   "sha256": "4caad941023cd8c59b4595b95da7b843472b5a4c242bf3eaa1234369c8fb8eaf"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C01/step01.stdout.txt",
+   "sha256": "4535487ce95ba3453c72faa31447d6aba2b71ab0953c186538ec5267282c7844"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C02/asserts.json",
+   "sha256": "d181763e29de753ec1fa90cff6ed59769f5238835e7fec5cf618af29bb4fc0fb"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C02/case.json",
+   "sha256": "deafe58e726cb48f9fc95e18b91d08eaa24599ae09894fcb7a5012e2259da1bd"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C02/step01.cmd.json",
+   "sha256": "96670c3878f14483536f2809c7bdad5267000d0bec6159cf9b28d3b5e090e2b4"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C02/step01.stderr.txt",
+   "sha256": "f755f15dedbde3ad736a934528a85f5ca5d4349aed3adee26c22d4884c72ad43"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C02/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C03/asserts.json",
+   "sha256": "93bd89b16e2ac7748d3af26c5cf8f4b024787c481530473d01ffa160db6b3007"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C03/case.json",
+   "sha256": "33ba62d218b9c564702c683d6764d7146c2d662906d7e4724f92b4ab0296a89d"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C03/step01.cmd.json",
+   "sha256": "2aefb26620be9232d4700e5ce424f2f9b6f2f6f0060f59b1c99035eec573c3b5"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C03/step01.stderr.txt",
+   "sha256": "f755f15dedbde3ad736a934528a85f5ca5d4349aed3adee26c22d4884c72ad43"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C03/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/asserts.json",
+   "sha256": "9adbb948818fe8f59dfa21f3ae69b33e035cd998130429608ed1155b5e6f8978"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/case.json",
+   "sha256": "f15e152e64917ea63de4f3aae98eb1aa350c8db68b6d4d6125945900a9c96f04"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step01.cmd.json",
+   "sha256": "a42431d02acac258867584e0045413f39ce6104ed8e853754f95d8ec1b5044cb"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step01.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step01.stdout.txt",
+   "sha256": "0281593e9ceeec1882de89780a57630a86386e0cae75323daced18a7fcc23a4c"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step02.cmd.json",
+   "sha256": "9a32886953ef2996056690db57eadabf1a884b153093af3c419064cea908f16c"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step02.stderr.txt",
+   "sha256": "7f45bdc6ff0ccdb76a5564c0967356bb9a7ddac238d0c48fc81fa3155a0e3c09"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step02.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step03.cmd.json",
+   "sha256": "1ea0998ea99957002e18b71cc80caf1e044b45d43ead5cf632f8750f0b3729e8"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step03.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__C04/step03.stdout.txt",
+   "sha256": "a65204ef65f9c7f651e6a284e75b4a5f32ce581f6128810b3fb47c9fe63e46f4"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-01/asserts.json",
+   "sha256": "0faeb5eeb37522a5a74b5b8af74780d6a5c4d3d4b16df3a1abebbf2dbe147665"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-01/case.json",
+   "sha256": "33551473c986bd660374db5ee3346593fae1fb22b7f73c1ba5ebbbb311c0394c"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-01/step01.cmd.json",
+   "sha256": "f312b532e45cdd0386acdadd0c9fd494562474cc06471a173bc5c1058945817e"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-01/step01.stderr.txt",
+   "sha256": "b9a1e4491d6769432023d44f0052c5e0ec1d5db5213d8ea727182ff9cf0ad70b"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-01/step01.stdout.txt",
+   "sha256": "14d0902aa1835bc0463b054e24649b55b7b38b2c1bde98b029374763beb5b58a"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-02/asserts.json",
+   "sha256": "d181763e29de753ec1fa90cff6ed59769f5238835e7fec5cf618af29bb4fc0fb"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-02/case.json",
+   "sha256": "111aa12e95e9eebea406b576e5cb0ab9ce52b729460b0f68c7655abd2d925b7a"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-02/step01.cmd.json",
+   "sha256": "d528ffda6d5962351aa7251393dad3be53c4ee95bb39f91c36d7ea0bb65f0799"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-02/step01.stderr.txt",
+   "sha256": "9537811d8957cdeb03621071778f8f1e1eb16c0c2c3d58a3dda656087cd85b83"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__R13-02/step01.stdout.txt",
+   "sha256": "d5fbd36ef2db6e34c85b1e2810b486a7226b46f8c587fa5e7de353c0e46ff509"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__S01/asserts.json",
+   "sha256": "2ad596c630bb5b962a7950d09678c381e0e44beb1063f0a3f6eedeb4b80d52ee"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__S01/case.json",
+   "sha256": "1ccf4cddc7cbfdba289b48d28f275cd68a4de6c849e82c356c2f74bb5139dca3"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__S01/step01.cmd.json",
+   "sha256": "71e63aa2cc4b5939dc4935708d1b73f34c615ac1a70e91a7ba9ef1c9e70305dc"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/intel-05.1__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/ket_qua.json",
+   "sha256": "d391e2f0d6944aae211837198f0e5cafd4656f88d4c12436c86c6ec5c5139b17"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/scratch/ps_one/sim_config_one_thu_r13.json",
+   "sha256": "972d206d3ceda1c731a8929437a0282c3ee4d85b8a82dd6dd295badb3d7bc12b"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/intel-05.1/20261024T202103-e5fb/scratch/ps_three/sim_config_three_thu_r13.json",
+   "sha256": "73d08a815da772ba2605af55311e91d3fd3fa8ba1c2bbdf1ccca55a26a63560c"
+  }
+ ],
+ "loi_san_pham": []
+}

@@ -1,0 +1,46 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/image_run.py.txt",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\marketing-02.1\\20261024T202026-4a20\\marketing-02.1__R13-02\\out/image_http.json",
+  "--sku",
+  "mat-ong-sam-300ml",
+  "--channel",
+  "shopee",
+  "--headline",
+  "Quà quê Quảng Nam Thử R13",
+  "--scene",
+  "vườn sâm buổi sáng"
+ ],
+ "env_doi": [
+  "IMAGE_MODEL",
+  "IMAGE_OUT_DIR",
+  "IMAGE_PROVIDER",
+  "LLM_CAP_DEFAULT_USD",
+  "LLM_KILL",
+  "LLM_KILL_FEATURES",
+  "PACKSHOT_DIR"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:21:03+07:00",
+ "ket_thuc": "2026-10-24T20:21:07+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × shopee × 1:1: refused provider: cổng chi phí/tắt chặn: tính năng 'marketing-02\\.1' đang bị nút tắt khẩn)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0)",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\[image_run\\] requests=0\\b",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "0d5970b978411296852ef00eabb3022d16bdf0e7015e71dc6bd365cd8a1a7885",
+ "stderr_sha256": "acd15c1a08786d72756d6f27c3e0849f19a7901068b520ce6b0997829c8559d5"
+}

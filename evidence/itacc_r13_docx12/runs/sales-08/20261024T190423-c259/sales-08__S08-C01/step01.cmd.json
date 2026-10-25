@@ -1,0 +1,32 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T190423-c259\\scratch/gdata",
+  "-",
+  "agents.listing_export",
+  "--website-feed",
+  "--out",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T190423-c259\\scratch/s08_feed_trial"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T19:04:47+07:00",
+ "ket_thuc": "2026-10-24T19:04:52+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stderr_re": "\\[từ chối\\] xuất nguồn dữ liệu website[^\\n]*sales-03[^\\n]*chạy thử[^\\n]*không ghi tệp",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "038575e3f2fc51cbdd76718a399d0e97282274814a35bf42e4b4e28b5623c93e"
+}

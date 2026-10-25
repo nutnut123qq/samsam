@@ -71,7 +71,7 @@ if mod == "pipelines.anchor":
     def _post(url, body, timeout):
         with open(os.environ["P102_POST_LOG"], "a", encoding="utf-8") as f:
             f.write(body.hex() + "\\n")
-        return b"\\xf0p102-fake-calendar"
+        return bytes.fromhex("f01011111111111111111111111111111111080083dfe30d2ef90c8e191868747470733a2f2f63616c2e703130322e696e76616c6964")  # OTS hợp lệ (r13)
 
     def _submit(conn, ref, cfg, by=anchor.CREATED_BY, post=None):
         return _orig(conn, ref, cfg, by=by, post=_post)

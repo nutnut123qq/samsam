@@ -1,0 +1,39 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r10/g5/harness/zalo_webhook.py.txt",
+  "--state",
+  "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_farming/farming-01-f7197494762e0549517d543d1a071e23/zstate",
+  "--staff",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/farming-01/garden_staff.json",
+  "--fixtures",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/farming-01",
+  "--event",
+  "text",
+  "--text",
+  "KV-A01 tưới chữ ký sai",
+  "--bad-sig"
+ ],
+ "env_doi": [
+  "DEPLOY",
+  "GARDEN_MEDIA_DIR"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:19:36+07:00",
+ "ket_thuc": "2026-10-24T20:19:58+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "POST#1 HTTP 403[\\s\\S]*N_HANDLED 0",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "00cad5a9ce6341fca40f1e601ef77eb457e68da50a6d48ad9abdab9c5b1eec19",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

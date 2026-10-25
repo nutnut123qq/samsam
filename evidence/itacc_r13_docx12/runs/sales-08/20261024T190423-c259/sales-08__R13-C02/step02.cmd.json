@@ -1,0 +1,35 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T190423-c259\\scratch/gdata",
+  "van_hanh",
+  "agents.listing_export",
+  "--verify",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T190423-c259\\scratch/s08_feed_tamper/feed.manifest.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T19:05:02+07:00",
+ "ket_thuc": "2026-10-24T19:05:06+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "(?s)\\A(?!.*gia_id lệch)(?=.*\\[LỆCH\\] tệp nguồn dữ liệu đã bị sửa \\(sha lệch manifest\\))(?=.*\\[done\\] 1 điểm lệch)",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "1ebc32b0948ab27a44820a946d2f70514e8b2ab38defd15ef4e196ab107fb1ea",
+ "stderr_sha256": "6742609bf8f71d83d15d9f52e04d156f80c5c0e91501d8b3c4c36e6aefbc673b"
+}

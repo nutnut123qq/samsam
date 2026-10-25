@@ -1,0 +1,25 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/fake_shopee_retry_r13.py.txt"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:56:26+07:00",
+ "ket_thuc": "2026-10-24T18:56:29+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*\\[retry\\] shopee /api/v2/product/get_item_list: HTTP 429 — chờ 1s \\(1/3\\))(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*SLEEPS: \\[1\\.0\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=429)(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=200)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True status=200)(?=[\\s\\S]*N_ITEM_LIST=2\\b)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "a13249daa58b2a64f5076719bf07cea877d6eb4efacd2ffa6beb03802bec450d",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

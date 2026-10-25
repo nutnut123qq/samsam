@@ -1,0 +1,31 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/anchor_ots_run.py.txt",
+  "--fake-post",
+  "valid",
+  "--force-mode",
+  "van_hanh",
+  "--submit",
+  "latest"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:00:25+07:00",
+ "ket_thuc": "2026-10-25T00:00:25+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*\\[FIXTURE\\] rollout\\._FORCE_MODE=van_hanh[\\s\\S]*\\[FAKE\\] POST https://cal-a\\.test/digest 32B timeout=5 body_khop_manifest=True[\\s\\S]*\\[FAKE\\] POST https://cal-b\\.test/digest 32B timeout=5 body_khop_manifest=True[\\s\\S]*\\[ok\\] lần gom #\\d+: đã gửi calendar cal-b\\.test — chờ xác nhận Bitcoin[\\s\\S]*\\[FAKE\\] POST_CALLS 2 GET_CALLS 0 NET_CALLS 0",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "8083c2631d76c5b47eb45aacf33524c5f56da39f2dd066b9ed70c96e49c03af0",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,22 @@
+[
+ {
+  "sql": "select count(*) from content_drafts where content_type = 'listing' and channel = 'tiktok'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from content_drafts",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r13_docx12\\runs\\sales-03\\20261024T202144-1d08\\sales-03__S03-C10\\out/llm.json",
+  "re": "\\A\\[\\]\\Z",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ }
+]

@@ -1,0 +1,46 @@
+{
+ "probe": "j_onprem_v1",
+ "root": "D:\\code\\samsam",
+ "ca": [
+  {
+   "ca": "bat_buoc_ma_hoa_thieu_khoa_tu_choi",
+   "ket_qua": "PASS",
+   "actual": "BACKUP_REQUIRE_ENCRYPTION=1 nhưng chưa có BACKUP_PASSPHRASE_FILE — không ghi bản chưa mã hóa"
+  },
+  {
+   "ca": "offsite_cung_thiet_bi_tu_choi",
+   "ket_qua": "PASS",
+   "actual": "BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR — không phải bản sao ngoài máy"
+  },
+  {
+   "ca": "preflight_chua_cau_hinh_chua_san_sang",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "tail": " CHUA_XAC_NHAN (Bên B ký biên bản): may chu vat ly + UPS; may giam sat DOC LAP (ngoai server); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat\n\nKẾT LUẬN: CHƯA SẴN SÀNG — 6 mục đo được chưa đạt\n\n"
+   }
+  },
+  {
+   "ca": "preflight_doc_so_backup_that",
+   "ket_qua": "PASS",
+   "actual": {
+    "fresh": {
+     "sao_luu:thu_muc": "DAT",
+     "sao_luu:ma_hoa_bat_buoc": "DAT",
+     "sao_luu:offsite": "CHUA_DAT",
+     "sao_luu:ban_gan_nhat": "DAT"
+    },
+    "old": {
+     "sao_luu:thu_muc": "DAT",
+     "sao_luu:ma_hoa_bat_buoc": "DAT",
+     "sao_luu:offsite": "CHUA_DAT",
+     "sao_luu:ban_gan_nhat": "CHUA_DAT"
+    }
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 4,
+  "FAIL": 0
+ }
+}

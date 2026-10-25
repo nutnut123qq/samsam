@@ -1,0 +1,27 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import glob,hashlib,shutil,sys; d=sys.argv[1]; m=glob.glob(d+'/website-feed-????-??-??.manifest.json'); assert len(m)==1,m; shutil.copyfile(m[0],d+'/feed.manifest.json'); h=lambda p: hashlib.sha256(open(p,'rb').read()).hexdigest(); print('FIXTURE chép manifest', m[0].replace(chr(92),'/').split('/')[-1], 'trùng byte', h(m[0])==h(d+'/feed.manifest.json'))",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T202217-1a01\\scratch/s08_feed"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:22:44+07:00",
+ "ket_thuc": "2026-10-24T20:22:44+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "trùng byte True",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "1b9195e54f297fdf5eb24e30026ac26af833e888a0553d0022fc5272bc923696",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

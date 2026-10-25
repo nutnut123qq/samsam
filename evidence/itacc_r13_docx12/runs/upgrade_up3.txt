@@ -1,0 +1,19 @@
+DB samsam_itacc_r13_up3 tạo mới (KHÔNG samsam) · nền D:\code\samsam_r13_baseline\tree
+## [tree] python scripts/apply_schema.py --roles → exit 0 · [done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_quote_events, b2b_requests, bom_combos, bom_items, care_purchase
+## [tree] python scripts/apply_schema.py --roles → exit 0 · [done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_quote_events, b2b_requests, bom_combos, bom_items, care_purchase
+## [samsam] python scripts/apply_schema.py --roles → exit 0 · [done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_quote_events, b2b_requests, bom_combos, bom_items, care_purchase
+## [samsam] python scripts/apply_schema.py --roles → exit 0 · [done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_quote_events, b2b_requests, bom_combos, bom_items, care_purchase
+[PASS] documents giữ nguyên 
+[PASS] documents.ocr_engine có, dòng cũ null 
+[PASS] anchor_receipts giữ nguyên 
+[PASS] đuôi agent_action_log không đổi 
+[PASS] verify_action_log 0 vấn đề (0)
+[PASS] ràng buộc r13 đúng 1 lần, ràng buộc cũ đã bỏ ['anchor_receipts_calendar_check', 'anchor_receipts_check1', 'anchor_receipts_created_by_check', 'anchor_receipts_error_check', 'anchor_receipts_provider_check', 'anchor_receipts_receipt_check', 'anchor_receipts_receipt_r13', 'anchor_receipts_status_r13']
+[PASS] chèn da_nang_cap có receipt OK 
+[PASS] da_nang_cap thiếu receipt bị chặn CheckViolation
+[PASS] status lạ bị chặn CheckViolation
+[PASS] append-only vẫn chặn UPDATE RaiseException
+[PASS] quyền không BỚT bớt []
+[PASS] quyền THÊM đúng svc_job INSERT anchor_receipts thêm [('svc_job', 'anchor_receipts', 'INSERT')]
+KET_QUA PASS
+EXIT 0

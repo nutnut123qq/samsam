@@ -1,0 +1,31 @@
+"""HARNESS r13 — gộp 4 nháp đã duyệt (criteria/drafts/r13_{A,B,C,D}.json, điều phối viên rà bằng validate_drafts_r13 +
+đọc mọi ca MOI_R13) thành criteria/r13_v1.json rồi khóa sha256. Không sửa nội dung ca.
+  python -I lock_criteria_r13.py.txt <fp_code>"""
+import hashlib
+import json
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+C = Path(__file__).resolve().parents[1] / "criteria"
+items, srcs = [], {}
+for g in "ABCD":
+    p = C / "drafts" / f"r13_{g}.json"
+    srcs[p.name] = hashlib.sha256(p.read_bytes()).hexdigest()
+    items += json.loads(p.read_text(encoding="utf-8"))["items"]
+crit = {"_doc": "Tiêu chí kiểm lại r13 (12 mục DOCX bị chặn + 5 mục ảnh hưởng trực tiếp: sales-03, farming-02.1, "
+                "farming-02.2, data_platform-02.2, data_platform-07.2). Gộp NGUYÊN 4 nháp đã duyệt (nguồn + sha dưới); "
+                "luật criteria/HUONG_DAN_r13.md. Khóa TRƯỚC khi chạy.",
+        "nguon_nhap": srcs, "fingerprint_code": sys.argv[1],
+        "moi_truong": "Postgres Docker riêng samsam-itacc-r13 (127.0.0.1:55453), DB mới mỗi mục dựng bằng working tree "
+                      "(schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài",
+        "items": items}
+out = C / "r13_v1.json"
+b = json.dumps(crit, ensure_ascii=False, indent=1).encode("utf-8")
+with open(out, "xb") as fh:
+    fh.write(b)
+h = hashlib.sha256(b).hexdigest()
+with open(C / "r13_v1.lock.txt", "x", encoding="utf-8") as fh:
+    fh.write(f"r13_v1.json {h} {datetime.now(timezone(timedelta(hours=7))).isoformat(timespec='seconds')}\n")
+print(h, len(items), "mục", sum(len(i["ca"]) for i in items), "ca")

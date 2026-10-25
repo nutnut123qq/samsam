@@ -1,0 +1,170 @@
+"""PROBE r13 G v1 — farming-06 neo OpenTimestamps (`pipelines.anchor`): biên nhận phải là cây .ots HỢP LỆ khớp digest (không
+chỉ tiền tố), `upgrade` lấy attestation Bitcoin từ calendar CÓ TRONG cấu hình → trạng thái `da_nang_cap` tách khỏi `da_gui`,
+vẫn không phải xác minh bên thứ ba. Không DB (conn giả trả lần gom + biên nhận, ghi lại INSERT), không mạng (post/get giả theo
+định dạng OTS). Cùng mã/input/assertion baseline (1ad90df) và bản sửa.  python -I probe_g_anchor.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước):
+- biên nhận đúng tiền tố digest nhưng thân KHÔNG phải cây OTS (rác) → bị coi là hỏng.
+- submit với calendar trả rác → không ghi `da_gui` (thử calendar kế / ghi `loi`).
+- upgrade: calendar 404 → "cho", 0 ghi; calendar trả attestation Bitcoin → 1 INSERT `da_nang_cap` mang .ots đã ghép, phân
+  tích lại được, có khối 850001; receipt_state nói rõ CHƯA xác minh bên thứ ba.
+- upgrade KHÔNG hỏi calendar ngoài cấu hình (chống SSRF)."""
+import datetime as dt
+import hashlib
+import json
+import sys
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+import psycopg  # noqa: E402
+
+psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+from pipelines import anchor as an  # noqa: E402
+
+CAL = "https://cal-b.test"
+CFG = {"provider": "opentimestamps", "calendars": ["https://cal-a.test", CAL], "timeout_s": 5}
+PENDING = bytes.fromhex("83dfe30d2ef90c8e")
+BITCOIN = bytes.fromhex("0588960d73d71901")
+
+
+def vu(v):
+    out = bytearray()
+    while True:
+        b, v = v & 0x7f, v >> 7
+        out.append(b | (0x80 if v else 0))
+        if not v:
+            return bytes(out)
+
+
+def vb(b):
+    return vu(len(b)) + b
+
+
+NONCE = b"\x22" * 16
+
+
+def resp_for(uri):
+    return b"\xf0" + vb(NONCE) + b"\x08" + b"\x00" + PENDING + vb(vb(uri.encode()))
+
+
+LEAVES = [{"k": "plot_logs_head:1", "d": {"id": 1, "h": "ab"}, "h": "0" * 64}]
+ROOTH = "1" * 64
+AS_OF = dt.datetime(2026, 10, 24, tzinfo=dt.timezone.utc)
+SHA = hashlib.sha256(an.manifest(int((AS_OF - an.EPOCH).total_seconds() * 1e6), LEAVES, ROOTH)).hexdigest()
+
+
+class Conn:
+    def __init__(self, receipts):
+        self.receipts = receipts      # list[(status, calendar, bytes)]
+        self.inserts = []
+
+    def execute(self, sql, params=None):
+        self.sql = sql
+        if sql.startswith("insert into anchor_receipts"):
+            self.inserts.append(params)
+        return self
+
+    def fetchone(self):
+        if "from anchor_batches" in self.sql:
+            return (7, AS_OF, LEAVES, ROOTH, SHA)
+        if "from anchor_receipts" in self.sql:
+            ok = [r for r in self.receipts if r[0] in ("da_gui", "da_nang_cap")]
+            if "status, calendar, created_at" in self.sql:
+                return (ok[-1][0], ok[-1][1], AS_OF) if ok else None
+            return ok[-1] if ok else None
+        return None
+
+    def fetchall(self):
+        return []
+
+    def commit(self):
+        pass
+
+    def rollback(self):
+        pass
+
+    def transaction(self):
+        import contextlib
+        return contextlib.nullcontext()
+
+
+rows = []
+
+
+def case(ma, fn):
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+DG = bytes.fromhex(SHA)
+GOOD = an.ots_file(DG, resp_for(CAL))
+JUNK = an.ots_file(DG, b"\xf0p102-fake-calendar")
+
+
+def c_junk_receipt():
+    try:
+        an.parse_receipt(JUNK, SHA)
+        return False, "không phát hiện"
+    except ValueError as e:
+        return True, str(e)
+
+
+def c_submit_junk():
+    an._rollout = lambda: type("R", (), {"is_human": staticmethod(lambda by: False),
+                                         "use_reason": staticmethod(lambda *a: None)})
+    calls = []
+    c = Conn([])
+
+    def post(url, body, timeout):
+        calls.append(url)
+        return b"\xf0p102-fake-calendar" if "cal-a" in url else resp_for(CAL)
+    r = an.submit(c, 7, CFG, post=post)
+    da_gui = [p for p in c.inserts if r.get("calendar") == CAL]
+    return (r["status"] == "da_gui" and r["calendar"] == CAL and len(calls) == 2 and len(da_gui) == 1), \
+        {"r": r, "calls": calls}
+
+
+def c_upgrade_pending():
+    c = Conn([("da_gui", CAL, GOOD)])
+    gets = []
+    r = an.upgrade(c, 7, CFG, get=lambda url, t: gets.append(url))
+    return r["status"] == "cho" and c.inserts == [] and len(gets) == 1, {"r": r, "gets": gets}
+
+
+def c_upgrade_done():
+    c = Conn([("da_gui", CAL, GOOD)])
+    r = an.upgrade(c, 7, CFG, get=lambda url, t: b"\x08" + b"\x00" + BITCOIN + vb(vu(850001)))
+    ins = c.inserts[0] if c.inserts else None
+    ok = (r["status"] == "da_nang_cap" and r.get("heights") == [850001] and ins is not None
+          and "da_nang_cap" in c.sql)
+    if ok:
+        tree = an.parse_receipt(bytes(ins[2]), SHA)
+        ok = any(k == "bitcoin" for k, _c, _p in an.attestations(tree))
+        c.receipts.append(("da_nang_cap", CAL, bytes(ins[2])))
+        st = an.receipt_state(c, 7)
+        ok = ok and "CHƯA xác minh bên thứ ba" in st
+    return ok, {"r": r, "n_insert": len(c.inserts)}
+
+
+def c_upgrade_ssrf():
+    c = Conn([("da_gui", "https://evil.example", an.ots_file(DG, resp_for("https://evil.example")))])
+    gets = []
+    r = an.upgrade(c, 7, CFG, get=lambda url, t: gets.append(url))
+    return gets == [] and c.inserts == [], {"r": r}
+
+
+case("bien_nhan_rac_bi_phat_hien", c_junk_receipt)
+case("submit_bo_qua_calendar_tra_rac", c_submit_junk)
+case("upgrade_404_cho_khong_ghi", c_upgrade_pending)
+case("upgrade_bitcoin_da_nang_cap", c_upgrade_done)
+case("upgrade_khong_hoi_calendar_la", c_upgrade_ssrf)
+out = {"probe": "g_anchor_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

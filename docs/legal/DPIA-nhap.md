@@ -776,6 +776,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Không xử lý dữ liệu cá nhân (digest băm của bản ghi không PII) |
 | GAP | Chưa chọn chuỗi/provider/phí — chưa neo thật (BLOCKED quyết định hai bên); Calendar OpenTimestamps đặt ở nước ngoài — dù chỉ là digest, Pháp chế xác nhận trước khi bật |
 
+### DF-48 — Ảnh nền AI cho nháp ảnh marketing qua OpenRouter Images API (r13, marketing-02.1)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-48 |
+| Module (code) | `pipelines/image_provider_openrouter.py` |
+| Mục đích | Sinh nền ảnh quanh packshot thật cho nháp ảnh marketing (PL01 Marketing — ảnh bối cảnh AI) |
+| Dữ liệu | Gửi đi: CHỈ mô tả nền (prompt dựng từ --scene đã qua check_scene/guardrail, không tên người/SĐT/sản phẩm thật) + kích thước ảnh + model + danh sách provider được phép; KHÔNG gửi ảnh sản phẩm/packshot (ghép tại chỗ). Nhận về: ảnh nền PNG (base64) + usage.cost |
+| Lớp | Vàng |
+| Chủ thể | Không có chủ thể dữ liệu (mô tả cảnh vật) |
+| Nơi lưu | Ảnh ghép NHÁP `<IMAGE_OUT_DIR>/<sha256>.png` + `image_assets` (provider/model/prompt_sha256) + `llm_usage` (agent image, feature marketing-02.1, cost) |
+| Thời hạn lưu | Theo nháp ảnh (content_drafts/image_assets) — GAP như luồng nội dung |
+| Bên nhận | OpenRouter (openrouter.ai) + provider sinh ảnh trong `provider_only` của data/llm_gateway.json |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | MẶC ĐỊNH TẮT: IMAGE_PROVIDER=none; cần IMAGE_MODEL + OPENROUTER_API_KEY tường minh; Cổng llm_gateway._gate TRƯỚC mọi request: kill agent/tính năng, trần tháng agent `image` + tính năng marketing-02.1, không đọc được chi tiêu → chặn, rollout TẮT → chặn, whitelist provider rỗng → chặn; Không theo redirect, timeout 120 s, tối đa 1 lần thử lại 429/502/503 (502 không tính phí), trần ảnh 20 MB, kiểm định dạng/kích thước (sai cỡ → từ chối, không resize ngầm); Packshot/nhãn sản phẩm KHÔNG rời máy; ảnh luôn là NHÁP chờ người duyệt, nhãn 'Nội dung có sử dụng AI' |
+| Căn cứ xử lý | Lợi ích hợp pháp (không dữ liệu cá nhân) — điều khoản bản quyền ảnh sinh CẦN Pháp chế xác nhận |
+| GAP | Chưa chọn vendor/model, chưa có DPA/điều khoản bản quyền ảnh sinh (external-dep); Chỉ kiểm bằng transport giả theo schema tài liệu — chưa gọi API thật |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -824,6 +842,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-44 | Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/video/ghi âm (v12.4, video v13.4) | Vàng | trung bình | không | 3 |
 | DF-45 | Cảnh báo đỏ gửi email tới người nhận độc lập (v13.7) | Vàng | trung bình | không | 2 |
 | DF-47 | Neo mã xác thực chuỗi truy xuất lên blockchain — chỉ digest 32 byte (v13.8 C09) | Xanh | thấp | có | 2 |
+| DF-48 | Ảnh nền AI cho nháp ảnh marketing qua OpenRouter Images API (r13, marketing-02.1) | Vàng | trung bình | có | 2 |
 
 ## 4. Tổng hợp GAP
 
@@ -915,6 +934,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-45] Máy chủ SMTP (tên miền Sâm Sâm) chưa cấu hình; nếu dùng dịch vụ email nước ngoài cần TIA
 - [DF-47] Chưa chọn chuỗi/provider/phí — chưa neo thật (BLOCKED quyết định hai bên)
 - [DF-47] Calendar OpenTimestamps đặt ở nước ngoài — dù chỉ là digest, Pháp chế xác nhận trước khi bật
+- [DF-48] Chưa chọn vendor/model, chưa có DPA/điều khoản bản quyền ảnh sinh (external-dep)
+- [DF-48] Chỉ kiểm bằng transport giả theo schema tài liệu — chưa gọi API thật
 
 ## 5. Câu hỏi cho luật sư
 

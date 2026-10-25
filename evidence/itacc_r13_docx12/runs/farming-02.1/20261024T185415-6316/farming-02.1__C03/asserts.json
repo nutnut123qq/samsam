@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from garden_reminders where plot_id = 'IT-K03' and reminded_at is not null and reminded_by = 'Người Thử IT' and status = 'cho_gui'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from agent_action_log where action = 'garden_reminder_done' and object_type = 'garden_reminder' and actor = 'Người Thử IT' and object_id = (select id::text from garden_reminders where plot_id = 'IT-K03' and dot_key = 'none')",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

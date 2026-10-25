@@ -335,6 +335,27 @@ Loại: (1) thiếu code — tự làm; (2) có code, chưa kiểm tích hợp; 
 
 Website: tìm trên máy dev (`D:\code`) không thấy repo website/chatbot Sâm Sâm — chưa có đường dẫn/quyền; KHÔNG xây vào repo lõi, KHÔNG đóng bằng `website-feed`.
 
+### A11. Đợt r13 (24/10/2026) — 12 mục còn bị chặn: phần code có thể làm
+
+| ID | Code trước | Code sau (r13) | Probe trước → sau (PASS/FAIL) | Mức | Ca P/F/N | Trạng thái nội bộ | Còn chặn bởi |
+|---|---|---|---|---|---|---|---|
+| production-03 | ảnh nhãn: OCR registry chỉ `none` (exit 2) | OCR tại chỗ `paddle_local` dùng chung doc_intake | a_ocr 2/8 → 10/0 | LOCAL | 10/0/0 | **BỊ CHẶN** | EXTERNAL_INPUT |
+| data_platform-02.1 | scan → `cho_ocr` (provider none) | `paddle_local` + reprocess + `ocr_engine`, OCR rỗng không im lặng | a_ocr 2/8 → 10/0 | LOCAL | 12/0/0 | **BỊ CHẶN** | EXTERNAL_INPUT |
+| farming-01 | STT registry `none` | `whisper_local` (faster-whisper cục bộ, PyAV, trần, timeout) | b_stt 1/7 → 8/0 | MOCK | 28/0/3 | **BỊ CHẶN** | EXTERNAL_INPUT |
+| marketing-02.1 | nền ảnh `none` (gradient) | `openrouter_images` qua cổng llm_gateway | c_image_v2 10/3 → 13/0 | MOCK | 9/0/0 | **BỊ CHẶN** | EXTERNAL_INPUT |
+| production-02 | `--check` chỉ số đếm | nêu đích danh SKU thiếu; bắt buộc phiên bản + sha tệp; hồ sơ mẫu không tính | d_dossier 1/4 → 5/0 | LOCAL | 11/0/0 | **BỊ CHẶN** | EXTERNAL_INPUT |
+| data_platform-06 | không xử lý 429/5xx, không cổng tính năng | thử lại giới hạn + Retry-After; cổng data_platform-06 trước request | e_market_v2 2/3 → 5/0 | MOCK | 7/0/0 | **BỊ CHẶN** | EXTERNAL_INPUT |
+| intel-05.1 | chỉ kiểm ≥3 model | lượt thật đòi ≥3 nhà cung cấp, chặn trước lời gọi | f_persona 3/1 → 4/0 | LOCAL | 7/0/0 | **BỊ CHẶN** | EXTERNAL_INPUT |
+| farming-06 | biên nhận chỉ so tiền tố; không upgrade | phân tích cây .ots; submit bỏ phản hồi sai; `--upgrade` → `da_nang_cap` | g_anchor 0/5 → 5/0 | MOCK | 21/0/1 | **BỊ CHẶN** | EXTERNAL_INPUT |
+| sales-08 | feed không có verify | `--verify` feed (sha + giá web đã duyệt + mô tả) | h_feed 1/3 → 4/0 | LOCAL | 7/0/1 | **BỊ CHẶN** | SEPARATE_REPO |
+| sales-09 | không kênh chat website (repo riêng) | không đổi (không có hợp đồng giao tiếp) | — | LOCAL | 2/0/1 | **BỊ CHẶN** | SEPARATE_REPO |
+| ceo-90 | gói kiểm N22 làm tay | `scripts/incident_compare.py` chỉ đọc, từ chối DB samsam | i_incident 0/5 → 5/0 | LOCAL | 7/0/1 | **BỊ CHẶN** | NON_SOFTWARE |
+| data_platform-90 | không đo máy chủ; mã hóa/offsite tùy chọn | `scripts/onprem_preflight.py`; bắt buộc mã hóa; offsite khác thiết bị | j_onprem 0/4 → 4/0 | LOCAL | 5/0/1 | **BỊ CHẶN** | NON_SOFTWARE |
+
+Tổng nội bộ 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN; chờ bên ngoài: `dau-vao-va-quyet-dinh.md` mục G; evidence `evidence/itacc_r13_docx12/`; hồ sơ `nghiem-thu-ky-thuat-noi-bo.md` mục 0-r13. Nghiệm thu hợp đồng 0/96 không đổi.
+
+**Đính chính r13-fix4 (25/10/2026):** controller tái hiện 4 lỗi trong phần code r13 — OCR tự tải model khi thiếu `inference.pdiparams` (production-03, data_platform-02.1), ảnh AI hỏng ghi chi phí 0 (marketing-02.1), preflight báo backup ĐẠT khi không có dump/offsite (data_platform-90), `anchor --upgrade` bỏ cổng triển khai (farming-06). Đã vá + kiểm lại 6 mục (production-03 BỊ CHẶN 11/0/0, data_platform-02.1 BỊ CHẶN 13/0/0, marketing-02.1 BỊ CHẶN 11/0/0, data_platform-90 BỊ CHẶN 9/0/1, data_platform-07.2 ĐẠT 12/0/0, farming-06 BỊ CHẶN 24/0/1); tổng nội bộ vẫn 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN; 12 mục vẫn BỊ CHẶN như bảng trên. Evidence `evidence/itacc_r13_fix_4/`; hồ sơ `nghiem-thu-ky-thuat-noi-bo.md` mục 0.
+
 ## 0. Baseline và tiêu chí xong (G0)
 
 | Mục | Giá trị |

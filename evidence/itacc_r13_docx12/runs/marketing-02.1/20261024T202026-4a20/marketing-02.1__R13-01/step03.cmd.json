@@ -1,0 +1,27 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "-c",
+  "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); r=d['reqs']; b=r[0]['body'] if r else {}; ok=(d['requests']==1 and r[0]['method']=='POST' and r[0]['url']=='https://openrouter.ai/api/v1/images' and set(b)=={'model','prompt','size','output_format','n','provider'} and b['model']=='thu-r13/model-anh-gia' and b['size']=='1080x1080' and b['output_format']=='png' and b['n']==1 and b['provider']=={'only':d['provider_only_cfg'],'allow_fallbacks':False} and isinstance(d['provider_only_cfg'],list) and len(d['provider_only_cfg'])>0 and 'vườn sâm buổi sáng' in b['prompt']); print('BODY_OK', ok, d['requests'], sorted(b), flush=True)",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\marketing-02.1\\20261024T202026-4a20\\marketing-02.1__R13-01\\out/image_http.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:21:03+07:00",
+ "ket_thuc": "2026-10-24T20:21:03+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "BODY_OK True 1 ",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "9e78e8e22819b93bd51428758071f1f4e3d5d57638a31b5a388472e36e9a6b0f",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

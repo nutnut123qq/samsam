@@ -1,0 +1,38 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.doc_intake",
+  "--verify",
+  "472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c",
+  "--by",
+  "Pháp Chế Thử IT"
+ ],
+ "env_doi": [
+  "DOC_INTAKE_DIR",
+  "DOC_ORIGINALS_DIR",
+  "OCR_PROVIDER"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:18:54+07:00",
+ "ket_thuc": "2026-10-24T20:18:56+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "472d705c02fd không tồn tại hoặc không ở pending_review",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "4e44843fd294dd421e0e18046ddaf725c0e3b2afd38763f079683e14a1d7f2e4",
+ "stderr_sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+}

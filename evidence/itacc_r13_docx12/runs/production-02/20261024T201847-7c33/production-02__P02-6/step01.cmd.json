@@ -1,0 +1,31 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.product_dossiers",
+  "--check"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:18:58+07:00",
+ "ket_thuc": "2026-10-24T20:18:59+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*\\[blocked\\] danh mục hồ sơ gốc: 0/14)(?=.*\\[blocked\\] SKU golden đã gắn hồ sơ gốc: 0/13)",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "8952dce693959964a41de1f379859a108dca15f72749e38134a10742b2ec8d30",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

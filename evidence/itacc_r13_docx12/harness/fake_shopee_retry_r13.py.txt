@@ -1,0 +1,58 @@
+"""HARNESS r13 (bản chuyển, nhóm C — data_platform-06): chuyển từ evidence/itacc_r10/g5/harness/fake_shopee.py.txt
+(sha256 9402db07…; r10 chạy độc lập được, KHÔNG trỏ scratchpad r10 — bản gốc vẫn dùng nguyên cho ca cũ). Đổi so với gốc:
+  1) lần GET ĐẦU TIÊN tới /api/v2/product/get_item_list trả HTTP 429 + `Retry-After: 1` (các lần sau như gốc) — kiểm
+     nhánh r13 thử lại của ingest.market_api._request;
+  2) giá 2 item khác gốc (165000/445000, tên "API thử R13") → sha256 dữ liệu khác snapshot của ca cũ (không bị [skip]);
+  3) tiến trình con chạy `python -c` import ingest.market_api, thay `ma._sleep` bằng hàm GHI LẠI số giây (không chờ thật),
+     in `SLEEPS: [...]` rồi gọi ma.main([...]) — cùng đối số CLI như gốc (`--channel shopee --kind listing`);
+  4) nhật ký server ghi thêm `status=<mã trả>`; in `N_ITEM_LIST=<số request get_item_list>`.
+Server GIẢ 127.0.0.1 cổng ngẫu nhiên theo tài liệu công khai, key GIẢ (giá trị không in). Không mạng ngoài."""
+import json, os, subprocess, sys, threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit, parse_qs
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+LOG = []
+STATE = {"first_429": True}
+ITEMS = {"27357883504": ("Savina 12v API thử R13", "savina-12v", 165000),
+         "24325987926": ("Savigout 30v API thử R13", "savigout-30v", 445000)}
+class H(BaseHTTPRequestHandler):
+    def _send(self, code, body, extra=()):
+        b = json.dumps(body).encode()
+        self.send_response(code); self.send_header("Content-Type", "application/json")
+        for k, v in extra:
+            self.send_header(k, v)
+        self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
+    def do_GET(self):
+        u = urlsplit(self.path); q = parse_qs(u.query)
+        tag = f"GET {u.path} sign={'sign' in q} token={'access_token' in q} partner_id={'partner_id' in q}"
+        if u.path == "/api/v2/product/get_item_list" and STATE["first_429"]:
+            STATE["first_429"] = False
+            LOG.append(tag + " status=429")
+            return self._send(429, {"error": "error_too_many_request", "message": "thử R13"}, [("Retry-After", "1")])
+        if u.path == "/api/v2/product/get_item_list":
+            body = {"error": "", "response": {"item": [{"item_id": int(i)} for i in ITEMS], "has_next_page": False}}
+        elif u.path == "/api/v2/product/get_item_base_info":
+            ids = q["item_id_list"][0].split(",")
+            body = {"error": "", "response": {"item_list": [
+                {"item_id": int(i), "item_name": ITEMS[i][0], "item_sku": ITEMS[i][1], "item_status": "NORMAL",
+                 "has_model": False, "price_info": [{"original_price": ITEMS[i][2]}],
+                 "stock_info_v2": {"summary_info": {"total_available_stock": 7}}} for i in ids]}}
+        else:
+            LOG.append(tag + " status=404")
+            self.send_response(404); self.end_headers(); return
+        LOG.append(tag + " status=200")
+        self._send(200, body)
+    def log_message(self, *a): pass
+srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+env = dict(os.environ, SHOPEE_API_BASE=f"http://127.0.0.1:{srv.server_address[1]}",
+           SHOPEE_PARTNER_ID="100000", SHOPEE_PARTNER_KEY="fake-partner-key-thu-it",
+           SHOPEE_SHOP_ID="200000", SHOPEE_ACCESS_TOKEN="fake-token-thu-it", PYTHONIOENCODING="utf-8")
+CODE = ("import sys; import ingest.market_api as ma; S=[]; ma._sleep=S.append; "
+        "rc=ma.main(['--channel','shopee','--kind','listing']); print('SLEEPS:', S, flush=True); sys.exit(rc)")
+p = subprocess.run([sys.executable, "-c", CODE], env=env, capture_output=True, text=True, encoding="utf-8",
+                   timeout=120)
+print(p.stdout + p.stderr)
+print("SERVER_LOG:"); print("\n".join(LOG) or "(0 request)")
+print("N_ITEM_LIST=" + str(sum("/api/v2/product/get_item_list " in l for l in LOG)))
+srv.shutdown(); raise SystemExit(p.returncode)

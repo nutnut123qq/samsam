@@ -1,0 +1,31 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "pipelines.job_runs",
+  "--list"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:58:25+07:00",
+ "ket_thuc": "2026-10-24T18:58:27+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?m)^backup: [^\\n]*\\(hạn \\d+h\\)",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*(?:Traceback|\\[err\\]))",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "3eeeeacaea7059c3da5c4e2b593b5e22d5b816208bd40ba51df0db916f01619c",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,85 @@
+"""HARNESS r13-fix4 — bản sao `itacc_r13_docx12/harness/image_run.py.txt` (r13, giữ nguyên mọi phần khác), THÊM biến
+IMAGE_RUN_PAYLOAD chọn thân trả về của biên HTTP giả (F2): `valid` (mặc định, như r13: PNG đúng cỡ, cost 0.04) ·
+`bad_b64` (200, data[0].b64_json = "!bad-base64!", usage.cost 0.40) · `not_image` (200, b64 của byte không phải ảnh,
+usage.cost 0.40). Mọi cổng/ghi sổ của sản phẩm chạy thật trên DB thử. Không mạng (MockTransport + chặn socket ngoài)."""
+
+import base64
+import io
+import json
+import os
+import socket
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO))
+os.chdir(REPO)
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+_orig = socket.socket.connect
+
+
+def _guard(self, addr):
+    host = addr[0] if isinstance(addr, tuple) else str(addr)
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        raise OSError(f"[image_run] chặn kết nối mạng ngoài tới {host}")
+    return _orig(self, addr)
+
+
+socket.socket.connect = _guard
+LOG = Path(sys.argv[1])
+ARGS = sys.argv[2:]
+os.environ["OPENROUTER_API_KEY"] = "khoa-gia-thu-r13"
+
+import httpx  # noqa: E402
+from PIL import Image  # noqa: E402
+
+from pipelines import image_provider_openrouter as orp  # noqa: E402
+from pipelines import image_studio as ims  # noqa: E402
+from pipelines import llm_gateway as gw  # noqa: E402
+
+REQS = []
+
+
+def _png_b64(w, h):
+    b = io.BytesIO()
+    Image.new("RGB", (w, h), (46, 110, 64)).save(b, "PNG")
+    return base64.b64encode(b.getvalue()).decode()
+
+
+def handler(request):
+    body = json.loads(request.content or b"{}")
+    REQS.append({"url": str(request.url), "method": request.method, "body": body})
+    w, h = (int(x) for x in str(body.get("size", "64x64")).split("x"))
+    mode = os.environ.get("IMAGE_RUN_PAYLOAD", "valid")
+    if mode == "bad_b64":
+        return httpx.Response(200, json={"data": [{"b64_json": "!bad-base64!"}], "usage": {"cost": 0.40}})
+    if mode == "not_image":
+        return httpx.Response(200, json={"data": [{"b64_json": base64.b64encode(b"khong-phai-anh").decode()}],
+                                         "usage": {"cost": 0.40}})
+    return httpx.Response(200, json={"created": 1, "data": [{"b64_json": _png_b64(w, h), "media_type": "image/png"}],
+                                     "usage": {"prompt_tokens": 0, "completion_tokens": 0, "cost": 0.04}})
+
+
+orp._image_http = lambda: httpx.Client(transport=httpx.MockTransport(handler), timeout=30)
+
+
+def _dump(rc):
+    try:
+        only = list(gw._config().get("provider_only") or [])
+    except Exception as e:  # noqa: BLE001 — chỉ là dữ kiện đối chiếu
+        only = f"loi {type(e).__name__}"
+    LOG.parent.mkdir(parents=True, exist_ok=True)
+    LOG.write_text(json.dumps({"requests": len(REQS), "reqs": REQS, "provider_only_cfg": only, "rc": rc},
+                              ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"[image_run] requests={len(REQS)}", file=sys.stderr, flush=True)
+
+
+rc = 1
+try:
+    rc = ims.main(ARGS)
+except SystemExit as e:  # argparse
+    rc = e.code if isinstance(e.code, int) else 2
+finally:
+    _dump(rc)
+sys.exit(rc)

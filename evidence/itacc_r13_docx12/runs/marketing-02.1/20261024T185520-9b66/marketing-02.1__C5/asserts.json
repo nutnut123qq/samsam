@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from content_drafts where content_type = 'image'",
+  "expect": 4,
+  "actual": 4,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from image_assets",
+  "expect": 4,
+  "actual": 4,
+  "dat": true
+ },
+ {
+  "file_glob": "evidence\\itacc_r13_docx12\\runs\\marketing-02.1\\20261024T185520-9b66\\scratch/image_assets/*.png",
+  "count": 1,
+  "actual": 1,
+  "files": [
+   {
+    "path": "evidence/itacc_r13_docx12/runs/marketing-02.1/20261024T185520-9b66/scratch/image_assets/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.png",
+    "sha256": "14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430"
+   }
+  ],
+  "dat": true
+ }
+]

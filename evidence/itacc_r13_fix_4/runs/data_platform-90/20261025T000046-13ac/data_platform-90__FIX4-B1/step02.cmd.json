@@ -1,0 +1,37 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "scripts/db_backup.py"
+ ],
+ "env_doi": [
+  "BACKUP_DATABASE_URL",
+  "BACKUP_DIR",
+  "BACKUP_OFFSITE",
+  "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE",
+  "BACKUP_PASSPHRASE_FILE",
+  "BACKUP_REQUIRE_ENCRYPTION",
+  "DRILL_DATABASE_URL",
+  "JOB_DATABASE_URL",
+  "LOADER_DATABASE_URL",
+  "PG_BIN",
+  "WEBHOOK_DATABASE_URL"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:00:55+07:00",
+ "ket_thuc": "2026-10-25T00:00:56+07:00",
+ "exit": 2,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?!.*CHƯA mã hóa)(?=.*\\[done\\] samsam_itacc_r13fix4_\\w+_\\d{8}_\\d{6}_vn\\.dump\\.enc — \\d+ bytes)(?=.*\\[offsite\\] đã chép \\+ kiểm sha256)",
+   "khop": false
+  }
+ ],
+ "dat": false,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e71a2e9c6dc880b701423831960468779a8d2bfb221b42a092138d9f573a425c",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

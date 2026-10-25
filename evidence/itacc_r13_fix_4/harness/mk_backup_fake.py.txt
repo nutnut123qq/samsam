@@ -1,0 +1,18 @@
+"""HARNESS r13-fix4 — tái hiện ca controller F3 dưới <BASE>: <BASE>/bk/backup_runs.jsonl 1 dòng mới status=ok + offsite
+khác null, manifest CHỈ {"encrypted": true}, KHÔNG có tệp dump; <BASE>/off rỗng; <BASE>/khoa.txt tệp khóa tổng hợp.
+  python mk_backup_fake.py.txt <BASE>   → in "[fake] ok"."""
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+base = Path(sys.argv[1])
+(base / "bk").mkdir(parents=True, exist_ok=False)
+(base / "off").mkdir()
+(base / "khoa.txt").write_text("synthetic-only-passphrase-1234567890\n", encoding="utf-8")
+fn = "missing_20261024_101010_vn.dump.enc"
+(base / "bk" / "backup_runs.jsonl").write_text(json.dumps({
+    "ts": datetime.now(timezone.utc).isoformat(), "status": "ok", "file": fn,
+    "offsite": {"dir": str(base / "off")}}) + "\n", encoding="utf-8")
+(base / "bk" / (fn + ".manifest.json")).write_text(json.dumps({"encrypted": True}), encoding="utf-8")
+print("[fake] ok")

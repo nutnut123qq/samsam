@@ -1,0 +1,30 @@
+"""HARNESS r13-fix4 — chạy `python -m <module> <đối số>` (runpy) với MỌI socket connect ra ngoài localhost bị CHẶN và đếm
+(DB thử 127.0.0.1 vẫn đi được). In `[guard] mang=N` ra stderr khi thoát. Dùng cho ca kiểm "không tự tải model / không gọi
+calendar" ở đường CLI thật. Không sửa mã sản phẩm.   python guard_run.py.txt -m <module> [đối số...]"""
+import atexit
+import runpy
+import socket
+import sys
+from pathlib import Path
+
+for s in (sys.stdout, sys.stderr):
+    s.reconfigure(encoding="utf-8", errors="replace")
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+NET = []
+_orig = socket.socket.connect
+
+
+def _guard(self, addr):
+    host = addr[0] if isinstance(addr, tuple) else str(addr)
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        NET.append(str(host)[:80])
+        raise OSError(f"[guard] chặn kết nối mạng ngoài tới {host}")
+    return _orig(self, addr)
+
+
+socket.socket.connect = _guard
+atexit.register(lambda: print(f"[guard] mang={len(NET)} {NET[:3]}", file=sys.stderr, flush=True))
+assert sys.argv[1] == "-m", "dùng: guard_run.py.txt -m <module> ..."
+mod = sys.argv[2]
+sys.argv = [mod] + sys.argv[3:]
+runpy.run_module(mod, run_name="__main__", alter_sys=True)

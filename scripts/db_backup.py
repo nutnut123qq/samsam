@@ -22,6 +22,10 @@ env tiến trình thắng `.env`):
 - `BACKUP_OFFSITE` (tùy chọn): rỗng → `[warn]`; `dir:<path>` (ngoài repo)
   → chép dump + manifest, kiểm lại sha256, retention như local;
   `s3://<bucket>/<prefix>` → KHÔNG gọi mạng, báo external-dep, exit 3.
+- r13: `BACKUP_REQUIRE_ENCRYPTION=1` → thiếu `BACKUP_PASSPHRASE_FILE` = exit 2
+  (không bao giờ ghi bản rõ); `BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1` →
+  offsite cùng thiết bị (`st_dev`) với BACKUP_DIR = exit 2 (không bật: chỉ
+  `[warn]`). Khác thiết bị KHÔNG chứng minh khác máy — Bên B xác nhận.
 - `PG_BIN` (tùy chọn) — thư mục chứa `pg_dump`/`pg_restore`.
 
 Chọn công cụ Postgres (ghi vào manifest `tool`), theo thứ tự:
@@ -359,16 +363,44 @@ def read_config(env=os.environ) -> dict:
         if not passfile.is_file():
             raise UsageError("BACKUP_PASSPHRASE_FILE không tồn tại")
         check_passfile(passfile)
+    if passfile is None and _flag(env, "BACKUP_REQUIRE_ENCRYPTION"):
+        # r13 (data_platform-90): server Bên B bật cờ này → KHÔNG bao giờ ghi
+        # bản rõ (thiếu khóa = usage exit 2 trước khi connect).
+        raise UsageError("BACKUP_REQUIRE_ENCRYPTION=1 nhưng chưa có "
+                         "BACKUP_PASSPHRASE_FILE — không ghi bản chưa mã hóa")
     off = (env.get("BACKUP_OFFSITE") or "").strip()
     offsite = None
     if off.startswith("dir:"):
         offsite = ("dir", dir_outside_repo(off[4:], "BACKUP_OFFSITE dir:"))
+        if same_device(bdir, offsite[1]):
+            # r13: cùng thiết bị lưu trữ với BACKUP_DIR = chưa phải offsite.
+            if _flag(env, "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE"):
+                raise UsageError("BACKUP_OFFSITE cùng thiết bị lưu trữ với "
+                                 "BACKUP_DIR — không phải bản sao ngoài máy")
+            print("[warn] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR "
+                  "(st_dev) — chưa phải offsite thật")
     elif off.startswith("s3://"):
         offsite = ("s3", off)
     elif off:
         raise UsageError("BACKUP_OFFSITE phải là dir:<path> hoặc s3://...")
     return {"dir": bdir, "keep": int(raw_keep), "passfile": passfile,
             "offsite": offsite}
+
+
+def _flag(env, name: str) -> bool:
+    return (env.get(name) or "").strip() == "1"
+
+
+def same_device(a: Path, b: Path) -> bool:
+    """Hai đường (thư mục gần nhất đang tồn tại) cùng `st_dev`? Khác thiết
+    bị KHÔNG chứng minh khác máy (ổ mạng vẫn có thể cùng host) — chỉ là điều
+    kiện cần; máy offsite thật do Bên B xác nhận."""
+    def dev(p: Path) -> int:
+        p = Path(p).resolve()
+        while not p.exists() and p.parent != p:
+            p = p.parent
+        return p.stat().st_dev
+    return dev(a) == dev(b)
 
 
 def _snapshot_counts(conn) -> dict:

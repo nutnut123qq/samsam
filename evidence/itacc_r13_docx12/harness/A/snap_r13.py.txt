@@ -1,0 +1,20 @@
+"""HARNESS r13 nhóm A — so trạng thái DB trước/sau trong CÙNG một ca (MỚI): giá trị lấy bằng placeholder runner
+{sql:...} (runner thay lúc chạy từng bước). `save` ghi giá trị vào tệp; `cmp` exit 0 nếu giá trị hiện tại == giá trị
+đã lưu, exit 1 nếu khác (in cả hai). Dùng để dịch kỳ vọng r10 "không thêm dòng / 0 ghi / không đổi".
+  python snap_r13.py.txt save <file> <value> · python snap_r13.py.txt cmp <file> <value>"""
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+mode, f, v = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
+if mode == "save":
+    if f.exists():
+        sys.exit(f"[snap] {f.name} đã có — không ghi đè")
+    f.write_text(v, encoding="utf-8")
+    print(f"[snap] save {v}")
+elif mode == "cmp":
+    old = f.read_text(encoding="utf-8")
+    print(f"[snap] trước={old} sau={v}")
+    sys.exit(0 if old == v else 1)
+else:
+    sys.exit("mode phải là save|cmp")

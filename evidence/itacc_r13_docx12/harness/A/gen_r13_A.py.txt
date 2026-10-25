@@ -1,0 +1,538 @@
+"""HARNESS r13 nhóm A — sinh NHÁP tiêu chí evidence/itacc_r13_docx12/criteria/drafts/r13_A.json (production-03,
+data_platform-02.1, data_platform-02.2, production-02). Viết từ ĐỌC MÃ (ingest/doc_intake.py, agents/sx_label.py,
+ingest/product_dossiers.py, ingest/golden_store.py) + bản ghi r10 evidence/itacc_r10/items/<id>.json + đầu ra r10
+evidence/itacc_r10/g4/out/*.txt, g5/runs/*.txt — không chạy DB/lệnh sản phẩm. Người viết nháp KHÔNG khóa.
+  python -I gen_r13_A.py.txt"""
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+EV = Path(__file__).resolve().parents[2]
+OUT = EV / "criteria" / "drafts" / "r13_A.json"
+
+ERR = list(range(1, 256))                       # r10 "exit != 0"
+NO_TB = "\\A(?![\\s\\S]*Traceback)"
+SEED = {"argv": ["python", "-m", "pipelines.rollout", "--seed", "--by", "Người Thử R13"], "expect_exit": 0,
+        "stdout_re": "\\[OK\\] vào sổ"}
+A_SHA = "af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1"   # gtn_thu_it.pdf (r10)
+S_SHA = "472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c"   # scan_thu_it.png (r10)
+ENGINE = "paddleocr-2.x/latin_PP-OCRv3"
+PREP = "{H}/A/prep_r13.py.txt"
+SNAP = "{H}/A/snap_r13.py.txt"
+
+
+def seed_case(item):
+    return {"ma": f"{item}__S00", "nguon_r10": "MOI", "tien_quyet": True,
+            "mo_ta": "seed sổ triển khai trên DB thử (tính năng co_code = chạy thử; mục mot_phan chưa vào sổ = chạy thử "
+                     "theo rollout.mode) — như SETUP-seed r10", "buoc": [SEED]}
+
+
+def env_none(intake="{SCR}/intake"):
+    # OCR_PROVIDER "" (không null): load_dotenv(.env) không ghi đè biến đã có → chắc chắn provider none
+    return {"OCR_PROVIDER": "", "DOC_INTAKE_DIR": intake, "DOC_ORIGINALS_DIR": "{SCR}/originals"}
+
+
+def env_paddle(intake, model_dir=""):
+    # OCR_PADDLE_MODEL_DIR "" = mặc định ~/.paddleocr/whl (chặn .env lấp); OCR_MAX_PAGES/OCR_TIMEOUT_S xóa = mặc định mã
+    return {"OCR_PROVIDER": "paddle_local", "OCR_PADDLE_MODEL_DIR": model_dir, "OCR_MAX_PAGES": None,
+            "OCR_TIMEOUT_S": None, "DOC_INTAKE_DIR": intake, "DOC_ORIGINALS_DIR": "{SCR}/originals"}
+
+
+def intake(env, exit_, *res, out_re=None):
+    st = {"argv": ["python", "-m", "ingest.doc_intake"], "env": env, "expect_exit": exit_}
+    if res:
+        st["stdout_re"] = "(?s)" + "".join(f"(?=.*{r})" for r in res)
+    st["out_re"] = out_re or NO_TB
+    return st
+
+
+def prep(dest, *src, name=None, suffix=None):
+    a = ["python", PREP, dest, *src]
+    if name:
+        a += ["--name", name]
+    if suffix:
+        a += ["--suffix", suffix]
+    return {"argv": a, "expect_exit": 0, "stdout_re": "\\[prep\\] ok"}
+
+
+def allre(*res):
+    return "(?s)" + "".join(f"(?=.*{r})" for r in res)
+
+
+DOC_STATE = ("{sql:select md5((select count(*) from documents)::text || '|' || (select string_agg(sha256 || ':' || status"
+             " || ':' || text_source || ':' || coalesce(ocr_engine, '-') || ':' || coalesce(pages::text, '-') || ':' ||"
+             " coalesce(pii_flag::text, '-') || ':' || coalesce(verified_by, '-'), ',' order by sha256) from documents)"
+             " || '|' || (select coalesce(string_agg(sha256 || ':' || field || ':' || value || ':' || verified::text, ','"
+             " order by sha256, field), '') from document_fields))}")
+
+# ------------------------------------------------------------------ production-03
+P3 = "production-03"
+FX3 = "{FX13}/items/production-03"
+LC = "select count(*) from approval_queue where object_type = 'label_check'"
+
+
+def sx(*args, env=None, exit_=0, so=None, se=None):
+    st = {"argv": ["python", "-m", "agents.sx_label", *args], "expect_exit": exit_}
+    if env is not None:
+        st["env"] = env
+    if so:
+        st["stdout_re"] = so
+    if se:
+        st["stderr_re"] = se
+    return st
+
+
+p03 = {
+    "id": P3, "db": "samsam_itacc_r13_p03", "muc_kiem_de_xuat": "LOCAL",
+    "nguon_tieu_chi": "evidence/itacc_r10/items/production-03.json (C1–C4) + MOI_R13 provider OCR paddle_local",
+    "ly_do_kiem_lai": "r13 thêm provider OCR tại chỗ paddle_local (ingest/doc_intake.py) mà sx_label --image dùng chung",
+    "tieu_chi_cu_the": [
+        "T1 sx_label --text trích ĐKSP/quy cách/NSX-HSD/mã lô/cụm bắt buộc, so golden + hồ sơ lô + listing → danh sách lệch "
+        "đúng; --submit → 1 mục production/label_check agent:sx_label",
+        "T2 chạy lại cùng nhãn → skip; SKU nhóm hạn chế → payload chỉ mã H-<sha8>",
+        "T3 --image với OCR none → exit 2 hướng dẫn (chặn an toàn, KHÔNG làm đọc ảnh thành đạt); file rỗng / SKU lạ → exit 1",
+        "T4 không sửa nhãn/golden/listing",
+        "T5 (r13) --image ảnh nhãn fixture với OCR_PROVIDER=paddle_local (OCR tại chỗ, model cục bộ) → exit 0, trích được "
+        "ĐKSP 15/2026 và mã lô L2026-1012 từ ẢNH, không ghi DB khi không --submit; --submit → đúng 1 mục label_check "
+        "production pending agent:sx_label cho SKU mat-ong-sam-300ml; OCR none vẫn exit 2 (T3 giữ)",
+    ],
+    "ca": [
+        seed_case(P3),
+        {"ma": f"{P3}__S01", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "dựng lại trạng thái DB chung r10 (samsam_itacc_r10_prod): production-02 P02-1 đã nạp golden_prod.json "
+                  "(savina-12v 10 viên) TRƯỚC P03 — r13 DB riêng nên nạp lại bằng đúng lệnh P02-1",
+         "buoc": [{"argv": ["python", "-m", "ingest.golden_store", "--file", f"{FX3}/golden_prod.json"], "expect_exit": 0}],
+         "kiem": [{"sql": "select pack_spec from sku_master where sku_key = 'savina-12v'",
+                   "expect": "10 viên ngậm (tuýp PP)"}]},
+        {"ma": f"{P3}__P03-1", "nguon_r10": "P03-1",
+         "mo_ta": "nhãn savina-12v có lỗi (+ listing fixture nạp trước, r10 P03-0) → ĐKSP lệch, thiếu khuyến cáo, lô không "
+                  "hồ sơ; không --submit → không ghi hàng duyệt",
+         "buoc": [{"argv": ["python", "-m", "ingest.market_csv", "--file", f"{FX3}/listing_shopee.csv", "--channel",
+                            "shopee", "--kind", "listing"], "expect_exit": 0},
+                  sx("--sku", "savina-12v", "--text", f"{FX3}/nhan_savina.txt",
+                     so=allre("\\[dang_ky_lech\\] số ĐKSP: nhãn ghi 1234/2021/ĐKSP; golden 8014/2021/ĐKSP",
+                              "\\[bat_buoc_thieu\\] nhãn thiếu: câu khuyến cáo TPBVSK",
+                              "\\[lo_khong_ho_so\\] mã lô IT-LOT-777 trên nhãn chưa có hồ sơ lô",
+                              "\\[dry\\] \\d+ điểm lệch"))],
+         "kiem": [{"sql": LC, "expect": 0}]},
+        {"ma": f"{P3}__P03-2", "nguon_r10": "P03-2", "mo_ta": "--submit → 1 label_check production agent:sx_label pending "
+                                                              "(payload không chép nguyên văn nhãn)",
+         "buoc": [sx("--sku", "savina-12v", "--text", f"{FX3}/nhan_savina.txt", "--submit",
+                     so="\\[submit\\] hàng duyệt #\\d+ \\(label_check, khối production\\)")],
+         "kiem": [{"sql": LC + " and block = 'production' and created_by = 'agent:sx_label' and status = 'pending' and "
+                               "object_id like 'sxlabel:savina-12v:b5ade2c4c6fd:%'", "expect": 1},
+                  {"sql": LC, "expect": 1},
+                  {"sql": LC + " and payload like '%SAVINA THỬ IT%'", "expect": 0}]},
+        {"ma": f"{P3}__P03-3", "nguon_r10": "P03-3", "mo_ta": "ÂM idempotent: --submit lại → [skip], không thêm mục",
+         "buoc": [sx("--sku", "savina-12v", "--text", f"{FX3}/nhan_savina.txt", "--submit",
+                     so="\\[skip\\] đợt này đã có")],
+         "kiem": [{"sql": LC, "expect": 1}]},
+        {"ma": f"{P3}__P03-4", "nguon_r10": "P03-4", "mo_ta": "nhãn rượu --submit → hàng duyệt chỉ mã H-xxxxxxxx (không "
+                                                              "sku_key/tên rượu)",
+         "buoc": [sx("--sku", "ruou-sam-chai-thuy-tinh-500ml", "--text", f"{FX3}/nhan_ruou.txt", "--submit",
+                     so="\\[submit\\] hàng duyệt #\\d+")],
+         "kiem": [{"sql": LC + " and object_id like 'sxlabel:H-0e8929fd:%' and title ~ '^Đối soát nhãn — SKU "
+                               "H-[0-9a-f]{8}: '", "expect": 1},
+                  {"sql": LC + " and (object_id || ' ' || title || ' ' || payload) ~* '(ruou|rượu)'", "expect": 0}]},
+        {"ma": f"{P3}__P03-5", "nguon_r10": "P03-5",
+         "mo_ta": "đọc ẢNH nhãn với OCR none (OCR_PROVIDER rỗng) → exit 2 chưa cấu hình OCR — chặn an toàn giữ nguyên r13",
+         "buoc": [sx("--sku", "savina-12v", "--image", f"{FX3}/nhan.png", env={"OCR_PROVIDER": ""}, exit_=2,
+                     se="chưa cấu hình OCR")],
+         "kiem": [{"sql": LC, "expect": 2}]},
+        {"ma": f"{P3}__P03-6", "nguon_r10": "P03-6", "mo_ta": "ÂM file rỗng / SKU lạ → exit 1; label_check vẫn 2",
+         "buoc": [sx("--sku", "savina-12v", "--text", f"{FX3}/nhan_empty.txt", exit_=1, se="rỗng"),
+                  sx("--sku", "khong-co", "--text", f"{FX3}/nhan_savina.txt", exit_=1, se="không có trong golden")],
+         "kiem": [{"sql": LC, "expect": 2}]},
+        {"ma": f"{P3}__R13-01", "nguon_r10": "MOI_R13",
+         "mo_ta": "ảnh nhãn fixture (chữ GIẢ) --image với OCR_PROVIDER=paddle_local → exit 0, OCR trích ĐKSP 15/2026 + lô "
+                  "L2026-1012 (regex bảo thủ: chữ Việt có thể mất dấu); có lệch (food → thiếu số tự công bố; lô chưa có hồ "
+                  "sơ) → [dry], không ghi hàng duyệt",
+         "buoc": [sx("--sku", "mat-ong-sam-300ml", "--image", "{FX13}/ocr/nhan_mat_ong.png",
+                     env={"OCR_PROVIDER": "paddle_local", "OCR_PADDLE_MODEL_DIR": "", "OCR_MAX_PAGES": None,
+                          "OCR_TIMEOUT_S": None},
+                     so=allre("trích: ĐKSP [^·\\n]*15/2026/ĐKSP", "· lô [^·\\n]*L2026-1012",
+                              "\\[dry\\] \\d+ điểm lệch"))],
+         "kiem": [{"sql": LC, "expect": 2}]},
+        {"ma": f"{P3}__R13-02", "nguon_r10": "MOI_R13",
+         "mo_ta": "như R13-01 + --submit → đúng 1 mục label_check production pending agent:sx_label cho mat-ong-sam-300ml",
+         "buoc": [sx("--sku", "mat-ong-sam-300ml", "--image", "{FX13}/ocr/nhan_mat_ong.png", "--submit",
+                     env={"OCR_PROVIDER": "paddle_local", "OCR_PADDLE_MODEL_DIR": "", "OCR_MAX_PAGES": None,
+                          "OCR_TIMEOUT_S": None},
+                     so="\\[submit\\] hàng duyệt #\\d+ \\(label_check, khối production\\)")],
+         "kiem": [{"sql": LC + " and object_id like 'sxlabel:mat-ong-sam-300ml:%' and block = 'production' and "
+                               "created_by = 'agent:sx_label' and status = 'pending'", "expect": 1},
+                  {"sql": LC, "expect": 3}]},
+    ],
+}
+
+# ------------------------------------------------------------------ data_platform-02.1
+D1 = "data_platform-02.1"
+FXD1 = "{FX13}/items/data_platform-02.1"
+DOC_A = f"select {{c}} from documents where sha256 = '{A_SHA}'"
+DOC_S = f"select {{c}} from documents where sha256 = '{S_SHA}'"
+PREV01 = "{OUT}/../../data_platform-02.1__DP021-01"
+OCR_OK = (f"status = 'pending_review' and text_source = 'ocr' and ocr_engine = '{ENGINE}' and pii_flag is not null "
+          "and verified_by is null")
+SO_GIAY = "f.field = 'so_giay' and f.value ~* '^123/2026/[ĐÐD]KSP$' and not f.verified"
+
+d021 = {
+    "id": D1, "db": "samsam_itacc_r13_dp021", "muc_kiem_de_xuat": "LOCAL",
+    "nguon_tieu_chi": "evidence/itacc_r10/items/data_platform-02.1.json + MOI_R13 provider OCR paddle_local",
+    "ly_do_kiem_lai": "ingest/doc_intake.py đổi ở r13: provider paddle_local + cột documents.ocr_engine",
+    "tieu_chi_cu_the": [
+        "T1 doc_intake: PDF có lớp chữ → document_fields trích regex chờ xác nhận (pending_review); ảnh scan → cho_ocr + "
+        "[blocked] exit 2 (OCR none)",
+        "T2 --reprocess-pending provider none → exit 2 0 ghi",
+        "T3 không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+        "T4 (r13) OCR_PROVIDER=paddle_local: PDF scan chỉ-ảnh 2 trang + ảnh nhãn → pending_review, text_source 'ocr', "
+        f"ocr_engine '{ENGINE}', so_giay khớp 123/2026/[ĐD]KSP, mọi field verified=false (KHÔNG tự verified)",
+        "T5 (r13) đường xử lý lại: intake không provider → cho_ocr exit 2 [blocked]; --reprocess-pending paddle_local → "
+        "pending_review + ocr_engine + field nháp; chạy lại → không đổi gì",
+        "T6 (r13) ảnh hỏng / PDF quá OCR_MAX_PAGES (31 > 30) → đếm error, exit 1, không ghi dòng documents; thiếu model cục "
+        "bộ (OCR_PADDLE_MODEL_DIR rỗng) → error 'thiếu model OCR cục bộ', không tạo dòng, không nạp PaddleOCR (không tải)",
+    ],
+    "ca": [
+        seed_case(D1),
+        {"ma": f"{D1}__S01", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "đặt 2 fixture r10 (chép nguyên byte, sha = r10) vào thư mục intake {SCR}/intake/giay_tiep_nhan/ — r10 "
+                  "sinh bằng g5/harness/make_pdf.py.txt vào scratchpad",
+         "buoc": [prep("{SCR}/intake/giay_tiep_nhan", f"{FXD1}/gtn_thu_it.pdf", f"{FXD1}/scan_thu_it.png")]},
+        {"ma": f"{D1}__DP021-01", "nguon_r10": "DP021-01", "tien_quyet": True,
+         "mo_ta": "intake PDF chữ + ảnh scan (OCR none) → PDF pending_review + fields; ảnh cho_ocr + exit 2 [blocked]",
+         "buoc": [intake(env_none(), 2, "\\[new\\] af03f4436115 giay_tiep_nhan pending_review fields=[1-9]",
+                         "\\[new\\] 472d705c02fd giay_tiep_nhan cho_ocr fields=0",
+                         "\\[done\\] new=2 dup=0 cho_ocr=1 skipped=0 error=0", "\\[blocked\\] 1 tài liệu scan/ảnh ở cho_ocr")],
+         "kiem": [{"sql": DOC_A.format(c="status || '|' || text_source || '|' || pages || '|' || pii_flag::text || '|' || "
+                                         "doc_type"), "expect": "pending_review|pdf_text|1|false|giay_tiep_nhan"},
+                  {"sql": DOC_S.format(c="status || '|' || text_source || '|' || coalesce(pii_flag::text, 'NULL')"),
+                   "expect": "cho_ocr|none|NULL"},
+                  {"sql": f"select count(*) > 0 from document_fields where sha256 = '{A_SHA}'", "expect": True},
+                  {"sql": f"select count(*) from document_fields where sha256 = '{S_SHA}'", "expect": 0}]},
+        {"ma": f"{D1}__DP021-01q", "nguon_r10": "DP021-01q",
+         "mo_ta": "assert DB (r10 q.py → SQL): document_fields verified=false; giá trị trích r10 (PDF chữ ASCII)",
+         "kiem": [{"sql": "select bool_and(not verified) and count(*) > 0 from document_fields", "expect": True},
+                  {"sql": f"select value from document_fields where sha256 = '{A_SHA}' and field = 'so_giay'",
+                   "expect": "123/2026/DKSP"},
+                  {"sql": f"select value from document_fields where sha256 = '{A_SHA}' and field = 'ngay_cap'",
+                   "expect": "2026-10-15"},
+                  {"sql": f"select value from document_fields where sha256 = '{A_SHA}' and field = 'ten_san_pham'",
+                   "expect": "Mat ong sam Thu IT"}]},
+        {"ma": f"{D1}__DP021-02", "nguon_r10": "DP021-02",
+         "mo_ta": "ảnh scan → cho_ocr, exit 2 [blocked] — r10 'như DP021-01 (cùng lượt chạy)': đọc lại exit + stdout bước "
+                  "intake của ca DP021-01 (cùng lượt runner) + trạng thái DB",
+         "kiem": [{"file_re": f"{PREV01}/step01.cmd.json", "re": "\"exit\": 2,", "expect": True},
+                  {"file_re": f"{PREV01}/step01.stdout.txt",
+                   "re": "\\[blocked\\] 1 tài liệu scan/ảnh ở cho_ocr — OCR_PROVIDER chưa cấu hình", "expect": True},
+                  {"sql": DOC_S.format(c="status"), "expect": "cho_ocr"}]},
+        {"ma": f"{D1}__DP021-03", "nguon_r10": "DP021-03", "mo_ta": "--reprocess-pending provider none → exit 2, 0 ghi",
+         "buoc": [{"argv": ["python", "-m", "ingest.doc_intake", "--reprocess-pending"],
+                   "env": env_none(), "expect_exit": 2,
+                   "stdout_re": "\\[blocked\\] OCR_PROVIDER chưa cấu hình", "out_re": NO_TB}],
+         "kiem": [{"sql": DOC_S.format(c="status"), "expect": "cho_ocr"},
+                  {"sql": "select count(*) from documents", "expect": 2},
+                  {"sql": "select count(*) from documents where ocr_engine is not null", "expect": 0}]},
+        {"ma": f"{D1}__R13-01", "nguon_r10": "MOI_R13",
+         "mo_ta": "thiếu model cục bộ: OCR_PADDLE_MODEL_DIR = thư mục rỗng → [err] 'thiếu model OCR cục bộ (det, rec)', "
+                  "error=1, exit 1, không dòng documents. Kiểm TRƯỚC import paddleocr nên không có đường tải model; "
+                  "runner không chặn mạng — '0 kết nối mạng' là probe A (khong_mo_mang), không phải ca này. Chạy TRƯỚC "
+                  "R13-02 (cùng ảnh nhãn: lỗi không tạo dòng nên R13-02 vẫn là tài liệu mới)",
+         "buoc": [prep("{SCR}/empty_models"),
+                  prep("{SCR}/intake_nomodel/nhan", "{FX13}/ocr/nhan_mat_ong.png"),
+                  intake(env_paddle("{SCR}/intake_nomodel", "{SCR}/empty_models"), 1,
+                         "\\[err\\] #1 thiếu model OCR cục bộ \\(det, rec\\) ở OCR_PADDLE_MODEL_DIR",
+                         "\\[done\\] new=0 dup=0 cho_ocr=0 skipped=0 error=1")],
+         "kiem": [{"sql": "select count(*) from documents where filename = 'nhan_mat_ong.png'", "expect": 0}]},
+        {"ma": f"{D1}__R13-02", "nguon_r10": "MOI_R13",
+         "mo_ta": "intake giay_tiep_nhan/tiep_nhan_scan.pdf (2 trang chỉ ảnh) + nhan/nhan_mat_ong.png với "
+                  "OCR_PROVIDER=paddle_local → cả hai pending_review, text_source ocr, ocr_engine ghi, so_giay ~ 123/2026, "
+                  "field verified=false; exit 0, không [blocked]",
+         "buoc": [prep("{SCR}/intake_ocr/giay_tiep_nhan", "{FX13}/ocr/tiep_nhan_scan.pdf"),
+                  prep("{SCR}/intake_ocr/nhan", "{FX13}/ocr/nhan_mat_ong.png"),
+                  intake(env_paddle("{SCR}/intake_ocr"), 0,
+                         "\\[new\\] [0-9a-f]{12} giay_tiep_nhan pending_review fields=[1-3]",
+                         "\\[new\\] [0-9a-f]{12} nhan pending_review fields=0",
+                         "\\[done\\] new=2 dup=0 cho_ocr=0 skipped=0 error=0",
+                         out_re="\\A(?![\\s\\S]*(\\[blocked\\]|Traceback))")],
+         "kiem": [{"sql": "select count(*) from documents where filename in ('tiep_nhan_scan.pdf', 'nhan_mat_ong.png') "
+                          f"and {OCR_OK}", "expect": 2},
+                  {"sql": "select doc_type || '|' || pages from documents where filename = 'tiep_nhan_scan.pdf'",
+                   "expect": "giay_tiep_nhan|2"},
+                  {"sql": "select doc_type || '|' || pages from documents where filename = 'nhan_mat_ong.png'",
+                   "expect": "nhan|1"},
+                  {"sql": "select count(*) from document_fields f join documents d using (sha256) where "
+                          f"d.filename = 'tiep_nhan_scan.pdf' and {SO_GIAY}", "expect": 1},
+                  {"sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename in "
+                          "('tiep_nhan_scan.pdf', 'nhan_mat_ong.png') and f.verified", "expect": 0},
+                  {"sql": "select count(*) from document_fields f join documents d using (sha256) where "
+                          "d.filename = 'nhan_mat_ong.png'", "expect": 0}]},
+        {"ma": f"{D1}__R13-03", "nguon_r10": "MOI_R13",
+         "mo_ta": "ảnh hỏng (hong.jpg) + PDF 31 trang (qua_trang.pdf) với paddle_local → 2 error, exit 1, không dòng "
+                  "documents (bản gốc vẫn lưu theo thiết kế store_original trước trích — không assert)",
+         "buoc": [prep("{SCR}/intake_err/giay_tiep_nhan", "{FX13}/ocr/qua_trang.pdf"),
+                  prep("{SCR}/intake_err/nhan", "{FX13}/ocr/hong.jpg"),
+                  intake(env_paddle("{SCR}/intake_err"), 1,
+                         "\\[err\\] #1 PDF 31 trang > OCR_MAX_PAGES=30",
+                         "\\[err\\] #2 ảnh hỏng/không đọc được",
+                         "\\[done\\] new=0 dup=0 cho_ocr=0 skipped=0 error=2")],
+         "kiem": [{"sql": "select count(*) from documents where filename in ('qua_trang.pdf', 'hong.jpg')", "expect": 0}]},
+        {"ma": f"{D1}__R13-04", "nguon_r10": "MOI_R13", "tien_quyet": True,
+         "mo_ta": "đường xử lý lại (1/3): biến thể tiep_nhan_scan_rp.pdf (= byte tiep_nhan_scan.pdf + hậu tố "
+                  "'%r13-reprocess-variant' sau %%EOF → sha khác, nội dung trang y hệt; cần vì sha đã có ở R13-02 sẽ "
+                  "'dup') intake KHÔNG provider → cho_ocr, exit 2 [blocked]",
+         "buoc": [prep("{SCR}/intake_rp/giay_tiep_nhan", "{FX13}/ocr/tiep_nhan_scan.pdf", name="tiep_nhan_scan_rp.pdf",
+                       suffix="%r13-reprocess-variant"),
+                  intake(env_none("{SCR}/intake_rp"), 2, "\\[new\\] [0-9a-f]{12} giay_tiep_nhan cho_ocr fields=0",
+                         "\\[done\\] new=1 dup=0 cho_ocr=1 skipped=0 error=0", "\\[blocked\\] 1 tài liệu scan/ảnh")],
+         "kiem": [{"sql": "select status || '|' || text_source || '|' || coalesce(ocr_engine, 'NULL') || '|' || "
+                          "coalesce(pii_flag::text, 'NULL') from documents where filename = 'tiep_nhan_scan_rp.pdf'",
+                   "expect": "cho_ocr|none|NULL|NULL"}]},
+        {"ma": f"{D1}__R13-05", "nguon_r10": "MOI_R13",
+         "mo_ta": "đường xử lý lại (2/3): --reprocess-pending OCR_PROVIDER=paddle_local → biến thể pending_review, ocr, "
+                  "ocr_engine, 2 trang, so_giay ~ 123/2026, field verified=false; exit 0 (scan_thu_it.png r10 vẫn trong "
+                  "cho_ocr — không assert số done/still)",
+         "buoc": [{"argv": ["python", "-m", "ingest.doc_intake", "--reprocess-pending"],
+                   "env": env_paddle("{SCR}/intake_rp"), "expect_exit": 0,
+                   "stdout_re": allre("\\[ocr\\] [0-9a-f]{12} giay_tiep_nhan → pending_review fields=[1-3]",
+                                      "\\[done\\] done=\\d+ still=\\d+ error=0"), "out_re": NO_TB}],
+         "kiem": [{"sql": f"select count(*) from documents where filename = 'tiep_nhan_scan_rp.pdf' and {OCR_OK} and "
+                          "pages = 2", "expect": 1},
+                  {"sql": "select count(*) from document_fields f join documents d using (sha256) where "
+                          f"d.filename = 'tiep_nhan_scan_rp.pdf' and {SO_GIAY}", "expect": 1},
+                  {"sql": "select count(*) from document_fields f join documents d using (sha256) where "
+                          "d.filename = 'tiep_nhan_scan_rp.pdf' and f.verified", "expect": 0},
+                  {"sql": "select count(*) from documents where status = 'verified'", "expect": 0}]},
+        {"ma": f"{D1}__R13-06", "nguon_r10": "MOI_R13",
+         "mo_ta": "đường xử lý lại (3/3): chạy lại --reprocess-pending paddle_local → done=0, exit 0, trạng thái "
+                  "documents + document_fields không đổi (băm trước/sau bằng {sql:...})",
+         "buoc": [{"argv": ["python", SNAP, "save", "{SCR}/rp_state.snap", DOC_STATE], "expect_exit": 0},
+                  {"argv": ["python", "-m", "ingest.doc_intake", "--reprocess-pending"],
+                   "env": env_paddle("{SCR}/intake_rp"), "expect_exit": 0,
+                   "stdout_re": "\\[done\\] done=0 still=\\d+ error=0",
+                   "out_re": "\\A(?![\\s\\S]*(\\[ocr\\]|Traceback))"},
+                  {"argv": ["python", SNAP, "cmp", "{SCR}/rp_state.snap", DOC_STATE], "expect_exit": 0}]},
+    ],
+}
+
+# ------------------------------------------------------------------ data_platform-02.2
+D2 = "data_platform-02.2"
+FXD2 = "{FX13}/items/data_platform-02.2"
+d022 = {
+    "id": D2, "db": "samsam_itacc_r13_dp022", "muc_kiem_de_xuat": "LOCAL",
+    "nguon_tieu_chi": "evidence/itacc_r10/items/data_platform-02.2.json",
+    "ly_do_kiem_lai": "ingest/doc_intake.py đổi ở r13 (provider paddle_local, cột ocr_engine) — kiểm lại luồng bản gốc/verify",
+    "tieu_chi_cu_the": [
+        "T1 Bản gốc lưu DOC_ORIGINALS_DIR/<sha256> bất biến + documents.sha256 khớp; idempotent dup",
+        "T2 Pháp chế --verify/--reject --by → status đổi; cho_ocr không verify được; agent bị chặn; loader_gate tắt → exit 2",
+        "T3 không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+        "T4 (r13) cột mới documents.ocr_engine = NULL với tài liệu không OCR (pdf_text / cho_ocr khi provider none)",
+    ],
+    "ca": [
+        seed_case(D2),
+        {"ma": f"{D2}__S01", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "đặt 2 fixture r10 vào {SCR}/intake/giay_tiep_nhan/ (như data_platform-02.1__S01)",
+         "buoc": [prep("{SCR}/intake/giay_tiep_nhan", f"{FXD2}/gtn_thu_it.pdf", f"{FXD2}/scan_thu_it.png")]},
+        {"ma": f"{D2}__S02", "nguon_r10": "MOI", "tien_quyet": True,
+         "mo_ta": "dựng lại trạng thái DB chung r10 (samsam_itacc_r10_dp): DP021-01 đã intake 2 tài liệu TRƯỚC DP022 — "
+                  "r13 DB riêng nên chạy lại đúng lệnh DP021-01 (OCR none → exit 2); + T4 ocr_engine NULL",
+         "buoc": [intake(env_none(), 2, "\\[done\\] new=2 dup=0 cho_ocr=1 skipped=0 error=0")],
+         "kiem": [{"sql": f"select count(*) from documents where sha256 in ('{A_SHA}', '{S_SHA}')", "expect": 2},
+                  {"sql": "select count(*) from documents where ocr_engine is not null", "expect": 0}]},
+        {"ma": f"{D2}__DP022-01", "nguon_r10": "DP022-01",
+         "mo_ta": "bản gốc + sha: tên tệp = sha256(nội dung) = documents.sha256 (r10 sha256sum tay → harness "
+                  "check_originals_r13 + SQL)",
+         "buoc": [{"argv": ["python", "{H}/A/check_originals_r13.py.txt", "{SCR}/originals", A_SHA, S_SHA],
+                   "expect_exit": 0, "stdout_re": allre("MATCH 472d705c02fd", "MATCH af03f4436115")}],
+         "kiem": [{"sql": f"select count(*) from documents where sha256 in ('{A_SHA}', '{S_SHA}')", "expect": 2}]},
+        {"ma": f"{D2}__DP022-02", "nguon_r10": "DP022-02", "mo_ta": "ÂM idempotent: intake lại → dup, không thêm dòng",
+         "buoc": [intake(env_none(), 0, "\\[dup\\] af03f4436115 trùng", "\\[dup\\] 472d705c02fd trùng",
+                         "\\[done\\] new=0 dup=2")],
+         "kiem": [{"sql": "select count(*) from documents", "expect": 2}]},
+        {"ma": f"{D2}__DP022-05", "nguon_r10": "DP022-05",
+         "mo_ta": "ÂM agent --reject → exit 1, không đổi (chạy TRƯỚC DP022-03 đúng thứ tự thời gian r10: 05 10:45:00, "
+                  "04 10:45:02, 03 10:45:03)",
+         "buoc": [{"argv": ["python", "-m", "ingest.doc_intake", "--reject", A_SHA, "--by", "agent:doc"],
+                   "env": env_none(), "expect_exit": 1, "stdout_re": "không đổi gì", "out_re": NO_TB}],
+         "kiem": [{"sql": DOC_A.format(c="status || '|' || coalesce(verified_by, 'NULL')"),
+                   "expect": "pending_review|NULL"}]},
+        {"ma": f"{D2}__DP022-04", "nguon_r10": "DP022-04", "mo_ta": "ÂM --verify tài liệu cho_ocr → exit 1, không đổi",
+         "buoc": [{"argv": ["python", "-m", "ingest.doc_intake", "--verify", S_SHA, "--by", "Pháp Chế Thử IT"],
+                   "env": env_none(), "expect_exit": 1,
+                   "stdout_re": "472d705c02fd không tồn tại hoặc không ở pending_review", "out_re": NO_TB}],
+         "kiem": [{"sql": DOC_S.format(c="status || '|' || coalesce(verified_by, 'NULL')"), "expect": "cho_ocr|NULL"}]},
+        {"ma": f"{D2}__DP022-03", "nguon_r10": "DP022-03", "mo_ta": "verify (người) → verified; field verified=true",
+         "buoc": [{"argv": ["python", "-m", "ingest.doc_intake", "--verify", A_SHA, "--by", "Pháp Chế Thử IT"],
+                   "env": env_none(), "expect_exit": 0,
+                   "stdout_re": "\\[ok\\] af03f4436115 → verified bởi Pháp Chế Thử IT", "out_re": NO_TB}],
+         "kiem": [{"sql": DOC_A.format(c="status || '|' || verified_by"), "expect": "verified|Pháp Chế Thử IT"},
+                  {"sql": f"select count(*) > 0 and bool_and(verified) from document_fields where sha256 = '{A_SHA}'",
+                   "expect": True}]},
+        {"ma": f"{D2}__DP022-06a", "nguon_r10": "DP022-06a", "mo_ta": "disable data_platform-02.2 → tắt",
+         "buoc": [{"argv": ["python", "-m", "pipelines.rollout", "--disable", "data_platform-02.2", "--by",
+                            "Người Thử IT"], "expect_exit": 0,
+                   "stdout_re": "\\[OK\\] data_platform-02.2: chạy thử → tắt"}],
+         "kiem": [{"sql": "select stage from feature_rollout where feature_id = 'data_platform-02.2'", "expect": "tat"}]},
+        {"ma": f"{D2}__DP022-06b", "nguon_r10": "DP022-06b", "mo_ta": "ÂM tính năng tắt → loader chặn exit 2, không nạp",
+         "buoc": [intake(env_none(), 2, "\\[rollout\\] .*data_platform-02\\.2 → KHÔNG nạp")],
+         "kiem": [{"sql": "select count(*) from documents", "expect": 2}]},
+        {"ma": f"{D2}__DP022-06c", "nguon_r10": "DP022-06c", "mo_ta": "promote data_platform-02.2 → chạy thử",
+         "buoc": [{"argv": ["python", "-m", "pipelines.rollout", "--promote", "data_platform-02.2", "--by",
+                            "Người Thử IT"], "expect_exit": 0,
+                   "stdout_re": "\\[OK\\] data_platform-02.2: tắt → chạy thử"}],
+         "kiem": [{"sql": "select stage from feature_rollout where feature_id = 'data_platform-02.2'",
+                   "expect": "chay_thu"}]},
+    ],
+}
+
+# ------------------------------------------------------------------ production-02
+P2 = "production-02"
+FX2 = "{FX13}/items/production-02"
+SAVINA_LIST = ("select id from price_list where sku_key = 'savina-12v' and channel = 'shopee' and kind = 'list' and "
+               "valid_to is null and program_id is null")
+GOLDEN_STATE = ("{sql:select (select count(*) from price_list) || '|' || (select coalesce(max(id), 0) from price_list) || '|'"
+                " || (select count(*) from golden_discrepancies) || '|' || (select coalesce(max(version), 0) from sku_master)"
+                " || '|' || (select coalesce(sum(version), 0) from sku_master) || '|' || (select count(*) from sku_master)}")
+UNMAPPED = ("da-an-sam-30v, mat-ong-sam-120ml-1hu, mat-ong-sam-120ml-2hu, mat-ong-sam-300ml, ruou-sam-binh-su-do-500ml, "
+            "ruou-sam-chai-thuy-tinh-500ml, sapentol-30v, saphraton-20v, saphraton-40v, saphraton-80v, "
+            "saphraton-combo-2x20v, savigout-30v, savina-12v")   # sorted(set(golden) - đã gắn), data/golden_skus.json
+
+
+def golden(*args, exit_=0, so=None):
+    st = {"argv": ["python", "-m", "ingest.golden_store", *args], "expect_exit": exit_}
+    if so:
+        st["stdout_re"] = so
+    return st
+
+
+def dossier(*args, exit_, so):
+    return {"argv": ["python", "-m", "ingest.product_dossiers", "--check", *args], "expect_exit": exit_, "stdout_re": so,
+            "out_re": NO_TB}
+
+
+p02 = {
+    "id": P2, "db": "samsam_itacc_r13_p02", "muc_kiem_de_xuat": "LOCAL",
+    "nguon_tieu_chi": "evidence/itacc_r10/items/production-02.json (C1–C4) + MOI_R13 luật hồ sơ r13",
+    "ly_do_kiem_lai": "ingest/product_dossiers.py đổi ở r13: bắt buộc phien_ban + tep_sha256, hồ sơ mau=true là lỗi, báo "
+                      "đích danh SKU chưa gắn",
+    "tieu_chi_cu_the": [
+        "T1 golden_store --file nạp golden → sku_master/price_list (chờ duyệt) + golden_discrepancies có detail theo từng "
+        "nguồn (không 'đề xuất')",
+        "T2 golden lỗi (vi phạm R1/file rỗng) → exit 1, 0 ghi; nạp lại → không nhân dòng price_list",
+        "T3 product_dossiers --check trên sổ thật → exit 2 BLOCKED nêu đúng phần thiếu (0/14 hồ sơ, SKU chưa gắn); bộ kiểm "
+        "hoạt động trên fixture (đủ → 0, lệch số công bố → 1)",
+        "T4 duyệt giá chỉ người (agent: bị chặn)",
+        "T5 (r13) sổ thật → [blocked] nêu ĐÍCH DANH 13 SKU golden chưa gắn ('chưa gắn: da-an-sam-30v, …, savina-12v'); hồ sơ "
+        "thiếu phien_ban/tep_sha256 → exit 1 nêu tên trường (fixture r10 nguyên bản); hồ sơ mau=true → exit 1, không tính "
+        "vào số hồ sơ",
+    ],
+    "ca": [
+        seed_case(P2),
+        {"ma": f"{P2}__P02-1", "nguon_r10": "P02-1", "tien_quyet": True,
+         "mo_ta": "nạp golden fixture (savina-12v quy cách 12→10 viên) → phiếu spec_mismatch pending, detail theo nguồn "
+                  "(golden + web), không trường đề xuất; price_list vẫn chờ duyệt (r10 q.py → SQL)",
+         "buoc": [golden("--file", f"{FX2}/golden_prod.json", so=allre("\\[load\\] sku_changed=1",
+                                                                       "\\[disc\\] [^\\n]*spec_mismatch=[1-9]"))],
+         "kiem": [{"sql": "select pack_spec || '|' || version || '|' || source from sku_master where sku_key = "
+                          "'savina-12v'", "expect": "10 viên ngậm (tuýp PP)|2|golden_prod.json"},
+                  {"sql": "select count(*) > 0 and bool_and(status = 'pending') and bool_and(detail ? 'golden' and "
+                          "detail ? 'web') from golden_discrepancies where kind = 'spec_mismatch' and sku_key = "
+                          "'savina-12v'", "expect": True},
+                  {"sql": "select count(*) from golden_discrepancies where kind = 'spec_mismatch' and detail::text ~* "
+                          "'(de_xuat|đề xuất|proposed|suggest)'", "expect": 0},
+                  {"sql": "select count(*) from price_list where approved_by is not null", "expect": 0}]},
+        {"ma": f"{P2}__P02-2", "nguon_r10": "P02-2", "mo_ta": "ÂM idempotent: nạp lại → price_list không thêm (băm số dòng "
+                                                              "+ max id trước/sau)",
+         "buoc": [{"argv": ["python", SNAP, "save", "{SCR}/p02_2.snap",
+                            "{sql:select count(*) || '|' || coalesce(max(id), 0) from price_list}"], "expect_exit": 0},
+                  golden("--file", f"{FX2}/golden_prod.json", so="price_inserted=0, price_closed=0"),
+                  {"argv": ["python", SNAP, "cmp", "{SCR}/p02_2.snap",
+                            "{sql:select count(*) || '|' || coalesce(max(id), 0) from price_list}"], "expect_exit": 0}]},
+        {"ma": f"{P2}__P02-3", "nguon_r10": "P02-3", "mo_ta": "ÂM golden vi phạm R1 / rỗng → exit 1, 0 ghi (price_list, "
+                                                              "phiếu lệch, version sku_master không đổi)",
+         "buoc": [{"argv": ["python", SNAP, "save", "{SCR}/p02_3.snap", GOLDEN_STATE], "expect_exit": 0},
+                  golden("--file", f"{FX2}/golden_bad.json", exit_=1, so="không nạp gì"),
+                  golden("--file", f"{FX2}/golden_empty.json", exit_=1, so="không connect, không ghi/xóa"),
+                  {"argv": ["python", SNAP, "cmp", "{SCR}/p02_3.snap", GOLDEN_STATE], "expect_exit": 0}]},
+        {"ma": f"{P2}__P02-4", "nguon_r10": "P02-4", "mo_ta": "report phiếu lệch → liệt kê pending",
+         "buoc": [golden("--report", so="\\[report\\] \\d+ phiếu lệch pending")]},
+        {"ma": f"{P2}__P02-5", "nguon_r10": "P02-5",
+         "mo_ta": "ÂM agent duyệt giá → exit != 0; dòng giá vẫn chưa duyệt (r10 id 2 = savina-12v shopee list → lấy id "
+                  "bằng {sql:...})",
+         "buoc": [golden("--approve-price", "{sql:" + SAVINA_LIST + "}", "--by", "agent:x", exit_=ERR)],
+         "kiem": [{"sql": "select approved_by is null and approved_at is null from price_list where id = (" + SAVINA_LIST
+                          + ")", "expect": True}]},
+        {"ma": f"{P2}__P02-6", "nguon_r10": "P02-6", "mo_ta": "hồ sơ gốc thật → exit 2 BLOCKED 0/14 + SKU chưa gắn",
+         "buoc": [dossier(exit_=2, so=allre("\\[blocked\\] danh mục hồ sơ gốc: 0/14",
+                                            "\\[blocked\\] SKU golden đã gắn hồ sơ gốc: 0/13"))]},
+        {"ma": f"{P2}__P02-7", "nguon_r10": "P02-7",
+         "mo_ta": "bộ kiểm trên fixture đủ / lệch: 7a dossier_full_r13.json (= fixture r10 + phien_ban/tep_sha256 GIẢ — cập "
+                  "nhật định dạng bắt buộc r13, không nới; xem NGUON.txt) → exit 0; 7b dossier_lech.json NGUYÊN BẢN r10 → "
+                  "exit 1 và vẫn nêu 'số công bố lệch golden của savina-12v' (còn thêm lỗi thiếu trường r13)",
+         "buoc": [dossier("--file", f"{FX2}/dossier_full_r13.json", "--golden", f"{FX2}/golden_prod.json", exit_=0,
+                          so="\\[done\\] hồ sơ 13 · SKU golden 13 · đã gắn 13 · lỗi 0"),
+                  dossier("--file", f"{FX2}/dossier_lech.json", "--golden", f"{FX2}/golden_prod.json", exit_=1,
+                          so="\\[err\\] danh_muc_ho_so_goc\\[0\\]: số công bố lệch golden của savina-12v")]},
+        {"ma": f"{P2}__R13-01", "nguon_r10": "MOI_R13",
+         "mo_ta": "sổ thật → exit 2, [blocked] nêu đích danh mọi SKU golden chưa gắn (sorted, data/golden_skus.json)",
+         "buoc": [dossier(exit_=2, so=allre("\\[blocked\\] danh mục hồ sơ gốc: 0/14",
+                                            re.escape("[blocked] SKU golden đã gắn hồ sơ gốc: 0/13 — chưa gắn: "
+                                                      + UNMAPPED)))]},
+        {"ma": f"{P2}__R13-02", "nguon_r10": "MOI_R13",
+         "mo_ta": "dossier_full.json NGUYÊN BẢN r10 (thiếu phien_ban/tep_sha256) → exit 1 nêu tên 2 trường cho mỗi hồ sơ "
+                  "(13 × 2 = 26 lỗi)",
+         "buoc": [dossier("--file", f"{FX2}/dossier_full.json", "--golden", f"{FX2}/golden_prod.json", exit_=1,
+                          so=allre("\\[err\\] danh_muc_ho_so_goc\\[0\\]\\.phien_ban: thiếu/rỗng",
+                                   "\\[err\\] danh_muc_ho_so_goc\\[0\\]\\.tep_sha256: thiếu/rỗng",
+                                   "\\[done\\] hồ sơ 13 · SKU golden 13 · đã gắn 13 · lỗi 26"))]},
+        {"ma": f"{P2}__R13-03", "nguon_r10": "MOI_R13",
+         "mo_ta": "dossier_mau_r13.json (HS-IT-01 mau=true) → exit 1; hồ sơ mẫu là lỗi và KHÔNG tính (hồ sơ 12, đã gắn 12)",
+         "buoc": [dossier("--file", f"{FX2}/dossier_mau_r13.json", "--golden", f"{FX2}/golden_prod.json", exit_=1,
+                          so=allre("\\[err\\] danh_muc_ho_so_goc\\[0\\]: hồ sơ MẪU \\(mau=true\\)",
+                                   "\\[done\\] hồ sơ 12 · SKU golden 13 · đã gắn 12 · lỗi 2"))]},
+    ],
+}
+
+DOC = ("NHÁP r13 nhóm A (24/10/2026, người viết nháp — điều phối viên duyệt/sửa/khóa): production-03, data_platform-02.1, "
+       "data_platform-02.2, production-02. Bản ghi hiện hành r10 evidence/itacc_r10/items/<id>.json; lệnh/đầu ra r10 "
+       "evidence/itacc_r10/g4/out/*.txt (production) và g5/runs/*.txt (data_platform). Mỗi ca r10 ↔ đúng 1 ca r13 "
+       "(`nguon_r10`); `MOI` = dựng lại trạng thái DB chung r10 (samsam_itacc_r10_prod / _dp) trên DB riêng r13; "
+       "`MOI_R13` = mã mới r13 (OCR paddle_local; luật hồ sơ phien_ban/tep_sha256/mau). Fixture r10 chép nguyên byte vào "
+       "{FX13}/items/<id>/ (SHA256SUMS.txt + NGUON.txt; gtn_thu_it.pdf/scan_thu_it.png chép từ scratchpad r10 — r10 không "
+       "lưu trong evidence, sha khớp dau_vao). Fixture OCR r13 dùng thẳng {FX13}/ocr/. Ngoại lệ trung thành có lý do: "
+       "production-02__P02-7 7a dùng dossier_full_r13.json (fixture r10 + phien_ban/tep_sha256 GIẢ — định dạng bắt buộc r13; "
+       "fixture nguyên bản chạy ở R13-02 kỳ vọng exit 1); P02-5 lấy id dòng giá bằng {sql:...} (r10 id 2); DP021-02 r10 'như "
+       "DP021-01 cùng lượt' → đọc lại step01 của ca DP021-01 (file_re). Kỳ vọng 'không thêm/0 ghi' r10 → băm trạng thái DB "
+       "trước/sau bằng {H}/A/snap_r13.py.txt + {sql:...}. OCR_PROVIDER/OCR_PADDLE_MODEL_DIR đặt '' (không null) để "
+       "load_dotenv(.env) không lấp. {SCR} của runner nằm TRONG repo (evidence/itacc_r13_docx12/runs/<id>/<run>/scratch) — "
+       "DOC_INTAKE_DIR/DOC_ORIGINALS_DIR trỏ vào đó (doc_intake không đòi ngoài repo; nội dung toàn fixture GIẢ). Không ca "
+       "UI. Harness mới: {H}/A/{prep_r13,snap_r13,check_originals_r13,mk_fixtures_A_r13,gen_r13_A}.py.txt. Sinh bằng "
+       "{H}/A/gen_r13_A.py.txt.")
+
+crit = {"_doc": DOC,
+        "moi_truong": "Postgres thử 127.0.0.1:55453, DB riêng samsam_itacc_r13_{p03,dp021,dp022,p02} (schema/roles ×2 + core "
+                      "+ golden, working tree); dev mode (AUTH_MODE trống); OCR paddle_local dùng model cục bộ "
+                      "~/.paddleocr/whl (det en_PP-OCRv3, rec latin_PP-OCRv3; cls mặc định PaddleOCR cũng ở đó)",
+        "items": [p03, d021, d022, p02]}
+# tự kiểm: mỗi ca r10 có đúng 1 ca r13; mã ca duy nhất; db duy nhất
+R10 = {P3: ["P03-1", "P03-2", "P03-3", "P03-4", "P03-5", "P03-6"],
+       D1: ["DP021-01", "DP021-01q", "DP021-02", "DP021-03"],
+       D2: ["DP022-01", "DP022-02", "DP022-03", "DP022-04", "DP022-05", "DP022-06a", "DP022-06b", "DP022-06c"],
+       P2: ["P02-1", "P02-2", "P02-3", "P02-4", "P02-5", "P02-6", "P02-7"]}
+for it in crit["items"]:
+    src = [c["nguon_r10"] for c in it["ca"] if c["nguon_r10"] not in ("MOI", "MOI_R13")]
+    assert sorted(src) == sorted(R10[it["id"]]), (it["id"], src)
+    mas = [c["ma"] for c in it["ca"]]
+    assert len(mas) == len(set(mas)) and all(m.startswith(it["id"] + "__") for m in mas)
+    for c in it["ca"]:
+        for st in c.get("buoc", []):
+            for k in ("stdout_re", "stderr_re", "out_re"):
+                if k in st:
+                    re.compile(st[k])
+        for k in c.get("kiem", []):
+            if "re" in k:
+                re.compile(k["re"])
+assert len({i["db"] for i in crit["items"]}) == 4
+OUT.parent.mkdir(parents=True, exist_ok=True)
+OUT.write_bytes(json.dumps(crit, ensure_ascii=False, indent=1).encode("utf-8"))
+print(OUT, {i["id"]: len(i["ca"]) for i in crit["items"]})

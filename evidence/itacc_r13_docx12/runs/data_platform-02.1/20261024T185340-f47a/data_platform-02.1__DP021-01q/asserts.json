@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select bool_and(not verified) and count(*) > 0 from document_fields",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select value from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1' and field = 'so_giay'",
+  "expect": "123/2026/DKSP",
+  "actual": "123/2026/DKSP",
+  "dat": true
+ },
+ {
+  "sql": "select value from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1' and field = 'ngay_cap'",
+  "expect": "2026-10-15",
+  "actual": "2026-10-15",
+  "dat": true
+ },
+ {
+  "sql": "select value from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1' and field = 'ten_san_pham'",
+  "expect": "Mat ong sam Thu IT",
+  "actual": "Mat ong sam Thu IT",
+  "dat": true
+ }
+]

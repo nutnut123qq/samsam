@@ -1,0 +1,39 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/stt_run.py.txt",
+  "--mode",
+  "ok",
+  "--model-dir",
+  "C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r13/ext_farming/farming-01-f7197494762e0549517d543d1a071e23/stt_model"
+ ],
+ "env_doi": [
+  "GARDEN_MEDIA_DIR",
+  "GARDEN_STT_MAX_SECONDS",
+  "GARDEN_STT_MODEL_DIR",
+  "GARDEN_STT_PROVIDER",
+  "GARDEN_STT_TIMEOUT_S"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:20:41+07:00",
+ "ket_thuc": "2026-10-24T20:20:43+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "^(?![\\s\\S]*0912345678)[\\s\\S]*\\[nhap\\] #\\d+ \\(whisper_local\\) — NHÁP[\\s\\S]*Khoảnh KV-A01 tưới 30 phút gọi \\*\\*\\*[\\s\\S]*FACT RC 0[\\s\\S]*FACT NHAP_PRESENT True[\\s\\S]*FACT TEXT_PRESENT True[\\s\\S]*FACT PHONE_MASKED True[\\s\\S]*FACT MODEL_INIT 1[\\s\\S]*FACT TRANSCRIBE_CALLS 1[\\s\\S]*FACT MODEL_PATH_OK True[\\s\\S]*FACT LOCAL_FILES_ONLY True[\\s\\S]*FACT DEVICE cpu[\\s\\S]*FACT AUDIO_OK True[\\s\\S]*FACT AUDIO_DTYPE float32[\\s\\S]*FACT LANGUAGE vi[\\s\\S]*FACT DRAFT_STATUS cho_chep_loi[\\s\\S]*FACT NET_CALLS 0",
+   "khop": true
+  },
+  {
+   "stderr_re": "^(?![\\s\\S]*0912345678)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "fb868ce21b83cca6c389de444e5145d1ca0ccd58f5b0ed2929fcef2f6e057d09",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

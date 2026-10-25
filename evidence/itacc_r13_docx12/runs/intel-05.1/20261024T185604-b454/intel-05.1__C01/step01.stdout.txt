@@ -1,0 +1,13 @@
+[DRY-RUN — số giả, gateway giả, không gọi LLM]
+Nghiên cứu giả lập persona — run dry-20261024-511b2b12 · persona_set v1 (e42a92a06373) · 45 lời gọi, 45 hợp lệ
+KHÔNG phải dự báo doanh số — chỉ dùng để loại bớt phương án yếu trước khi thử với khách thật.
+Giới hạn: persona tổng hợp + mô hình ngôn ngữ (dữ liệu huấn luyện thiên lệch WEIRD) không đại diện người tiêu dùng Việt Nam thật.
+
+phương án | khoảng p10–p90 | p50 | độ phân tán | n hợp lệ
+brand-qua-tet-vung-trong | 4.5 – 8.6 | 7.1 | 4.0 | 45
+brand-truy-xuat-nguon-goc | 4.8 – 8.2 | 5.9 | 3.4 | 45
+mat-ong-sam-qua-tet | 4.6 – 8.8 | 6.4 | 4.2 | 45
+doi-chung-yeu (đối chứng yếu) | 0.8 – 2.9 | 1.6 | 2.1 | 45
+Đối chứng yếu thấp nhất ở 45/45 lời gọi hợp lệ (100%, ngưỡng 80%).
+Cần Quản lý MXH duyệt báo cáo trước khi dùng.
+[ok] 180 dòng sim_runs (45 lời gọi) run_id=dry-20261024-511b2b12

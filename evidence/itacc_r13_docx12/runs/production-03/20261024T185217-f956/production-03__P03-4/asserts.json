@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'label_check' and object_id like 'sxlabel:H-0e8929fd:%' and title ~ '^Đối soát nhãn — SKU H-[0-9a-f]{8}: '",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'label_check' and (object_id || ' ' || title || ' ' || payload) ~* '(ruou|rượu)'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

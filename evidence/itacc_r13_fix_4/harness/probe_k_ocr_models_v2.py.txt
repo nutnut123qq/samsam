@@ -1,0 +1,155 @@
+"""PROBE r13-fix4 K v2 — F1: OCR `paddle_local` KHÔNG được để PaddleOCR (bản đã cài) tự tải model khi bộ model cục bộ thiếu
+tệp. Dùng PaddleOCR THẬT; chặn downloader (`download_with_progressbar` của ppocr) + mọi socket connect TRƯỚC khi có mạng —
+không mock toàn bộ PaddleOCR. Không DB. Cùng mã/input/assertion cho snapshot r13 CHƯA vá và bản vá.
+  python -I probe_k_ocr_models_v2.py.txt <ROOT> <FIXTURE_DIR> <MODEL_DIR_DAY_DU> <out.json>
+v2 (sửa harness, giữ log v1 `probes/k_ocr_models_truoc`): v1 chạy mọi ca trong 1 tiến trình — ở snapshot chưa vá, ca
+pdiparams RỖNG lọt cổng nên PaddleOCR nạp model giả và tiến trình chết (access violation 0xC0000005) → mất kết quả mọi ca.
+v2 chạy MỖI ca trong tiến trình con riêng (cùng thiết lập chặn mạng/downloader); tiến trình con chết không có kết quả ở ca
+mong đợi TỪ CHỐI = FAIL (cổng đã để engine nạp bộ model không hợp lệ), ghi exit code. Tiêu chí/input giữ nguyên v1:
+- det/rec/cls (từng bộ, 2 bộ còn lại đủ): có inference.pdmodel nhưng THIẾU inference.pdiparams → DocError nêu tên bộ thiếu,
+  0 lần gọi downloader, 0 kết nối mạng, PaddleOCR không được khởi tạo.
+- cả 3 bộ thiếu pdiparams (ca controller) → như trên.
+- pdiparams RỖNG 0 byte (rec) → từ chối như thiếu.
+- thiếu pdmodel (rec) → DocError, 0 downloader (đã đạt trước vá — ca đối chứng).
+- ca dương: bộ model cục bộ ĐẦY ĐỦ (MODEL_DIR_DAY_DU) → engine khởi tạo, OCR thật ảnh PNG nhãn + PDF chỉ ảnh 2 trang ra
+  chữ (LOT/123/2026), 0 downloader, 0 mạng; OCR_ENGINES ghi engine; ảnh trắng → source none."""
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT, FX, FULL, OUT = sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3]), sys.argv[4]
+CASES = ["thieu_pdiparams_det", "thieu_pdiparams_rec", "thieu_pdiparams_cls", "thieu_pdiparams_ca_3_bo",
+         "pdiparams_rong_rec", "thieu_pdmodel_rec_doi_chung", "du_model_cuc_bo_ocr_that"]
+
+
+def child(ma: str, out_row: str) -> None:
+    import importlib
+    import os
+    import shutil
+    import socket
+    import tempfile
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.path.insert(0, ROOT)
+    os.chdir(ROOT)
+    for k in list(os.environ):
+        if k.endswith("DATABASE_URL") or k.startswith("PG") or k in ("OPENROUTER_API_KEY", "OCR_PADDLE_MODEL_DIR"):
+            os.environ.pop(k, None)
+    NET, DL, CTOR = [], [], []
+
+    def _no_net(self, addr):
+        NET.append(str(addr)[:60])
+        raise OSError("probe: chặn mạng")
+
+    socket.socket.connect = _no_net
+    socket.create_connection = lambda *a, **k: _no_net(None, a[0] if a else None)
+    import psycopg
+    psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+    pm = importlib.import_module("paddleocr.paddleocr")    # PaddleOCR thật (thêm ppocr vào sys.path)
+
+    def _block_dl(url, dest, *a, **k):
+        DL.append(str(url)[:120])
+        raise RuntimeError("probe: chặn tự tải model (không có mạng)")
+
+    for name in ("ppocr.utils.network", "paddleocr.ppocr.utils.network"):
+        try:
+            importlib.import_module(name).download_with_progressbar = _block_dl
+        except ImportError:
+            pass
+    real = pm.PaddleOCR
+
+    class _CountOCR(real):
+        def __init__(self, *a, **k):
+            CTOR.append(1)
+            json.dump({"ca": ma, "dang_khoi_tao_paddle": True}, open(out_row + ".pre", "w", encoding="utf-8"))
+            super().__init__(*a, **k)
+
+    pm.PaddleOCR = _CountOCR
+    import paddleocr
+    paddleocr.PaddleOCR = _CountOCR
+    from ingest import doc_intake as di
+    tmp = Path(tempfile.mkdtemp(prefix="r13fix4k-"))
+
+    def mk(bad: dict):
+        root = tmp / "m"
+        for k, parts in di._PADDLE_SUBDIRS.items():
+            d = root.joinpath(*parts)
+            d.mkdir(parents=True)
+            how = bad.get(k)
+            if how != "no_model":
+                (d / "inference.pdmodel").write_bytes(b"synthetic-model")
+            if how == "empty_params":
+                (d / "inference.pdiparams").write_bytes(b"")
+            elif how != "no_params":
+                (d / "inference.pdiparams").write_bytes(b"synthetic-params")
+        return root
+
+    def refused(bad, want):
+        os.environ["OCR_PADDLE_MODEL_DIR"] = str(mk(bad))
+        try:
+            di._paddle_engine()
+            got = "trả engine"
+        except di.DocError as e:
+            got = f"DocError: {e}"
+        except Exception as e:  # noqa: BLE001 — downloader bị chặn ném RuntimeError = đã định tải
+            got = f"{type(e).__name__}: {e}"
+        return (got.startswith("DocError") and all(w in got for w in want) and not DL and not NET
+                and not CTOR), got[:200]
+
+    def full():
+        os.environ["OCR_PADDLE_MODEL_DIR"] = str(FULL)
+        t1, p1, s1 = di.extract_text(FX / "nhan_mat_ong.png", "paddle_local", ".png")
+        t2, p2, s2 = di.extract_text(FX / "tiep_nhan_scan.pdf", "paddle_local", ".pdf")
+        t3, _p3, s3 = di.extract_text(FX / "trang.png", "paddle_local", ".png")
+        ok = (s1 == "ocr" and "LOT" in t1.upper() and s2 == "ocr" and p2 == 2 and "123/2026" in t2 and s3 == "none"
+              and bool(di.OCR_ENGINES.get("paddle_local")) and not DL and not NET and len(CTOR) == 1)
+        return ok, {"nhan": [s1, p1, t1[:80]], "pdf": [s2, p2, t2[:80]], "trang": s3,
+                    "engine": di.OCR_ENGINES.get("paddle_local")}
+
+    plan = {f"thieu_pdiparams_{b}": lambda b=b: refused({b: "no_params"}, [b]) for b in ("det", "rec", "cls")}
+    plan["thieu_pdiparams_ca_3_bo"] = lambda: refused({b: "no_params" for b in ("det", "rec", "cls")},
+                                                      ["det", "rec", "cls"])
+    plan["pdiparams_rong_rec"] = lambda: refused({"rec": "empty_params"}, ["rec"])
+    plan["thieu_pdmodel_rec_doi_chung"] = lambda: refused({"rec": "no_model"}, ["rec"])
+    plan["du_model_cuc_bo_ocr_that"] = full
+    di._paddle = None
+    try:
+        ok, actual = plan[ma]()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    shutil.rmtree(tmp, ignore_errors=True)
+    json.dump({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual, "downloader": DL, "mang": NET,
+               "khoi_tao_paddle": len(CTOR)}, open(out_row, "w", encoding="utf-8"), ensure_ascii=False,
+              default=str)
+
+
+if len(sys.argv) > 6 and sys.argv[5] == "--ca":
+    child(sys.argv[6], sys.argv[7])
+    sys.exit(0)
+
+sys.stdout.reconfigure(encoding="utf-8")
+rows = []
+for ma in CASES:
+    row_f = Path(OUT + f".{ma}.row")
+    r = subprocess.run([sys.executable, "-I", __file__, ROOT, str(FX), str(FULL), OUT, "--ca", ma, str(row_f)],
+                       capture_output=True, timeout=600)
+    pre = Path(str(row_f) + ".pre")
+    if row_f.exists():
+        row = json.loads(row_f.read_text(encoding="utf-8"))
+    else:
+        row = {"ca": ma, "ket_qua": "FAIL",
+               "actual": (f"tiến trình con chết exit {r.returncode} (0x{r.returncode & 0xFFFFFFFF:08X}) — "
+                          + ("PaddleOCR đã được khởi tạo với bộ model không hợp lệ (cổng không từ chối)"
+                             if pre.exists() else "chết trước khi khởi tạo PaddleOCR")),
+               "stderr_tail": r.stderr.decode("utf-8", "replace")[-300:]}
+    row["exit_tien_trinh_con"] = r.returncode
+    for f in (row_f, pre):
+        f.unlink(missing_ok=True)
+    rows.append(row)
+out = {"probe": "k_ocr_models_v2", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160], "exit=", r["exit_tien_trinh_con"])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

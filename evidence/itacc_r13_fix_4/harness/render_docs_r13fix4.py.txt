@@ -1,0 +1,192 @@
+"""HARNESS r13-fix4 — cập nhật hồ sơ theo kết quả lượt vá 4 lỗi controller (số lấy từ tong_hop/items/ban_ghi của lượt, không
+gõ tay số tổng). Sửa: docs/handover/nghiem-thu-ky-thuat-noi-bo.md (mục 0 mới, r13 → lịch sử có đính chính, mục 3/4),
+DONE.md, docs/handover/v13-board.md, docs/handover/doi-chieu-docx.md (A11 đính chính), AGENTS.md (dòng r13). Mỗi thay
+thế kiểm đúng 1 lần.  python -I render_docs_r13fix4.py.txt"""
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r13_fix_4"
+th = json.loads((EV / "tong_hop.json").read_text(encoding="utf-8"))
+tt = th["tom_tat"]
+assert not tt["loi_nhat_quan"]
+T = tt["tong"]
+TOT = f"{T.get('DAT', 0)} ĐẠT / {T.get('CHUA_KIEM', 0)} CHƯA KIỂM / {T.get('BI_CHAN', 0)} BỊ CHẶN"
+SRC = ", ".join(f"{k} {v}" for k, v in sorted(tt["nguon"].items()))
+rows = {r["id"]: r for r in th["items"]}
+
+
+def pfn(r):
+    c = r["ca"]
+    return f"{c.get('PASS', 0)}/{c.get('FAIL', 0)}/{c.get('NOT_RUN', 0)}"
+
+
+def pb(name):
+    d = json.loads((EV / "probes" / name / "ban_ghi.json").read_text(encoding="utf-8"))
+    return f"{d['tong']['PASS']}/{d['tong']['FAIL']}", d
+
+
+FP = (EV / "FP_CHOT.txt").read_text(encoding="utf-8").split()
+FPC = FP[FP.index("code") + 1]
+full = (EV / "gate" / "full_chot_f1.txt").read_text(encoding="utf-8")
+FULL = next(ln for ln in full.splitlines() if " passed" in ln and " in " in ln).strip()
+assert full.rstrip().endswith("EXIT 0") and "failed" not in FULL and "skipped" not in FULL
+EVAL = next(ln for ln in (EV / "gate" / "eval.txt").read_text(encoding="utf-8").splitlines()
+            if ln.startswith("[done] guardrail v2")).strip()
+RT = next(ln for ln in (EV / "gate" / "redteam.txt").read_text(encoding="utf-8").splitlines()
+          if ln.startswith("tỷ lệ lọt")).strip()
+P = {k: pb(k) for k in ("k_ocr_models_v2_truoc", "k_ocr_models_v2_sau_fp2", "l_image_cost_truoc",
+                         "l_image_cost_sau_fp2", "m_backup_files_truoc", "m_backup_files_sau_fp2",
+                         "n_anchor_gate_truoc", "n_anchor_gate_sau_fp2", "j_onprem_v3_truoc", "j_onprem_v3_sau_fp2",
+                         "r13_j_onprem_sau_fix4")}
+for k in ("truoc", "sau_fp2"):
+    for n in ("k_ocr_models_v2", "l_image_cost", "m_backup_files", "n_anchor_gate"):
+        assert P[f"{n}_{k}"][1]["probe_sha256"] == P[f"{n}_truoc"][1]["probe_sha256"]
+assert all(P[f"{n}_sau_fp2"][1]["fp_code"] == FPC for n in ("k_ocr_models_v2", "l_image_cost", "m_backup_files",
+                                                              "n_anchor_gate", "j_onprem_v3"))
+R13P = []
+for n in ("a_ocr", "b_stt", "c_image_v2", "d_dossier", "e_market_v2", "f_persona", "g_anchor", "h_feed", "i_incident"):
+    s, d = pb(f"r13_{n}_sau_fix4")
+    assert d["fp_code"] == FPC
+    R13P.append(f"{n} {s}")
+ID6 = ["production-03", "data_platform-02.1", "marketing-02.1", "data_platform-90", "data_platform-07.2", "farming-06"]
+LV = {i: rows[i]["luot"] for i in ID6}
+assert all(v == "r13fix4" for v in LV.values())
+CA6 = ", ".join(f"{i} {('ĐẠT' if rows[i]['trang_thai'] == 'DAT' else 'BỊ CHẶN')} {pfn(rows[i])}" for i in ID6)
+
+SEC0 = f"""## 0. Checkpoint r13-fix4 — vá 4 lỗi controller phát hiện ở r13 (25/10/2026)
+
+- **Bối cảnh:** controller rà r13 (fp mã `1975775d…`) tái hiện 4 lỗi nên chưa duyệt đóng r13. Lượt này chỉ vá 4 lỗi +
+  test/probe + hồ sơ; CHƯA commit/merge/push/deploy, không DB `samsam`, không đổi `acceptance_status` (0/96), không gỡ
+  blocker. Snapshot r13 CHƯA vá ngoài repo `D:\\code\\samsam_r13fix_baseline` (khớp fp mã `1975775d…`, full `bf041789…`).
+  Container riêng `samsam-itacc-r13fix4` (127.0.0.1:55454). Evidence `evidence/itacc_r13_fix_4/`.
+- **Đính chính r13:** các claim r13 "model OCR cục bộ, không tự tải", "chi phí ảnh ghi từ usage.cost", "preflight đo bản
+  backup gần nhất" và "`--upgrade` an toàn như submit" CHƯA đúng ở 4 điểm dưới (đúng sau bản vá này). Tiêu chí r13 đã khóa có
+  ca mã hóa chính lỗi (farming-06 R03/R05/R06/R08 chạy `--upgrade` ở chạy thử; probe `j_onprem` ca 4 chấp nhận manifest
+  giả) — thay bằng phiên bản mới có lý do, bản r13 giữ nguyên làm lịch sử.
+
+| Lỗi | Tái hiện trên snapshot r13 (trước) | Sau vá (fp mã `{FPC[:12]}…`) | Probe trước → sau (PASS/FAIL, cùng sha) | Mức |
+|---|---|---|---|---|
+| F1 OCR tự tải model | 3 bộ det/rec/cls có `inference.pdmodel`, thiếu `inference.pdiparams` → cổng cho qua, PaddleOCR THẬT gọi trình tải mạng (bị chặn trong probe); pdiparams rỗng → PaddleOCR nạp model giả, tiến trình chết 0xC0000005 | `ingest/doc_intake.py`: đòi đủ pdmodel + pdiparams không rỗng cho cả 3 bộ, thiếu → `DocError` nêu bộ thiếu TRƯỚC khi khởi tạo PaddleOCR; 0 downloader, 0 mạng; OCR thật ảnh + PDF với model đủ vẫn chạy | k_ocr_models_v2 {P['k_ocr_models_v2_truoc'][0]} → {P['k_ocr_models_v2_sau_fp2'][0]} | LOCAL (PaddleOCR thật, model cục bộ) |
+| F2 mất chi phí ảnh hỏng | HTTP 200 `b64_json` hỏng + `usage.cost` 0.40 → ghi `cost_usd=0.0`; byte không phải ảnh → ghi `ok=true` | `pipelines/image_provider_openrouter.py`: HTTP 200 = ghi ĐÚNG 1 dòng chi phí đã báo trước khi kiểm ảnh, `ok=false` khi ảnh hỏng; không đọc được cost hợp lệ → mức dự phòng hiện có; 502 vẫn 0; cổng trước request giữ nguyên | l_image_cost {P['l_image_cost_truoc'][0]} → {P['l_image_cost_sau_fp2'][0]} | MOCK (HTTP giả; sổ llm_usage + `_month_spend` thật ở pytest DB và mục marketing-02.1) |
+| F3 preflight tin sổ | sổ `backup_runs` ok + manifest `{{"encrypted":true}}`, KHÔNG dump, offsite rỗng → `sao_luu:ban_gan_nhat` DAT; thời điểm tương lai cũng DAT | `scripts/onprem_preflight.py`: manifest hợp lệ (`db_backup.load_manifest`) + mã hóa, tệp dump THẬT khớp size/sha256 ở `BACKUP_DIR` VÀ offsite `dir:` (dump + manifest), không ở tương lai (>5 phút), chưa cấu hình offsite dir → CHUA_DAT | m_backup_files {P['m_backup_files_truoc'][0]} → {P['m_backup_files_sau_fp2'][0]} | LOCAL (+ backup pg_dump THẬT ở mục data_platform-90/07.2; "khác thiết bị" chỉ GIẢ LẬP trong probe) |
+| F4 `--upgrade` bỏ cổng | tính năng TẮT: submit bị chặn nhưng upgrade vẫn GET calendar | `pipelines/anchor.py`: `upgrade` gọi `rollout.use_reason` TRƯỚC mọi HTTP/INSERT (chạy thử/tắt/không xác định/có người duyệt với job agent → `AnchorError`, CLI exit 1); vận hành: 404 → chờ, attestation → `da_nang_cap` append-only, calendar ngoài cấu hình 0 GET | n_anchor_gate {P['n_anchor_gate_truoc'][0]} → {P['n_anchor_gate_sau_fp2'][0]} | MOCK (calendar giả) |
+
+- **Probe:** khóa sha trước khi vá (`KHOA_PROBE_truoc_va.txt`); probe K v1 chết cả tiến trình ở snapshot (ca pdiparams rỗng)
+  → v2 cô lập từng ca (log v1 giữ). Hồi quy 10 probe r13 trên mã cuối: {", ".join(R13P)}; `j_onprem` v1
+  {P['r13_j_onprem_sau_fix4'][0]} (ca 4 mã hóa lỗi F3) → v3 (v2 lỗi cú pháp heredoc, log giữ): snapshot
+  {P['j_onprem_v3_truoc'][0]} → mã cuối {P['j_onprem_v3_sau_fp2'][0]}.
+- **Kiểm lại 6 mục ảnh hưởng trực tiếp** (tiêu chí `criteria/r13fix4_v1.json` kế thừa nguyên ca r13 + ca FIX4 mới, khóa
+  trước khi chạy; `r13fix4_v2.json` cho 2 mục backup — lô k1 FAIL ca FIX4 do LỖI TIÊU CHÍ placeholder `{{sql:…}}` ghép chuỗi,
+  sản phẩm từ chối đúng "nằm trong repo"; log k1 giữ): {CA6}. NOT_RUN chỉ ca cần thật (neo thật; hạ tầng Bên B).
+- **Không đổi schema/roles** (docs/schema.sql, docs/roles.sql trùng snapshot) → không phát sinh migration.
+- **Tổng nội bộ (code sinh `tong_hop.json`):** {TOT} (r13: 84/0/12). Nguồn: {SRC}; {tt['so_tham_chieu_evidence']}
+  tham chiếu evidence khớp file/hash, 0 vi phạm nhất quán. 12 mục vẫn BỊ CHẶN đúng nguyên nhân r13; nghiệm thu hợp đồng 0/96.
+- **Full/gate (fp mã `{FPC}`):** full pytest **{FULL}**, EXIT 0, 0 failed / 0 skipped (`gate/full_chot_f1.txt`, DB mới
+  `samsam_itacc_r13fix4_full1`, dừng nếu dựng DB/preflight lỗi); ruff EXIT 0; eval `{EVAL}` EXIT 0; DPIA --check EXIT 0;
+  red-team `{RT}` EXIT 0; quét secret `gate/secret_scan.txt`.
+- **Giới hạn:** "khác thiết bị" offsite không đo được trên máy dev; tệp model OCR có mặt nhưng HỎNG nội dung vẫn làm PaddleOCR
+  chết tiến trình (không tải/không mạng — ngoài phạm vi 4 lỗi, ghi lại); `--upgrade` ở giai đoạn có người duyệt chưa có đường
+  cho người (fail-closed). KHÔNG phải tích hợp thật/nghiệm thu hợp đồng.
+
+"""
+
+nt = REPO / "docs" / "handover" / "nghiem-thu-ky-thuat-noi-bo.md"
+s = nt.read_text(encoding="utf-8")
+reps = [
+    ("# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r13 (12 mục DOCX bị chặn, phần code có thể làm, 24/10/2026)",
+     "# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r13-fix4 (vá 4 lỗi controller của r13, 25/10/2026)"),
+    ("## 0. Checkpoint r13 — 12 mục DOCX còn BỊ CHẶN: làm PHẦN CODE CÓ THỂ LÀM (24/10/2026)\n",
+     SEC0 + "## 0-r13. Checkpoint r13 (LỊCH SỬ — 4 lỗi F1–F4 đính chính ở mục 0) — 12 mục DOCX còn BỊ CHẶN: làm PHẦN CODE CÓ"
+     " THỂ LÀM (24/10/2026)\n"),
+    ("## 3. Kết quả tổng HIỆN HÀNH (r13) — mẫu số 96", "## 3. Kết quả tổng HIỆN HÀNH (r13-fix4) — mẫu số 96"),
+    ("(`evidence/itacc_r13_docx12/source_map.json`; r13 = kiểm lại lượt r13, còn lại kế thừa)",
+     "(`evidence/itacc_r13_fix_4/source_map.json`; r13fix4 = kiểm lại lượt vá 4 lỗi, r13 = lượt r13, còn lại kế thừa)"),
+]
+for a, b in reps:
+    assert s.count(a) == 1, a[:60]
+    s = s.replace(a, b)
+i4 = s.index("## 4. Bảng 96 mục")
+head, tab = s[:i4], s[i4:]
+for fid in ID6:
+    r = rows[fid]
+    lines = [ln for ln in tab.split("\n") if ln.startswith(f"| {fid} |")]
+    assert len(lines) == 1, fid
+    cells = lines[0].split(" | ")
+    assert cells[4] == "r13", (fid, cells[4])
+    cells[4] = "r13fix4"
+    cells[7] = pfn(r)
+    tab = tab.replace(lines[0], " | ".join(cells))
+s = head + tab
+nt.write_text(s, encoding="utf-8", newline="\n")
+
+DONE = f"""## Vòng r13-fix4 (25/10/2026) — vá 4 lỗi controller phát hiện ở r13 — CHƯA commit/merge/push/deploy
+
+Không DB `samsam`; không đổi `acceptance_status`; không gỡ blocker. fp mã cuối `{FPC}` (snapshot r13 chưa vá
+`D:\\code\\samsam_r13fix_baseline` = fp `1975775d…`). Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0.
+
+1. F1 `ingest/doc_intake.py`: model OCR cục bộ phải đủ `inference.pdmodel` + `inference.pdiparams` (không rỗng) cả 3 bộ, thiếu →
+   từ chối trước PaddleOCR (r13 chỉ kiểm pdmodel → PaddleOCR tự tải). Probe {P['k_ocr_models_v2_truoc'][0]} → {P['k_ocr_models_v2_sau_fp2'][0]}.
+2. F2 `pipelines/image_provider_openrouter.py`: HTTP 200 ảnh hỏng vẫn ghi chi phí đã báo 1 lần, `ok=false`. Probe
+   {P['l_image_cost_truoc'][0]} → {P['l_image_cost_sau_fp2'][0]}.
+3. F3 `scripts/onprem_preflight.py`: bản gần nhất chỉ ĐẠT khi dump + manifest thật khớp ở local và offsite, không ở tương lai.
+   Probe {P['m_backup_files_truoc'][0]} → {P['m_backup_files_sau_fp2'][0]}; test cũ chấp nhận dump `b"x"` + manifest tối giản đã sửa.
+4. F4 `pipelines/anchor.py`: `--upgrade` qua cổng triển khai trước HTTP/INSERT. Probe {P['n_anchor_gate_truoc'][0]} → {P['n_anchor_gate_sau_fp2'][0]}.
+5. Kiểm lại 6 mục ảnh hưởng: {CA6}. Tổng 96: **{TOT}** (không đổi). Không đổi schema/roles.
+6. Gate: full {FULL}, EXIT 0; ruff/eval/DPIA/red-team EXIT 0. Evidence `evidence/itacc_r13_fix_4/`.
+   Đính chính r13: 4 claim về OCR không tự tải / chi phí ảnh / preflight backup / upgrade chưa đúng trước bản vá này.
+
+"""
+dn = REPO / "DONE.md"
+s = dn.read_text(encoding="utf-8")
+a = "## Vòng r13 (24/10/2026) — 12 mục DOCX bị chặn: làm phần code có thể làm — CHƯA commit/merge/push/deploy\n"
+assert s.count(a) == 1
+s = s.replace(a, DONE + a.replace("CHƯA commit/merge/push/deploy\n",
+                                  "CHƯA commit/merge/push/deploy (4 lỗi F1–F4 đính chính ở r13-fix4 trên)\n"))
+dn.write_text(s, encoding="utf-8", newline="\n")
+
+BOARD = f"""## Checkpoint mới — Vòng r13-fix4 (25/10/2026): vá 4 lỗi controller của r13 — CHƯA commit/merge/push/deploy
+
+Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ blocker. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Kết luận r13 bên dưới là LỊCH SỬ — sai ở F1–F4.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| F1 OCR tự tải model khi thiếu pdiparams | vá: đòi đủ pdmodel + pdiparams cả 3 bộ; probe cùng sha {P['k_ocr_models_v2_truoc'][0]} → {P['k_ocr_models_v2_sau_fp2'][0]} | `evidence/itacc_r13_fix_4/probes/k_ocr_models_v2_*` |
+| F2 ảnh hỏng mất chi phí | vá: ghi chi phí đã báo 1 lần, ok=false; {P['l_image_cost_truoc'][0]} → {P['l_image_cost_sau_fp2'][0]} | `probes/l_image_cost_*`, `tests/test_r13_fix4.py` |
+| F3 preflight backup tin sổ/manifest | vá: đo dump + offsite thật theo manifest; {P['m_backup_files_truoc'][0]} → {P['m_backup_files_sau_fp2'][0]} | `probes/m_backup_files_*` |
+| F4 `--upgrade` bỏ cổng triển khai | vá: cổng trước HTTP/INSERT (hàm + CLI); {P['n_anchor_gate_truoc'][0]} → {P['n_anchor_gate_sau_fp2'][0]} | `probes/n_anchor_gate_*` |
+| Kiểm lại 6 mục | {CA6} | `items/`, `runs/`, `criteria/r13fix4_v1.json`, `r13fix4_v2.json` |
+| Tổng 96 | **{TOT}** (r13 84/0/12) | `tong_hop.json`, `source_map.json` |
+| Gate (fp mã `{FPC[:12]}…`) | full {FULL} EXIT 0; ruff 0; eval 0; DPIA 0; red-team 0; không đổi schema | `gate/` |
+
+"""
+bd = REPO / "docs" / "handover" / "v13-board.md"
+s = bd.read_text(encoding="utf-8")
+a = "## Checkpoint mới — Vòng r13 (24/10/2026):"
+assert s.count(a) == 1
+s = s.replace(a, BOARD + "## Checkpoint (LỊCH SỬ — 4 lỗi F1–F4 vá ở r13-fix4) — Vòng r13 (24/10/2026):")
+bd.write_text(s, encoding="utf-8", newline="\n")
+
+dc = REPO / "docs" / "handover" / "doi-chieu-docx.md"
+s = dc.read_text(encoding="utf-8")
+a = ("Tổng nội bộ 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN; chờ bên ngoài: `dau-vao-va-quyet-dinh.md` mục G; evidence "
+     "`evidence/itacc_r13_docx12/`; hồ sơ `nghiem-thu-ky-thuat-noi-bo.md` mục 0. Nghiệm thu hợp đồng 0/96 không đổi.")
+assert s.count(a) == 1
+s = s.replace(a, a.replace("mục 0.", "mục 0-r13.") + f"\n\n**Đính chính r13-fix4 (25/10/2026):** controller tái hiện 4 lỗi trong phần code r13 — OCR tự tải model khi"
+              " thiếu `inference.pdiparams` (production-03, data_platform-02.1), ảnh AI hỏng ghi chi phí 0 (marketing-02.1),"
+              " preflight báo backup ĐẠT khi không có dump/offsite (data_platform-90), `anchor --upgrade` bỏ cổng triển khai"
+              f" (farming-06). Đã vá + kiểm lại 6 mục ({CA6}); tổng nội bộ vẫn {TOT}; 12 mục vẫn BỊ CHẶN như bảng trên."
+              " Evidence `evidence/itacc_r13_fix_4/`; hồ sơ `nghiem-thu-ky-thuat-noi-bo.md` mục 0.")
+dc.write_text(s, encoding="utf-8", newline="\n")
+
+ag = REPO / "AGENTS.md"
+s = ag.read_text(encoding="utf-8")
+a = "· runbook 10.11, chờ bên ngoài `dau-vao-va-quyet-dinh.md` mục G |"
+assert s.count(a) == 1
+s = s.replace(a, "· r13-fix4 (25/10): OCR đòi đủ `inference.pdmodel`+`inference.pdiparams` cả 3 bộ; ảnh AI HTTP 200 hỏng vẫn ghi"
+              " chi phí (ok=false); `onprem_preflight` đo dump + offsite thật theo manifest; `anchor --upgrade` qua cổng"
+              " triển khai · " + a[2:])
+ag.write_text(s, encoding="utf-8", newline="\n")
+print("ok", TOT, SRC, FPC[:12], FULL)

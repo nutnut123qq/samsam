@@ -1,0 +1,11 @@
+PASS LOI nhan_png_ocr_trich_truong {'src': 'ocr', 'dksp': ['15/2026/ĐKSP'], 'nsx': ['2026-10-12'], 'hsd': ['2028-10-12'], 'lots': ['L2026-1012'], 'qty': ['300 ml']}
+PASS LOI sx_label_read_image {'len': 108}
+PASS LOI pdf_scan_2_trang {'src': 'ocr', 'pages': 2, 'fields': {'so_giay': '123/2026/DKSP', 'ngay_cap': '2026-10-05'}}
+PASS LOI anh_trang_none {'src': 'none'}
+PASS LOI anh_hong_docerror DocError: ảnh hỏng/không đọc được: UnidentifiedImageError
+PASS LOI pdf_qua_trang_docerror DocError: PDF 31 trang > OCR_MAX_PAGES=30
+PASS LOI thieu_model_tu_choi DocError: thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR · net+0
+PASS LOI engine_truy_vet {'paddle_local': 'paddleocr-2.x/latin_PP-OCRv3'}
+PASS DOI_CHUNG provider_none_giu_cho_ocr none
+PASS DOI_CHUNG khong_mo_mang []
+TONG {'PASS': 10, 'FAIL': 0}

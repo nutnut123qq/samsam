@@ -1,0 +1,38 @@
+[
+ {
+  "sql": "select count(*) from documents where filename in ('tiep_nhan_scan.pdf', 'nhan_mat_ong.png') and status = 'pending_review' and text_source = 'ocr' and ocr_engine = 'paddleocr-2.x/latin_PP-OCRv3' and pii_flag is not null and verified_by is null",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select doc_type || '|' || pages from documents where filename = 'tiep_nhan_scan.pdf'",
+  "expect": "giay_tiep_nhan|2",
+  "actual": "giay_tiep_nhan|2",
+  "dat": true
+ },
+ {
+  "sql": "select doc_type || '|' || pages from documents where filename = 'nhan_mat_ong.png'",
+  "expect": "nhan|1",
+  "actual": "nhan|1",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'tiep_nhan_scan.pdf' and f.field = 'so_giay' and f.value ~* '^123/2026/[ĐÐD]KSP$' and not f.verified",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename in ('tiep_nhan_scan.pdf', 'nhan_mat_ong.png') and f.verified",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'nhan_mat_ong.png'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

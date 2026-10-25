@@ -1102,6 +1102,32 @@
         "Chưa chọn chuỗi/provider/phí — chưa neo thật (BLOCKED quyết định hai bên)",
         "Calendar OpenTimestamps đặt ở nước ngoài — dù chỉ là digest, Pháp chế xác nhận trước khi bật"
       ]
+    },
+    {
+      "id": "DF-48",
+      "name": "Ảnh nền AI cho nháp ảnh marketing qua OpenRouter Images API (r13, marketing-02.1)",
+      "modules": [
+        "pipelines/image_provider_openrouter.py"
+      ],
+      "data": "Gửi đi: CHỈ mô tả nền (prompt dựng từ --scene đã qua check_scene/guardrail, không tên người/SĐT/sản phẩm thật) + kích thước ảnh + model + danh sách provider được phép; KHÔNG gửi ảnh sản phẩm/packshot (ghép tại chỗ). Nhận về: ảnh nền PNG (base64) + usage.cost",
+      "class": "vang",
+      "subjects": "Không có chủ thể dữ liệu (mô tả cảnh vật)",
+      "purpose": "Sinh nền ảnh quanh packshot thật cho nháp ảnh marketing (PL01 Marketing — ảnh bối cảnh AI)",
+      "storage": "Ảnh ghép NHÁP `<IMAGE_OUT_DIR>/<sha256>.png` + `image_assets` (provider/model/prompt_sha256) + `llm_usage` (agent image, feature marketing-02.1, cost)",
+      "retention": "Theo nháp ảnh (content_drafts/image_assets) — GAP như luồng nội dung",
+      "recipients": "OpenRouter (openrouter.ai) + provider sinh ảnh trong `provider_only` của data/llm_gateway.json",
+      "cross_border": true,
+      "safeguards": [
+        "MẶC ĐỊNH TẮT: IMAGE_PROVIDER=none; cần IMAGE_MODEL + OPENROUTER_API_KEY tường minh",
+        "Cổng llm_gateway._gate TRƯỚC mọi request: kill agent/tính năng, trần tháng agent `image` + tính năng marketing-02.1, không đọc được chi tiêu → chặn, rollout TẮT → chặn, whitelist provider rỗng → chặn",
+        "Không theo redirect, timeout 120 s, tối đa 1 lần thử lại 429/502/503 (502 không tính phí), trần ảnh 20 MB, kiểm định dạng/kích thước (sai cỡ → từ chối, không resize ngầm)",
+        "Packshot/nhãn sản phẩm KHÔNG rời máy; ảnh luôn là NHÁP chờ người duyệt, nhãn 'Nội dung có sử dụng AI'"
+      ],
+      "legal_basis": "Lợi ích hợp pháp (không dữ liệu cá nhân) — điều khoản bản quyền ảnh sinh CẦN Pháp chế xác nhận",
+      "gaps": [
+        "Chưa chọn vendor/model, chưa có DPA/điều khoản bản quyền ảnh sinh (external-dep)",
+        "Chỉ kiểm bằng transport giả theo schema tài liệu — chưa gọi API thật"
+      ]
     }
   ]
 }

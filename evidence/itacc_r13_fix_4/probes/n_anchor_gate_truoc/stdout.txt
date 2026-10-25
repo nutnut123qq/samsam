@@ -1,0 +1,10 @@
+PASS doi_chung_submit_tat_0_post {'got': 'AnchorError: neo lần gom #7: tính năng farming-06 đang tắt — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng', 'posts': []}
+FAIL upgrade_tat_0_get_0_insert {'got': "không chặn: {'id': 7, 'status': 'cho', 'errors': []}", 'gets': ['https://cal-b.test/timestamp/ff3c98b62aabc3f2b584406b736af20d2dfefbb6a59d663cf9bf50603
+FAIL upgrade_khong_xac_dinh_fail_closed {'got': "không chặn: {'id': 7, 'status': 'cho', 'errors': []}", 'gets': ['https://cal-b.test/timestamp/ff3c98b62aabc3f2b584406b736af20d2dfefbb6a59d663cf9bf50603
+FAIL upgrade_chay_thu_0_get {'got': "không chặn: {'id': 7, 'status': 'cho', 'errors': []}", 'gets': ['https://cal-b.test/timestamp/ff3c98b62aabc3f2b584406b736af20d2dfefbb6a59d663cf9bf50603
+FAIL upgrade_co_nguoi_duyet_job_khong_tu_mo {'got': "không chặn: {'id': 7, 'status': 'cho', 'errors': []}", 'gets': ['https://cal-b.test/timestamp/ff3c98b62aabc3f2b584406b736af20d2dfefbb6a59d663cf9bf50603
+FAIL cli_upgrade_tat_exit_khac_0_0_mang {'rc': 0, 'net': ["('cal-b.test', 443)"], 'inserts': 0, 'stderr': ''}
+PASS van_hanh_pending_cho_0_insert {'r': {'id': 7, 'status': 'cho', 'errors': []}, 'gets': ['https://cal-b.test/timestamp/ff3c98b62aabc3f2b584406b736af20d2dfefbb6a59d663cf9bf50603ac404f2']}
+PASS van_hanh_bitcoin_1_insert_da_nang_cap {'r': {'id': 7, 'status': 'da_nang_cap', 'new': True, 'heights': [850001]}, 'inserts': 1, 'kinds': ['bitcoin'], 'state': 'calendar cal-b.test đã trả attestation
+PASS van_hanh_calendar_ngoai_cau_hinh_0_get {'r': {'id': 7, 'status': 'cho', 'errors': ['calendar ngoài cấu hình — không hỏi']}, 'gets': []}
+TONG {'PASS': 4, 'FAIL': 5}

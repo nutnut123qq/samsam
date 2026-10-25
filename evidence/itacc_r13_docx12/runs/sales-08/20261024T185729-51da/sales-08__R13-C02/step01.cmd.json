@@ -1,0 +1,23 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import glob,shutil,sys; s,d=sys.argv[1:3]; shutil.copytree(s,d); f=glob.glob(d+'/website-feed-????-??-??.json'); assert len(f)==1,f; open(f[0],'ab').write(b' '); print('FIXTURE sửa 1 byte', f[0])",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T185729-51da\\scratch/s08_feed",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T185729-51da\\scratch/s08_feed_tamper"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:58:04+07:00",
+ "ket_thuc": "2026-10-24T18:58:04+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "b712070d37d9cf3e2a253684a75b7f6d6ccecd0010dab9eff13ff60ad29f4473",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

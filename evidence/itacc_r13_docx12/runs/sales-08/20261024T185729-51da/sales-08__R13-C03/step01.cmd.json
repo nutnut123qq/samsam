@@ -1,0 +1,23 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import json,sys; s,d=sys.argv[1:3]; g=json.loads(open(s,'rb').read().decode('utf-8')); k=[x for x in g['skus'] if x['sku_key']=='mat-ong-sam-300ml']; assert len(k)==1; assert k[0]['prices']['web']['list']==2980000; k[0]['prices']['web']['list']=3100000; open(d,'w',encoding='utf-8').write(json.dumps(g,ensure_ascii=False,indent=1)); print('FIXTURE golden giá web mới 3100000 (Thử R13) ->', d)",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\fixtures/items/sales-03/golden_fixture.json",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-08\\20261024T185729-51da\\scratch/golden_gia_web_moi.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:58:09+07:00",
+ "ket_thuc": "2026-10-24T18:58:09+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "a5c5e325b5f3f1021024ad46b93cefdf58f151b43d6e74a601e88663ecb638b3",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

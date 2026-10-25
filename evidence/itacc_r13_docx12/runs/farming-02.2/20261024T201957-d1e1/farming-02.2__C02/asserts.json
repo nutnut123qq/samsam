@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where block = 'farming' and object_type = 'plot_log_gap' and created_by = 'agent:garden_director' and status = 'pending' and decided_by is null and decided_at is null and object_id in ('gap:IT-K02:none', 'gap:IT-K04:none') and payload like '%CHƯA gán người phụ trách%'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and object_id like 'gap:IT-%'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ }
+]

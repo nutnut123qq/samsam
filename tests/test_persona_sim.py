@@ -182,6 +182,16 @@ class FakeConn:
         self.closed = True
 
 
+# r13: lượt thật cần >= 3 nhà cung cấp khác nhau — cấu hình THỬ (tên model giả).
+MULTI = ["openai/gpt-4o-mini", "anthropic/model-gia-thu", "google/model-gia-thu"]
+
+
+def _signed_multi(d):
+    d.update(dpia_signed=True)
+    for m, mid in zip(d["models"], MULTI):
+        m["id"] = mid
+
+
 def _write_cfg(tmp_path, mut):
     d = copy.deepcopy(CFG)
     mut(d)
@@ -228,7 +238,7 @@ def test_dpia_gate_opens_only_on_true_both_sides(tmp_path, monkeypatch):
         raise Opened
 
     monkeypatch.setattr(ps, "gateway_chat", sentinel)
-    p = _write_cfg(tmp_path, lambda d: d.update(dpia_signed=True))
+    p = _write_cfg(tmp_path, _signed_multi)
     monkeypatch.setattr(ps, "CONFIG_FILE", p)
     with pytest.raises(Opened):
         ps.main(["--config", str(p)])
@@ -336,14 +346,14 @@ def test_real_path_uses_gateway_agent_and_params(tmp_path, monkeypatch,
     monkeypatch.setattr(llm_gateway, "chat", gw_chat)
     fake = FakeConn()
     monkeypatch.setattr(ps, "_connect", lambda: fake)
-    p = _write_cfg(tmp_path, lambda d: d.update(dpia_signed=True))
+    p = _write_cfg(tmp_path, _signed_multi)
     monkeypatch.setattr(ps, "CONFIG_FILE", p)
     assert ps.main(["--config", str(p)]) == 0
     out = capsys.readouterr().out
     assert "DRY-RUN" not in out
     assert len(seen) == 45
     assert {a for a, *_ in seen} == {"persona_sim"}
-    assert {m for _, m, *_ in seen} == {m["id"] for m in CFG["models"]}
+    assert {m for _, m, *_ in seen} == set(MULTI)
     assert {t for *_, t, _ in seen} == {CFG["temperature"]}
     base = CFG["base_seed"]
     assert sorted({s for *_, s in seen}) == [base + i for i in range(5)]
@@ -398,7 +408,7 @@ def test_gateway_blocked_midway_writes_nothing(tmp_path, monkeypatch,
     monkeypatch.setattr(llm_gateway, "chat", gw_chat)
     connects = []
     monkeypatch.setattr(ps, "_connect", lambda: connects.append(1))
-    p = _write_cfg(tmp_path, lambda d: d.update(dpia_signed=True))
+    p = _write_cfg(tmp_path, _signed_multi)
     monkeypatch.setattr(ps, "CONFIG_FILE", p)
     assert ps.main(["--config", str(p)]) == 1
     cap = capsys.readouterr()
@@ -529,3 +539,13 @@ def test_db_score_check_constraint(db):
     bad = dict(rows[0], score=11)
     with pytest.raises(psycopg.errors.CheckViolation):
         ps.write_rows(db, [bad], commit=False)
+
+
+def test_real_run_needs_three_providers_zero_calls(tmp_path, monkeypatch, capsys):
+    """r13: DPIA đã ký nhưng 3 model cùng 1 nhà cung cấp → [refuse] exit 2, 0 lời gọi."""
+    _no_llm_no_db(monkeypatch)
+    monkeypatch.setattr(ps, "gateway_chat", lambda *a, **k: pytest.fail("không được gọi LLM"))
+    p = _write_cfg(tmp_path, lambda d: d.update(dpia_signed=True))
+    monkeypatch.setattr(ps, "CONFIG_FILE", p)
+    assert ps.main(["--config", str(p)]) == 2
+    assert "nhà cung cấp" in capsys.readouterr().err

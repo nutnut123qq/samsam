@@ -1,0 +1,20 @@
+[warn] BACKUP_OFFSITE cùng thiết bị lưu trữ với BACKUP_DIR (st_dev) — chưa phải offsite thật
+# Preflight on-prem — hoang (machine-id khong-co) · 2026-10-24 17:04Z
+
+| Mục | Kết quả | Chi tiết (đo tại máy này) |
+|---|---|---|
+| db | DAT | server PG 17; pg_dump: C:\Program Files\PostgreSQL\17\bin\pg_dump |
+| dich_vu:webhook | CHUA_DAT | thiếu WEBHOOK_DATABASE_URL |
+| dich_vu:job | CHUA_DAT | thiếu JOB_DATABASE_URL |
+| dich_vu:loader | CHUA_DAT | thiếu LOADER_DATABASE_URL |
+| dich_vu:backup | CHUA_DAT | thiếu BACKUP_DATABASE_URL |
+| sao_luu:thu_muc | CHUA_DAT | tồn tại+ghi được: True; trống 12.7 GB (cần ≥ 50) |
+| sao_luu:ma_hoa_bat_buoc | DAT | BACKUP_REQUIRE_ENCRYPTION=1 + có tệp khóa |
+| sao_luu:offsite | CHUA_DAT | offsite CÙNG thiết bị với BACKUP_DIR |
+| sao_luu:ban_gan_nhat | CHUA_DAT | local: thiếu tệp dump samsam_itacc_r13fix4_dp072_20261025_000401_vn.dump.enc |
+| lich:systemd | KHONG_AP_DUNG | hệ điều hành Windows — không phải server systemd |
+
+Không đo được từ trong máy — CHUA_XAC_NHAN (Bên B ký biên bản): may chu vat ly + UPS; may giam sat DOC LAP (ngoai server); may offsite la MAY KHAC; nguoi giu tai khoan cao nhat
+
+KẾT LUẬN: CHƯA SẴN SÀNG — 7 mục đo được chưa đạt
+

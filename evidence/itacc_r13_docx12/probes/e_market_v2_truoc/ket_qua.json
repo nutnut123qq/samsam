@@ -1,0 +1,46 @@
+{
+ "probe": "e_market_v2",
+ "root": "D:\\code\\samsam_r13_baseline\\tree",
+ "ca": [
+  {
+   "ca": "429_retry_after_roi_200",
+   "ket_qua": "FAIL",
+   "actual": "ApiError: shopee /api/v2/product/get_item_list: HTTP 429"
+  },
+  {
+   "ca": "503_het_luot_thu_lai",
+   "ket_qua": "FAIL",
+   "actual": {
+    "req": 1,
+    "waits": [],
+    "err": "shopee /api/v2/product/get_item_list: HTTP 503"
+   }
+  },
+  {
+   "ca": "400_khong_thu_lai",
+   "ket_qua": "PASS",
+   "actual": {
+    "req": 1,
+    "err": "shopee /api/v2/product/get_item_list: HTTP 400"
+   }
+  },
+  {
+   "ca": "tinh_nang_tat_0_request",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 0,
+    "req": 1,
+    "out": "[warn] API shopee/listing trả 0 dòng — không nạp gì.\n[job-runs] không có DATABASE_URL — bỏ ghi job_runs\n"
+   }
+  },
+  {
+   "ca": "endpoint_ghi_bi_chan",
+   "ket_qua": "PASS",
+   "actual": "ScopeError"
+  }
+ ],
+ "tong": {
+  "PASS": 2,
+  "FAIL": 3
+ }
+}

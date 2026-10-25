@@ -1,0 +1,15 @@
+"""HARNESS r13-fix4 — dựng bộ model OCR GIẢ thiếu tệp dưới <DIR> theo cấu trúc `doc_intake._PADDLE_SUBDIRS` của cây đang
+chạy: mỗi bộ det/rec/cls chỉ có inference.pdmodel (byte giả), THIẾU inference.pdiparams (ca controller F1).
+  python mk_models_thieu.py.txt <DIR>   → in "[models] thieu_pdiparams 3 bo"."""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from ingest import doc_intake as di  # noqa: E402
+
+root = Path(sys.argv[1])
+for parts in di._PADDLE_SUBDIRS.values():
+    d = root.joinpath(*parts)
+    d.mkdir(parents=True, exist_ok=False)
+    (d / "inference.pdmodel").write_bytes(b"synthetic-incomplete-model")
+print(f"[models] thieu_pdiparams {len(di._PADDLE_SUBDIRS)} bo")

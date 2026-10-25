@@ -937,3 +937,42 @@ scram cho local/127.0.0.1/::1. Server Bên B/CI/máy khác: CHƯA kiểm.
   năng>` trên stdout, không traceback, không in nội dung nghiệp vụ, không ghi
   file/DB. CLI đã có giao diện `[blocked] …` trên stderr từ v14.3 (vd
   `hdtv_report`, `acc_ar`, `rev_share`) giữ nguyên.
+
+**10.11 Adapter + công cụ đợt r13 (24/10/2026 — kiểm kỹ thuật nội bộ; mặc định vẫn TẮT, bật = quyết định Bên B/Pháp chế)**
+
+- OCR tại chỗ (production-03, data_platform-02.1): `OCR_PROVIDER=paddle_local`; model PaddleOCR 2.x đặt sẵn ở
+  `OCR_PADDLE_MODEL_DIR` (mặc định `~/.paddleocr/whl`, cần đủ `det/en/en_PP-OCRv3_det_infer`,
+  `rec/latin/latin_PP-OCRv3_rec_infer`, `cls/ch_ppocr_mobile_v2.0_cls_infer`), MỖI bộ phải có cả `inference.pdmodel`
+  lẫn `inference.pdiparams` (không rỗng) — thiếu/rỗng tệp nào → lỗi trước khi khởi tạo PaddleOCR, KHÔNG tự tải
+  (r13-fix4 F1: bản r13 chỉ kiểm pdmodel nên thiếu pdiparams vẫn để PaddleOCR gọi trình tải mạng). Tệp có mặt nhưng hỏng
+  nội dung không phát hiện được trước khi nạp — chép model từ nguồn đã kiểm sha.
+  Trần `OCR_MAX_PAGES` (30) + `OCR_TIMEOUT_S` (300). Kết quả luôn `pending_review` (Pháp chế `--verify`); engine ghi
+  `documents.ocr_engine`. Có provider mà OCR không ra chữ → `[cho_ocr]` exit 2 (người đọc bản gốc). Chữ Việt mất một
+  phần dấu thanh — đối chiếu người là bắt buộc.
+- STT tại chỗ (farming-01): `GARDEN_STT_PROVIDER=whisper_local` + `GARDEN_STT_MODEL_DIR` (thư mục model faster-whisper
+  có `model.bin`, tải sẵn, `local_files_only`). Trần `GARDEN_STT_MAX_SECONDS` (600) / `GARDEN_STT_TIMEOUT_S` (300).
+  `python -m connectors.zalo_garden --transcribe ID` chỉ IN NHÁP đã che PII; người nghe ghi nhật ký + `--done`. Chạy
+  OCR và STT ở TIẾN TRÌNH riêng (ctranslate2 không nạp được sau PaddleOCR trong cùng tiến trình trên Windows).
+- Ảnh nền AI (marketing-02.1): `IMAGE_PROVIDER=openrouter_images` + `IMAGE_MODEL` + `OPENROUTER_API_KEY`; trước mỗi
+  request qua cổng `llm_gateway` (agent `image`, tính năng `marketing-02.1`: kill, trần tháng, rollout, whitelist);
+  tối đa 1 lần thử lại 429/502/503; chi phí ghi `llm_usage` từ `usage.cost`. Packshot không rời máy. HTTP 200 mà ảnh
+  hỏng/thiếu/không phải ảnh vẫn ghi ĐÚNG 1 dòng chi phí đã báo (`ok=false`), thiếu `usage.cost` hợp lệ → mức dự phòng
+  `image_cost_fallback_usd` (mặc định 0.25) — trần tháng tính cả khoản này (r13-fix4 F2).
+- Neo (farming-06): sau `--submit`, chạy `python -m pipelines.anchor --upgrade latest` (≥1 khối Bitcoin sau) → dòng
+  `da_nang_cap` khi calendar trả attestation; trạng thái này CHƯA là xác minh bên thứ ba (`--export` + `ots verify`).
+  `--upgrade` qua cổng triển khai như `--submit` (r13-fix4 F4): farming-06 chưa vào sổ / chạy thử / tắt → exit 1, 0
+  HTTP, 0 dòng; job `agent:anchor` không phải người nên giai đoạn có người duyệt cũng chặn — chỉ chạy ở vận hành.
+- API sàn (data_platform-06): 429/5xx thử lại ≤3 lần theo `Retry-After` (trần 30 s); tính năng tắt → `[rollout]` exit 2,
+  0 request.
+- Sao lưu (data_platform-90/07.2): trên server đặt `BACKUP_REQUIRE_ENCRYPTION=1` (thiếu khóa → exit 2, không ghi bản rõ)
+  và `BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1` (offsite cùng thiết bị → exit 2). `python scripts/onprem_preflight.py --out
+  <tệp>` đo tại máy: DB + pg_dump, 4 login dịch vụ (riêng, không superuser, đúng role), sao lưu (thư mục, mã hóa bắt
+  buộc, offsite khác thiết bị, bản gần nhất ≤26 giờ), timer systemd; chỉ đọc biến môi trường tiến trình. Bản gần
+  nhất chỉ ĐẠT khi tệp dump THẬT + manifest hợp lệ (mã hóa) có ở CẢ `BACKUP_DIR` lẫn offsite `dir:` và khớp
+  size/sha256 manifest, thời điểm trong sổ không ở tương lai (r13-fix4 F3; offsite `s3://` chưa kiểm được → CHUA_DAT).
+  Preflight băm toàn bộ tệp dump — chạy ngoài giờ cao điểm nếu dump lớn.
+- N22 (ceo-90): DBA dựng 2 bản sao cô lập (backup TRƯỚC sự cố + dump hiện tại) rồi `INCIDENT_BASELINE_URL=…
+  INCIDENT_NOW_URL=… python scripts/incident_compare.py --out <tệp>` — chỉ đọc, từ chối dbname `samsam`, báo cáo chỉ số
+  đếm/tên; thiếu bản trước = UNVERIFIED.
+- Nguồn dữ liệu website (sales-08): trước khi bên website nạp, `python -m agents.listing_export --verify
+  <website-feed-….manifest.json>` (sha tệp + giá web ĐÃ duyệt còn hiệu lực + mô tả đã duyệt).

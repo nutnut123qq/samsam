@@ -329,3 +329,22 @@ def test_san_verify_detects_price_change(db, tmp_path, change):
         if change == "gia_moi":
             _web_price(db, SKU, 160000, channel="shopee", days_ago=0)
     assert le.verify(db, mp, readiness=RD) != []
+
+
+def test_website_feed_verify_detects_price_change_and_tamper(db, tmp_path):
+    """r13 sales-08: --verify nguồn dữ liệu website — khớp ngay sau xuất;
+    giá web mới được duyệt (bản cũ hết hiệu lực) → lệch gia_id; tệp bị sửa →
+    lệch sha. Không DB thật của Sâm Sâm — DB thử của test."""
+    from datetime import timedelta
+    old = _web_price(db, SKU, 120000)
+    _master(db)
+    mp = le.website_feed(db, tmp_path, readiness=RD)
+    man = json.loads(mp.read_text(encoding="utf-8"))
+    assert le.verify_feed(db, man, mp, readiness=RD) == []
+    db.execute("update price_list set valid_to = %s where id = %s", (_today() - timedelta(days=1), old))
+    _web_price(db, SKU, 130000, days_ago=1)
+    bad = le.verify_feed(db, man, mp, readiness=RD)
+    assert any(f"{SKU}: gia_id lệch" in b for b in bad) and any("gia_vnd" in b for b in bad)
+    f = tmp_path / man["file"]
+    f.write_bytes(f.read_bytes() + b" ")
+    assert any("sha lệch" in b for b in le.verify_feed(db, man, mp, readiness=RD))

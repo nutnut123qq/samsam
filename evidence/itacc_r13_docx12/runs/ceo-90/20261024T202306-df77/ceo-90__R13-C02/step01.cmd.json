@@ -1,0 +1,30 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/incident_run.py.txt",
+  "tu_choi_samsam"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:23:10+07:00",
+ "ket_thuc": "2026-10-24T20:23:11+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[harness\\] mode=tu_choi_samsam rc=2 so_ket_noi=0\\b",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\[từ chối\\] hiện tại: trỏ DB `samsam` thật[^\\n]*0 kết nối",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "925c0618ae22698ba19ce2593923207af6ef63e9050b955e7ac1da17e1323321",
+ "stderr_sha256": "c51e92f7cb0c89c8c54d64048cd4225fb106bff8f3a76251444c48cd95fe4642"
+}

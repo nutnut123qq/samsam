@@ -1,0 +1,152 @@
+"""r13 HARNESS (MOCK) farming-01 — STT `whisper_local` của connectors.zalo_garden chạy THẬT tới biên `WhisperModel`.
+
+Viết mới cho r13 (không chuyển từ r10). Máy dev KHÔNG có model Whisper → chạy chép lời thật = BỊ CHẶN; harness này chỉ
+kiểm hợp đồng tại biên:
+  - sinh WAV 2 giây tất định (stdlib wave, 16 kHz mono 16-bit, sóng sin theo --mode) — hoặc tệp hỏng (--mode corrupt:
+    đầu RIFF....WAVE đúng magic nhưng thân rác);
+  - lưu vào kho bằng ĐÚNG hàm sản phẩm `scripts.garden_media.store(raw, ext, <GARDEN_MEDIA_DIR>/audio)` (bố cục
+    <kho>/audio/<sha[:2]>/<sha>.<ext>, như webhook) — GARDEN_MEDIA_DIR do bước đặt, phải NGOÀI repo;
+  - INSERT 1 dòng garden_voice_drafts (status mặc định cho_chep_loi, source 'fixture:r13_stt', staff IT-NV01) trên
+    DATABASE_URL (on conflict sha256 → dùng lại dòng cũ);
+  - FAKE module `faster_whisper` vào sys.modules TRƯỚC khi sản phẩm import (máy có cài faster-whisper thật nhưng không có
+    model): WhisperModel ghi lại đối số khởi tạo + audio/ngôn ngữ nhận được, trả 2 đoạn
+    "Khoảnh KV-A01 tưới 30 phút" / "gọi 0912345678" (--mode ok), đoạn rỗng (--mode empty) hoặc ngủ 3 giây (--mode slow);
+  - thư mục model GIẢ có model.bin (--model-dir), GARDEN_STT_PROVIDER=whisper_local;
+  - chặn mạng Python (socket.create_connection / socket.socket.connect) — đếm NET_CALLS (libpq của psycopg không đi qua
+    socket Python nên DB vẫn chạy);
+  - gọi `connectors.zalo_garden.main(["--transcribe", id])` (PyAV `_decode_16k` THẬT), in nguyên stdout của sản phẩm rồi
+    in FACT; exit = mã trả về của main.
+Dùng: python stt_run.py.txt --mode ok|empty|slow|corrupt --model-dir DIR   (env GARDEN_MEDIA_DIR, DATABASE_URL; tùy chọn
+GARDEN_STT_MAX_SECONDS / GARDEN_STT_TIMEOUT_S — sản phẩm đọc lúc import)."""
+import argparse
+import contextlib
+import io
+import math
+import os
+import socket
+import struct
+import sys
+import time
+import types
+import wave
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT))
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--mode", required=True, choices=("ok", "empty", "slow", "corrupt"))
+ap.add_argument("--model-dir", required=True)
+a = ap.parse_args()
+
+NET = [0]
+
+
+def _no_net(*_a, **_k):
+    NET[0] += 1
+    raise OSError("[HARNESS] mạng bị chặn")
+
+
+socket.create_connection = _no_net
+socket.socket.connect = _no_net
+
+# ---- 1) ghi âm tất định
+FREQ = {"ok": 440, "empty": 660, "slow": 880}
+if a.mode == "corrupt":
+    raw = b"RIFF" + struct.pack("<I", 4000) + b"WAVE" + b"khong phai am thanh - fixture thu R13 " * 40
+else:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(16000)
+        w.writeframes(b"".join(struct.pack("<h", int(8000 * math.sin(2 * math.pi * FREQ[a.mode] * i / 16000)))
+                               for i in range(32000)))
+    raw = buf.getvalue()
+
+# ---- 2) fake faster_whisper (biên cuối)
+REC = {"init": [], "calls": []}
+
+
+class _Seg:
+    def __init__(self, text):
+        self.text = text
+
+
+class WhisperModel:  # noqa: D401 — giả
+    def __init__(self, path, **kw):
+        REC["init"].append({"path": str(path), **kw})
+
+    def transcribe(self, audio, **kw):
+        REC["calls"].append({"n": int(len(audio)), "dtype": str(getattr(audio, "dtype", "?")), **kw})
+        if a.mode == "slow":
+            time.sleep(3)
+        if a.mode == "empty":
+            return iter([_Seg("  "), _Seg("")]), None
+        return iter([_Seg(" Khoảnh KV-A01 tưới 30 phút "), _Seg("gọi 0912345678")]), None
+
+
+fw = types.ModuleType("faster_whisper")
+fw.WhisperModel = WhisperModel
+sys.modules["faster_whisper"] = fw
+
+md = Path(a.model_dir)
+md.mkdir(parents=True, exist_ok=True)
+(md / "model.bin").write_bytes(b"FAKE MODEL THU R13 - khong phai model Whisper that\n")
+os.environ["GARDEN_STT_PROVIDER"] = "whisper_local"
+os.environ["GARDEN_STT_MODEL_DIR"] = str(md)
+
+from connectors import zalo_garden as zg  # noqa: E402
+from scripts import garden_media as gm  # noqa: E402
+
+store = zg._store_dir()
+if store is None:
+    print("[HARNESS] GARDEN_MEDIA_DIR thiếu hoặc nằm trong repo — dừng", file=sys.stderr)
+    raise SystemExit(3)
+ext = zg.audio_kind(raw)
+sha, path = gm.store(raw, ext, store / "audio")
+print(f"[HARNESS] audio {sha[:12]}.{ext} {len(raw)}B -> {path.relative_to(store).as_posix()}")
+
+# ---- 3) dòng nháp
+import psycopg  # noqa: E402
+
+with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5) as c:
+    c.execute("insert into garden_voice_drafts (sha256, ext, bytes, staff_code, plot_id, source) values"
+              " (%s, %s, %s, 'IT-NV01', null, 'fixture:r13_stt') on conflict (sha256) do nothing",
+              (sha, ext, len(raw)))
+    did = c.execute("select id from garden_voice_drafts where sha256 = %s", (sha,)).fetchone()[0]
+    c.commit()
+print(f"DRAFT_ID {did}")
+
+# ---- 4) chạy sản phẩm
+out, err = io.StringIO(), io.StringIO()
+with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+    rc = zg.main(["--transcribe", str(did)])
+so, se = out.getvalue(), err.getvalue()
+sys.stdout.write(so)
+sys.stderr.write(se)
+
+with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5) as c:
+    st = c.execute("select status from garden_voice_drafts where id = %s", (did,)).fetchone()[0]
+
+init = REC["init"][0] if REC["init"] else {}
+call = REC["calls"][0] if REC["calls"] else {}
+n = call.get("n", 0)
+print("FACT RC", rc)
+print("FACT NHAP_PRESENT", f"[nhap] #{did} (whisper_local) — NHÁP" in so)
+print("FACT TEXT_PRESENT", "Khoảnh KV-A01 tưới 30 phút" in so)
+print("FACT PHONE_MASKED", "0912345678" not in so + se and "gọi ***" in so)
+print("FACT MODEL_INIT", len(REC["init"]))
+print("FACT TRANSCRIBE_CALLS", len(REC["calls"]))
+print("FACT MODEL_PATH_OK", init.get("path") == str(md))
+print("FACT LOCAL_FILES_ONLY", init.get("local_files_only"))
+print("FACT DEVICE", init.get("device"))
+print("FACT AUDIO_SAMPLES", n)
+print("FACT AUDIO_OK", 31500 <= n <= 32500)
+print("FACT AUDIO_DTYPE", call.get("dtype"))
+print("FACT LANGUAGE", call.get("language"))
+print("FACT DRAFT_STATUS", st)
+print("FACT NET_CALLS", NET[0])
+raise SystemExit(rc)

@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from plot_logs where detail = 'tưới thử R12 UI-01' and author = 'Nông Dân Thử R12' and source = 'manual' and row_hash is not null",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from pg_roles where rolname like 'r12f\\_%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

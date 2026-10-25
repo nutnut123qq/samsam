@@ -1,0 +1,113 @@
+"""PROBE r13 F v1 — intel-05.1 giả lập khách hàng (`scripts/persona_sim.py`): lượt THẬT cần ≥3 nhà cung cấp khác nhau, chặn
+trước mọi lời gọi. Không DB, không LLM: lời gọi thật thay bằng hàm canh (sentinel) ghi lại; cấu hình DPIA=true chỉ ở tệp TẠM
+(file chuẩn data/sim_config.json KHÔNG đổi — CONFIG_FILE trỏ tệp tạm trong tiến trình probe). Cùng mã baseline/bản sửa.
+  python -I probe_f_persona.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước):
+- DPIA ký (tệp tạm) + 3 model cùng nhà cung cấp `openai` → exit 2, `[refuse]` nêu nhà cung cấp, 0 lời gọi LLM, 0 DB.
+- DPIA ký + 3 nhà cung cấp khác nhau → đi tới lời gọi thật (sentinel được gọi) — đối chứng dương: cổng không chặn nhầm.
+- DPIA chưa ký (file chuẩn) → exit 2 như cũ (đối chứng).
+- data/sim_config.json thật vẫn dpia_signed=false sau probe."""
+import contextlib
+import copy
+import io
+import json
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG") or k == "OPENROUTER_API_KEY":
+        os.environ.pop(k, None)
+sys.path.insert(0, str(Path(ROOT) / "scripts"))
+import persona_sim as ps  # noqa: E402
+
+from pipelines import llm_gateway  # noqa: E402
+
+CALLS, DB = [], []
+llm_gateway.chat = lambda *a, **k: CALLS.append("chat") or (_ for _ in ()).throw(RuntimeError("probe: cấm LLM"))
+ps._connect = lambda *a, **k: DB.append(1) or (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+
+
+class Opened(Exception):
+    pass
+
+
+def sentinel(*a, **k):
+    CALLS.append("gateway_chat")
+    raise Opened
+
+
+ps.gateway_chat = sentinel
+CFG = json.loads((Path(ROOT) / "data" / "sim_config.json").read_text(encoding="utf-8"))
+TMP = Path(tempfile.mkdtemp(prefix="r13ps-"))
+rows = []
+
+
+def cfg_file(name, mut):
+    d = copy.deepcopy(CFG)
+    mut(d)
+    p = TMP / name
+    p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+    return p
+
+
+def run(p, canon=True):
+    CALLS.clear()
+    DB.clear()
+    if canon:
+        ps.CONFIG_FILE = p
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = ps.main(["--config", str(p)])
+    except Opened:
+        rc = "OPENED"
+    return rc, err.getvalue()
+
+
+def case(ma, fn):
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def c_one_vendor():
+    rc, err = run(cfg_file("one.json", lambda d: d.update(dpia_signed=True)))
+    return rc == 2 and CALLS == [] and DB == [] and "nhà cung cấp" in err, {"rc": rc, "calls": list(CALLS),
+                                                                            "err": err[-200:]}
+
+
+def c_three():
+    def mut(d):
+        d.update(dpia_signed=True)
+        for m, mid in zip(d["models"], ["openai/gpt-4o-mini", "anthropic/model-gia", "google/model-gia"]):
+            m["id"] = mid
+    rc, err = run(cfg_file("three.json", mut))
+    return rc == "OPENED" and CALLS == ["gateway_chat"], {"rc": rc, "calls": list(CALLS)}
+
+
+def c_unsigned():
+    ps.CONFIG_FILE = Path(ROOT) / "data" / "sim_config.json"
+    rc, err = run(ps.CONFIG_FILE, canon=False)
+    return rc == 2 and CALLS == [] and "[refuse]" in err, {"rc": rc}
+
+
+case("mot_nha_cung_cap_bi_chan_0_goi", c_one_vendor)
+case("ba_nha_cung_cap_toi_loi_goi", c_three)
+case("dpia_chua_ky_chan", c_unsigned)
+case("file_chuan_khong_doi", lambda: (json.loads((Path(ROOT) / "data" / "sim_config.json").read_text(
+    encoding="utf-8"))["dpia_signed"] is False, "dpia_signed=false"))
+out = {"probe": "f_persona_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

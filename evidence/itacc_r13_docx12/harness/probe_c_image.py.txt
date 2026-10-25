@@ -1,0 +1,177 @@
+"""PROBE r13 C v1 — adapter API sinh ảnh nền cho marketing-02.1 (`pipelines.image_studio`, provider `openrouter_images`).
+Không DB (chi tiêu tháng/ghi usage thay bằng giả ghi lại), không mạng thật: HTTP qua httpx.MockTransport trả đúng schema tài
+liệu OpenRouter Images API (data[].b64_json, media_type, usage.cost). Cùng mã/input/assertion cho baseline (1ad90df) và bản sửa.
+  python -I probe_c_image.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước):
+- thành công: generate_background trả ảnh đúng cỡ, meta provider=openrouter_images, ai_generated=True, model=IMAGE_MODEL;
+  request POST .../images đúng model/prompt/size "WxH"/provider.only = whitelist gateway/allow_fallbacks=False, KHÔNG có ảnh
+  sản phẩm trong body; ghi usage ok với cost = usage.cost.
+- compose(--scene) với provider này: ảnh nháp có packshot nguyên vẹn (verify_packshot True), meta ai_generated.
+- 0 request khi: thiếu IMAGE_MODEL / thiếu key / nút tắt tính năng / không đọc được chi tiêu / vượt trần tháng.
+- 502 rồi 200 → 2 request, đúng 1 bản ghi usage ok; 429 hai lần → lỗi, 2 request, không ảnh; timeout → lỗi; b64 hỏng → lỗi;
+  ảnh sai cỡ → lỗi (không resize ngầm).
+- 0 socket mạng thật."""
+import base64
+import io
+import json
+import os
+import socket
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG") or k in ("LLM_KILL", "LLM_KILL_FEATURES", "IMAGE_PROVIDER"):
+        os.environ.pop(k, None)
+NET = []
+
+
+def _no_net(self, addr):
+    NET.append(str(addr)[:60])
+    raise OSError("probe: chặn mạng")
+
+
+socket.socket.connect = _no_net
+import httpx  # noqa: E402
+import psycopg  # noqa: E402
+from PIL import Image  # noqa: E402
+
+psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+from pipelines import image_studio as ims  # noqa: E402
+from pipelines import llm_gateway as gw  # noqa: E402
+
+REQ, REC = [], []
+STATE = {"spend": 0.0, "script": []}
+gw._month_spend = lambda agent, sql=None: STATE["spend"]
+gw._record = lambda *a, **k: REC.append({"agent": a[0], "model": a[1], "cost": a[4], "ok": a[5],
+                                         "feature": k.get("feature") or (a[7] if len(a) > 7 else None)})
+
+
+def png(size, color=(30, 120, 60)):
+    b = io.BytesIO()
+    Image.new("RGB", size, color).save(b, "PNG")
+    return base64.b64encode(b.getvalue()).decode()
+
+
+def handler(request):
+    REQ.append({"url": str(request.url), "body": json.loads(request.content or b"{}"),
+                "auth": request.headers.get("authorization", "")[:7]})
+    step = STATE["script"].pop(0) if STATE["script"] else ("ok", None)
+    kind, arg = step
+    if kind == "status":
+        return httpx.Response(arg, json={"error": {"code": arg}})
+    if kind == "timeout":
+        raise httpx.ReadTimeout("probe timeout", request=request)
+    if kind == "bad_b64":
+        return httpx.Response(200, json={"created": 1, "data": [{"b64_json": "@@@không-phải-base64", "media_type": "image/png"}]})
+    w, h = arg or tuple(map(int, REQ[-1]["body"].get("size", "64x64").split("x")))
+    return httpx.Response(200, json={"created": 1, "data": [{"b64_json": png((w, h)), "media_type": "image/png"}],
+                                     "usage": {"prompt_tokens": 0, "completion_tokens": 4175, "total_tokens": 4175,
+                                               "cost": 0.04}})
+
+
+ims._image_http = lambda: httpx.Client(transport=httpx.MockTransport(handler), timeout=5)
+os.environ.update(OPENROUTER_API_KEY="probe-key-gia-khong-that", IMAGE_MODEL="probe/model-gia")
+rows = []
+
+
+def case(ma, fn, reset=True):
+    if reset:
+        REQ.clear()
+        REC.clear()
+        STATE.update(spend=0.0, script=[])
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def gen(size=(64, 48)):
+    return ims.generate_background("nền vườn sâm buổi sáng", size, provider="openrouter_images")
+
+
+def c_ok():
+    img, meta = gen()
+    b = REQ[0]["body"] if REQ else {}
+    only = gw._config().get("provider_only")
+    ok = (img.size == (64, 48) and meta.get("ai_generated") is True and meta.get("model") == "probe/model-gia"
+          and meta.get("provider") == "openrouter_images" and len(REQ) == 1 and REQ[0]["url"].endswith("/images")
+          and b.get("size") == "64x48" and b.get("model") == "probe/model-gia" and b.get("prompt")
+          and b.get("provider", {}).get("only") == only and b["provider"].get("allow_fallbacks") is False
+          and set(b) <= {"model", "prompt", "size", "output_format", "n", "provider"}
+          and REC == [{"agent": "image", "model": "probe/model-gia", "cost": 0.04, "ok": True,
+                       "feature": "marketing-02.1"}])
+    return ok, {"meta": meta, "body_keys": sorted(b), "rec": REC, "n_req": len(REQ)}
+
+
+def c_compose():
+    d = Path(tempfile.mkdtemp(prefix="r13img-"))
+    ims.make_sample_packshot(d / "pk" / "mat-ong-sam-300ml.png", "mat-ong-sam-300ml")
+    res = ims.compose("mat-ong-sam-300ml", "facebook", "Quà biếu mùa thu", fmt="1:1", scene="vườn sâm buổi sáng",
+                      readiness={("mat-ong-sam-300ml", "facebook"): "TP_THUONG"}, provider="openrouter_images", packshot_dir=d / "pk", out_dir=d / "out")
+    if not res.get("ok"):
+        return False, res.get("refused")
+    img = Image.open(res["path"]).convert("RGB")
+    ok = ims.verify_packshot(img, res["fitted"], res["packshot_xy"]) and res["meta"].get("ai_generated") is True
+    return ok, {"ai": res["meta"].get("ai_generated"), "provider": res["meta"].get("provider"), "n_req": len(REQ)}
+
+
+def blocked(setup, teardown=None):
+    def f():
+        setup()
+        try:
+            gen()
+            return False, "không chặn"
+        except ims.ImageProviderError as e:
+            return len(REQ) == 0, f"{e} · req={len(REQ)}"
+        finally:
+            if teardown:
+                teardown()
+    return f
+
+
+def c_retry502():
+    STATE["script"] = [("status", 502), ("ok", None)]
+    img, meta = gen()
+    return len(REQ) == 2 and [r["ok"] for r in REC] == [True], {"n_req": len(REQ), "rec": REC}
+
+
+def failing(script):
+    def f():
+        STATE["script"] = list(script)
+        try:
+            gen()
+            return False, "không lỗi"
+        except ims.ImageProviderError as e:
+            return all(not r["ok"] for r in REC) or script[0][0] == "ok", f"{e} · req={len(REQ)} rec={REC}"
+    return f
+
+
+case("thanh_cong_dung_schema_va_usage", c_ok)
+case("compose_giu_nguyen_packshot", c_compose)
+case("thieu_model_0_request", blocked(lambda: os.environ.pop("IMAGE_MODEL"),
+                                      lambda: os.environ.__setitem__("IMAGE_MODEL", "probe/model-gia")))
+case("thieu_key_0_request", blocked(lambda: os.environ.pop("OPENROUTER_API_KEY"),
+                                    lambda: os.environ.__setitem__("OPENROUTER_API_KEY", "probe-key-gia-khong-that")))
+case("nut_tat_tinh_nang_0_request", blocked(lambda: os.environ.__setitem__("LLM_KILL_FEATURES", "marketing-02.1"),
+                                            lambda: os.environ.pop("LLM_KILL_FEATURES")))
+case("khong_doc_duoc_chi_tieu_0_request", blocked(lambda: STATE.update(spend=None)))
+case("vuot_tran_0_request", blocked(lambda: STATE.update(spend=1e6)))
+case("502_thu_lai_1_lan", c_retry502)
+case("429_hai_lan_loi", failing([("status", 429), ("status", 429)]))
+case("timeout_loi", failing([("timeout", None)]))
+case("b64_hong_loi", failing([("bad_b64", None)]))
+case("sai_kich_thuoc_loi", failing([("ok", (32, 32))]))
+case("khong_mo_mang", lambda: (NET == [], NET), reset=False)
+out = {"probe": "c_image_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:180])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

@@ -1,0 +1,211 @@
+"""PROBE r13-fix4 N v1 — F4: `pipelines.anchor.upgrade` (hàm + CLI `--upgrade`) phải qua cổng triển khai (rollout, HĐ 6.7)
+như `submit` TRƯỚC mọi HTTP tới calendar và mọi INSERT biên nhận. Dùng `pipelines.rollout` THẬT (ép giai đoạn qua
+`_FORCE_MODE`, hoặc để None → đọc sổ qua conn giả = đường fail-closed thật). Không DB thật (conn giả ghi lại INSERT), không
+mạng (hàm get giả cho đường hàm; đường CLI chặn mọi socket connect + đếm). Cùng mã/input/assertion snapshot r13 chưa vá +
+bản vá.  python -I probe_n_anchor_gate.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước khi vá):
+- tính năng TẮT: submit bị chặn (đối chứng, 0 POST); upgrade bị chặn (lỗi ValueError), 0 GET, 0 INSERT.
+- không xác định được giai đoạn (chưa vào sổ, _FORCE_MODE None + sổ trả rỗng → chạy thử fail-closed): upgrade 0 GET, 0 INSERT.
+- chạy thử: upgrade 0 GET, 0 INSERT. có người duyệt: upgrade do job (agent) 0 GET, 0 INSERT (không tự mở quyền).
+- CLI `--upgrade 7` khi TẮT: exit ≠ 0, 0 kết nối mạng, 0 INSERT.
+- vận hành (ca hợp lệ giữ nguyên): 404/pending → "cho", 0 INSERT; attestation Bitcoin → 1 INSERT `da_nang_cap`
+  (append-only) + receipt_state nói CHƯA xác minh bên thứ ba; calendar ngoài cấu hình → 0 GET."""
+import contextlib
+import datetime as dt
+import hashlib
+import io
+import json
+import socket
+import sys
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+NET = []
+
+
+def _no_net(self, addr):
+    NET.append(str(addr)[:60])
+    raise OSError("probe: chặn mạng")
+
+
+socket.socket.connect = _no_net
+socket.create_connection = lambda *a, **k: _no_net(None, a[0] if a else None)
+import psycopg  # noqa: E402
+
+psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+from pipelines import anchor as an  # noqa: E402
+from pipelines import rollout  # noqa: E402
+
+CAL = "https://cal-b.test"
+CFG = {"provider": "opentimestamps", "calendars": ["https://cal-a.test", CAL], "timeout_s": 5}
+PENDING, BITCOIN = bytes.fromhex("83dfe30d2ef90c8e"), bytes.fromhex("0588960d73d71901")
+
+
+def vu(v):
+    out = bytearray()
+    while True:
+        b, v = v & 0x7f, v >> 7
+        out.append(b | (0x80 if v else 0))
+        if not v:
+            return bytes(out)
+
+
+def vb(b):
+    return vu(len(b)) + b
+
+
+NONCE = b"\x22" * 16
+
+
+def resp_for(uri):
+    return b"\xf0" + vb(NONCE) + b"\x08" + b"\x00" + PENDING + vb(vb(uri.encode()))
+
+
+LEAVES = [{"k": "plot_logs_head:1", "d": {"id": 1, "h": "ab"}, "h": "0" * 64}]
+ROOTH = "1" * 64
+AS_OF = dt.datetime(2026, 10, 24, tzinfo=dt.timezone.utc)
+SHA = hashlib.sha256(an.manifest(int((AS_OF - an.EPOCH).total_seconds() * 1e6), LEAVES, ROOTH)).hexdigest()
+DG = bytes.fromhex(SHA)
+GOOD = an.ots_file(DG, resp_for(CAL))
+ODD = an.ots_file(DG, resp_for("https://cal-la.test"))
+
+
+class Conn:
+    def __init__(self, receipts):
+        self.receipts = receipts      # list[(status, calendar, bytes)]
+        self.inserts = []
+
+    def execute(self, sql, params=None):
+        self.sql = sql
+        if sql.lstrip().startswith("insert into anchor_receipts"):
+            self.inserts.append(params)
+        return self
+
+    def fetchone(self):
+        s = self.sql
+        if "from feature_rollout" in s:
+            return None                       # chưa vào sổ → rollout.mode fail-closed
+        if s.startswith("select now()"):
+            return (AS_OF,)
+        if "from anchor_batches" in s:
+            return (7, AS_OF, LEAVES, ROOTH, SHA)
+        if "from anchor_receipts" in s:
+            ok = [r for r in self.receipts if r[0] in ("da_gui", "da_nang_cap")]
+            if "status, calendar, created_at" in s:
+                return (ok[-1][0], ok[-1][1], AS_OF) if ok else None
+            if s.startswith("select calendar from"):
+                return (ok[-1][1],) if ok else None
+            return ok[-1] if ok else None
+        return None
+
+    def fetchall(self):
+        return []
+
+    def commit(self):
+        pass
+
+    def rollback(self):
+        pass
+
+    def close(self):
+        pass
+
+    def transaction(self):
+        return contextlib.nullcontext()
+
+
+rows = []
+
+
+def case(ma, fn):
+    NET.clear()
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def upgrade_blocked(stage):
+    def f():
+        rollout._FORCE_MODE = stage
+        c, gets = Conn([("da_gui", CAL, GOOD)]), []
+        try:
+            r = an.upgrade(c, 7, CFG, get=lambda url, t: gets.append(url))
+            got = f"không chặn: {r}"
+        except ValueError as e:
+            got = f"{type(e).__name__}: {e}"
+        return (not got.startswith("không chặn") and gets == [] and c.inserts == [] and not NET), \
+            {"got": got[:200], "gets": gets, "inserts": len(c.inserts)}
+    return f
+
+
+def c_submit_tat():
+    rollout._FORCE_MODE = "tat"
+    c, posts = Conn([]), []
+    try:
+        an.submit(c, 7, CFG, post=lambda url, body, t: posts.append(url))
+        got = "không chặn"
+    except ValueError as e:
+        got = f"{type(e).__name__}: {e}"
+    return got != "không chặn" and posts == [] and c.inserts == [], {"got": got[:160], "posts": posts}
+
+
+def c_cli_tat():
+    rollout._FORCE_MODE = "tat"
+    c = Conn([("da_gui", CAL, GOOD)])
+    an.load_config = lambda *a, **k: dict(CFG)
+    an.connect = lambda: c
+    err = io.StringIO()
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+        rc = an.main(["--upgrade", "7"])
+    return rc != 0 and not NET and c.inserts == [], {"rc": rc, "net": list(NET), "inserts": len(c.inserts),
+                                                    "stderr": err.getvalue()[-200:]}
+
+
+def c_vh_pending():
+    rollout._FORCE_MODE = "van_hanh"
+    c, gets = Conn([("da_gui", CAL, GOOD)]), []
+    r = an.upgrade(c, 7, CFG, get=lambda url, t: gets.append(url))
+    return r["status"] == "cho" and c.inserts == [] and len(gets) == 1, {"r": r, "gets": gets}
+
+
+def c_vh_bitcoin():
+    rollout._FORCE_MODE = "van_hanh"
+    c = Conn([("da_gui", CAL, GOOD)])
+    r = an.upgrade(c, 7, CFG, get=lambda url, t: b"\x08" + b"\x00" + BITCOIN + vb(vu(850001)))
+    ins = c.inserts                                   # params (batch_id, calendar, receipt, created_by)
+    tree = an.parse_receipt(bytes(ins[0][2]), SHA) if len(ins) == 1 else None
+    kinds = [k for k, _c, _p in an.attestations(tree)] if tree else []
+    if tree:
+        c.receipts.append(("da_nang_cap", CAL, bytes(ins[0][2])))
+    st = an.receipt_state(c, 7)
+    ok = (r["status"] == "da_nang_cap" and r.get("heights") == [850001] and len(ins) == 1
+          and kinds == ["bitcoin"] and "CHƯA xác minh bên thứ ba" in st)
+    return ok, {"r": r, "inserts": len(ins), "kinds": kinds, "state": st}
+
+
+def c_vh_outside():
+    rollout._FORCE_MODE = "van_hanh"
+    c, gets = Conn([("da_gui", "https://cal-la.test", ODD)]), []
+    r = an.upgrade(c, 7, CFG, get=lambda url, t: gets.append(url))
+    return r["status"] == "cho" and gets == [] and c.inserts == [], {"r": r, "gets": gets}
+
+
+case("doi_chung_submit_tat_0_post", c_submit_tat)
+case("upgrade_tat_0_get_0_insert", upgrade_blocked("tat"))
+case("upgrade_khong_xac_dinh_fail_closed", upgrade_blocked(None))
+case("upgrade_chay_thu_0_get", upgrade_blocked("chay_thu"))
+case("upgrade_co_nguoi_duyet_job_khong_tu_mo", upgrade_blocked("co_nguoi_duyet"))
+case("cli_upgrade_tat_exit_khac_0_0_mang", c_cli_tat)
+case("van_hanh_pending_cho_0_insert", c_vh_pending)
+case("van_hanh_bitcoin_1_insert_da_nang_cap", c_vh_bitcoin)
+case("van_hanh_calendar_ngoai_cau_hinh_0_get", c_vh_outside)
+out = {"probe": "n_anchor_gate_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

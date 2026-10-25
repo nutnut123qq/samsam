@@ -232,6 +232,19 @@
 | Rủi ro tồn dư | Chưa chọn chuỗi/provider/phí — chưa neo thật (BLOCKED quyết định hai bên); Calendar OpenTimestamps đặt ở nước ngoài — dù chỉ là digest, Pháp chế xác nhận trước khi bật |
 | Căn cứ | Không xử lý dữ liệu cá nhân (digest băm của bản ghi không PII) — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-48 — Ảnh nền AI cho nháp ảnh marketing qua OpenRouter Images API (r13, marketing-02.1)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (openrouter.ai) + provider sinh ảnh trong `provider_only` của data/llm_gateway.json |
+| Dữ liệu gửi đi (sau biện pháp) | Gửi đi: CHỈ mô tả nền (prompt dựng từ --scene đã qua check_scene/guardrail, không tên người/SĐT/sản phẩm thật) + kích thước ảnh + model + danh sách provider được phép; KHÔNG gửi ảnh sản phẩm/packshot (ghép tại chỗ). Nhận về: ảnh nền PNG (base64) + usage.cost |
+| Lớp | Vàng |
+| Mục đích | Sinh nền ảnh quanh packshot thật cho nháp ảnh marketing (PL01 Marketing — ảnh bối cảnh AI) |
+| Biện pháp kỹ thuật | MẶC ĐỊNH TẮT: IMAGE_PROVIDER=none; cần IMAGE_MODEL + OPENROUTER_API_KEY tường minh; Cổng llm_gateway._gate TRƯỚC mọi request: kill agent/tính năng, trần tháng agent `image` + tính năng marketing-02.1, không đọc được chi tiêu → chặn, rollout TẮT → chặn, whitelist provider rỗng → chặn; Không theo redirect, timeout 120 s, tối đa 1 lần thử lại 429/502/503 (502 không tính phí), trần ảnh 20 MB, kiểm định dạng/kích thước (sai cỡ → từ chối, không resize ngầm); Packshot/nhãn sản phẩm KHÔNG rời máy; ảnh luôn là NHÁP chờ người duyệt, nhãn 'Nội dung có sử dụng AI' |
+| Thời hạn lưu (theo map) | Theo nháp ảnh (content_drafts/image_assets) — GAP như luồng nội dung |
+| Rủi ro tồn dư | Chưa chọn vendor/model, chưa có DPA/điều khoản bản quyền ảnh sinh (external-dep); Chỉ kiểm bằng transport giả theo schema tài liệu — chưa gọi API thật |
+| Căn cứ | Lợi ích hợp pháp (không dữ liệu cá nhân) — điều khoản bản quyền ảnh sinh CẦN Pháp chế xác nhận — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
 Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20, DF-25, DF-26, DF-27, DF-31, DF-32, DF-33, DF-34, DF-35, DF-38, DF-42, DF-44, DF-45.

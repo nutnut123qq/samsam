@@ -1,0 +1,151 @@
+{
+ "probe": "m_backup_files_v1",
+ "root": "D:\\code\\samsam",
+ "khac_thiet_bi": "GIẢ LẬP (mock same_device=False)",
+ "ca": [
+  {
+   "ca": "bo_tep_hop_le",
+   "mong_doi": "DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "DAT",
+    "chi_tiet": "status=ok; probe_db_20261024_101010_vn.dump.enc mã hóa; dump local + offsite đo khớp size/sha256 manifest",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "tai_hien_controller_khong_dump_offsite_rong",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "manifest local thiếu/hỏng — không kiểm được tệp dump",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "mat_dump_local",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "local: thiếu tệp dump probe_db_20261024_101010_vn.dump.enc",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "dump_sai_hash_cung_co",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "local: sha256 tệp dump lệch manifest",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "dump_sai_kich_thuoc",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "local: kích thước tệp dump lệch manifest",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "thieu_dump_offsite",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "offsite: thiếu tệp dump probe_db_20261024_101010_vn.dump.enc",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "dump_offsite_sai_hash",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "offsite: sha256 tệp dump lệch manifest",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "thieu_manifest_offsite",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "offsite: manifest thiếu/hỏng/lệch bản local",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "manifest_hong_toi_gian",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "manifest local thiếu/hỏng — không kiểm được tệp dump",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "manifest_khong_ma_hoa",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "bản dump chưa mã hóa",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "qua_han",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "cách 3.0 giờ (> 1)",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "thoi_diem_tuong_lai",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "thời điểm trong sổ ở tương lai (5.0 giờ)",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "log_status_fail",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "status=fail",
+    "offsite": "DAT"
+   }
+  },
+  {
+   "ca": "chua_cau_hinh_offsite",
+   "mong_doi": "CHUA_DAT",
+   "ket_qua": "PASS",
+   "actual": {
+    "ban_gan_nhat": "CHUA_DAT",
+    "chi_tiet": "chưa cấu hình offsite dir: — không kiểm được bản sao",
+    "offsite": "CHUA_DAT"
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 14,
+  "FAIL": 0
+ }
+}

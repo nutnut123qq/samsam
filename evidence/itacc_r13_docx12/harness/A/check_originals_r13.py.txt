@@ -1,0 +1,21 @@
+"""HARNESS r13 nhóm A — dịch ca r10 DP022-01 (`sha256sum <scratch>/originals/*` → "tên tệp = sha256(nội dung)"; r10
+chạy tay, không có tệp harness): kho bản gốc <dir> chứa ĐÚNG tập tệp <sha...> (bỏ qua tệp tạm `.tmp-*`), mỗi tệp có
+tên = sha256 nội dung. In MATCH/MISMATCH <sha12>; exit 0 khi khớp hết, 1 khi lệch/thiếu/thừa.
+Đối chiếu documents.sha256 làm bằng `kiem` SQL của ca.
+  python check_originals_r13.py.txt <dir> <sha> [<sha> ...]"""
+import hashlib
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+d, want = Path(sys.argv[1]), set(sys.argv[2:])
+have = {p.name: p for p in d.iterdir() if p.is_file() and not p.name.startswith(".tmp-")}
+ok = set(have) == want
+for name, p in sorted(have.items()):
+    m = hashlib.sha256(p.read_bytes()).hexdigest() == name
+    ok &= m
+    print("MATCH" if m else "MISMATCH", name[:12])
+for name in sorted(want - set(have)):
+    print("THIEU", name[:12])
+print(f"[originals] {len(have)} tệp · khớp tập mong đợi: {set(have) == want}")
+sys.exit(0 if ok else 1)

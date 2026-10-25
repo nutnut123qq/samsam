@@ -483,6 +483,8 @@ create table if not exists documents (
 );
 
 create index if not exists documents_status_idx on documents (status);
+-- r13: engine/model đã tạo text OCR (truy vết; null = không OCR).
+alter table documents add column if not exists ocr_engine text;
 
 create table if not exists document_fields (
   sha256 text references documents(sha256) on delete restrict,
@@ -3688,6 +3690,20 @@ create table if not exists anchor_receipts (
   check ((status = 'da_gui') = (receipt is not null and calendar is not null)),
   check ((status = 'loi') = (error is not null))
 );
+-- r13: thêm trạng thái `da_nang_cap` (biên nhận đã ghép attestation Bitcoin do
+-- calendar trả — `pipelines.anchor --upgrade`; KHÁC xác minh bên thứ ba). Bảng
+-- tạo ở trên giữ NGUYÊN văn bản cũ nên DB mới và DB cũ có cùng tên ràng buộc
+-- tự đặt: `anchor_receipts_status_check` (cột status) + `anchor_receipts_check`
+-- (cặp status/receipt, ràng buộc bảng thứ nhất) → bỏ 2 tên đó, thêm 2 ràng buộc
+-- tên cố định (drop-if-exists rồi add: áp lại 2 lần an toàn).
+alter table anchor_receipts drop constraint if exists anchor_receipts_status_check;
+alter table anchor_receipts drop constraint if exists anchor_receipts_check;
+alter table anchor_receipts drop constraint if exists anchor_receipts_status_r13;
+alter table anchor_receipts add constraint anchor_receipts_status_r13
+  check (status in ('da_gui', 'da_nang_cap', 'loi'));
+alter table anchor_receipts drop constraint if exists anchor_receipts_receipt_r13;
+alter table anchor_receipts add constraint anchor_receipts_receipt_r13
+  check ((status in ('da_gui', 'da_nang_cap')) = (receipt is not null and calendar is not null));
 create index if not exists anchor_receipts_batch_idx
   on anchor_receipts (batch_id, id);
 create or replace trigger anchor_receipts_append_only_row

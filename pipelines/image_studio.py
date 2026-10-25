@@ -56,9 +56,12 @@ tất định từ `brand_colors`, 0 lời gọi mạng). Chỗ cắm provider t
 (external-dep — key + hợp đồng API sinh ảnh, có phí): hàm
 `fn(prompt, size) -> (PIL.Image, {"model": str})` đăng ký vào `PROVIDERS`;
 hàm đó PHẢI bọc như `pipelines.llm_gateway` (kill-switch LLM_KILL + trần chi
-phí tháng agent `image` trong data/llm_gateway.json + ghi `llm_usage`) —
-v6.2 chưa cắm, chưa có cap. Provider trả ảnh sai kích thước -> lỗi (không
-resize ngầm).
+phí tháng agent `image` trong data/llm_gateway.json + ghi `llm_usage`).
+r13: `openrouter_images` = OpenRouter Images API qua `llm_gateway._gate`
+(agent `image`, tính năng marketing-02.1) — cần IMAGE_MODEL + key; tối đa 1
+lần thử lại khi 429/502/503; chi phí lấy `usage.cost`. Provider trả ảnh sai
+kích thước -> lỗi (không resize ngầm). Vendor/model/DPA/trần = quyết định
+ngoài; mặc định vẫn `none`.
 
 CLI:
   python -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook
@@ -228,9 +231,15 @@ def _bg_none(prompt, size):
     return img, {"model": "none"}
 
 
-# name -> fn(prompt, size) -> (PIL.Image, {"model": str}). Provider thật =
-# external-dep (docstring module: phải bọc kill/cap/usage như llm_gateway).
-PROVIDERS = {"none": _bg_none}
+def _bg_openrouter(prompt, size):
+    """r13: nền AI qua OpenRouter Images API — mã mạng ở module riêng
+    `pipelines.image_provider_openrouter` (nạp lười)."""
+    from pipelines import image_provider_openrouter as orp
+    return orp.background(prompt, size)
+
+
+# name -> fn(prompt, size) -> (PIL.Image, {"model": str}).
+PROVIDERS = {"none": _bg_none, "openrouter_images": _bg_openrouter}
 
 
 def _provider_name(provider) -> str:

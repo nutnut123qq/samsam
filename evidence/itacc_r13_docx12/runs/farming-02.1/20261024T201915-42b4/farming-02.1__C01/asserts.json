@@ -1,0 +1,38 @@
+[
+ {
+  "sql": "select count(*) from garden_reminders where plot_id = 'IT-K03' and dot_key = 'none' and kind = 'no-logs' and ma_nv = 'IT-NV01' and status = 'cho_gui' and kenh = 'thu_cong' and not is_sample and reminded_at is null",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from garden_reminders where plot_id in ('IT-K02', 'IT-K04') and dot_key = 'none' and kind = 'no-logs' and ma_nv is null and status = 'khong_nguoi_nhan' and kenh = 'thu_cong' and not is_sample",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from garden_reminders where plot_id = 'IT-K01'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from garden_reminders where plot_id like 'KV-%' and not is_sample",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from garden_reminders where plot_id like 'KV-%' and is_sample and kind = 'gap'",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from garden_reminders where closed_at is null",
+  "expect": 6,
+  "actual": 6,
+  "dat": true
+ }
+]

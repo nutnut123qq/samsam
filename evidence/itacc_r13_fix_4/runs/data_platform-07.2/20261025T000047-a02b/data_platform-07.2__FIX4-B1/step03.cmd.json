@@ -1,0 +1,42 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "scripts/onprem_preflight.py"
+ ],
+ "env_doi": [
+  "BACKUP_DATABASE_URL",
+  "BACKUP_DIR",
+  "BACKUP_KEEP",
+  "BACKUP_OFFSITE",
+  "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE",
+  "BACKUP_PASSPHRASE_FILE",
+  "BACKUP_REQUIRE_ENCRYPTION",
+  "DRILL_DATABASE_URL",
+  "JOB_DATABASE_URL",
+  "LOADER_DATABASE_URL",
+  "PG_BIN",
+  "WEBHOOK_DATABASE_URL"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:01:28+07:00",
+ "ket_thuc": "2026-10-25T00:01:30+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*\\| sao_luu:ban_gan_nhat \\| DAT \\| status=ok; [^|\\n]*dump local \\+ offsite đo khớp size/sha256 manifest \\|)(?=.*\\| sao_luu:ma_hoa_bat_buoc \\| DAT \\|)(?=.*\\| sao_luu:offsite \\| CHUA_DAT \\| offsite CÙNG thiết bị)",
+   "khop": false
+  },
+  {
+   "stderr_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": false,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "3172f1917a399009aaf0d43b7542cbdf8025c80c8a541ab90be69cd8e867961e",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

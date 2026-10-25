@@ -1,0 +1,139 @@
+"""PROBE r13 E v1 — data_platform-06 API sàn chỉ đọc (`ingest.market_api`): 429/5xx có backoff giới hạn + cổng tính năng TRƯỚC
+request. Server HTTP GIẢ trên 127.0.0.1 (cổng động), không DB, không mạng ngoài; chờ (sleep) thay bằng hàm ghi lại. Cùng
+mã/input/assertion baseline (1ad90df) và bản sửa.  python -I probe_e_market.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước):
+- Shopee get_item_list: 429 (Retry-After: 2) rồi 200 → thành công, đúng 2 request, chờ 2 giây (đã ghi).
+- 503 liên tục → lỗi sau đúng 4 request (1 + 3 lần thử lại), chờ tăng dần, có trần.
+- 400 → lỗi ngay, 1 request (không thử lại lỗi không tạm thời).
+- tính năng data_platform-06 TẮT (rollout._FORCE_MODE="tat") → CLI exit 2, 0 request tới server.
+- đối chứng: endpoint ghi (ngoài allowlist) bị từ chối trước request."""
+import contextlib
+import io
+import json
+import os
+import sys
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG") or k.startswith(("SHOPEE_", "TIKTOK_")):
+        os.environ.pop(k, None)
+from ingest import market_api as ma  # noqa: E402
+from pipelines import rollout  # noqa: E402
+
+REQ, SCRIPT, WAITS = [], [], []
+
+
+class H(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def _go(self):
+        REQ.append(self.path.split("?")[0])
+        code, hdr = SCRIPT.pop(0) if SCRIPT else (200, {})
+        body = (json.dumps({"error": "", "response": {"item": [], "has_next_page": False, "total_count": 0}})
+                if code == 200 else json.dumps({"error": "x"})).encode()
+        self.send_response(code)
+        for k, v in hdr.items():
+            self.send_header(k, v)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+    do_GET = do_POST = _go
+
+
+srv = HTTPServer(("127.0.0.1", 0), H)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+BASE = f"http://127.0.0.1:{srv.server_address[1]}"
+CREDS = {"SHOPEE_PARTNER_ID": "1000001", "SHOPEE_PARTNER_KEY": "khoa-gia-probe", "SHOPEE_SHOP_ID": "2000002",
+         "SHOPEE_ACCESS_TOKEN": "token-gia-probe"}
+if hasattr(ma, "_sleep"):
+    ma._sleep = WAITS.append
+else:  # baseline: không có điểm chờ — vá time.sleep của module để probe không chờ thật
+    ma.time.sleep = WAITS.append
+rows = []
+
+
+def call():
+    return ma._request("shopee", "GET", ma.SP_ITEM_LIST, {"offset": 0, "page_size": 10}, creds=CREDS, base=BASE)
+
+
+def case(ma_, fn):
+    REQ.clear()
+    SCRIPT.clear()
+    WAITS.clear()
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma_, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def c_429():
+    SCRIPT[:] = [(429, {"Retry-After": "2"}), (200, {})]
+    doc = call()
+    return isinstance(doc, dict) and len(REQ) == 2 and WAITS == [2.0], {"req": len(REQ), "waits": WAITS}
+
+
+def c_503():
+    SCRIPT[:] = [(503, {})] * 6
+    try:
+        call()
+        return False, "không lỗi"
+    except ma.ApiError as e:
+        return len(REQ) == 4 and len(WAITS) == 3 and WAITS == sorted(WAITS) and max(WAITS) <= 30, \
+            {"req": len(REQ), "waits": WAITS, "err": str(e)}
+
+
+def c_400():
+    SCRIPT[:] = [(400, {})]
+    try:
+        call()
+        return False, "không lỗi"
+    except ma.ApiError as e:
+        return len(REQ) == 1 and WAITS == [], {"req": len(REQ), "err": str(e)}
+
+
+def c_tat():
+    for k, v in CREDS.items():
+        os.environ[k] = v
+    os.environ["SHOPEE_API_BASE"] = BASE
+    ma.load_dotenv = lambda *a, **k: None
+    rollout._FORCE_MODE = "tat"
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            rc = ma.main(["--channel", "shopee", "--kind", "listing"])
+    except SystemExit as e:
+        rc = e.code
+    finally:
+        rollout._FORCE_MODE = None
+    return rc == 2 and REQ == [], {"rc": rc, "req": len(REQ), "out": buf.getvalue()[-160:]}
+
+
+def c_scope():
+    try:
+        ma._request("shopee", "POST", "/api/v2/product/update_item", {}, creds=CREDS, base=BASE)
+        return False, "không chặn"
+    except ma.ScopeError:
+        return REQ == [], "ScopeError"
+
+
+case("429_retry_after_roi_200", c_429)
+case("503_het_luot_thu_lai", c_503)
+case("400_khong_thu_lai", c_400)
+case("tinh_nang_tat_0_request", c_tat)
+case("endpoint_ghi_bi_chan", c_scope)
+srv.shutdown()
+out = {"probe": "e_market_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

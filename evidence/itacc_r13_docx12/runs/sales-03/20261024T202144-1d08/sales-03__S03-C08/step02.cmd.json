@@ -1,0 +1,31 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import runpy,sys; from pathlib import Path; from pipelines import guardrail,rollout; a=sys.argv[1:]; guardrail.DATA_DIR=Path(a.pop(0)); m=a.pop(0); rollout._FORCE_MODE=None if m=='-' else m; mod=a.pop(0); sys.argv=[mod]+a; print('[launch] FIXTURE guardrail.DATA_DIR =',guardrail.DATA_DIR,'_FORCE_MODE =',rollout._FORCE_MODE,file=sys.stderr); runpy.run_module(mod,run_name='__main__',alter_sys=True)",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-03\\20261024T202144-1d08\\scratch/gdata",
+  "van_hanh",
+  "agents.listing_export",
+  "--verify",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\sales-03\\20261024T202144-1d08\\scratch/export_tamper/listing-shopee-mat-ong-sam-300ml-d1.manifest.json"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:22:42+07:00",
+ "ket_thuc": "2026-10-24T20:22:45+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "\\[LỆCH\\] tệp CSV đã bị sửa",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "7210b6f5dd7c8dc92dec61eac60f5a0f0deaf48249a1072674f287dae034e4fa",
+ "stderr_sha256": "ca4e8c41d04f36aefac1cd6d06300106a163356293563329b0d0550fee912bfe"
+}

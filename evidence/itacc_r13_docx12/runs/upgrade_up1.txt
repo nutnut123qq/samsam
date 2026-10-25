@@ -1,0 +1,11 @@
+DB samsam_itacc_r13_up1 tạo mới (KHÔNG samsam) · nền D:\code\samsam_r13_baseline\tree
+## [tree] python scripts/apply_schema.py --roles → exit 0 · [done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_quote_events, b2b_requests, bom_combos, bom_items, care_purchase
+## [tree] python scripts/apply_schema.py --roles → exit 0 · [done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_quote_events, b2b_requests, bom_combos, bom_items, care_purchase
+Traceback (most recent call last):
+  File "D:\code\samsam\evidence\itacc_r13_docx12\harness\upgrade_r13.py.txt", line 62, in <module>
+    bid = c.execute("insert into anchor_batches (as_of, leaves, merkle_root, manifest_sha256, created_by) values"
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py", line 300, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.CheckViolation: new row for relation "anchor_batches" violates check constraint "anchor_batches_leaves_check"
+DETAIL:  Failing row contains (1, 2026-10-24 11:52:14.642638+00, [], 1111111111111111111111111111111111111111111111111111111111111111, 2222222222222222222222222222222222222222222222222222222222222222, agent:anchor, 2026-10-24 11:52:14.642638+00).

@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select count(*) from garden_reminders where plot_id = 'IT-K05' and status = 'cho_kenh' and kenh is null and ma_nv = 'IT-NV01' and not is_sample",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and object_id = 'gap:IT-K05:none' and block = 'farming' and created_by = 'agent:garden_director' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and object_id like 'gap:IT-%'",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from garden_reminders where plot_id = 'IT-K03' and status = 'cho_gui' and reminded_by = 'Người Thử IT'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

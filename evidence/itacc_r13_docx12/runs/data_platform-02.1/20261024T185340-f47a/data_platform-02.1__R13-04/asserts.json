@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select status || '|' || text_source || '|' || coalesce(ocr_engine, 'NULL') || '|' || coalesce(pii_flag::text, 'NULL') from documents where filename = 'tiep_nhan_scan_rp.pdf'",
+  "expect": "cho_ocr|none|NULL|NULL",
+  "actual": "cho_ocr|none|NULL|NULL",
+  "dat": true
+ }
+]

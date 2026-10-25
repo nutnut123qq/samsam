@@ -1,0 +1,53 @@
+"""HARNESS r13 (MỚI, nhóm C — data_platform-07.2): kiểm ĐỘC LẬP bản backup mới nhất trong một thư mục (không dùng hàm
+của scripts/db_backup.py). Thay cho bước r10 DP072-01q (q.py `select * from file_output_evidence` + đối chiếu manifest tay).
+
+  python bk_check_r13.py.txt <thư_mục_backup>
+
+In từng dòng (regex của tiêu chí đọc):
+  manifests <n>                       số *.manifest.json
+  file <tên>                          file của manifest mới nhất (created_at)
+  keys_ok <bool>                      bộ key manifest == 12 key r10 (format…row_counts)
+  sha_match <bool>                    sha256 file == manifest.sha256 và size khớp
+  encrypted <bool> cipher <giá trị>
+  magic <PGDMP|Salted__|khac>         8 byte đầu file (bản rõ pg_dump -Fc / openssl enc -salt)
+  host_user_in_manifest <bool>        manifest có host/user/password của DATABASE_URL hoặc chuỗi DSN
+  row_counts_tables <n>
+  evidence_rows_for_sha <n>           file_output_evidence nguon backup_runs, output_key = bk:<sha manifest>"""
+import glob
+import hashlib
+import json
+import os
+import sys
+from datetime import datetime
+
+import psycopg
+from psycopg import conninfo
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+d = sys.argv[1]
+mans = sorted(glob.glob(os.path.join(d, "*.manifest.json")))
+print("manifests", len(mans))
+assert mans, "không có manifest"
+docs = [(json.loads(open(p, "rb").read().decode("utf-8")), p) for p in mans]
+m, mp = max(docs, key=lambda t: datetime.fromisoformat(t[0]["created_at"]))
+f = os.path.join(d, m["file"])
+raw = open(f, "rb").read()
+print("file", m["file"])
+keys = {"format", "created_at", "db_name", "server_version", "pg_dump_version", "tool", "file", "size_bytes",
+        "sha256", "encrypted", "cipher", "row_counts"}
+print("keys_ok", set(m) == keys)
+sha = hashlib.sha256(raw).hexdigest()
+print("sha_match", sha == m["sha256"] and len(raw) == m["size_bytes"])
+print("encrypted", m["encrypted"], "cipher", m["cipher"])
+print("magic", "PGDMP" if raw[:5] == b"PGDMP" else "Salted__" if raw[:8] == b"Salted__" else "khac")
+dsn = os.environ["DATABASE_URL"]
+c = conninfo.conninfo_to_dict(dsn)
+text = open(mp, "rb").read().decode("utf-8")
+needles = [v for k, v in c.items() if k in ("host", "user", "password") and v] + ["postgres://",
+                                                                                          "postgresql://"]
+print("host_user_in_manifest", any(str(n) in text for n in needles) or any(k in m for k in ("host", "user")))
+print("row_counts_tables", len(m["row_counts"]))
+with psycopg.connect(dsn, connect_timeout=5) as conn:
+    n = conn.execute("select count(*) from file_output_evidence where nguon = 'backup_runs' and output_key = %s",
+                     ("bk:" + m["sha256"],)).fetchone()[0]
+print("evidence_rows_for_sha", n)

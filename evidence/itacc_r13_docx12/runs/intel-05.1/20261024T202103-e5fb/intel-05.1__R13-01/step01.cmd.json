@@ -1,0 +1,32 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/persona_run.py.txt",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\fixtures/items/intel-05.1/sim_config_dpia_true.json",
+  "one",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\runs\\intel-05.1\\20261024T202103-e5fb\\scratch/ps_one"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T20:21:21+07:00",
+ "ket_thuc": "2026-10-24T20:21:24+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "FACTS \\{\\\"rc\\\": 2, \\\"calls\\\": 0, \\\"canon_dpia_signed\\\": false\\}",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\[refuse\\] lượt thật cần >= 3 nhà cung cấp khác nhau trong sim_config\\.models \\(hiện: openai\\) — 0 lời gọi LLM",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "14d0902aa1835bc0463b054e24649b55b7b38b2c1bde98b029374763beb5b58a",
+ "stderr_sha256": "b9a1e4491d6769432023d44f0052c5e0ec1d5db5213d8ea727182ff9cf0ad70b"
+}

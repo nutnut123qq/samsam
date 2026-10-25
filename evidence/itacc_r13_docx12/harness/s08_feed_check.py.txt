@@ -1,0 +1,48 @@
+"""HARNESS r13 sales-08 S08-C02 — kiểm NỘI DUNG nguồn dữ liệu website vừa xuất (ép van_hanh) theo kỳ vọng r10 S08-C02
+("rượu ẩn giá + không giỏ; SKU thiếu điều kiện có ly_do") + tiêu chí r10 T1 ("không bịa giá") — thay việc đọc tay
+evidence/itacc_r10/g2/out/s08_feed/*.json của r10. Chỉ đọc tệp.
+  python s08_feed_check.py.txt <thư mục xuất> <golden fixture> <id giá web list ĐÃ duyệt> <giá đó>
+Exit 0 + FEED_KHOP khi mọi kiểm đạt; 1 + FEED_LECH."""
+import glob
+import hashlib
+import json
+import os
+import sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+out, fx, pid, price = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4])
+SKU = "mat-ong-sam-300ml"
+feeds = sorted(glob.glob(os.path.join(out, "website-feed-????-??-??.json")))
+mans = sorted(glob.glob(os.path.join(out, "website-feed-????-??-??.manifest.json")))
+if len(feeds) != 1 or len(mans) != 1:
+    print("FEED_LECH số tệp", feeds, mans)
+    sys.exit(1)
+raw = open(feeds[0], "rb").read()
+rows = json.loads(raw.decode("utf-8"))["rows"]
+man = json.loads(open(mans[0], "rb").read().decode("utf-8"))
+gold = {s["sku_key"]: s for s in json.loads(open(fx, "rb").read().decode("utf-8"))["skus"]}
+by = {r["sku_key"]: r for r in rows}
+alc = sorted(k for k, s in gold.items() if s.get("category") == "alcohol")
+sell = sorted(k for k, r in by.items() if r["gio_hang"])
+checks = {
+    "đủ SKU golden fixture, mỗi SKU 1 dòng": sorted(by) == sorted(gold) and len(rows) == len(gold),
+    "fixture có SKU rượu": len(alc) >= 1,
+    "rượu: an_gia true, gio_hang false, gia_vnd null, ly_do rượu": all(
+        by[k]["an_gia"] is True and by[k]["gio_hang"] is False and by[k]["gia_vnd"] is None
+        and any("rượu" in x for x in by[k]["ly_do"]) for k in alc),
+    "SKU không bán được đều có ly_do": all(r["ly_do"] for r in rows if not r["gio_hang"]),
+    "không bịa giá: SKU không bán được gia_vnd null": all(r["gia_vnd"] is None for r in rows if not r["gio_hang"]),
+    "chỉ mat-ong-sam-300ml bán được, đúng giá + id giá web ĐÃ duyệt, mô tả draft #1": (
+        sell == [SKU] and by[SKU]["gia_vnd"] == price and by[SKU]["gia_id"] == pid and bool(by[SKU]["mo_ta"])
+        and by[SKU]["draft_id"] == 1 and by[SKU]["an_gia"] is False and not by[SKU]["ly_do"]),
+    "manifest khớp tệp (file, sha, so_sku, ban_duoc, gia_phien_ban)": (
+        man.get("file") == os.path.basename(feeds[0]) and man.get("file_sha256") == hashlib.sha256(raw).hexdigest()
+        and man.get("so_sku") == len(gold) and man.get("ban_duoc") == 1 and man.get("gia_phien_ban") == {SKU: pid}),
+}
+for k, v in checks.items():
+    print(("[ok] " if v else "[SAI] ") + k)
+print("rượu:", {k: (by[k]["an_gia"], by[k]["gio_hang"], by[k]["gia_vnd"]) for k in alc})
+print("bán được:", sell, "| so_sku:", len(rows))
+ok = all(checks.values())
+print("FEED_KHOP" if ok else "FEED_LECH")
+sys.exit(0 if ok else 1)

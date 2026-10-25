@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from plot_logs where detail like '%ép tắt%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ }
+]

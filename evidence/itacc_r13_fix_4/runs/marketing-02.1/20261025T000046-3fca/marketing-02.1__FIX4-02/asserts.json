@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from llm_usage where agent_id = 'image' and not ok and cost_usd = 0.40 and feature_id = 'marketing-02.1'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select round(sum(cost_usd)::numeric, 2)::text from llm_usage where feature_id = 'marketing-02.1'",
+  "expect": "0.84",
+  "actual": "0.84",
+  "dat": true
+ }
+]

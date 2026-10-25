@@ -1,0 +1,54 @@
+{
+ "probe": "d_dossier_v1",
+ "root": "D:\\code\\samsam_r13_baseline\\tree",
+ "ca": [
+  {
+   "ca": "so_that_neu_dich_danh_sku",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 2,
+    "out": "[blocked] danh mục hồ sơ gốc: 0/14 (Bên B cung cấp tên, thành phần, quy cách, số công bố + căn cứ)\n[blocked] SKU golden đã gắn hồ sơ gốc: 0/13\n[done] hồ sơ 0 · SKU golden 13 · đã gắn 0 · lỗi 0\n"
+   }
+  },
+  {
+   "ca": "thieu_phien_ban_loi",
+   "ket_qua": "FAIL",
+   "actual": []
+  },
+  {
+   "ca": "thieu_tep_sha256_loi",
+   "ket_qua": "FAIL",
+   "actual": []
+  },
+  {
+   "ca": "ho_so_mau_khong_tinh",
+   "ket_qua": "FAIL",
+   "actual": {
+    "errors": [
+     "sku[sku-b].ho_so_goc: 'HS-02' không có trong danh mục"
+    ],
+    "missing": [
+     "SKU golden đã gắn hồ sơ gốc: 1/2"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "ca": "du_truong_khong_loi",
+   "ket_qua": "PASS",
+   "actual": {
+    "errors": [],
+    "missing": [],
+    "dossiers": 2,
+    "mapped": 2,
+    "skus": 2
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 1,
+  "FAIL": 4
+ }
+}

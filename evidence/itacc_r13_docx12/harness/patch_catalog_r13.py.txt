@@ -1,0 +1,60 @@
+"""HARNESS r13 — cập nhật `blocker` của 12 mục trong data/contract_features.json theo mã r13 (KHÔNG đổi code_status,
+acceptance_status, output_sources — blocker ngoài vẫn còn). Thay ĐÚNG chuỗi blocker trong tệp (giữ nguyên byte khác); chạy 1 lần.
+  python -I patch_catalog_r13.py.txt"""
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+P = ROOT / "data" / "contract_features.json"
+NEW = {
+    "production-03": "r13: đọc ảnh nhãn qua OCR TẠI CHỖ `OCR_PROVIDER=paddle_local` (PaddleOCR, model cục bộ, không mạng) — "
+    "đã kiểm local trên ảnh fixture; chữ Việt mất một phần dấu thanh. Còn chờ: Bên B/Pháp chế chọn engine/vendor dùng thật "
+    "(+DPA nếu dịch vụ), ảnh nhãn thật, Pháp chế chốt data/label_rules.json (GIẢ ĐỊNH)",
+    "data_platform-02.1": "r13: OCR TẠI CHỖ `paddle_local` (PDF scan render từng trang, trần trang/thời gian, "
+    "documents.ocr_engine) cho intake + --reprocess-pending — kiểm local trên scan fixture; kết quả luôn pending_review chờ "
+    "Pháp chế --verify. Còn chờ: quyết định engine/vendor dùng thật (+DPA), tài liệu thật, chính sách cổng tắt loader "
+    "(data/loader_gate.json chưa cấu hình)",
+    "farming-01": "r13: adapter STT TẠI CHỖ `GARDEN_STT_PROVIDER=whisper_local` (faster-whisper, model cục bộ "
+    "GARDEN_STT_MODEL_DIR, local_files_only) cho --transcribe — chỉ kiểm MOCK tại biên WhisperModel (máy dev không có model). "
+    "Còn chờ: model Whisper (hoặc STT trong nước + DPA) được duyệt + tải về server Bên B, payload/media Zalo OA thật, danh "
+    "sách nhân viên, chính sách lưu",
+    "marketing-02.1": "r13: adapter `IMAGE_PROVIDER=openrouter_images` (OpenRouter Images API qua cổng llm_gateway: kill/trần/"
+    "rollout/whitelist/llm_usage) — kiểm MOCK theo schema tài liệu. Còn chờ: chọn vendor/model (IMAGE_MODEL), điều khoản/DPA, "
+    "key, trần chi phí, packshot được phép",
+    "production-02": "r13: --check nêu đích danh SKU chưa gắn hồ sơ, bắt buộc phien_ban + tep_sha256, hồ sơ mau=true không "
+    "tính. Còn chờ Bên B: đủ 14 hồ sơ gốc + căn cứ xác nhận + ánh xạ SKU (data/product_dossiers.json danh_muc_ho_so_goc rỗng → "
+    "exit 2); chính sách cổng tắt loader chưa cấu hình",
+    "data_platform-06": "BLOCKED — CHƯA VERIFIED với sàn thật (chưa có app/key/sandbox). r13: thử lại có giới hạn "
+    "429/5xx (Retry-After, trần 30 s) + cổng tính năng trước request. CHƯA làm "
+    "refresh token + quyết toán: đặc tả chính thức Shopee/TikTok không truy cập được từ máy dev (nguồn phụ mâu thuẫn đường dẫn "
+    "auth). Còn chờ Bên B: app + quyền chỉ đọc + key/token + sandbox/shop + tài liệu chính thức; chữ ký/field/phân trang CHƯA "
+    "VERIFIED với sàn thật",
+    "intel-05.1": "r13: lượt thật đòi ≥3 nhà cung cấp khác nhau (chặn trước mọi lời gọi). Còn chờ người có thẩm quyền: DPIA/TIA "
+    "ký (dpia_signed — CHỈ người thật đổi), DPA, provider/model được duyệt + mở whitelist, key, ngân sách",
+    "farming-06": "r13: phân tích biên nhận .ots đầy đủ, submit bỏ phản hồi calendar sai định dạng, --upgrade → `da_nang_cap` "
+    "(calendar trả attestation Bitcoin — CHƯA phải xác minh bên thứ ba) — kiểm MOCK với calendar giả đúng định dạng OTS. Còn "
+    "chờ hai bên: chọn chuỗi/provider/phí/tài khoản, cho phép gửi thật (provider 'none' = CHƯA NEO)",
+    "sales-08": "Website ở repo riêng (repo/owner/domain/môi trường chưa xác định — quyết định user 15/10/2026). r13 phía repo "
+    "này: --verify nguồn dữ liệu website (sha tệp + giá web ĐÃ duyệt còn hiệu lực + mô tả đã duyệt). Còn chờ: repo + owner "
+    "website, hợp đồng giao tiếp/đơn hàng (D-HB-08, D-DL-10)",
+    "sales-09": "Chatbot website ở repo riêng (repo/owner chưa xác định — quyết định user 15/10/2026); repo này không có kênh chat "
+    "website (CHAT_CHANNELS zalo/messenger). Còn chờ: repo + owner + đặc tả kênh chat website",
+    "ceo-90": "Sổ nghĩa vụ N01–N22 (docs/handover/so-nghia-vu-hop-dong.md, trạng thái de_xuat) chờ hai bên thực hiện/xác nhận; "
+    "PL05 chưa được cung cấp. r13: scripts/incident_compare.py (gói kiểm chỉ đọc N22, từ chối DB samsam) — cần DBA Bên B dựng "
+    "bản sao backup TRƯỚC sự cố + bản hiện tại; thiếu = UNVERIFIED",
+    "data_platform-90": "Chưa có bằng chứng server vật lý/UPS/NAS-offsite/monitor độc lập/người giữ tài khoản cao nhất (F08). r13: "
+    "scripts/onprem_preflight.py đo điều kiện tại máy (DB, login dịch vụ, sao lưu mã hóa bắt buộc/offsite khác thiết bị/bản "
+    "gần nhất, timer) + db_backup BACKUP_REQUIRE_ENCRYPTION / BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE — chạy trên server Bên B mới "
+    "có giá trị",
+}
+raw = P.read_bytes().decode("utf-8")
+doc = json.loads(raw)
+out = raw
+for f in doc["features"]:
+    if f.get("id") in NEW:
+        old = json.dumps(f["blocker"], ensure_ascii=False)       # chuỗi JSON nguyên dạng trong tệp
+        assert out.count(old) == 1, f["id"]
+        out = out.replace(old, json.dumps(NEW[f["id"]], ensure_ascii=False))
+assert sum(x.get("id") in NEW and x.get("blocker") == NEW[x["id"]] for x in json.loads(out)["features"]) == len(NEW)
+P.write_bytes(out.encode("utf-8"))      # chỉ thay đúng 12 chuỗi blocker, giữ nguyên mọi byte khác
+print("ok", len(NEW))

@@ -1,0 +1,666 @@
+# Full pytest r13 — chốt r13 trên fp code 39085f03
+# ngày (client) 2026-10-24T19:09:33+07:00 · git HEAD 1ad90df2a3eddd7f4bcd2c23b2d0c3d2c5ea8863 nhánh codex/remaining-docx-12
+# fp full = 39085f038976c89e5a5d9f114ab61661f9e33868ded126f06dc47c5f3fe14361
+# fp code = 39085f038976c89e5a5d9f114ab61661f9e33868ded126f06dc47c5f3fe14361
+# Docker: 28.4.0
+## dựng DB samsam_itacc_r13_full1: apply_schema --roles ×2 + core_store + golden_store (mkdb_r13)
+  mkdb rc=0 (log runs/dung_db_samsam_itacc_r13_full1.txt)
+# DB samsam_itacc_r13_full1 @ 127.0.0.1 55453 (KHÔNG phải samsam)
+# bảng public 108 · thiếu [] · products 27 · sku_master 13 · roles ['agent_writer', 'app_human', 'svc_job', 'svc_ui', 'svc_webhook']
+# preflight OK
+## lệnh: python -m pytest -q -ra -p no:cacheprovider
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+.................F...................................................... [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+.................................................F...................... [ 17%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+.................................................................F...... [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+.....................................................F.................. [ 72%]
+.....F.................................................................. [ 73%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+.....................................................F.................. [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+................................................                         [100%]
+================================== FAILURES ===================================
+_______________________ test_schema_block_no_alter_drop _______________________
+
+    def test_schema_block_no_alter_drop():
+        sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        block = sql[sql.index("v8.1 Sổ quyết định TGĐ"):]
+        # v13: sau v8.1 chỉ cho ALTER cộng thêm theo allowlist hẹp của drift-guard
+        # test_store (add column if not exists, cặp CHECK tên cố định); bảng sổ
+        # quyết định thì không ALTER/DROP nào.
+        from tests.test_store import _forbidden_ddl
+>       assert _forbidden_ddl(block.lower()) == []
+E       AssertionError: assert ['alter table...'alter table'] == []
+E         
+E         Left contains 3 more items, first extra item: 'alter table'
+E         Use -v to get more diff
+
+tests\test_ceo_decisions.py:131: AssertionError
+______________________ test_every_egress_module_declared ______________________
+
+    def test_every_egress_module_declared():
+        egress = dpia_draft.egress_modules(ROOT)
+        assert KNOWN_EGRESS <= egress, KNOWN_EGRESS - egress   # chống scanner rỗng
+        undeclared = sorted(egress - _declared(dpia_draft.load_map(MAP_PATH)))
+>       assert not undeclared, (
+            "module gửi dữ liệu ra ngoài CHƯA khai báo trong "
+            f"data/data_flow_map.json: {undeclared}")
+E       AssertionError: module gửi dữ liệu ra ngoài CHƯA khai báo trong data/data_flow_map.json: ['pipelines/image_provider_openrouter.py']
+E       assert not ['pipelines/image_provider_openrouter.py']
+
+tests\test_data_flow_map.py:95: AssertionError
+_______________________ test_schema_sql_has_leads_table _______________________
+
+    def test_schema_sql_has_leads_table():
+        sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        lower = sql.lower()
+        match = re.search(
+            r"create table if not exists leads\s*\((.*?)\);", lower,
+            re.DOTALL)
+        assert match
+        columns = match.group(1)
+        for name in ("id", "dedup_key", "ts", "channel", "user_hash",
+                     "question", "intent", "status", "source", "created_at"):
+            assert re.search(rf"^\s*{name}\s", columns, re.MULTILINE), name
+        assert "id bigint generated always as identity primary key" in columns
+        assert "dedup_key text not null unique" in columns
+        assert "status text not null default 'new'" in columns
+        assert len(re.findall(
+            r"^create table if not exists", lower, re.MULTILINE)) >= 24
+        # v3.4: nới HẸP — chỉ `alter table <t> add column if not exists
+        # <c> ...;` (1 action) được phép; mọi alter/drop table khác bị bắt.
+        rest = re.sub(r"\balter\s+table\s+\w+\s+add\s+column\s+if\s+not"
+                      r"\s+exists\s+\w+[^;,]*;", "", lower)
+        # v8.2 KD-A3: nới HẸP thêm ĐÚNG cặp drop+add CHECK mục đích consents
+        # (thêm 'b2b') — tên bảng, tên constraint và dạng check đều cố định.
+        narrow = ((r"\balter\s+table\s+consents\s+drop\s+constraint\s+if\s+"
+                   r"exists\s+consents_purpose_check\s*;"),
+                  (r"\balter\s+table\s+consents\s+add\s+constraint\s+"
+                   r"consents_purpose_check\s+check\s*\(\s*purpose\s+in\s*"
+                   r"\(\s*'cskh',\s*'marketing',\s*'dai_ly',\s*'b2b'\s*\)\s*\)"
+                   r"\s*;"))
+        for pat in narrow:
+            assert len(re.findall(pat, rest)) == 1, pat
+            rest = re.sub(pat, "", rest)
+        # v13: cặp CHECK tên cố định (feature_rollout id, settlement_rows
+        # txn_type) — cùng allowlist hẹp với drift-guard test_store.
+        from tests.test_store import _DOCX_CHECK_OK, _V13_CHECK_OK
+        rest = _V13_CHECK_OK.sub("", rest)
+        # docx P0: cặp CHECK `file_output_evidence` (nguồn conversations).
+        rest = _DOCX_CHECK_OK.sub("", rest)
+>       assert not re.search(r"\b(alter|drop)\s+table\b", rest)
+E       AssertionError: assert not <re.Match object; span=(173946, 173957), match='alter table'>
+E        +  where <re.Match object; span=(173946, 173957), match='alter table'> = <function search at 0x0000017F60819260>('\\b(alter|drop)\\s+table\\b', '-- schema postgres local cho pilot. chạy tay: psql -d samsam -f docs/schema.sql\n-- embedding lưu float8[] (không cần...n v_id;\nend $$;\nrevoke execute on function plot_log_add_human(text, timestamptz, text, text, text)\n  from public;\n')
+E        +    where <function search at 0x0000017F60819260> = re.search
+
+tests\test_lead_store.py:390: AssertionError
+________________ test_schema_vendor_table_no_identity_columns _________________
+
+    def test_schema_vendor_table_no_identity_columns():
+        sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        blk = sql.split("create table if not exists social_mentions_vendor")[1]
+        blk = blk.split(");")[0].lower()
+        for bad in ("author", "tac_gia", "name", "phone", "sdt", "email", "url",
+                    "link", "user_id"):
+            assert bad not in blk, bad
+        tail = sql.split("v10.3 social listening nhà cung cấp")[1].lower()
+        # v13: ALTER cộng thêm theo allowlist hẹp của drift-guard test_store.
+        from tests.test_store import _forbidden_ddl
+>       assert _forbidden_ddl(tail) == []
+E       AssertionError: assert ['alter table...'alter table'] == []
+E         
+E         Left contains 3 more items, first extra item: 'alter table'
+E         Use -v to get more diff
+
+tests\test_social_vendor.py:163: AssertionError
+__________________ test_schema_sql_has_content_drafts_table ___________________
+
+    def test_schema_sql_has_content_drafts_table():
+        sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        lower = sql.lower()
+        match = re.search(
+            r"create table if not exists content_drafts\s*\((.*?)\);",
+            lower, re.DOTALL)
+        assert match
+        columns = match.group(1)
+        for name in ("id", "created_at", "brief", "channel", "text",
+                     "guardrail", "status", "reviewer", "reviewed_at",
+                     "review_note", "scheduled_date", "source"):
+            assert re.search(rf"^\s*{name}\s", columns, re.MULTILINE), name
+        assert "id bigint generated always as identity primary key" in columns
+        assert "guardrail jsonb not null" in columns
+        assert "status text not null default 'pending'" in columns
+        assert "scheduled_date date" in columns
+        assert "created_by text" in lower                  # v3.4 add column
+        assert len(re.findall(
+            r"^create table if not exists", lower, re.MULTILINE)) >= 24
+>       assert _forbidden_ddl(lower) == []
+E       AssertionError: assert ['alter table...'alter table'] == []
+E         
+E         Left contains 3 more items, first extra item: 'alter table'
+E         Use -v to get more diff
+
+tests\test_store.py:405: AssertionError
+___________________ test_p2_blockers_recorded_not_verified ____________________
+
+    def test_p2_blockers_recorded_not_verified():
+        src = (ROOT / "ingest" / "market_api.py").read_text(encoding="utf-8")
+        assert "BLOCKED — CHƯA VERIFIED" in src
+        f = FEATS["data_platform-06"]
+        assert f["code_status"] != "co_code"
+>       assert f["blocker"].startswith("BLOCKED") and "CHƯA VERIFIED" in \
+            f["blocker"]
+E       AssertionError: assert (False)
+E        +  where False = <built-in method startswith of str object at 0x0000017F7A8141B0>('BLOCKED')
+E        +    where <built-in method startswith of str object at 0x0000017F7A8141B0> = 'r13: thử lại có giới hạn 429/5xx (Retry-After, trần 30 s) + cổng tính năng trước request. CHƯA làm refresh token + qu...p + quyền chỉ đọc + key/token + sandbox/shop + tài liệu chính thức; chữ ký/field/phân trang CHƯA VERIFIED với sàn thật'.startswith
+
+tests\test_v13_c09_anchor_legal.py:420: AssertionError
+============================== warnings summary ===============================
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\google\protobuf\internal\well_known_types.py:91: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
+    _EPOCH_DATETIME_NAIVE = datetime.datetime.utcfromtimestamp(0)
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:18: DeprecationWarning: Call to deprecated create function FileDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    DESCRIPTOR = _descriptor.FileDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:36: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:43: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:50: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:57: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:64: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:29: DeprecationWarning: Call to deprecated create function Descriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _SLOT = _descriptor.Descriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:95: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:102: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:88: DeprecationWarning: Call to deprecated create function Descriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _MULTISLOTDESC = _descriptor.Descriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:133: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:140: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:147: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:154: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:161: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:168: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:175: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:182: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:189: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:196: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:203: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:210: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:217: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:224: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:231: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:238: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:245: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:252: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:259: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:266: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:273: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:280: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:126: DeprecationWarning: Call to deprecated create function Descriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _GRAPHCONFIG = _descriptor.Descriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:311: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:318: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:325: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:332: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:339: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:346: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:353: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:360: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:367: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:374: DeprecationWarning: Call to deprecated create function FieldDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.FieldDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\data_feed_pb2.py:304: DeprecationWarning: Call to deprecated create function Descriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _DATAFEEDDESC = _descriptor.Descriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:19: DeprecationWarning: Call to deprecated create function FileDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    DESCRIPTOR = _descriptor.FileDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:33: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:37: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:41: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:45: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:49: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:53: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:57: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:61: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:65: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:69: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:73: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:77: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:81: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:85: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:89: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:93: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:97: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:101: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:27: DeprecationWarning: Call to deprecated create function EnumDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _ATTRTYPE = _descriptor.EnumDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:140: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:144: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:148: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:152: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:134: DeprecationWarning: Call to deprecated create function EnumDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _SCALAR_TYPE = _descriptor.EnumDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:170: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:174: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:178: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:182: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:186: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:190: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:194: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:198: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:202: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:206: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:210: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:214: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:218: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:222: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:226: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:230: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:234: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:238: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:242: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:246: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:250: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:254: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:258: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:262: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:266: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:270: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:274: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:278: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:282: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:286: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\paddle\base\proto\framework_pb2.py:290: DeprecationWarning: Call to deprecated create function EnumValueDescriptor(). Note: Create unlinked descriptors is going to go away. Please use get/find descriptors from generated code or query the descriptor_pool.
+    _descriptor.EnumValueDescriptor(
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\astor\op_util.py:92: DeprecationWarning: ast.Num is deprecated and will be removed in Python 3.14; use ast.Constant instead
+    precedence_data = dict((getattr(ast, x, None), z) for x, y, z in op_data)
+
+tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\pytz\tzinfo.py:27: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
+    _epoch = datetime.utcfromtimestamp(0)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_ceo_decisions.py::test_schema_block_no_alter_drop - Asserti...
+FAILED tests/test_data_flow_map.py::test_every_egress_module_declared - Asser...
+FAILED tests/test_lead_store.py::test_schema_sql_has_leads_table - AssertionE...
+FAILED tests/test_social_vendor.py::test_schema_vendor_table_no_identity_columns
+FAILED tests/test_store.py::test_schema_sql_has_content_drafts_table - Assert...
+FAILED tests/test_v13_c09_anchor_legal.py::test_p2_blockers_recorded_not_verified
+6 failed, 6810 passed, 103 warnings in 3759.53s (1:02:39)
+
+EXIT 1

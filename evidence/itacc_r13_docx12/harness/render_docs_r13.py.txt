@@ -1,0 +1,200 @@
+"""HARNESS r13 — cập nhật tài liệu từ evidence (không gõ tay số): docs/handover/nghiem-thu-ky-thuat-noi-bo.md (mục 0 r13,
+mục 3 tiêu đề, mục 4 dòng 17 mục, ghi chú nguồn), docs/handover/doi-chieu-docx.md (A11), DONE.md, docs/handover/v13-board.md.
+Giữ CRLF. Chạy 1 lần (dừng nếu đã có).  python -I render_docs_r13.py.txt"""
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = Path(__file__).resolve().parents[3]
+EV = ROOT / "evidence" / "itacc_r13_docx12"
+G = EV / "gate"
+T = json.loads((EV / "tong_hop.json").read_text(encoding="utf-8"))
+ts, rows = T["tom_tat"], {r["id"]: r for r in T["items"]}
+IT = {p.stem: json.loads(p.read_text(encoding="utf-8")) for p in (EV / "items").glob("*.json")}
+LBL = {"DAT": "ĐẠT", "CHUA_KIEM": "CHƯA KIỂM", "BI_CHAN": "BỊ CHẶN"}
+
+
+def gate(name, pat=None):
+    t = (G / name).read_text(encoding="utf-8")
+    x = re.findall(r"(?m)^EXIT (\d+)", t)[-1]
+    m = re.search(pat, t) if pat else None
+    return (m.group(1).strip("= ") if m else ""), x
+
+
+full_res, full_x = gate("full_chot_f2.txt", r"(?m)^(=*\s*\d+ (?:passed|failed)[^\n]*)")
+f1_res, f1_x = gate("full_chot_f1.txt", r"(?m)^(=*\s*\d+ (?:passed|failed)[^\n]*)")
+FT = (G / "full_chot_f2.txt").read_text(encoding="utf-8")
+fpc = re.search(r"# fp code = (\w+)", FT).group(1)
+_, ruff_x = gate("ruff.txt")
+ev_res, ev_x = gate("eval.txt", r"(\[done\] guardrail[^\n]*)")
+_, dpia_x = gate("dpia.txt")
+rt_res, rt_x = gate("redteam.txt", r"(tỷ lệ lọt[^\n]*)")
+sc_res, sc_x = gate("secret_scan.txt", r"(giá trị bí mật kiểm[^\n]*)")
+skips = re.findall(r"(?m)^SKIPPED[^\n]*", FT)
+
+
+def P(k):
+    a = json.loads((EV / "probes" / f"{k}_truoc" / "ban_ghi.json").read_text(encoding="utf-8"))
+    b = json.loads((EV / "probes" / f"{k}_sau_fp2" / "ban_ghi.json").read_text(encoding="utf-8"))
+    assert a["probe_sha256"] == b["probe_sha256"]
+    return f"{k} {a['tong']['PASS']}/{a['tong']['FAIL']} → {b['tong']['PASS']}/{b['tong']['FAIL']}"
+
+
+TWELVE = [
+    ("production-03", "ảnh nhãn: OCR registry chỉ `none` (exit 2)", "OCR tại chỗ `paddle_local` dùng chung doc_intake", "a_ocr"),
+    ("data_platform-02.1", "scan → `cho_ocr` (provider none)", "`paddle_local` + reprocess + `ocr_engine`, OCR rỗng không im lặng", "a_ocr"),
+    ("farming-01", "STT registry `none`", "`whisper_local` (faster-whisper cục bộ, PyAV, trần, timeout)", "b_stt"),
+    ("marketing-02.1", "nền ảnh `none` (gradient)", "`openrouter_images` qua cổng llm_gateway", "c_image_v2"),
+    ("production-02", "`--check` chỉ số đếm", "nêu đích danh SKU thiếu; bắt buộc phiên bản + sha tệp; hồ sơ mẫu không tính", "d_dossier"),
+    ("data_platform-06", "không xử lý 429/5xx, không cổng tính năng", "thử lại giới hạn + Retry-After; cổng data_platform-06 trước request", "e_market_v2"),
+    ("intel-05.1", "chỉ kiểm ≥3 model", "lượt thật đòi ≥3 nhà cung cấp, chặn trước lời gọi", "f_persona"),
+    ("farming-06", "biên nhận chỉ so tiền tố; không upgrade", "phân tích cây .ots; submit bỏ phản hồi sai; `--upgrade` → `da_nang_cap`", "g_anchor"),
+    ("sales-08", "feed không có verify", "`--verify` feed (sha + giá web đã duyệt + mô tả)", "h_feed"),
+    ("sales-09", "không kênh chat website (repo riêng)", "không đổi (không có hợp đồng giao tiếp)", None),
+    ("ceo-90", "gói kiểm N22 làm tay", "`scripts/incident_compare.py` chỉ đọc, từ chối DB samsam", "i_incident"),
+    ("data_platform-90", "không đo máy chủ; mã hóa/offsite tùy chọn", "`scripts/onprem_preflight.py`; bắt buộc mã hóa; offsite khác thiết bị", "j_onprem"),
+]
+
+
+def kq(iid):
+    c = rows[iid]["ca"]
+    return f"{c.get('PASS', 0)}/{c.get('FAIL', 0)}/{c.get('NOT_RUN', 0)}"
+
+
+tab = ["| ID | Code trước | Code sau (r13) | Probe trước → sau (PASS/FAIL) | Mức | Ca P/F/N | Trạng thái nội bộ | Còn chặn bởi |",
+       "|---|---|---|---|---|---|---|---|"]
+for iid, before, after, pk in TWELVE:
+    r = rows[iid]
+    tab.append(f"| {iid} | {before} | {after} | {P(pk) if pk else '—'} | {r['muc_kiem']} | {kq(iid)} | "
+               f"**{LBL[r['trang_thai']]}** | {r['nguyen_nhan_day_du'].split(':')[0]} |")
+aff = ["sales-03", "farming-02.1", "farming-02.2", "data_platform-02.2", "data_platform-07.2"]
+aff_s = ", ".join(f"{i} {LBL[rows[i]['trang_thai']]} {kq(i)}" for i in aff)
+tot = ts["tong"]
+tot_s = f"{tot.get('DAT', 0)} ĐẠT / {tot.get('CHUA_KIEM', 0)} CHƯA KIỂM / {tot.get('BI_CHAN', 0)} BỊ CHẶN"
+cause = ", ".join(f"{k} {v}" for k, v in sorted(ts["nguyen_nhan_bi_chan"].items()))
+src = ", ".join(f"{k} {v}" for k, v in sorted(ts["nguon"].items()))
+gates = (f"full pytest **{full_res}**, EXIT {full_x} (`gate/full_chot_f2.txt`, DB mới, script dừng khi dựng DB/preflight"
+         f" lỗi, che DSN + libpq password=){'; SKIP: ' + '; '.join(skips) if skips else ''}; ruff (`--exclude .agents"
+         f" --exclude founder`) EXIT {ruff_x}; eval tất định --no-record `{ev_res}` EXIT {ev_x}; DPIA --check EXIT"
+         f" {dpia_x}; red-team `{rt_res}` EXIT {rt_x}; quét secret `{sc_res}` EXIT {sc_x}")
+
+SEC = f"""## 0. Checkpoint r13 — 12 mục DOCX còn BỊ CHẶN: làm PHẦN CODE CÓ THỂ LÀM (24/10/2026)
+
+- **Phạm vi:** đúng 12 mục BỊ CHẶN + 5 mục ảnh hưởng trực tiếp qua mã dùng chung. Baseline `main` `1ad90df` (snapshot
+  `D:\\code\\samsam_r13_baseline`), nhánh `codex/remaining-docx-12`, CHƯA commit. Không DB `samsam`. Container
+  `samsam-itacc-r13` (127.0.0.1:55453). Bảng việc trước khi code: `evidence/itacc_r13_docx12/BANG_VIEC.md`.
+- **Ba lớp tách riêng:** A. CODE (đã triển khai + kiểm môi trường thử); B. TÍCH HỢP THẬT (chưa kiểm — không key/vendor/
+  sandbox/model thật nào được dùng); C. NGHIỆM THU (nội bộ dưới đây; hợp đồng vẫn 0/96, không đổi `acceptance_status`).
+  MOCK = biên được giả (HTTP/model) — không chứng minh dịch vụ/dữ liệu/server thật.
+
+{chr(10).join(tab)}
+
+- **Ảnh hưởng trực tiếp (chạy lại toàn bộ ca, tiêu chí khóa):** {aff_s}.
+- **Tiêu chí:** `criteria/r13_v1.json` (17 mục, 188 ca, khóa sha trước khi chạy; nháp 4 agent chỉ-đọc, điều phối viên rà
+  + khóa) + `criteria/r13_v2.json` (2 mục — lỗi TIÊU CHÍ/FIXTURE ở lô lo1: regex trước bản vá cls; giá fixture vi phạm luật
+  golden R1; lượt v1 giữ ở `luot_bi_thay_the`). Tiêu chí khóa ở fp mã `2be3eb72…`; sau khóa chỉ đổi chuỗi `blocker`
+  trong `data/contract_features.json` (văn bản) và — sau full #1 (`gate/full_chot_f1.txt`: {f1_res}, EXIT {f1_x}; 6 fail
+  đều do thay đổi r13: drift-guard DDL schema, luồng egress mới chưa khai `data/data_flow_map.json`, chuỗi blocker
+  data_platform-06 phải mở đầu 'BLOCKED') — DDL `anchor_receipts` chuyển sang lệnh tường minh tên cố định + allowlist
+  drift-guard, khai DF-48 + sinh lại DPIA/TIA, sửa chuỗi blocker → fp mã cuối `{fpc[:12]}…`. Chạy lại TRÊN fp cuối: 17 mục
+  (lô `lo3`, cùng tiêu chí — lo1/lo2 ghi `luot_bi_thay_the`), 10 probe (`probes/*_sau_fp2`), nâng cấp schema
+  (`runs/upgrade_up4.txt`), full #2.
+- **Nâng cấp schema/roles** (`documents.ocr_engine`, ràng buộc `anchor_receipts` `da_nang_cap`, `svc_job` INSERT
+  anchor_receipts) từ baseline có dữ liệu ×2: 12/12 PASS trên schema cuối (`runs/upgrade_up4.txt`; `upgrade_up3.txt` trên
+  DDL khối DO trước đó cũng PASS; v1/v2 hỏng harness giữ).
+- **Tổng nội bộ (code sinh `tong_hop.json`):** {tot_s} (r12-fix: 84/0/12). Nguồn: {src}; {ts['so_tham_chieu_evidence']}
+  tham chiếu evidence khớp file/hash, {len(ts['loi_nhat_quan'])} vi phạm nhất quán. BỊ CHẶN: {cause} — 4 mục
+  MISSING_ADAPTER cũ nay EXTERNAL_INPUT (adapter đã có, chờ quyết định vendor/model/DPA/dữ liệu). Không mục nào được gỡ
+  chặn vì có adapter hoặc mock pass.
+- **Full/gate (fp mã `{fpc}`):** {gates}.
+- **Chờ bên ngoài:** bảng đầy đủ `docs/handover/dau-vao-va-quyet-dinh.md` mục G (ai → cần gì → ảnh hưởng → cấu hình → bằng
+  chứng → lệnh kiểm). Chưa làm vì thiếu đặc tả chính thức: refresh token + quyết toán Shopee/TikTok.
+- **Giới hạn:** OCR tại chỗ là lựa chọn kỹ thuật THỬ (chữ Việt mất dấu thanh một phần, trường tên SP không trích được);
+  STT không chạy thật (không có model, không tự tải); ảnh AI/anchor/API sàn chỉ MOCK; preflight chỉ có giá trị trên
+  server Bên B. KHÔNG phải nghiệm thu hợp đồng.
+
+"""
+
+
+def crlf_write(p, s):
+    p.write_bytes(s.replace("\r\n", "\n").replace("\n", "\r\n").encode("utf-8"))
+
+
+doc = ROOT / "docs" / "handover" / "nghiem-thu-ky-thuat-noi-bo.md"
+s = doc.read_bytes().decode("utf-8").replace("\r\n", "\n")
+assert "Checkpoint r13" not in s
+h0 = "## 0. Checkpoint r12-fix — vá ĐÚNG hai lỗi controller bác ở r12: D2, L3 (24/10/2026)"
+assert s.count(h0) == 1
+s = s.replace(h0, SEC + "## 0a. Checkpoint r12-fix (LỊCH SỬ) — vá ĐÚNG hai lỗi controller bác ở r12: D2, L3 (24/10/2026)")
+first = s.split("\n", 1)[0]
+s = s.replace(first, "# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r13 (12 mục DOCX bị chặn, phần code"
+              " có thể làm, 24/10/2026)", 1)
+s = s.replace("## 3. Kết quả tổng HIỆN HÀNH (r12-fix) — mẫu số 96", "## 3. Kết quả tổng HIỆN HÀNH (r13) — mẫu số 96")
+s = re.sub(r"Lượt = nguồn bản ghi hiện hành \(`evidence/itacc_r12_fix_d2_l3/source_map\.json`[^)]*\)",
+           "Lượt = nguồn bản ghi hiện hành (`evidence/itacc_r13_docx12/source_map.json`; r13 = kiểm lại lượt r13, còn lại"
+           " kế thừa)", s, count=1)
+sec4 = s.index("## 4. Bảng 96 mục")       # chỉ thay dòng TRONG bảng 96 mục (bảng mục 0 cũng có cùng ID)
+for iid, r in rows.items():
+    if r["luot"] != "r13":
+        continue
+    m = re.compile(rf"(?m)^\| {re.escape(iid)} \| [^\n]*$").search(s, sec4)
+    assert m, iid
+    new = (f"| {iid} | {r['khoi']} | {r['giai_doan']} | {r['ten']} | r13 | **{LBL[r['trang_thai']]}** | {r['muc_kiem']} | "
+           f"{kq(iid)} | {r['nguyen_nhan_day_du'].split(':')[0] if r['trang_thai'] == 'BI_CHAN' else ''} |")
+    s = s[:m.start()] + new + s[m.end():]
+crlf_write(doc, s)
+
+dc = ROOT / "docs" / "handover" / "doi-chieu-docx.md"
+s = dc.read_bytes().decode("utf-8").replace("\r\n", "\n")
+anchor = "## 0. Baseline và tiêu chí xong (G0)"
+assert s.count(anchor) == 1 and "### A11." not in s
+a11 = ("### A11. Đợt r13 (24/10/2026) — 12 mục còn bị chặn: phần code có thể làm\n\n" + "\n".join(tab) +
+       f"\n\nTổng nội bộ {tot_s}; chờ bên ngoài: `dau-vao-va-quyet-dinh.md` mục G; evidence `evidence/itacc_r13_docx12/`;"
+       " hồ sơ `nghiem-thu-ky-thuat-noi-bo.md` mục 0. Nghiệm thu hợp đồng 0/96 không đổi.\n\n")
+crlf_write(dc, s.replace(anchor, a11 + anchor))
+
+b = ROOT / "docs" / "handover" / "v13-board.md"
+s = b.read_bytes().decode("utf-8").replace("\r\n", "\n")
+anchor = "## Checkpoint mới — Vòng r12-fix (24/10/2026)"
+assert s.count(anchor) == 1 and "Vòng r13" not in s
+board = f"""## Checkpoint mới — Vòng r13 (24/10/2026): 12 mục DOCX bị chặn — làm phần code có thể làm — CHƯA commit/merge/push/deploy
+
+Nhánh `codex/remaining-docx-12` từ `main` `1ad90df`. Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ chặn vì adapter/mock. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; chờ bên ngoài: `dau-vao-va-quyet-dinh.md` mục G.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| Code 12 mục | OCR/STT/ảnh AI adapter, hồ sơ gốc, API sàn (429 + cổng), persona ≥3 nhà cung cấp, OTS parse + upgrade, verify feed web, incident_compare, onprem_preflight + backup bắt buộc mã hóa/offsite khác thiết bị | `evidence/itacc_r13_docx12/BANG_VIEC.md` |
+| Probe trước/sau (cùng sha) | 10/10 probe: baseline FAIL → bản cuối PASS | `probes/` |
+| Kiểm lại 17 mục (12 + 5 ảnh hưởng) | mọi ca chạy được PASS; NOT_RUN chỉ ca cần thật (UI, model/vendor, repo riêng, hạ tầng) | `items/`, `runs/`, `criteria/r13_v1.json`, `r13_v2.json` |
+| Tổng 96 | **{tot_s}** (r12-fix 84/0/12); BỊ CHẶN {cause} | `tong_hop.json`, `source_map.json` |
+| Gate (fp mã `{fpc[:12]}…`) | full {full_res} EXIT {full_x}; ruff {ruff_x}; eval {ev_x}; DPIA {dpia_x}; red-team {rt_x}; secret {sc_x}; nâng cấp schema ×2 PASS | `gate/`, `runs/upgrade_up4.txt` |
+
+"""
+crlf_write(b, s.replace(anchor, board + anchor))
+
+d = ROOT / "DONE.md"
+s = d.read_bytes().decode("utf-8").replace("\r\n", "\n")
+h = "## Vòng r12-fix (24/10/2026)"
+assert s.count(h) == 1 and "## Vòng r13" not in s
+done = f"""## Vòng r13 (24/10/2026) — 12 mục DOCX bị chặn: làm phần code có thể làm — CHƯA commit/merge/push/deploy
+
+Nhánh `codex/remaining-docx-12` từ `main` `1ad90df`; không DB `samsam`; không đổi `acceptance_status`. fp mã cuối `{fpc}`.
+
+1. OCR tại chỗ `paddle_local` (doc_intake + sx_label; model cục bộ det/rec/cls, không tự tải; trần trang/thời gian;
+   `documents.ocr_engine`; OCR rỗng exit 2), STT tại chỗ `whisper_local` (zalo_garden; model cục bộ; giải mã PyAV),
+   ảnh nền `openrouter_images` (module riêng, cổng llm_gateway, `usage.cost` → llm_usage).
+2. Hồ sơ gốc: nêu đích danh SKU thiếu, bắt buộc `phien_ban`/`tep_sha256`, hồ sơ mẫu không tính. API sàn: thử lại 429/5xx
+   giới hạn + cổng data_platform-06. Persona: lượt thật ≥3 nhà cung cấp. Neo: phân tích .ots, submit bỏ phản hồi sai,
+   `--upgrade` → `da_nang_cap` (≠ xác minh bên thứ ba). Feed website `--verify`. `scripts/incident_compare.py` (N22, chỉ
+   đọc). `scripts/onprem_preflight.py` + `BACKUP_REQUIRE_ENCRYPTION` / `BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE`.
+3. Schema/roles: `documents.ocr_engine`, ràng buộc anchor_receipts r13, `svc_job` INSERT anchor_receipts — nâng cấp ×2 PASS (`runs/upgrade_up4.txt`).
+4. Probe 10/10 trước FAIL → sau PASS; kiểm lại 17 mục (tiêu chí v1 + v2 có lý do): mọi ca chạy được PASS. Tổng 96:
+   **{tot_s}** — 12 mục vẫn BỊ CHẶN bởi đầu vào ngoài code (bảng `dau-vao-va-quyet-dinh.md` mục G).
+5. Gate: full {full_res}, EXIT {full_x}; ruff/eval/DPIA/red-team/secret EXIT {ruff_x}/{ev_x}/{dpia_x}/{rt_x}/{sc_x}.
+   Evidence `evidence/itacc_r13_docx12/`.
+
+"""
+crlf_write(d, s.replace(h, done + h))
+print("ok", tot_s, full_res, full_x)

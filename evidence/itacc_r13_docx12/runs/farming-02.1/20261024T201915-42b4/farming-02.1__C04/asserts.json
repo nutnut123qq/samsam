@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from garden_reminders where plot_id = 'IT-K03' and reminded_at is null and reminded_by is null",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from agent_action_log where action = 'garden_reminder_done'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

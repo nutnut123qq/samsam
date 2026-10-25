@@ -1,0 +1,28 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/verify_img_r13.py.txt",
+  "D:\\code\\samsam\\evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/img_ai",
+  "D:\\code\\samsam\\evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/packshots/mat-ong-sam-300ml.png",
+  "D:\\code\\samsam\\evidence\\itacc_r10/g3/harness/verify_image.py.txt"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:01:33+07:00",
+ "ket_thuc": "2026-10-25T00:01:34+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*SHA_DB 1 [0-9a-f]{64})(?=[\\s\\S]*AI_META True openrouter_images\\b)(?=[\\s\\S]*format PNG mode RGB size \\(1080, 1080\\))(?=[\\s\\S]*info_keys \\[\\] exif_len 0)(?=[\\s\\S]*chunks \\['IDAT', 'IEND', 'IHDR'\\])(?=[\\s\\S]*alpha255_pixels [1-9]\\d* mismatch 0\\b)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "8c807917a173d1ff1f777e51f085fc4453007c01fef49b7d89085f5aa15828dd",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

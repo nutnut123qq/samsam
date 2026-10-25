@@ -1,0 +1,110 @@
+"""PROBE r13 H v1 — sales-08 biên repo website: `agents.listing_export --verify <manifest nguồn dữ liệu website>` kiểm tệp feed
+trước khi bên website nạp. Không DB: đọc giá web đã duyệt / mô tả đã duyệt / readiness thay bằng hàm giả (dữ liệu THỬ); dựng
+feed bằng `website_feed` thật. Cùng mã/input/assertion baseline (1ad90df) và bản sửa.  python -I probe_h_feed.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước):
+- vừa xuất → `--verify` exit 0 "khớp", không traceback.
+- giá web ĐÃ duyệt đổi phiên bản (id khác) → exit 1, báo `gia_id lệch` của SKU.
+- tệp feed bị sửa 1 byte → exit 1, báo sha lệch.
+- rượu vẫn ẩn giá + không giỏ trong feed (đối chứng quy tắc cũ)."""
+import contextlib
+import io
+import json
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG"):
+        os.environ.pop(k, None)
+import psycopg  # noqa: E402
+
+psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+from agents import listing_export as le  # noqa: E402
+from pipelines import rollout, store  # noqa: E402
+
+SKU, ALC = "mat-ong-sam-300ml", "ruou-sam-chai-thuy-tinh-500ml"
+RD = {(SKU, "web"): "TP_THUONG", (ALC, "web"): "TP_THUONG"}
+PRICE = {"id": 11}
+le.web_prices = lambda conn, today: {SKU: {"price": 120000, "id": PRICE["id"], "approved": True},
+                                     ALC: {"price": 500000, "id": 21, "approved": True}}
+
+
+def master(conn, sku):
+    if sku == SKU:
+        return 1, "Mật ong sâm 300ml (dữ liệu thử r13) — hũ thủy tinh, dùng pha nước ấm."
+    raise le.ExportError("chưa có mô tả listing kênh web đã duyệt")
+
+
+le.master = master
+store.readiness_from_db = lambda conn: RD
+rollout.use_reason = lambda *a, **k: None
+le.connect = lambda: type("C", (), {"close": lambda self: None})()
+TMP = Path(tempfile.mkdtemp(prefix="r13feed-"))
+rows = []
+
+
+def cli(mp):
+    out, err = io.StringIO(), io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            rc = le.main(["--verify", str(mp)])
+    except Exception as e:  # noqa: BLE001
+        rc = f"EXC {type(e).__name__}: {str(e)[:80]}"
+    return rc, out.getvalue() + err.getvalue()
+
+
+def case(ma, fn):
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+MP = le.website_feed(None, TMP, readiness=RD)
+MAN = json.loads(MP.read_text(encoding="utf-8"))
+FEED = {r["sku_key"]: r for r in json.loads((TMP / MAN["file"]).read_text(encoding="utf-8"))["rows"]}
+
+
+def c_ok():
+    rc, t = cli(MP)
+    return rc == 0 and "khớp" in t, {"rc": rc, "out": t[-160:]}
+
+
+def c_price():
+    PRICE["id"] = 12
+    try:
+        rc, t = cli(MP)
+    finally:
+        PRICE["id"] = 11
+    return rc == 1 and f"{SKU}: gia_id lệch" in t, {"rc": rc, "out": t[-200:]}
+
+
+def c_tamper():
+    f = TMP / MAN["file"]
+    orig = f.read_bytes()
+    f.write_bytes(orig + b" ")
+    try:
+        rc, t = cli(MP)
+    finally:
+        f.write_bytes(orig)
+    return rc == 1 and "sha" in t, {"rc": rc, "out": t[-160:]}
+
+
+case("vua_xuat_khop", c_ok)
+case("gia_doi_phien_ban_lech", c_price)
+case("tep_bi_sua_lech", c_tamper)
+case("ruou_an_gia_khong_gio", lambda: (FEED[ALC]["an_gia"] is True and FEED[ALC]["gio_hang"] is False
+                                       and FEED[ALC]["gia_vnd"] is None, FEED[ALC]["ly_do"]))
+out = {"probe": "h_feed_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

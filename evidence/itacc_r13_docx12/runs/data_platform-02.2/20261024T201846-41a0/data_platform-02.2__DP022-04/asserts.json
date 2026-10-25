@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select status || '|' || coalesce(verified_by, 'NULL') from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+  "expect": "cho_ocr|NULL",
+  "actual": "cho_ocr|NULL",
+  "dat": true
+ }
+]

@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select count(*) from file_output_evidence where nguon = 'backup_runs' and output_key ~ '^bk:[0-9a-f]{64}$' and not is_sample",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

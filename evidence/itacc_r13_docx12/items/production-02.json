@@ -1,0 +1,1503 @@
+{
+ "id": "production-02",
+ "ten": "Hồ sơ sản phẩm",
+ "khoi": "production",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Sản xuất, R&D / Hồ sơ sản phẩm: 'Hồ sơ gốc 14 sản phẩm (thành phần, quy cách, số công bố); cấp dữ liệu chuẩn cho mọi kênh'",
+ "luot": "r13",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/production-02.json",
+  "sha256": "161715a097e2bd680bc9644ce2dd911fdee9509f43ae5fb487b305300bb93d2e"
+ },
+ "trang_thai_truoc": {
+  "luot": "r10",
+  "trang_thai": "BI_CHAN",
+  "nguyen_nhan": "EXTERNAL_INPUT"
+ },
+ "ly_do_chay_lai": "12 mục DOCX bị chặn — kiểm lại toàn bộ ca + ca mã r13",
+ "fingerprint_code_luc_khoa": "2be3eb728f34c542859ae4e32c366024af7690f2ec6ba8b43a7ce98fd211d98b",
+ "tieu_chi_file": "evidence/itacc_r13_docx12/criteria/r13_v1.json",
+ "tieu_chi_sha256": "920bbe0bcc4d988cfdc7cebcfedc5ad6872ef833dd7f8674963019d5d7678513",
+ "tieu_chi_khoa": "r13_v1.json 920bbe0bcc4d988cfdc7cebcfedc5ad6872ef833dd7f8674963019d5d7678513 2026-10-24T18:51:39+07:00",
+ "tieu_chi": [
+  "T1 golden_store --file nạp golden → sku_master/price_list (chờ duyệt) + golden_discrepancies có detail theo từng nguồn (không 'đề xuất')",
+  "T2 golden lỗi (vi phạm R1/file rỗng) → exit 1, 0 ghi; nạp lại → không nhân dòng price_list",
+  "T3 product_dossiers --check trên sổ thật → exit 2 BLOCKED nêu đúng phần thiếu (0/14 hồ sơ, SKU chưa gắn); bộ kiểm hoạt động trên fixture (đủ → 0, lệch số công bố → 1)",
+  "T4 duyệt giá chỉ người (agent: bị chặn)",
+  "T5 (r13) sổ thật → [blocked] nêu ĐÍCH DANH 13 SKU golden chưa gắn ('chưa gắn: da-an-sam-30v, …, savina-12v'); hồ sơ thiếu phien_ban/tep_sha256 → exit 1 nêu tên trường (fixture r10 nguyên bản); hồ sơ mau=true → exit 1, không tính vào số hồ sơ"
+ ],
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r13 (127.0.0.1:55453), DB mới mỗi mục dựng bằng working tree (schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài DB samsam_itacc_r13_p02.",
+ "run_id": "20261024T201847-7c33",
+ "ca": [
+  {
+   "ma": "production-02__S00",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai trên DB thử (tính năng co_code = chạy thử; mục mot_phan chưa vào sổ = chạy thử theo rollout.mode) — như SETUP-seed r10",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:47+07:00",
+      "ket_thuc": "2026-10-24T20:18:49+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__S00/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__S00/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__S00"
+  },
+  {
+   "ma": "production-02__P02-1",
+   "nguon_r10": "P02-1",
+   "mo_ta": "nạp golden fixture (savina-12v quy cách 12→10 viên) → phiếu spec_mismatch pending, detail theo nguồn (golden + web), không trường đề xuất; price_list vẫn chờ duyệt (r10 q.py → SQL)",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)(?=.*\\[load\\] sku_changed=1)(?=.*\\[disc\\] [^\\n]*spec_mismatch=[1-9])"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select pack_spec || '|' || version || '|' || source from sku_master where sku_key = 'savina-12v'",
+      "expect": "10 viên ngậm (tuýp PP)|2|golden_prod.json"
+     },
+     {
+      "sql": "select count(*) > 0 and bool_and(status = 'pending') and bool_and(detail ? 'golden' and detail ? 'web') from golden_discrepancies where kind = 'spec_mismatch' and sku_key = 'savina-12v'",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from golden_discrepancies where kind = 'spec_mismatch' and detail::text ~* '(de_xuat|đề xuất|proposed|suggest)'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from price_list where approved_by is not null",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.golden_store --file evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_prod.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[load\\] sku_changed=1)(?=.*\\[disc\\] [^\\n]*spec_mismatch=[1-9])",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:49+07:00",
+      "ket_thuc": "2026-10-24T20:18:51+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select pack_spec || '|' || version || '|' || source from sku_master where sku_key = 'savina-12v'",
+      "expect": "10 viên ngậm (tuýp PP)|2|golden_prod.json",
+      "actual": "10 viên ngậm (tuýp PP)|2|golden_prod.json",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) > 0 and bool_and(status = 'pending') and bool_and(detail ? 'golden' and detail ? 'web') from golden_discrepancies where kind = 'spec_mismatch' and sku_key = 'savina-12v'",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from golden_discrepancies where kind = 'spec_mismatch' and detail::text ~* '(de_xuat|đề xuất|proposed|suggest)'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from price_list where approved_by is not null",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-1"
+  },
+  {
+   "ma": "production-02__P02-2",
+   "nguon_r10": "P02-2",
+   "mo_ta": "ÂM idempotent: nạp lại → price_list không thêm (băm số dòng + max id trước/sau)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "price_inserted=0, price_closed=0"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/snap_r13.py.txt save evidence\\itacc_r13_docx12\\runs\\production-02\\20261024T201847-7c33\\scratch/p02_2.snap 34|34",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T20:18:51+07:00",
+      "ket_thuc": "2026-10-24T20:18:51+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.golden_store --file evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_prod.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "price_inserted=0, price_closed=0",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:51+07:00",
+      "ket_thuc": "2026-10-24T20:18:53+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/snap_r13.py.txt cmp evidence\\itacc_r13_docx12\\runs\\production-02\\20261024T201847-7c33\\scratch/p02_2.snap 34|34",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T20:18:53+07:00",
+      "ket_thuc": "2026-10-24T20:18:53+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step03.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2"
+  },
+  {
+   "ma": "production-02__P02-3",
+   "nguon_r10": "P02-3",
+   "mo_ta": "ÂM golden vi phạm R1 / rỗng → exit 1, 0 ghi (price_list, phiếu lệch, version sku_master không đổi)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "không nạp gì"
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "không connect, không ghi/xóa"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/snap_r13.py.txt save evidence\\itacc_r13_docx12\\runs\\production-02\\20261024T201847-7c33\\scratch/p02_3.snap 34|34|41|2|14|13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T20:18:53+07:00",
+      "ket_thuc": "2026-10-24T20:18:53+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.golden_store --file evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_bad.json",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "không nạp gì",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:53+07:00",
+      "ket_thuc": "2026-10-24T20:18:54+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.golden_store --file evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_empty.json",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "không connect, không ghi/xóa",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:55+07:00",
+      "ket_thuc": "2026-10-24T20:18:56+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step03.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/snap_r13.py.txt cmp evidence\\itacc_r13_docx12\\runs\\production-02\\20261024T201847-7c33\\scratch/p02_3.snap 34|34|41|2|14|13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T20:18:56+07:00",
+      "ket_thuc": "2026-10-24T20:18:56+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step04.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step04.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0,
+    1,
+    1,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3"
+  },
+  {
+   "ma": "production-02__P02-4",
+   "nguon_r10": "P02-4",
+   "mo_ta": "report phiếu lệch → liệt kê pending",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[report\\] \\d+ phiếu lệch pending"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.golden_store --report",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[report\\] \\d+ phiếu lệch pending",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:56+07:00",
+      "ket_thuc": "2026-10-24T20:18:57+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-4/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-4"
+  },
+  {
+   "ma": "production-02__P02-5",
+   "nguon_r10": "P02-5",
+   "mo_ta": "ÂM agent duyệt giá → exit != 0; dòng giá vẫn chưa duyệt (r10 id 2 = savina-12v shopee list → lấy id bằng {sql:...})",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38,
+       39,
+       40,
+       41,
+       42,
+       43,
+       44,
+       45,
+       46,
+       47,
+       48,
+       49,
+       50,
+       51,
+       52,
+       53,
+       54,
+       55,
+       56,
+       57,
+       58,
+       59,
+       60,
+       61,
+       62,
+       63,
+       64,
+       65,
+       66,
+       67,
+       68,
+       69,
+       70,
+       71,
+       72,
+       73,
+       74,
+       75,
+       76,
+       77,
+       78,
+       79,
+       80,
+       81,
+       82,
+       83,
+       84,
+       85,
+       86,
+       87,
+       88,
+       89,
+       90,
+       91,
+       92,
+       93,
+       94,
+       95,
+       96,
+       97,
+       98,
+       99,
+       100,
+       101,
+       102,
+       103,
+       104,
+       105,
+       106,
+       107,
+       108,
+       109,
+       110,
+       111,
+       112,
+       113,
+       114,
+       115,
+       116,
+       117,
+       118,
+       119,
+       120,
+       121,
+       122,
+       123,
+       124,
+       125,
+       126,
+       127,
+       128,
+       129,
+       130,
+       131,
+       132,
+       133,
+       134,
+       135,
+       136,
+       137,
+       138,
+       139,
+       140,
+       141,
+       142,
+       143,
+       144,
+       145,
+       146,
+       147,
+       148,
+       149,
+       150,
+       151,
+       152,
+       153,
+       154,
+       155,
+       156,
+       157,
+       158,
+       159,
+       160,
+       161,
+       162,
+       163,
+       164,
+       165,
+       166,
+       167,
+       168,
+       169,
+       170,
+       171,
+       172,
+       173,
+       174,
+       175,
+       176,
+       177,
+       178,
+       179,
+       180,
+       181,
+       182,
+       183,
+       184,
+       185,
+       186,
+       187,
+       188,
+       189,
+       190,
+       191,
+       192,
+       193,
+       194,
+       195,
+       196,
+       197,
+       198,
+       199,
+       200,
+       201,
+       202,
+       203,
+       204,
+       205,
+       206,
+       207,
+       208,
+       209,
+       210,
+       211,
+       212,
+       213,
+       214,
+       215,
+       216,
+       217,
+       218,
+       219,
+       220,
+       221,
+       222,
+       223,
+       224,
+       225,
+       226,
+       227,
+       228,
+       229,
+       230,
+       231,
+       232,
+       233,
+       234,
+       235,
+       236,
+       237,
+       238,
+       239,
+       240,
+       241,
+       242,
+       243,
+       244,
+       245,
+       246,
+       247,
+       248,
+       249,
+       250,
+       251,
+       252,
+       253,
+       254,
+       255
+      ]
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select approved_by is null and approved_at is null from price_list where id = (select id from price_list where sku_key = 'savina-12v' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null)",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.golden_store --approve-price 2 --by agent:x",
+      "exit": 1,
+      "expect_exit": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38,
+       39,
+       40,
+       41,
+       42,
+       43,
+       44,
+       45,
+       46,
+       47,
+       48,
+       49,
+       50,
+       51,
+       52,
+       53,
+       54,
+       55,
+       56,
+       57,
+       58,
+       59,
+       60,
+       61,
+       62,
+       63,
+       64,
+       65,
+       66,
+       67,
+       68,
+       69,
+       70,
+       71,
+       72,
+       73,
+       74,
+       75,
+       76,
+       77,
+       78,
+       79,
+       80,
+       81,
+       82,
+       83,
+       84,
+       85,
+       86,
+       87,
+       88,
+       89,
+       90,
+       91,
+       92,
+       93,
+       94,
+       95,
+       96,
+       97,
+       98,
+       99,
+       100,
+       101,
+       102,
+       103,
+       104,
+       105,
+       106,
+       107,
+       108,
+       109,
+       110,
+       111,
+       112,
+       113,
+       114,
+       115,
+       116,
+       117,
+       118,
+       119,
+       120,
+       121,
+       122,
+       123,
+       124,
+       125,
+       126,
+       127,
+       128,
+       129,
+       130,
+       131,
+       132,
+       133,
+       134,
+       135,
+       136,
+       137,
+       138,
+       139,
+       140,
+       141,
+       142,
+       143,
+       144,
+       145,
+       146,
+       147,
+       148,
+       149,
+       150,
+       151,
+       152,
+       153,
+       154,
+       155,
+       156,
+       157,
+       158,
+       159,
+       160,
+       161,
+       162,
+       163,
+       164,
+       165,
+       166,
+       167,
+       168,
+       169,
+       170,
+       171,
+       172,
+       173,
+       174,
+       175,
+       176,
+       177,
+       178,
+       179,
+       180,
+       181,
+       182,
+       183,
+       184,
+       185,
+       186,
+       187,
+       188,
+       189,
+       190,
+       191,
+       192,
+       193,
+       194,
+       195,
+       196,
+       197,
+       198,
+       199,
+       200,
+       201,
+       202,
+       203,
+       204,
+       205,
+       206,
+       207,
+       208,
+       209,
+       210,
+       211,
+       212,
+       213,
+       214,
+       215,
+       216,
+       217,
+       218,
+       219,
+       220,
+       221,
+       222,
+       223,
+       224,
+       225,
+       226,
+       227,
+       228,
+       229,
+       230,
+       231,
+       232,
+       233,
+       234,
+       235,
+       236,
+       237,
+       238,
+       239,
+       240,
+       241,
+       242,
+       243,
+       244,
+       245,
+       246,
+       247,
+       248,
+       249,
+       250,
+       251,
+       252,
+       253,
+       254,
+       255
+      ],
+      "regex": [],
+      "bat_dau": "2026-10-24T20:18:57+07:00",
+      "ket_thuc": "2026-10-24T20:18:58+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-5/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-5/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select approved_by is null and approved_at is null from price_list where id = (select id from price_list where sku_key = 'savina-12v' and channel = 'shopee' and kind = 'list' and valid_to is null and program_id is null)",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-5"
+  },
+  {
+   "ma": "production-02__P02-6",
+   "nguon_r10": "P02-6",
+   "mo_ta": "hồ sơ gốc thật → exit 2 BLOCKED 0/14 + SKU chưa gắn",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "(?s)(?=.*\\[blocked\\] danh mục hồ sơ gốc: 0/14)(?=.*\\[blocked\\] SKU golden đã gắn hồ sơ gốc: 0/13)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.product_dossiers --check",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[blocked\\] danh mục hồ sơ gốc: 0/14)(?=.*\\[blocked\\] SKU golden đã gắn hồ sơ gốc: 0/13)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:58+07:00",
+      "ket_thuc": "2026-10-24T20:18:59+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-6/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-6/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-6"
+  },
+  {
+   "ma": "production-02__P02-7",
+   "nguon_r10": "P02-7",
+   "mo_ta": "bộ kiểm trên fixture đủ / lệch: 7a dossier_full_r13.json (= fixture r10 + phien_ban/tep_sha256 GIẢ — cập nhật định dạng bắt buộc r13, không nới; xem NGUON.txt) → exit 0; 7b dossier_lech.json NGUYÊN BẢN r10 → exit 1 và vẫn nêu 'số công bố lệch golden của savina-12v' (còn thêm lỗi thiếu trường r13)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\] hồ sơ 13 · SKU golden 13 · đã gắn 13 · lỗi 0",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "\\[err\\] danh_muc_ho_so_goc\\[0\\]: số công bố lệch golden của savina-12v",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.product_dossiers --check --file evidence\\itacc_r13_docx12\\fixtures/items/production-02/dossier_full_r13.json --golden evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_prod.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\] hồ sơ 13 · SKU golden 13 · đã gắn 13 · lỗi 0",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:59+07:00",
+      "ket_thuc": "2026-10-24T20:18:59+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.product_dossiers --check --file evidence\\itacc_r13_docx12\\fixtures/items/production-02/dossier_lech.json --golden evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_prod.json",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "\\[err\\] danh_muc_ho_so_goc\\[0\\]: số công bố lệch golden của savina-12v",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:59+07:00",
+      "ket_thuc": "2026-10-24T20:18:59+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step02.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7"
+  },
+  {
+   "ma": "production-02__R13-01",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "sổ thật → exit 2, [blocked] nêu đích danh mọi SKU golden chưa gắn (sorted, data/golden_skus.json)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "(?s)(?=.*\\[blocked\\] danh mục hồ sơ gốc: 0/14)(?=.*\\[blocked\\]\\ SKU\\ golden\\ đã\\ gắn\\ hồ\\ sơ\\ gốc:\\ 0/13\\ —\\ chưa\\ gắn:\\ da\\-an\\-sam\\-30v,\\ mat\\-ong\\-sam\\-120ml\\-1hu,\\ mat\\-ong\\-sam\\-120ml\\-2hu,\\ mat\\-ong\\-sam\\-300ml,\\ ruou\\-sam\\-binh\\-su\\-do\\-500ml,\\ ruou\\-sam\\-chai\\-thuy\\-tinh\\-500ml,\\ sapentol\\-30v,\\ saphraton\\-20v,\\ saphraton\\-40v,\\ saphraton\\-80v,\\ saphraton\\-combo\\-2x20v,\\ savigout\\-30v,\\ savina\\-12v)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.product_dossiers --check",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[blocked\\] danh mục hồ sơ gốc: 0/14)(?=.*\\[blocked\\]\\ SKU\\ golden\\ đã\\ gắn\\ hồ\\ sơ\\ gốc:\\ 0/13\\ —\\ chưa\\ gắn:\\ da\\-an\\-sam\\-30v,\\ mat\\-ong\\-sam\\-120ml\\-1hu,\\ mat\\-ong\\-sam\\-120ml\\-2hu,\\ mat\\-ong\\-sam\\-300ml,\\ ruou\\-sam\\-binh\\-su\\-do\\-500ml,\\ ruou\\-sam\\-chai\\-thuy\\-tinh\\-500ml,\\ sapentol\\-30v,\\ saphraton\\-20v,\\ saphraton\\-40v,\\ saphraton\\-80v,\\ saphraton\\-combo\\-2x20v,\\ savigout\\-30v,\\ savina\\-12v)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:18:59+07:00",
+      "ket_thuc": "2026-10-24T20:19:00+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-01"
+  },
+  {
+   "ma": "production-02__R13-02",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "dossier_full.json NGUYÊN BẢN r10 (thiếu phien_ban/tep_sha256) → exit 1 nêu tên 2 trường cho mỗi hồ sơ (13 × 2 = 26 lỗi)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)(?=.*\\[err\\] danh_muc_ho_so_goc\\[0\\]\\.phien_ban: thiếu/rỗng)(?=.*\\[err\\] danh_muc_ho_so_goc\\[0\\]\\.tep_sha256: thiếu/rỗng)(?=.*\\[done\\] hồ sơ 13 · SKU golden 13 · đã gắn 13 · lỗi 26)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.product_dossiers --check --file evidence\\itacc_r13_docx12\\fixtures/items/production-02/dossier_full.json --golden evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_prod.json",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[err\\] danh_muc_ho_so_goc\\[0\\]\\.phien_ban: thiếu/rỗng)(?=.*\\[err\\] danh_muc_ho_so_goc\\[0\\]\\.tep_sha256: thiếu/rỗng)(?=.*\\[done\\] hồ sơ 13 · SKU golden 13 · đã gắn 13 · lỗi 26)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:19:00+07:00",
+      "ket_thuc": "2026-10-24T20:19:00+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-02/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-02"
+  },
+  {
+   "ma": "production-02__R13-03",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "dossier_mau_r13.json (HS-IT-01 mau=true) → exit 1; hồ sơ mẫu là lỗi và KHÔNG tính (hồ sơ 12, đã gắn 12)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)(?=.*\\[err\\] danh_muc_ho_so_goc\\[0\\]: hồ sơ MẪU \\(mau=true\\))(?=.*\\[done\\] hồ sơ 12 · SKU golden 13 · đã gắn 12 · lỗi 2)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.product_dossiers --check --file evidence\\itacc_r13_docx12\\fixtures/items/production-02/dossier_mau_r13.json --golden evidence\\itacc_r13_docx12\\fixtures/items/production-02/golden_prod.json",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[err\\] danh_muc_ho_so_goc\\[0\\]: hồ sơ MẪU \\(mau=true\\))(?=.*\\[done\\] hồ sơ 12 · SKU golden 13 · đã gắn 12 · lỗi 2)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:19:00+07:00",
+      "ket_thuc": "2026-10-24T20:19:00+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-03/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-03"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "EXTERNAL_INPUT: 14 hồ sơ gốc chưa được Bên B cung cấp (danh_muc_ho_so_goc rỗng, 0/13 SKU gắn) — bộ kiểm r13 nêu đích danh SKU thiếu, bắt buộc phiên bản + sha tệp, không tính hồ sơ mẫu",
+ "can_de_go": "Bên B giao 14 hồ sơ (tên, thành phần, quy cách, số công bố, phiên bản, sha tệp, căn cứ, người xác nhận) + ánh xạ SKU; `python -m ingest.product_dossiers --check` exit 0",
+ "gioi_han": " Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r13), fixture/dữ liệu THỬ, AI/HTTP/model giả ở biên nơi ghi MOCK — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [
+  {
+   "lot": "lo1",
+   "criteria": "r13_v1.json",
+   "run_id": "20261024T185340-98ac",
+   "thu_muc": "evidence/itacc_r13_docx12/runs/production-02/20261024T185340-98ac",
+   "ly_do": "chạy lại trên fp mã cuối 1975775d… sau khi đổi DDL anchor_receipts sang lệnh tường minh (drift-guard) + văn bản catalog/data_flow_map; cùng tiêu chí, kết quả lo1 đều PASS"
+  }
+ ],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/ket_qua.json",
+   "sha256": "da0e2aec1fd43f8aac4d880031cd6c00e79bbf1b4a7a8d429ecf4e3152ce2e83"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-1/asserts.json",
+   "sha256": "3fdaf642ac235d2c2e301190b0bd26c4b65f2788cecf5dfabc18dd0f6b167d0c"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-1/case.json",
+   "sha256": "83c8e13c3f97386d1e5471d2ea40280bb5cc0e2dc0b37cf9253b887b8500eea2"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-1/step01.cmd.json",
+   "sha256": "a5d165cb43e95f8cdcb6e8e92f638ce390b51ca5eb1fd249e83905d5c095c861"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-1/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-1/step01.stdout.txt",
+   "sha256": "533b77c8f77105c9cbdee17a093df2f2219c380d2e74897db3c542a8ffbaccc4"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/case.json",
+   "sha256": "ca86177e3140a8d6468ca71b7c4abe1a7805856dd093d33fdd16bb247e1ce76f"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step01.cmd.json",
+   "sha256": "179a8b801760161801db25aa55ae371648777062e88f5bceed09bd539d3a9d5d"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step01.stdout.txt",
+   "sha256": "eae00ef4a88ae3135ebedbc62f2017a4a0ebceef5664cec3b15bbd026f5272d9"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step02.cmd.json",
+   "sha256": "5ce86f1329c9d49adeea99155be9571c7dc655735f3304a567d19e72806ce09f"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step02.stdout.txt",
+   "sha256": "00c1b752f6ba431c881b387206a58e1a80bcff6d874267b05410bdb2dcf45205"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step03.cmd.json",
+   "sha256": "742ff9fb0185f215575702833edd78aced95eb740b8f3f90968fed573b062975"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-2/step03.stdout.txt",
+   "sha256": "8035bb3f9e55b5836b4ab56afc4a34de3c37bc3a7fc5c63edf6ef2bc2cff6899"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/case.json",
+   "sha256": "45c69797d52c01dc4b8d032d7b1243d7a5ac6bf7b527312b97bb7f628e931930"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step01.cmd.json",
+   "sha256": "3be35ee06d86b47ed53c35995da0aa47295ca4b259488724db2453d30f176410"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step01.stdout.txt",
+   "sha256": "996006b8645fd240d8c627734b4df4267d493f0a99c40776a76a31f502d9770e"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step02.cmd.json",
+   "sha256": "c7337d7c6f872e6a958d58737f395c19abe42e6fb5543ac5ca74ca3a038e6a4b"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step02.stdout.txt",
+   "sha256": "2b7b819ffc5913485a5047c7514b1284ab97a949c585ad7dc8629b44c0cf7de3"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step03.cmd.json",
+   "sha256": "7e49b0b402081d5a7ff1d291ace46ad86326fef007c7d92251a7cded97f26ab7"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step03.stdout.txt",
+   "sha256": "7f1628b17298c5b237ecab7a46b6c992c13eda8ced25a464fdbedc377b17e5aa"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step04.cmd.json",
+   "sha256": "81d8ace67edd4fd5b231453931d9b9e99592b06ff853ff48b83392487a55d510"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step04.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-3/step04.stdout.txt",
+   "sha256": "e453f03784ad4584d496464b33d54eecda4279fd7e262b7d330cd0e3131fe7fc"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-4/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-4/case.json",
+   "sha256": "d5f2c58f089d167effd1afbc104c79fc6175c8e1a7716f852d61bcb201f1dadb"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-4/step01.cmd.json",
+   "sha256": "5cb9c6be4f3235a6966251cb5bb5540d2c8667ca9f3c5fd75ecd59fa077deb35"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-4/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-4/step01.stdout.txt",
+   "sha256": "6b3b5099d87f862726bea92df5c0392d5a2efe482b050adae1ab6dc7d33417dd"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-5/asserts.json",
+   "sha256": "20b9d1cb476decb3a1e9d3d15244633bd4f1216084acbfe7de8fd7841053228a"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-5/case.json",
+   "sha256": "4b3b81c26c7b62d2001902b035722f5dd926b6bf9e1335f70ce3f6395782945d"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-5/step01.cmd.json",
+   "sha256": "44267257d1c4df19fc345d2dd32d402d2846bfd9ff6ec0c9df7c237a962a4530"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-5/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-5/step01.stdout.txt",
+   "sha256": "289af138ae70704892d25f1a7d5f973f363770b140d363419f8c24713f2b6acb"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-6/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-6/case.json",
+   "sha256": "0f17884ff4b658da6f99c2f562fc5ca991d1e5d405f8c9fcd071d7f00f1c6c0a"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-6/step01.cmd.json",
+   "sha256": "a6b06404ed1b9635f3072cbc8b77a3170f8867f40c0456f5985ba93739d077ab"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-6/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-6/step01.stdout.txt",
+   "sha256": "8952dce693959964a41de1f379859a108dca15f72749e38134a10742b2ec8d30"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/case.json",
+   "sha256": "97a8dba368bcb73128ee40923b69f9301686a071e199a791f8d476bfa49ee522"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step01.cmd.json",
+   "sha256": "7cdeb528bbea4b9fc785692ad7fb691bec991ef2519fdc46fdccbeddc9405a87"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step01.stdout.txt",
+   "sha256": "b57318c12d3d7ae20c1ab27cd68cf6aa5b9d25f8102ac5a8377547bcde106cc1"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step02.cmd.json",
+   "sha256": "9bd5ce71a7d9bd60ca5296905cdbdc2557017f2c87e02a1ae350161355ea537e"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__P02-7/step02.stdout.txt",
+   "sha256": "7b451ac808a355c9658af2f19278fb4e35d2f3393f7e9c9938a363a01094b895"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-01/case.json",
+   "sha256": "fc89bd03cb7abc80fa9e8a453c16083d801b59220c079eaf51a982b559e465c7"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-01/step01.cmd.json",
+   "sha256": "91de93d3ffce66db2a0e8133a3a7bcc4b6d830e6b4a9baaacee09b6433759e3e"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-01/step01.stdout.txt",
+   "sha256": "8952dce693959964a41de1f379859a108dca15f72749e38134a10742b2ec8d30"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-02/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-02/case.json",
+   "sha256": "750e8e4ebf7a109a5c27d0ce60833b99eb53ef8c653928772c33585e3130a870"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-02/step01.cmd.json",
+   "sha256": "a26c658b11470750f62a479cc32083f2aa42c0e722fea763d358e97276dc48f9"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-02/step01.stdout.txt",
+   "sha256": "e9fa25442074e8428b5af43e400840f8d06fe0fd8b9f0c216c4523ae0259432c"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-03/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-03/case.json",
+   "sha256": "e86369d680986c042847a56c419260cf49da51745485fe154dcb3b0c06e4ce3a"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-03/step01.cmd.json",
+   "sha256": "01a552690be80a77c4eccc0372e4386197b2958673beac8cdf5c779ae7a9b778"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__R13-03/step01.stdout.txt",
+   "sha256": "7a2d1ac6dcb89ca4b528edd483fdba4cc0ba59591da38309a5a65659eef95f5b"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__S00/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__S00/case.json",
+   "sha256": "5bc6d69a70f26e69f212bd34c0c1fcb0c5772aef82f67c21d59933fe0b66d9cc"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__S00/step01.cmd.json",
+   "sha256": "66330f366dd6a2eac1869d9ab71d1d70135d6edfda1e2b193a81aa0033310220"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__S00/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/production-02__S00/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/scratch/p02_2.snap",
+   "sha256": "9c91cef572f6145df6bf4eb44f68e0134745360dfdcd617f9013ad7742cb0ca3"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/production-02/20261024T201847-7c33/scratch/p02_3.snap",
+   "sha256": "56f6d216cb747e73fa858ac3841673ef265b4f904fb05c9e1ced4781512b5f67"
+  }
+ ],
+ "loi_san_pham": []
+}

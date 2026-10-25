@@ -161,7 +161,11 @@ def test_cli_submit_provider_none_blocked_before_connect(no_connect, capsys):
 # ================================================================ DB neo
 
 
-def _fake_post(calls, fail=(), resp=b"\xf0\x10" + b"\x00" * 8):
+# r13: phản hồi calendar HỢP LỆ định dạng OTS (append 16 byte → sha256 → pending).
+CAL_RESP = bytes.fromhex("f01011111111111111111111111111111111080083dfe30d2ef90c8e131268747470733a2f2f63616c2d622e74657374")
+
+
+def _fake_post(calls, fail=(), resp=CAL_RESP):
     def post(url, body, timeout):
         calls.append((url, body, timeout))
         if any(url.startswith(f) for f in fail):
@@ -289,7 +293,7 @@ def test_submit_ots_only_digest_failover_retry(db, proxy, run, tmp_path):
         assert body == bytes.fromhex(sha) and t == 5
     rec = bytes(db.execute("select receipt from anchor_receipts where status"
                            " = 'da_gui'").fetchone()[0])
-    assert rec == an.ots_file(bytes.fromhex(sha), b"\xf0\x10" + b"\x00" * 8)
+    assert rec == an.ots_file(bytes.fromhex(sha), CAL_RESP)
     state = an.receipt_state(proxy, bid)
     assert "chờ xác nhận Bitcoin" in state and "đã neo" not in state
     # Đã gửi → no-op, không gọi mạng.

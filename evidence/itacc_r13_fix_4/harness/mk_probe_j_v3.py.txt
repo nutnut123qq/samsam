@@ -1,0 +1,16 @@
+from pathlib import Path
+
+H = Path(r"D:\code\samsam\evidence\itacc_r13_fix_4\harness")
+s = (H / "probe_j_onprem_v2.py.txt").read_text(encoding="utf-8")
+bad1 = 'kf.write_text("mot-khoa-thu-du-dai-123\n", encoding="utf-8")\n    now = datetime.now(timezone.utc)\n    if real:'
+good1 = 'kf.write_text("mot-khoa-thu-du-dai-123\\n", encoding="utf-8")\n    now = datetime.now(timezone.utc)\n    if real:'
+bad2 = '(b / "backup_runs.jsonl").write_text(json.dumps(rec) + "\n", encoding="utf-8")\n    return {'
+good2 = '(b / "backup_runs.jsonl").write_text(json.dumps(rec) + "\\n", encoding="utf-8")\n    return {'
+assert s.count(bad1) == 1 and s.count(bad2) == 1
+s = s.replace(bad1, good1).replace(bad2, good2)
+s = s.replace('"""PROBE r13 J v2 (r13-fix4)', '"""PROBE r13 J v3 (r13-fix4; v3 = v2 sửa 2 chuỗi "\\n" bị heredoc làm vỡ — v2 '
+              'không chạy được (SyntaxError), log giữ ở probes/j_onprem_v2_*; tiêu chí/ca/input không đổi)', 1)
+s = s.replace('"probe": "j_onprem_v2"', '"probe": "j_onprem_v3"')
+(H / "probe_j_onprem_v3.py.txt").write_text(s, encoding="utf-8", newline="\n")
+compile(s, "v3", "exec")
+print("ok")

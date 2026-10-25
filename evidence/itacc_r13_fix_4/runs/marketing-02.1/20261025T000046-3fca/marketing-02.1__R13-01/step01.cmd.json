@@ -1,0 +1,46 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/image_run.py.txt",
+  "D:\\code\\samsam\\evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\marketing-02.1__R13-01\\out/image_http.json",
+  "--sku",
+  "mat-ong-sam-300ml",
+  "--channel",
+  "facebook",
+  "--headline",
+  "Quà quê Quảng Nam Thử R13",
+  "--scene",
+  "vườn sâm buổi sáng"
+ ],
+ "env_doi": [
+  "IMAGE_MODEL",
+  "IMAGE_OUT_DIR",
+  "IMAGE_PROVIDER",
+  "LLM_CAP_DEFAULT_USD",
+  "LLM_KILL",
+  "LLM_KILL_FEATURES",
+  "PACKSHOT_DIR"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:01:26+07:00",
+ "ket_thuc": "2026-10-25T00:01:33+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 1, skipped 0, refused 0, failed 0)",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\[image_run\\] requests=1\\b",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "5a3750684ee6fc0b16455b2f2e96f79a27ce5165aa750c481db5086da0823a16",
+ "stderr_sha256": "1b26ef94e08bea11ef1bb3fb3731b5c9bceb3d845bd2b039404fd0b9c2e785ac"
+}

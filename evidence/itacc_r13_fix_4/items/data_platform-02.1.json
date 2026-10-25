@@ -1,0 +1,1580 @@
+{
+ "id": "data_platform-02.1",
+ "ten": "Đọc chữ tự động từ giấy tờ",
+ "khoi": "data_platform",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Hạ tầng dữ liệu và AI / Số hóa giấy tờ: 'Scan, đọc chữ tự động'",
+ "luot": "r13fix4",
+ "supersedes": {
+  "path": "evidence/itacc_r13_docx12/items/data_platform-02.1.json",
+  "sha256": "50fe4ab02f34c14b9f606430aff3e6809081625d463c18631c08cf158af00e35"
+ },
+ "trang_thai_truoc": {
+  "luot": "r13",
+  "trang_thai": "BI_CHAN",
+  "nguyen_nhan": "EXTERNAL_INPUT: code OCR tại chỗ paddle_local (intake + --reprocess-pending) đã triển khai + kiểm LOCAL trên scan fixture; vendor/engine chưa được Bên B/Pháp chế chọn, chưa có tài liệu thật; data/loader_gate.json chưa cấu hình"
+ },
+ "ly_do_chay_lai": "mô-đun của mục đổi ở bản vá r13-fix4 F1 (cổng model OCR cục bộ đòi đủ pdmodel+pdiparams) (ảnh hưởng trực tiếp)",
+ "tieu_chi_file": "evidence/itacc_r13_fix_4/criteria/r13fix4_v1.json",
+ "tieu_chi_sha256": "fa9c3e13911edfab5101cadb5311616af3f504bbc421e077412826b3d902ec64",
+ "tieu_chi_khoa": "r13fix4_v1.json fa9c3e13911edfab5101cadb5311616af3f504bbc421e077412826b3d902ec64 2026-10-24T23:53:24+07:00",
+ "tieu_chi": [
+  "T1 doc_intake: PDF có lớp chữ → document_fields trích regex chờ xác nhận (pending_review); ảnh scan → cho_ocr + [blocked] exit 2 (OCR none)",
+  "T2 --reprocess-pending provider none → exit 2 0 ghi",
+  "T3 không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+  "T4 (r13) OCR_PROVIDER=paddle_local: PDF scan chỉ-ảnh 2 trang + ảnh nhãn → pending_review, text_source 'ocr', ocr_engine 'paddleocr-2.x/latin_PP-OCRv3', so_giay khớp 123/2026/[ĐD]KSP, mọi field verified=false (KHÔNG tự verified)",
+  "T5 (r13) đường xử lý lại: intake không provider → cho_ocr exit 2 [blocked]; --reprocess-pending paddle_local → pending_review + ocr_engine + field nháp; chạy lại → không đổi gì",
+  "T6 (r13) ảnh hỏng / PDF quá OCR_MAX_PAGES (31 > 30) → đếm error, exit 1, không ghi dòng documents; thiếu model cục bộ (OCR_PADDLE_MODEL_DIR rỗng) → error 'thiếu model OCR cục bộ', không tạo dòng, không nạp PaddleOCR (không tải)"
+ ],
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r13fix4 (127.0.0.1:55454), DB mới mỗi mục dựng bằng working tree (schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài DB samsam_itacc_r13fix4_dp021v2.",
+ "run_id": "20261025T000047-0e44",
+ "ca": [
+  {
+   "ma": "data_platform-02.1__S00",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ triển khai trên DB thử (tính năng co_code = chạy thử; mục mot_phan chưa vào sổ = chạy thử theo rollout.mode) — như SETUP-seed r10",
+   "tien_quyet": true,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:47+07:00",
+      "ket_thuc": "2026-10-25T00:00:49+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S00/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S00/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S00"
+  },
+  {
+   "ma": "data_platform-02.1__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "đặt 2 fixture r10 (chép nguyên byte, sha = r10) vào thư mục intake {SCR}/intake/giay_tiep_nhan/ — r10 sinh bằng g5/harness/make_pdf.py.txt vào scratchpad",
+   "tien_quyet": true,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[prep\\] ok"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/prep_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/intake/giay_tiep_nhan evidence\\itacc_r13_docx12\\fixtures/items/data_platform-02.1/gtn_thu_it.pdf evidence\\itacc_r13_docx12\\fixtures/items/data_platform-02.1/scan_thu_it.png",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[prep\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:50+07:00",
+      "ket_thuc": "2026-10-25T00:00:50+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S01"
+  },
+  {
+   "ma": "data_platform-02.1__DP021-01",
+   "nguon_r10": "DP021-01",
+   "mo_ta": "intake PDF chữ + ảnh scan (OCR none) → PDF pending_review + fields; ảnh cho_ocr + exit 2 [blocked]",
+   "tien_quyet": true,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "(?s)(?=.*\\[new\\] af03f4436115 giay_tiep_nhan pending_review fields=[1-9])(?=.*\\[new\\] 472d705c02fd giay_tiep_nhan cho_ocr fields=0)(?=.*\\[done\\] new=2 dup=0 cho_ocr=1 skipped=0 error=0)(?=.*\\[blocked\\] 1 tài liệu scan/ảnh ở cho_ocr)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select status || '|' || text_source || '|' || pages || '|' || pii_flag::text || '|' || doc_type from documents where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1'",
+      "expect": "pending_review|pdf_text|1|false|giay_tiep_nhan"
+     },
+     {
+      "sql": "select status || '|' || text_source || '|' || coalesce(pii_flag::text, 'NULL') from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+      "expect": "cho_ocr|none|NULL"
+     },
+     {
+      "sql": "select count(*) > 0 from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1'",
+      "expect": true
+     },
+     {
+      "sql": "select count(*) from document_fields where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.doc_intake",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[new\\] af03f4436115 giay_tiep_nhan pending_review fields=[1-9])(?=.*\\[new\\] 472d705c02fd giay_tiep_nhan cho_ocr fields=0)(?=.*\\[done\\] new=2 dup=0 cho_ocr=1 skipped=0 error=0)(?=.*\\[blocked\\] 1 tài liệu scan/ảnh ở cho_ocr)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:50+07:00",
+      "ket_thuc": "2026-10-25T00:00:52+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select status || '|' || text_source || '|' || pages || '|' || pii_flag::text || '|' || doc_type from documents where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1'",
+      "expect": "pending_review|pdf_text|1|false|giay_tiep_nhan",
+      "actual": "pending_review|pdf_text|1|false|giay_tiep_nhan",
+      "dat": true
+     },
+     {
+      "sql": "select status || '|' || text_source || '|' || coalesce(pii_flag::text, 'NULL') from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+      "expect": "cho_ocr|none|NULL",
+      "actual": "cho_ocr|none|NULL",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) > 0 from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1'",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from document_fields where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01"
+  },
+  {
+   "ma": "data_platform-02.1__DP021-01q",
+   "nguon_r10": "DP021-01q",
+   "mo_ta": "assert DB (r10 q.py → SQL): document_fields verified=false; giá trị trích r10 (PDF chữ ASCII)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [],
+    "kiem": [
+     {
+      "sql": "select bool_and(not verified) and count(*) > 0 from document_fields",
+      "expect": true
+     },
+     {
+      "sql": "select value from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1' and field = 'so_giay'",
+      "expect": "123/2026/DKSP"
+     },
+     {
+      "sql": "select value from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1' and field = 'ngay_cap'",
+      "expect": "2026-10-15"
+     },
+     {
+      "sql": "select value from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1' and field = 'ten_san_pham'",
+      "expect": "Mat ong sam Thu IT"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": [
+     {
+      "sql": "select bool_and(not verified) and count(*) > 0 from document_fields",
+      "expect": true,
+      "actual": true,
+      "dat": true
+     },
+     {
+      "sql": "select value from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1' and field = 'so_giay'",
+      "expect": "123/2026/DKSP",
+      "actual": "123/2026/DKSP",
+      "dat": true
+     },
+     {
+      "sql": "select value from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1' and field = 'ngay_cap'",
+      "expect": "2026-10-15",
+      "actual": "2026-10-15",
+      "dat": true
+     },
+     {
+      "sql": "select value from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1' and field = 'ten_san_pham'",
+      "expect": "Mat ong sam Thu IT",
+      "actual": "Mat ong sam Thu IT",
+      "dat": true
+     }
+    ]
+   },
+   "exit": [],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01q"
+  },
+  {
+   "ma": "data_platform-02.1__DP021-02",
+   "nguon_r10": "DP021-02",
+   "mo_ta": "ảnh scan → cho_ocr, exit 2 [blocked] — r10 'như DP021-01 (cùng lượt chạy)': đọc lại exit + stdout bước intake của ca DP021-01 (cùng lượt runner) + trạng thái DB",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [],
+    "kiem": [
+     {
+      "file_re": "{OUT}/../../data_platform-02.1__DP021-01/step01.cmd.json",
+      "re": "\"exit\": 2,",
+      "expect": true
+     },
+     {
+      "file_re": "{OUT}/../../data_platform-02.1__DP021-01/step01.stdout.txt",
+      "re": "\\[blocked\\] 1 tài liệu scan/ảnh ở cho_ocr — OCR_PROVIDER chưa cấu hình",
+      "expect": true
+     },
+     {
+      "sql": "select status from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+      "expect": "cho_ocr"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": [
+     {
+      "file_re": "evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\data_platform-02.1__DP021-02\\out/../../data_platform-02.1__DP021-01/step01.cmd.json",
+      "re": "\"exit\": 2,",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\data_platform-02.1__DP021-02\\out/../../data_platform-02.1__DP021-01/step01.stdout.txt",
+      "re": "\\[blocked\\] 1 tài liệu scan/ảnh ở cho_ocr — OCR_PROVIDER chưa cấu hình",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "sql": "select status from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+      "expect": "cho_ocr",
+      "actual": "cho_ocr",
+      "dat": true
+     }
+    ]
+   },
+   "exit": [],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-02"
+  },
+  {
+   "ma": "data_platform-02.1__DP021-03",
+   "nguon_r10": "DP021-03",
+   "mo_ta": "--reprocess-pending provider none → exit 2, 0 ghi",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[blocked\\] OCR_PROVIDER chưa cấu hình",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select status from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+      "expect": "cho_ocr"
+     },
+     {
+      "sql": "select count(*) from documents",
+      "expect": 2
+     },
+     {
+      "sql": "select count(*) from documents where ocr_engine is not null",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.doc_intake --reprocess-pending",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[blocked\\] OCR_PROVIDER chưa cấu hình",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:52+07:00",
+      "ket_thuc": "2026-10-25T00:00:54+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select status from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+      "expect": "cho_ocr",
+      "actual": "cho_ocr",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from documents",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from documents where ocr_engine is not null",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-03"
+  },
+  {
+   "ma": "data_platform-02.1__R13-01",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "thiếu model cục bộ: OCR_PADDLE_MODEL_DIR = thư mục rỗng → [err] 'thiếu model OCR cục bộ (det, rec, cls)', error=1, exit 1, không dòng documents. Kiểm TRƯỚC import paddleocr nên không có đường tải model; runner không chặn mạng — '0 kết nối mạng' là probe A (khong_mo_mang), không phải ca này. Chạy TRƯỚC R13-02 (cùng ảnh nhãn: lỗi không tạo dòng nên R13-02 vẫn là tài liệu mới)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[prep\\] ok"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[prep\\] ok"
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)(?=.*\\[err\\] #1 thiếu model OCR cục bộ \\(det, rec, cls\\) ở OCR_PADDLE_MODEL_DIR)(?=.*\\[done\\] new=0 dup=0 cho_ocr=0 skipped=0 error=1)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename = 'nhan_mat_ong.png'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/prep_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/empty_models",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[prep\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:54+07:00",
+      "ket_thuc": "2026-10-25T00:00:54+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/prep_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/intake_nomodel/nhan evidence\\itacc_r13_docx12\\fixtures/ocr/nhan_mat_ong.png",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[prep\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:54+07:00",
+      "ket_thuc": "2026-10-25T00:00:54+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.doc_intake",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[err\\] #1 thiếu model OCR cục bộ \\(det, rec, cls\\) ở OCR_PADDLE_MODEL_DIR)(?=.*\\[done\\] new=0 dup=0 cho_ocr=0 skipped=0 error=1)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:54+07:00",
+      "ket_thuc": "2026-10-25T00:00:57+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename = 'nhan_mat_ong.png'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01"
+  },
+  {
+   "ma": "data_platform-02.1__FIX4-01",
+   "nguon_r10": "MOI_R13FIX4",
+   "mo_ta": "F1: model cục bộ thiếu inference.pdiparams (3 bộ) → doc_intake [err] 'thiếu model OCR cục bộ (det, rec, cls)', error=1, exit 1, 0 dòng documents, 0 kết nối mạng ({HX}/guard_run). Chạy TRƯỚC R13-02 (lỗi không tạo dòng nên ảnh nhãn ở R13-02 vẫn là tài liệu mới)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[models\\] thieu_pdiparams 3 bo"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[prep\\] ok"
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)(?=.*\\[err\\] #1 thiếu model OCR cục bộ \\(det, rec, cls\\) ở OCR_PADDLE_MODEL_DIR)(?=.*\\[done\\] new=0 dup=0 cho_ocr=0 skipped=0 error=1)",
+      "stderr_re": "(?s)(?=.*\\[guard\\] mang=0 )(?!.*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename = 'nhan_mat_ong.png'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_fix_4\\harness/mk_models_thieu.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/models_thieu",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[models\\] thieu_pdiparams 3 bo",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:57+07:00",
+      "ket_thuc": "2026-10-25T00:00:59+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/prep_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/intake_thieu/nhan evidence\\itacc_r13_docx12\\fixtures/ocr/nhan_mat_ong.png",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[prep\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:59+07:00",
+      "ket_thuc": "2026-10-25T00:00:59+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_fix_4\\harness/guard_run.py.txt -m ingest.doc_intake",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[err\\] #1 thiếu model OCR cục bộ \\(det, rec, cls\\) ở OCR_PADDLE_MODEL_DIR)(?=.*\\[done\\] new=0 dup=0 cho_ocr=0 skipped=0 error=1)",
+        "khop": true
+       },
+       {
+        "stderr_re": "(?s)(?=.*\\[guard\\] mang=0 )(?!.*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:59+07:00",
+      "ket_thuc": "2026-10-25T00:01:02+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename = 'nhan_mat_ong.png'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01"
+  },
+  {
+   "ma": "data_platform-02.1__R13-02",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "intake giay_tiep_nhan/tiep_nhan_scan.pdf (2 trang chỉ ảnh) + nhan/nhan_mat_ong.png với OCR_PROVIDER=paddle_local → cả hai pending_review, text_source ocr, ocr_engine ghi, so_giay ~ 123/2026, field verified=false; exit 0, không [blocked]",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[prep\\] ok"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[prep\\] ok"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)(?=.*\\[new\\] [0-9a-f]{12} giay_tiep_nhan pending_review fields=[1-3])(?=.*\\[new\\] [0-9a-f]{12} nhan pending_review fields=0)(?=.*\\[done\\] new=2 dup=0 cho_ocr=0 skipped=0 error=0)",
+      "out_re": "\\A(?![\\s\\S]*(\\[blocked\\]|Traceback))"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename in ('tiep_nhan_scan.pdf', 'nhan_mat_ong.png') and status = 'pending_review' and text_source = 'ocr' and ocr_engine = 'paddleocr-2.x/latin_PP-OCRv3' and pii_flag is not null and verified_by is null",
+      "expect": 2
+     },
+     {
+      "sql": "select doc_type || '|' || pages from documents where filename = 'tiep_nhan_scan.pdf'",
+      "expect": "giay_tiep_nhan|2"
+     },
+     {
+      "sql": "select doc_type || '|' || pages from documents where filename = 'nhan_mat_ong.png'",
+      "expect": "nhan|1"
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'tiep_nhan_scan.pdf' and f.field = 'so_giay' and f.value ~* '^123/2026/[ĐÐD]KSP$' and not f.verified",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename in ('tiep_nhan_scan.pdf', 'nhan_mat_ong.png') and f.verified",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'nhan_mat_ong.png'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/prep_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/intake_ocr/giay_tiep_nhan evidence\\itacc_r13_docx12\\fixtures/ocr/tiep_nhan_scan.pdf",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[prep\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:02+07:00",
+      "ket_thuc": "2026-10-25T00:01:02+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/prep_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/intake_ocr/nhan evidence\\itacc_r13_docx12\\fixtures/ocr/nhan_mat_ong.png",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[prep\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:03+07:00",
+      "ket_thuc": "2026-10-25T00:01:03+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.doc_intake",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[new\\] [0-9a-f]{12} giay_tiep_nhan pending_review fields=[1-3])(?=.*\\[new\\] [0-9a-f]{12} nhan pending_review fields=0)(?=.*\\[done\\] new=2 dup=0 cho_ocr=0 skipped=0 error=0)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*(\\[blocked\\]|Traceback))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:03+07:00",
+      "ket_thuc": "2026-10-25T00:01:30+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename in ('tiep_nhan_scan.pdf', 'nhan_mat_ong.png') and status = 'pending_review' and text_source = 'ocr' and ocr_engine = 'paddleocr-2.x/latin_PP-OCRv3' and pii_flag is not null and verified_by is null",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select doc_type || '|' || pages from documents where filename = 'tiep_nhan_scan.pdf'",
+      "expect": "giay_tiep_nhan|2",
+      "actual": "giay_tiep_nhan|2",
+      "dat": true
+     },
+     {
+      "sql": "select doc_type || '|' || pages from documents where filename = 'nhan_mat_ong.png'",
+      "expect": "nhan|1",
+      "actual": "nhan|1",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'tiep_nhan_scan.pdf' and f.field = 'so_giay' and f.value ~* '^123/2026/[ĐÐD]KSP$' and not f.verified",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename in ('tiep_nhan_scan.pdf', 'nhan_mat_ong.png') and f.verified",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'nhan_mat_ong.png'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02"
+  },
+  {
+   "ma": "data_platform-02.1__R13-03",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "ảnh hỏng (hong.jpg) + PDF 31 trang (qua_trang.pdf) với paddle_local → 2 error, exit 1, không dòng documents (bản gốc vẫn lưu theo thiết kế store_original trước trích — không assert)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[prep\\] ok"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[prep\\] ok"
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)(?=.*\\[err\\] #1 PDF 31 trang > OCR_MAX_PAGES=30)(?=.*\\[err\\] #2 ảnh hỏng/không đọc được)(?=.*\\[done\\] new=0 dup=0 cho_ocr=0 skipped=0 error=2)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename in ('qua_trang.pdf', 'hong.jpg')",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/prep_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/intake_err/giay_tiep_nhan evidence\\itacc_r13_docx12\\fixtures/ocr/qua_trang.pdf",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[prep\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:30+07:00",
+      "ket_thuc": "2026-10-25T00:01:30+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/prep_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/intake_err/nhan evidence\\itacc_r13_docx12\\fixtures/ocr/hong.jpg",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[prep\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:30+07:00",
+      "ket_thuc": "2026-10-25T00:01:30+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step02.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.doc_intake",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[err\\] #1 PDF 31 trang > OCR_MAX_PAGES=30)(?=.*\\[err\\] #2 ảnh hỏng/không đọc được)(?=.*\\[done\\] new=0 dup=0 cho_ocr=0 skipped=0 error=2)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:30+07:00",
+      "ket_thuc": "2026-10-25T00:01:33+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename in ('qua_trang.pdf', 'hong.jpg')",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03"
+  },
+  {
+   "ma": "data_platform-02.1__R13-04",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "đường xử lý lại (1/3): biến thể tiep_nhan_scan_rp.pdf (= byte tiep_nhan_scan.pdf + hậu tố '%r13-reprocess-variant' sau %%EOF → sha khác, nội dung trang y hệt; cần vì sha đã có ở R13-02 sẽ 'dup') intake KHÔNG provider → cho_ocr, exit 2 [blocked]",
+   "tien_quyet": true,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[prep\\] ok"
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "(?s)(?=.*\\[new\\] [0-9a-f]{12} giay_tiep_nhan cho_ocr fields=0)(?=.*\\[done\\] new=1 dup=0 cho_ocr=1 skipped=0 error=0)(?=.*\\[blocked\\] 1 tài liệu scan/ảnh)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select status || '|' || text_source || '|' || coalesce(ocr_engine, 'NULL') || '|' || coalesce(pii_flag::text, 'NULL') from documents where filename = 'tiep_nhan_scan_rp.pdf'",
+      "expect": "cho_ocr|none|NULL|NULL"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/prep_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/intake_rp/giay_tiep_nhan evidence\\itacc_r13_docx12\\fixtures/ocr/tiep_nhan_scan.pdf --name tiep_nhan_scan_rp.pdf --suffix %r13-reprocess-variant",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[prep\\] ok",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:33+07:00",
+      "ket_thuc": "2026-10-25T00:01:33+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.doc_intake",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[new\\] [0-9a-f]{12} giay_tiep_nhan cho_ocr fields=0)(?=.*\\[done\\] new=1 dup=0 cho_ocr=1 skipped=0 error=0)(?=.*\\[blocked\\] 1 tài liệu scan/ảnh)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:33+07:00",
+      "ket_thuc": "2026-10-25T00:01:34+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select status || '|' || text_source || '|' || coalesce(ocr_engine, 'NULL') || '|' || coalesce(pii_flag::text, 'NULL') from documents where filename = 'tiep_nhan_scan_rp.pdf'",
+      "expect": "cho_ocr|none|NULL|NULL",
+      "actual": "cho_ocr|none|NULL|NULL",
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04"
+  },
+  {
+   "ma": "data_platform-02.1__R13-05",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "đường xử lý lại (2/3): --reprocess-pending OCR_PROVIDER=paddle_local → biến thể pending_review, ocr, ocr_engine, 2 trang, so_giay ~ 123/2026, field verified=false; exit 0 (scan_thu_it.png r10 vẫn trong cho_ocr — không assert số done/still)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)(?=.*\\[ocr\\] [0-9a-f]{12} giay_tiep_nhan → pending_review fields=[1-3])(?=.*\\[done\\] done=\\d+ still=\\d+ error=0)",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename = 'tiep_nhan_scan_rp.pdf' and status = 'pending_review' and text_source = 'ocr' and ocr_engine = 'paddleocr-2.x/latin_PP-OCRv3' and pii_flag is not null and verified_by is null and pages = 2",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'tiep_nhan_scan_rp.pdf' and f.field = 'so_giay' and f.value ~* '^123/2026/[ĐÐD]KSP$' and not f.verified",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'tiep_nhan_scan_rp.pdf' and f.verified",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from documents where status = 'verified'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.doc_intake --reprocess-pending",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[ocr\\] [0-9a-f]{12} giay_tiep_nhan → pending_review fields=[1-3])(?=.*\\[done\\] done=\\d+ still=\\d+ error=0)",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:34+07:00",
+      "ket_thuc": "2026-10-25T00:01:53+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-05/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-05/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from documents where filename = 'tiep_nhan_scan_rp.pdf' and status = 'pending_review' and text_source = 'ocr' and ocr_engine = 'paddleocr-2.x/latin_PP-OCRv3' and pii_flag is not null and verified_by is null and pages = 2",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'tiep_nhan_scan_rp.pdf' and f.field = 'so_giay' and f.value ~* '^123/2026/[ĐÐD]KSP$' and not f.verified",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from document_fields f join documents d using (sha256) where d.filename = 'tiep_nhan_scan_rp.pdf' and f.verified",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from documents where status = 'verified'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-05"
+  },
+  {
+   "ma": "data_platform-02.1__R13-06",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "đường xử lý lại (3/3): chạy lại --reprocess-pending paddle_local → done=0, exit 0, trạng thái documents + document_fields không đổi (băm trước/sau bằng {sql:...})",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\] done=0 still=\\d+ error=0",
+      "out_re": "\\A(?![\\s\\S]*(\\[ocr\\]|Traceback))"
+     },
+     {
+      "expect_exit": 0
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/snap_r13.py.txt save evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/rp_state.snap 5a5439f4105cd69975d189a90350f83b",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-25T00:01:53+07:00",
+      "ket_thuc": "2026-10-25T00:01:53+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.doc_intake --reprocess-pending",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\] done=0 still=\\d+ error=0",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*(\\[ocr\\]|Traceback))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:53+07:00",
+      "ket_thuc": "2026-10-25T00:02:06+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/A/snap_r13.py.txt cmp evidence\\itacc_r13_fix_4\\runs\\data_platform-02.1\\20261025T000047-0e44\\scratch/rp_state.snap 5a5439f4105cd69975d189a90350f83b",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-25T00:02:06+07:00",
+      "ket_thuc": "2026-10-25T00:02:06+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step03.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "EXTERNAL_INPUT: code OCR tại chỗ paddle_local (intake + --reprocess-pending) đã triển khai + kiểm LOCAL trên scan fixture; vendor/engine chưa được Bên B/Pháp chế chọn, chưa có tài liệu thật; data/loader_gate.json chưa cấu hình",
+ "can_de_go": "Quyết định engine OCR dùng thật (+DPA nếu dịch vụ), tài liệu thật, chính sách cổng loader; chạy lại intake/reprocess trên bản sao tài liệu thật",
+ "gioi_han": " Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r13fix4), fixture/dữ liệu THỬ, AI/HTTP/model giả ở biên nơi ghi MOCK; 'khác thiết bị' offsite KHÔNG đo được trên máy dev — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01/asserts.json",
+   "sha256": "d31c59511726172f57efde1fd60b7531b319765a6a8abc552ebf876cb7b86e76"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01/case.json",
+   "sha256": "e6830fe99b248c73961245bf7928026f418d6524756c6b7f800e0a654eeaa804"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01/step01.cmd.json",
+   "sha256": "baffe1b203426ad9859cc25e5d2e65c8500c14a5d37648faf7b50f66177bef4b"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01/step01.stdout.txt",
+   "sha256": "133110a05551fcc6627d196c08caa0eb1bb1647e24427ad4e59f1d38c4a942b1"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01q/asserts.json",
+   "sha256": "9764ae302b07af8b7f306988ac1e3192cdf3cd6c8bc5018a34e9e4d7a99047c0"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-01q/case.json",
+   "sha256": "0da293b8f22753091ad045da5d5130b46305cf74bfa1524cf44d64954a80f319"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-02/asserts.json",
+   "sha256": "b352089ac1d5ac0f29fe4f656a8f1b2f09305d0fc15e3e8365531b810676172f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-02/case.json",
+   "sha256": "504d67fced03c4adc7d810c449cabc77a9be56c47b216f1f4581197fa0f4e9f4"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-03/asserts.json",
+   "sha256": "09c4966d63a7696aab9fd6153751f190f9d0011cf4c3dd07017d9d150ea8f2e6"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-03/case.json",
+   "sha256": "e132cd4a2822dcc0e343562e3cb24ea635222590239a9c94492d64516cb7c77e"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-03/step01.cmd.json",
+   "sha256": "2d04455e12a4c9de1e5dcb392ff909377fc52affb4d78b95dfca83e4904738ce"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__DP021-03/step01.stdout.txt",
+   "sha256": "4e1570064702f0a3cb1a5627e7bb885bf888752b1babcb8ffc75a0051e831f6f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/asserts.json",
+   "sha256": "41fb89ea921f9ef5260bfe0a980d6d66d6d5c5dd9fe40db508ae72a9c1cdc300"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/case.json",
+   "sha256": "bd5fe2269848a8ff29d0fc95af1d64049f87167ba7f240465e4cff539f9591fb"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step01.cmd.json",
+   "sha256": "c9710bc1972232b132347c726919ee300949679da755eda705f70a07c92b2842"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step01.stdout.txt",
+   "sha256": "afeb016d7248886918d67cf75998a4c63c119b0dd6b40a2d154cc3ef972545c4"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step02.cmd.json",
+   "sha256": "3a64a22b459194816864448157c79a0a75fd1c3ec43122f2bb33e89355ae0a13"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step02.stdout.txt",
+   "sha256": "234a76dafab4e039c1e6e0d23ba043ea58977d67506af8473cf1a2f76d2f9490"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step03.cmd.json",
+   "sha256": "10e0e2270a568286e9b56969a09e41daf0da38a2f2d47324e389cf929741ee0f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step03.stderr.txt",
+   "sha256": "51b44bd6023a46740573dc983be158f72deed21cad2cf82643665e430a90c5cf"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__FIX4-01/step03.stdout.txt",
+   "sha256": "f0f272d2e1dfcc9b55f03863e8220cd7c2424fa822346ecab0099997a59ff7fb"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/asserts.json",
+   "sha256": "41fb89ea921f9ef5260bfe0a980d6d66d6d5c5dd9fe40db508ae72a9c1cdc300"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/case.json",
+   "sha256": "9e2ad98986be0459668c48e8eff1b90a615fb58764d401a0944814c24fd2f0a9"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step01.cmd.json",
+   "sha256": "c756e35d61e9ca8ad8b1c954d9dc7b6e5ec673c4e2ba01c703e3e0d8b1368f3c"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step01.stdout.txt",
+   "sha256": "db292170afb9314d5416114b1eba1e9febddc470b5ee19623343b37a2e45d056"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step02.cmd.json",
+   "sha256": "debbb9cc0adfff9a2d6891b1de1d4a83b291aec7cda15fe101fd5cc46a58f641"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step02.stdout.txt",
+   "sha256": "234a76dafab4e039c1e6e0d23ba043ea58977d67506af8473cf1a2f76d2f9490"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step03.cmd.json",
+   "sha256": "7877b58a7a7c11e4827aa84caa2fd11417262281dbbe08f64964369e3cdf13c1"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-01/step03.stdout.txt",
+   "sha256": "f0f272d2e1dfcc9b55f03863e8220cd7c2424fa822346ecab0099997a59ff7fb"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/asserts.json",
+   "sha256": "37743deb3ced45b38916d54f6572b2ab06768d2e8af601d35833908b2305540f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/case.json",
+   "sha256": "43a4f261de51269bb7b87baf637f2a73e036e3f94df2ae3abf1ecb313d762451"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step01.cmd.json",
+   "sha256": "062d0751bb4f255c9f6a8ba318d2e8c8905cd9d0856c80b5b69fe6c75b2b3db5"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step01.stdout.txt",
+   "sha256": "f01fe9db7af07e823eeb8eefe6084e066f6d437cd207d46f0ff6654cf5061304"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step02.cmd.json",
+   "sha256": "6dd2fb2256feb32cfbb11e4242d8857c7aed2d5e71a9ab78208696275f6c56ef"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step02.stdout.txt",
+   "sha256": "234a76dafab4e039c1e6e0d23ba043ea58977d67506af8473cf1a2f76d2f9490"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step03.cmd.json",
+   "sha256": "4142985613d789dab9fe4c425cd1f20abbf4e0967e7091c52f251aa30f176186"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-02/step03.stdout.txt",
+   "sha256": "aaa6abdd449381cd1836ce9268537ba382fede1d2734e4fe62f4bc04faca5252"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/asserts.json",
+   "sha256": "b15d805823f255fa08ab79de7cec822bb9346ff313ab4d5228176de83a4414c5"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/case.json",
+   "sha256": "547bdb7a6fd6a226fffb2a9d3740bf2d3984b80c7f8d66b4ba8a192349bea363"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step01.cmd.json",
+   "sha256": "0cfdfb8e43321c5fcf9c84bf302ca907e9fcc4776f47b4ca1ebd0134ede6f711"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step01.stdout.txt",
+   "sha256": "f9718aa4555ff392e55e38d8cc41ae15ed90adf4c988a1ebece397a7f92d03f4"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step02.cmd.json",
+   "sha256": "9108d60cf1ed9b985084bc406d12718c3bd5f18d35517fc962f5a41c2e717312"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step02.stdout.txt",
+   "sha256": "b4fd92b184486d025f6fe2a6e8c6f616ea983dcfcb994b2a9b579d8b39662396"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step03.cmd.json",
+   "sha256": "67b6c242b575c25377ae210d44ca82bd653b1716762478d1e5c55b424a347193"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-03/step03.stdout.txt",
+   "sha256": "f08c7479d8dfabd42ab34df142a1e83abec542c8255685c56352ce4574076467"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/asserts.json",
+   "sha256": "8087c022ea679c0207946bbab2080f867841d1855d7b0d374a415f1a525c916c"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/case.json",
+   "sha256": "d5324d0f374c491ead658310a371a5d35ea2291d829ce301477ab574db83aac3"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step01.cmd.json",
+   "sha256": "11f63059b346e58cba24c986c8d4175f2438bfa3c79d771adc4e65643cd1ee28"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step01.stdout.txt",
+   "sha256": "7c7310503dd0d52387b73a74ad7327af68a3f8a054f1ebc4381c464b22e535a2"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step02.cmd.json",
+   "sha256": "6e1cf54ec79178269a3e4477515d511c343cef557019a9ac4bedc9ba8510f8ec"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-04/step02.stdout.txt",
+   "sha256": "73328d5dc589aad3350b5679f8bfd0e374112cab979d3a18be0d2a1f2e8ecbb5"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-05/asserts.json",
+   "sha256": "e8c4cf5a49b1f1e626e70b87f2888761cb1287619ce3842f7ca2b25e9d39cdd2"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-05/case.json",
+   "sha256": "e09d6925985c48c5201d989a23b402d2a68a877ccd1cefb3235d796b4c7b8e5d"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-05/step01.cmd.json",
+   "sha256": "0ea99118f4b07778e536037c5bc645be0e9af58313caf6d915f645121b13660c"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-05/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-05/step01.stdout.txt",
+   "sha256": "f8172f33bb8edd9f239085df1ed65bda0cb630d66e28897f5523eebe08ef0a38"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/case.json",
+   "sha256": "6c8997a1e7d7a2fe4d26c2289ddffcb06ca0bb6ab917c5db83851a652632de08"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step01.cmd.json",
+   "sha256": "258a5d09b078418e3682340c89558aa40a66970ccae2952d857092ec4c2803b8"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step01.stdout.txt",
+   "sha256": "96d7ae4c4467a3b6ad2a95764061dfdf5fbfbcd59d5b43cd9f9e1641fafece58"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step02.cmd.json",
+   "sha256": "ec9e0859fd4e6d5574dfa030083a58454a43e7d755a0f87be07ddc9a33720b75"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step02.stdout.txt",
+   "sha256": "0f3af03433b7312fa0fa43466957c9981c5ab8f7004428c1f386d08d13408504"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step03.cmd.json",
+   "sha256": "0da90d6e0f4207b9476618df9926db0e5ee79d474f971bf33952855d671236fb"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__R13-06/step03.stdout.txt",
+   "sha256": "a32bc9f593b418e16fc6cdd6d7e45a4087b1dfedc016e83954245fdc53cc9ad6"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S00/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S00/case.json",
+   "sha256": "53058262d0705505ccc107d1020c5c89e59fc94df4461cc503a36214ea7b1c69"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S00/step01.cmd.json",
+   "sha256": "e2ce4062674e874b917184307f7018b517702ba4ffb3edfc80331359742df486"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S00/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S00/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S01/case.json",
+   "sha256": "a2a934261fb47c23124868b6f8b66a9ae6029881122e5718b3f63e24d0392767"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S01/step01.cmd.json",
+   "sha256": "e659e64a9bb4bc09588581dc4b3b45f49d7108f8d4b79210fc16a4ff25d86a54"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/data_platform-02.1__S01/step01.stdout.txt",
+   "sha256": "99b538e1e9f908cf31905d2e00263aa39b936ad5656cbcc0c4323152ae495e8a"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/ket_qua.json",
+   "sha256": "8a6c5546cbb04a1e2fc7511e60b15770002a3de4f8fc517698a4429acbe34b06"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/intake/giay_tiep_nhan/gtn_thu_it.pdf",
+   "sha256": "af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/intake/giay_tiep_nhan/scan_thu_it.png",
+   "sha256": "472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/intake_err/giay_tiep_nhan/qua_trang.pdf",
+   "sha256": "77d3d14242fe0d3a2ee86af6319b6f9a6f3076cc242ef50fea2e4ae2f548c44f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/intake_err/nhan/hong.jpg",
+   "sha256": "3cee94fb837150e272729354d4f78e3c8cdabda76ef0a0becc13f745d4674a60"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/intake_nomodel/nhan/nhan_mat_ong.png",
+   "sha256": "5f1de8a11a8b1fe88e39ce0c1881fc30b3c22e277bd01d10be5512262129a538"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/intake_ocr/giay_tiep_nhan/tiep_nhan_scan.pdf",
+   "sha256": "dc8ddff77a208ebbe95bdceade769c74d1f5bb10619e6b989f39a77ba9869a8f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/intake_ocr/nhan/nhan_mat_ong.png",
+   "sha256": "5f1de8a11a8b1fe88e39ce0c1881fc30b3c22e277bd01d10be5512262129a538"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/intake_rp/giay_tiep_nhan/tiep_nhan_scan_rp.pdf",
+   "sha256": "d6c97523831e7dabc444bd1a6c5d15e71e7a7ebd4386c64a58791bb0b2173454"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/intake_thieu/nhan/nhan_mat_ong.png",
+   "sha256": "5f1de8a11a8b1fe88e39ce0c1881fc30b3c22e277bd01d10be5512262129a538"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/models_thieu/cls/ch_ppocr_mobile_v2.0_cls_infer/inference.pdmodel",
+   "sha256": "2b15f16073455681f843e4a401ee45d260bda8e37684c522c44023384bee1ffe"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/models_thieu/det/en/en_PP-OCRv3_det_infer/inference.pdmodel",
+   "sha256": "2b15f16073455681f843e4a401ee45d260bda8e37684c522c44023384bee1ffe"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/models_thieu/rec/latin/latin_PP-OCRv3_rec_infer/inference.pdmodel",
+   "sha256": "2b15f16073455681f843e4a401ee45d260bda8e37684c522c44023384bee1ffe"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/originals/3cee94fb837150e272729354d4f78e3c8cdabda76ef0a0becc13f745d4674a60",
+   "sha256": "3cee94fb837150e272729354d4f78e3c8cdabda76ef0a0becc13f745d4674a60"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/originals/472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c",
+   "sha256": "472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/originals/5f1de8a11a8b1fe88e39ce0c1881fc30b3c22e277bd01d10be5512262129a538",
+   "sha256": "5f1de8a11a8b1fe88e39ce0c1881fc30b3c22e277bd01d10be5512262129a538"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/originals/77d3d14242fe0d3a2ee86af6319b6f9a6f3076cc242ef50fea2e4ae2f548c44f",
+   "sha256": "77d3d14242fe0d3a2ee86af6319b6f9a6f3076cc242ef50fea2e4ae2f548c44f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/originals/af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1",
+   "sha256": "af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/originals/d6c97523831e7dabc444bd1a6c5d15e71e7a7ebd4386c64a58791bb0b2173454",
+   "sha256": "d6c97523831e7dabc444bd1a6c5d15e71e7a7ebd4386c64a58791bb0b2173454"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/originals/dc8ddff77a208ebbe95bdceade769c74d1f5bb10619e6b989f39a77ba9869a8f",
+   "sha256": "dc8ddff77a208ebbe95bdceade769c74d1f5bb10619e6b989f39a77ba9869a8f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/data_platform-02.1/20261025T000047-0e44/scratch/rp_state.snap",
+   "sha256": "7becbcfd8b32e02adfbd8709cae10cec5d69b3bc09106d32eb87d1f775146167"
+  }
+ ],
+ "loi_san_pham": []
+}

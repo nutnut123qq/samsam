@@ -1,0 +1,203 @@
+"""PROBE r13 B v1 — STT tại chỗ cho farming-01 (`connectors.zalo_garden --transcribe`). Không DB thật (conn giả trả 1 nháp),
+CHẶN MẠNG. Máy dev KHÔNG có model Whisper → mức MOCK: `faster_whisper.WhisperModel` thay bằng lớp GIẢ ghi lại đầu vào; giải mã
+audio là THẬT (PyAV) trên WAV sinh tất định. Cùng mã/input/assertion cho baseline (1ad90df) và bản sửa.
+  python -I probe_b_stt.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước):
+- thiếu GARDEN_STT_MODEL_DIR → `--transcribe` exit 2 TRƯỚC khi kết nối DB/đọc audio, 0 lời gọi model, 0 mạng.
+- model có (thư mục giả có model.bin) → `_transcribe` exit 0, in NHÁP đã che PII (SĐT trong lời nói bị che); model GIẢ nhận
+  audio đã giải mã 16 kHz đúng độ dài (~2 s = 32000 mẫu ±5%), language="vi"; chỉ khởi tạo model 1 lần cho 2 lần chép.
+- lời rỗng → exit 1; tệp hỏng → exit 1 (không gọi model); dài hơn trần → exit 1 (không gọi model); model chạy quá timeout →
+  exit 1.
+- 0 lần mở socket."""
+import contextlib
+import hashlib
+import io
+import json
+import math
+import os
+import socket
+import struct
+import sys
+import tempfile
+import time
+import wave
+from pathlib import Path
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG") or k.startswith("GARDEN_STT"):
+        os.environ.pop(k, None)
+NET = []
+
+
+def _no_net(self, addr):
+    NET.append(str(addr)[:60])
+    raise OSError("probe: chặn mạng")
+
+
+socket.socket.connect = _no_net
+import psycopg  # noqa: E402
+
+DBCALLS = []
+psycopg.connect = lambda *a, **k: DBCALLS.append(1) or (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+import faster_whisper  # noqa: E402
+
+from connectors import zalo_garden as zg  # noqa: E402
+
+CALLS = {"init": 0, "transcribe": [], "text": "", "sleep": 0}
+
+
+class Seg:
+    def __init__(self, t):
+        self.text = t
+
+
+class FakeWhisper:
+    def __init__(self, path, **kw):
+        CALLS["init"] += 1
+        CALLS["init_kw"] = sorted(kw)
+
+    def transcribe(self, audio, **kw):
+        CALLS["transcribe"].append({"n": len(audio), "language": kw.get("language")})
+        if CALLS["sleep"]:
+            time.sleep(CALLS["sleep"])
+        return iter([Seg(x) for x in CALLS["text"].split("|")]), None
+
+
+faster_whisper.WhisperModel = FakeWhisper
+STORE = Path(tempfile.mkdtemp(prefix="r13stt-"))
+os.environ["GARDEN_MEDIA_DIR"] = str(STORE)
+
+
+def wav(seconds):
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(16000)
+        w.writeframes(b"".join(struct.pack("<h", int(8000 * math.sin(2 * math.pi * 440 * i / 16000)))
+                               for i in range(int(16000 * seconds))))
+    return buf.getvalue()
+
+
+def put(data, ext):
+    sha = hashlib.sha256(data).hexdigest()
+    p = STORE / "audio" / sha[:2]
+    p.mkdir(parents=True, exist_ok=True)
+    (p / f"{sha}.{ext}").write_bytes(data)
+    return sha
+
+
+class Conn:
+    def __init__(self, sha, ext):
+        self.row = (sha, ext)
+
+    def execute(self, *a, **k):
+        return self
+
+    def fetchone(self):
+        return self.row
+
+
+rows = []
+
+
+def run_tx(data, ext):
+    sha = put(data, ext)
+    out, err = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        try:
+            rc = zg._transcribe(Conn(sha, ext), 1, "whisper_local")
+        except Exception as e:  # noqa: BLE001
+            rc = f"EXC {type(e).__name__}: {e}"[:200]
+    return rc, out.getvalue(), err.getvalue()
+
+
+def case(ma, fn):
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def c_no_model():
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+        os.environ["GARDEN_STT_PROVIDER"] = "whisper_local"
+        rc = zg.main(["--transcribe", "1"])
+    return (rc == 2 and not DBCALLS and CALLS["init"] == 0 and "model" in err.getvalue().lower()), \
+        {"rc": rc, "db": len(DBCALLS), "err": err.getvalue()[:160]}
+
+
+case("thieu_model_exit2_truoc_db", c_no_model)
+MD = Path(tempfile.mkdtemp(prefix="r13model-"))
+(MD / "model.bin").write_bytes(b"fake")
+os.environ["GARDEN_STT_MODEL_DIR"] = str(MD)
+
+
+def c_ok():
+    CALLS["text"] = "Khoảnh KV-A01 tưới 30 phút|gọi 0912345678 nếu cần"
+    rc, out, err = run_tx(wav(2.0), "wav")
+    t = CALLS["transcribe"][-1] if CALLS["transcribe"] else {}
+    ok = (rc == 0 and "NHÁP" in out and "KV-A01" in out and "0912345678" not in out and "***" in out
+          and abs(t.get("n", 0) - 32000) <= 1600 and t.get("language") == "vi")
+    return ok, {"rc": rc, "out": out[-160:], "model_nhan": t, "err": err[:120]}
+
+
+def c_once():
+    rc, out, err = run_tx(wav(1.0), "wav")
+    return rc == 0 and CALLS["init"] == 1, {"init": CALLS["init"], "rc": rc}
+
+
+def c_empty():
+    CALLS["text"] = " "
+    rc, out, err = run_tx(wav(1.5), "wav")
+    return rc == 1, {"rc": rc, "err": err[:160]}
+
+
+def c_corrupt():
+    n0 = len(CALLS["transcribe"])
+    rc, out, err = run_tx(b"#!AMR\n" + bytes(range(256)) * 4, "amr")
+    return rc == 1 and len(CALLS["transcribe"]) == n0, {"rc": rc, "err": err[:160]}
+
+
+def c_long():
+    n0 = len(CALLS["transcribe"])
+    old = getattr(zg, "STT_MAX_SECONDS", None)
+    zg.STT_MAX_SECONDS = 1.0
+    try:
+        rc, out, err = run_tx(wav(2.5), "wav")
+    finally:
+        zg.STT_MAX_SECONDS = old
+    return rc == 1 and len(CALLS["transcribe"]) == n0, {"rc": rc, "err": err[:160]}
+
+
+def c_timeout():
+    CALLS["text"], CALLS["sleep"] = "muộn", 2.0
+    old = getattr(zg, "STT_TIMEOUT_S", None)
+    zg.STT_TIMEOUT_S = 0.3
+    try:
+        rc, out, err = run_tx(wav(1.2), "wav")
+    finally:
+        zg.STT_TIMEOUT_S, CALLS["sleep"] = old, 0
+    return rc == 1 and "muộn" not in out, {"rc": rc, "err": err[:160]}
+
+
+case("chep_loi_nhap_che_pii", c_ok)
+case("model_nap_mot_lan", c_once)
+case("loi_rong_exit1", c_empty)
+case("tep_hong_khong_goi_model", c_corrupt)
+case("qua_tran_do_dai_khong_goi_model", c_long)
+case("qua_timeout_exit1", c_timeout)
+case("khong_mo_mang", lambda: (NET == [], NET))
+out = {"probe": "b_stt_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:180])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

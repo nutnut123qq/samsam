@@ -1,0 +1,47 @@
+"""HARNESS r13 — tiêu chí v2 cho ĐÚNG 2 mục có ca FAIL do lỗi TIÊU CHÍ/FIXTURE ở lô lo1 (v1 giữ nguyên, lượt cũ ghi
+`luot_bi_thay_the`). Không nới kỳ vọng:
+- data_platform-02.1 R13-01: thông báo sản phẩm là "(det, rec, cls)" — bản vá cls_model_dir (không tự tải model cls) làm
+  TRƯỚC khi khóa v1 nhưng nháp viết từ mã cũ "(det, rec)"; hành vi kiểm (từ chối, 0 dòng, không mạng) giữ nguyên.
+- sales-08 R13-C03: fixture giá web mới 3.100.000 vi phạm luật golden R1 (list ≤ 149% giá sàn 2.000.000 = 2.980.000) nên
+  golden_store từ chối đúng — đổi sang 2.900.000 (hợp lệ, khác 2.980.000); kỳ vọng lệch gia_id + gia_vnd giữ nguyên.
+DB mới (hậu tố v2). Khóa TRƯỚC khi chạy.  python -I mk_criteria_r13_v2.py.txt <fp_code>"""
+import copy
+import hashlib
+import json
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+C = Path(__file__).resolve().parents[1] / "criteria"
+v1 = C / "r13_v1.json"
+src = json.loads(v1.read_text(encoding="utf-8"))
+REPL = {
+    "data_platform-02.1": [("thiếu model OCR cục bộ \\\\(det, rec\\\\)", "thiếu model OCR cục bộ \\\\(det, rec, cls\\\\)"),
+                           ("'thiếu model OCR cục bộ (det, rec)'", "'thiếu model OCR cục bộ (det, rec, cls)'")],
+    "sales-08": [("k[0]['prices']['web']['list']=3100000", "k[0]['prices']['web']['list']=2900000"),
+                 ("giá web mới 3100000", "giá web mới 2900000"), ("web list 3.100.000", "web list 2.900.000"),
+                 ("hiện 3100000", "hiện 2900000"), ("price_vnd = 3100000", "price_vnd = 2900000")],
+}
+items = []
+for it in src["items"]:
+    if it["id"] not in REPL:
+        continue
+    s = json.dumps(it, ensure_ascii=False)
+    for a, b in REPL[it["id"]]:
+        n = s.count(a)
+        assert n >= 1, (it["id"], a)
+        s = s.replace(a, b)
+    new = json.loads(s)
+    new["db"] = it["db"] + "v2"
+    new["phien_ban_tieu_chi"] = {"tu": "r13_v1.json", "ly_do": __doc__.split("Không nới kỳ vọng:")[1].split("DB mới")[0].strip()}
+    items.append(copy.deepcopy(new))
+crit = {"_doc": __doc__.split("\n  python")[0], "nguon": {"r13_v1.json": hashlib.sha256(v1.read_bytes()).hexdigest()},
+        "fingerprint_code": sys.argv[1], "moi_truong": src["moi_truong"], "items": items}
+b = json.dumps(crit, ensure_ascii=False, indent=1).encode("utf-8")
+with open(C / "r13_v2.json", "xb") as fh:
+    fh.write(b)
+h = hashlib.sha256(b).hexdigest()
+with open(C / "r13_v2.lock.txt", "x", encoding="utf-8") as fh:
+    fh.write(f"r13_v2.json {h} {datetime.now(timezone(timedelta(hours=7))).isoformat(timespec='seconds')}\n")
+print(h, [i["id"] for i in items])

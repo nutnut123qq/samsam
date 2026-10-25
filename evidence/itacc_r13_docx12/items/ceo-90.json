@@ -1,0 +1,639 @@
+{
+ "id": "ceo-90",
+ "ten": "Nghĩa vụ hợp đồng ngoài phần mềm",
+ "khoi": "ceo",
+ "giai_doan": "P1",
+ "pham_vi": "nghia_vu_hd",
+ "can_cu": "HĐ Điều 2, 4, 6, 9, 13; PL01 mục 7; PL03; PL04 — nghĩa vụ không phải phần mềm",
+ "luot": "r13",
+ "supersedes": {
+  "path": "evidence/itacc_r10/items/ceo-90.json",
+  "sha256": "c3b610656ff1c0d0908d6b1909f95b20b4ce6821c4fce77c2549f9217601948f"
+ },
+ "trang_thai_truoc": {
+  "luot": "r10",
+  "trang_thai": "BI_CHAN",
+  "nguyen_nhan": "NON_SOFTWARE"
+ },
+ "ly_do_chay_lai": "12 mục DOCX bị chặn — kiểm lại toàn bộ ca + ca mã r13",
+ "fingerprint_code_luc_khoa": "2be3eb728f34c542859ae4e32c366024af7690f2ec6ba8b43a7ce98fd211d98b",
+ "tieu_chi_file": "evidence/itacc_r13_docx12/criteria/r13_v1.json",
+ "tieu_chi_sha256": "920bbe0bcc4d988cfdc7cebcfedc5ad6872ef833dd7f8674963019d5d7678513",
+ "tieu_chi_khoa": "r13_v1.json 920bbe0bcc4d988cfdc7cebcfedc5ad6872ef833dd7f8674963019d5d7678513 2026-10-24T18:51:39+07:00",
+ "tieu_chi": [
+  "T1 (r10) Kiểm phần tài liệu/công cụ: sổ nghĩa vụ docs/handover/so-nghia-vu-hop-dong.md có N01–N20, mỗi dòng có căn cứ + trạng thái; danh mục `rollout --catalog` thể hiện ceo-90 ngoài code",
+  "T2 (r10) Phần nghĩa vụ thực hiện (nhân sự, đào tạo, trực, góp/hoàn trả, bảo hành, bàn giao/xóa bản sao) KHÔNG chứng minh được trên máy dev → BI_CHAN NON_SOFTWARE",
+  "T3 (r13 MỚI) `scripts/incident_compare.py` chỉ đọc, DSN CHỈ qua INCIDENT_BASELINE_URL/INCIDENT_NOW_URL: thiếu một → exit 2 [UNVERIFIED], 0 kết nối; dbname `samsam` hoặc thiếu dbname → exit 2 [từ chối], 0 kết nối; cùng bản sao đọc 2 lần → exit 0 'Khác biệt: 0'; thêm 1 dòng job_runs trong khung 2026-10-20 03:03:38–03:28:30 UTC → exit 1, báo job_runs + khung"
+ ],
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r13 (127.0.0.1:55453), DB mới mỗi mục dựng bằng working tree (schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài DB samsam_itacc_r13_c90.",
+ "run_id": "20261024T202306-df77",
+ "ca": [
+  {
+   "ma": "ceo-90__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "tiền đề: seed sổ rollout trên DB mục (C01/C02 không đọc DB; ca incident dùng DB mục làm 'bản sao cô lập')",
+   "tien_quyet": true,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\]"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\]",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:23:06+07:00",
+      "ket_thuc": "2026-10-24T20:23:08+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__S01"
+  },
+  {
+   "ma": "ceo-90__C01",
+   "nguon_r10": "C01",
+   "mo_ta": "Sổ nghĩa vụ đủ cấu trúc — harness r10 NGUYÊN {FX10}/g1/harness/parse_so_nghia_vu.py.txt (sha c3b6917d…; đọc D:\\code\\samsam\\docs\\handover\\so-nghia-vu-hop-dong.md = chính repo trên máy này). Kỳ vọng r10: có N01..N20, mỗi dòng căn cứ HĐ/PL + trạng thái (sổ hiện có thêm N21–N22, vẫn đủ N01..N20)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)(?=.*đủ N01\\.\\.N20: True \\| thiếu: \\[\\])(?=.*mỗi dòng 8 cột: True \\[\\])(?=.*căn cứ có HĐ/PL hoặc ghi rõ không có điều khoản: True)(?=.*trạng thái: \\{'[a-z_]+': \\d+(?:, '[a-z_]+': \\d+)*\\})"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g1/harness/parse_so_nghia_vu.py.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*đủ N01\\.\\.N20: True \\| thiếu: \\[\\])(?=.*mỗi dòng 8 cột: True \\[\\])(?=.*căn cứ có HĐ/PL hoặc ghi rõ không có điều khoản: True)(?=.*trạng thái: \\{'[a-z_]+': \\d+(?:, '[a-z_]+': \\d+)*\\})",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:23:08+07:00",
+      "ket_thuc": "2026-10-24T20:23:08+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C01"
+  },
+  {
+   "ma": "ceo-90__C02",
+   "nguon_r10": "C02",
+   "mo_ta": "Danh mục thể hiện mục ngoài code — `rollout --catalog` exit 0 + dòng ngoài 89/code_status (r10 ceo90_C02) + mục ceo-90 trong data/contract_features.json (r10 ceo90_C02b)",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)(?=.*ngoài 89: [^\\n]*nghia_vu_hd [1-9])(?=.*code_status: [^\\n]*ngoai_code [1-9])"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "CEO90_NGOAI_CODE"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --catalog",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*ngoài 89: [^\\n]*nghia_vu_hd [1-9])(?=.*code_status: [^\\n]*ngoai_code [1-9])",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:23:08+07:00",
+      "ket_thuc": "2026-10-24T20:23:09+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step01.stderr.txt"
+     },
+     {
+      "argv": "python -c import json,sys; f=[x for x in json.loads(open(sys.argv[1],'rb').read().decode('utf-8'))['features'] if x.get('id')=='ceo-90']; print([{k:x.get(k) for k in ('id','pham_vi','code_status','acceptance_status')} for x in f]); ok=len(f)==1 and f[0].get('code_status')=='ngoai_code' and f[0].get('pham_vi')=='nghia_vu_hd'; print('CEO90_NGOAI_CODE' if ok else 'CEO90_LECH'); sys.exit(0 if ok else 1) D:\\code\\samsam/data/contract_features.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "CEO90_NGOAI_CODE",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:23:09+07:00",
+      "ket_thuc": "2026-10-24T20:23:09+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step02.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02"
+  },
+  {
+   "ma": "ceo-90__R13-C01",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "incident_compare thiếu INCIDENT_BASELINE_URL (NOW = DB mục) → exit 2 [UNVERIFIED], 0 kết nối",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[harness\\] mode=thieu rc=2 so_ket_noi=0\\b",
+      "stderr_re": "\\[UNVERIFIED\\] thiếu INCIDENT_BASELINE_URL"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/incident_run.py.txt thieu",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[harness\\] mode=thieu rc=2 so_ket_noi=0\\b",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\[UNVERIFIED\\] thiếu INCIDENT_BASELINE_URL",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:23:09+07:00",
+      "ket_thuc": "2026-10-24T20:23:10+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C01"
+  },
+  {
+   "ma": "ceo-90__R13-C02",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "incident_compare từ chối DB thật: NOW dbname=samsam (host 127.0.0.1 port 1 — giả, không bao giờ kết nối) → exit 2 [từ chối], 0 kết nối; NOW thiếu dbname → exit 2 [từ chối], 0 kết nối",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[harness\\] mode=tu_choi_samsam rc=2 so_ket_noi=0\\b",
+      "stderr_re": "\\[từ chối\\] hiện tại: trỏ DB `samsam` thật[^\\n]*0 kết nối"
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[harness\\] mode=tu_choi_thieu_dbname rc=2 so_ket_noi=0\\b",
+      "stderr_re": "\\[từ chối\\] hiện tại: thiếu dbname tường minh[^\\n]*0 kết nối"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/incident_run.py.txt tu_choi_samsam",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[harness\\] mode=tu_choi_samsam rc=2 so_ket_noi=0\\b",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\[từ chối\\] hiện tại: trỏ DB `samsam` thật[^\\n]*0 kết nối",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:23:10+07:00",
+      "ket_thuc": "2026-10-24T20:23:11+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/incident_run.py.txt tu_choi_thieu_dbname",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[harness\\] mode=tu_choi_thieu_dbname rc=2 so_ket_noi=0\\b",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\[từ chối\\] hiện tại: thiếu dbname tường minh[^\\n]*0 kết nối",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:23:11+07:00",
+      "ket_thuc": "2026-10-24T20:23:12+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step02.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    2,
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02"
+  },
+  {
+   "ma": "ceo-90__R13-C03",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "cùng 1 bản sao (DB mục) đọc qua 2 handle → exit 0 'Khác biệt: 0'",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)(?=.*- Bản trước: `samsam_itacc_r13_c90` · bản hiện tại: `samsam_itacc_r13_c90`)(?=.*- Khác biệt: 0\\s)(?=.*\\[harness\\] mode=cung_ban rc=0 so_ket_noi=2\\b)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from job_runs where started_at between '2026-10-20 03:03:38+00' and '2026-10-20 03:28:30+00'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/incident_run.py.txt cung_ban",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*- Bản trước: `samsam_itacc_r13_c90` · bản hiện tại: `samsam_itacc_r13_c90`)(?=.*- Khác biệt: 0\\s)(?=.*\\[harness\\] mode=cung_ban rc=0 so_ket_noi=2\\b)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:23:12+07:00",
+      "ket_thuc": "2026-10-24T20:23:14+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from job_runs where started_at between '2026-10-20 03:03:38+00' and '2026-10-20 03:28:30+00'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C03"
+  },
+  {
+   "ma": "ceo-90__R13-C04",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "FIXTURE: thêm 1 dòng job_runs (job 'thu_r13_su_co', started_at 2026-10-20 03:10:00 UTC — trong khung sự cố) vào DB mục bằng psycopg → incident_compare cùng bản → exit 1, báo job_runs 1 dòng trong khung + khung",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)(?=.*- Khung sự cố: 2026-10-20 03:03:38\\+00 → 2026-10-20 03:28:30\\+00)(?=.*- Khác biệt: 1\\s)(?=.*- bảng job_runs: 1 dòng có thời điểm trong khung sự cố ở bản hiện tại)(?=.*\\[harness\\] mode=cung_ban rc=1 so_ket_noi=2\\b)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from job_runs where started_at between '2026-10-20 03:03:38+00' and '2026-10-20 03:28:30+00' and job = 'thu_r13_su_co'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -c import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL'],autocommit=True,connect_timeout=5); r=c.execute(\"insert into job_runs (job, started_at, finished_at, ok, detail, host) values ('thu_r13_su_co', '2026-10-20 03:10:00+00', '2026-10-20 03:10:05+00', true, 'Thử R13 — dòng giả lập trong khung sự cố', 'thu-r13') returning id\").fetchone(); print('FIXTURE job_runs id', r[0]); c.close()",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-24T20:23:14+07:00",
+      "ket_thuc": "2026-10-24T20:23:15+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/incident_run.py.txt cung_ban",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*- Khung sự cố: 2026-10-20 03:03:38\\+00 → 2026-10-20 03:28:30\\+00)(?=.*- Khác biệt: 1\\s)(?=.*- bảng job_runs: 1 dòng có thời điểm trong khung sự cố ở bản hiện tại)(?=.*\\[harness\\] mode=cung_ban rc=1 so_ket_noi=2\\b)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-24T20:23:15+07:00",
+      "ket_thuc": "2026-10-24T20:23:17+07:00",
+      "stdout": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from job_runs where started_at between '2026-10-20 03:03:38+00' and '2026-10-20 03:28:30+00' and job = 'thu_r13_su_co'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04"
+  },
+  {
+   "ma": "ceo-90__C03",
+   "nguon_r10": "C03",
+   "mo_ta": "Thực hiện nghĩa vụ",
+   "tien_quyet": false,
+   "expected": {
+    "buoc": [],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [],
+    "kiem": []
+   },
+   "exit": [],
+   "ket_qua": "NOT_RUN",
+   "ly_do_not_run": "Thực hiện nghĩa vụ (nhân sự toàn thời gian, bàn giao đầu vào, đào tạo, trực, góp/hoàn trả bằng sản phẩm, bảo hành, bàn giao/xóa bản sao khi chấm dứt) là hành vi ngoài phần mềm của hai bên — không chứng minh được trên máy dev (r10 C03 NOT_RUN cùng lý do); đối soát N22 trên bản sao THẬT (backup trước sự cố) là việc DBA Bên B",
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C03"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "LOCAL",
+ "nguyen_nhan": "NON_SOFTWARE: nghĩa vụ N01–N22 chờ hai bên thực hiện/xác nhận, PL05 chưa cung cấp; N22 cần bản sao backup TRƯỚC sự cố (r13: scripts/incident_compare.py sẵn sàng, chỉ đọc)",
+ "can_de_go": "Hai bên thực hiện/ký từng nghĩa vụ, cung cấp PL05; DBA Bên B dựng 2 bản sao + chạy incident_compare",
+ "gioi_han": " Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r13), fixture/dữ liệu THỬ, AI/HTTP/model giả ở biên nơi ghi MOCK — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [
+  {
+   "lot": "lo1",
+   "criteria": "r13_v1.json",
+   "run_id": "20261024T185824-41bd",
+   "thu_muc": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T185824-41bd",
+   "ly_do": "chạy lại trên fp mã cuối 1975775d… sau khi đổi DDL anchor_receipts sang lệnh tường minh (drift-guard) + văn bản catalog/data_flow_map; cùng tiêu chí, kết quả lo1 đều PASS"
+  }
+ ],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C01/case.json",
+   "sha256": "cdf9781a25680443a768ac7cfb80e057f46985016c5d2c98bf95629b6e25edbb"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C01/step01.cmd.json",
+   "sha256": "988ac6a427a2b106a3b4a4eaeb7ef6abbf7f8ab8889dce8931773153637616bb"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C01/step01.stdout.txt",
+   "sha256": "a43ad3095b0b1cee8f008d01957396ab9e2832bd0380250b9a0dcd3ceb2a3fb4"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/case.json",
+   "sha256": "9a430fdfa4bbc0b762d62204cba3ec3cf82f90c61a21f88db6315f23397e7dcf"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step01.cmd.json",
+   "sha256": "5689082a7eb8295451b42fe5f1445f879b51a892a03a0d5c8bbc6a74b79384fe"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step01.stdout.txt",
+   "sha256": "e538ed8f9afa8014708d7fb885f41aa3742d4f4e555f0e4b819179b3f56254d9"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step02.cmd.json",
+   "sha256": "d87e1370d9f16df6dad3f9e6dc063807ce84d42a80cd0a1acce7eed3f6ae28f6"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C02/step02.stdout.txt",
+   "sha256": "0ad38dafd2dbb78d156b1d6d9522c5c26e0316fbbabb49d71941d6d7e9529a1a"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__C03/case.json",
+   "sha256": "ecc99e7f53d33099b19c2d253d9f6c795fd906929f01828e35cc80b072df0db4"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C01/case.json",
+   "sha256": "10009d0d64736ec25f866aa31755fe8ae4b8ff218913ee2eaef90f6c4f52d6d2"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C01/step01.cmd.json",
+   "sha256": "22a6d4d4271d5d6aea73734ae43fd39a01a71b764a067c1894ac5a1bf32d03c4"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C01/step01.stderr.txt",
+   "sha256": "29df270f995626136616ec2ec74ef869526b711c917e262bc13289be86de6c25"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C01/step01.stdout.txt",
+   "sha256": "58d194bac3ec71cd4f224812a40ba4a16bd4daa01a8bbd0c46a3a5ae9ba83d81"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/case.json",
+   "sha256": "9824bf0e28acff2b5cd5a1c7ac7ad20501b358b7deb08310e2f6e69426d66dc2"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step01.cmd.json",
+   "sha256": "86e900b46b99d6e7b0751bce798b7b8dceb18b6c59fb9f04767a8c5aac9b018f"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step01.stderr.txt",
+   "sha256": "c51e92f7cb0c89c8c54d64048cd4225fb106bff8f3a76251444c48cd95fe4642"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step01.stdout.txt",
+   "sha256": "925c0618ae22698ba19ce2593923207af6ef63e9050b955e7ac1da17e1323321"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step02.cmd.json",
+   "sha256": "064b507425baa5551d6773c6658ce4b0a45454835cf8697d7293b71bb56aabd0"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step02.stderr.txt",
+   "sha256": "e6a88a35a92295fe492fa502999905efab560446e5f9931a6ec249f54fb59326"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C02/step02.stdout.txt",
+   "sha256": "722d60b6182e5bc2092a249383e1ae6ed11ae63e9d87e84c113e4846a246ca06"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C03/asserts.json",
+   "sha256": "da3ab800198c4d8ecef9d7b4df5b145e1068727ca788f0dff59c69b758bfaec5"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C03/case.json",
+   "sha256": "f825188fe5c3a70a89a81fdc00d8dd81b18663a607592c2e73b8b67e70060d39"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C03/step01.cmd.json",
+   "sha256": "600ee1f4c3462aabd8fd0a06d2cce6f16b97f33c40695369f274976ad7d8030b"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C03/step01.stdout.txt",
+   "sha256": "d620b9b445f9dea8c375db23f39977af3f09610d398b2fe2d6e6bc7a3578d54d"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/asserts.json",
+   "sha256": "c57a40c4b446231e96427e51d6a683c8e50877677ed8b14a9206a439c90be2ab"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/case.json",
+   "sha256": "e91764539e09257f61522457df24b0ff18ce3296233a9f907158fbfbb9ee2b51"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step01.cmd.json",
+   "sha256": "b2909edfdefcf21c6f0f59a512385661bdcde6df9c771266564b44a74995dd50"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step01.stdout.txt",
+   "sha256": "783aa1ad2f2b0b2dc3e73a02ae1d86e80bc27376d45f02919ffc4d01d022e89a"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step02.cmd.json",
+   "sha256": "a70d51a660ab855e79f22523a983c21bee2816dc459b6742d1b9110924c85f57"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__R13-C04/step02.stdout.txt",
+   "sha256": "1fd758f62c7cdd238b703a246fbb7992724700d3f0331e4465feb0ee68c39de5"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__S01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__S01/case.json",
+   "sha256": "8d663a3eeb800cbbe45f4e41d120df97fcc0e229f1b6edd1a9dd4ab3c5cd6106"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__S01/step01.cmd.json",
+   "sha256": "3f4703f56d5534db761ec3607b754b82a71cb7862358b81ecff766e6e0523995"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ceo-90__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r13_docx12/runs/ceo-90/20261024T202306-df77/ket_qua.json",
+   "sha256": "6ae125c5041cfb19ab9703886fd8a5f7ab89120ab6848b0051743faed81093c1"
+  }
+ ],
+ "loi_san_pham": []
+}

@@ -1,0 +1,160 @@
+"""HARNESS r13 — dựng evidence/itacc_r13_docx12/items/<id>.json cho 17 mục kiểm lại từ log GỐC lượt hiện hành + tiêu chí
+khóa (r13_v1.json; data_platform-02.1 + sales-08 → r13_v2.json, lượt v1 ghi `luot_bi_thay_the`). Trạng thái (không chấm tay):
+mọi ca chạy được PASS + mục KHÔNG còn lý do ngoài code → DAT; có FAIL → CHUA_KIEM (chưa xác minh); NOT_RUN/LOI_HARNESS mà
+không lý do ngoài code → CHUA_KIEM; 12 mục DOCX còn lý do ngoài code (vendor/DPA/key/model, dữ liệu Bên B, repo riêng,
+ngoài phần mềm) → BI_CHAN + nguyên nhân CỤ THỂ r13 (cột `nguyen_nhan` dưới) — KHÔNG gỡ chặn vì có adapter/mock pass.
+supersedes = nguồn hiện hành theo evidence/itacc_r12_fix_d2_l3/source_map.json.  python -I build_items_r13.py.txt"""
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r13_docx12"
+PREV = REPO / "evidence" / "itacc_r12_fix_d2_l3"
+KHUNG = {i["id"]: i for i in json.loads((REPO / "evidence/itacc_r10/criteria/khung.json").read_text(encoding="utf-8"))["items"]}
+SMAP = json.loads((PREV / "source_map.json").read_text(encoding="utf-8"))["items"]
+TH = {i["id"]: i for i in json.loads((PREV / "tong_hop.json").read_text(encoding="utf-8"))["items"]}
+GH = (" Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r13), fixture/dữ liệu THỬ, AI/HTTP/model giả ở"
+      " biên nơi ghi MOCK — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.")
+RUNS = {'production-03': '20261024T201727-45de', 'production-02': '20261024T201847-7c33', 'data_platform-02.2': '20261024T201846-41a0', 'farming-02.1': '20261024T201915-42b4', 'data_platform-02.1': '20261024T201846-1cee', 'farming-02.2': '20261024T201957-d1e1', 'farming-01': '20261024T201912-997c', 'marketing-02.1': '20261024T202026-4a20', 'intel-05.1': '20261024T202103-e5fb', 'data_platform-06': '20261024T202120-0d8e', 'data_platform-07.2': '20261024T202136-4483', 'sales-03': '20261024T202144-1d08', 'sales-08': '20261024T202217-1a01', 'sales-09': '20261024T202303-9d23', 'ceo-90': '20261024T202306-df77', 'data_platform-90': '20261024T202314-527f', 'farming-06': '20261024T202021-1d2e'}
+# lượt trước (lo1, r13_v1 trên fp 2be3eb72…/39085f03…) — thay vì chạy lại trên fp cuối sau khi đổi DDL anchor_receipts
+LO1 = {'production-03': '20261024T185217-f956', 'production-02': '20261024T185340-98ac', 'data_platform-02.2': '20261024T185340-8b6d', 'farming-02.1': '20261024T185415-6316', 'data_platform-02.1': '20261024T185340-f47a', 'farming-02.2': '20261024T185455-fc14', 'farming-01': '20261024T185412-866d', 'marketing-02.1': '20261024T185520-9b66', 'intel-05.1': '20261024T185604-b454', 'data_platform-06': '20261024T185618-2956', 'data_platform-07.2': '20261024T185642-2f9b', 'sales-03': '20261024T185645-0d9c', 'sales-09': '20261024T185813-5447', 'sales-08': '20261024T185729-51da', 'data_platform-90': '20261024T185824-05bd', 'ceo-90': '20261024T185824-41bd', 'farming-06': '20261024T185517-cb92'}
+V2 = {"data_platform-02.1": ("20261024T185340-f47a", "R13-01 regex nháp viết từ mã trước bản vá cls '(det, rec)' — sản phẩm"
+                             " in '(det, rec, cls)'; hành vi đúng (từ chối, 0 dòng) — lỗi TIÊU CHÍ, v2 sửa regex"),
+      "sales-08": ("20261024T185729-51da", "R13-C03 fixture giá web 3.100.000 vi phạm luật golden R1 (≤149% giá sàn) nên"
+                   " golden_store từ chối đúng — lỗi FIXTURE, v2 dùng 2.900.000")}
+V2LO2 = {"data_platform-02.1": "20261024T190306-4bab", "sales-08": "20261024T190423-c259"}
+EXT = "vendor/engine chưa được Bên B/Pháp chế chọn"
+CAUSE = {
+    "production-03": ("EXTERNAL_INPUT: code đọc ảnh nhãn qua OCR tại chỗ paddle_local đã triển khai + kiểm LOCAL trên ảnh"
+                      f" fixture; {EXT} (engine dùng thật/DPA nếu dịch vụ), chưa có ảnh nhãn thật, data/label_rules.json"
+                      " GIẢ ĐỊNH chờ Pháp chế",
+                      "Bên B/Pháp chế chọn engine OCR (giữ paddle_local hoặc vendor trong nước + DPA + key), cấp ảnh nhãn"
+                      " thật, Pháp chế chốt luật nhãn; chạy lại production-03 R13-01/02 trên ảnh thật"),
+    "data_platform-02.1": ("EXTERNAL_INPUT: code OCR tại chỗ paddle_local (intake + --reprocess-pending) đã triển khai + kiểm"
+                           f" LOCAL trên scan fixture; {EXT}, chưa có tài liệu thật; data/loader_gate.json chưa cấu hình",
+                           "Quyết định engine OCR dùng thật (+DPA nếu dịch vụ), tài liệu thật, chính sách cổng loader;"
+                           " chạy lại intake/reprocess trên bản sao tài liệu thật"),
+    "farming-01": ("EXTERNAL_INPUT: adapter STT tại chỗ whisper_local đã triển khai, chỉ kiểm MOCK tại biên WhisperModel —"
+                   " máy dev KHÔNG có model Whisper (không tự tải); cần model/STT được duyệt + DPA, payload/media Zalo OA"
+                   " thật, danh sách nhân viên, chính sách lưu",
+                   "Duyệt + tải model Whisper (hoặc STT trong nước + DPA) về server Bên B (GARDEN_STT_MODEL_DIR), payload OA"
+                   " thật; chạy `--transcribe` trên ghi âm thật + đánh giá chất lượng tiếng Việt"),
+    "marketing-02.1": ("EXTERNAL_INPUT: adapter openrouter_images (Images API qua cổng llm_gateway) đã triển khai, kiểm MOCK"
+                       " theo schema tài liệu; chưa chọn vendor/model, điều khoản/DPA, key, trần chi phí, packshot được phép",
+                       "Chọn model (IMAGE_MODEL) + DPA/điều khoản + key + trần feature marketing-02.1, packshot thật; chạy"
+                       " 1 ảnh thật có người duyệt"),
+    "production-02": ("EXTERNAL_INPUT: 14 hồ sơ gốc chưa được Bên B cung cấp (danh_muc_ho_so_goc rỗng, 0/13 SKU gắn) — bộ"
+                      " kiểm r13 nêu đích danh SKU thiếu, bắt buộc phiên bản + sha tệp, không tính hồ sơ mẫu",
+                      "Bên B giao 14 hồ sơ (tên, thành phần, quy cách, số công bố, phiên bản, sha tệp, căn cứ, người xác"
+                      " nhận) + ánh xạ SKU; `python -m ingest.product_dossiers --check` exit 0"),
+    "data_platform-06": ("EXTERNAL_INPUT: chưa có app/quyền chỉ đọc/key/token/sandbox Shopee/TikTok; đặc tả chính thức"
+                         " không truy cập được → refresh token + quyết toán CHƯA làm (không đoán API); r13 thêm thử lại"
+                         " 429/5xx + cổng tính năng, kiểm MOCK",
+                         "Bên B cấp app + quyền chỉ đọc + key/token + sandbox + tài liệu chính thức; dev viết refresh token"
+                         " + quyết toán theo tài liệu; chạy market_api trên sandbox"),
+    "intel-05.1": ("EXTERNAL_INPUT: DPIA/TIA chưa ký (dpia_signed=false), DPA, provider/model ≥3 nhà cung cấp chưa duyệt,"
+                   " key, ngân sách — r13 chặn lượt thật khi <3 nhà cung cấp",
+                   "Pháp chế + TGĐ ký DPIA/TIA → người thật đổi dpia_signed; chọn ≥3 nhà cung cấp + mở whitelist + key +"
+                   " trần; chạy persona_sim lượt thật nhỏ"),
+    "farming-06": ("EXTERNAL_INPUT: hai bên chưa chọn chuỗi/provider/phí/tài khoản neo (provider none) — r13 phân tích biên"
+                   " nhận .ots + --upgrade (da_nang_cap ≠ xác minh bên thứ ba), kiểm MOCK calendar giả",
+                   "Hai bên chọn provider (vd OpenTimestamps) + cho phép gửi; chạy --submit/--upgrade thật rồi bên thứ ba"
+                   " `ots verify` với header khối Bitcoin"),
+    "sales-08": ("SEPARATE_REPO: website ở repo riêng (repo/owner/domain/môi trường chưa xác định) — repo này cấp nguồn"
+                 " dữ liệu + --verify feed (r13)",
+                 "Giao repo + owner website, hợp đồng giao tiếp/đơn hàng (D-HB-08, D-DL-10); nghiệm thu trang SP/giỏ/thanh"
+                 " toán trên môi trường website"),
+    "sales-09": ("SEPARATE_REPO: chatbot website ở repo riêng (repo/owner chưa xác định); repo này không có kênh chat"
+                 " website", "Giao repo + owner + đặc tả kênh chat website; nghiệm thu trên môi trường website"),
+    "ceo-90": ("NON_SOFTWARE: nghĩa vụ N01–N22 chờ hai bên thực hiện/xác nhận, PL05 chưa cung cấp; N22 cần bản sao backup"
+               " TRƯỚC sự cố (r13: scripts/incident_compare.py sẵn sàng, chỉ đọc)",
+               "Hai bên thực hiện/ký từng nghĩa vụ, cung cấp PL05; DBA Bên B dựng 2 bản sao + chạy incident_compare"),
+    "data_platform-90": ("NON_SOFTWARE: chưa có bằng chứng server vật lý/UPS/NAS-offsite/monitor độc lập/người giữ tài khoản"
+                         " cao nhất (r13: scripts/onprem_preflight.py + db_backup bắt buộc mã hóa/offsite khác thiết bị)",
+                         "Bên B dựng server + UPS + offsite + monitor độc lập; chạy onprem_preflight trên server + biên bản"
+                         " ký"),
+}
+
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def rel(p):
+    p = Path(p).resolve()
+    try:
+        return str(p.relative_to(REPO)).replace("\\", "/")
+    except ValueError:
+        return str(p).replace("\\", "/")
+
+
+for fid, run_id in RUNS.items():
+    cfile = "r13_v2.json" if fid in V2 else "r13_v1.json"
+    crit_p = EV / "criteria" / cfile
+    lock = crit_p.with_name(cfile.replace(".json", ".lock.txt")).read_text(encoding="utf-8").split()
+    crit = json.loads(crit_p.read_text(encoding="utf-8"))
+    citem = next(i for i in crit["items"] if i["id"] == fid)
+    run = EV / "runs" / fid / run_id
+    kq = json.loads((run / "ket_qua.json").read_text(encoding="utf-8"))
+    assert kq["criteria_sha256"] == sha(crit_p) == lock[1], f"{fid}: hash tiêu chí ≠ khóa ≠ lượt"
+    cases = []
+    for ca in citem["ca"]:
+        cdir = run / ca["ma"]
+        cr = json.loads((cdir / "case.json").read_text(encoding="utf-8"))
+        asserts = json.loads((cdir / "asserts.json").read_text(encoding="utf-8")) if (cdir / "asserts.json").exists() else []
+        steps = []
+        for st in sorted(cdir.glob("step*.cmd.json")):
+            s = json.loads(st.read_text(encoding="utf-8"))
+            steps.append({"argv": " ".join(s["argv"]).replace(str(REPO) + "\\", "")[:1500], "exit": s["exit"],
+                          "expect_exit": s["expect_exit"], "regex": s["regex"], "bat_dau": s["bat_dau"],
+                          "ket_thuc": s["ket_thuc"], "stdout": rel(st.with_name(st.name.replace(".cmd.json", ".stdout.txt"))),
+                          "stderr": rel(st.with_name(st.name.replace(".cmd.json", ".stderr.txt")))})
+        res = cr["ket_qua"]
+        cases.append({"ma": ca["ma"], "nguon_r10": ca.get("nguon_r10"), "mo_ta": ca.get("mo_ta"),
+                      "tien_quyet": bool(ca.get("tien_quyet")),
+                      "expected": {"buoc": [{k: b.get(k) for k in ("expect_exit", "stdout_re", "stderr_re", "out_re")
+                                             if k in b} for b in ca.get("buoc", [])], "kiem": ca.get("kiem", [])},
+                      "actual": {"buoc": steps, "kiem": asserts}, "exit": [s["exit"] for s in steps], "ket_qua": res,
+                      "ly_do_not_run": cr.get("ly_do_not_run") if res == "NOT_RUN" else None,
+                      "loi_harness": cr.get("loi_harness"), "thu_muc": rel(cdir)})
+    res = [x["ket_qua"] for x in cases]
+    if fid in CAUSE:
+        st, cause, go = "BI_CHAN", CAUSE[fid][0], CAUSE[fid][1]
+    elif "FAIL" in res:
+        st, cause, go = "CHUA_KIEM", "CHUA_XAC_MINH", ""
+    elif any(r in ("NOT_RUN", "LOI_HARNESS") for r in res):
+        st, cause, go = "CHUA_KIEM", "XEM_CA", ""
+    else:
+        st, cause, go = "DAT", "", ""
+    old = REPO / SMAP[fid]["path"]
+    k = KHUNG[fid]
+    files = sorted(p for p in run.rglob("*") if p.is_file())
+    sup = [{"lot": "lo1", "criteria": "r13_v1.json", "run_id": LO1[fid],
+            "thu_muc": f"evidence/itacc_r13_docx12/runs/{fid}/{LO1[fid]}",
+            "ly_do": V2[fid][1] if fid in V2 else ("chạy lại trên fp mã cuối 1975775d… sau khi đổi DDL anchor_receipts sang"
+                                                     " lệnh tường minh (drift-guard) + văn bản catalog/data_flow_map; cùng"
+                                                     " tiêu chí, kết quả lo1 đều PASS")}]
+    if fid in V2:
+        sup.append({"lot": "lo2", "criteria": "r13_v2.json", "run_id": V2LO2[fid],
+                    "thu_muc": f"evidence/itacc_r13_docx12/runs/{fid}/{V2LO2[fid]}",
+                    "ly_do": "chạy lại trên fp mã cuối (như trên); kết quả lo2 PASS"})
+    rec = {"id": fid, "ten": k["ten"], "khoi": k["khoi"], "giai_doan": k["giai_doan"], "pham_vi": k["pham_vi"],
+           "can_cu": k["can_cu"], "luot": "r13", "supersedes": {"path": SMAP[fid]["path"], "sha256": sha(old)},
+           "trang_thai_truoc": {"luot": SMAP[fid]["luot"], "trang_thai": TH[fid]["trang_thai"],
+                                "nguyen_nhan": TH[fid]["nguyen_nhan_day_du"]},
+           "ly_do_chay_lai": ("12 mục DOCX bị chặn — kiểm lại toàn bộ ca + ca mã r13" if fid in CAUSE else
+                              "mô-đun của mục đổi ở r13 (ảnh hưởng trực tiếp)"),
+           "fingerprint_code_luc_khoa": crit.get("fingerprint_code"), "tieu_chi_file": rel(crit_p),
+           "tieu_chi_sha256": sha(crit_p), "tieu_chi_khoa": " ".join(lock), "tieu_chi": citem.get("tieu_chi_cu_the"),
+           "moi_truong": crit.get("moi_truong", "") + f" DB {citem['db']}.", "run_id": run_id, "ca": cases,
+           "trang_thai": st, "muc_kiem": citem.get("muc_kiem_de_xuat"), "nguyen_nhan": cause, "can_de_go": go,
+           "gioi_han": GH, "luot_bi_thay_the": sup,
+           "evidence": [{"path": rel(p), "sha256": sha(p)} for p in files], "loi_san_pham": []}
+    p = EV / "items" / f"{fid}.json"
+    p.parent.mkdir(exist_ok=True)
+    p.open("w", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))
+    print(fid, st, rec["muc_kiem"], f"{res.count('PASS')}/{len(res)} PASS", f"FAIL {res.count('FAIL')}",
+          f"NOT_RUN {res.count('NOT_RUN')}", len(files), "file")

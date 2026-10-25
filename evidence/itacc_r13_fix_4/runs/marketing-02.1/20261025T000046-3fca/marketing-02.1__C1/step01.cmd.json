@@ -1,0 +1,40 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "pipelines.image_studio",
+  "--sku",
+  "mat-ong-sam-300ml",
+  "--channel",
+  "facebook",
+  "--headline",
+  "Quà quê Quảng Nam Thử IT",
+  "--scene",
+  "vườn sâm trong sương sớm"
+ ],
+ "env_doi": [
+  "IMAGE_OUT_DIR",
+  "IMAGE_PROVIDER",
+  "PACKSHOT_DIR",
+  "PROBE_ROOT"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:00:56+07:00",
+ "ket_thuc": "2026-10-25T00:01:03+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stderr_re": "\\[blocked\\] --scene cần nền AI nhưng IMAGE_PROVIDER chưa cấu hình",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "bb014bf5881c34328aa36dedc396d690c561f41f0fe9815a61e438f2d80c7069"
+}

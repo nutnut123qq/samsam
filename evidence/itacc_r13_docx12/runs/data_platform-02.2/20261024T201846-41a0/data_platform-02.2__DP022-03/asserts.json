@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select status || '|' || verified_by from documents where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1'",
+  "expect": "verified|Pháp Chế Thử IT",
+  "actual": "verified|Pháp Chế Thử IT",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) > 0 and bool_and(verified) from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ }
+]

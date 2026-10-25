@@ -257,6 +257,140 @@ def _manifest_of(row) -> bytes:
     return manifest(_us(row[1]), row[2], row[3])
 
 
+# ------------------------------------------------------- định dạng .ots (r13)
+# Định dạng OpenTimestamps (python-opentimestamps / opentimestamps.org): sau
+# OTS_HEAD + digest là CÂY timestamp: mỗi nút = dãy mục, mục không phải cuối
+# có tiền tố 0xff; mục = attestation (0x00 ‖ tag 8 byte ‖ varbytes payload)
+# hoặc phép (tag 1 byte [‖ varbytes đối số] ‖ nút con). varuint = LEB128.
+# Pending: payload = varbytes(URI calendar); Bitcoin: payload = varuint(chiều
+# cao khối). KHÔNG kiểm khối Bitcoin ở đây (cần node/header thật — bên thứ ba).
+ATT_PENDING = bytes.fromhex("83dfe30d2ef90c8e")
+ATT_BITCOIN = bytes.fromhex("0588960d73d71901")
+_OP_BIN = {0xf0: "append", 0xf1: "prepend"}
+_OP_HASH = {0x08: "sha256", 0x02: "sha1"}
+_MAX_OPS = 512
+
+
+class OtsError(ValueError):
+    """Biên nhận .ots sai định dạng / không khớp digest."""
+
+
+def _varuint(buf: bytes, i: int) -> tuple[int, int]:
+    v = shift = 0
+    while True:
+        if i >= len(buf) or shift > 63:
+            raise OtsError("varuint cụt/quá dài")
+        b = buf[i]
+        i += 1
+        v |= (b & 0x7f) << shift
+        if not b & 0x80:
+            return v, i
+        shift += 7
+
+
+def _put_varuint(v: int) -> bytes:
+    out = bytearray()
+    while True:
+        b = v & 0x7f
+        v >>= 7
+        out.append(b | (0x80 if v else 0))
+        if not v:
+            return bytes(out)
+
+
+def _varbytes(buf: bytes, i: int, cap: int = 4096) -> tuple[bytes, int]:
+    n, i = _varuint(buf, i)
+    if n > cap or i + n > len(buf):
+        raise OtsError("varbytes cụt/quá cỡ")
+    return buf[i:i + n], i + n
+
+
+def _apply(op: int, arg: bytes | None, msg: bytes) -> bytes:
+    if op == 0xf0:
+        return msg + arg
+    if op == 0xf1:
+        return arg + msg
+    return hashlib.new(_OP_HASH[op], msg).digest()
+
+
+def parse_tree(buf: bytes, i: int, msg: bytes, budget: list) -> tuple[dict, int]:
+    """Nút timestamp tại `msg` → ({"msg", "atts": [(tag, payload)],
+    "ops": [(op, arg, nút)]}, chỉ số kế). Phép lạ/cụt/quá nhiều → OtsError."""
+    node = {"msg": msg, "atts": [], "ops": []}
+    while True:
+        if i >= len(buf):
+            raise OtsError("cây timestamp cụt")
+        more = buf[i] == 0xff
+        i += more
+        if i >= len(buf):
+            raise OtsError("cây timestamp cụt")
+        tag = buf[i]
+        i += 1
+        budget[0] -= 1
+        if budget[0] < 0:
+            raise OtsError("quá nhiều phép")
+        if tag == 0x00:
+            if i + 8 > len(buf):
+                raise OtsError("attestation cụt")
+            atag = buf[i:i + 8]
+            payload, i = _varbytes(buf, i + 8)
+            node["atts"].append((atag, payload))
+        elif tag in _OP_BIN or tag in _OP_HASH:
+            arg = None
+            if tag in _OP_BIN:
+                arg, i = _varbytes(buf, i)
+            child, i = parse_tree(buf, i, _apply(tag, arg, msg), budget)
+            node["ops"].append((tag, arg, child))
+        else:
+            raise OtsError(f"phép 0x{tag:02x} không hỗ trợ")
+        if not more:
+            return node, i
+
+
+def write_tree(node: dict) -> bytes:
+    items = ([b"\x00" + t + _put_varuint(len(p)) + p for t, p in node["atts"]]
+             + [bytes([op]) + (_put_varuint(len(a)) + a if a is not None
+                               else b"") + write_tree(c)
+                for op, a, c in node["ops"]])
+    if not items:
+        raise OtsError("nút rỗng")
+    return b"".join(b"\xff" + x for x in items[:-1]) + items[-1]
+
+
+def attestations(node: dict) -> list[tuple[str, bytes, bytes]]:
+    """[(pending|bitcoin|khac, commitment, payload)] trong cả cây."""
+    kind = {ATT_PENDING: "pending", ATT_BITCOIN: "bitcoin"}
+    out = [(kind.get(t, "khac"), node["msg"], p) for t, p in node["atts"]]
+    for _op, _a, c in node["ops"]:
+        out += attestations(c)
+    return out
+
+
+def parse_receipt(receipt: bytes, digest_hex: str) -> dict:
+    """Biên nhận .ots đã lưu → cây (gốc tại digest). Sai đầu tệp / digest
+    khác bản kê / byte thừa / không có attestation → OtsError."""
+    head = OTS_HEAD + bytes.fromhex(digest_hex)
+    if not receipt.startswith(head):
+        raise OtsError("đầu biên nhận không mang đúng digest bản kê")
+    tree, i = parse_tree(receipt, len(head), bytes.fromhex(digest_hex),
+                         [_MAX_OPS])
+    if i != len(receipt):
+        raise OtsError("byte thừa sau cây timestamp")
+    if not attestations(tree):
+        raise OtsError("biên nhận không có attestation nào")
+    return tree
+
+
+def _graft(node: dict, commitment: bytes, sub: dict) -> bool:
+    """Gắn cây con `sub` (gốc tại `commitment`) vào nút pending tương ứng; bỏ
+    attestation pending ở nút đó. True = đã gắn."""
+    if node["msg"] == commitment and any(t == ATT_PENDING for t, _ in node["atts"]):
+        node["atts"] = [a for a in node["atts"] if a[0] != ATT_PENDING] + sub["atts"]
+        node["ops"] += sub["ops"]
+        return True
+    return any(_graft(c, commitment, sub) for _o, _a, c in node["ops"])
+
+
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *a, **kw):
         raise urllib.error.URLError("redirect bị chặn")
@@ -313,6 +447,7 @@ def submit(conn, ref, cfg: dict, by: str = CREATED_BY,
     for cal in cfg["calendars"]:
         try:
             resp = post(cal + "/digest", digest, cfg["timeout_s"])
+            parse_receipt(ots_file(digest, resp), digest.hex())   # r13: kiểm cây
         except (OSError, ValueError, urllib.error.URLError) as e:
             errs.append(f"{cal.removeprefix('https://')}: {type(e).__name__}")
             continue
@@ -390,27 +525,119 @@ def verify(conn, ref) -> tuple[int, list[str]]:
     bad = chain_problems(conn)
     if bad:
         out.append(f"chuỗi plot_logs có {len(bad)} vấn đề")
-    head = OTS_HEAD + bytes.fromhex(sha)
     for rid, rec in conn.execute(
             "select id, receipt from anchor_receipts where batch_id = %s and"
-            " status = 'da_gui' order by id", (bid,)).fetchall():
-        if not bytes(rec).startswith(head):
-            out.append(f"biên nhận #{rid} không mang đúng digest bản kê")
+            " status in ('da_gui', 'da_nang_cap') order by id",
+            (bid,)).fetchall():
+        try:   # r13: phân tích cả cây .ots, không chỉ so tiền tố
+            parse_receipt(bytes(rec), sha)
+        except OtsError as e:
+            out.append(f"biên nhận #{rid} hỏng: {e}")
     conn.commit()
     return bid, out
+
+
+def http_get(url: str, timeout: int) -> bytes | None:
+    """GET https, không redirect, trần byte → body | None (404 = chưa có)."""
+    if not url.startswith("https://"):
+        raise ValueError("chỉ https")
+    req = urllib.request.Request(url, method="GET", headers={
+        "Accept": "application/vnd.opentimestamps.v1",
+        "User-Agent": "samsam-anchor/1"})
+    opener = urllib.request.build_opener(_NoRedirect)
+    try:
+        with opener.open(req, timeout=timeout) as r:
+            data = r.read(MAX_RESP + 1)
+    except urllib.error.HTTPError as e:
+        e.close()
+        if e.code == 404:
+            return None
+        raise ValueError(f"HTTP {e.code}") from None
+    if not data or len(data) > MAX_RESP:
+        raise ValueError("phản hồi rỗng/quá cỡ")
+    return data
+
+
+def upgrade(conn, ref, cfg: dict, get=http_get) -> dict:
+    """r13: hỏi calendar attestation hoàn tất cho biên nhận mới nhất của lần
+    gom (GET <calendar>/timestamp/<commitment hex>, chỉ calendar có trong cấu
+    hình). Có attestation Bitcoin → dòng `da_nang_cap` mang .ots đã ghép
+    (append-only). Vẫn KHÔNG phải xác minh bên thứ ba (chưa đối chiếu header
+    khối Bitcoin) → {"id", "status": "da_nang_cap"|"cho"|"chua_gui", ...}."""
+    row = _batch(conn, ref)
+    bid, sha = row[0], row[4]
+    # r13-fix4 F4: hỏi calendar = DÙNG ra ngoài như submit → cùng cổng triển khai
+    # (HĐ 6.7) TRƯỚC mọi HTTP/INSERT; giai đoạn không xác định → chạy thử (chặn).
+    # Job (agent) không phải người: `co_nguoi_duyet` cũng chặn — không tự mở quyền.
+    why = _rollout().use_reason(conn, FEATURE, f"nâng cấp biên nhận lần gom #{bid}",
+                                False)
+    if why:
+        raise AnchorError(why)
+    rec = conn.execute(
+        "select status, calendar, receipt from anchor_receipts where batch_id"
+        " = %s and status in ('da_gui', 'da_nang_cap') order by id desc"
+        " limit 1", (bid,)).fetchone()
+    conn.commit()
+    if rec is None:
+        return {"id": bid, "status": "chua_gui"}
+    status, cal, receipt = rec[0], rec[1], bytes(rec[2])
+    tree = parse_receipt(receipt, sha)
+    if status == "da_nang_cap" or any(k == "bitcoin" for k, _c, _p in
+                                      attestations(tree)):
+        return {"id": bid, "status": "da_nang_cap", "new": False}
+    allowed = set(cfg["calendars"])
+    got, errs = 0, []
+    for kind, commitment, payload in attestations(tree):
+        if kind != "pending":
+            continue
+        uri = _varbytes(payload, 0, 1000)[0].decode("utf-8", "replace")
+        if uri not in allowed:
+            if kind == "pending":
+                errs.append("calendar ngoài cấu hình — không hỏi")
+            continue
+        try:
+            body = get(f"{uri}/timestamp/{commitment.hex()}", cfg["timeout_s"])
+        except (OSError, ValueError, urllib.error.URLError) as e:
+            errs.append(f"{uri.removeprefix('https://')}: {type(e).__name__}")
+            continue
+        if body is None:
+            continue
+        sub, i = parse_tree(body, 0, commitment, [_MAX_OPS])
+        if i != len(body):
+            raise OtsError("phản hồi calendar có byte thừa")
+        if any(k == "bitcoin" for k, _c, _p in attestations(sub)):
+            got += _graft(tree, commitment, sub)
+    if not got:
+        return {"id": bid, "status": "cho", "errors": errs}
+    new = OTS_HEAD + bytes.fromhex(sha) + write_tree(tree)
+    parse_receipt(new, sha)                    # tự kiểm trước khi ghi
+    with conn.transaction():
+        conn.execute(
+            "insert into anchor_receipts (batch_id, provider, status, calendar,"
+            " receipt, created_by) values (%s, 'opentimestamps', 'da_nang_cap',"
+            " %s, %s, %s)", (bid, cal, new, CREATED_BY))
+    conn.commit()
+    heights = sorted(_varuint(p, 0)[0] for k, _c, p in attestations(tree)
+                     if k == "bitcoin")
+    return {"id": bid, "status": "da_nang_cap", "new": True,
+            "heights": heights}
 
 
 def receipt_state(conn, bid: int) -> str:
     r = conn.execute("select status, calendar, created_at from"
                      " anchor_receipts where batch_id = %s order by"
-                     " (status = 'da_gui') desc, id desc limit 1",
-                     (bid,)).fetchone()
+                     " (status = 'da_nang_cap') desc, (status = 'da_gui') desc,"
+                     " id desc limit 1", (bid,)).fetchone()
     if r is None:
         return "chưa neo"
     if r[0] == "loi":
         return "chưa neo (lần gửi gần nhất lỗi — chạy lại --submit)"
+    if r[0] == "da_nang_cap":
+        return (f"calendar {r[1].removeprefix('https://')} đã trả attestation"
+                " Bitcoin — CHƯA xác minh bên thứ ba (ots verify với header"
+                " khối Bitcoin)")
     return (f"đã gửi calendar {r[1].removeprefix('https://')} — chờ xác nhận"
-            " Bitcoin (bên thứ ba: ots upgrade + ots verify)")
+            " Bitcoin (--upgrade; bên thứ ba: ots verify)")
 
 
 def export(conn, ref, out_dir: Path) -> list[Path]:
@@ -421,7 +648,8 @@ def export(conn, ref, out_dir: Path) -> list[Path]:
     p.write_bytes(_manifest_of(row))
     files = [p]
     rec = conn.execute("select receipt from anchor_receipts where batch_id ="
-                       " %s and status = 'da_gui' order by id limit 1",
+                       " %s and status in ('da_gui', 'da_nang_cap') order by"
+                       " (status = 'da_nang_cap') desc, id desc limit 1",
                        (bid,)).fetchone()
     conn.commit()
     if rec:
@@ -444,12 +672,13 @@ def main(argv=None) -> int:
     ap.add_argument("--export", metavar="ID|latest")
     ap.add_argument("--out", type=Path)
     ap.add_argument("--status", action="store_true")
+    ap.add_argument("--upgrade", metavar="ID|latest")
     ap.add_argument("--by", default=CREATED_BY)
     a = ap.parse_args(argv)
-    ops = [a.build, a.submit, a.verify, a.export, a.status]
+    ops = [a.build, a.submit, a.verify, a.export, a.status, a.upgrade]
     if sum(bool(x) for x in ops) != 1:
         ap.error("chọn đúng 1 trong --build/--submit/--verify/--export/"
-                 "--status")
+                 "--status/--upgrade")
     if a.export and a.out is None:
         ap.error("--export cần --out DIR")
     by = " ".join(str(a.by).split())[:100]
@@ -460,7 +689,7 @@ def main(argv=None) -> int:
     except AnchorError as e:
         print(f"[err] {e}", file=sys.stderr)
         return 2
-    if a.submit and cfg["provider"] == "none":
+    if (a.submit or a.upgrade) and cfg["provider"] == "none":
         print("[external-dep] provider 'none' — CHƯA NEO: chọn chuỗi/provider"
               "/phí là quyết định hai bên (data/anchor_config.json).",
               file=sys.stderr)
@@ -502,6 +731,19 @@ def main(argv=None) -> int:
                       + "; ".join(r["errors"]), file=sys.stderr)
                 return 1
             print(f"[ok] lần gom #{r['id']}: {receipt_state(conn, r['id'])}")
+        elif a.upgrade:
+            r = upgrade(conn, a.upgrade, cfg)
+            if r["status"] == "chua_gui":
+                print(f"[err] lần gom #{r['id']}: chưa có biên nhận đã gửi",
+                      file=sys.stderr)
+                return 1
+            if r["status"] == "cho":
+                print(f"[cho] lần gom #{r['id']}: calendar chưa có attestation"
+                      " Bitcoin" + (" — " + "; ".join(r["errors"])
+                                    if r["errors"] else ""))
+                return 0
+            print(f"[ok] lần gom #{r['id']}: {receipt_state(conn, r['id'])}"
+                  + (f" · khối {r['heights']}" if r.get("heights") else ""))
         elif a.verify:
             bid, probs = verify(conn, a.verify)
             for p in probs:

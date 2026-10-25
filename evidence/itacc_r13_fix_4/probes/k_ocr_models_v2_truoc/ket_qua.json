@@ -1,0 +1,92 @@
+{
+ "probe": "k_ocr_models_v2",
+ "root": "D:\\code\\samsam_r13fix_baseline",
+ "ca": [
+  {
+   "ca": "thieu_pdiparams_det",
+   "ket_qua": "FAIL",
+   "actual": "RuntimeError: probe: chặn tự tải model (không có mạng)",
+   "downloader": [
+    "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar"
+   ],
+   "mang": [],
+   "khoi_tao_paddle": 1,
+   "exit_tien_trinh_con": 0
+  },
+  {
+   "ca": "thieu_pdiparams_rec",
+   "ket_qua": "FAIL",
+   "actual": "RuntimeError: probe: chặn tự tải model (không có mạng)",
+   "downloader": [
+    "https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/latin_PP-OCRv3_rec_infer.tar"
+   ],
+   "mang": [],
+   "khoi_tao_paddle": 1,
+   "exit_tien_trinh_con": 0
+  },
+  {
+   "ca": "thieu_pdiparams_cls",
+   "ket_qua": "FAIL",
+   "actual": "RuntimeError: probe: chặn tự tải model (không có mạng)",
+   "downloader": [
+    "https://paddleocr.bj.bcebos.com/dygraph_v2.0/ch/ch_ppocr_mobile_v2.0_cls_infer.tar"
+   ],
+   "mang": [],
+   "khoi_tao_paddle": 1,
+   "exit_tien_trinh_con": 0
+  },
+  {
+   "ca": "thieu_pdiparams_ca_3_bo",
+   "ket_qua": "FAIL",
+   "actual": "RuntimeError: probe: chặn tự tải model (không có mạng)",
+   "downloader": [
+    "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_det_infer.tar"
+   ],
+   "mang": [],
+   "khoi_tao_paddle": 1,
+   "exit_tien_trinh_con": 0
+  },
+  {
+   "ca": "pdiparams_rong_rec",
+   "ket_qua": "FAIL",
+   "actual": "tiến trình con chết exit 3221225477 (0xC0000005) — PaddleOCR đã được khởi tạo với bộ model không hợp lệ (cổng không từ chối)",
+   "stderr_tail": "",
+   "exit_tien_trinh_con": 3221225477
+  },
+  {
+   "ca": "thieu_pdmodel_rec_doi_chung",
+   "ket_qua": "PASS",
+   "actual": "DocError: thiếu model OCR cục bộ (rec) ở OCR_PADDLE_MODEL_DIR",
+   "downloader": [],
+   "mang": [],
+   "khoi_tao_paddle": 0,
+   "exit_tien_trinh_con": 0
+  },
+  {
+   "ca": "du_model_cuc_bo_ocr_that",
+   "ket_qua": "PASS",
+   "actual": {
+    "nhan": [
+     "ocr",
+     1,
+     "Mat ong säm 300ml\nS6 DKSP: 15/2026/DKSP\nNSX: 12/10/2026\nHSD: 12/10/2028\nLOT: L20"
+    ],
+    "pdf": [
+     "ocr",
+     2,
+     "GIAY TIEP NHAN BAN TU' CONG BO\nSó: 123/2026/DKSP\nNgay cäp: 05/10/2026\nTén sän ph"
+    ],
+    "trang": "none",
+    "engine": "paddleocr-2.x/latin_PP-OCRv3"
+   },
+   "downloader": [],
+   "mang": [],
+   "khoi_tao_paddle": 1,
+   "exit_tien_trinh_con": 0
+  }
+ ],
+ "tong": {
+  "PASS": 2,
+  "FAIL": 5
+ }
+}

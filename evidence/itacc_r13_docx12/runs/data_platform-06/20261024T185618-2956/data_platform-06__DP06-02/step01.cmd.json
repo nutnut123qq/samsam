@@ -1,0 +1,25 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r10/g5/harness/fake_shopee.py.txt"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T18:56:20+07:00",
+ "ket_thuc": "2026-10-24T18:56:22+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*\\[done\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "74c94c3e0fb4ee4edda6ce6d0669f57c517d90e45f48a7f5dfe7bf63968d578c",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

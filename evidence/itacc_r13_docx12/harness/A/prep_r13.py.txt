@@ -1,0 +1,28 @@
+"""HARNESS r13 nhóm A — chuẩn bị thư mục cho ca (MỚI, không chuyển từ r10; r10 chép tay bằng lib.sh vào scratchpad):
+mkdir -p <dest>, chép nguyên byte từng <src> vào <dest>/ (giữ tên, hoặc --name cho đúng 1 src), in sha256 tệp đích.
+--suffix S: nối thêm byte UTF-8 của S vào CUỐI tệp đích (tạo biến thể khác sha — dùng cho PDF: nội dung sau %%EOF
+bị bỏ qua khi đọc). Không có src → chỉ tạo thư mục (vd thư mục model rỗng). Đích đã có tệp cùng tên → từ chối (exit 1).
+  python prep_r13.py.txt <dest> [src ...] [--name N] [--suffix S]"""
+import argparse
+import hashlib
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+ap = argparse.ArgumentParser()
+ap.add_argument("dest", type=Path)
+ap.add_argument("src", type=Path, nargs="*")
+ap.add_argument("--name")
+ap.add_argument("--suffix", default="")
+a = ap.parse_args()
+if a.name and len(a.src) != 1:
+    ap.error("--name chỉ dùng với đúng 1 src")
+a.dest.mkdir(parents=True, exist_ok=True)
+for s in a.src:
+    dst = a.dest / (a.name or s.name)
+    if dst.exists():
+        sys.exit(f"[prep] {dst.name} đã có — không ghi đè")
+    b = s.read_bytes() + a.suffix.encode("utf-8")
+    dst.write_bytes(b)
+    print(hashlib.sha256(b).hexdigest(), dst.name)
+print(f"[prep] ok {len(a.src)} tệp")

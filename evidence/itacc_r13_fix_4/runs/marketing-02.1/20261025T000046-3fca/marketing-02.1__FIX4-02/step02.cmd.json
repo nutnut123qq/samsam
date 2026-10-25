@@ -1,0 +1,26 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "from pipelines import llm_gateway as gw; print('SPEND_TINH_NANG', round(gw._month_spend('marketing-02.1', gw._FEATURE_SPEND_SQL), 2), 'SPEND_AGENT', round(gw._month_spend('image'), 2))"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T00:01:56+07:00",
+ "ket_thuc": "2026-10-25T00:02:00+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "SPEND_TINH_NANG 0\\.84 SPEND_AGENT 0\\.84\\b",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "d81924a3ac185925fbbbe1af0653eec07e726404a55556e83a586c94083da25e",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

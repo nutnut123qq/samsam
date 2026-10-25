@@ -1,0 +1,1532 @@
+{
+ "id": "marketing-02.1",
+ "ten": "Ảnh bối cảnh AI quanh ảnh sản phẩm thật",
+ "khoi": "marketing",
+ "giai_doan": "P1",
+ "pham_vi": "tinh_nang_ai",
+ "can_cu": "PL01 mục 2 — Marketing và SEO / Ảnh và video AI: 'Ảnh bối cảnh quanh ảnh sản phẩm thật'",
+ "luot": "r13fix4",
+ "supersedes": {
+  "path": "evidence/itacc_r13_docx12/items/marketing-02.1.json",
+  "sha256": "1fc276861a6a3a05b211f1747217ef6933fa3f3ea1442cf37be364e8c1d4cb7c"
+ },
+ "trang_thai_truoc": {
+  "luot": "r13",
+  "trang_thai": "BI_CHAN",
+  "nguyen_nhan": "EXTERNAL_INPUT: adapter openrouter_images (Images API qua cổng llm_gateway) đã triển khai, kiểm MOCK theo schema tài liệu; chưa chọn vendor/model, điều khoản/DPA, key, trần chi phí, packshot được phép"
+ },
+ "ly_do_chay_lai": "mô-đun của mục đổi ở bản vá r13-fix4 F2 (ảnh AI hỏng vẫn ghi chi phí provider đã báo vào llm_usage, ok=false) (ảnh hưởng trực tiếp)",
+ "tieu_chi_file": "evidence/itacc_r13_fix_4/criteria/r13fix4_v1.json",
+ "tieu_chi_sha256": "fa9c3e13911edfab5101cadb5311616af3f504bbc421e077412826b3d902ec64",
+ "tieu_chi_khoa": "r13fix4_v1.json fa9c3e13911edfab5101cadb5311616af3f504bbc421e077412826b3d902ec64 2026-10-24T23:53:24+07:00",
+ "tieu_chi": [
+  "T1 `python -m pipelines.image_studio` chạy được; IMAGE_PROVIDER none + --scene vẫn bị chặn exit 2 '[blocked]' trước mọi provider; provider lạ (dalle) → exit 2 'chưa cắm', 0 dòng (r13: danh sách hỗ trợ có thêm openrouter_images)",
+  "T2 (provider none) nháp ảnh: content_drafts content_type='image' created_by='agent:mkt03' pending + image_assets sha256 = sha file PNG; nhãn 'Nội dung có sử dụng AI' trong text_layer/sidecar; pixel packshot alpha 255 khớp tuyệt đối; PNG không EXIF/text chunk; ai_generated=false",
+  "T3 SKU TPBVSK → maket_xnqc, rượu → ruou, 0 file/0 dòng; chạy lại → skipped",
+  "T4 không gọi mạng ngoài (socket ngoài localhost bị chặn; HTTP provider chỉ qua MockTransport); không đăng/gửi",
+  "T5 (MỚI r13) IMAGE_PROVIDER=openrouter_images + IMAGE_MODEL + key GIẢ + --scene: đúng 1 POST {BASE_URL}/images body {model, prompt (có mô tả nền), size '1080x1080', output_format png, n 1, provider{only = whitelist gateway, allow_fallbacks false}} — không ảnh sản phẩm trong body; nháp image pending agent:mkt03 + image_assets provider openrouter_images ai_generated=true model/prompt_sha256/prompt_version ghi đủ, meta ai_generated true; packshot vẫn nguyên vẹn (kiểm độc lập); llm_usage đúng 1 dòng agent 'image' feature 'marketing-02.1' cost 0.04 ok",
+  "T6 (MỚI r13) LLM_KILL_FEATURES=marketing-02.1 → 'refused provider' (nút tắt khẩn), 0 request, 0 file, 0 dòng content_drafts/image_assets/llm_usage mới; IMAGE_MODEL rỗng → 'refused provider' IMAGE_MODEL chưa đặt, 0 request, 0 dòng"
+ ],
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r13fix4 (127.0.0.1:55454), DB mới mỗi mục dựng bằng working tree (schema/roles ×2 + core + golden); không DB samsam, không provider thật, không gửi ra ngoài DB samsam_itacc_r13fix4_m021.",
+ "run_id": "20261025T000046-3fca",
+ "ca": [
+  {
+   "ma": "marketing-02.1__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout (r10 DB chung samsam_itacc_r10_mkt đã seed) + golden FIXTURE r10 (mat-ong-sam-300ml self_declaration_ok=true, chép {FX13}/items/marketing-02.1) qua ingest.golden_store --file + packshot MẪU (make_sample_packshot qua {H12}/mk_packshot.py.txt) ở {SCR}/packshots",
+   "tien_quyet": true,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ \\d+"
+     },
+     {
+      "expect_exit": 0
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[packshot\\] MẪU mat-ong-sam-300ml\\.png"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ \\d+",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:46+07:00",
+      "ket_thuc": "2026-10-25T00:00:48+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m ingest.golden_store --file evidence\\itacc_r13_docx12\\fixtures/items/marketing-02.1/golden_fixture_food.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [],
+      "bat_dau": "2026-10-25T00:00:48+07:00",
+      "ket_thuc": "2026-10-25T00:00:51+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r12\\harness/mk_packshot.py.txt evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/packshots mat-ong-sam-300ml",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[packshot\\] MẪU mat-ong-sam-300ml\\.png",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:51+07:00",
+      "ket_thuc": "2026-10-25T00:00:56+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01"
+  },
+  {
+   "ma": "marketing-02.1__C1",
+   "nguon_r10": "02.1-C1",
+   "mo_ta": "--scene khi IMAGE_PROVIDER none (đặt rỗng = none, chặn .env lấp) — chặn an toàn, KHÔNG phải đầu ra ảnh AI",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stderr_re": "\\[blocked\\] --scene cần nền AI nhưng IMAGE_PROVIDER chưa cấu hình"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 0
+     },
+     {
+      "file_glob": "{SCR}/img_c1/*",
+      "count": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --headline Quà quê Quảng Nam Thử IT --scene vườn sâm trong sương sớm",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "\\[blocked\\] --scene cần nền AI nhưng IMAGE_PROVIDER chưa cấu hình",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:00:56+07:00",
+      "ket_thuc": "2026-10-25T00:01:03+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C1/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C1/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/img_c1/*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C1"
+  },
+  {
+   "ma": "marketing-02.1__C2",
+   "nguon_r10": "02.1-C2",
+   "mo_ta": "IMAGE_PROVIDER=dalle (vendor lạ)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stderr_re": "\\[error\\] IMAGE_PROVIDER='dalle' chưa cắm — API sinh ảnh là external-dep; hỗ trợ: none"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 0
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 0
+     },
+     {
+      "file_glob": "{SCR}/img_c2/*",
+      "count": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --headline Quà quê Quảng Nam Thử IT",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stderr_re": "\\[error\\] IMAGE_PROVIDER='dalle' chưa cắm — API sinh ảnh là external-dep; hỗ trợ: none",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:03+07:00",
+      "ket_thuc": "2026-10-25T00:01:07+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C2/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C2/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/img_c2/*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C2"
+  },
+  {
+   "ma": "marketing-02.1__C3",
+   "nguon_r10": "02.1-C3",
+   "mo_ta": "phần con: ghép packshot MẪU + nền gradient, 4 kênh như lệnh r10 (facebook/shopee/tiktok/web); kiểm độc lập bằng verify_image.py.txt r10 (box từ meta DB)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*mat-ong-sam-300ml × shopee × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*mat-ong-sam-300ml × tiktok × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*mat-ong-sam-300ml × web × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 4 ảnh — created 4, skipped 0, refused 0, failed 0)"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*SHA_DB 4 [0-9a-f]{64})(?=[\\s\\S]*AI_META False none\\b)(?=[\\s\\S]*format PNG mode RGB size \\(1080, 1080\\))(?=[\\s\\S]*info_keys \\[\\] exif_len 0)(?=[\\s\\S]*chunks \\['IDAT', 'IEND', 'IHDR'\\])(?=[\\s\\S]*alpha255_pixels [1-9]\\d* mismatch 0\\b)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image' and created_by = 'agent:mkt03' and status = 'pending' and sku = 'mat-ong-sam-300ml' and channel in ('facebook', 'shopee', 'tiktok', 'web')",
+      "expect": 4
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image' and text like '%Nội dung có sử dụng AI%'",
+      "expect": 4
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 4
+     },
+     {
+      "sql": "select count(distinct file_sha256) from image_assets",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from image_assets where ai_generated = false and provider = 'none' and label_text like 'Nội dung có sử dụng AI%' and created_by = 'agent:mkt03' and meta->>'ai_generated' = 'false' and draft_id in (select id from content_drafts where content_type = 'image')",
+      "expect": 4
+     },
+     {
+      "file_glob": "{SCR}/image_assets/*.png",
+      "count": 1
+     },
+     {
+      "file_glob": "{SCR}/image_assets/*.json",
+      "count": 1
+     },
+     {
+      "file_re": "{SCR}/image_assets/*.json",
+      "re": "Nội dung có sử dụng AI",
+      "expect": true
+     },
+     {
+      "file_re": "{SCR}/image_assets/*.json",
+      "re": "\\\"ai_generated\\\": false",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --channel shopee --channel tiktok --channel web --headline Quà quê Quảng Nam Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*mat-ong-sam-300ml × shopee × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*mat-ong-sam-300ml × tiktok × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*mat-ong-sam-300ml × web × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 4 ảnh — created 4, skipped 0, refused 0, failed 0)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:07+07:00",
+      "ket_thuc": "2026-10-25T00:01:13+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/verify_img_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/image_assets evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/packshots/mat-ong-sam-300ml.png evidence\\itacc_r10/g3/harness/verify_image.py.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*SHA_DB 4 [0-9a-f]{64})(?=[\\s\\S]*AI_META False none\\b)(?=[\\s\\S]*format PNG mode RGB size \\(1080, 1080\\))(?=[\\s\\S]*info_keys \\[\\] exif_len 0)(?=[\\s\\S]*chunks \\['IDAT', 'IEND', 'IHDR'\\])(?=[\\s\\S]*alpha255_pixels [1-9]\\d* mismatch 0\\b)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:13+07:00",
+      "ket_thuc": "2026-10-25T00:01:15+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image' and created_by = 'agent:mkt03' and status = 'pending' and sku = 'mat-ong-sam-300ml' and channel in ('facebook', 'shopee', 'tiktok', 'web')",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image' and text like '%Nội dung có sử dụng AI%'",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     },
+     {
+      "sql": "select count(distinct file_sha256) from image_assets",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets where ai_generated = false and provider = 'none' and label_text like 'Nội dung có sử dụng AI%' and created_by = 'agent:mkt03' and meta->>'ai_generated' = 'false' and draft_id in (select id from content_drafts where content_type = 'image')",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/image_assets/*.png",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/image_assets/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.png",
+        "sha256": "14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/image_assets/*.json",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/image_assets/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.json",
+        "sha256": "50e3dcaee7a364c3763d65082c1e0312010b79b2d83a9a91e088dd96a856d1e4"
+       }
+      ],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/image_assets/*.json",
+      "re": "Nội dung có sử dụng AI",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/image_assets/*.json",
+      "re": "\\\"ai_generated\\\": false",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3"
+  },
+  {
+   "ma": "marketing-02.1__C4",
+   "nguon_r10": "02.1-C4",
+   "mo_ta": "SKU TPBVSK (saphraton-20v) và rượu",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*saphraton-20v × shopee × 1:1: refused maket_xnqc)(?=[\\s\\S]*ruou-sam-chai-thuy-tinh-500ml × shopee × 1:1: refused ruou)(?=[\\s\\S]*\\[done\\] 2 ảnh — created 0, skipped 0, refused 2, failed 0)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 4
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 4
+     },
+     {
+      "file_glob": "{SCR}/image_assets/*.png",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.image_studio --sku saphraton-20v --sku ruou-sam-chai-thuy-tinh-500ml --channel shopee --headline Quà quê Quảng Nam Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*saphraton-20v × shopee × 1:1: refused maket_xnqc)(?=[\\s\\S]*ruou-sam-chai-thuy-tinh-500ml × shopee × 1:1: refused ruou)(?=[\\s\\S]*\\[done\\] 2 ảnh — created 0, skipped 0, refused 2, failed 0)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:15+07:00",
+      "ket_thuc": "2026-10-25T00:01:20+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C4/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C4/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/image_assets/*.png",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/image_assets/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.png",
+        "sha256": "14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430"
+       }
+      ],
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C4"
+  },
+  {
+   "ma": "marketing-02.1__C5",
+   "nguon_r10": "02.1-C5",
+   "mo_ta": "chạy lại (facebook như lệnh r10)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: skipped [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 1, refused 0, failed 0)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 4
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 4
+     },
+     {
+      "file_glob": "{SCR}/image_assets/*.png",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r12\\harness/wrap.py.txt -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --headline Quà quê Quảng Nam Thử IT",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: skipped [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 1, refused 0, failed 0)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:20+07:00",
+      "ket_thuc": "2026-10-25T00:01:26+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C5/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C5/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 4,
+      "actual": 4,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/image_assets/*.png",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/image_assets/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.png",
+        "sha256": "14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430"
+       }
+      ],
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C5"
+  },
+  {
+   "ma": "marketing-02.1__R13-01",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "provider openrouter_images + --scene: HTTP qua MockTransport ({H}/image_run.py.txt, PNG đúng cỡ, usage.cost 0.04), cổng llm_gateway/llm_usage/DB thật; kiểm body request + kiểm độc lập packshot",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 1, skipped 0, refused 0, failed 0)",
+      "stderr_re": "\\[image_run\\] requests=1\\b"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*SHA_DB 1 [0-9a-f]{64})(?=[\\s\\S]*AI_META True openrouter_images\\b)(?=[\\s\\S]*format PNG mode RGB size \\(1080, 1080\\))(?=[\\s\\S]*info_keys \\[\\] exif_len 0)(?=[\\s\\S]*chunks \\['IDAT', 'IEND', 'IHDR'\\])(?=[\\s\\S]*alpha255_pixels [1-9]\\d* mismatch 0\\b)"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "BODY_OK True 1 "
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image' and created_by = 'agent:mkt03' and status = 'pending'",
+      "expect": 5
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 5
+     },
+     {
+      "sql": "select count(*) from image_assets where provider = 'openrouter_images' and ai_generated and model = 'thu-r13/model-anh-gia' and prompt_sha256 ~ '^[0-9a-f]{64}$' and prompt_version = 'image_background@1' and label_text like 'Nội dung có sử dụng AI%' and meta->>'ai_generated' = 'true' and meta->'background'->>'provider' = 'openrouter_images' and meta->'background'->>'model' = 'thu-r13/model-anh-gia' and created_by = 'agent:mkt03' and channel = 'facebook' and sku = 'mat-ong-sam-300ml'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from llm_usage where agent_id = 'image' and feature_id = 'marketing-02.1' and ok and cost_usd = 0.04 and model = 'thu-r13/model-anh-gia'",
+      "expect": 1
+     },
+     {
+      "file_glob": "{SCR}/img_ai/*.png",
+      "count": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/image_run.py.txt evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\marketing-02.1__R13-01\\out/image_http.json --sku mat-ong-sam-300ml --channel facebook --headline Quà quê Quảng Nam Thử R13 --scene vườn sâm buổi sáng",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × facebook × 1:1: created #\\d+ [0-9a-f]{64}\\.png)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 1, skipped 0, refused 0, failed 0)",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\[image_run\\] requests=1\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:26+07:00",
+      "ket_thuc": "2026-10-25T00:01:33+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step01.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/verify_img_r13.py.txt evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/img_ai evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/packshots/mat-ong-sam-300ml.png evidence\\itacc_r10/g3/harness/verify_image.py.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*SHA_DB 1 [0-9a-f]{64})(?=[\\s\\S]*AI_META True openrouter_images\\b)(?=[\\s\\S]*format PNG mode RGB size \\(1080, 1080\\))(?=[\\s\\S]*info_keys \\[\\] exif_len 0)(?=[\\s\\S]*chunks \\['IDAT', 'IEND', 'IHDR'\\])(?=[\\s\\S]*alpha255_pixels [1-9]\\d* mismatch 0\\b)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:33+07:00",
+      "ket_thuc": "2026-10-25T00:01:34+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step02.stderr.txt"
+     },
+     {
+      "argv": "python -c import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); r=d['reqs']; b=r[0]['body'] if r else {}; ok=(d['requests']==1 and r[0]['method']=='POST' and r[0]['url']=='https://openrouter.ai/api/v1/images' and set(b)=={'model','prompt','size','output_format','n','provider'} and b['model']=='thu-r13/model-anh-gia' and b['size']=='1080x1080' and b['output_format']=='png' and b['n']==1 and b['provider']=={'only':d['provider_only_cfg'],'allow_fallbacks':False} and isinstance(d['provider_only_cfg'],list) and len(d['provider_only_cfg'])>0 and 'vườn sâm buổi sáng' in b['prompt']); print('BODY_OK', ok, d['requests'], sorted(b), flush=True) evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\marketing-02.1__R13-01\\out/image_http.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "BODY_OK True 1 ",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:34+07:00",
+      "ket_thuc": "2026-10-25T00:01:34+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step03.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step03.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image' and created_by = 'agent:mkt03' and status = 'pending'",
+      "expect": 5,
+      "actual": 5,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 5,
+      "actual": 5,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets where provider = 'openrouter_images' and ai_generated and model = 'thu-r13/model-anh-gia' and prompt_sha256 ~ '^[0-9a-f]{64}$' and prompt_version = 'image_background@1' and label_text like 'Nội dung có sử dụng AI%' and meta->>'ai_generated' = 'true' and meta->'background'->>'provider' = 'openrouter_images' and meta->'background'->>'model' = 'thu-r13/model-anh-gia' and created_by = 'agent:mkt03' and channel = 'facebook' and sku = 'mat-ong-sam-300ml'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage where agent_id = 'image' and feature_id = 'marketing-02.1' and ok and cost_usd = 0.04 and model = 'thu-r13/model-anh-gia'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/img_ai/*.png",
+      "count": 1,
+      "actual": 1,
+      "files": [
+       {
+        "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/img_ai/ee6d0ebebb319b687092fcf8c96a36b8abf48f9b2803688f733743f56f3a3c41.png",
+        "sha256": "ee6d0ebebb319b687092fcf8c96a36b8abf48f9b2803688f733743f56f3a3c41"
+       }
+      ],
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01"
+  },
+  {
+   "ma": "marketing-02.1__R13-02",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "LLM_KILL_FEATURES=marketing-02.1 (nút tắt khẩn theo tính năng) → refused provider TRƯỚC mọi request",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × shopee × 1:1: refused provider: cổng chi phí/tắt chặn: tính năng 'marketing-02\\.1' đang bị nút tắt khẩn)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0)",
+      "stderr_re": "\\[image_run\\] requests=0\\b"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 5
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 5
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 1
+     },
+     {
+      "file_glob": "{SCR}/img_kill/*",
+      "count": 0
+     },
+     {
+      "file_re": "{OUT}/image_http.json",
+      "re": "\\\"requests\\\": 0,",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/image_run.py.txt evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\marketing-02.1__R13-02\\out/image_http.json --sku mat-ong-sam-300ml --channel shopee --headline Quà quê Quảng Nam Thử R13 --scene vườn sâm buổi sáng",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × shopee × 1:1: refused provider: cổng chi phí/tắt chặn: tính năng 'marketing-02\\.1' đang bị nút tắt khẩn)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0)",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\[image_run\\] requests=0\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:34+07:00",
+      "ket_thuc": "2026-10-25T00:01:38+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 5,
+      "actual": 5,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 5,
+      "actual": 5,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/img_kill/*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\marketing-02.1__R13-02\\out/image_http.json",
+      "re": "\\\"requests\\\": 0,",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-02"
+  },
+  {
+   "ma": "marketing-02.1__R13-03",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "IMAGE_MODEL rỗng (chưa chọn model) → refused provider, 0 request",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × tiktok × 1:1: refused provider: IMAGE_MODEL chưa đặt)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0)",
+      "stderr_re": "\\[image_run\\] requests=0\\b"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 5
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 5
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 1
+     },
+     {
+      "file_glob": "{SCR}/img_nomodel/*",
+      "count": 0
+     },
+     {
+      "file_re": "{OUT}/image_http.json",
+      "re": "\\\"requests\\\": 0,",
+      "expect": true
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/image_run.py.txt evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\marketing-02.1__R13-03\\out/image_http.json --sku mat-ong-sam-300ml --channel tiktok --headline Quà quê Quảng Nam Thử R13 --scene vườn sâm buổi sáng",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*mat-ong-sam-300ml × tiktok × 1:1: refused provider: IMAGE_MODEL chưa đặt)(?=[\\s\\S]*\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0)",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\[image_run\\] requests=0\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:38+07:00",
+      "ket_thuc": "2026-10-25T00:01:42+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from content_drafts where content_type = 'image'",
+      "expect": 5,
+      "actual": 5,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from image_assets",
+      "expect": 5,
+      "actual": 5,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from llm_usage",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "file_glob": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\scratch/img_nomodel/*",
+      "count": 0,
+      "actual": 0,
+      "files": [],
+      "dat": true
+     },
+     {
+      "file_re": "evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\marketing-02.1__R13-03\\out/image_http.json",
+      "re": "\\\"requests\\\": 0,",
+      "expect": true,
+      "actual": true,
+      "so_tep": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-03"
+  },
+  {
+   "ma": "marketing-02.1__FIX4-01",
+   "nguon_r10": "MOI_R13FIX4",
+   "mo_ta": "F2: HTTP 200 + usage.cost 0.40 nhưng ảnh hỏng (bad_b64) → image_studio từ chối (refused 1), sổ llm_usage thật nhận ĐÚNG 1 dòng mới cost 0.40 ok=false feature marketing-02.1; chi tiêu tháng mà cổng _gate đọc (`_month_spend`) cộng khoản đó (0.04 của R13-01 + 0.40/lần lỗi). HTTP = MockTransport",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0",
+      "stderr_re": "\\[image_run\\] requests=1\\b"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "SPEND_TINH_NANG 0\\.44 SPEND_AGENT 0\\.44\\b"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from llm_usage where agent_id = 'image' and not ok and cost_usd = 0.40 and feature_id = 'marketing-02.1'",
+      "expect": 1
+     },
+     {
+      "sql": "select round(sum(cost_usd)::numeric, 2)::text from llm_usage where feature_id = 'marketing-02.1'",
+      "expect": "0.44"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_fix_4\\harness/image_run_fix4.py.txt evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\marketing-02.1__FIX4-01\\out/image_http.json --sku mat-ong-sam-300ml --channel web --headline Quà quê Quảng Nam Thử R13 --scene vườn sâm buổi sáng",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\[image_run\\] requests=1\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:42+07:00",
+      "ket_thuc": "2026-10-25T00:01:47+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step01.stderr.txt"
+     },
+     {
+      "argv": "python -c from pipelines import llm_gateway as gw; print('SPEND_TINH_NANG', round(gw._month_spend('marketing-02.1', gw._FEATURE_SPEND_SQL), 2), 'SPEND_AGENT', round(gw._month_spend('image'), 2))",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "SPEND_TINH_NANG 0\\.44 SPEND_AGENT 0\\.44\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:47+07:00",
+      "ket_thuc": "2026-10-25T00:01:52+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from llm_usage where agent_id = 'image' and not ok and cost_usd = 0.40 and feature_id = 'marketing-02.1'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select round(sum(cost_usd)::numeric, 2)::text from llm_usage where feature_id = 'marketing-02.1'",
+      "expect": "0.44",
+      "actual": "0.44",
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01"
+  },
+  {
+   "ma": "marketing-02.1__FIX4-02",
+   "nguon_r10": "MOI_R13FIX4",
+   "mo_ta": "F2: HTTP 200 + usage.cost 0.40 nhưng ảnh hỏng (not_image) → image_studio từ chối (refused 1), sổ llm_usage thật nhận ĐÚNG 1 dòng mới cost 0.40 ok=false feature marketing-02.1; chi tiêu tháng mà cổng _gate đọc (`_month_spend`) cộng khoản đó (0.04 của R13-01 + 0.40/lần lỗi). HTTP = MockTransport",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0",
+      "stderr_re": "\\[image_run\\] requests=1\\b"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "SPEND_TINH_NANG 0\\.84 SPEND_AGENT 0\\.84\\b"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from llm_usage where agent_id = 'image' and not ok and cost_usd = 0.40 and feature_id = 'marketing-02.1'",
+      "expect": 2
+     },
+     {
+      "sql": "select round(sum(cost_usd)::numeric, 2)::text from llm_usage where feature_id = 'marketing-02.1'",
+      "expect": "0.84"
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_fix_4\\harness/image_run_fix4.py.txt evidence\\itacc_r13_fix_4\\runs\\marketing-02.1\\20261025T000046-3fca\\marketing-02.1__FIX4-02\\out/image_http.json --sku mat-ong-sam-300ml --channel shopee --headline Quà quê Quảng Nam Thử R13 --scene vườn sâm buổi sáng",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[done\\] 1 ảnh — created 0, skipped 0, refused 1, failed 0",
+        "khop": true
+       },
+       {
+        "stderr_re": "\\[image_run\\] requests=1\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:52+07:00",
+      "ket_thuc": "2026-10-25T00:01:56+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step01.stderr.txt"
+     },
+     {
+      "argv": "python -c from pipelines import llm_gateway as gw; print('SPEND_TINH_NANG', round(gw._month_spend('marketing-02.1', gw._FEATURE_SPEND_SQL), 2), 'SPEND_AGENT', round(gw._month_spend('image'), 2))",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "SPEND_TINH_NANG 0\\.84 SPEND_AGENT 0\\.84\\b",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T00:01:56+07:00",
+      "ket_thuc": "2026-10-25T00:02:00+07:00",
+      "stdout": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step02.stdout.txt",
+      "stderr": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step02.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from llm_usage where agent_id = 'image' and not ok and cost_usd = 0.40 and feature_id = 'marketing-02.1'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select round(sum(cost_usd)::numeric, 2)::text from llm_usage where feature_id = 'marketing-02.1'",
+      "expect": "0.84",
+      "actual": "0.84",
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "EXTERNAL_INPUT: adapter openrouter_images (Images API qua cổng llm_gateway) đã triển khai, kiểm MOCK theo schema tài liệu; chưa chọn vendor/model, điều khoản/DPA, key, trần chi phí, packshot được phép",
+ "can_de_go": "Chọn model (IMAGE_MODEL) + DPA/điều khoản + key + trần feature marketing-02.1, packshot thật; chạy 1 ảnh thật có người duyệt",
+ "gioi_han": " Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r13fix4), fixture/dữ liệu THỬ, AI/HTTP/model giả ở biên nơi ghi MOCK; 'khác thiết bị' offsite KHÔNG đo được trên máy dev — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/ket_qua.json",
+   "sha256": "1c8fc7f26dabce9badc25038cc96995c1e3482a2d8ee17d869cb81b76e2674be"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C1/asserts.json",
+   "sha256": "1afdf5faa049061edb217b9c6d52d9080a1f74838379d18e401ffe613d674b62"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C1/case.json",
+   "sha256": "906a3db82dda1733fd689823653970b3c476c5a3efa0ae3c9a591aa71144efff"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C1/step01.cmd.json",
+   "sha256": "a6b5bb959cd5182ba109eb4991ff9d60ea56aadb80136a99fbd94dcf1ab596e7"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C1/step01.stderr.txt",
+   "sha256": "bb014bf5881c34328aa36dedc396d690c561f41f0fe9815a61e438f2d80c7069"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C1/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C2/asserts.json",
+   "sha256": "4ea3b6e58ac36d7ce467e2d4edf26b17a208215d32bca7d48d858e18f62d67d9"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C2/case.json",
+   "sha256": "a6f1a14873ab5f1cf35835c1dd7161110efa47b78112c001204e4005fa2db194"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C2/step01.cmd.json",
+   "sha256": "67e53b6d782de10d0aa82e7e96b47a8449adde25b9cdb4a5e9296a654273bc78"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C2/step01.stderr.txt",
+   "sha256": "3ea7744c4e967856d36d78534d90329e42b58a04c13ba1dd06365d622941a32c"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C2/step01.stdout.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/asserts.json",
+   "sha256": "95f932ce73bde207d3e272d7d674472b6642d5d2252318dc43b8518961abc1f3"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/case.json",
+   "sha256": "5fa4e7dad606ff1ffd193dbf1553f984c2cf48a20332ba89a23105725a068c51"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step01.cmd.json",
+   "sha256": "b67d9230b26dd5caeaceadeeb8042f170dfc87576ee22de37c1a00612b2dad65"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step01.stdout.txt",
+   "sha256": "5d938947df5a2622ceb2f6401385c4298fdacdd24ada524b38c788eea1e4ef1d"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step02.cmd.json",
+   "sha256": "226476414b44f0e99e862af5e3d5ff2716322830929891d67ca9e9dff2202a0d"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C3/step02.stdout.txt",
+   "sha256": "f209a6d4ba1209eac65688fa631dc8ef5efd2a40fea53f2ea420afea43bdf922"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C4/asserts.json",
+   "sha256": "dc4a91f827eaa90de450c458a4155645410ba72b925ced4b9666bef8b5df415f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C4/case.json",
+   "sha256": "2788a4c8cb3071d3fa50bb88818462ad0619593107386828816b465cd61b9956"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C4/step01.cmd.json",
+   "sha256": "5701be19453d47570b2fd51c259f58c177937da5632a16424ce0f24bad450cc9"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C4/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C4/step01.stdout.txt",
+   "sha256": "ccd2bea4666e62787415bb3f7c5942fc3e132c8504794c51da15ffda9724d2f3"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C5/asserts.json",
+   "sha256": "dc4a91f827eaa90de450c458a4155645410ba72b925ced4b9666bef8b5df415f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C5/case.json",
+   "sha256": "f600d1da509882acd776785d328251a8e8430a8105b9cc77dc60ad1ca29bb998"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C5/step01.cmd.json",
+   "sha256": "5fe9e05b9c1f3f312baf66c43c85128e08c0c97a8826647bf86daaf99dc01ca3"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C5/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__C5/step01.stdout.txt",
+   "sha256": "ad8b98ff3f18ca3eae8558b35425d3bb6230d1570073795780098ca20970a20d"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/asserts.json",
+   "sha256": "54075daa04b1ac7b5b450e27e3e4bca5cd70f96b6a7e482538a8cfb57fcf7afc"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/case.json",
+   "sha256": "48a30f53f6aaa2be65ef3e4a5a3323a073755af80cb6666ef974dee73df58a51"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/out/image_http.json",
+   "sha256": "f65000bd9077de730365b78fa22bf8f5fa40896d96333e3380aa228b9438f4e7"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step01.cmd.json",
+   "sha256": "ca3b15585d0d3ea7c200a112e3a2e6018ef0355386d82cfb1bcf9b9b20daaef6"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step01.stderr.txt",
+   "sha256": "1b26ef94e08bea11ef1bb3fb3731b5c9bceb3d845bd2b039404fd0b9c2e785ac"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step01.stdout.txt",
+   "sha256": "122c08baf566c8e1638db8eef8a2c9b9b5810a5322416765112b2f9588282474"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step02.cmd.json",
+   "sha256": "f799ad853c45fec96c80d28960d65a2469889abbf68806e81ea722c04d68f07b"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-01/step02.stdout.txt",
+   "sha256": "625fa48cf234489e79072c04e0aadae375302125d94d8196cf7944ef95d1027a"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/asserts.json",
+   "sha256": "fba68ab9a4ab1712d9638fbef752691b7aa88b7a69a164988337f7c36894cb7c"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/case.json",
+   "sha256": "2dca0045ccfb7070d8f12a4f50505e714fc36f0c56037262c4c883fb12dc5f9c"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/out/image_http.json",
+   "sha256": "f65000bd9077de730365b78fa22bf8f5fa40896d96333e3380aa228b9438f4e7"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step01.cmd.json",
+   "sha256": "055b511f7323067a6dfc0ed8af5e5af4ee60c95dd42a47eb800d389b3f0e9671"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step01.stderr.txt",
+   "sha256": "1b26ef94e08bea11ef1bb3fb3731b5c9bceb3d845bd2b039404fd0b9c2e785ac"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step01.stdout.txt",
+   "sha256": "4a72df2662b34b4c57b6323d0272bd3d2d6b5b03dac2e07e0a4261c9f8bf420b"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step02.cmd.json",
+   "sha256": "dec2ed19f0343ea24f7ceb99fd9844c340f7dc09febc3047abc392f7196dbdaa"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__FIX4-02/step02.stdout.txt",
+   "sha256": "d81924a3ac185925fbbbe1af0653eec07e726404a55556e83a586c94083da25e"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/asserts.json",
+   "sha256": "b0336008794cc3823f723e383a9f83547875795d78ee9205bdfd718a05ed31c0"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/case.json",
+   "sha256": "a0ddf3282d749a76c22ce32fc9969fed832a4d0dc245c567140ad9ab76fba687"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/out/image_http.json",
+   "sha256": "f65000bd9077de730365b78fa22bf8f5fa40896d96333e3380aa228b9438f4e7"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step01.cmd.json",
+   "sha256": "6327874ab2d07b500df24c8ffdb1944d60931d402c2853f1ff5ebeee67707f58"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step01.stderr.txt",
+   "sha256": "1b26ef94e08bea11ef1bb3fb3731b5c9bceb3d845bd2b039404fd0b9c2e785ac"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step01.stdout.txt",
+   "sha256": "5a3750684ee6fc0b16455b2f2e96f79a27ce5165aa750c481db5086da0823a16"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step02.cmd.json",
+   "sha256": "a44c8223d12572ecee61528881948b22146a330fff33e83bfd8d76c7b948343a"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step02.stdout.txt",
+   "sha256": "8c807917a173d1ff1f777e51f085fc4453007c01fef49b7d89085f5aa15828dd"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step03.cmd.json",
+   "sha256": "247cdcdddb179ec991fd15c998a0b38cda5ce6a30f520d977749c5a2e967d302"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-01/step03.stdout.txt",
+   "sha256": "9e78e8e22819b93bd51428758071f1f4e3d5d57638a31b5a388472e36e9a6b0f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-02/asserts.json",
+   "sha256": "32c5205fd8acb6d1ae5401b7af0ddcd71266913c9a2df6a6dabeac6c85b58eb9"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-02/case.json",
+   "sha256": "6a11602096d3447183fb9790aae9269363bf3548d85f2f90d71e28831959c285"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-02/out/image_http.json",
+   "sha256": "eef09ff75cbdbef3d02638744292662ad667a6a66db76a76157641ca179cc37d"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-02/step01.cmd.json",
+   "sha256": "fb2095c13b6ee743c1b9ff140d9fe639fccb88701cd341fd92c92f1da1c8839f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-02/step01.stderr.txt",
+   "sha256": "acd15c1a08786d72756d6f27c3e0849f19a7901068b520ce6b0997829c8559d5"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-02/step01.stdout.txt",
+   "sha256": "0d5970b978411296852ef00eabb3022d16bdf0e7015e71dc6bd365cd8a1a7885"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-03/asserts.json",
+   "sha256": "2c85424b2df3a6311047444d55319ec2c59c9efd2d4d291dba23f03ec8a50cfc"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-03/case.json",
+   "sha256": "0050a06e4f1b9ffd8160ffc006726a42943d42e65761ef84bbd51587178d2f87"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-03/out/image_http.json",
+   "sha256": "eef09ff75cbdbef3d02638744292662ad667a6a66db76a76157641ca179cc37d"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-03/step01.cmd.json",
+   "sha256": "de38000d828d8b4b54c2d586d8d16ffac13ed88a8f194ce66f29cc558d758d79"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-03/step01.stderr.txt",
+   "sha256": "acd15c1a08786d72756d6f27c3e0849f19a7901068b520ce6b0997829c8559d5"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__R13-03/step01.stdout.txt",
+   "sha256": "16e6916fbd2afca8256e8b7accee4b877c370896da08d4ee2fe21e76eae84a05"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/asserts.json",
+   "sha256": "3ad45bd2abe5f61133605f6b8c04c199fdc9480508af193690ca2804882db020"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/case.json",
+   "sha256": "91fc234e8f3f45f5d014f7041da0b21988f954f0761d135f89bc9bbb8a812a63"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step01.cmd.json",
+   "sha256": "ac7ba0e31f3b436984f62098a6f02e31b31495fb8099a736cd4ebcf622287322"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step02.cmd.json",
+   "sha256": "15ec0a4418f995d16b75da2dbefa5811821fd692bb098b32005cefbba7d39754"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step02.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step02.stdout.txt",
+   "sha256": "3bd938efc3a980a40723330e0ce633e12b4401b0086d81cad0137edf65b2833a"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step03.cmd.json",
+   "sha256": "355e101df4e3513b0715bd1d59dcae9fc5d271050f68e9046074f2f9d39095a8"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/marketing-02.1__S01/step03.stdout.txt",
+   "sha256": "55393f7935d7a829abdb2cfca1d5fcd903843a5b1de7449467be90dc37f38b4b"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/image_assets/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.json",
+   "sha256": "50e3dcaee7a364c3763d65082c1e0312010b79b2d83a9a91e088dd96a856d1e4"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/image_assets/14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430.png",
+   "sha256": "14a73526c1fe80ccfb9fa4bfb2ea329dba150eacef96cb121e541bc23c0de430"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/img_ai/ee6d0ebebb319b687092fcf8c96a36b8abf48f9b2803688f733743f56f3a3c41.json",
+   "sha256": "7719859942f19f20f43f47631d0d1e85b8c86ae55972993113eac662e2a34c6f"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/img_ai/ee6d0ebebb319b687092fcf8c96a36b8abf48f9b2803688f733743f56f3a3c41.png",
+   "sha256": "ee6d0ebebb319b687092fcf8c96a36b8abf48f9b2803688f733743f56f3a3c41"
+  },
+  {
+   "path": "evidence/itacc_r13_fix_4/runs/marketing-02.1/20261025T000046-3fca/scratch/packshots/mat-ong-sam-300ml.png",
+   "sha256": "aabab111cb0dbbe9929f163d12949cabbbc10050baff605da05521d9d8a5d38d"
+  }
+ ],
+ "loi_san_pham": []
+}

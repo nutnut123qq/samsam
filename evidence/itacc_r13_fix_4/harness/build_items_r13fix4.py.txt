@@ -1,0 +1,109 @@
+"""HARNESS r13-fix4 — dựng evidence/itacc_r13_fix_4/items/<id>.json cho 6 mục kiểm lại (ảnh hưởng trực tiếp 4 bản vá) từ log
+GỐC lượt fix4 (runs/<id>/<run_id>/) + tiêu chí khóa criteria/r13fix4_v1.json. Trạng thái tính như build_items_r13 (không chấm
+tay): mục còn lý do ngoài code ở bản ghi r13 (production-03, data_platform-02.1, marketing-02.1, data_platform-90,
+farming-06) → giữ BI_CHAN + nguyên nhân/việc gỡ r13 NGUYÊN VĂN (không gỡ chặn vì bản vá/mock pass); có FAIL → CHUA_KIEM;
+NOT_RUN/LOI_HARNESS không lý do ngoài code → CHUA_KIEM; còn lại DAT. supersedes = bản ghi r13 hiện hành
+(evidence/itacc_r13_docx12/source_map.json, hash phải khớp).
+  python -I build_items_r13fix4.py.txt <id>=<run_id>[@v2] [...]
+Mục chạy theo r13fix4_v2.json (`@v2`) ghi lượt v1 (lô k1) vào `luot_bi_thay_the` kèm lý do (LỖI TIÊU CHÍ placeholder)."""
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r13_fix_4"
+PREV = REPO / "evidence" / "itacc_r13_docx12"
+SMAP = json.loads((PREV / "source_map.json").read_text(encoding="utf-8"))["items"]
+TH = {i["id"]: i for i in json.loads((PREV / "tong_hop.json").read_text(encoding="utf-8"))["items"]}
+K1 = {"data_platform-90": "20261025T000046-13ac", "data_platform-07.2": "20261025T000047-a02b"}
+LY_V2 = ("lô k1 (r13fix4_v1): ca FIX4-* FAIL vì LỖI TIÊU CHÍ — `{sql:…}` ghép tiền tố/hậu tố nên runner không thay, đường dẫn"
+         " còn trong repo → preflight/db_backup từ chối đúng 'nằm trong repo'; v2 đưa tiền tố/hậu tố vào trong SQL, kỳ vọng giữ nguyên")
+FIX = {"production-03": "F1 (cổng model OCR cục bộ đòi đủ pdmodel+pdiparams)",
+       "data_platform-02.1": "F1 (cổng model OCR cục bộ đòi đủ pdmodel+pdiparams)",
+       "marketing-02.1": "F2 (ảnh AI hỏng vẫn ghi chi phí provider đã báo vào llm_usage, ok=false)",
+       "data_platform-90": "F3 (preflight đo tệp dump + bản offsite thật theo manifest)",
+       "data_platform-07.2": "F3 (preflight đo tệp dump + bản offsite thật theo manifest — đầu ra backup)",
+       "farming-06": "F4 (anchor --upgrade qua cổng triển khai trước HTTP/INSERT)"}
+GH = (" Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r13fix4), fixture/dữ liệu THỬ, AI/HTTP/model giả"
+      " ở biên nơi ghi MOCK; 'khác thiết bị' offsite KHÔNG đo được trên máy dev — không phải tích hợp thật, không phải nghiệm"
+      " thu hợp đồng/production.")
+
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def rel(p):
+    p = Path(p).resolve()
+    try:
+        return str(p.relative_to(REPO)).replace("\\", "/")
+    except ValueError:
+        return str(p).replace("\\", "/")
+
+
+for arg in sys.argv[1:]:
+    fid, run_id = arg.split("=", 1)
+    run_id, _, ver = run_id.partition("@")
+    ver = ver or "v1"
+    CRIT = EV / "criteria" / f"r13fix4_{ver}.json"
+    lock = CRIT.with_name(f"r13fix4_{ver}.lock.txt").read_text(encoding="utf-8").split()
+    crit = json.loads(CRIT.read_text(encoding="utf-8"))
+    citem = next(i for i in crit["items"] if i["id"] == fid)
+    run = EV / "runs" / fid / run_id
+    kq = json.loads((run / "ket_qua.json").read_text(encoding="utf-8"))
+    assert kq["criteria_sha256"] == sha(CRIT) == lock[1], f"{fid}: hash tiêu chí ≠ khóa ≠ lượt"
+    old_p = REPO / SMAP[fid]["path"]
+    assert sha(old_p) == SMAP[fid]["sha256"], f"{fid}: bản ghi r13 hiện hành bị sửa"
+    old = json.loads(old_p.read_text(encoding="utf-8"))
+    cases = []
+    for ca in citem["ca"]:
+        cdir = run / ca["ma"]
+        cr = json.loads((cdir / "case.json").read_text(encoding="utf-8"))
+        asserts = json.loads((cdir / "asserts.json").read_text(encoding="utf-8")) if (cdir / "asserts.json").exists() else []
+        steps = []
+        for st in sorted(cdir.glob("step*.cmd.json")):
+            s = json.loads(st.read_text(encoding="utf-8"))
+            steps.append({"argv": " ".join(s["argv"]).replace(str(REPO) + "\\", "")[:1500], "exit": s["exit"],
+                          "expect_exit": s["expect_exit"], "regex": s["regex"], "bat_dau": s["bat_dau"],
+                          "ket_thuc": s["ket_thuc"], "stdout": rel(st.with_name(st.name.replace(".cmd.json", ".stdout.txt"))),
+                          "stderr": rel(st.with_name(st.name.replace(".cmd.json", ".stderr.txt")))})
+        res = cr["ket_qua"]
+        cases.append({"ma": ca["ma"], "nguon_r10": ca.get("nguon_r10"), "mo_ta": ca.get("mo_ta"),
+                      "tien_quyet": bool(ca.get("tien_quyet")), "thay_the": ca.get("thay_the"),
+                      "ly_do_thay": ca.get("ly_do_thay"),
+                      "expected": {"buoc": [{k: b.get(k) for k in ("expect_exit", "stdout_re", "stderr_re", "out_re")
+                                             if k in b} for b in ca.get("buoc", [])], "kiem": ca.get("kiem", [])},
+                      "actual": {"buoc": steps, "kiem": asserts}, "exit": [s["exit"] for s in steps], "ket_qua": res,
+                      "ly_do_not_run": cr.get("ly_do_not_run") if res == "NOT_RUN" else None,
+                      "loi_harness": cr.get("loi_harness"), "thu_muc": rel(cdir)})
+    res = [x["ket_qua"] for x in cases]
+    if old["trang_thai"] == "BI_CHAN":
+        st, cause, go = "BI_CHAN", old["nguyen_nhan"], old["can_de_go"]
+    elif "FAIL" in res:
+        st, cause, go = "CHUA_KIEM", "CHUA_XAC_MINH", ""
+    elif any(r in ("NOT_RUN", "LOI_HARNESS") for r in res):
+        st, cause, go = "CHUA_KIEM", "XEM_CA", ""
+    else:
+        st, cause, go = "DAT", "", ""
+    files = sorted(p for p in run.rglob("*") if p.is_file())
+    rec = {"id": fid, "ten": old["ten"], "khoi": old["khoi"], "giai_doan": old["giai_doan"], "pham_vi": old["pham_vi"],
+           "can_cu": old["can_cu"], "luot": "r13fix4",
+           "supersedes": {"path": SMAP[fid]["path"], "sha256": SMAP[fid]["sha256"]},
+           "trang_thai_truoc": {"luot": SMAP[fid]["luot"], "trang_thai": TH[fid]["trang_thai"],
+                                "nguyen_nhan": TH[fid]["nguyen_nhan_day_du"]},
+           "ly_do_chay_lai": "mô-đun của mục đổi ở bản vá r13-fix4 " + FIX[fid] + " (ảnh hưởng trực tiếp)",
+           "tieu_chi_file": rel(CRIT), "tieu_chi_sha256": sha(CRIT), "tieu_chi_khoa": " ".join(lock),
+           "tieu_chi": old.get("tieu_chi"), "moi_truong": crit.get("moi_truong", "") + f" DB {citem['db']}.",
+           "run_id": run_id, "ca": cases, "trang_thai": st, "muc_kiem": old.get("muc_kiem"), "nguyen_nhan": cause,
+           "can_de_go": go, "gioi_han": GH,
+           "luot_bi_thay_the": ([{"lot": "k1", "criteria": "r13fix4_v1.json", "run_id": K1[fid],
+                                  "thu_muc": f"evidence/itacc_r13_fix_4/runs/{fid}/{K1[fid]}", "ly_do": LY_V2}]
+                                if ver == "v2" else []),
+           "evidence": [{"path": rel(p), "sha256": sha(p)} for p in files], "loi_san_pham": []}
+    p = EV / "items" / f"{fid}.json"
+    p.parent.mkdir(exist_ok=True)
+    p.open("x", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))
+    print(fid, st, rec["muc_kiem"], f"{res.count('PASS')}/{len(res)} PASS", f"FAIL {res.count('FAIL')}",
+          f"NOT_RUN {res.count('NOT_RUN')}", len(files), "file")

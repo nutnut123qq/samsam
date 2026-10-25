@@ -1,0 +1,37 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r12\\harness/wrap.py.txt",
+  "-m",
+  "pipelines.content",
+  "--listing",
+  "--sku",
+  "mat-ong-sam-300ml",
+  "--channel",
+  "web",
+  "--no-llm"
+ ],
+ "env_doi": [
+  "PROBE_LLM_LOG",
+  "PROBE_ROOT",
+  "PROBE_SET"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-24T19:04:38+07:00",
+ "ket_thuc": "2026-10-24T19:04:42+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "(?s)(?=.*mat-ong-sam-300ml × web: created #1\\b)(?=.*created 1, skipped 0, refused 0, failed 0)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "601ad57da4dc6cd3ac096b479333b32dda5e49cac633c60fb33584be28b38d9e",
+ "stderr_sha256": "9480f6ade648f708213a95374e33cad62b7f6dbfe40eff64a724a6d01f79a82e"
+}

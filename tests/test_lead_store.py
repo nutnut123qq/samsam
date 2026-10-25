@@ -383,10 +383,12 @@ def test_schema_sql_has_leads_table():
         rest = re.sub(pat, "", rest)
     # v13: cặp CHECK tên cố định (feature_rollout id, settlement_rows
     # txn_type) — cùng allowlist hẹp với drift-guard test_store.
-    from tests.test_store import _DOCX_CHECK_OK, _V13_CHECK_OK
+    from tests.test_store import _DOCX_CHECK_OK, _R13_ANCHOR_OK, _V13_CHECK_OK
     rest = _V13_CHECK_OK.sub("", rest)
     # docx P0: cặp CHECK `file_output_evidence` (nguồn conversations).
     rest = _DOCX_CHECK_OK.sub("", rest)
+    # r13: ràng buộc trạng thái `anchor_receipts` (thêm da_nang_cap).
+    rest = _R13_ANCHOR_OK.sub("", rest)
     assert not re.search(r"\b(alter|drop)\s+table\b", rest)
     assert re.search(r"\b(alter|drop)\s+table\b", re.sub(
         narrow[0], "", "alter table consents drop constraint if exists"

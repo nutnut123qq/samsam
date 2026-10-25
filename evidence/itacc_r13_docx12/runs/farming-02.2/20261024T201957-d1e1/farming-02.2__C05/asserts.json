@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_id like 'gap:IT-K06%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_id like 'gap:IT-K05%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'plot_log_gap' and object_id like 'gap:IT-%'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ }
+]

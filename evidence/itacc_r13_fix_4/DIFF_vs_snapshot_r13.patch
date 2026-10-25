@@ -1,0 +1,631 @@
+diff --git a/samsam_r13fix_baseline/ingest/doc_intake.py b/samsam/ingest/doc_intake.py
+index 2a62614..7b9094a 100644
+--- a/samsam_r13fix_baseline/ingest/doc_intake.py
++++ b/samsam/ingest/doc_intake.py
+@@ -123,6 +123,9 @@ _PADDLE_SUBDIRS = {"det": ("det", "en", "en_PP-OCRv3_det_infer"),
+                    # PaddleOCR 2.x luôn tải model cls nếu thiếu thư mục, kể cả
+                    # use_angle_cls=False → phải có sẵn + truyền tường minh.
+                    "cls": ("cls", "ch_ppocr_mobile_v2.0_cls_infer")}
++# PaddleOCR 2.x (`maybe_download`) tự tải bộ model khi thiếu pdiparams HOẶC
++# pdmodel → cổng phải đòi đủ cả hai (rỗng 0 byte = thiếu: engine nạp sẽ chết).
++_PADDLE_FILES = ("inference.pdmodel", "inference.pdiparams")
+ _paddle = None   # engine nạp 1 lần / tiến trình (nạp model ~10 s)
+ 
+ 
+@@ -133,7 +136,8 @@ def _paddle_engine():
+                     or Path.home() / ".paddleocr" / "whl")
+         dirs = {k: root.joinpath(*v) for k, v in _PADDLE_SUBDIRS.items()}
+         missing = [k for k, d in dirs.items()
+-                   if not (d / "inference.pdmodel").is_file()]
++                   if not all((d / f).is_file() and (d / f).stat().st_size
++                              for f in _PADDLE_FILES)]
+         if missing:  # thiếu model → từ chối, KHÔNG để PaddleOCR tự tải mạng
+             raise DocError("thiếu model OCR cục bộ ("
+                            + ", ".join(missing) + ") ở OCR_PADDLE_MODEL_DIR")
+diff --git a/samsam_r13fix_baseline/pipelines/anchor.py b/samsam/pipelines/anchor.py
+index 0449017..049ee2f 100644
+--- a/samsam_r13fix_baseline/pipelines/anchor.py
++++ b/samsam/pipelines/anchor.py
+@@ -566,6 +566,13 @@ def upgrade(conn, ref, cfg: dict, get=http_get) -> dict:
+     khối Bitcoin) → {"id", "status": "da_nang_cap"|"cho"|"chua_gui", ...}."""
+     row = _batch(conn, ref)
+     bid, sha = row[0], row[4]
++    # r13-fix4 F4: hỏi calendar = DÙNG ra ngoài như submit → cùng cổng triển khai
++    # (HĐ 6.7) TRƯỚC mọi HTTP/INSERT; giai đoạn không xác định → chạy thử (chặn).
++    # Job (agent) không phải người: `co_nguoi_duyet` cũng chặn — không tự mở quyền.
++    why = _rollout().use_reason(conn, FEATURE, f"nâng cấp biên nhận lần gom #{bid}",
++                                False)
++    if why:
++        raise AnchorError(why)
+     rec = conn.execute(
+         "select status, calendar, receipt from anchor_receipts where batch_id"
+         " = %s and status in ('da_gui', 'da_nang_cap') order by id desc"
+diff --git a/samsam_r13fix_baseline/pipelines/image_provider_openrouter.py b/samsam/pipelines/image_provider_openrouter.py
+index 0f8c956..97c4345 100644
+--- a/samsam_r13fix_baseline/pipelines/image_provider_openrouter.py
++++ b/samsam/pipelines/image_provider_openrouter.py
+@@ -2,6 +2,7 @@
+ `openrouter_images`). Tách khỏi image_studio để module ghép ảnh giữ bất biến "không có đường mạng"; đường mạng DUY
+ NHẤT là hàm `background` dưới đây, chỉ chạy sau cổng `llm_gateway._gate`."""
+ import base64
++import math
+ import os
+ import time
+ from io import BytesIO
+@@ -67,30 +68,41 @@ def background(prompt: str, size: tuple[int, int]):
+         gw._record(IMAGE_AGENT, model, 0, 0, 0.0, False,
+                    f"http {resp.status_code}", IMAGE_FEATURE)
+         raise ImageProviderError(f"API sinh ảnh trả HTTP {resp.status_code}")
++    # r13-fix4 F2: HTTP 200 = provider đã sinh ảnh/tính phí → ghi chi phí ĐÚNG 1
++    # lần TRƯỚC khi giải mã/kiểm ảnh, kể cả ảnh hỏng (ghi 0 làm trần tháng hụt
++    # khoản đã chi). Không đọc được `usage.cost` hợp lệ → mức dự phòng (fail-closed
++    # FinOps, cùng chính sách cũ cho ảnh không kèm cost).
+     try:
+         doc = resp.json()
+-        item = doc["data"][0]
+-        raw = base64.b64decode(item["b64_json"], validate=True)
+-    except (ValueError, KeyError, IndexError, TypeError) as e:
+-        gw._record(IMAGE_AGENT, model, 0, 0, 0.0, False,
+-                   f"response hỏng {type(e).__name__}", IMAGE_FEATURE)
+-        raise ImageProviderError("response API sinh ảnh sai định dạng") from None
+-    usage = doc.get("usage") or {}
++    except ValueError:
++        doc = None
++    usage = doc.get("usage") if isinstance(doc, dict) else None
++    usage = usage if isinstance(usage, dict) else {}
+     cost = usage.get("cost")
+-    # Ảnh đã trả = đã tính phí: không có `cost` → ghi trần dự phòng (fail-closed
+-    # FinOps — ghi 0 làm trần tháng mất tác dụng).
+-    cost = float(cost) if isinstance(cost, (int, float)) else float(
+-        cfg.get("image_cost_fallback_usd") or 0.25)
+-    gw._record(IMAGE_AGENT, model, int(usage.get("prompt_tokens") or 0),
+-               int(usage.get("completion_tokens") or 0), cost, True,
+-               feature=IMAGE_FEATURE)
+-    if len(raw) > IMAGE_MAX_BYTES:
+-        raise ImageProviderError("ảnh trả về quá lớn")
++    if not (isinstance(cost, (int, float)) and not isinstance(cost, bool)
++            and math.isfinite(cost) and cost >= 0):
++        cost = float(cfg.get("image_cost_fallback_usd") or 0.25)
++    img, err, label = None, None, None
+     try:
+-        img = Image.open(BytesIO(raw))
+-        img.load()
+-    except Exception as e:  # noqa: BLE001 — byte không phải ảnh
+-        raise ImageProviderError(f"ảnh trả về hỏng ({type(e).__name__})") from None
+-    if img.format not in ("PNG", "JPEG", "WEBP"):
+-        raise ImageProviderError(f"ảnh trả về định dạng {img.format}")
++        raw = base64.b64decode(doc["data"][0]["b64_json"], validate=True)
++    except (ValueError, KeyError, IndexError, TypeError) as e:
++        err, label = "response API sinh ảnh sai định dạng", f"response hỏng {type(e).__name__}"
++    else:
++        if len(raw) > IMAGE_MAX_BYTES:
++            err, label = "ảnh trả về quá lớn", "ảnh quá lớn"
++        else:
++            try:
++                img = Image.open(BytesIO(raw))
++                img.load()
++            except Exception as e:  # noqa: BLE001 — byte không phải ảnh
++                err, label = f"ảnh trả về hỏng ({type(e).__name__})", f"ảnh hỏng {type(e).__name__}"
++            else:
++                if img.format not in ("PNG", "JPEG", "WEBP"):
++                    err = label = f"ảnh trả về định dạng {img.format}"
++    tok = [v if isinstance(v, int) and not isinstance(v, bool) and v >= 0 else 0
++           for v in (usage.get("prompt_tokens"), usage.get("completion_tokens"))]
++    gw._record(IMAGE_AGENT, model, tok[0], tok[1], float(cost), err is None,
++               label, feature=IMAGE_FEATURE)
++    if err:
++        raise ImageProviderError(err)
+     return img, {"model": model}
+diff --git a/samsam_r13fix_baseline/scripts/onprem_preflight.py b/samsam/scripts/onprem_preflight.py
+index f444b49..c92cb06 100644
+--- a/samsam_r13fix_baseline/scripts/onprem_preflight.py
++++ b/samsam/scripts/onprem_preflight.py
+@@ -9,7 +9,8 @@
+                 thuộc đúng role svc_* (đo trực tiếp, không phụ thuộc AUTH_MODE)
+   sao_luu       BACKUP_DIR ngoài repo, tồn tại, ghi được, trống ≥ --min-free-gb; BACKUP_REQUIRE_ENCRYPTION=1 + có
+                 BACKUP_PASSPHRASE_FILE; offsite `dir:` khác thiết bị (st_dev); bản backup gần nhất trong sổ
+-                backup_runs.jsonl ok + encrypted + offsite ok + mới hơn --max-backup-age-h giờ
++                backup_runs.jsonl ok + mới hơn --max-backup-age-h giờ (không ở tương lai) + manifest hợp lệ mã hóa +
++                tệp dump THẬT khớp size/sha256 manifest ở CẢ BACKUP_DIR lẫn offsite `dir:` (r13-fix4)
+   lich          Linux systemd: mọi timer trong deploy/onprem/jobs.json có unit đã cài trong /etc/systemd/system
+ Không đo được từ trong máy → luôn CHUA_XAC_NHAN (Bên B ký): máy chủ vật lý/UPS, máy giám sát ĐỘC LẬP, máy offsite là máy khác,
+ người giữ tài khoản cao nhất. Kết quả gắn hostname + machine-id + thời điểm (giờ máy) — không dùng cho máy khác.
+@@ -127,25 +128,67 @@ def check_backup(env, min_free_gb: float, max_age_h: float, now: datetime) -> li
+     if last is None:
+         out.append(("sao_luu:ban_gan_nhat", "CHUA_DAT", "chưa có bản backup nào trong sổ"))
+     else:
+-        try:
+-            at = datetime.fromisoformat(str(last.get("ts")))
+-            age = (now - (at if at.tzinfo else at.replace(tzinfo=timezone.utc))).total_seconds() / 3600
+-        except ValueError:
+-            age = float("inf")
+-        enc = None
+-        if last.get("file"):     # mã hóa ghi ở manifest cạnh tệp dump
+-            try:
+-                enc = json.loads((d / (last["file"] + db_backup.MANIFEST_SUFFIX)).read_bytes()).get("encrypted")
+-            except (OSError, ValueError):
+-                enc = None
+-        good = (last.get("status") == "ok" and last.get("offsite") is not None and enc is True
+-                and age <= max_age_h)
+-        out.append(("sao_luu:ban_gan_nhat", "DAT" if good else "CHUA_DAT",
+-                    (f"status={last.get('status')}; cách {age:.1f} giờ; encrypted={enc}; "
+-                     f"offsite={'có' if last.get('offsite') else 'không'}")))
++        probs = _latest_problems(d, off, last, max_age_h, now)
++        out.append(("sao_luu:ban_gan_nhat", "DAT" if not probs else "CHUA_DAT",
++                    "; ".join(probs) if probs else
++                    f"status=ok; {last['file']} mã hóa; dump local + offsite đo khớp size/sha256 manifest"))
+     return out
+ 
+ 
++CLOCK_SKEW_H = 5 / 60     # sổ ghi muộn hơn giờ máy quá mức này = thời điểm tương lai, không phải bản mới
++
++
++def _copy_problems(folder: Path, m: dict, where: str) -> list[str]:
++    """Đo tệp dump THẬT trong `folder` so manifest (size_bytes + sha256)."""
++    from scripts import db_backup
++    f = folder / m["file"]
++    if not f.is_file():
++        return [f"{where}: thiếu tệp dump {m['file']}"]
++    if f.stat().st_size != m["size_bytes"]:
++        return [f"{where}: kích thước tệp dump lệch manifest"]
++    if db_backup.sha256_file(f) != m["sha256"]:
++        return [f"{where}: sha256 tệp dump lệch manifest"]
++    return []
++
++
++def _latest_problems(d: Path, off, last: dict, max_age_h: float, now: datetime) -> list[str]:
++    """r13-fix4 F3: bản gần nhất trong sổ chỉ ĐẠT khi tệp dump + manifest (định dạng `db_backup.load_manifest`) tồn tại
++    và khớp ở CẢ BACKUP_DIR lẫn offsite `dir:` cấu hình — sổ/manifest một mình không chứng minh có bản sao."""
++    from scripts import db_backup
++    probs = []
++    if last.get("status") != "ok":
++        probs.append(f"status={last.get('status')}")
++    try:
++        at = datetime.fromisoformat(str(last.get("ts")))
++        age = (now - (at if at.tzinfo else at.replace(tzinfo=timezone.utc))).total_seconds() / 3600
++    except ValueError:
++        age = None
++    if age is None:
++        probs.append("thời điểm trong sổ không đọc được")
++    elif age < -CLOCK_SKEW_H:
++        probs.append(f"thời điểm trong sổ ở tương lai ({-age:.1f} giờ)")
++    elif age > max_age_h:
++        probs.append(f"cách {age:.1f} giờ (> {max_age_h:g})")
++    if last.get("offsite") is None:
++        probs.append("sổ chưa ghi offsite xong")
++    fname = last.get("file")
++    m = (db_backup.load_manifest(d / (fname + db_backup.MANIFEST_SUFFIX))
++         if isinstance(fname, str) and fname else None)
++    if m is None:
++        return probs + ["manifest local thiếu/hỏng — không kiểm được tệp dump"]
++    if m["encrypted"] is not True:
++        probs.append("bản dump chưa mã hóa")
++    if last.get("sha256") not in (None, m["sha256"]):
++        probs.append("sha256 trong sổ lệch manifest")
++    probs += _copy_problems(d, m, "local")
++    if off is None or off[0] != "dir":
++        return probs + ["chưa cấu hình offsite dir: — không kiểm được bản sao"]
++    om = db_backup.load_manifest(off[1] / (fname + db_backup.MANIFEST_SUFFIX))
++    if om is None or (om["sha256"], om["size_bytes"]) != (m["sha256"], m["size_bytes"]):
++        probs.append("offsite: manifest thiếu/hỏng/lệch bản local")
++    return probs + _copy_problems(off[1], m, "offsite")
++
++
+ def check_timers() -> tuple[str, str, str]:
+     if platform.system() != "Linux":
+         return ("lich:systemd", "KHONG_AP_DUNG", f"hệ điều hành {platform.system()} — không phải server systemd")
+diff --git a/samsam_r13fix_baseline/tests/test_r13_batch_a.py b/samsam/tests/test_r13_batch_a.py
+index caf43f5..beeefb5 100644
+--- a/samsam_r13fix_baseline/tests/test_r13_batch_a.py
++++ b/samsam/tests/test_r13_batch_a.py
+@@ -39,7 +39,7 @@ def no_network(monkeypatch):
+ def _models_ok():
+     root = Path.home() / ".paddleocr" / "whl"
+     return importlib.util.find_spec("paddleocr") is not None and all(
+-        root.joinpath(*v, "inference.pdmodel").is_file() for v in di._PADDLE_SUBDIRS.values())
++        root.joinpath(*v, f).is_file() for v in di._PADDLE_SUBDIRS.values() for f in di._PADDLE_FILES)
+ 
+ 
+ def _label_png(path):
+diff --git a/samsam_r13fix_baseline/tests/test_r13_batch_c.py b/samsam/tests/test_r13_batch_c.py
+index 4bc23ff..5913592 100644
+--- a/samsam_r13fix_baseline/tests/test_r13_batch_c.py
++++ b/samsam/tests/test_r13_batch_c.py
+@@ -1,5 +1,6 @@
+ """r13 đợt C: gói so sánh bản sao sự cố (ceo-90/N22, `scripts/incident_compare.py`), preflight on-prem + bắt buộc mã hóa/
+ offsite khác thiết bị (data_platform-90, `scripts/onprem_preflight.py`, `scripts/db_backup.py`). Không DB `samsam`."""
++import hashlib
+ import json
+ import os
+ from datetime import datetime, timedelta, timezone
+@@ -105,6 +106,19 @@ def test_preflight_backup_checks_measure_real_files(tmp_path):
+     rec = {"ts": (now - timedelta(hours=2)).isoformat(), "status": "ok", "file": "x.dump.enc", "offsite": {"dir": "o"}}
+     (bdir / "backup_runs.jsonl").write_text(json.dumps(rec) + "\n", encoding="utf-8")
+     rows = {k: st for k, st, _n in op.check_backup(env, 0.0, 26.0, now)}
++    # r13-fix4 F3: sổ + manifest tối giản + dump giả KHÔNG đủ — phải có cặp dump/manifest thật ở cả local lẫn offsite.
++    assert rows["sao_luu:ban_gan_nhat"] == "CHUA_DAT"
++    name, dump = "db_20261024_080000_vn.dump.enc", b"Salted__" + bytes(64)
++    man = {"format": 1, "created_at": (now - timedelta(hours=2)).isoformat(), "db_name": "db", "server_version": "17",
++           "pg_dump_version": "17", "tool": "local", "file": name, "size_bytes": len(dump),
++           "sha256": hashlib.sha256(dump).hexdigest(), "encrypted": True, "cipher": db_backup.CIPHER, "row_counts": {}}
++    (tmp_path / "o").mkdir()
++    for folder in (bdir, tmp_path / "o"):
++        (folder / name).write_bytes(dump)
++        (folder / (name + db_backup.MANIFEST_SUFFIX)).write_text(json.dumps(man), encoding="utf-8")
++    rec.update(file=name, offsite="dir")
++    (bdir / "backup_runs.jsonl").write_text(json.dumps(rec) + "\n", encoding="utf-8")
++    rows = {k: st for k, st, _n in op.check_backup(env, 0.0, 26.0, now)}
+     assert rows["sao_luu:ban_gan_nhat"] == "DAT"
+     rows = {k: st for k, st, _n in op.check_backup(env, 0.0, 1.0, now)}
+     assert rows["sao_luu:ban_gan_nhat"] == "CHUA_DAT"             # quá tuổi
+diff --git a/samsam/tests/test_r13_fix4.py b/samsam/tests/test_r13_fix4.py
+new file mode 100644
+index 0000000..4541267
+--- /dev/null
++++ b/samsam/tests/test_r13_fix4.py
+@@ -0,0 +1,365 @@
++"""r13-fix4: 4 lỗi controller — F1 cổng model OCR cục bộ đòi đủ pdmodel + pdiparams (PaddleOCR không tự tải), F2 ảnh AI
++hỏng vẫn ghi chi phí provider đã báo vào sổ mà cổng tháng đọc, F3 preflight backup đo tệp dump/offsite THẬT, F4 `anchor
++--upgrade` qua cổng triển khai. Không mạng, không DB `samsam` (ca DB dùng schema tạm `da_db`, ROLLBACK)."""
++import base64
++import contextlib
++import hashlib
++import io
++import json
++import socket
++import sys
++import time
++import types
++from datetime import datetime, timedelta, timezone
++
++import httpx
++import pytest
++from PIL import Image
++
++from ingest import doc_intake as di
++from pipelines import anchor as an
++from pipelines import image_provider_openrouter as orp
++from pipelines import llm_gateway as gw
++from pipelines import rollout
++from pipelines.image_studio import ImageProviderError
++from scripts import db_backup
++from scripts import onprem_preflight as op
++from tests.test_da_schema import da_db
++from tests.test_r13_batch_b import RESP, bitcoin
++from tests.test_v13_c09_anchor_legal import (  # noqa: F401 — fixture DB thử
++    OTS_CFG,
++    _fake_post,
++    _issued,
++    _now,
++    db,
++    proxy,
++    run,
++)
++
++
++@pytest.fixture
++def no_network(monkeypatch):
++    calls = []
++
++    def boom(self, *a, **k):
++        calls.append(a)
++        raise AssertionError("không được gọi mạng")
++    monkeypatch.setattr(socket.socket, "connect", boom)
++    return calls
++
++
++# --- F1: model OCR cục bộ ------------------------------------------------------
++
++def _models(root, bad=None, how=None):
++    for k, parts in di._PADDLE_SUBDIRS.items():
++        d = root.joinpath(*parts)
++        d.mkdir(parents=True)
++        for f in di._PADDLE_FILES:
++            if k == bad and (how == f or (how == "rong" and f == "inference.pdiparams")):
++                if how == "rong":
++                    (d / f).write_bytes(b"")
++                continue
++            (d / f).write_bytes(b"synthetic")
++    return root
++
++
++@pytest.fixture
++def fake_paddle(monkeypatch):
++    made = []
++
++    class Fake:
++        def __init__(self, **kw):
++            made.append(kw)
++    monkeypatch.setitem(sys.modules, "paddleocr", types.SimpleNamespace(PaddleOCR=Fake))
++    monkeypatch.setattr(di, "_paddle", None)
++    return made
++
++
++@pytest.mark.parametrize("bad", ["det", "rec", "cls"])
++@pytest.mark.parametrize("how", ["inference.pdiparams", "inference.pdmodel", "rong"])
++def test_ocr_gate_requires_pdmodel_and_pdiparams(tmp_path, monkeypatch, fake_paddle, no_network, bad, how):
++    monkeypatch.setenv("OCR_PADDLE_MODEL_DIR", str(_models(tmp_path, bad, how)))
++    with pytest.raises(di.DocError, match=rf"thiếu model OCR cục bộ \({bad}\)"):
++        di._paddle_engine()
++    assert fake_paddle == [] and no_network == []          # chưa từng tới PaddleOCR (đường tự tải)
++
++
++def test_ocr_gate_complete_models_pass_explicit_dirs(tmp_path, monkeypatch, fake_paddle, no_network):
++    monkeypatch.setenv("OCR_PADDLE_MODEL_DIR", str(_models(tmp_path)))
++    di._paddle_engine()
++    assert len(fake_paddle) == 1 and no_network == []
++    kw = fake_paddle[0]
++    for k in ("det", "rec", "cls"):
++        assert kw[f"{k}_model_dir"] == str(tmp_path.joinpath(*di._PADDLE_SUBDIRS[k]))
++
++
++# --- F2: chi phí ảnh AI ----------------------------------------------------------
++
++class _Ledger:
++    """llm_usage trong bộ nhớ cho ĐÚNG gw._record + gw._month_spend (SQL thật)."""
++
++    def __init__(self):
++        self.rows = []
++
++    def __call__(self):
++        return self
++
++    def execute(self, sql, params=None):
++        self.res = None
++        if sql.startswith("insert into llm_usage"):
++            self.rows.append(dict(zip(("agent", "model", "tin", "tout", "cost", "ok", "error", "feature"), params)))
++        elif "sum(cost_usd)" in sql:
++            col = "feature" if "where feature_id" in sql else "agent"
++            self.res = (sum(r["cost"] for r in self.rows if r[col] == params[0]),)
++        return self
++
++    def fetchone(self):
++        return self.res
++
++    def commit(self):
++        pass
++
++    def close(self):
++        pass
++
++
++def _png():
++    b = io.BytesIO()
++    Image.new("RGB", (32, 32), (1, 2, 3)).save(b, "PNG")
++    return base64.b64encode(b.getvalue()).decode()
++
++
++@pytest.fixture
++def img_env(monkeypatch):
++    monkeypatch.setenv("OPENROUTER_API_KEY", "khoa-gia")
++    monkeypatch.setenv("IMAGE_MODEL", "vendor/model-gia")
++    monkeypatch.setenv("LLM_PROVIDER_ONLY", "prov-a")
++    monkeypatch.delenv("LLM_KILL_FEATURES", raising=False)
++    monkeypatch.setattr(time, "sleep", lambda s: None)
++    led = _Ledger()
++    monkeypatch.setattr(gw, "_connect", led)
++    reqs = []
++
++    def serve(*responses):
++        def handler(req):
++            reqs.append(req)
++            return responses[min(len(reqs), len(responses)) - 1]
++        monkeypatch.setattr(orp, "_image_http", lambda: httpx.Client(transport=httpx.MockTransport(handler)))
++    return led, reqs, serve
++
++
++FALLBACK = float(gw._config().get("image_cost_fallback_usd") or 0.25)
++
++
++@pytest.mark.parametrize("body,cost", [
++    ({"data": [{"b64_json": "!bad-base64!"}], "usage": {"cost": 0.40}}, 0.40),
++    ({"data": [], "usage": {"cost": 0.40}}, 0.40),
++    ({"usage": {"cost": 0.40}}, 0.40),
++    ({"data": [{"b64_json": base64.b64encode(b"khong-phai-anh").decode()}], "usage": {"cost": 0.40}}, 0.40),
++    ({"data": [{"b64_json": "!bad-base64!"}]}, FALLBACK),
++    ({"data": [{"b64_json": "!bad-base64!"}], "usage": {"cost": -1}}, FALLBACK),
++    ({"data": [{"b64_json": "!bad-base64!"}], "usage": {"cost": True, "prompt_tokens": "x"}}, FALLBACK),
++    (b"<html>khong phai json</html>", FALLBACK)])
++def test_image_billed_failure_keeps_cost_once(img_env, body, cost):
++    led, reqs, serve = img_env
++    serve(httpx.Response(200, content=body) if isinstance(body, bytes) else httpx.Response(200, json=body))
++    with pytest.raises(ImageProviderError):
++        orp.background("nền", (32, 32))
++    assert len(reqs) == 1 and len(led.rows) == 1
++    assert led.rows[0]["cost"] == pytest.approx(cost) and led.rows[0]["ok"] is False and led.rows[0]["error"]
++    assert gw._month_spend("image") == pytest.approx(cost)
++    assert gw._month_spend("marketing-02.1", gw._FEATURE_SPEND_SQL) == pytest.approx(cost)
++
++
++def test_image_valid_and_unbilled_paths_unchanged(img_env, monkeypatch):
++    led, reqs, serve = img_env
++    serve(httpx.Response(200, json={"data": [{"b64_json": _png()}], "usage": {"cost": 0.40}}))
++    img, meta = orp.background("nền", (32, 32))
++    assert meta == {"model": "vendor/model-gia"}
++    assert img.size == (32, 32) and [(r["cost"], r["ok"]) for r in led.rows] == [(0.40, True)]
++    led.rows.clear()
++    serve(httpx.Response(502, json={}))
++    with pytest.raises(ImageProviderError, match="502"):
++        orp.background("nền", (32, 32))
++    assert [(r["cost"], r["ok"]) for r in led.rows] == [(0.0, False)]       # 502 không tính phí (tài liệu)
++    led.rows.clear()
++    reqs.clear()
++    monkeypatch.setenv("LLM_KILL_FEATURES", "marketing-02.1")
++    with pytest.raises(ImageProviderError, match="cổng"):
++        orp.background("nền", (32, 32))
++    assert reqs == [] and led.rows == []
++
++
++class _DbLedger:
++    """gw._connect trỏ conn schema tạm: commit/close no-op để dữ liệu ở lại tx fixture (ROLLBACK cuối)."""
++
++    def __init__(self, conn):
++        self.conn = conn
++
++    def __call__(self):
++        return self
++
++    def execute(self, sql, params=None):
++        return self.conn.execute(sql, params)
++
++    def commit(self):
++        pass
++
++    def close(self):
++        pass
++
++
++def test_image_failed_cost_reaches_monthly_gate_db(img_env, monkeypatch):
++    _led, _reqs, serve = img_env
++    for conn in da_db():
++        monkeypatch.setattr(gw, "_connect", _DbLedger(conn))
++        before = gw._month_spend("marketing-02.1", gw._FEATURE_SPEND_SQL)
++        serve(httpx.Response(200, json={"data": [{"b64_json": "!bad-base64!"}], "usage": {"cost": 0.40}}))
++        with pytest.raises(ImageProviderError):
++            orp.background("nền", (32, 32))
++        rows = conn.execute("select cost_usd, ok, feature_id from llm_usage where agent_id = 'image'").fetchall()
++        assert [(float(c), ok, f) for c, ok, f in rows] == [(0.40, False, "marketing-02.1")]
++        assert gw._month_spend("marketing-02.1", gw._FEATURE_SPEND_SQL) == pytest.approx(before + 0.40)
++        assert gw._month_spend("image") == pytest.approx(0.40)
++
++
++# --- F3: preflight backup đo tệp thật --------------------------------------------
++
++NAME = "fix4_db_20261024_101010_vn.dump.enc"
++DUMP = b"Salted__" + bytes(range(256)) * 4
++
++
++def _backup(tmp_path, *, local=True, local_bytes=DUMP, off=True, off_bytes=DUMP, off_manifest=True, manifest=None,
++            age_h=2.0, status="ok", offsite_cfg=True, encrypted=True):
++    now = datetime.now(timezone.utc)
++    b, o = tmp_path / "b", tmp_path / "o"
++    b.mkdir()
++    o.mkdir()
++    kf = tmp_path / "khoa.txt"
++    kf.write_text("mot-khoa-thu-du-dai-123\n", encoding="utf-8")
++    m = manifest if manifest is not None else {
++        "format": 1, "created_at": (now - timedelta(hours=age_h)).isoformat(), "db_name": "fix4_db",
++        "server_version": "17", "pg_dump_version": "17", "tool": "local", "file": NAME, "size_bytes": len(DUMP),
++        "sha256": hashlib.sha256(DUMP).hexdigest(), "encrypted": encrypted, "cipher": db_backup.CIPHER,
++        "row_counts": {}}
++    if local:
++        (b / NAME).write_bytes(local_bytes)
++    (b / (NAME + db_backup.MANIFEST_SUFFIX)).write_text(json.dumps(m), encoding="utf-8")
++    if off:
++        (o / NAME).write_bytes(off_bytes)
++    if off_manifest:
++        (o / (NAME + db_backup.MANIFEST_SUFFIX)).write_text(json.dumps(m), encoding="utf-8")
++    (b / "backup_runs.jsonl").write_text(json.dumps({
++        "ts": (now - timedelta(hours=age_h)).isoformat(), "status": status, "file": NAME,
++        "sha256": hashlib.sha256(DUMP).hexdigest(), "offsite": "dir"}) + "\n", encoding="utf-8")
++    env = {"BACKUP_DIR": str(b), "BACKUP_PASSPHRASE_FILE": str(kf), "BACKUP_REQUIRE_ENCRYPTION": "1"}
++    if offsite_cfg:
++        env["BACKUP_OFFSITE"] = f"dir:{o}"
++    return env, now
++
++
++_BAD = bytearray(DUMP)
++_BAD[7] ^= 1
++
++
++@pytest.mark.parametrize("kw,want", [
++    ({}, "DAT"),
++    ({"local": False}, "thiếu tệp dump"),
++    ({"local_bytes": bytes(_BAD)}, "sha256 tệp dump lệch"),
++    ({"local_bytes": DUMP + b"x"}, "kích thước"),
++    ({"off": False}, "offsite: thiếu tệp dump"),
++    ({"off_bytes": bytes(_BAD)}, "offsite: sha256"),
++    ({"off_manifest": False}, "offsite: manifest"),
++    ({"manifest": {"encrypted": True}}, "manifest local thiếu/hỏng"),
++    ({"encrypted": False}, "chưa mã hóa"),
++    ({"age_h": -5.0}, "tương lai"),
++    ({"status": "fail"}, "status=fail"),
++    ({"offsite_cfg": False}, "chưa cấu hình offsite")])
++def test_preflight_latest_backup_measures_real_copies(tmp_path, monkeypatch, kw, want):
++    monkeypatch.setattr(db_backup, "same_device", lambda a, b: False)     # GIẢ LẬP khác thiết bị — không phải offsite thật
++    env, now = _backup(tmp_path, **kw)
++    st, note = {k: (s, n) for k, s, n in op.check_backup(env, 0.0, 26.0, now)}["sao_luu:ban_gan_nhat"]
++    if want == "DAT":
++        assert st == "DAT", note
++    else:
++        assert st == "CHUA_DAT" and want in note, note
++
++
++def test_preflight_latest_backup_too_old(tmp_path, monkeypatch):
++    monkeypatch.setattr(db_backup, "same_device", lambda a, b: False)
++    env, now = _backup(tmp_path, age_h=3.0)
++    rows = {k: (s, n) for k, s, n in op.check_backup(env, 0.0, 1.0, now)}
++    assert rows["sao_luu:ban_gan_nhat"][0] == "CHUA_DAT" and "cách 3.0 giờ" in rows["sao_luu:ban_gan_nhat"][1]
++
++
++# --- F4: anchor --upgrade qua cổng triển khai ------------------------------------
++
++class _FakeAnchorConn:
++    def __init__(self, receipt):
++        self.receipt, self.inserts = receipt, []
++
++    def execute(self, sql, params=None):
++        self.sql = sql
++        if sql.lstrip().startswith("insert into anchor_receipts"):
++            self.inserts.append(params)
++        return self
++
++    def fetchone(self):
++        if "from feature_rollout" in self.sql:
++            return None
++        if self.sql.startswith("select now()"):
++            return (datetime(2026, 10, 24, tzinfo=timezone.utc),)
++        if "from anchor_batches" in self.sql:
++            return (7, None, [], "1" * 64, hashlib.sha256(b"x").hexdigest())
++        if "from anchor_receipts" in self.sql:
++            return ("da_gui", "https://cal-b.test", self.receipt)
++        return None
++
++    def commit(self):
++        pass
++
++    def rollback(self):
++        pass
++
++    def close(self):
++        pass
++
++    def transaction(self):
++        return contextlib.nullcontext()
++
++
++@pytest.mark.parametrize("stage", ["tat", "chay_thu", "co_nguoi_duyet", None])
++def test_upgrade_blocked_before_http_and_insert(monkeypatch, stage):
++    monkeypatch.setattr(rollout, "_FORCE_MODE", stage)        # None + enforce + chưa vào sổ → chạy thử (fail-closed)
++    monkeypatch.setattr(rollout, "enforce_enabled", lambda *a: True)
++    c = _FakeAnchorConn(an.ots_file(hashlib.sha256(b"x").digest(), RESP))
++    with pytest.raises(an.AnchorError, match="nâng cấp biên nhận"):
++        an.upgrade(c, 7, OTS_CFG, get=lambda *a: pytest.fail("không được gọi calendar"))
++    assert c.inserts == []
++
++
++def test_upgrade_cli_disabled_exit1_no_network(monkeypatch, no_network, capsys):
++    monkeypatch.setattr(rollout, "_FORCE_MODE", "tat")
++    c = _FakeAnchorConn(an.ots_file(hashlib.sha256(b"x").digest(), RESP))
++    monkeypatch.setattr(an, "load_config", lambda *a, **k: dict(OTS_CFG))
++    monkeypatch.setattr(an, "connect", lambda: c)
++    assert an.main(["--upgrade", "7"]) == 1
++    assert "nâng cấp biên nhận" in capsys.readouterr().err
++    assert no_network == [] and c.inserts == []
++
++
++def test_upgrade_db_disabled_keeps_receipts_then_runs_when_operating(db, proxy, run, monkeypatch):  # noqa: F811
++    _issued(db, proxy, run)
++    bid = an.build(proxy, _now(db))["id"]
++    an.submit(proxy, bid, OTS_CFG, post=_fake_post([], resp=RESP))
++    count = "select count(*) from anchor_receipts where batch_id = %s"
++    n0 = db.execute(count, (bid,)).fetchone()[0]
++    monkeypatch.setattr(rollout, "_FORCE_MODE", "tat")
++    with pytest.raises(an.AnchorError):
++        an.upgrade(proxy, bid, OTS_CFG, get=lambda *a: pytest.fail("không được gọi calendar"))
++    assert db.execute(count, (bid,)).fetchone()[0] == n0
++    monkeypatch.setattr(rollout, "_FORCE_MODE", "van_hanh")
++    r = an.upgrade(proxy, bid, OTS_CFG, get=lambda url, t: b"\x08" + bitcoin(850002))
++    assert r["status"] == "da_nang_cap" and r["heights"] == [850002]
++    assert db.execute(count, (bid,)).fetchone()[0] == n0 + 1
++    assert "CHƯA xác minh bên thứ ba" in an.receipt_state(proxy, bid)

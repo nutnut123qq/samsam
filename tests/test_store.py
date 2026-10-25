@@ -446,10 +446,19 @@ _DOCX_CHECK_OK = re.compile(
     r"\s*\([^;]*\))\s*;")
 
 
+# r13 farming-06: thêm trạng thái `da_nang_cap` cho `anchor_receipts` — chỉ ĐÚNG
+# 2 tên tự đặt cũ (drop) + 2 tên cố định r13 (drop-if-exists / add check).
+_R13_ANCHOR_OK = re.compile(
+    r"\balter\s+table\s+anchor_receipts\s+(?:drop\s+constraint\s+if\s+exists"
+    r"\s+anchor_receipts_(?:status_check|check|status_r13|receipt_r13)|add\s+"
+    r"constraint\s+anchor_receipts_(?:status_r13|receipt_r13)\s+check\s*"
+    r"\([^;]*\))\s*;")
+
+
 def _forbidden_ddl(lower: str) -> list[str]:
-    return re.findall(r"\b(?:alter|drop)\s+table\b", _DOCX_CHECK_OK.sub(
-        "", _V13_CHECK_OK.sub("", _CONSENT_B2B_OK.sub(
-            "", _ALTER_ADD_OK.sub("", lower)))))
+    return re.findall(r"\b(?:alter|drop)\s+table\b", _R13_ANCHOR_OK.sub(
+        "", _DOCX_CHECK_OK.sub("", _V13_CHECK_OK.sub("", _CONSENT_B2B_OK.sub(
+            "", _ALTER_ADD_OK.sub("", lower))))))
 
 
 def test_drift_guard_narrow_alter_only():
@@ -485,7 +494,13 @@ def test_drift_guard_narrow_alter_only():
                 ("alter table orders add constraint "
                  "file_output_evidence_nguon_check check (x);"),
                 ("alter table file_output_evidence drop constraint if exists "
-                 "file_output_evidence_pkey;")):
+                 "file_output_evidence_pkey;"),
+                ("alter table anchor_receipts drop constraint if exists "
+                 "anchor_receipts_pkey;"),
+                ("alter table anchor_receipts add constraint "
+                 "anchor_receipts_status_r13 check (x), drop column receipt;"),
+                ("alter table anchor_batches drop constraint if exists "
+                 "anchor_receipts_check;")):
         assert _forbidden_ddl(bad), bad
     assert _forbidden_ddl(
         "alter table x add column if not exists y text;") == []

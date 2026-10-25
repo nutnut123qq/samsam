@@ -1,0 +1,124 @@
+"""PROBE r13 J v2 (r13-fix4) — bản v1 giữ nguyên 3 ca đầu; ca 4 v1 `preflight_doc_so_backup_that` dựng sổ + manifest CHỈ
+{"encrypted": true}, KHÔNG dump/offsite và kỳ vọng DAT = mã hóa chính lỗi F3 (controller) → thay bằng 2 ca: bộ tệp THẬT
+(dump + manifest đúng định dạng db_backup ở BACKUP_DIR và offsite dir:) mới → DAT, quá tuổi → CHUA_DAT; và ca v1 cũ (manifest
+tối giản, không dump) → CHUA_DAT. Log v1 giữ ở itacc_r13_docx12/probes/j_onprem_* và itacc_r13_fix_4/probes/r13_j_onprem_sau_fix4.
+Mô tả v1: data_platform-90 hạ tầng on-prem: preflight ĐO điều kiện tại máy chạy (`scripts/onprem_preflight.py`) +
+sao lưu bắt buộc mã hóa / offsite khác thiết bị (`scripts/db_backup.py`). Không DB, không dịch vụ: thư mục tạm, sổ backup giả
+lập đúng định dạng. Cùng mã baseline (1ad90df) và bản sửa.  python -I probe_j_onprem.py.txt <ROOT> <out.json>
+Tiêu chí (khóa trước):
+- BACKUP_REQUIRE_ENCRYPTION=1 không có tệp khóa → db_backup từ chối (UsageError) — không bao giờ ghi bản rõ.
+- offsite dir: cùng thiết bị với BACKUP_DIR + BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE=1 → từ chối.
+- preflight khi chưa cấu hình gì → exit 1 "CHƯA SẴN SÀNG", liệt kê mục Bên B phải xác nhận, 0 kết nối DB.
+- preflight đọc sổ backup THẬT trong BACKUP_DIR: bản mới + mã hóa + offsite → DAT; quá tuổi → CHUA_DAT."""
+import contextlib
+import io
+import json
+import os
+import sys
+import tempfile
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith(("PG", "BACKUP_")):
+        os.environ.pop(k, None)
+import psycopg  # noqa: E402
+
+CONN = []
+psycopg.connect = lambda *a, **k: CONN.append(1) or (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+from scripts import db_backup  # noqa: E402
+
+TMP = Path(tempfile.mkdtemp(prefix="r13op-"))
+rows = []
+
+
+def case(ma, fn):
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def refused(env, word):
+    def f():
+        try:
+            db_backup.read_config(env)
+            return False, "không từ chối"
+        except db_backup.UsageError as e:
+            return word in str(e), str(e)
+    return f
+
+
+def c_preflight_empty():
+    from scripts import onprem_preflight as op
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        rc = op.main([])
+    t = out.getvalue()
+    return rc == 1 and "CHƯA SẴN SÀNG" in t and "CHUA_XAC_NHAN" in t and CONN == [], {"rc": rc, "tail": t[-200:]}
+
+
+def _env(tag, real):
+    import hashlib
+    b, o = TMP / tag / "b", TMP / tag / "o"
+    b.mkdir(parents=True)
+    o.mkdir()
+    kf = TMP / tag / "khoa.txt"
+    kf.write_text("mot-khoa-thu-du-dai-123
+", encoding="utf-8")
+    now = datetime.now(timezone.utc)
+    if real:
+        name, dump = "probe_db_20261024_090000_vn.dump.enc", b"Salted__" + bytes(range(200))
+        man = {"format": 1, "created_at": (now - timedelta(hours=3)).isoformat(), "db_name": "probe_db",
+               "server_version": "17", "pg_dump_version": "17", "tool": "local", "file": name, "size_bytes": len(dump),
+               "sha256": hashlib.sha256(dump).hexdigest(), "encrypted": True, "cipher": db_backup.CIPHER,
+               "row_counts": {}}
+        for d in (b, o):
+            (d / name).write_bytes(dump)
+            (d / (name + db_backup.MANIFEST_SUFFIX)).write_text(json.dumps(man), encoding="utf-8")
+        rec = {"ts": (now - timedelta(hours=3)).isoformat(), "status": "ok", "file": name, "offsite": "dir"}
+    else:
+        (b / ("x.dump.enc" + db_backup.MANIFEST_SUFFIX)).write_text(json.dumps({"encrypted": True}), encoding="utf-8")
+        rec = {"ts": (now - timedelta(hours=3)).isoformat(), "status": "ok", "file": "x.dump.enc",
+               "offsite": {"dir": "o"}}
+    (b / "backup_runs.jsonl").write_text(json.dumps(rec) + "
+", encoding="utf-8")
+    return {"BACKUP_DIR": str(b), "BACKUP_PASSPHRASE_FILE": str(kf), "BACKUP_REQUIRE_ENCRYPTION": "1",
+            "BACKUP_OFFSITE": f"dir:{o}"}, now
+
+
+def c_preflight_backup_real():
+    from scripts import onprem_preflight as op
+    env, now = _env("real", True)
+    fresh = {k: st for k, st, _n in op.check_backup(env, 0.0, 26.0, now)}
+    old = {k: st for k, st, _n in op.check_backup(env, 0.0, 1.0, now)}
+    return fresh["sao_luu:ban_gan_nhat"] == "DAT" and old["sao_luu:ban_gan_nhat"] == "CHUA_DAT",         {"fresh": fresh, "old": old}
+
+
+def c_preflight_backup_v1_fake():
+    from scripts import onprem_preflight as op
+    env, now = _env("fake", False)
+    got = {k: st for k, st, _n in op.check_backup(env, 0.0, 26.0, now)}
+    return got["sao_luu:ban_gan_nhat"] == "CHUA_DAT", got
+
+
+case("bat_buoc_ma_hoa_thieu_khoa_tu_choi",
+     refused({"BACKUP_DIR": str(TMP / "b1"), "BACKUP_REQUIRE_ENCRYPTION": "1"}, "BACKUP_REQUIRE_ENCRYPTION"))
+case("offsite_cung_thiet_bi_tu_choi",
+     refused({"BACKUP_DIR": str(TMP / "b2"), "BACKUP_OFFSITE": f"dir:{TMP / 'o2'}",
+              "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "1"}, "thiết bị"))
+case("preflight_chua_cau_hinh_chua_san_sang", c_preflight_empty)
+case("preflight_bo_tep_that_moi_dat_qua_tuoi_chua_dat", c_preflight_backup_real)
+case("preflight_so_manifest_toi_gian_khong_dump_chua_dat", c_preflight_backup_v1_fake)
+out = {"probe": "j_onprem_v2", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:160])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

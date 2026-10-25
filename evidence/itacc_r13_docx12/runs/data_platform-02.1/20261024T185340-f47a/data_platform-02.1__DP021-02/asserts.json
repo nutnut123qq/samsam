@@ -1,0 +1,24 @@
+[
+ {
+  "file_re": "evidence\\itacc_r13_docx12\\runs\\data_platform-02.1\\20261024T185340-f47a\\data_platform-02.1__DP021-02\\out/../../data_platform-02.1__DP021-01/step01.cmd.json",
+  "re": "\"exit\": 2,",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "file_re": "evidence\\itacc_r13_docx12\\runs\\data_platform-02.1\\20261024T185340-f47a\\data_platform-02.1__DP021-02\\out/../../data_platform-02.1__DP021-01/step01.stdout.txt",
+  "re": "\\[blocked\\] 1 tài liệu scan/ảnh ở cho_ocr — OCR_PROVIDER chưa cấu hình",
+  "expect": true,
+  "actual": true,
+  "so_tep": 1,
+  "dat": true
+ },
+ {
+  "sql": "select status from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+  "expect": "cho_ocr",
+  "actual": "cho_ocr",
+  "dat": true
+ }
+]
