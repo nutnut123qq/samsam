@@ -1,0 +1,169 @@
+{
+ "probe": "p2_anchor_human_v1",
+ "root": "D:\\code\\samsam",
+ "db": "samsam_itacc_r14_a1",
+ "ca": [
+  {
+   "ca": "nguoi_dung_quyen_bitcoin",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "post": "0",
+    "get": "1",
+    "net": "0",
+    "out": "[FAKE] GET https://cal-b.test/timestamp/3ed3f36ff51878559047f6deddcad49\r\n[ok] lần gom #1: calendar cal-b.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba (ots verify với header khối Bitcoin) · khối [850001]\r\n[FAKE] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n",
+    "da_nang_cap": [
+     [
+      "Người Duyệt Neo Thử"
+     ]
+    ],
+    "log": 1
+   }
+  },
+  {
+   "ca": "chay_lai_khong_trung",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "post": "0",
+    "get": "0",
+    "net": "0",
+    "out": "[ok] lần gom #1: calendar cal-b.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba (ots verify với header khối Bitcoin)\r\n[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n"
+   }
+  },
+  {
+   "ca": "nguoi_dung_quyen_404",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "post": "0",
+    "get": "1",
+    "net": "0",
+    "out": "[FAKE] GET https://cal-b.test/timestamp/f1b2db64783d27271bb9ed6983fd0ff\r\n[cho] lần gom #2: calendar chưa có attestation Bitcoin\r\n[FAKE] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n"
+   }
+  },
+  {
+   "ca": "job_co_nguoi_duyet",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "post": "0",
+    "get": "0",
+    "net": "0",
+    "out": "[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [err] nâng cấp biên nhận lần gom #3: tính năng farming-06 đang có người duyệt — HĐ 6.7/PL02 mục 1 — mục chưa được NGƯỜI duyệt từng mục\r\n"
+   }
+  },
+  {
+   "ca": "gia_by",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "post": "0",
+    "get": "0",
+    "net": "0",
+    "out": "[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n[err] --by \"Người Bán Hàng Thử\" không phải người của login r14p2_sau_a — không ghi thay người khác\r\n"
+   }
+  },
+  {
+   "ca": "login_khong_anh_xa",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "post": "0",
+    "get": "0",
+    "net": "0",
+    "out": "[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n[err] login r14p2_sau_u chưa được ánh xạ người (human_logins — Bên B điền theo văn bản ủy quyền, không tự điền)\r\n"
+   }
+  },
+  {
+   "ca": "sai_khoi",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "post": "0",
+    "get": "0",
+    "net": "0",
+    "out": "[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n[err] người \"Người Bán Hàng Thử\" không được ủy quyền khối farming (human_logins)\r\n"
+   }
+  },
+  {
+   "ca": "nguoi_chay_thu",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "post": "0",
+    "get": "0",
+    "net": "0",
+    "out": "[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n[err] nâng cấp biên nhận lần gom #7: tính năng farming-06 đang chạy thử — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng\r\n"
+   }
+  },
+  {
+   "ca": "calendar_ngoai_allowlist",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "post": "0",
+    "get": "0",
+    "net": "0",
+    "out": "[cho] lần gom #8: calendar chưa có attestation Bitcoin — calendar ngoài cấu hình — không hỏi\r\n[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n"
+   }
+  },
+  {
+   "ca": "receipt_cay_hong",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "post": "0",
+    "get": "0",
+    "net": "0",
+    "out": "[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n[err] phép 0x6e không hỗ trợ\r\n"
+   }
+  },
+  {
+   "ca": "job_van_hanh",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "post": "0",
+    "get": "1",
+    "net": "0",
+    "out": "[FAKE] GET https://cal-b.test/timestamp/e68ea82f639bfb6f3cb0c0848917ed7\r\n[ok] lần gom #10: calendar cal-b.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba (ots verify với header khối Bitcoin) · khối [850001]\r\n[FAKE] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0\r\n | ",
+    "row": [
+     [
+      "agent:anchor"
+     ]
+    ]
+   }
+  },
+  {
+   "ca": "submit_nguoi_giu_nguyen",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "post": "2",
+    "get": "0",
+    "net": "0",
+    "out": "[ok] lần gom #11: đã gửi calendar cal-b.test — chờ xác nhận Bitcoin (--upgrade; bên thứ ba: ots verify)\r\n[FAKE] POST_CALLS 2 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)\r\n",
+    "row": [
+     [
+      "da_gui",
+      "Người Duyệt Neo Thử"
+     ]
+    ]
+   }
+  },
+  {
+   "ca": "sql_truc_tiep",
+   "ket_qua": "PASS",
+   "actual": {
+    "insert": "InsufficientPrivilege",
+    "update": "InsufficientPrivilege",
+    "delete": "InsufficientPrivilege"
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 13,
+  "FAIL": 0
+ }
+}

@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from anchor_receipts",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from anchor_receipts r join anchor_batches b on b.id = r.batch_id where r.status = 'da_gui' and r.provider = 'opentimestamps' and r.calendar = 'https://cal-b.test' and r.created_by = 'agent:anchor' and substr(r.receipt, 1, 33) = decode('004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e892940108', 'hex') and substr(r.receipt, 34, 32) = decode(b.manifest_sha256, 'hex') and position(decode('83dfe30d2ef90c8e', 'hex') in r.receipt) > 0",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from anchor_receipts where status = 'loi'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

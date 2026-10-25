@@ -1,0 +1,26 @@
+[
+ {
+  "sql": "select status || '|' || text_source || '|' || pages || '|' || pii_flag::text || '|' || doc_type from documents where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1'",
+  "expect": "pending_review|pdf_text|1|false|giay_tiep_nhan",
+  "actual": "pending_review|pdf_text|1|false|giay_tiep_nhan",
+  "dat": true
+ },
+ {
+  "sql": "select status || '|' || text_source || '|' || coalesce(pii_flag::text, 'NULL') from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+  "expect": "cho_ocr|none|NULL",
+  "actual": "cho_ocr|none|NULL",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) > 0 from document_fields where sha256 = 'af03f4436115c4e1aac2eeb9ae831291dd0b0147fb42af1e3ab2bd78b688d2f1'",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from document_fields where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

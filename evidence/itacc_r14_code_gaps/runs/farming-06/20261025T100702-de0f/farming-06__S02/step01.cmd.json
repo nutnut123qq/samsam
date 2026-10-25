@@ -1,0 +1,21 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-c",
+  "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T10:07:06+07:00",
+ "ket_thuc": "2026-10-25T10:07:08+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "6f8aa80ad50cc17c10952ec5d93ac2addd4a2ba2eeac0003c34212bddb2e33b2",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

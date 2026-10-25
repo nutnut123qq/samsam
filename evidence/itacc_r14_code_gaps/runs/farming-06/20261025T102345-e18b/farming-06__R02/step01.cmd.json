@@ -1,0 +1,33 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/anchor_ots_run.py.txt",
+  "--fake-post",
+  "none",
+  "--submit",
+  "latest"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T10:30:39+07:00",
+ "ket_thuc": "2026-10-25T10:30:41+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "^(?![\\s\\S]*\\[FAKE\\] POST https)[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\[err\\] neo lần gom #\\d+: tính năng farming-06 đang chạy thử — HĐ 6\\.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "145a0d44b90f83518a743a0303ec7b10ce71a7e3f2c4e12f4ea727be6d69eab4",
+ "stderr_sha256": "8978aee0b041a197d2dd0898879c8de96d157687b451dce16e680488ea3a945e"
+}

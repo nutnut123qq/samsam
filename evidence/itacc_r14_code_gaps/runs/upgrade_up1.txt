@@ -1,0 +1,14 @@
+# nâng cấp schema r14 — 2026-10-25T10:01:12+07:00
+# trước: 100 bảng, anchor_receipts=13, documents=1, agent_action_log=3
+PASS apply_schema --roles lần 1 exit 0 [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+PASS apply_schema --roles lần 2 exit 0 [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+PASS số dòng mọi bảng giữ nguyên {}
+PASS đuôi hash chain agent_action_log giữ nguyên
+PASS verify_action_log 0 vấn đề (0)
+PASS chỉ mục anchor_receipts_upgrade_once
+PASS function anchor_upgrade_human SECURITY DEFINER + search_path cố định (True, True)
+PASS app_human EXECUTE, PUBLIC không, app_human không INSERT anchor_receipts (True, False, False)
+PASS quyền bảng chỉ THÊM (sau ⊇ trước) []
+# sau: anchor_receipts=13, quyền mới 0
+TONG PASS
+EXIT 0

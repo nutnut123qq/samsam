@@ -1,0 +1,10 @@
+PASS anh_hop_le_cost_040 {'out': 'ảnh (32, 32)', 'spend_agent': 0.4, 'spend_feature': 0.4}
+PASS b64_hong_giu_cost_040 {'out': 'ImageProviderError: response API sinh ảnh sai định dạng', 'spend_agent': 0.4, 'spend_feature': 0.4}
+PASS data_rong_giu_cost_040 {'out': 'ImageProviderError: response API sinh ảnh sai định dạng', 'spend_agent': 0.4, 'spend_feature': 0.4}
+PASS thieu_data_giu_cost_040 {'out': 'ImageProviderError: response API sinh ảnh sai định dạng', 'spend_agent': 0.4, 'spend_feature': 0.4}
+PASS byte_khong_phai_anh_giu_cost_040_ok_false {'out': 'ImageProviderError: ảnh trả về hỏng (UnidentifiedImageError)', 'spend_agent': 0.4, 'spend_feature': 0.4}
+PASS b64_hong_khong_usage_du_phong {'out': 'ImageProviderError: response API sinh ảnh sai định dạng', 'spend_agent': 0.25, 'spend_feature': 0.25}
+PASS than_khong_phai_json_du_phong {'out': 'ImageProviderError: response API sinh ảnh sai định dạng', 'spend_agent': 0.25, 'spend_feature': 0.25}
+PASS doi_chung_502_khong_tinh_phi {'out': 'ImageProviderError: API sinh ảnh trả HTTP 502', 'requests': 2}
+PASS doi_chung_nut_tat_0_request {'out': "ImageProviderError: cổng chi phí/tắt chặn: tính năng 'marketing-02.1' đang bị nút tắt khẩn", 'requests': 0}
+TONG {'PASS': 9, 'FAIL': 0}

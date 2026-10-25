@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'label_check' and object_id like 'sxlabel:mat-ong-sam-300ml:%' and block = 'production' and created_by = 'agent:sx_label' and status = 'pending'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'label_check'",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ }
+]

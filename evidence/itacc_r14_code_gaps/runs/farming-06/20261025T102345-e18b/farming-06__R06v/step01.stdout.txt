@@ -1,0 +1,5 @@
+[HARNESS] provider=opentimestamps (giả) calendars=['https://cal-a.test', 'https://cal-b.test'] post=none get=bitcoin
+[FIXTURE] rollout._FORCE_MODE=van_hanh
+[FAKE] GET https://cal-b.test/timestamp/e9ca2dd315d1e82c1383068be1ad191eccdc781a9d9cf57f52bffe97ee4ecf30 timeout=5 khop_commitment=True
+[ok] lần gom #1: calendar cal-b.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba (ots verify với header khối Bitcoin) · khối [850001]
+[FAKE] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0

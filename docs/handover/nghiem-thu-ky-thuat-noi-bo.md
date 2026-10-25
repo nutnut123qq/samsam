@@ -1,8 +1,80 @@
-# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r13-fix4 (vá 4 lỗi controller của r13, 25/10/2026)
+# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r14-fix2 (vá 2 lỗi controller của r14, 25/10/2026)
 
 > **Đây KHÔNG phải nghiệm thu hợp đồng.** Kiểm hành vi phần mềm trên máy dev, DB Postgres thử cô lập, dữ liệu fixture giả. Không xác nhận thay hai bên, không đổi `acceptance_status` (vẫn 0/96 `da_nghiem_thu`), không coi máy này là server Bên B, không dùng số ĐẠT nội bộ thay số nghiệm thu hợp đồng. Ma trận nghiệm thu hợp đồng (`ma-tran-nghiem-thu.md`) giữ vai trò riêng.
 
-## 0. Checkpoint r13-fix4 — vá 4 lỗi controller phát hiện ở r13 (25/10/2026)
+## 0. Checkpoint r14-fix2 — vá 2 lỗi controller của r14 (25/10/2026)
+
+- **Phạm vi:** nhánh `codex/docx-code-gaps` (HEAD `0afa388`, r14 chưa commit). Snapshot r14 CHƯA vá ngoài repo
+  `D:\code\samsam_r14fix_snapshot` (khớp fp mã `ed6a3551…`); lịch sử neo hợp lệ dựng bằng code baseline `0afa388`
+  (`D:\code\samsam_r14_baseline`). CHƯA commit/merge/push/deploy; không DB `samsam`; container riêng `samsam-itacc-r14fix2`
+  (127.0.0.1:55456). Evidence `evidence/itacc_r14_fix_2/`.
+- **Đính chính r14:** (1) "refresh không in token" chưa đúng — trường lỗi của sàn (`error` Shopee / `code` TikTok) được in
+  nguyên văn qua `mc._safe` (chỉ che PII), nên phản hồi phản chiếu token/khóa lộ ra stdout và chuỗi exception; cùng cụm ở
+  `_request` (đường dữ liệu). (2) "nâng cấp schema ×2 PASS" chỉ đúng với lịch sử không trùng — lịch sử HỢP LỆ có 2
+  `da_nang_cap` cùng lần gom (2 upgrade baseline chạy đồng thời) làm `create unique index anchor_receipts_upgrade_once` lỗi
+  23505; và r14 báo `new: True` cho cả 2 caller đua dù chỉ 1 dòng được ghi.
+
+| Lỗi | Trước (snapshot r14) | Sau (fp mã `10c77bd2fb44…`) | Probe trước → sau (PASS/FAIL, cùng sha) | Mức |
+|---|---|---|---|---|
+| F1 credential lọt log lỗi refresh | `{"error": <refresh token>}` / `{"code": <app_secret>}` / dict/list chứa token → in nguyên văn ở `[err]` + exception; đường dữ liệu cũng vậy | `market_api._err_code`: chỉ in mã đúng dạng (Shopee `error_[a-z0-9_]`, TikTok số nguyên), loại mọi mã chứa credential đã biết, khác → "đã ẩn"; áp cả refresh lẫn `_request`; HTTP/mạng/JSON vẫn chỉ status/loại lỗi | Q1 6/8 → 14/0 | CONTRACT_TESTED (server giả) |
+| F2 migration lỗi với lịch sử trùng hợp lệ | áp schema r14 lên DB có 2 `da_nang_cap` hợp lệ cùng lần gom → 23505, schema không nâng cấp được; 2 caller đua đều báo `new: True` | bỏ chỉ mục unique; trigger `anchor_receipts_upgrade_once` (BEFORE INSERT `da_nang_cap`: khóa advisory theo lần gom + kiểm lại dưới khóa → 23505 cho dòng MỚI, lịch sử không đụng); function `anchor_upgrade_human` trả `(receipt_id, created)`; đường job ghi dưới cùng khóa; `new` = có thật tạo dòng; lịch sử > 1 dòng → báo `so_dong_nang_cap`, CLI in "N biên nhận da_nang_cap (lịch sử)" | Q2 5/5 → 10/0 | LOCAL, login Postgres THẬT, calendar giả |
+
+- **Migration (Q2 + `runs/upgrade_tu_schema_r14.txt`):** lịch sử dựng bằng 2 lời gọi `upgrade()` baseline đồng thời (barrier ở
+  calendar giả, cây OTS hợp lệ) → áp schema/roles mới ×2 exit 0; số dòng mọi bảng, từng dòng biên nhận (id/status/sha256/
+  created_by), đuôi hash chain, verify_action_log 0, quyền chỉ thêm — giữ nguyên. Nâng cấp từ DB đã có schema r14 cũ (chỉ mục
+  + function kiểu bigint) ×2: chỉ mục bỏ, trigger có, function trả TABLE, app_human EXECUTE, PUBLIC không, app_human không
+  INSERT, dòng giữ nguyên. Đồng thời sau nâng cấp: job+job, người+người, người+job → đúng 1 dòng mới, 1 `new` True + 1 False;
+  ca chặn (job ở có người duyệt, sai `--by`, chạy thử) 0 GET 0 dòng.
+- **Hồi quy (mã cuối):** r14_p1_ocr_isolation 11/0, r14_p2_anchor_human 13/0, r14_p3_market_refresh 10/0, r13_g_anchor 5/0, r13_e_market_v2 5/0, fix4_n_anchor_gate 9/0.
+- **Kiểm lại 2 mục** (tiêu chí `criteria/r14fix2_v1.json` = r14_v1 chỉ đổi tên DB/thư mục): farming-06 BỊ CHẶN 27/0/1, data_platform-06 BỊ CHẶN 9/0/0.
+- **Tổng nội bộ (code sinh `tong_hop.json`):** 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN (r14: 84/0/12). Nguồn: r10 29, r11 4, r12 42, r12fix 4, r13 10, r13fix4 3, r14 2, r14fix2 2; 5392 tham chiếu
+  evidence khớp, 0 vi phạm nhất quán. Nghiệm thu hợp đồng 0/96.
+- **Full/gate (fp mã `10c77bd2fb44271e063e1724d318bb81297ae57a8e9665b66bd995ccb5c89866`):** full pytest **6893 passed in 4066.75s (1:07:46)**, EXIT 0, 0 failed / 0 skipped (`gate/full_chot_f1.txt`, DB mới
+  `samsam_itacc_r14fix2_full1`); ruff EXIT 0; eval `[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=bc378178b239 model=rules judge=None` EXIT 0; DPIA --check EXIT 0; red-team `tỷ lệ lọt: 0/50 = 0.0% (known-gap 0, lọt chưa xử lý 0)` EXIT 0; quét secret
+  `gate/secret_scan.txt`.
+- **Còn chờ (không đổi):** quyết toán API sàn (Kế toán chốt ánh xạ escrow Shopee + tài liệu finance TikTok); website/chatbot
+  repo riêng; vendor/dữ liệu thật/hạ tầng/biên bản hai bên — `dau-vao-va-quyet-dinh.md` mục H.
+
+## 0-r14. Checkpoint r14 (LỊCH SỬ — 2 đính chính F1/F2 ở mục 0) — phần code còn thiếu bám DOCX: C1 OCR, C2 neo cho người duyệt, C3a refresh token (25/10/2026)
+
+- **Phạm vi:** nhánh `codex/docx-code-gaps` từ `main` `0afa388` (snapshot `D:\code\samsam_r14_baseline`, `git archive`), CHƯA
+  commit/merge/push/deploy. Không DB `samsam`; container riêng `samsam-itacc-r14` (127.0.0.1:55455). Bảng việc A/B/C/D lập
+  TRƯỚC khi code: `evidence/itacc_r14_code_gaps/BANG_VIEC.md`; nguồn tài liệu API sàn: `NGUON_TAI_LIEU.md`.
+- **Đính chính:** checkpoint r13/r13-fix4 ghi "bảng chờ CHỈ còn đầu vào ngoài code" và "tài liệu chính thức sàn không truy
+  cập được" — CHƯA đúng: còn code chưa viết (3 việc dưới + quyết toán qua API), tài liệu Shopee/TikTok mở được bằng trình
+  duyệt (công cụ tải trang bị chặn domain). Bảng chờ hiện hành: `dau-vao-va-quyet-dinh.md` mục H.
+
+| Việc | Trước (0afa388) | Sau (fp mã `ed6a35516235…`) | Probe trước → sau (PASS/FAIL, cùng sha) | Mức |
+|---|---|---|---|---|
+| C1 OCR chết/treo tiến trình gọi | model đủ tên + khác rỗng nhưng hỏng → PaddleOCR native crash giết intake/reprocess/sx_label (0xC0000005); engine abort giết caller; treo khi khởi tạo không có timeout (kết quả muộn ghi được) | `ingest/ocr_worker.py`: nạp model + render + nhận dạng ở TIẾN TRÌNH CON; cha kiểm model rồi đợi có timeout (bọc cả nạp model), crash/treo/kết quả hỏng → `DocError`; con không nhận DSN | P1 4/7 → 11/0 | LOCAL (PaddleOCR thật + gói giả crash/treo) |
+| C2 nâng cấp neo cho người duyệt | `upgrade()` chặn mọi người ở giai đoạn có người duyệt; CLI không truyền `--by` | `upgrade(by=)`: cổng theo người + `human_actor` TRƯỚC HTTP; ghi qua function `anchor_upgrade_human` (SECURITY DEFINER, search_path cố định, chỉ app_human EXECUTE); 1 `da_nang_cap`/lần gom (unique) | P2 10/3 → 13/0 | MOCK calendar, login Postgres THẬT |
+| C3a refresh token sàn | không có | `--refresh` + tự refresh khi < 1 giờ theo tài liệu chính thức (Shopee POST `/api/v2/auth/access_token/get`, TikTok GET `/api/v2/token/refresh`); kho `MARKET_TOKEN_FILE` ngoài repo, ghi nguyên tử, khóa tệp, 1 lần thử, không redirect, không in token; `AUTH_ALLOWED` cứng | P3 3/7 → 10/0 | CONTRACT_TESTED (server giả) — UNVERIFIED_LIVE |
+
+- **Không làm (B — cần quyết định/tài liệu):** quyết toán qua API — Shopee escrow có tài liệu nhưng ánh xạ ~40 thành phần
+  (gồm thuế khấu trừ VAT/PIT/CIT) vào 7 cột `settlement_rows` là quyết định Kế toán; TikTok finance chưa có tài liệu chính thức
+  bản hiện hành. Tạm dùng `ingest.settlement_csv`.
+- **Probe:** khóa trước khi sửa (`KHOA_PROBE_truoc_sua.txt`). Ca P3 `kho_trong_repo`/`doi_chung_tat` cũng PASS ở baseline do
+  `--refresh` không tồn tại (argparse exit 2, 0 request) — chỉ là đối chứng. P1 lượt `sau_chot2` FAIL 2 ca intake/reprocess
+  do dùng lại DB đã có tài liệu (intake báo trùng) — chạy lại trên DB mới dựng từ cây cuối (`sau_chot3`), probe không đổi.
+  Hồi quy r13/r13-fix4 trên mã cuối: a_ocr 10/0, b_stt 8/0, c_image_v2 13/0, d_dossier 5/0, e_market_v2 5/0, f_persona 4/0, g_anchor 5/0, h_feed 4/0, i_incident 5/0, l_image_cost 9/0, m_backup_files 14/0, n_anchor_gate 9/0, j_onprem_v3 5/0; `k_ocr_models_v2` 6/1 (ca đòi PaddleOCR khởi tạo TRONG tiến trình
+  gọi — đúng điều C1 cố ý đổi) → v3 bỏ đúng điều kiện đó: 7/0.
+- **Kiểm lại 4 mục** (tiêu chí `criteria/r14_v1.json` kế thừa nguyên ca nguồn hiện hành + ca R14 mới, khóa trước): production-03 BỊ CHẶN 12/0/0, data_platform-02.1 BỊ CHẶN 14/0/0, farming-06 BỊ CHẶN 27/0/1, data_platform-06 BỊ CHẶN 9/0/0.
+  Lô k1 dừng có chủ đích (sửa blocker catalog sai trước khi chốt fingerprint); lô k2: farming-06 FAIL vì harness r13
+  `anchor_ots_run` thay `upgrade.__defaults__` mà chữ ký mới thêm `by` ở vị trí → đổi `by` thành keyword-only (giữ nguyên chữ
+  ký vị trí cũ) → fingerprint chốt v2, chạy lại cả 4 mục (k3).
+- **Schema/roles:** function `anchor_upgrade_human` + chỉ mục unique `anchor_receipts_upgrade_once` + EXECUTE cho app_human;
+  nâng cấp từ DB baseline CÓ DỮ LIỆU ×2: PASS (dòng mọi bảng, đuôi hash chain, verify_action_log 0, quyền chỉ thêm —
+  `runs/upgrade_up1.txt`).
+- **Tổng nội bộ (code sinh `tong_hop.json`):** 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN (r13-fix4: 84/0/12). Nguồn: r10 29, r11 4, r12 42, r12fix 4, r13 10, r13fix4 3, r14 4; 5392 tham chiếu
+  evidence khớp file/hash, 0 vi phạm nhất quán. 12 mục vẫn BỊ CHẶN; data_platform-06 nguyên nhân cập nhật (refresh đã có, quyết
+  toán chưa). Nghiệm thu hợp đồng 0/96.
+- **Full/gate (fp mã `ed6a3551623569aae681df676cb1a4e41dee382f482a1ecc48cc7a8a27e23fca`):** full pytest **6882 passed in 4687.76s (1:18:07)**, EXIT 0, 0 failed / 0 skipped (`gate/full_chot_f1.txt`, DB mới
+  `samsam_itacc_r14_full1`); ruff EXIT 0; eval `[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=bc378178b239 model=rules judge=None` EXIT 0; DPIA --check EXIT 0; red-team `tỷ lệ lọt: 0/50 = 0.0% (known-gap 0, lọt chưa xử lý 0)` EXIT 0; quét secret
+  `gate/secret_scan.txt`.
+- **Giới hạn:** OCR mỗi tài liệu 1 tiến trình (nạp model ~10 s); refresh chưa chạy sandbox; nơi lưu credential cuối cùng chưa
+  chốt; neo vẫn calendar giả. KHÔNG phải tích hợp thật/nghiệm thu hợp đồng.
+
+## 0-r13fix4. Checkpoint r13-fix4 (LỊCH SỬ — xem đính chính ở mục 0) — vá 4 lỗi controller phát hiện ở r13 (25/10/2026)
 
 - **Bối cảnh:** controller rà r13 (fp mã `1975775d…`) tái hiện 4 lỗi nên chưa duyệt đóng r13. Lượt này chỉ vá 4 lỗi +
   test/probe + hồ sơ; CHƯA commit/merge/push/deploy, không DB `samsam`, không đổi `acceptance_status` (0/96), không gỡ
@@ -233,7 +305,7 @@
 - Như r10/r11 (tiêu chí khóa trước, entry point thật, assertion máy kiểm, evidence gốc không ghi đè) + r12: probe trước/sau cho từng nhóm lỗi, tiêu chí kiểm lại 48 mục thực thi được, phiên bản tiêu chí mới khi phát hiện lỗi harness/tiêu chí (không sửa tệp đã khóa), tổng hợp 96 bằng code (`harness/aggregate_r12.py.txt`).
 - Phân loại: ĐẠT = mọi ca bắt buộc PASS; CHƯA KIỂM = có NOT_RUN/lỗi harness; BỊ CHẶN = lỗi sản phẩm đã xác minh hoặc lý do ngoài code (giữ nguyên dù ca chạy được PASS). FIXTURE (golden giả, ép van_hanh, lùi ngày hiệu lực giá bằng tắt trigger trong DB thử, setval sequence) chỉ dựng tình huống — không là bằng chứng quyền/append-only/ngày chạy thử hợp đồng.
 
-## 3. Kết quả tổng HIỆN HÀNH (r13-fix4) — mẫu số 96 (89 tính năng AI + 7 hạng mục)
+## 3. Kết quả tổng HIỆN HÀNH (r14-fix2) — mẫu số 96 (89 tính năng AI + 7 hạng mục)
 
 | Nhóm | Số mục |
 |---|---|
@@ -266,7 +338,7 @@
 
 ## 4. Bảng 96 mục
 
-Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transport). Lượt = nguồn bản ghi hiện hành (`evidence/itacc_r13_fix_4/source_map.json`; r13fix4 = kiểm lại lượt vá 4 lỗi, r13 = lượt r13, còn lại kế thừa). Chi tiết: bản ghi theo đường dẫn trong source_map.
+Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transport). Lượt = nguồn bản ghi hiện hành (`evidence/itacc_r14_fix_2/source_map.json`; r14fix2/r14 = kiểm lại lượt vá/r14, r13fix4/r13 = lượt trước, còn lại kế thừa). Chi tiết: bản ghi theo đường dẫn trong source_map.
 
 | ID | Khối | GĐ | Tên | Lượt | Trạng thái | Mức | Ca P/F/N | Nguyên nhân / ghi chú |
 |---|---|---|---|---|---|---|---|---|
@@ -327,7 +399,7 @@ Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transpor
 | finance-05.2 | finance | P1 | Dự báo dòng tiền 13 tuần | r12 | **ĐẠT** | LOCAL | 8/0/0 |  |
 | production-01 | production | P1 | Báo cáo sản xuất | r12 | **ĐẠT** | LOCAL | 12/0/0 |  |
 | production-02 | production | P1 | Hồ sơ sản phẩm | r13 | **BỊ CHẶN** | LOCAL | 11/0/0 | EXTERNAL_INPUT |
-| production-03 | production | P1 | Đối soát nhãn | r13fix4 | **BỊ CHẶN** | LOCAL | 11/0/0 | EXTERNAL_INPUT |
+| production-03 | production | P1 | Đối soát nhãn | r14 | **BỊ CHẶN** | LOCAL | 12/0/0 | EXTERNAL_INPUT |
 | production-04.3 | production | P1 | Hồ sơ lô, cảnh báo cận hạn | r12 | **ĐẠT** | LOCAL | 13/0/0 |  |
 | production-05.1 | production | P2 | Tra cứu tài liệu R&D | r12 | **ĐẠT** | MOCK | 7/0/0 |  |
 | production-05.2 | production | P2 | Tóm tắt tài liệu R&D | r12 | **ĐẠT** | MOCK | 8/0/0 |  |
@@ -351,7 +423,7 @@ Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transpor
 | legal_hr-06.3 | legal_hr | P1 | Chấm công | r12 | **ĐẠT** | LOCAL | 5/0/0 |  |
 | legal_hr-07 | legal_hr | P2 | Cập nhật văn bản pháp luật mới | r11 | **ĐẠT** | MOCK | 6/0/0 |  |
 | data_platform-01 | data_platform | P1 | Kho dữ liệu chung | r10 | **ĐẠT** | LOCAL | 11/0/0 |  |
-| data_platform-02.1 | data_platform | P1 | Đọc chữ tự động từ giấy tờ | r13fix4 | **BỊ CHẶN** | LOCAL | 13/0/0 | EXTERNAL_INPUT |
+| data_platform-02.1 | data_platform | P1 | Đọc chữ tự động từ giấy tờ | r14 | **BỊ CHẶN** | LOCAL | 14/0/0 | EXTERNAL_INPUT |
 | data_platform-02.2 | data_platform | P1 | Lưu bản gốc kèm mã kiểm tra | r13 | **ĐẠT** | LOCAL | 11/0/0 |  |
 | data_platform-03 | data_platform | P1 | Kho tri thức cho chatbot | r10 | **ĐẠT** | MOCK | 7/0/0 |  |
 | data_platform-04 | data_platform | P1 | Cổng AI an toàn | r10 | **ĐẠT** | MOCK | 1/0/0 |  |
@@ -360,8 +432,8 @@ Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transpor
 | data_platform-07.2 | data_platform | P1 | Backup hằng ngày | r13fix4 | **ĐẠT** | LOCAL | 12/0/0 |  |
 | data_platform-07.3 | data_platform | P1 | Kiểm thử trước khi đưa thay đổi lên | r10 | **ĐẠT** | LOCAL | 7/0/0 |  |
 | sales-08 | sales | P1 | Website bán hàng | r13 | **BỊ CHẶN** | LOCAL | 7/0/1 | SEPARATE_REPO |
-| data_platform-06 | data_platform | P2 | Kết nối API sàn chỉ đọc | r13 | **BỊ CHẶN** | MOCK | 7/0/0 | EXTERNAL_INPUT |
-| farming-06 | farming | P2 | Neo mã xác thực lên blockchain | r13fix4 | **BỊ CHẶN** | MOCK | 24/0/1 | EXTERNAL_INPUT |
+| data_platform-06 | data_platform | P2 | Kết nối API sàn chỉ đọc | r14fix2 | **BỊ CHẶN** | MOCK | 9/0/0 | EXTERNAL_INPUT |
+| farming-06 | farming | P2 | Neo mã xác thực lên blockchain | r14fix2 | **BỊ CHẶN** | MOCK | 27/0/1 | EXTERNAL_INPUT |
 | finance-06 | finance | P1 | Doanh thu thuần trực tuyến + biên bản đối soát quý | r12 | **ĐẠT** | LOCAL | 12/0/0 |  |
 | data_platform-08 | data_platform | P1 | Sổ triển khai 3 bước + hồ sơ nghiệm thu + báo cáo vận hành tháng | r10 | **ĐẠT** | LOCAL | 10/0/0 |  |
 | ceo-90 | ceo | P1 | Nghĩa vụ hợp đồng ngoài phần mềm | r13 | **BỊ CHẶN** | LOCAL | 7/0/1 | NON_SOFTWARE |

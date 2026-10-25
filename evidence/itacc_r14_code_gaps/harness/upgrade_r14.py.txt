@@ -1,0 +1,85 @@
+"""HARNESS r14 — nâng cấp schema/roles từ baseline `0afa388` CÓ DỮ LIỆU → working tree, áp 2 lần.
+DB nguồn = bản sao (CREATE DATABASE … TEMPLATE) của DB baseline `samsam_itacc_r14_base1` (dựng bằng cây baseline + dữ liệu thật
+của probe P1/P2 phía trước: tài liệu, lần gom neo, biên nhận da_gui + da_nang_cap, agent_action_log). Container r14
+(127.0.0.1:55455), KHÔNG samsam. Không in DSN/mật khẩu.
+  python -I upgrade_r14.py.txt <repo> <admin_env> <template_db> <new_db>
+Kiểm: (1) số dòng MỌI bảng public không đổi qua 2 lần áp; đuôi hash chain agent_action_log không đổi; verify_action_log()
+0 vấn đề; (2) có chỉ mục unique `anchor_receipts_upgrade_once` (dữ liệu da_nang_cap cũ không trùng nên tạo được); function
+`anchor_upgrade_human` SECURITY DEFINER + search_path cố định, app_human EXECUTE, PUBLIC không; app_human KHÔNG INSERT
+anchor_receipts; (3) quyền bảng (role_table_grants) sau ⊇ trước — chỉ THÊM, không BỚT."""
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import psycopg
+from psycopg import conninfo
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+REPO, ADM, TPL, DB = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3], sys.argv[4]
+assert DB.startswith("samsam_itacc_r14_") and TPL.startswith("samsam_itacc_r14_")
+d = conninfo.conninfo_to_dict(ADM.read_text(encoding="utf-8").split("'")[1])
+assert d["host"] == "127.0.0.1" and str(d["port"]) == "55455"
+d["dbname"] = "postgres"
+with psycopg.connect(conninfo.make_conninfo(**d), autocommit=True, connect_timeout=5) as c:
+    if c.execute("select 1 from pg_database where datname = %s", (DB,)).fetchone():
+        raise SystemExit(f"DB {DB} đã có — không ghi đè")
+    c.execute(f"create database {DB} template {TPL}")
+d["dbname"] = DB
+DSN = conninfo.make_conninfo(**d)
+FAILS = []
+
+
+def check(name, cond, info=""):
+    print(("PASS " if cond else "FAIL ") + name + (f" {info}" if info else ""), flush=True)
+    if not cond:
+        FAILS.append(name)
+
+
+def snap(c):
+    tabs = [r[0] for r in c.execute("select table_name from information_schema.tables where table_schema = 'public'"
+                                    " and table_type = 'BASE TABLE' order by 1")]
+    counts = {t: c.execute(f'select count(*) from public."{t}"').fetchone()[0] for t in tabs}
+    tail = c.execute("select id, row_hash from agent_action_log order by id desc limit 1").fetchone()
+    grants = set(c.execute("select grantee, table_name, privilege_type from information_schema.role_table_grants"
+                           " where table_schema = 'public' and grantee <> 'postgres'").fetchall())
+    return counts, tail, grants
+
+
+def apply():
+    env = {k: v for k, v in os.environ.items() if not (k.startswith("PG") or k.endswith("DATABASE_URL"))}
+    env.update(DATABASE_URL=DSN, PYTHONIOENCODING="utf-8")
+    r = subprocess.run([sys.executable, "scripts/apply_schema.py", "--roles"], cwd=REPO, env=env,
+                       capture_output=True, timeout=600)
+    out = r.stdout.decode("utf-8", "replace")
+    return r.returncode, out.splitlines()[-1][:100] if out else r.stderr.decode("utf-8", "replace")[-200:]
+
+
+with psycopg.connect(DSN, connect_timeout=5) as c:
+    c0, t0, g0 = snap(c)
+    print(f"# trước: {len(c0)} bảng, anchor_receipts={c0.get('anchor_receipts')}, documents={c0.get('documents')},"
+          f" agent_action_log={c0.get('agent_action_log')}")
+for i in (1, 2):
+    rc, tail = apply()
+    check(f"apply_schema --roles lần {i} exit 0", rc == 0, tail)
+with psycopg.connect(DSN, connect_timeout=5) as c:
+    c1, t1, g1 = snap(c)
+    check("số dòng mọi bảng giữ nguyên", {k: c1.get(k) for k in c0} == c0,
+          str({k: (c0[k], c1.get(k)) for k in c0 if c1.get(k) != c0[k]}))
+    check("đuôi hash chain agent_action_log giữ nguyên", t0 == t1)
+    probs = c.execute("select count(*) from verify_action_log()").fetchone()[0]
+    check("verify_action_log 0 vấn đề", probs == 0, f"({probs})")
+    check("chỉ mục anchor_receipts_upgrade_once", c.execute(
+        "select indisunique from pg_index where indexrelid = 'anchor_receipts_upgrade_once'::regclass").fetchone()
+          == (True,))
+    fn = c.execute("select prosecdef, proconfig is not null from pg_proc where proname = 'anchor_upgrade_human'"
+                   " and pronamespace = 'public'::regnamespace").fetchone()
+    check("function anchor_upgrade_human SECURITY DEFINER + search_path cố định", fn == (True, True), str(fn))
+    q = c.execute("select has_function_privilege('app_human', 'public.anchor_upgrade_human(bigint, text, bytea, text)',"
+                  " 'execute'), has_function_privilege('public', 'public.anchor_upgrade_human(bigint, text, bytea,"
+                  " text)', 'execute'), has_table_privilege('app_human', 'public.anchor_receipts', 'insert')").fetchone()
+    check("app_human EXECUTE, PUBLIC không, app_human không INSERT anchor_receipts", q == (True, False, False), str(q))
+    check("quyền bảng chỉ THÊM (sau ⊇ trước)", g0 <= g1, str(sorted(g0 - g1)[:5]))
+    print(f"# sau: anchor_receipts={c1.get('anchor_receipts')}, quyền mới {len(g1 - g0)}")
+print("TONG", "PASS" if not FAILS else f"FAIL {FAILS}")
+sys.exit(1 if FAILS else 0)

@@ -976,3 +976,24 @@ scram cho local/127.0.0.1/::1. Server Bên B/CI/máy khác: CHƯA kiểm.
   đếm/tên; thiếu bản trước = UNVERIFIED.
 - Nguồn dữ liệu website (sales-08): trước khi bên website nạp, `python -m agents.listing_export --verify
   <website-feed-….manifest.json>` (sha tệp + giá web ĐÃ duyệt còn hiệu lực + mô tả đã duyệt).
+
+**10.12 Đợt r14 (25/10/2026 — kiểm kỹ thuật nội bộ; evidence `evidence/itacc_r14_code_gaps/`)**
+
+- OCR `paddle_local`: nạp model + render trang + nhận dạng chạy ở TIẾN TRÌNH CON `python -m ingest.ocr_worker` — model
+  hỏng (crash native), engine treo hay kết quả hỏng chỉ làm tài liệu đó lỗi (`[err]`, giữ `cho_ocr` khi reprocess), intake /
+  `sx_label` chạy tiếp. `OCR_TIMEOUT_S` (300) giờ bọc CẢ nạp model; hết hạn → giết tiến trình con, không ghi kết quả muộn.
+  Mỗi tài liệu 1 tiến trình (nạp model ~10 s) — lô scan lớn chạy chậm hơn; tiến trình con không nhận biến DSN/`PG*`.
+- Neo (farming-06) giai đoạn có người duyệt: người được Bên B ủy quyền khối farming chạy
+  `python -m pipelines.anchor --upgrade latest --by "<người>"` bằng LOGIN Postgres RIÊNG của mình (`in role app_human`, có
+  dòng `human_logins`). Kiểm `auth.cli_gate` + `human_actor` TRƯỚC khi hỏi calendar; ghi chỉ qua function
+  `anchor_upgrade_human` (app_human không INSERT bảng). Job `agent:anchor` vẫn chỉ chạy ở vận hành. Mỗi lần gom thêm tối đa 1
+  dòng `da_nang_cap` MỚI (r14-fix2: trigger `anchor_receipts_upgrade_once` khóa theo lần gom; lịch sử trước đó có thể đã
+  có > 1 dòng do 2 upgrade baseline chạy đồng thời — giữ nguyên, CLI báo "N biên nhận da_nang_cap (lịch sử)") — vẫn CHƯA là
+  xác minh bên thứ ba.
+- API sàn (data_platform-06): kho token JSON NGOÀI repo `MARKET_TOKEN_FILE` (`{kênh: {access_token, refresh_token,
+  expire_at}}`, ghi nguyên tử, khóa tệp `<kho>.lock`). Lần đầu: đặt `SHOPEE_REFRESH_TOKEN`/`TIKTOK_REFRESH_TOKEN` từ kết quả ủy
+  quyền của chủ shop rồi `python -m ingest.market_api --channel shopee --refresh`; sau đó `--kind listing|order` tự refresh khi
+  còn < 1 giờ. refresh_token Shopee DÙNG 1 LẦN — mất kho = chủ shop ủy quyền lại; KHÔNG chạy 2 máy cùng một kho. TikTok
+  refresh gửi app_secret trong URL theo tài liệu → không bật log URL ở proxy. Nơi lưu credential cuối cùng (tệp vs kho bí mật)
+  là quyết định Bên B. Quyết toán qua API CHƯA có — dùng `ingest.settlement_csv`.
+  Lỗi từ sàn chỉ in mã đúng dạng (`error_*` Shopee / số TikTok) — mã khác (có thể phản chiếu token) in "đã ẩn" (r14-fix2).

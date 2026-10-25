@@ -1,0 +1,12 @@
+PASS model_hong_paddle_that exit= 0 {'DocError': 'tiến trình OCR thoát bất thường (mã 3221225477) — model/engine hỏng? không có kết quả'}
+PASS worker_crash_abort exit= 0 {'DocError': 'tiến trình OCR thoát bất thường (mã 3221226505) — model/engine hỏng? không có kết quả'}
+PASS treo_khoi_tao exit= 0 {'DocError': 'OCR quá 8 giây — đã dừng tiến trình OCR, bỏ'}
+PASS treo_suy_luan exit= 0 {'DocError': 'OCR quá 8 giây — đã dừng tiến trình OCR, bỏ'}
+PASS thieu_pdiparams exit= 0 {'DocError': 'thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR'}
+PASS pdmodel_rong exit= 0 {'DocError': 'thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR'}
+PASS hop_le_that exit= 0 {'png': {'src': 'ocr', 'pages': 1, 'text': 'Mat ong säm 300ml\nS6 DKSP: 15/2026/DKSP\nNSX: 12/10/2026\nHSD: 12/10/2028\nLOT: L2026-1012\nThé tich thuc
+PASS trang_hong_qua_trang exit= 0 {'trang': {'src': 'none', 'pages': 1, 'text': ''}, 'hong': {'DocError': 'ảnh hỏng/không đọc được: UnidentifiedImageError'}, 'qua_trang': {'DocError': 
+PASS cli_sx_label_model_hong exit= 0 {'rc': 1, 'stderr': '[error] tiến trình OCR thoát bất thường (mã 3221225477) — model/engine hỏng? không có kết quả — không connect\r\n'}
+PASS cli_intake_model_hong exit= 0 {'rc': 1, 'stdout': '[loader-gate] doc_intake: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform
+PASS cli_reprocess_model_hong exit= 0 {'nap_none_rc': 2, 'rc': 1, 'stdout': '[err] 5f1de8a11a8b tiến trình OCR thoát bất thường (mã 3221225477) — model/engine hỏng? không có kết quả\r\n[do
+TONG {'PASS': 11, 'FAIL': 0}

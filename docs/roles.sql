@@ -616,6 +616,10 @@ grant execute on function
 -- hash/thời điểm). `org_prospects` KHÔNG grant (v8.3 — chỉ owner đọc):
 -- `da_b2b --handover` đọc dòng của ĐÚNG lô qua `org_batch_rows_human`.
 grant select on anchor_batches, anchor_receipts to app_human;
+-- r14 C2: `anchor --upgrade --by <người>` ghi `da_nang_cap` CHỈ qua function
+-- (không INSERT bảng cho app_human).
+grant execute on function anchor_upgrade_human(bigint, text, bytea, text)
+  to app_human;
 -- `kd_quote --outcome/--verify-send`: thu hồi INSERT cột trực tiếp (v14.4) —
 -- ghi chỉ qua `b2b_quote_event_human` (trước vá: login người INSERT thẳng
 -- được dòng với `recorded_by` là tên người khác / báo giá chưa duyệt).

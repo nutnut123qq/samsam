@@ -1,0 +1,14 @@
+PASS thanh_cong_dung_schema_va_usage {'meta': {'provider': 'openrouter_images', 'model': 'probe/model-gia', 'ai_generated': True}, 'body_keys': ['model', 'n', 'output_format', 'prompt', 'provider', 'size'], 'rec': [{'
+PASS compose_giu_nguyen_packshot {'ai': True, 'provider': None, 'n_req': 1}
+PASS thieu_model_0_request IMAGE_MODEL chưa đặt — chọn model sinh ảnh là quyết định ngoài (vendor/điều khoản/DPA) · req=0
+PASS thieu_key_0_request thiếu OPENROUTER_API_KEY · req=0
+PASS nut_tat_tinh_nang_0_request cổng chi phí/tắt chặn: tính năng 'marketing-02.1' đang bị nút tắt khẩn · req=0
+PASS khong_doc_duoc_chi_tieu_0_request cổng chi phí/tắt chặn: agent 'image': không đọc được chi tiêu tháng — chặn (fail-closed) · req=0
+PASS vuot_tran_0_request cổng chi phí/tắt chặn: agent 'image' vượt trần tháng 1000000.0000/5.00 USD · req=0
+PASS 502_thu_lai_1_lan {'n_req': 2, 'rec': [{'agent': 'image', 'model': 'probe/model-gia', 'cost': 0.04, 'ok': True, 'feature': 'marketing-02.1'}]}
+PASS 429_hai_lan_loi API sinh ảnh trả HTTP 429 · req=2 rec=[{'agent': 'image', 'model': 'probe/model-gia', 'cost': 0.0, 'ok': False, 'feature': 'marketing-02.1'}]
+PASS timeout_loi lỗi kết nối (ReadTimeout) · req=1 rec=[{'agent': 'image', 'model': 'probe/model-gia', 'cost': 0.0, 'ok': False, 'feature': 'marketing-02.1'}]
+PASS b64_hong_loi response API sinh ảnh sai định dạng · req=1 rec=[{'agent': 'image', 'model': 'probe/model-gia', 'cost': 0.25, 'ok': False, 'feature': 'marketing-02.1'}]
+PASS sai_kich_thuoc_loi provider openrouter_images trả ảnh sai kích thước (cần 64x48) — không resize ngầm · req=1 rec=[{'agent': 'image', 'model': 'probe/model-gia', 'cost': 0.04, 'ok': True, 'feature': '
+PASS khong_mo_mang []
+TONG {'PASS': 13, 'FAIL': 0}

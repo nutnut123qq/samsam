@@ -1,0 +1,14 @@
+PASS nguoi_dung_quyen_bitcoin {'rc': 0, 'post': '0', 'get': '1', 'net': '0', 'out': '[FAKE] GET https://cal-b.test/timestamp/98a5bd4f563aad54a391440743dbe74\r\n[ok] lần gom #25: calendar cal-b.test đã trả attestation Bitcoin — CHƯ
+PASS chay_lai_khong_trung {'rc': 0, 'post': '0', 'get': '0', 'net': '0', 'out': '[ok] lần gom #25: calendar cal-b.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba (ots verify với header khối Bitcoin)\r\n[FAKE] POST_C
+PASS nguoi_dung_quyen_404 {'rc': 0, 'post': '0', 'get': '1', 'net': '0', 'out': '[FAKE] GET https://cal-b.test/timestamp/026b062f681fa7ded3792ea9310b347\r\n[cho] lần gom #26: calendar chưa có attestation Bitcoin\r\n[FAKE] POST
+PASS job_co_nguoi_duyet {'rc': 1, 'post': '0', 'get': '0', 'net': '0', 'out': '[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [err] nâng cấp biên nhận lần gom #27: tính năng farming-06 đang có người duyệt — HĐ 6.7/PL02 mụ
+PASS gia_by {'rc': 1, 'post': '0', 'get': '0', 'net': '0', 'out': '[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|pro
+PASS login_khong_anh_xa {'rc': 1, 'post': '0', 'get': '0', 'net': '0', 'out': '[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|pro
+PASS sai_khoi {'rc': 1, 'post': '0', 'get': '0', 'net': '0', 'out': '[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|pro
+PASS nguoi_chay_thu {'rc': 1, 'post': '0', 'get': '0', 'net': '0', 'out': '[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|pro
+PASS calendar_ngoai_allowlist {'rc': 0, 'post': '0', 'get': '0', 'net': '0', 'out': '[cho] lần gom #32: calendar chưa có attestation Bitcoin — calendar ngoài cấu hình — không hỏi\r\n[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n 
+PASS receipt_cay_hong {'rc': 1, 'post': '0', 'get': '0', 'net': '0', 'out': '[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n | [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|pro
+PASS job_van_hanh {'rc': 0, 'post': '0', 'get': '1', 'net': '0', 'out': '[FAKE] GET https://cal-b.test/timestamp/6a76e66a6814c9d320039175385d030\r\n[ok] lần gom #34: calendar cal-b.test đã trả attestation Bitcoin — CHƯ
+PASS submit_nguoi_giu_nguyen {'rc': 0, 'post': '2', 'get': '0', 'net': '0', 'out': '[ok] lần gom #35: đã gửi calendar cal-b.test — chờ xác nhận Bitcoin (--upgrade; bên thứ ba: ots verify)\r\n[FAKE] POST_CALLS 2 GET_CALLS 0 NET_CA
+PASS sql_truc_tiep {'insert': 'InsufficientPrivilege', 'update': 'InsufficientPrivilege', 'delete': 'InsufficientPrivilege'}
+TONG {'PASS': 13, 'FAIL': 0}

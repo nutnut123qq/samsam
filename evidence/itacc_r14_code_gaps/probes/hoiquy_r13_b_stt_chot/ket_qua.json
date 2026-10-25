@@ -1,0 +1,77 @@
+{
+ "probe": "b_stt_v1",
+ "root": "D:\\code\\samsam",
+ "ca": [
+  {
+   "ca": "thieu_model_exit2_truoc_db",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 2,
+    "db": 0,
+    "err": "[blocked] whisper_local cần model cục bộ đã duyệt: đặt GARDEN_STT_MODEL_DIR tới thư mục có model.bin (không tự tải mạng) — chưa cấu hình STT: BLOCKED — cần vend"
+   }
+  },
+  {
+   "ca": "chep_loi_nhap_che_pii",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "out": "[nhap] #1 (whisper_local) — NHÁP, người nghe đối chiếu rồi ghi nhật ký + --done:\nKhoảnh KV-A01 tưới 30 phút gọi *** nếu cần\n",
+    "model_nhan": {
+     "n": 32000,
+     "language": "vi"
+    },
+    "err": ""
+   }
+  },
+  {
+   "ca": "model_nap_mot_lan",
+   "ket_qua": "PASS",
+   "actual": {
+    "init": 1,
+    "rc": 0
+   }
+  },
+  {
+   "ca": "loi_rong_exit1",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "err": "[err] STT whisper_local không ra chữ — người nghe ghi tay\n"
+   }
+  },
+  {
+   "ca": "tep_hong_khong_goi_model",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "err": "[err] STT whisper_local: không giải mã được ghi âm (PatchWelcomeError)\n"
+   }
+  },
+  {
+   "ca": "qua_tran_do_dai_khong_goi_model",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "err": "[err] STT whisper_local: ghi âm 2.5s > 1s\n"
+   }
+  },
+  {
+   "ca": "qua_timeout_exit1",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "err": "[err] STT whisper_local: STT quá 0.3 giây — bỏ\n"
+   }
+  },
+  {
+   "ca": "khong_mo_mang",
+   "ket_qua": "PASS",
+   "actual": []
+  }
+ ],
+ "tong": {
+  "PASS": 8,
+  "FAIL": 0
+ }
+}

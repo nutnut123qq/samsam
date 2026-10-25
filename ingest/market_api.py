@@ -44,6 +44,11 @@ của Shopee Open Platform/TikTok Shop (Bên B cấp app chỉ đọc) → chữ
 endpoint, field, phân trang, rate limit mới chỉ kiểm bằng server giả theo tài
 liệu công khai. Không ghi "đã kết nối API sàn" vào hồ sơ nghiệm thu khi chưa
 chạy được với sandbox thật.
+r14: refresh token Shopee/TikTok viết theo TÀI LIỆU CHÍNH THỨC (`--refresh`;
+tự refresh khi token trong kho `MARKET_TOKEN_FILE` còn < 1 giờ) — kiểm bằng
+server giả (CONTRACT_TESTED), CHƯA chạy sandbox. Quyết toán/escrow qua API CHƯA
+viết: chờ Kế toán chốt ánh xạ trường escrow → cột `settlement_rows` (Shopee) và
+tài liệu chính thức finance hiện hành (TikTok); tạm dùng `ingest.settlement_csv`.
 
 CLI: `python -m ingest.market_api --channel shopee|tiktok --kind
 listing|order [--days N]` — thiếu key env → `[external-dep]` exit 2 (0
@@ -102,6 +107,23 @@ ALLOWED = frozenset({
     ("tiktok", "POST", TT_PRODUCT_SEARCH),
     ("tiktok", "POST", TT_ORDER_SEARCH),
 })
+
+# r14 C3a: refresh token theo tài liệu CHÍNH THỨC (đọc 25/10/2026 —
+# evidence/itacc_r14_code_gaps/NGUON_TAI_LIEU.md). Shopee RefreshAccessToken:
+# POST {SHOPEE_API_BASE}/api/v2/auth/access_token/get, sign Public API
+# (partner_id + path + timestamp), body {refresh_token, partner_id, shop_id}
+# → access_token (4 giờ) + refresh_token MỚI dùng 1 lần + expire_in (giây).
+# TikTok: GET {TIKTOK_AUTH_BASE}/api/v2/token/refresh?app_key&app_secret&
+# refresh_token&grant_type=refresh_token → data.access_token(+_expire_in Unix
+# ts) + data.refresh_token. CHỈ phục vụ xác thực cho các endpoint đọc ở ALLOWED.
+SP_AUTH_REFRESH = "/api/v2/auth/access_token/get"
+TT_AUTH_REFRESH = "/api/v2/token/refresh"
+DEFAULT_AUTH_BASE = {"tiktok": "https://auth.tiktok-shops.com"}
+AUTH_ALLOWED = frozenset({("shopee", "POST", SP_AUTH_REFRESH),
+                          ("tiktok", "GET", TT_AUTH_REFRESH)})
+TOKEN_FILE_VAR = "MARKET_TOKEN_FILE"     # kho token JSON NGOÀI repo
+REFRESH_MARGIN_S = 3600                  # còn < 1 giờ → refresh trước khi kéo
+_TOKEN_RE = re.compile(r"[\x21-\x7e]{8,512}")
 
 KEYS = {"shopee": ("SHOPEE_PARTNER_ID", "SHOPEE_PARTNER_KEY",
                    "SHOPEE_SHOP_ID", "SHOPEE_ACCESS_TOKEN"),
@@ -164,18 +186,25 @@ def sign_tiktok(app_secret: str, path: str, query: dict, body: str) -> str:
 # ---------------------------------------------------------------- cấu hình
 
 
-def read_creds(channel: str) -> dict:
-    """Key từ env — thiếu/rỗng → ConfigError nêu TÊN biến (không giá trị)."""
-    creds = {k: (os.environ.get(k) or "").strip() for k in KEYS[channel]}
+def read_creds(channel: str, token: str | None = None, *,
+               refresh_only: bool = False) -> dict:
+    """Key từ env — thiếu/rỗng → ConfigError nêu TÊN biến (không giá trị).
+    `token` = access token từ kho (r14) thay biến env; `refresh_only` = chỉ
+    cần key app (chưa có access token)."""
+    keys = KEYS[channel][:3] if refresh_only else KEYS[channel]
+    creds = {k: (os.environ.get(k) or "").strip() for k in keys}
+    if token:
+        creds[KEYS[channel][3]] = token
     missing = [k for k, v in creds.items() if not v]
     if missing:
         raise ConfigError("thiếu " + ", ".join(missing))
     return creds
 
 
-def api_base(channel: str) -> str:
-    var = f"{channel.upper()}_API_BASE"
-    raw = (os.environ.get(var) or "").strip() or DEFAULT_BASE[channel]
+def api_base(channel: str, var: str | None = None,
+             default: str | None = None) -> str:
+    var = var or f"{channel.upper()}_API_BASE"
+    raw = (os.environ.get(var) or "").strip() or default or DEFAULT_BASE[channel]
     try:
         u = urllib.parse.urlsplit(raw)
         host = u.hostname
@@ -259,7 +288,36 @@ def _request(channel: str, method: str, path: str, params: dict | None,
     req = urllib.request.Request(url, data=data, headers=headers,
                                  method=method)
     where = f"{channel} {path}"
-    for attempt in range(RETRY_MAX + 1):
+    doc = _send(req, where)
+    if channel == "shopee":
+        if doc.get("error"):
+            raise ApiError(f"{where}: mã lỗi {_err_code(doc['error'], creds)}")
+    elif doc.get("code") != 0:
+        raise ApiError(f"{where}: mã lỗi {_err_code(doc.get('code'), creds)}")
+    return doc
+
+
+# r14-fix2 F1: trường lỗi do SÀN trả có thể phản chiếu token/khóa → chỉ in mã đã
+# kiểm kiểu/dạng (Shopee `error_*`, TikTok số nguyên), mọi giá trị khác ẩn.
+_ERR_CODE_RE = re.compile(r"error_[a-z0-9_]{1,40}")
+
+
+def _err_code(v, creds: dict, *extra: str) -> str:
+    s = None
+    if isinstance(v, int) and not isinstance(v, bool) and abs(v) < 10 ** 9:
+        s = str(v)
+    elif isinstance(v, str) and _ERR_CODE_RE.fullmatch(v):
+        s = v
+    secrets = [x for x in (*creds.values(), *extra) if isinstance(x, str) and len(x) >= 8]
+    if s is None or any(x in s for x in secrets):
+        return "(không đúng dạng mã lỗi — đã ẩn)"
+    return s
+
+
+def _send(req, where: str, retries: int = RETRY_MAX) -> dict:
+    """Gửi 1 request (không redirect, timeout, trần byte) → JSON object. Lỗi
+    chỉ nêu HTTP status/loại lỗi — KHÔNG body, KHÔNG URL (URL chứa token)."""
+    for attempt in range(retries + 1):
         try:
             with _OPENER.open(req, timeout=TIMEOUT_S) as resp:
                 status = resp.status
@@ -268,7 +326,7 @@ def _request(channel: str, method: str, path: str, params: dict | None,
         except urllib.error.HTTPError as e:
             ra = e.headers.get("Retry-After", "") if e.headers else ""
             e.close()
-            if e.code not in RETRY_STATUS or attempt == RETRY_MAX:
+            if e.code not in RETRY_STATUS or attempt == retries:
                 raise ApiError(f"{where}: HTTP {e.code}"
                                + (f" sau {attempt + 1} lần" if attempt else "")
                                ) from None
@@ -289,12 +347,167 @@ def _request(channel: str, method: str, path: str, params: dict | None,
         raise ApiError(f"{where}: JSON hỏng") from None
     if not isinstance(doc, dict):
         raise ApiError(f"{where}: JSON không phải object")
-    if channel == "shopee":
-        if doc.get("error"):
-            raise ApiError(f"{where}: mã lỗi {mc._safe(doc['error'], 60)}")
-    elif doc.get("code") != 0:
-        raise ApiError(f"{where}: mã lỗi {mc._safe(doc.get('code'), 60)}")
     return doc
+
+
+# ---------------------------------------------------------------- token (r14)
+
+
+def token_file() -> Path | None:
+    """Đường kho token (`MARKET_TOKEN_FILE`) — trống = không dùng kho; nằm
+    trong repo → ConfigError (token không bao giờ vào git)."""
+    raw = (os.environ.get(TOKEN_FILE_VAR) or "").strip()
+    if not raw:
+        return None
+    p = Path(raw).resolve()
+    if p == ROOT or ROOT in p.parents:
+        raise ConfigError(f"{TOKEN_FILE_VAR} nằm trong repo — đặt NGOÀI repo")
+    return p
+
+
+def load_tokens(path: Path) -> dict:
+    try:
+        doc = json.loads(path.read_bytes().decode("utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as e:
+        raise ConfigError(f"{TOKEN_FILE_VAR}: không đọc được "
+                          f"({type(e).__name__})") from None
+    if not isinstance(doc, dict):
+        raise ConfigError(f"{TOKEN_FILE_VAR}: không phải object")
+    return doc
+
+
+def save_tokens(path: Path, doc: dict) -> None:
+    """Ghi nguyên tử (tệp tạm cùng thư mục + os.replace)."""
+    tmp = path.with_name(path.name + f".{os.getpid()}.tmp")
+    try:
+        tmp.write_bytes(json.dumps(doc, sort_keys=True).encode("utf-8"))
+        try:
+            os.chmod(tmp, 0o600)
+        except OSError:
+            pass
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def _tok(v, field: str, where: str) -> str:
+    if not isinstance(v, str) or not _TOKEN_RE.fullmatch(v):
+        raise DataError(f"{where}: thiếu/sai {field}")
+    return v
+
+
+def refresh_token(channel: str, creds: dict, refresh: str, base: str, *,
+                  timestamp: int | None = None) -> dict:
+    """1 lần gọi refresh (KHÔNG thử lại — refresh_token Shopee dùng 1 lần) →
+    {access_token, refresh_token, expire_at}. Lỗi → ApiError/DataError."""
+    method, path = (("POST", SP_AUTH_REFRESH) if channel == "shopee"
+                    else ("GET", TT_AUTH_REFRESH))
+    if (channel, method, path) not in AUTH_ALLOWED:
+        raise ScopeError(f"{mc._clean(channel, 20)}: refresh ngoài allowlist")
+    ts = int(time.time()) if timestamp is None else int(timestamp)
+    where = f"{channel} refresh token"
+    if channel == "shopee":
+        pid = creds["SHOPEE_PARTNER_ID"]
+        try:
+            body = {"refresh_token": refresh, "partner_id": int(pid),
+                    "shop_id": int(creds["SHOPEE_SHOP_ID"])}
+        except ValueError:
+            raise ConfigError("SHOPEE_PARTNER_ID/SHOPEE_SHOP_ID phải là số"
+                              ) from None
+        sign = hmac.new(creds["SHOPEE_PARTNER_KEY"].encode(),
+                        f"{pid}{SP_AUTH_REFRESH}{ts}".encode(),
+                        hashlib.sha256).hexdigest()
+        url = (f"{base}{SP_AUTH_REFRESH}?" + urllib.parse.urlencode(
+            {"partner_id": pid, "timestamp": ts, "sign": sign}))
+        req = urllib.request.Request(
+            url, data=json.dumps(body).encode("utf-8"), method="POST",
+            headers={"Content-Type": "application/json",
+                     "Accept": "application/json"})
+        doc = _send(req, where, retries=0)
+        if doc.get("error"):
+            raise ApiError(f"{where}: mã lỗi "
+                           f"{_err_code(doc['error'], creds, refresh)}")
+        exp = doc.get("expire_in")
+        if not isinstance(exp, int) or isinstance(exp, bool) or exp <= 0:
+            raise DataError(f"{where}: thiếu/sai expire_in")
+        return {"access_token": _tok(doc.get("access_token"), "access_token",
+                                     where),
+                "refresh_token": _tok(doc.get("refresh_token"),
+                                      "refresh_token", where),
+                "expire_at": ts + exp}
+    url = (f"{base}{TT_AUTH_REFRESH}?" + urllib.parse.urlencode({
+        "app_key": creds["TIKTOK_APP_KEY"],
+        "app_secret": creds["TIKTOK_APP_SECRET"],
+        "refresh_token": refresh, "grant_type": "refresh_token"}))
+    req = urllib.request.Request(url, method="GET",
+                                 headers={"Accept": "application/json"})
+    doc = _send(req, where, retries=0)
+    if doc.get("code") != 0:
+        raise ApiError(f"{where}: mã lỗi "
+                       f"{_err_code(doc.get('code'), creds, refresh)}")
+    data = doc.get("data")
+    if not isinstance(data, dict):
+        raise DataError(f"{where}: thiếu data")
+    exp = data.get("access_token_expire_in")
+    if not isinstance(exp, int) or isinstance(exp, bool) or exp <= ts:
+        raise DataError(f"{where}: thiếu/sai access_token_expire_in")
+    return {"access_token": _tok(data.get("access_token"), "access_token",
+                                 where),
+            "refresh_token": _tok(data.get("refresh_token"), "refresh_token",
+                                  where),
+            "expire_at": exp}
+
+
+def _do_refresh(channel: str, creds: dict, path: Path,
+                force: bool) -> str | None:
+    """Refresh dưới khóa tệp kho → access token mới | None (lỗi đã in). Đọc lại
+    kho TRONG khóa: tiến trình khác vừa refresh xong → dùng luôn, không gọi."""
+    from pipelines.job_runs import _file_lock
+    with _file_lock(path.with_name(path.name + ".lock")) as got:
+        if not got:
+            print(f"[err] {channel}: tiến trình khác đang refresh token — bỏ "
+                  "lượt, không gửi request.", flush=True)
+            return None
+        try:
+            store = load_tokens(path)
+        except ConfigError as e:
+            print(f"[err] {e}", flush=True)
+            return None
+        entry = store.get(channel)
+        entry = entry if isinstance(entry, dict) else {}
+        exp = entry.get("expire_at")
+        if (not force and entry.get("access_token") and isinstance(exp, int)
+                and exp > time.time() + REFRESH_MARGIN_S):
+            return entry["access_token"]
+        old = entry.get("refresh_token") or (
+            os.environ.get(f"{channel.upper()}_REFRESH_TOKEN") or "").strip()
+        if not old:
+            print(f"[external-dep] {channel}: chưa có refresh_token (kho "
+                  f"{TOKEN_FILE_VAR} hoặc {channel.upper()}_REFRESH_TOKEN — chủ"
+                  " shop ủy quyền app); 0 request.", flush=True)
+            return None
+        try:
+            base = (api_base("shopee") if channel == "shopee" else
+                    api_base(channel, "TIKTOK_AUTH_BASE",
+                             DEFAULT_AUTH_BASE["tiktok"]))
+            new = refresh_token(channel, creds, old, base)
+        except (ApiError, DataError, ConfigError) as e:
+            print(f"[err] {e} — kho token KHÔNG đổi.", flush=True)
+            return None
+        store[channel] = new
+        try:
+            save_tokens(path, store)
+        except OSError as e:
+            print(f"[err] {channel}: refresh xong nhưng KHÔNG lưu được kho "
+                  f"token ({type(e).__name__}) — refresh_token mới đã mất, cần "
+                  "chủ shop ủy quyền lại.", flush=True)
+            return None
+    print(f"[ok] {channel}: đã refresh token — hết hạn "
+          f"{datetime.fromtimestamp(new['expire_at'], VN_TZ):%Y-%m-%d %H:%M}"
+          " (giờ VN).", flush=True)
+    return new["access_token"]
 
 
 # ---------------------------------------------------------------- chuẩn hóa
@@ -628,15 +841,19 @@ def main(argv: list[str] | None = None) -> int:
         prog="python -m ingest.market_api",
         description="Kéo listing/đơn qua API sàn CHỈ ĐỌC vào staging v3.3.")
     ap.add_argument("--channel", choices=CHANNELS, required=True)
-    ap.add_argument("--kind", choices=(*KINDS, "ads"), required=True)
+    ap.add_argument("--kind", choices=(*KINDS, "ads"))
+    ap.add_argument("--refresh", action="store_true",
+                    help=f"refresh access token (kho {TOKEN_FILE_VAR}) rồi thoát")
     ap.add_argument("--days", type=int,
                     help=f"order: số ngày gần nhất 1..{DAYS_MAX} "
                          f"(mặc định {DAYS_DEFAULT})")
     args = ap.parse_args(argv)
+    if bool(args.kind) == args.refresh:
+        ap.error("chọn đúng 1: --kind hoặc --refresh")
     if args.kind == "ads":
         ap.error("ads chỉ qua file — `ingest.market_csv` (API quảng cáo = "
                  "external-dep)")
-    if args.days is not None and args.kind != "order":
+    if args.days is not None and args.kind != "order":  # --refresh: kind None
         ap.error("--days chỉ dùng với --kind order")
     if args.days is None:
         args.days = DAYS_DEFAULT
@@ -645,7 +862,18 @@ def main(argv: list[str] | None = None) -> int:
 
     load_dotenv(ROOT / ".env")
     try:
-        creds = read_creds(args.channel)
+        tfile = token_file()
+        entry = (load_tokens(tfile).get(args.channel) if tfile else None)
+        entry = entry if isinstance(entry, dict) else {}
+        if args.refresh and tfile is None:
+            raise ConfigError(f"--refresh cần {TOKEN_FILE_VAR} (refresh_token "
+                              "xoay vòng phải được lưu)")
+    except ConfigError as e:
+        print(f"[err] {e} — 0 request.", flush=True)
+        return 2
+    try:
+        creds = read_creds(args.channel, entry.get("access_token"),
+                           refresh_only=bool(tfile))
     except ConfigError as e:
         print(f"[external-dep] {e} — chưa có app key/token sàn (Partner "
               "Center, quyền chỉ đọc); 0 request, không connect DB.",
@@ -660,6 +888,16 @@ def main(argv: list[str] | None = None) -> int:
     from pipelines import rollout
     if why := rollout.blocked(None, "kéo dữ liệu API sàn chỉ đọc", FEATURE):
         return rollout.say_blocked(why)
+    exp = entry.get("expire_at")
+    if tfile and (args.refresh or not entry.get("access_token")
+                  or not isinstance(exp, int)
+                  or exp <= time.time() + REFRESH_MARGIN_S):
+        tok = _do_refresh(args.channel, creds, tfile, args.refresh)
+        if tok is None:
+            return 1
+        creds[KEYS[args.channel][3]] = tok
+    if args.refresh:
+        return 0
     try:
         smap = load_status_map()
     except ConfigError as e:

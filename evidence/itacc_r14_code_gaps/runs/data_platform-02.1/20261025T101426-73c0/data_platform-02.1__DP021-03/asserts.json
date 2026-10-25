@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select status from documents where sha256 = '472d705c02fdd6ad5e7dec3d1ab88c09d3a4edd2dddda5f8403f6ab59a3c041c'",
+  "expect": "cho_ocr",
+  "actual": "cho_ocr",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from documents",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from documents where ocr_engine is not null",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

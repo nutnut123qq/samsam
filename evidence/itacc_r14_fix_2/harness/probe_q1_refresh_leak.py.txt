@@ -1,0 +1,241 @@
+"""PROBE r14-fix2 Q1 v1 — F1: phản hồi lỗi của sàn (refresh token + đường dữ liệu cùng cụm) KHÔNG được làm lộ credential ra
+stdout/stderr hay chuỗi exception mà caller có thể in. Credential GIẢ; server http.server 127.0.0.1 (không sàn thật); gọi
+`ingest.market_api` của cây chỉ định TRONG tiến trình (ép giai đoạn `rollout._FORCE_MODE`), không DB. Cùng mã/input/
+assertion cho snapshot r14 CHƯA vá (fp ed6a3551…) và bản vá.
+  python -I probe_q1_refresh_leak.py.txt <ROOT> <out.json>
+Bí mật kiểm: refresh_token cũ, access_token cũ (trong kho), partner_key, app_secret, refresh/access token mới.
+Tiêu chí (khóa trước khi vá) — mọi ca: không bí mật nào xuất hiện trong stdout+stderr của main()/_do_refresh() lẫn str()/repr()
+của exception do refresh_token()/_request() ném:
+- sp_error_phan_chieu_{refresh,access,partner_key}: Shopee refresh trả {"error": <bí mật>} → exit 1, đúng 1 request, kho không đổi.
+- tt_code_phan_chieu_{refresh,app_secret}: TikTok refresh trả {"code": <bí mật>} → như trên.
+- sp_error_dict / tt_code_list: trường lỗi là dict/list chứa bí mật → lỗi có kiểm soát, không lộ.
+- sp_du_lieu_error_phan_chieu_access (cùng cụm `_request`): get_item_list trả {"error": <access token>} → không lộ.
+- http_500 / redirect_302 / json_hong (TikTok refresh — URL mang app_secret + refresh_token): thông báo có kiểm soát, không URL/body.
+- loi_nghiep_vu_thuong: {"error": "error_auth"} → thông báo vẫn nêu `error_auth`, 1 request, kho không đổi.
+- thanh_cong_xoay_vong: refresh hợp lệ → kho có token mới + hạn; request dữ liệu sau dùng access token MỚI.
+- tat_0_request: tính năng tắt → exit 2, 0 request, kho không đổi."""
+import contextlib
+import io
+import json
+import os
+import sys
+import tempfile
+import threading
+import time
+import urllib.parse
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+ROOT, OUT = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith(("PG", "SHOPEE_", "TIKTOK_", "MARKET_")):
+        os.environ.pop(k, None)
+import psycopg  # noqa: E402
+
+psycopg.connect = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("probe: cấm DB"))
+from ingest import market_api as ma  # noqa: E402
+from pipelines import rollout  # noqa: E402
+
+ma.load_dotenv = lambda *a, **k: None
+ma._sleep = lambda s: None
+R_OLD, A_OLD = "FAKE_REFRESH_OLD_Q1_7f3a9c", "FAKE_ACCESS_OLD_Q1_2b8e4d"
+R_NEW, A_NEW = "FAKE_REFRESH_NEW_Q1_9d1c55", "FAKE_ACCESS_NEW_Q1_44aa01"
+PKEY, TSEC = "FAKE_PARTNER_KEY_Q1_c0ffee", "FAKE_APP_SECRET_Q1_beef42"
+SECRETS = (R_OLD, A_OLD, R_NEW, A_NEW, PKEY, TSEC)
+TMP = Path(tempfile.mkdtemp(prefix="r14fix2q1-"))
+
+
+class Srv:
+    def __init__(self, route):
+        self.route, self.req = route, []
+        srv = self
+
+        class H(BaseHTTPRequestHandler):
+            def _any(self):
+                u = urllib.parse.urlsplit(self.path)
+                n = int(self.headers.get("Content-Length") or 0)
+                if n:
+                    self.rfile.read(n)
+                q = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
+                srv.req.append({"m": self.command, "p": u.path, "q": q})
+                st, payload, hd = srv.route(self.command, u.path, q)
+                data = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
+                self.send_response(st)
+                for k, v in (hd or {}).items():
+                    self.send_header(k, v)
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+            do_GET = do_POST = _any
+
+            def log_message(self, *a):
+                pass
+        self.h = ThreadingHTTPServer(("127.0.0.1", 0), H)
+        self.url = f"http://127.0.0.1:{self.h.server_address[1]}"
+        threading.Thread(target=self.h.serve_forever, daemon=True).start()
+
+    def close(self):
+        self.h.shutdown()
+        self.h.server_close()
+
+
+def store(ch, tag):
+    p = TMP / f"{tag}.json"
+    p.write_text(json.dumps({ch: {"access_token": A_OLD, "refresh_token": R_OLD, "expire_at": 1}}), encoding="utf-8")
+    return p
+
+
+def env_for(ch, srv, kho):
+    if ch == "shopee":
+        return {"SHOPEE_PARTNER_ID": "100001", "SHOPEE_PARTNER_KEY": PKEY, "SHOPEE_SHOP_ID": "200002",
+                "SHOPEE_API_BASE": srv.url, "MARKET_TOKEN_FILE": str(kho)}
+    return {"TIKTOK_APP_KEY": "fakeappkey", "TIKTOK_APP_SECRET": TSEC, "TIKTOK_SHOP_CIPHER": "ROW_c",
+            "TIKTOK_AUTH_BASE": srv.url, "TIKTOK_API_BASE": srv.url, "MARKET_TOKEN_FILE": str(kho)}
+
+
+def run_main(argv, env, mode="van_hanh"):
+    old = dict(os.environ)
+    os.environ.update(env)
+    rollout._FORCE_MODE = mode
+    o, e = io.StringIO(), io.StringIO()
+    try:
+        with contextlib.redirect_stdout(o), contextlib.redirect_stderr(e):
+            try:
+                rc = ma.main(argv)
+            except SystemExit as x:
+                rc = x.code
+    finally:
+        os.environ.clear()
+        os.environ.update(old)
+    return rc, o.getvalue() + e.getvalue()
+
+
+def leaked(*texts):
+    blob = "\n".join(texts)
+    return [s[:16] + "…" for s in SECRETS if s in blob]
+
+
+def direct_exc(ch, srv):
+    """Gọi refresh_token() trực tiếp — chuỗi exception caller có thể in."""
+    creds = ({"SHOPEE_PARTNER_ID": "100001", "SHOPEE_PARTNER_KEY": PKEY, "SHOPEE_SHOP_ID": "200002"}
+             if ch == "shopee" else {"TIKTOK_APP_KEY": "fakeappkey", "TIKTOK_APP_SECRET": TSEC})
+    try:
+        ma.refresh_token(ch, creds, R_OLD, srv.url)
+        return ""
+    except Exception as x:  # noqa: BLE001
+        return f"{x!s} | {x!r}"
+
+
+rows = []
+
+
+def case(ma_, fn):
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma_, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def refresh_err(ch, payload, status=200, headers=None, want=None):
+    def f():
+        auth = ma.SP_AUTH_REFRESH if ch == "shopee" else ma.TT_AUTH_REFRESH
+        s = Srv(lambda m, p, q: (status, payload, headers) if p == auth else (404, {}, None))
+        kho = store(ch, f"{ch}{len(rows)}")
+        before = kho.read_bytes()
+        try:
+            rc, text = run_main(["--channel", ch, "--refresh"], env_for(ch, s, kho))
+            n_main = len(s.req)
+            exc = direct_exc(ch, s)
+        finally:
+            s.close()
+        lk = leaked(text, exc)
+        ok = (rc == 1 and n_main == 1 and kho.read_bytes() == before and not lk
+              and (want is None or want in text))
+        return ok, {"rc": rc, "requests": n_main, "lo": lk, "stdout": text[-220:].replace(R_OLD, "<R_OLD>")
+                    .replace(A_OLD, "<A_OLD>").replace(PKEY, "<PKEY>").replace(TSEC, "<TSEC>"),
+                    "exc": exc[:160].replace(R_OLD, "<R_OLD>").replace(A_OLD, "<A_OLD>").replace(PKEY, "<PKEY>")
+                    .replace(TSEC, "<TSEC>")}
+    return f
+
+
+def c_data_path():
+    def route(m, p, q):
+        if p == "/api/v2/product/get_item_list":
+            return 200, {"error": A_OLD, "message": "x"}, None
+        return 404, {}, None
+    s = Srv(route)
+    try:
+        env = {"SHOPEE_PARTNER_ID": "100001", "SHOPEE_PARTNER_KEY": PKEY, "SHOPEE_SHOP_ID": "200002",
+               "SHOPEE_API_BASE": s.url, "SHOPEE_ACCESS_TOKEN": A_OLD}
+        rc, text = run_main(["--channel", "shopee", "--kind", "listing"], env)
+        try:
+            ma._request("shopee", "GET", ma.SP_ITEM_LIST, {"offset": 0}, creds={
+                "SHOPEE_PARTNER_ID": "100001", "SHOPEE_PARTNER_KEY": PKEY, "SHOPEE_SHOP_ID": "200002",
+                "SHOPEE_ACCESS_TOKEN": A_OLD}, base=s.url)
+            exc = ""
+        except Exception as x:  # noqa: BLE001
+            exc = f"{x!s} | {x!r}"
+    finally:
+        s.close()
+    lk = leaked(text, exc)
+    return rc == 1 and not lk, {"rc": rc, "lo": lk}
+
+
+def c_success():
+    def route(m, p, q):
+        if p == ma.SP_AUTH_REFRESH:
+            return 200, {"error": "", "message": "", "access_token": A_NEW, "refresh_token": R_NEW,
+                         "expire_in": 14400}, None
+        if p == "/api/v2/product/get_item_list":
+            return 200, {"error": "", "response": {"item": [], "has_next_page": False}}, None
+        return 404, {}, None
+    s = Srv(route)
+    kho = store("shopee", "ok")
+    try:
+        rc, text = run_main(["--channel", "shopee", "--kind", "listing"], env_for("shopee", s, kho))
+    finally:
+        s.close()
+    st = json.loads(kho.read_text(encoding="utf-8"))["shopee"]
+    data = [x for x in s.req if x["p"] != ma.SP_AUTH_REFRESH]
+    ok = (rc == 0 and st["access_token"] == A_NEW and st["refresh_token"] == R_NEW
+          and abs(st["expire_at"] - (time.time() + 14400)) < 120 and data
+          and all(x["q"].get("access_token") == A_NEW for x in data) and not leaked(text))
+    return ok, {"rc": rc, "paths": [x["p"] for x in s.req], "lo": leaked(text)}
+
+
+def c_off():
+    s = Srv(lambda m, p, q: (200, {}, None))
+    kho = store("shopee", "off")
+    before = kho.read_bytes()
+    try:
+        rc, text = run_main(["--channel", "shopee", "--kind", "listing"], env_for("shopee", s, kho), mode="tat")
+    finally:
+        s.close()
+    return rc == 2 and not s.req and kho.read_bytes() == before and not leaked(text), {"rc": rc, "n": len(s.req)}
+
+
+case("sp_error_phan_chieu_refresh", refresh_err("shopee", {"error": R_OLD, "message": "m"}))
+case("sp_error_phan_chieu_access", refresh_err("shopee", {"error": A_OLD, "message": "m"}))
+case("sp_error_phan_chieu_partner_key", refresh_err("shopee", {"error": PKEY, "message": "m"}))
+case("tt_code_phan_chieu_refresh", refresh_err("tiktok", {"code": R_OLD, "message": "m"}))
+case("tt_code_phan_chieu_app_secret", refresh_err("tiktok", {"code": TSEC, "message": "m"}))
+case("sp_error_dict", refresh_err("shopee", {"error": {"token": R_OLD, "key": PKEY}}))
+case("tt_code_list", refresh_err("tiktok", {"code": [TSEC, R_OLD]}))
+case("sp_du_lieu_error_phan_chieu_access", c_data_path)
+case("http_500", refresh_err("tiktok", {"code": 1, "message": R_OLD}, status=500))
+case("redirect_302", refresh_err("tiktok", {}, status=302, headers={"Location": "http://127.0.0.1:1/x?s=" + TSEC}))
+case("json_hong", refresh_err("tiktok", (R_OLD + "{không phải json").encode("utf-8")))
+case("loi_nghiep_vu_thuong", refresh_err("shopee", {"error": "error_auth", "message": "invalid"}, want="error_auth"))
+case("thanh_cong_xoay_vong", c_success)
+case("tat_0_request", c_off)
+out = {"probe": "q1_refresh_leak_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:180])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

@@ -1,0 +1,187 @@
+{
+ "probe": "l_image_cost_v1",
+ "root": "D:\\code\\samsam",
+ "fallback_usd": 0.25,
+ "ca": [
+  {
+   "ca": "anh_hop_le_cost_040",
+   "ket_qua": "PASS",
+   "actual": {
+    "out": "ảnh (32, 32)",
+    "spend_agent": 0.4,
+    "spend_feature": 0.4
+   },
+   "so_chi_phi": [
+    {
+     "agent_id": "image",
+     "model": "probe/model-gia",
+     "tin": 0,
+     "tout": 0,
+     "cost_usd": 0.4,
+     "ok": true,
+     "error": null,
+     "feature_id": "marketing-02.1"
+    }
+   ]
+  },
+  {
+   "ca": "b64_hong_giu_cost_040",
+   "ket_qua": "PASS",
+   "actual": {
+    "out": "ImageProviderError: response API sinh ảnh sai định dạng",
+    "spend_agent": 0.4,
+    "spend_feature": 0.4
+   },
+   "so_chi_phi": [
+    {
+     "agent_id": "image",
+     "model": "probe/model-gia",
+     "tin": 0,
+     "tout": 0,
+     "cost_usd": 0.4,
+     "ok": false,
+     "error": "response hỏng Error",
+     "feature_id": "marketing-02.1"
+    }
+   ]
+  },
+  {
+   "ca": "data_rong_giu_cost_040",
+   "ket_qua": "PASS",
+   "actual": {
+    "out": "ImageProviderError: response API sinh ảnh sai định dạng",
+    "spend_agent": 0.4,
+    "spend_feature": 0.4
+   },
+   "so_chi_phi": [
+    {
+     "agent_id": "image",
+     "model": "probe/model-gia",
+     "tin": 0,
+     "tout": 0,
+     "cost_usd": 0.4,
+     "ok": false,
+     "error": "response hỏng IndexError",
+     "feature_id": "marketing-02.1"
+    }
+   ]
+  },
+  {
+   "ca": "thieu_data_giu_cost_040",
+   "ket_qua": "PASS",
+   "actual": {
+    "out": "ImageProviderError: response API sinh ảnh sai định dạng",
+    "spend_agent": 0.4,
+    "spend_feature": 0.4
+   },
+   "so_chi_phi": [
+    {
+     "agent_id": "image",
+     "model": "probe/model-gia",
+     "tin": 0,
+     "tout": 0,
+     "cost_usd": 0.4,
+     "ok": false,
+     "error": "response hỏng KeyError",
+     "feature_id": "marketing-02.1"
+    }
+   ]
+  },
+  {
+   "ca": "byte_khong_phai_anh_giu_cost_040_ok_false",
+   "ket_qua": "PASS",
+   "actual": {
+    "out": "ImageProviderError: ảnh trả về hỏng (UnidentifiedImageError)",
+    "spend_agent": 0.4,
+    "spend_feature": 0.4
+   },
+   "so_chi_phi": [
+    {
+     "agent_id": "image",
+     "model": "probe/model-gia",
+     "tin": 0,
+     "tout": 0,
+     "cost_usd": 0.4,
+     "ok": false,
+     "error": "ảnh hỏng UnidentifiedImageError",
+     "feature_id": "marketing-02.1"
+    }
+   ]
+  },
+  {
+   "ca": "b64_hong_khong_usage_du_phong",
+   "ket_qua": "PASS",
+   "actual": {
+    "out": "ImageProviderError: response API sinh ảnh sai định dạng",
+    "spend_agent": 0.25,
+    "spend_feature": 0.25
+   },
+   "so_chi_phi": [
+    {
+     "agent_id": "image",
+     "model": "probe/model-gia",
+     "tin": 0,
+     "tout": 0,
+     "cost_usd": 0.25,
+     "ok": false,
+     "error": "response hỏng Error",
+     "feature_id": "marketing-02.1"
+    }
+   ]
+  },
+  {
+   "ca": "than_khong_phai_json_du_phong",
+   "ket_qua": "PASS",
+   "actual": {
+    "out": "ImageProviderError: response API sinh ảnh sai định dạng",
+    "spend_agent": 0.25,
+    "spend_feature": 0.25
+   },
+   "so_chi_phi": [
+    {
+     "agent_id": "image",
+     "model": "probe/model-gia",
+     "tin": 0,
+     "tout": 0,
+     "cost_usd": 0.25,
+     "ok": false,
+     "error": "response hỏng TypeError",
+     "feature_id": "marketing-02.1"
+    }
+   ]
+  },
+  {
+   "ca": "doi_chung_502_khong_tinh_phi",
+   "ket_qua": "PASS",
+   "actual": {
+    "out": "ImageProviderError: API sinh ảnh trả HTTP 502",
+    "requests": 2
+   },
+   "so_chi_phi": [
+    {
+     "agent_id": "image",
+     "model": "probe/model-gia",
+     "tin": 0,
+     "tout": 0,
+     "cost_usd": 0.0,
+     "ok": false,
+     "error": "http 502",
+     "feature_id": "marketing-02.1"
+    }
+   ]
+  },
+  {
+   "ca": "doi_chung_nut_tat_0_request",
+   "ket_qua": "PASS",
+   "actual": {
+    "out": "ImageProviderError: cổng chi phí/tắt chặn: tính năng 'marketing-02.1' đang bị nút tắt khẩn",
+    "requests": 0
+   },
+   "so_chi_phi": []
+  }
+ ],
+ "tong": {
+  "PASS": 9,
+  "FAIL": 0
+ }
+}

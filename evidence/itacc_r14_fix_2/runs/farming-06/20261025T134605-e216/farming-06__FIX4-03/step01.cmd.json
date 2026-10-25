@@ -1,0 +1,35 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/anchor_ots_run.py.txt",
+  "--fake-get",
+  "none",
+  "--force-mode",
+  "co_nguoi_duyet",
+  "--upgrade",
+  "latest"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T13:52:18+07:00",
+ "ket_thuc": "2026-10-25T13:52:20+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+   "khop": true
+  },
+  {
+   "stderr_re": "\\[err\\] nâng cấp biên nhận lần gom #\\d+: tính năng farming-06 đang",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "2e1a55ced37d68db055c2e79bce9615d48ee81a333c335ed5a317c1a24ac162f",
+ "stderr_sha256": "1c26aec48ebcde5c5875038382267ead8989500cdb39b517453b203b119de74f"
+}

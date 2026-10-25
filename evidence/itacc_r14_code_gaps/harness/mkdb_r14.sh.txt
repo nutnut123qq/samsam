@@ -1,0 +1,37 @@
+# r13: bản sao mkdb_r12fix.sh.txt — tiền tố DB samsam_itacc_r14_, cổng 55455.
+# r12-fix: bản sao mkdb_r12.sh.txt — tiền tố DB samsam_itacc_r12fix_, cổng 55452, che thêm libpq password=.
+#!/bin/bash
+# HARNESS r12 — tạo DB thử MỚI samsam_itacc_r12_<mã> trên container samsam-itacc-r12 (127.0.0.1:55451), dựng schema/roles
+# ×2 + core + golden bằng CODE của cây ROOT (snapshot baseline hoặc working tree). Không drop (DB có rồi → từ chối).
+# bash mkdb_r12.sh.txt <ROOT> <db> <admin_env> <out_env> <log>
+ROOT="$1"; DB="$2"; ADM="$3"; OUT="$4"; LOG="$5"
+case "$DB" in samsam_itacc_r14_*) ;; *) echo "tên DB không hợp lệ"; exit 2;; esac
+source "$ADM"
+python -I - "$DB" "$OUT" <<'PY'
+import os, secrets, sys
+from cryptography.fernet import Fernet
+from psycopg import conninfo
+import psycopg
+db, out = sys.argv[1], sys.argv[2]
+d = conninfo.conninfo_to_dict(os.environ["ITACC_ADMIN"])
+assert d["host"] == "127.0.0.1" and str(d["port"]) == "55455" and d["dbname"] == "postgres"
+with psycopg.connect(conninfo.make_conninfo(**d), autocommit=True, connect_timeout=5) as c:
+    if c.execute("select 1 from pg_database where datname = %s", (db,)).fetchone():
+        sys.exit(f"DB {db} đã tồn tại — không drop/ghi đè")
+    c.execute(f"create database {db}")
+d["dbname"] = db
+open(out, "w").write(
+    f"export DATABASE_URL='{conninfo.make_conninfo(**d)}'\n"
+    f"export INTEL_HASH_SALT='{secrets.token_urlsafe(24)}'\n"
+    f"export CONTACT_VAULT_KEY='{Fernet.generate_key().decode()}'\n")
+PY
+rc=$?; [ $rc -ne 0 ] && exit $rc
+( for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+  source "$OUT"; export OPENROUTER_API_KEY="" PYTHONIOENCODING=utf-8
+  unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY
+  cd "$ROOT"; echo "# dựng $DB từ cây $(basename "$ROOT") $(date -Iseconds)"
+  for s in "scripts/apply_schema.py --roles" "scripts/apply_schema.py --roles" "-m ingest.core_store" "-m ingest.golden_store"; do
+    python $s > "$OUT.step" 2>&1; rc=$?
+    echo "## python $s → exit $rc"; tail -3 "$OUT.step" | sed -E 's#(postgres(ql)?://[^:]+:)[^@]+@#\1***@#g; s#password=[^ ]+#password=***#g'
+    [ $rc -ne 0 ] && { rm -f "$OUT.step"; exit $rc; }
+  done; rm -f "$OUT.step"; exit 0 ) > "$LOG" 2>&1

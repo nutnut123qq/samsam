@@ -147,12 +147,15 @@ _WRITE_RE = re.compile(r"(?i)update|add|delete|create|cancel|ship|set_|edit|"
 def test_ast_every_endpoint_literal_in_allowlist():
     tree = ast.parse(SRC.read_text(encoding="utf-8"))
     paths = {p for _c, _m, p in ma.ALLOWED}
+    auth = {p for _c, _m, p in ma.AUTH_ALLOWED}   # r14: 2 endpoint refresh token
+    assert len(ma.AUTH_ALLOWED) == 2 and all("token" in p for p in auth)
+    paths |= auth
     lits = [n.value for n in ast.walk(tree)
             if isinstance(n, ast.Constant) and isinstance(n.value, str)
             and n.value.startswith(("/api/v2/", "/product/", "/order/"))]
     assert len(lits) >= 7
     assert set(lits) <= paths, set(lits) - paths
-    assert not [p for p in paths if _WRITE_RE.search(p)]
+    assert not [p for p in paths - auth if _WRITE_RE.search(p)]
     assert len(ma.ALLOWED) == 7
     assert {m for _c, m, _p in ma.ALLOWED} == {"GET", "POST"}
     assert all(m == "GET" for c, m, _p in ma.ALLOWED if c == "shopee")

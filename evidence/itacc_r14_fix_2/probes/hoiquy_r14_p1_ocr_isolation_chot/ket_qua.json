@@ -1,0 +1,199 @@
+{
+ "probe": "p1_ocr_isolation_v1",
+ "root": "D:\\code\\samsam",
+ "ca": [
+  {
+   "ca": "model_hong_paddle_that",
+   "got": {
+    "DocError": "tiến trình OCR thoát bất thường (mã 3221225477) — model/engine hỏng? không có kết quả"
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 28.5,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "worker_crash_abort",
+   "got": {
+    "DocError": "tiến trình OCR thoát bất thường (mã 3221226505) — model/engine hỏng? không có kết quả"
+   },
+   "giay": 5.5,
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 6.0,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "treo_khoi_tao",
+   "got": {
+    "DocError": "OCR quá 8 giây — đã dừng tiến trình OCR, bỏ"
+   },
+   "giay": 9.3,
+   "ket_qua_muon": false,
+   "pid_engine_con_song": false,
+   "pid_engine_la_tien_trinh_goi": false,
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 36.2,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "treo_suy_luan",
+   "got": {
+    "DocError": "OCR quá 8 giây — đã dừng tiến trình OCR, bỏ"
+   },
+   "giay": 10.4,
+   "ket_qua_muon": false,
+   "pid_engine_con_song": false,
+   "pid_engine_la_tien_trinh_goi": false,
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 36.4,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "thieu_pdiparams",
+   "got": {
+    "DocError": "thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR"
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 1.5,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "pdmodel_rong",
+   "got": {
+    "DocError": "thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR"
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 1.5,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "hop_le_that",
+   "got": {
+    "png": {
+     "src": "ocr",
+     "pages": 1,
+     "text": "Mat ong säm 300ml\nS6 DKSP: 15/2026/DKSP\nNSX: 12/10/2026\nHSD: 12/10/2028\nLOT: L2026-1012\nThé tich thuc: 300ml"
+    },
+    "pdf_scan": {
+     "src": "ocr",
+     "pages": 2,
+     "text": "GIAY TIEP NHAN BAN TU' CONG BO\nSó: 123/2026/DKSP\nNgay cäp: 05/10/2026\nTén sän phäm: Mat ong sam 300ml\nTrang 2 - Co quan "
+    },
+    "pdf_chu": {
+     "src": "pdf_text",
+     "pages": 1,
+     "text": "GIAY TIEP NHAN so 77/2026/DKSP GIAY TIEP NHAN so 77/2026/DKSP GIAY TIEP NHAN so 77/2026/DKSP GIAY TIEP NHAN so 77/2026/D"
+    }
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 39.7,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "trang_hong_qua_trang",
+   "got": {
+    "trang": {
+     "src": "none",
+     "pages": 1,
+     "text": ""
+    },
+    "hong": {
+     "DocError": "ảnh hỏng/không đọc được: UnidentifiedImageError"
+    },
+    "qua_trang": {
+     "DocError": "PDF 31 trang > OCR_MAX_PAGES=30"
+    }
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 23.6,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "cli_sx_label_model_hong",
+   "got": {
+    "rc": 1,
+    "stderr": "[error] tiến trình OCR thoát bất thường (mã 3221225477) — model/engine hỏng? không có kết quả — không connect\r\n"
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 18.6,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "cli_intake_model_hong",
+   "got": {
+    "rc": 1,
+    "stdout": "[loader-gate] doc_intake: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-02.1 chay_thu, data_platform-02.2 chay_thu → nạp\r\n[err] #1 tiến trình OCR thoát bất thường (mã 3221225477) — model/engine hỏng? không có kết quả\r\n[done] new=0 dup=0 cho_ocr=0 skipped=0 error=1\r\n",
+    "docs": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ]
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 16.2,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "cli_reprocess_model_hong",
+   "got": {
+    "nap_none_rc": 2,
+    "rc": 1,
+    "stdout": "[err] 5f1de8a11a8b tiến trình OCR thoát bất thường (mã 3221225477) — model/engine hỏng? không có kết quả\r\n[done] done=0 still=0 error=1\r\n",
+    "docs": [
+     [
+      0,
+      0
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 18.8,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  }
+ ],
+ "tong": {
+  "PASS": 11,
+  "FAIL": 0
+ }
+}

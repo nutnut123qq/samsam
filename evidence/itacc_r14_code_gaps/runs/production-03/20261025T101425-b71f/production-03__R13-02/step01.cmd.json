@@ -1,0 +1,36 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "agents.sx_label",
+  "--sku",
+  "mat-ong-sam-300ml",
+  "--image",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\fixtures/ocr/nhan_mat_ong.png",
+  "--submit"
+ ],
+ "env_doi": [
+  "OCR_MAX_PAGES",
+  "OCR_PADDLE_MODEL_DIR",
+  "OCR_PROVIDER",
+  "OCR_TIMEOUT_S"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T10:16:12+07:00",
+ "ket_thuc": "2026-10-25T10:17:32+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "\\[submit\\] hàng duyệt #\\d+ \\(label_check, khối production\\)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "3511e5d8347bb148f9f166157d1f3f085a22f327500d3544be0e764fe0ed012d",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

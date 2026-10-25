@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from qr_signatures where lot_code = 'IT-LOT-G5-02'",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from qr_codes where lot_code = 'IT-LOT-G5-02' and revoked_at is not null",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from qr_codes",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

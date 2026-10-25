@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select string_agg(status, ',' order by id) from anchor_receipts",
+  "expect": "da_gui,da_nang_cap",
+  "actual": "da_gui",
+  "dat": false
+ },
+ {
+  "sql": "select count(*) from anchor_receipts r join anchor_batches b on b.id = r.batch_id where r.status = 'da_nang_cap' and r.calendar = 'https://cal-b.test' and r.created_by = 'agent:anchor' and substr(r.receipt, 34, 32) = decode(b.manifest_sha256, 'hex') and position(decode('0588960d73d71901', 'hex') in r.receipt) > 0 and position(decode('83dfe30d2ef90c8e', 'hex') in r.receipt) = 0",
+  "expect": 1,
+  "actual": 0,
+  "dat": false
+ }
+]

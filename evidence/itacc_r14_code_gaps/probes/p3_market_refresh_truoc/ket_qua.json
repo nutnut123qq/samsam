@@ -1,0 +1,119 @@
+{
+ "probe": "p3_market_refresh_v1",
+ "root": "D:\\code\\samsam_r14_baseline",
+ "muc_kiem": "CONTRACT_TESTED (server giả) — UNVERIFIED_LIVE",
+ "ca": [
+  {
+   "ca": "shopee_refresh_hop_le",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 2,
+    "reqs": [],
+    "leaked": [],
+    "text": "usage: python -m ingest.market_api [-h] --channel {shopee,tiktok} --kind\n                                   {listing,order,ads} [--days DAYS]\npython -m ingest.market_api: error: the following arguments are required: --kind\n"
+   }
+  },
+  {
+   "ca": "shopee_tu_refresh_roi_keo",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 2,
+    "paths": [],
+    "leaked": [],
+    "text": "[external-dep] thiếu SHOPEE_ACCESS_TOKEN — chưa có app key/token sàn (Partner Center, quyền chỉ đọc); 0 request, không connect DB.\n"
+   }
+  },
+  {
+   "ca": "shopee_refresh_loi",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 2,
+    "auth": 0,
+    "data": 0,
+    "redirect_target": null,
+    "leaked": [],
+    "text": "[external-dep] thiếu SHOPEE_ACCESS_TOKEN — chưa có app key/token sàn (Partner Center, quyền chỉ đọc); 0 request, không connect DB.\n"
+   }
+  },
+  {
+   "ca": "shopee_thieu_refresh_token",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 2,
+    "auth": 0,
+    "data": 0,
+    "redirect_target": null,
+    "leaked": [],
+    "text": "[external-dep] thiếu SHOPEE_ACCESS_TOKEN — chưa có app key/token sàn (Partner Center, quyền chỉ đọc); 0 request, không connect DB.\n"
+   }
+  },
+  {
+   "ca": "shopee_refresh_429",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 2,
+    "auth": 0,
+    "data": 0,
+    "redirect_target": null,
+    "leaked": [],
+    "text": "[external-dep] thiếu SHOPEE_ACCESS_TOKEN — chưa có app key/token sàn (Partner Center, quyền chỉ đọc); 0 request, không connect DB.\n"
+   }
+  },
+  {
+   "ca": "shopee_refresh_redirect",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 2,
+    "auth": 0,
+    "data": 0,
+    "redirect_target": 0,
+    "leaked": [],
+    "text": "[external-dep] thiếu SHOPEE_ACCESS_TOKEN — chưa có app key/token sàn (Partner Center, quyền chỉ đọc); 0 request, không connect DB.\n"
+   }
+  },
+  {
+   "ca": "tiktok_refresh_hop_le",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 2,
+    "n": 0,
+    "leaked": [],
+    "text": "usage: python -m ingest.market_api [-h] --channel {shopee,tiktok} --kind\n                                   {listing,order,ads} [--days DAYS]\npython -m ingest.market_api: error: the following arguments are required: --kind\n"
+   }
+  },
+  {
+   "ca": "kho_trong_repo",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 2,
+    "n": 0,
+    "text": "usage: python -m ingest.market_api [-h] --channel {shopee,tiktok} --kind\n                                   {listing,order,ads} [--days DAYS]\npython -m ingest.market_api: error: the following arguments are required: --kind\n"
+   }
+  },
+  {
+   "ca": "doi_chung_tat",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 2,
+    "n": 0,
+    "text": "[rollout] kéo dữ liệu API sàn chỉ đọc: tính năng data_platform-06 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra\n"
+   }
+  },
+  {
+   "ca": "doi_chung_listing_env",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "paths": [
+     "/api/v2/product/get_item_list"
+    ],
+    "leaked": [],
+    "text": "[warn] API shopee/listing trả 0 dòng — không nạp gì.\n[job-runs] không có DATABASE_URL — bỏ ghi job_runs\n"
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 3,
+  "FAIL": 7
+ }
+}

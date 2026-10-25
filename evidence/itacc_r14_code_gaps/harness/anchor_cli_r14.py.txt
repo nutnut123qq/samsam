@@ -1,0 +1,91 @@
+"""HARNESS r14 (MOCK) — chạy `pipelines.anchor.main` THẬT với provider OpenTimestamps và calendar GIẢ (bản rút gọn từ
+itacc_r13_docx12/harness/anchor_ots_run.py.txt). data/anchor_config.json của repo vẫn `provider: none` (không sửa); trong
+tiến trình: `anchor.load_config` → OpenTimestamps 2 calendar giả; mặc định `get=`/`post=` của `upgrade`/`submit` thay bằng
+calendar giả (thay `__defaults__` vì mặc định gắn lúc định nghĩa hàm — hoạt động cho chữ ký cũ và mới); `http_get/http_post`
+bị thay bằng hàm báo lỗi; chặn mọi kết nối mạng ra ngoài localhost (DB thử 127.0.0.1 vẫn đi được) và đếm. KHÔNG ép giai
+đoạn: giai đoạn đọc THẬT từ `feature_rollout` của DB thử.
+  python anchor_cli_r14.py.txt [--fake-get 404|bitcoin|none] [--fake-post valid|none] <đối số anchor>
+In `[FAKE] POST_CALLS a GET_CALLS b NET_CALLS c` khi kết thúc. Exit = mã trả về của anchor.main."""
+import socket
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+sys.path.insert(0, str(Path.cwd()))
+argv = sys.argv[1:]
+
+
+def pop(flag):
+    if flag in argv:
+        i = argv.index(flag)
+        v = argv[i + 1]
+        del argv[i:i + 2]
+        return v
+    return "none"
+
+
+get_mode, post_mode = pop("--fake-get"), pop("--fake-post")
+NET, CALLS = [0], {"POST": 0, "GET": 0}
+_orig = socket.socket.connect
+
+
+def _guard(self, addr):
+    host = addr[0] if isinstance(addr, tuple) else str(addr)
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        NET[0] += 1
+        raise OSError("[HARNESS] mạng bị chặn")
+    return _orig(self, addr)
+
+
+socket.socket.connect = _guard
+from pipelines import anchor as an  # noqa: E402
+
+CAL_A, CAL_B = "https://cal-a.test", "https://cal-b.test"
+an.load_config = lambda path=None: {"provider": "opentimestamps", "calendars": [CAL_A, CAL_B], "timeout_s": 5}
+
+
+def vb(b: bytes) -> bytes:
+    return an._put_varuint(len(b)) + b
+
+
+NONCE = b"\x22" * 16
+RESP_B = b"\xf0" + vb(NONCE) + b"\x08" + b"\x00" + an.ATT_PENDING + vb(vb(CAL_B.encode()))
+BTC = b"\x08" + b"\x00" + an.ATT_BITCOIN + vb(an._put_varuint(850001))
+
+
+def fake_get(url, timeout):
+    CALLS["GET"] += 1
+    print(f"[FAKE] GET {url[:60]}", flush=True)
+    if get_mode == "404":
+        return None
+    if get_mode == "bitcoin":
+        return BTC
+    print("[FAKE] GET KHÔNG ĐƯỢC GỌI", flush=True)
+    raise OSError("fake get none")
+
+
+def fake_post(url, body, timeout):
+    CALLS["POST"] += 1
+    if post_mode == "valid" and url.startswith(CAL_B):
+        return RESP_B
+    if post_mode == "valid":
+        return b"\xf0junk"
+    print("[FAKE] POST KHÔNG ĐƯỢC GỌI", flush=True)
+    raise OSError("fake post none")
+
+
+def _boom(*a, **k):
+    raise OSError("[HARNESS] http thật bị chặn")
+
+
+an.http_get = an.http_post = _boom
+an.upgrade.__defaults__ = (fake_get,) + an.upgrade.__defaults__[1:]
+d = an.submit.__defaults__
+an.submit.__defaults__ = d[:-1] + (fake_post,)
+rc = 1
+try:
+    rc = an.main(argv)
+finally:
+    print(f"[FAKE] POST_CALLS {CALLS['POST']} GET_CALLS {CALLS['GET']} NET_CALLS {NET[0]}", flush=True)
+sys.exit(rc)

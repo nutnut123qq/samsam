@@ -1,0 +1,37 @@
+"""HARNESS r14 (FIXTURE) — chèn 1 lần gom neo mới + 1 biên nhận `da_gui` (pending calendar https://cal-b.test, đúng định
+dạng OTS như calendar giả của anchor_ots_run) bằng login OWNER của DB thử (DATABASE_URL do runner đặt) — dựng tình huống cho
+ca nâng cấp của người; KHÔNG phải bằng chứng gom/gửi thật (ca r13 C02/R04 đã kiểm đường đó).
+  python seed_batch_r14.py.txt <nhãn>   → in "[seed] lần gom #N"."""
+import hashlib
+import os
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+import psycopg  # noqa: E402
+from psycopg.types.json import Jsonb  # noqa: E402
+
+from pipelines import anchor as an  # noqa: E402
+
+tag = sys.argv[1]
+CAL = "https://cal-b.test"
+
+
+def vb(b):
+    return an._put_varuint(len(b)) + b
+
+
+resp = b"\xf0" + vb(b"\x22" * 16) + b"\x08" + b"\x00" + an.ATT_PENDING + vb(vb(CAL.encode()))
+with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5) as c:
+    n = c.execute("select count(*) from anchor_batches").fetchone()[0] + 1
+    leaves = [{"k": f"r14_seed:{tag}:{n}", "d": {"t": "r14_seed", "n": n}, "h": "0" * 64}]
+    as_of = datetime(2026, 10, 25, tzinfo=timezone.utc) + timedelta(seconds=n)
+    root = hashlib.sha256(f"r14{tag}{n}".encode()).hexdigest()
+    sha = hashlib.sha256(an.manifest(int((as_of - an.EPOCH).total_seconds() * 1e6), leaves, root)).hexdigest()
+    bid = c.execute("insert into anchor_batches (as_of, leaves, merkle_root, manifest_sha256, created_by) values"
+                    " (%s, %s, %s, %s, 'fixture r14') returning id", (as_of, Jsonb(leaves), root, sha)).fetchone()[0]
+    c.execute("insert into anchor_receipts (batch_id, provider, status, calendar, receipt, created_by) values"
+              " (%s, 'opentimestamps', 'da_gui', %s, %s, 'fixture r14')", (bid, CAL, an.ots_file(bytes.fromhex(sha), resp)))
+print(f"[seed] lần gom #{bid}")

@@ -1,0 +1,35 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/anchor_ots_run.py.txt",
+  "--force-mode",
+  "van_hanh",
+  "--fake-get",
+  "none",
+  "--upgrade",
+  "latest"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T10:13:46+07:00",
+ "ket_thuc": "2026-10-25T10:13:47+07:00",
+ "exit": 1,
+ "expect_exit": 1,
+ "regex": [
+  {
+   "stdout_re": "\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+   "khop": false
+  },
+  {
+   "stderr_re": "\\[err\\] lần gom #\\d+: chưa có biên nhận đã gửi",
+   "khop": false
+  }
+ ],
+ "dat": false,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "844e04438f1ba34c46a3ae11bf9b1adc8c54b658a1c742a76e61640a0308fae1",
+ "stderr_sha256": "2ffd3470c075b1fe083bf8b7e01da6c018cafc6997ed6796074e9bdebfa12e7f"
+}

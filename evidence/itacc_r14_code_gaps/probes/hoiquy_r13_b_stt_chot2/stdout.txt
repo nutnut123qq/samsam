@@ -1,0 +1,9 @@
+PASS thieu_model_exit2_truoc_db {'rc': 2, 'db': 0, 'err': '[blocked] whisper_local cần model cục bộ đã duyệt: đặt GARDEN_STT_MODEL_DIR tới thư mục có model.bin (không tự tải mạng) — chưa cấu hình STT: BLOCKED — c
+PASS chep_loi_nhap_che_pii {'rc': 0, 'out': '[nhap] #1 (whisper_local) — NHÁP, người nghe đối chiếu rồi ghi nhật ký + --done:\nKhoảnh KV-A01 tưới 30 phút gọi *** nếu cần\n', 'model_nhan': {'n': 32000, 'langu
+PASS model_nap_mot_lan {'init': 1, 'rc': 0}
+PASS loi_rong_exit1 {'rc': 1, 'err': '[err] STT whisper_local không ra chữ — người nghe ghi tay\n'}
+PASS tep_hong_khong_goi_model {'rc': 1, 'err': '[err] STT whisper_local: không giải mã được ghi âm (PatchWelcomeError)\n'}
+PASS qua_tran_do_dai_khong_goi_model {'rc': 1, 'err': '[err] STT whisper_local: ghi âm 2.5s > 1s\n'}
+PASS qua_timeout_exit1 {'rc': 1, 'err': '[err] STT whisper_local: STT quá 0.3 giây — bỏ\n'}
+PASS khong_mo_mang []
+TONG {'PASS': 8, 'FAIL': 0}

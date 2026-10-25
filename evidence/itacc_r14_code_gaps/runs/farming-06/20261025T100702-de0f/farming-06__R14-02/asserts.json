@@ -1,0 +1,8 @@
+[
+ {
+  "sql": "select count(*) from anchor_receipts where status = 'da_nang_cap' and batch_id = (select max(id) from anchor_batches)",
+  "expect": 1,
+  "actual": 0,
+  "dat": false
+ }
+]

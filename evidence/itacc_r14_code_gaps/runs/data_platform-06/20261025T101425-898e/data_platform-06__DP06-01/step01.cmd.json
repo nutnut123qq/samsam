@@ -1,0 +1,36 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.market_api",
+  "--channel",
+  "shopee",
+  "--kind",
+  "listing"
+ ],
+ "env_doi": [
+  "SHOPEE_ACCESS_TOKEN",
+  "SHOPEE_API_BASE",
+  "SHOPEE_PARTNER_ID",
+  "SHOPEE_PARTNER_KEY",
+  "SHOPEE_SHOP_ID"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T10:14:28+07:00",
+ "ket_thuc": "2026-10-25T10:14:32+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[external-dep\\] thiếu SHOPEE_PARTNER_ID, SHOPEE_PARTNER_KEY, SHOPEE_SHOP_ID, SHOPEE_ACCESS_TOKEN[^\\n]*0 request, không connect DB",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "acc6e43446ad09b067c22b8f33bdc090be76af4c4a9c21ea07103db959398cb4",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

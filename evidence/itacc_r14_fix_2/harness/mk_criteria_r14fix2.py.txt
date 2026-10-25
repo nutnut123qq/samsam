@@ -1,0 +1,31 @@
+"""HARNESS r14-fix2 — tiêu chí kiểm lại 2 mục bị F1/F2 ảnh hưởng trực tiếp: farming-06 (F2 ghi biên nhận nâng cấp) và
+data_platform-06 (F1 lỗi refresh/dữ liệu sàn). Nguồn (CHỈ ĐỌC): evidence/itacc_r14_code_gaps/criteria/r14_v1.json (đã khóa,
+hash ghi vào `nguon`). Biến đổi DUY NHẤT: tên DB/dump `samsam_itacc_r14_` → `samsam_itacc_r14fix2_` và thư mục ngoài repo
+`scratchpad/r14/` → `scratchpad/r14fix2/`. Không thêm/bớt/sửa ca (ca F1/F2 mới ở probe Q1/Q2). Khóa TRƯỚC khi chạy.
+  python -I mk_criteria_r14fix2.py.txt"""
+import hashlib
+import json
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+H = Path(__file__).resolve().parent
+EV = H.parent
+SRC = H.parents[1] / "itacc_r14_code_gaps" / "criteria" / "r14_v1.json"
+OUT = EV / "criteria" / "r14fix2_v1.json"
+LOCK = OUT.with_name("r14fix2_v1.lock.txt")
+assert not OUT.exists()
+doc = json.loads(SRC.read_text(encoding="utf-8"))
+items = []
+for it in doc["items"]:
+    if it["id"] in ("farming-06", "data_platform-06"):
+        s = json.dumps(it, ensure_ascii=False).replace("samsam_itacc_r14_", "samsam_itacc_r14fix2_").replace(
+            "scratchpad/r14/", "scratchpad/r14fix2/")
+        items.append(json.loads(s))
+out = {"_doc": __doc__, "nguon": {"r14_v1": hashlib.sha256(SRC.read_bytes()).hexdigest()},
+       "moi_truong": "Postgres Docker riêng samsam-itacc-r14fix2 (127.0.0.1:55456), DB mới mỗi mục dựng bằng working tree;"
+                     " không DB samsam, không sàn/calendar thật", "items": items}
+OUT.parent.mkdir(exist_ok=True)
+OUT.open("x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1))
+h = hashlib.sha256(OUT.read_bytes()).hexdigest()
+LOCK.open("x", encoding="utf-8").write(f"r14fix2_v1.json {h} {datetime.now(timezone(timedelta(hours=7))).isoformat(timespec='seconds')}\n")
+print("OK", h, {i["id"]: (i["db"], len(i["ca"])) for i in items})

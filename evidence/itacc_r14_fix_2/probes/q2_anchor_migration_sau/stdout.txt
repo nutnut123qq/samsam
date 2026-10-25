@@ -1,0 +1,11 @@
+PASS tien_quyet_lich_su_trung {'L1': 1, 'L2': 2, 'race_L2': {'results': [{'ok': {'id': 2, 'status': 'da_nang_cap', 'new': True, 'heights': [850007]}, 'gets': 1}, {'ok': {'id': 2, 'status': 'da_nang_cap', 'new': True, 'heights': [850007]}, 'gets': 1}]
+PASS A_B_ap_schema_2_lan [[0, '[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)', ''], [0, '[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)', '']]
+PASS G_giu_lich_su {'counts_diff': {}, 'receipts_same': True, 'chain_same': True, 'verify_problems': 0, 'grants_lost': []}
+PASS C_chay_lai_lich_su_trung {'rc': 0, 'out': '[ok] lần gom #2: calendar cal-b.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba (ots verify với header khối Bitcoin) · 2 biên nhận da_nang_cap (lịch sử)\r\n[FAKE] POST_CALLS 0 GET_CALLS 0 NET
+PASS D1_job_job {'da_nang_cap': 1, 'race': {'results': [{'ok': {'id': 1, 'status': 'da_nang_cap', 'new': True, 'heights': [850007]}, 'gets': 1}, {'ok': {'id': 1, 'status': 'da_nang_cap', 'new': False, 'heights': [850007], 'so_dong_nang_
+PASS D2_nguoi_nguoi {'da_nang_cap': 1, 'race': {'results': [{'ok': {'id': 2, 'status': 'da_nang_cap', 'new': True, 'heights': [850007]}, 'gets': 1}, {'ok': {'id': 2, 'status': 'da_nang_cap', 'new': False, 'heights': [850007], 'so_dong_nang_
+PASS D3_nguoi_job {'da_nang_cap': 1, 'race': {'results': [{'ok': {'id': 3, 'status': 'da_nang_cap', 'new': False, 'heights': [850007], 'so_dong_nang_cap': 1}, 'gets': 1}, {'ok': {'id': 3, 'status': 'da_nang_cap', 'new': True, 'heights': [
+PASS E1_job_co_nguoi_duyet {'race': {'results': [{'err': 'AnchorError: nâng cấp biên nhận lần gom #4: tính năng farming-06 đang có người duyệt — HĐ 6.7/PL02 mục 1 — mục chưa được NGƯỜI duyệt từng mục', 'gets': 0}], 'net': 0}, 'rows': 1}
+PASS E2_nguoi_sai_by {'race': {'results': [{'err': 'HumanDenied: --by "Người Duyệt Neo B Q2" không phải người của login r14f2_sau_a — không ghi thay người khác', 'gets': 0}], 'net': 0}, 'rows': 1}
+PASS E3_nguoi_chay_thu {'race': {'results': [{'err': 'AnchorError: nâng cấp biên nhận lần gom #6: tính năng farming-06 đang chạy thử — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng', 'gets': 0}], 'net': 0}, 'rows': 1}
+TONG {'PASS': 10, 'FAIL': 0}

@@ -63,9 +63,11 @@ Chạy: `python -m ingest.doc_intake` (intake, cấu hình `DOC_INTAKE_DIR`,
 
 import argparse
 import hashlib
+import json
 import logging
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import unicodedata
@@ -129,18 +131,28 @@ _PADDLE_FILES = ("inference.pdmodel", "inference.pdiparams")
 _paddle = None   # engine nạp 1 lần / tiến trình (nạp model ~10 s)
 
 
+def _model_root() -> Path:
+    """Thư mục model cục bộ đã kiểm đủ tệp (det/rec/cls × pdmodel + pdiparams,
+    không rỗng) — thiếu → DocError, KHÔNG để PaddleOCR tự tải mạng."""
+    root = Path(os.environ.get("OCR_PADDLE_MODEL_DIR", "").strip()
+                or Path.home() / ".paddleocr" / "whl")
+    missing = [k for k, v in _PADDLE_SUBDIRS.items()
+               if not all((root.joinpath(*v) / f).is_file()
+                          and (root.joinpath(*v) / f).stat().st_size
+                          for f in _PADDLE_FILES)]
+    if missing:
+        raise DocError("thiếu model OCR cục bộ (" + ", ".join(missing)
+                       + ") ở OCR_PADDLE_MODEL_DIR")
+    return root
+
+
 def _paddle_engine():
+    """CHỈ gọi trong tiến trình OCR con (`ingest.ocr_worker`) — engine native
+    hỏng/treo không được kéo theo tiến trình gọi (r14 C1)."""
     global _paddle
     if _paddle is None:
-        root = Path(os.environ.get("OCR_PADDLE_MODEL_DIR", "").strip()
-                    or Path.home() / ".paddleocr" / "whl")
+        root = _model_root()
         dirs = {k: root.joinpath(*v) for k, v in _PADDLE_SUBDIRS.items()}
-        missing = [k for k, d in dirs.items()
-                   if not all((d / f).is_file() and (d / f).stat().st_size
-                              for f in _PADDLE_FILES)]
-        if missing:  # thiếu model → từ chối, KHÔNG để PaddleOCR tự tải mạng
-            raise DocError("thiếu model OCR cục bộ ("
-                           + ", ".join(missing) + ") ở OCR_PADDLE_MODEL_DIR")
         try:
             from paddleocr import PaddleOCR
         except ImportError:
@@ -190,31 +202,68 @@ def _page_images(path: Path) -> list:
         raise DocError(f"ảnh hỏng/không đọc được: {type(e).__name__}") from None
 
 
-def _ocr_paddle_local(path: Path) -> str:
-    """OCR tại chỗ từng trang → text (dòng theo thứ tự engine trả). Quá
-    OCR_TIMEOUT_S → DocError (luồng OCR bị bỏ, không ghi kết quả muộn)."""
-    import threading
+def ocr_pages(path: Path) -> str:
+    """Render trang + nạp engine + nhận dạng → text. Chạy TRONG tiến trình OCR
+    con (`ingest.ocr_worker`); lỗi Python → DocError."""
     pages = _page_images(path)
     engine = _paddle_engine()
-    box: dict = {}
+    lines = []
+    try:
+        for img in pages:
+            for res in engine.ocr(img, cls=False) or []:
+                lines += [ln[1][0] for ln in res or [] if ln and ln[1]]
+    except Exception as e:  # noqa: BLE001 — lỗi engine → lỗi tài liệu
+        raise DocError(f"OCR lỗi ({type(e).__name__})") from None
+    return "\n".join(lines)
 
-    def work():
-        try:
-            lines = []
-            for img in pages:
-                for res in engine.ocr(img, cls=False) or []:
-                    lines += [ln[1][0] for ln in res or [] if ln and ln[1]]
-            box["text"] = "\n".join(lines)
-        except Exception as e:  # noqa: BLE001 — chuyển về luồng gọi
-            box["err"] = e
-    th = threading.Thread(target=work, name="ocr-paddle", daemon=True)
-    th.start()
-    th.join(OCR_TIMEOUT_S)
-    if th.is_alive():
-        raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — bỏ")
-    if "err" in box:
-        raise DocError(f"OCR lỗi ({type(box['err']).__name__})")
-    return box.get("text", "")
+
+# r14 C1: import + khởi tạo PaddleOCR + render + nhận dạng chạy ở TIẾN TRÌNH
+# CON — model hỏng làm engine native crash / treo không giết hoặc treo intake,
+# reprocess, sx_label. Timeout OCR_TIMEOUT_S bọc TOÀN BỘ (kể cả nạp model);
+# hết hạn → giết tiến trình con, không kết quả muộn.
+# shortcut: mỗi tài liệu 1 tiến trình (nạp model ~10 s/lần), dùng worker sống
+# lâu khi lô scan lớn làm chậm intake.
+OCR_WORKER = [sys.executable, "-m", "ingest.ocr_worker"]
+OCR_RESULT_TAG = "OCR_RESULT "
+OCR_OUT_MAX = 20 * 1024 * 1024
+
+
+def _ocr_paddle_local(path: Path) -> str:
+    """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+    engine → DocError có kiểm soát (không ghi gì là thành công)."""
+    root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+    req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                      "max_pages": OCR_MAX_PAGES})
+    env = {k: v for k, v in os.environ.items()
+           if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+    try:
+        r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                           capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                           cwd=ROOT, env=env)
+    except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+        raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                       " OCR, bỏ") from None
+    except OSError as e:
+        raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                       ) from None
+    if r.returncode != 0:
+        raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                       " — model/engine hỏng? không có kết quả")
+    out = None
+    if len(r.stdout) <= OCR_OUT_MAX:
+        for line in reversed(r.stdout.decode("utf-8", "replace").splitlines()):
+            if line.startswith(OCR_RESULT_TAG):
+                try:
+                    out = json.loads(line[len(OCR_RESULT_TAG):])
+                except ValueError:
+                    pass
+                break
+    if not isinstance(out, dict) or not (
+            out.get("ok") is False or isinstance(out.get("text"), str)):
+        raise DocError("tiến trình OCR trả kết quả hỏng — bỏ")
+    if out.get("ok") is not True:
+        raise DocError(str(out.get("error") or "OCR lỗi")[:200])
+    return out["text"]
 
 
 # name -> (callable(path) -> text, domestic). Vendor có phí (FPT.AI Reader…)

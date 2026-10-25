@@ -5351,6 +5351,102 @@ end $$;
 revoke execute on function anchor_receipt_human(bigint, text, text, bytea,
   text, text) from public;
 
+-- r14-fix2 F2: chống trùng `da_nang_cap` cho dòng MỚI bằng trigger tuần tự hóa
+-- theo lần gom (khóa advisory trong transaction, kiểm lại dưới khóa) thay chỉ
+-- mục unique r14 — chỉ mục không tạo được khi lịch sử HỢP LỆ đã có 2 dòng cùng
+-- lần gom (2 upgrade baseline 0afa388 chạy đồng thời). Lịch sử giữ nguyên (không
+-- UPDATE/DELETE); mọi INSERT `da_nang_cap` (job, function người, owner) vào lần
+-- gom đã có ≥1 dòng → 23505. Hàm ghi gọi cùng khóa TRƯỚC để trả "đã có" thay lỗi.
+drop index if exists anchor_receipts_upgrade_once;
+create or replace function anchor_receipt_upgrade_once() returns trigger
+language plpgsql set search_path from current as $$
+begin
+  if new.status = 'da_nang_cap' then
+    perform pg_advisory_xact_lock(
+      hashtextextended('anchor_receipts_upgrade:' || new.batch_id, 0));
+    if exists (select 1 from anchor_receipts where batch_id = new.batch_id
+                 and status = 'da_nang_cap') then
+      raise exception 'lần gom #% đã có biên nhận da_nang_cap — không ghi thêm',
+        new.batch_id using errcode = '23505';
+    end if;
+  end if;
+  return new;
+end $$;
+revoke execute on function anchor_receipt_upgrade_once() from public;
+create or replace trigger anchor_receipts_upgrade_once
+  before insert on anchor_receipts
+  for each row execute function anchor_receipt_upgrade_once();
+
+-- anchor --upgrade --by <người> (QUYẾT ĐỊNH khối farming, tính năng
+-- farming-06) ở giai đoạn có người duyệt: ghi biên nhận `da_nang_cap` (calendar
+-- trả attestation — KHÔNG phải xác minh blockchain bên thứ ba). Login không
+-- owner: giai đoạn cho dùng (co_nguoi_duyet | van_hanh); phải có biên nhận
+-- `da_gui` cùng calendar của lần gom; biên nhận mới mang đúng digest bản kê
+-- (cây OTS kiểm ở ứng dụng). Đã có `da_nang_cap` → no-op (trả id mới nhất,
+-- created = false). r14-fix2: trả (receipt_id, created) — bản r14 trả bigint chỉ
+-- tồn tại ở DB thử chưa phát hành, đổi kiểu trả về phải drop đúng bản đó.
+do $$
+begin
+  if exists (select 1 from pg_proc where proname = 'anchor_upgrade_human'
+               and pronamespace = current_schema()::regnamespace
+               and prorettype = 'bigint'::regtype) then
+    drop function anchor_upgrade_human(bigint, text, bytea, text);
+  end if;
+end $$;
+create or replace function anchor_upgrade_human(p_batch bigint,
+  p_calendar text, p_receipt bytea, p_by text)
+returns table (receipt_id bigint, created boolean)
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'farming');
+  b anchor_batches%rowtype;
+  v_stage text;
+  v_id bigint;
+begin
+  select * into b from anchor_batches where id = p_batch;
+  if not found then
+    raise exception 'không có lần gom #%', p_batch;
+  end if;
+  if not p10_owner_login() then
+    select stage into v_stage from feature_rollout
+     where feature_id = 'farming-06';
+    if v_stage is null or v_stage not in ('co_nguoi_duyet', 'van_hanh') then
+      raise exception 'farming-06 đang % — chưa cho dùng, không ghi biên nhận nâng cấp (HĐ 6.7/PL02)',
+        coalesce(v_stage, 'chưa vào sổ');
+    end if;
+  end if;
+  if not exists (select 1 from anchor_receipts where batch_id = p_batch
+                  and status = 'da_gui' and calendar = p_calendar) then
+    raise exception 'lần gom #%: không có biên nhận đã gửi tới calendar này — không nâng cấp',
+      p_batch;
+  end if;
+  if p_receipt is null or substring(p_receipt from 1 for 65) <> (
+       '\x004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e892940108'::bytea
+       || decode(b.manifest_sha256, 'hex')) then
+    raise exception 'lần gom #%: biên nhận nâng cấp không mang đúng digest bản kê — không ghi',
+      p_batch;
+  end if;
+  perform pg_advisory_xact_lock(
+    hashtextextended('anchor_receipts_upgrade:' || p_batch, 0));
+  select id into v_id from anchor_receipts
+   where batch_id = p_batch and status = 'da_nang_cap' order by id desc limit 1;
+  if found then
+    return query select v_id, false;
+    return;
+  end if;
+  insert into anchor_receipts (batch_id, provider, status, calendar, receipt,
+    created_by)
+  values (p_batch, 'opentimestamps', 'da_nang_cap', p_calendar, p_receipt,
+          v_by)
+  returning id into v_id;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'anchor_upgrade', 'anchor_batch', p_batch::text,
+          jsonb_build_object('receipt_id', v_id));
+  return query select v_id, true;
+end $$;
+revoke execute on function anchor_upgrade_human(bigint, text, bytea, text)
+  from public;
+
 -- kd_quote --outcome / --verify-send (NHẬP LIỆU — danh tính): 1 dòng
 -- b2b_quote_events cho báo giá sales ĐÃ duyệt. Kết quả (chot|khong_chot|huy)
 -- cần người (login của chính họ), 1 lần/báo giá; mốc `da_gui` cần bản gửi

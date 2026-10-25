@@ -1,0 +1,44 @@
+[
+ {
+  "sql": "select count(*) from anchor_batches where created_by = 'agent:anchor' and jsonb_array_length(leaves) = 6 and merkle_root ~ '^[0-9a-f]{64}$' and manifest_sha256 ~ '^[0-9a-f]{64}$'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from anchor_batches b, jsonb_array_elements(b.leaves) e where e->>'k' like 'plot_logs_head:%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from anchor_batches b, jsonb_array_elements(b.leaves) e where e->>'k' like 'qr_sig:%'",
+  "expect": 3,
+  "actual": 3,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from anchor_batches b, jsonb_array_elements(b.leaves) e where e->>'k' like 'qr_issue:%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from anchor_batches b, jsonb_array_elements(b.leaves) e where e->>'k' like 'qr_revoke:%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select jsonb_array_length(leaves) = 1 + (select count(*) from qr_signatures)::int + (select count(*) from qr_codes)::int + (select count(*) from qr_codes where revoked_at is not null)::int from anchor_batches order by id desc limit 1",
+  "expect": true,
+  "actual": true,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from anchor_batches where leaves::text ~ 'GĐ|Thử IT|Pháp Chế|Vùng Trồng|IT-K0'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

@@ -1,0 +1,244 @@
+"""PROBE r14 P1 v1 — C1: OCR `paddle_local` KHÔNG được làm chết/treo tiến trình gọi (intake, reprocess, sx_label, helper).
+Cùng mã/input/assertion cho baseline `0afa388` (snapshot `D:\\code\\samsam_r14_baseline`) và bản sửa.
+  python -I probe_p1_ocr_isolation.py.txt <ROOT> <FIXTURE_DIR> <MODEL_DIR_DAY_DU> <DB_ENV_FILE> <out.json>
+MỖI ca chạy trong tiến trình con riêng (giám sát timeout 240 s) — tiến trình con chính là "tiến trình gọi"; chết/treo =
+FAIL. Mạng: `sitecustomize.py` trên PYTHONPATH chặn + ghi lại mọi socket connect ra ngoài localhost ở MỌI tiến trình Python
+con (kể cả worker nếu có). Crash/treo: gói `paddleocr` GIẢ đặt đầu PYTHONPATH (os.abort() trong khởi tạo / ngủ rồi ghi dấu
+"kết quả muộn") — không sửa mã sản phẩm. Ca lỗi native thật: bộ model đủ tên + khác rỗng nhưng nội dung hỏng với PaddleOCR
+THẬT. DB (ca intake/reprocess) = DB test riêng dựng từ đúng cây của phía chạy (DB_ENV_FILE), KHÔNG phải `samsam`.
+Tiêu chí (khóa trước khi sửa):
+- model_hong_paddle_that: extract_text → DocError; tiến trình gọi sống (exit 0); 0 kết nối mạng.
+- worker_crash_abort: gói giả abort trong khởi tạo → DocError, gọi sống, không text.
+- treo_khoi_tao: gói giả ngủ 15 s trong khởi tạo, OCR_TIMEOUT_S=8 → DocError trong ≤ 30 s; sau thêm 25 s KHÔNG có dấu
+  "kết quả muộn"; tiến trình chứa engine giả đã chết.
+- treo_suy_luan: như trên nhưng ngủ trong ocr().
+- thieu_pdiparams / pdmodel_rong (PaddleOCR thật): DocError "thiếu model", 0 mạng.
+- hop_le_that: model đủ → ảnh nhãn PNG + PDF scan 2 trang ra chữ (LOT, 123/2026), source ocr; PDF có lớp chữ → pdf_text.
+- trang_hong_qua_trang: ảnh trắng → source none; JPG hỏng → DocError; PDF 31 trang → DocError (trần 30).
+- cli_sx_label_model_hong: `python -m agents.sx_label --image` với model hỏng → exit 1, "[error]", không mã crash.
+- cli_intake_model_hong: `python -m ingest.doc_intake` (DB test) với model hỏng → exit 1, "[err]", "[done]", 0 dòng mới.
+- cli_reprocess_model_hong: tài liệu cho_ocr (nạp với OCR none) → `--reprocess-pending` model hỏng → kết thúc có kiểm soát
+  (không mã crash, có "[done]"), tài liệu vẫn cho_ocr."""
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+ROOT, FX, FULL, DBENV, OUT = sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]), sys.argv[5]
+CRASH = {3221225477, 3221226505, 3, 134, -6, 0xC0000409}
+SUBDIRS = {"det": ("det", "en", "en_PP-OCRv3_det_infer"), "rec": ("rec", "latin", "latin_PP-OCRv3_rec_infer"),
+           "cls": ("cls", "ch_ppocr_mobile_v2.0_cls_infer")}
+
+SITECUSTOMIZE = r'''
+import os, socket
+_orig = socket.socket.connect
+def _guard(self, addr):
+    host = addr[0] if isinstance(addr, tuple) else str(addr)
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        with open(os.environ["PROBE_NET_LOG"], "a", encoding="utf-8") as f:
+            f.write(str(host)[:80] + "\n")
+        raise OSError("probe: chan mang")
+    return _orig(self, addr)
+socket.socket.connect = _guard
+'''
+FAKE = r'''
+import os, time, pathlib
+class PaddleOCR:
+    def __init__(self, **kw):
+        pathlib.Path(os.environ["FAKE_PID_FILE"]).write_text(str(os.getpid()))
+        mode = os.environ.get("FAKE_PADDLE_MODE")
+        if mode == "crash":
+            os.abort()
+        if mode == "hang_init":
+            time.sleep(15)
+            pathlib.Path(os.environ["FAKE_LATE_FILE"]).write_text("late-init")
+    def ocr(self, img, cls=False):
+        if os.environ.get("FAKE_PADDLE_MODE") == "hang_ocr":
+            time.sleep(15)
+            pathlib.Path(os.environ["FAKE_LATE_FILE"]).write_text("late-ocr")
+        return [[[[[0, 0], [1, 0], [1, 1], [0, 1]], ("FAKE-TEXT-MUON", 0.9)]]]
+'''
+
+
+def _db_env():
+    env = {}
+    for ln in DBENV.read_text(encoding="utf-8").splitlines():
+        if ln.startswith("export ") and "='" in ln:
+            k, v = ln[7:].split("=", 1)
+            env[k] = v.strip("'")
+    return env
+
+
+def _models(root: Path, how: str) -> Path:
+    for k, parts in SUBDIRS.items():
+        d = root.joinpath(*parts)
+        d.mkdir(parents=True)
+        for f in ("inference.pdmodel", "inference.pdiparams"):
+            if how == "thieu_pdiparams" and f == "inference.pdiparams":
+                continue
+            if how == "pdmodel_rong" and f == "inference.pdmodel":
+                (d / f).write_bytes(b"")
+                continue
+            (d / f).write_bytes(os.urandom(4096) if how == "hong" else b"synthetic-model-bytes")
+    return root
+
+
+def child(ma: str, row_file: str, tmp: str) -> None:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.path.insert(0, ROOT)
+    os.chdir(ROOT)
+    T = Path(tmp)
+    res = {"ca": ma}
+
+    def run_cli(args, extra_env):
+        env = {k: v for k, v in os.environ.items() if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        env.update(extra_env)
+        env["PYTHONIOENCODING"] = "utf-8"
+        r = subprocess.run([sys.executable, *args], cwd=ROOT, env=env, capture_output=True, timeout=200)
+        return r.returncode, r.stdout.decode("utf-8", "replace"), r.stderr.decode("utf-8", "replace")
+
+    def extract(name, ext=None):
+        from ingest import doc_intake as di
+        try:
+            text, pages, src = di.extract_text(FX / name if not Path(name).is_absolute() else Path(name),
+                                               "paddle_local", ext or Path(name).suffix)
+            return {"src": src, "pages": pages, "text": text[:120]}
+        except di.DocError as e:
+            return {"DocError": str(e)[:200]}
+
+    if ma == "model_hong_paddle_that":
+        os.environ["OCR_PADDLE_MODEL_DIR"] = str(_models(T / "m", "hong"))
+        res["got"] = extract("nhan_mat_ong.png")
+        res["ok"] = "DocError" in res["got"]
+    elif ma in ("worker_crash_abort", "treo_khoi_tao", "treo_suy_luan"):
+        os.environ["OCR_PADDLE_MODEL_DIR"] = str(_models(T / "m", "synthetic"))
+        os.environ["OCR_TIMEOUT_S"] = "8"
+        t0 = time.time()
+        res["got"] = extract("nhan_mat_ong.png")
+        res["giay"] = round(time.time() - t0, 1)
+        if ma == "worker_crash_abort":
+            res["ok"] = "DocError" in res["got"]
+        else:
+            time.sleep(25)   # tiến trình gọi còn sống lâu (như intake chạy tiếp) — chờ xem có kết quả muộn
+            late = Path(os.environ["FAKE_LATE_FILE"]).exists()
+            pid_f = Path(os.environ["FAKE_PID_FILE"])
+            pid = int(pid_f.read_text()) if pid_f.exists() else None
+            alive = False
+            if pid and pid != os.getpid():
+                out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
+                alive = str(pid) in out
+            elif pid == os.getpid():
+                alive = True   # engine giả chạy NGAY trong tiến trình gọi
+            res.update(ket_qua_muon=late, pid_engine_con_song=alive, pid_engine_la_tien_trinh_goi=pid == os.getpid())
+            res["ok"] = "DocError" in res["got"] and res["giay"] <= 30 and not late and not alive
+    elif ma in ("thieu_pdiparams", "pdmodel_rong"):
+        os.environ["OCR_PADDLE_MODEL_DIR"] = str(_models(T / "m", ma))
+        res["got"] = extract("nhan_mat_ong.png")
+        res["ok"] = "thiếu model" in res["got"].get("DocError", "")
+    elif ma == "hop_le_that":
+        os.environ["OCR_PADDLE_MODEL_DIR"] = str(FULL)
+        import fitz
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "GIAY TIEP NHAN so 77/2026/DKSP " * 4)
+        doc.save(T / "chu.pdf")
+        a, b, c = extract("nhan_mat_ong.png"), extract("tiep_nhan_scan.pdf"), extract(str(T / "chu.pdf"), ".pdf")
+        res["got"] = {"png": a, "pdf_scan": b, "pdf_chu": c}
+        res["ok"] = (a.get("src") == "ocr" and "LOT" in a.get("text", "").upper() and b.get("src") == "ocr"
+                     and b.get("pages") == 2 and "123/2026" in b.get("text", "") and c.get("src") == "pdf_text")
+    elif ma == "trang_hong_qua_trang":
+        os.environ["OCR_PADDLE_MODEL_DIR"] = str(FULL)
+        a, b, c = extract("trang.png"), extract("hong.jpg"), extract("qua_trang.pdf")
+        res["got"] = {"trang": a, "hong": b, "qua_trang": c}
+        res["ok"] = a.get("src") == "none" and "DocError" in b and "DocError" in c
+    elif ma == "cli_sx_label_model_hong":
+        rc, so, se = run_cli(["-m", "agents.sx_label", "--sku", "mat-ong-sam-300ml", "--image",
+                              str(FX / "nhan_mat_ong.png")],
+                             {"OCR_PROVIDER": "paddle_local", "OCR_PADDLE_MODEL_DIR": str(_models(T / "m", "hong"))})
+        res["got"] = {"rc": rc, "stderr": se[-300:]}
+        res["ok"] = rc == 1 and "[error]" in se and rc not in CRASH
+    elif ma in ("cli_intake_model_hong", "cli_reprocess_model_hong"):
+        db = _db_env()
+        intake = T / "intake" / "nhan"
+        intake.mkdir(parents=True)
+        shutil.copy(FX / "nhan_mat_ong.png", intake / f"nhan_{ma}.png")
+        base = {**db, "DOC_INTAKE_DIR": str(T / "intake"), "DOC_ORIGINALS_DIR": str(T / "orig")}
+        import psycopg
+        count_sql = "select count(*), count(*) filter (where status = 'cho_ocr') from documents"
+        with psycopg.connect(db["DATABASE_URL"], connect_timeout=5) as c:
+            n0 = c.execute(count_sql).fetchone()
+        mh = str(_models(T / "m", "hong"))
+        if ma == "cli_intake_model_hong":
+            rc, so, se = run_cli(["-m", "ingest.doc_intake"],
+                                 {**base, "OCR_PROVIDER": "paddle_local", "OCR_PADDLE_MODEL_DIR": mh})
+            with psycopg.connect(db["DATABASE_URL"], connect_timeout=5) as c:
+                n1 = c.execute(count_sql).fetchone()
+            res["got"] = {"rc": rc, "stdout": so[-400:], "docs": [n0, n1]}
+            res["ok"] = rc == 1 and "[err]" in so and "[done]" in so and n1[0] == n0[0] and rc not in CRASH
+        else:
+            rc0, so0, _ = run_cli(["-m", "ingest.doc_intake"], {**base, "OCR_PROVIDER": ""})
+            rc, so, se = run_cli(["-m", "ingest.doc_intake", "--reprocess-pending"],
+                                 {**base, "OCR_PROVIDER": "paddle_local", "OCR_PADDLE_MODEL_DIR": mh})
+            with psycopg.connect(db["DATABASE_URL"], connect_timeout=5) as c:
+                n1 = c.execute(count_sql).fetchone()
+            res["got"] = {"nap_none_rc": rc0, "rc": rc, "stdout": so[-400:], "docs": [n0, n1]}
+            res["ok"] = (rc0 == 2 and n1[1] == n0[1] + 1 and rc not in CRASH and rc in (0, 1, 2)
+                         and "[done]" in so and "Traceback" not in se)
+    res["mang"] = [x for x in Path(os.environ["PROBE_NET_LOG"]).read_text(encoding="utf-8").splitlines() if x] \
+        if Path(os.environ["PROBE_NET_LOG"]).exists() else []
+    res["ok"] = bool(res.get("ok")) and not res["mang"]
+    Path(row_file).write_text(json.dumps(res, ensure_ascii=False, default=str), encoding="utf-8")
+
+
+CASES = ["model_hong_paddle_that", "worker_crash_abort", "treo_khoi_tao", "treo_suy_luan", "thieu_pdiparams",
+         "pdmodel_rong", "hop_le_that", "trang_hong_qua_trang", "cli_sx_label_model_hong", "cli_intake_model_hong",
+         "cli_reprocess_model_hong"]
+FAKE_CASES = {"worker_crash_abort": "crash", "treo_khoi_tao": "hang_init", "treo_suy_luan": "hang_ocr"}
+
+if len(sys.argv) > 7 and sys.argv[6] == "--ca":
+    child(sys.argv[7], sys.argv[8], sys.argv[9])
+    sys.exit(0)
+
+sys.stdout.reconfigure(encoding="utf-8")
+rows = []
+for ma in CASES:
+    tmp = Path(tempfile.mkdtemp(prefix=f"r14p1-{ma[:10]}-"))
+    sup = tmp / "sup"
+    sup.mkdir()
+    (sup / "sitecustomize.py").write_text(SITECUSTOMIZE, encoding="utf-8")
+    pp = [str(sup)]
+    if ma in FAKE_CASES:
+        fk = tmp / "fake" / "paddleocr"
+        fk.mkdir(parents=True)
+        (fk / "__init__.py").write_text(FAKE, encoding="utf-8")
+        pp.insert(0, str(tmp / "fake"))
+    env = {k: v for k, v in os.environ.items() if not (k.endswith("DATABASE_URL") or k.startswith(("PG", "OCR_")))}
+    env.update(PYTHONPATH=os.pathsep.join(pp), PROBE_NET_LOG=str(tmp / "net.log"), FAKE_PID_FILE=str(tmp / "pid"),
+               FAKE_LATE_FILE=str(tmp / "late"), FAKE_PADDLE_MODE=FAKE_CASES.get(ma, ""), PYTHONIOENCODING="utf-8")
+    row_f = tmp / "row.json"
+    t0 = time.time()
+    try:
+        r = subprocess.run([sys.executable, __file__, ROOT, str(FX), str(FULL), str(DBENV), OUT, "--ca", ma,
+                            str(row_f), str(tmp)], env=env, capture_output=True, timeout=240)
+        rc, err = r.returncode, r.stderr.decode("utf-8", "replace")[-400:]
+    except subprocess.TimeoutExpired as e:
+        rc, err = "TIMEOUT_240s", (e.stderr or b"").decode("utf-8", "replace")[-400:]
+    if row_f.exists():
+        row = json.loads(row_f.read_text(encoding="utf-8"))
+    else:
+        row = {"ca": ma, "ok": False, "got": f"tiến trình gọi KHÔNG trả kết quả (exit {rc})"}
+    row.update(exit_tien_trinh_goi=rc, giay_tong=round(time.time() - t0, 1), stderr_tail=err)
+    row["ket_qua"] = "PASS" if row.get("ok") and rc == 0 else "FAIL"
+    rows.append(row)
+    shutil.rmtree(tmp, ignore_errors=True)
+out = {"probe": "p1_ocr_isolation_v1", "root": ROOT, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], "exit=", r["exit_tien_trinh_goi"], str(r.get("got"))[:150])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

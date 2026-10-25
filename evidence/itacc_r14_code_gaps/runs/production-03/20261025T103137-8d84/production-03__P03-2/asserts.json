@@ -1,0 +1,20 @@
+[
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'label_check' and block = 'production' and created_by = 'agent:sx_label' and status = 'pending' and object_id like 'sxlabel:savina-12v:b5ade2c4c6fd:%'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'label_check'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from approval_queue where object_type = 'label_check' and payload like '%SAVINA THỬ IT%'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

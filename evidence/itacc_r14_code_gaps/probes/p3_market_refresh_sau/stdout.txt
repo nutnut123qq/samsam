@@ -1,0 +1,11 @@
+PASS shopee_refresh_hop_le {'rc': 0, 'reqs': [('POST', '/api/v2/auth/access_token/get')], 'leaked': [], 'text': '[ok] shopee: đã refresh token — hết hạn 2026-10-25 13:45 (giờ VN).\n'}
+PASS shopee_tu_refresh_roi_keo {'rc': 0, 'paths': ['/api/v2/auth/access_token/get', '/api/v2/product/get_item_list'], 'leaked': [], 'text': '[ok] shopee: đã refresh token — hết hạn 2026-10-25 13:45 (giờ VN).\n[warn] API shopee/list
+PASS shopee_refresh_loi {'rc': 1, 'auth': 1, 'data': 0, 'redirect_target': None, 'leaked': [], 'text': '[err] shopee refresh token: mã lỗi error_auth — kho token KHÔNG đổi.\n'}
+PASS shopee_thieu_refresh_token {'rc': 1, 'auth': 1, 'data': 0, 'redirect_target': None, 'leaked': [], 'text': '[err] shopee refresh token: thiếu/sai refresh_token — kho token KHÔNG đổi.\n'}
+PASS shopee_refresh_429 {'rc': 1, 'auth': 1, 'data': 0, 'redirect_target': None, 'leaked': [], 'text': '[err] shopee refresh token: HTTP 429 — kho token KHÔNG đổi.\n'}
+PASS shopee_refresh_redirect {'rc': 1, 'auth': 1, 'data': 0, 'redirect_target': 0, 'leaked': [], 'text': '[err] shopee refresh token: HTTP 302 — kho token KHÔNG đổi.\n'}
+PASS tiktok_refresh_hop_le {'rc': 0, 'n': 1, 'leaked': [], 'text': '[ok] tiktok: đã refresh token — hết hạn 2026-11-01 09:45 (giờ VN).\n'}
+PASS kho_trong_repo {'rc': 2, 'n': 0, 'text': '[err] MARKET_TOKEN_FILE nằm trong repo — đặt NGOÀI repo — 0 request.\n'}
+PASS doi_chung_tat {'rc': 2, 'n': 0, 'text': '[rollout] kéo dữ liệu API sàn chỉ đọc: tính năng data_platform-06 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra\n'}
+PASS doi_chung_listing_env {'rc': 0, 'paths': ['/api/v2/product/get_item_list'], 'leaked': [], 'text': '[warn] API shopee/listing trả 0 dòng — không nạp gì.\n[job-runs] ghi job_runs lỗi (RuntimeError) — job vẫn chạy bình thường
+TONG {'PASS': 10, 'FAIL': 0}

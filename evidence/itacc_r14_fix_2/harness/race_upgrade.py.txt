@@ -1,0 +1,70 @@
+"""HARNESS r14-fix2 — gọi `pipelines.anchor.upgrade()` THẬT của cây <TREE> từ N luồng ĐỒNG THỜI (mỗi luồng 1 kết nối riêng —
+DSN đọc từ biến môi trường RACE_DSN_<i>, không qua argv), calendar GIẢ trả cây OTS hợp lệ (attestation Bitcoin 850007) và
+CHẶN mọi luồng ở barrier ngay trong lời gọi calendar → các luồng cùng đi qua kiểm "đã nâng cấp chưa" trước khi bất kỳ luồng nào
+ghi (tái hiện đua như controller). Không mạng thật (chặn socket ngoài localhost, đếm).
+  python race_upgrade.py.txt <TREE> <BID> <CAL> <FORCE:none|van_hanh|co_nguoi_duyet> <BY_1|-> [<BY_2|-> ...]
+BY = '-' → gọi như job (không truyền by — đúng chữ ký baseline 0afa388). In 1 dòng `RACE_JSON [...]` (kết quả hoặc lỗi/luồng,
+số GET/luồng, NET)."""
+import concurrent.futures
+import json
+import os
+import socket
+import sys
+import threading
+from pathlib import Path
+
+TREE, BID, CAL, FORCE, BYS = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4], sys.argv[5:]
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.path.insert(0, TREE)
+os.chdir(TREE)
+NET = [0]
+_orig = socket.socket.connect
+
+
+def _guard(self, addr):
+    host = addr[0] if isinstance(addr, tuple) else str(addr)
+    if host not in ("127.0.0.1", "::1", "localhost"):
+        NET[0] += 1
+        raise OSError("mạng bị chặn")
+    return _orig(self, addr)
+
+
+socket.socket.connect = _guard
+import psycopg  # noqa: E402
+
+from pipelines import anchor as an  # noqa: E402
+from pipelines import rollout  # noqa: E402
+
+rollout._FORCE_MODE = None if FORCE == "none" else FORCE
+barrier = threading.Barrier(len(BYS))
+GETS = [0] * len(BYS)
+
+
+def vb(x):
+    return an._put_varuint(len(x)) + x
+
+
+def run(i):
+    def get(url, timeout):
+        GETS[i] += 1
+        barrier.wait(20)
+        return b"\x08\x00" + an.ATT_BITCOIN + vb(an._put_varuint(850007))
+    try:
+        with psycopg.connect(os.environ[f"RACE_DSN_{i + 1}"], connect_timeout=10) as con:
+            cfg = {"provider": "opentimestamps", "calendars": [CAL], "timeout_s": 5}
+            if BYS[i] == "-":
+                r = an.upgrade(con, BID, cfg, get=get)
+            else:
+                r = an.upgrade(con, BID, cfg, get=get, by=BYS[i])
+            return {"ok": r, "gets": GETS[i]}
+    except BaseException as e:  # noqa: BLE001 — ghi lại lỗi của luồng
+        try:
+            barrier.abort()
+        except Exception:  # noqa: BLE001
+            pass
+        return {"err": f"{type(e).__name__}: {str(e).splitlines()[0][:200] if str(e) else ''}", "gets": GETS[i]}
+
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=len(BYS)) as pool:
+    out = list(pool.map(run, range(len(BYS))))
+print("RACE_JSON " + json.dumps({"results": out, "net": NET[0]}, ensure_ascii=False, default=str))

@@ -1,0 +1,35 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "ingest.doc_intake",
+  "--reprocess-pending"
+ ],
+ "env_doi": [
+  "DOC_INTAKE_DIR",
+  "DOC_ORIGINALS_DIR",
+  "OCR_PROVIDER"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T10:14:36+07:00",
+ "ket_thuc": "2026-10-25T10:14:40+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\[blocked\\] OCR_PROVIDER chưa cấu hình",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "4e1570064702f0a3cb1a5627e7bb885bf888752b1babcb8ffc75a0051e831f6f",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

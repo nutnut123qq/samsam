@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select created_by from anchor_receipts where status = 'da_nang_cap' and batch_id = (select max(id) from anchor_batches)",
+  "expect": "Người Duyệt Neo Thử R14",
+  "actual": "Người Duyệt Neo Thử R14",
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from agent_action_log where action = 'anchor_upgrade' and object_id = (select max(id)::text from anchor_batches)",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

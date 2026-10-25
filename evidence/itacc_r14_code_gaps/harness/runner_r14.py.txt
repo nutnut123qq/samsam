@@ -1,0 +1,277 @@
+"""r14: bản sao runner_r13fix4 — runs/ dưới evidence/itacc_r14_code_gaps, cổng 55455, {HR} = harness r14; {HX} = harness r13-fix4, {H}/{FX13} = harness/fixture r13 (CHỈ ĐỌC)."""
+"""r13-fix4: bản sao runner_r13 — runs/ dưới evidence/itacc_r13_fix_4, cổng 55454, {HX} = harness r13-fix4; {H}/{FX13} vẫn trỏ harness/fixture r13 (CHỈ ĐỌC).
+r13: bản sao runner_r12fix.py.txt — thư mục evidence/itacc_r13_docx12 (runs/), cổng 55454; placeholder {H} = harness
+r13, {H12} = harness r12, {FX13} = fixture r13, {FX12}/{FXF}/{HF}/{FX10} chỉ đọc (xem mk_harness_r13)."""
+"""r12-fix: bản sao runner_r12.py.txt — thư mục evidence/itacc_r12_fix_d2_l3 (runs/), cổng 55452, placeholder thêm
+{FXF}/{HF} (fixture/harness r12-fix); {FX12}/{H} vẫn trỏ fixture/harness r12 (CHỈ ĐỌC); che thêm libpq password=."""
+"""HARNESS r12 — bản sao runner r11 (đổi: cổng 55451, thư mục itacc_r12, placeholder {REPO}/{FX12}/{FX10}/{FX11},
+bước có thể bọc wrap.py.txt để fake AI ở biên cuối). Chạy ca của MỘT mục từ criteria/r12_<nhom>.json đã khóa.
+
+python -I runner_r12.py.txt <criteria/r12_x.json> <criteria/r12_x.lock.txt> <item_id> <env_file>
+
+- Từ chối chạy nếu sha256 criteria ≠ dòng khóa, hoặc DATABASE_URL (env_file) không phải
+  127.0.0.1:55451 / DB của mục (`db` trong criteria).
+- Mỗi lần chạy mục: runs/<id>/<run_id>/ (mkdir exist_ok=False); mỗi ca: <run_id>/<ma>/ ;
+  mỗi bước: stepNN.cmd.json (argv đã thay placeholder — không secret, giờ bắt đầu/kết
+  thúc Asia/Saigon, exit code lấy từ tiến trình, sha256 stdin), stepNN.stdout.txt,
+  stepNN.stderr.txt — mở chế độ 'x' (không ghi đè). Bộ lọc secret tự động: thay giá trị
+  mật khẩu DSN / INTEL_HASH_SALT / CONTACT_VAULT_KEY bằng '***' (đếm số lần thay, ghi trong
+  cmd.json `bo_loc`); KHÔNG sửa nội dung nghiệp vụ.
+- Assertion (`kiem`) chạy SAU các bước của ca trên DB thử → asserts.json (expected/actual).
+- Ca: PASS khi mọi bước đúng exit/regex + mọi assertion đúng; FAIL khi sai; LOI_HARNESS khi
+  placeholder/SQL assertion lỗi. Ca tien_quyet không PASS → ca sau NOT_RUN.
+- Tổng hợp lần chạy: runs/<id>/<run_id>/ket_qua.json (mở 'x').
+"""
+import hashlib
+import json
+import os
+import re
+import secrets
+import subprocess
+import sys
+import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+VN = timezone(timedelta(hours=7))
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r14_code_gaps"
+EVX = REPO / "evidence" / "itacc_r13_fix_4"
+EV13 = REPO / "evidence" / "itacc_r13_docx12"
+EV12 = REPO / "evidence" / "itacc_r12"
+EVF = REPO / "evidence" / "itacc_r12_fix_d2_l3"
+crit_p, lock_p, item_id, env_p = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3], Path(sys.argv[4])
+h = hashlib.sha256(crit_p.read_bytes()).hexdigest()
+lock = lock_p.read_text(encoding="utf-8").split()
+if lock[1] != h:
+    sys.exit(f"[runner] criteria sha256 {h} ≠ khóa {lock[1]} — dừng")
+crit = json.loads(crit_p.read_text(encoding="utf-8"))
+item = next(i for i in crit["items"] if i["id"] == item_id)
+
+ENV = {}
+for line in env_p.read_text(encoding="utf-8").splitlines():
+    m = re.match(r"export (\w+)='(.*)'$", line.strip())
+    if m:
+        ENV[m.group(1)] = m.group(2)
+from psycopg import conninfo  # noqa: E402
+
+d = conninfo.conninfo_to_dict(ENV["DATABASE_URL"])
+if not (d.get("host") == "127.0.0.1" and str(d.get("port")) == "55455" and d.get("dbname") == item["db"]):
+    sys.exit("[runner] DATABASE_URL không phải DB thử của mục — dừng")
+SECRETS = {"db_password": d.get("password") or "", "INTEL_HASH_SALT": ENV.get("INTEL_HASH_SALT", ""),
+           "CONTACT_VAULT_KEY": ENV.get("CONTACT_VAULT_KEY", "")}
+import psycopg  # noqa: E402
+
+
+def now():
+    return datetime.now(VN).isoformat(timespec="seconds")
+
+
+def redact(t: str):
+    n = {}
+    t = re.sub(r"(postgres(?:ql)?://[^:/\s]+:)[^@\s]+@", r"\1***@", t)
+    t = re.sub(r"password=(?!\*\*\*)\S+", "password=***", t)
+    for k, v in SECRETS.items():
+        if v and v in t:
+            n[k] = t.count(v)
+            t = t.replace(v, "***")
+    return t, n
+
+
+def q1(sql):
+    with psycopg.connect(ENV["DATABASE_URL"], connect_timeout=5) as c:
+        r = c.execute(sql).fetchone()
+        return None if r is None else r[0]
+
+
+def jsonable(v):
+    if isinstance(v, (int, float, str, bool)) or v is None:
+        return v
+    try:
+        from decimal import Decimal
+        if isinstance(v, Decimal):
+            return int(v) if v == v.to_integral_value() else float(v)
+    except ImportError:
+        pass
+    return str(v)
+
+
+run_id = datetime.now(VN).strftime("%Y%m%dT%H%M%S") + "-" + secrets.token_hex(2)
+RUN = EV / "runs" / item_id / run_id
+RUN.mkdir(parents=True, exist_ok=False)
+SCR = RUN / "scratch"
+SCR.mkdir()
+FX, H12 = EV12 / "fixtures", EV12 / "harness"
+FXF, HF = EVF / "fixtures", EVF / "harness"
+FX13, H = EV13 / "fixtures", EV13 / "harness"
+HX = EVX / "harness"
+HR = EV / "harness"
+FX10, FX11 = REPO / "evidence" / "itacc_r10", REPO / "evidence" / "itacc_r11"
+BG = {}
+
+
+def subst(s: str, out: Path) -> str:
+    s = (s.replace("{FX12}", str(FX)).replace("{FX10}", str(FX10)).replace("{FX11}", str(FX11)).replace("{FX}", str(FX))
+         .replace("{FXF}", str(FXF)).replace("{HF}", str(HF)).replace("{FX13}", str(FX13)).replace("{H12}", str(H12)).replace("{HX}", str(HX)).replace("{HR}", str(HR)).replace("{H}", str(H)).replace("{SCR}", str(SCR)).replace("{OUT}", str(out)).replace("{REPO}", str(REPO)))
+    m = re.fullmatch(r"\{sql:(.*)\}", s)
+    if m:
+        v = q1(m.group(1))
+        if v is None:
+            raise LookupError(f"placeholder sql trả rỗng: {m.group(1)[:120]}")
+        return str(v)
+    return s
+
+
+def child_env(over: dict, out: Path):
+    e = {k: v for k, v in os.environ.items()
+         if not (k.startswith("PG") or k.endswith("DATABASE_URL") or k in
+                 ("DEPLOY", "AUTH_MODE", "APPROVAL_ENFORCE", "RED_ALERT_NOTIFY", "LLM_KILL_FEATURES",
+                  "INTEL_HASH_SALT", "CONTACT_VAULT_KEY", "OPENROUTER_API_KEY"))}
+    e.update(ENV)
+    e.update(PYTHONIOENCODING="utf-8", OPENROUTER_API_KEY="")
+    for k, v in (over or {}).items():
+        if v is None:
+            e.pop(k, None)
+        else:
+            e[k] = subst(v, out)
+    return e
+
+
+def _rel(p: Path) -> str:
+    """Đường dẫn ghi vào asserts: tương đối repo nếu trong repo, tuyệt đối nếu ngoài (r12 24/10 — kho ngoài repo)."""
+    try:
+        return str(p.resolve().relative_to(REPO)).replace("\\", "/")
+    except ValueError:
+        return str(p.resolve()).replace("\\", "/")
+
+
+def sha(p: Path):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+results = []
+blocked = None
+for ca in item["ca"]:
+    cdir = RUN / ca["ma"]
+    cdir.mkdir(exist_ok=False)
+    out = cdir / "out"
+    out.mkdir()
+    if blocked or ca.get("not_run"):
+        # r12: `not_run` = ca KHÔNG chạy được trong môi trường này (lý do khóa trong tiêu chí trước khi chạy)
+        rec = {"ma": ca["ma"], "ket_qua": "NOT_RUN",
+               "ly_do_not_run": ca.get("not_run") or f"ca tiên quyết {blocked} không PASS"}
+        (cdir / "case.json").open("x", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))
+        results.append(rec)
+        continue
+    steps, ok, harness_err = [], True, None
+    for k, st in enumerate(ca.get("buoc", []), 1):
+        pre = cdir / f"step{k:02d}"
+        if "bg_stop" in st:
+            p = BG.pop(st["bg_stop"], None)
+            if p:
+                p.terminate()
+                try:
+                    p.wait(10)
+                except subprocess.TimeoutExpired:
+                    p.kill()
+            steps.append({"buoc": k, "bg_stop": st["bg_stop"], "exit": p.returncode if p else None})
+            continue
+        try:
+            argv = [sys.executable if a == "python" else subst(a, out) for a in st["argv"]]
+            env = child_env(st.get("env"), out)
+        except Exception as e:  # noqa: BLE001 — lỗi harness, không phải sản phẩm
+            harness_err = f"bước {k}: {type(e).__name__}: {e}"
+            ok = False
+            break
+        safe_argv = ["python" if a == sys.executable else a for a in argv]
+        if "bg_start" in st:
+            fo = open(f"{pre}.bg_stdout.txt", "x", encoding="utf-8")
+            fe = open(f"{pre}.bg_stderr.txt", "x", encoding="utf-8")
+            BG[st["bg_start"]] = subprocess.Popen(argv, cwd=REPO, env=env, stdout=fo, stderr=fe)
+            time.sleep(1.5)
+            steps.append({"buoc": k, "bg_start": st["bg_start"], "argv": safe_argv, "bat_dau": now(),
+                          "dang_chay": BG[st["bg_start"]].poll() is None})
+            ok &= steps[-1]["dang_chay"]
+            continue
+        stdin_b = Path(subst(st["stdin"], out)).read_bytes() if st.get("stdin") else None
+        t0 = now()
+        p = subprocess.run(argv, cwd=REPO, env=env, input=stdin_b, capture_output=True, timeout=900)
+        rc = p.returncode
+        t1 = now()
+        so, n1 = redact(p.stdout.decode("utf-8", "replace"))
+        se, n2 = redact(p.stderr.decode("utf-8", "replace"))
+        open(f"{pre}.stdout.txt", "x", encoding="utf-8").write(so)
+        open(f"{pre}.stderr.txt", "x", encoding="utf-8").write(se)
+        exp = st.get("expect_exit")
+        exp_ok = rc in exp if isinstance(exp, list) else rc == exp
+        checks = []
+        for key, txt in (("stdout_re", so), ("stderr_re", se), ("out_re", so + "\n" + se)):
+            if st.get(key):
+                checks.append({key: st[key], "khop": re.search(st[key], txt) is not None})
+        sok = exp_ok and all(c["khop"] for c in checks)
+        ok &= sok
+        rec = {"buoc": k, "argv": safe_argv, "env_doi": sorted((st.get("env") or {}).keys()),
+               "stdin_sha256": hashlib.sha256(stdin_b).hexdigest() if stdin_b else None,
+               "bat_dau": t0, "ket_thuc": t1, "exit": rc, "expect_exit": exp, "regex": checks,
+               "dat": sok, "bo_loc": {"dsn_mat_khau_regex": True, **{k2: v for d2 in (n1, n2) for k2, v in d2.items()}},
+               "stdout_sha256": sha(Path(f"{pre}.stdout.txt")), "stderr_sha256": sha(Path(f"{pre}.stderr.txt"))}
+        open(f"{pre}.cmd.json", "x", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))
+        steps.append(rec)
+    asserts = []
+    if harness_err is None:
+        for a in ca.get("kiem", []):
+            try:
+                if "sql" in a:
+                    act = jsonable(q1(a["sql"]))
+                    asserts.append({"sql": a["sql"], "expect": a["expect"], "actual": act, "dat": act == a["expect"]})
+                elif "file_glob" in a:
+                    pat = subst(a["file_glob"], out)
+                    files = sorted(Path(pat).parent.glob(Path(pat).name))
+                    asserts.append({"file_glob": pat.replace(str(REPO) + os.sep, ""), "count": a["count"],
+                                    "actual": len(files), "files": [{"path": _rel(f),
+                                                                      "sha256": sha(f)} for f in files],
+                                    "dat": len(files) == a["count"]})
+                elif "file_glob_dq" in a or "file_re_dq" in a:
+                    # r12 (24/10): như file_glob/file_re nhưng cho phép `*` ở THƯ MỤC (glob.glob) — loại cũ chỉ glob
+                    # thành phần cuối (Path.parent.glob), mẫu `.../*/index.html` luôn ra 0 tệp. Loại cũ giữ nguyên.
+                    import glob as _g
+                    pat = subst(a.get("file_glob_dq") or a["file_re_dq"], out)
+                    files = sorted(Path(x) for x in _g.glob(pat))
+                    if "file_glob_dq" in a:
+                        asserts.append({"file_glob_dq": pat.replace(str(REPO) + os.sep, ""), "count": a["count"],
+                                        "actual": len(files), "files": [{"path": _rel(f), "sha256": sha(f)} for f in files],
+                                        "dat": len(files) == a["count"]})
+                    else:
+                        txt = files[0].read_text(encoding="utf-8") if len(files) == 1 else ""
+                        act = bool(re.search(a["re"], txt)) if len(files) == 1 else None
+                        asserts.append({"file_re_dq": pat.replace(str(REPO) + os.sep, ""), "re": a["re"],
+                                        "expect": a.get("expect", True), "actual": act, "so_tep": len(files),
+                                        "dat": act is not None and act == a.get("expect", True)})
+                elif "file_re" in a:
+                    # r12: nội dung tệp (glob khớp đúng 1 tệp) có/không khớp regex `re`
+                    pat = subst(a["file_re"], out)
+                    files = sorted(Path(pat).parent.glob(Path(pat).name))
+                    txt = files[0].read_text(encoding="utf-8") if len(files) == 1 else ""
+                    act = bool(re.search(a["re"], txt)) if len(files) == 1 else None
+                    asserts.append({"file_re": pat.replace(str(REPO) + os.sep, ""), "re": a["re"],
+                                    "expect": a.get("expect", True), "actual": act, "so_tep": len(files),
+                                    "dat": act is not None and act == a.get("expect", True)})
+            except Exception as e:  # noqa: BLE001
+                harness_err = f"assertion lỗi: {type(e).__name__}: {str(e)[:200]}"
+                break
+    open(cdir / "asserts.json", "x", encoding="utf-8").write(json.dumps(asserts, ensure_ascii=False, indent=1, default=str))
+    kq = "LOI_HARNESS" if harness_err else ("PASS" if ok and all(a["dat"] for a in asserts) else "FAIL")
+    rec = {"ma": ca["ma"], "ket_qua": kq, "loi_harness": harness_err, "so_buoc": len(steps),
+           "exit": [s.get("exit") for s in steps], "assert_dat": sum(a["dat"] for a in asserts), "assert_tong": len(asserts)}
+    open(cdir / "case.json", "x", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))
+    results.append(rec)
+    print(kq, ca["ma"], rec["exit"], f"{rec['assert_dat']}/{rec['assert_tong']}", harness_err or "", flush=True)
+    if ca.get("tien_quyet") and kq != "PASS":
+        blocked = ca["ma"]
+for name, p in BG.items():
+    p.terminate()
+open(RUN / "ket_qua.json", "x", encoding="utf-8").write(json.dumps(
+    {"item": item_id, "run_id": run_id, "criteria_sha256": h, "db": item["db"], "ket_thuc": now(), "ca": results},
+    ensure_ascii=False, indent=1))
+print("RUN", run_id, {k: sum(r["ket_qua"] == k for r in results) for k in ("PASS", "FAIL", "NOT_RUN", "LOI_HARNESS")})

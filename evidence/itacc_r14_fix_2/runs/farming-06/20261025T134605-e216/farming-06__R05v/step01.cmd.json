@@ -1,0 +1,31 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r13_docx12\\harness/anchor_ots_run.py.txt",
+  "--force-mode",
+  "van_hanh",
+  "--fake-get",
+  "404",
+  "--upgrade",
+  "latest"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T13:52:20+07:00",
+ "ket_thuc": "2026-10-25T13:52:22+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*\\[FAKE\\] GET https://cal-b\\.test/timestamp/[0-9a-f]{64} timeout=5 khop_commitment=True[\\s\\S]*\\[cho\\] lần gom #\\d+: calendar chưa có attestation Bitcoin[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "84eec708fbb098dd1eb0049d4462f9d90cfed8f87b9cef1125f202904581e8f1",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

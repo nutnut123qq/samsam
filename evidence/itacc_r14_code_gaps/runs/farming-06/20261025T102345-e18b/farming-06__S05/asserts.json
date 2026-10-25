@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from plot_logs where created_at > now() - interval '5 minutes'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from qr_codes where revoked_at > now() - interval '5 minutes'",
+  "expect": 0,
+  "actual": 0,
+  "dat": true
+ }
+]

@@ -1,0 +1,194 @@
+{
+ "probe": "p1_ocr_isolation_v1",
+ "root": "D:\\code\\samsam_r14_baseline",
+ "ca": [
+  {
+   "ca": "model_hong_paddle_that",
+   "ok": false,
+   "got": "tiến trình gọi KHÔNG trả kết quả (exit 3221225477)",
+   "exit_tien_trinh_goi": 3221225477,
+   "giay_tong": 16.2,
+   "stderr_tail": "",
+   "ket_qua": "FAIL"
+  },
+  {
+   "ca": "worker_crash_abort",
+   "ok": false,
+   "got": "tiến trình gọi KHÔNG trả kết quả (exit 3221226505)",
+   "exit_tien_trinh_goi": 3221226505,
+   "giay_tong": 4.2,
+   "stderr_tail": "",
+   "ket_qua": "FAIL"
+  },
+  {
+   "ca": "treo_khoi_tao",
+   "got": {
+    "src": "ocr",
+    "pages": 1,
+    "text": "FAKE-TEXT-MUON"
+   },
+   "giay": 17.3,
+   "ket_qua_muon": true,
+   "pid_engine_con_song": true,
+   "pid_engine_la_tien_trinh_goi": true,
+   "ok": false,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 42.7,
+   "stderr_tail": "",
+   "ket_qua": "FAIL"
+  },
+  {
+   "ca": "treo_suy_luan",
+   "got": {
+    "DocError": "OCR quá 8 giây — bỏ"
+   },
+   "giay": 9.3,
+   "ket_qua_muon": true,
+   "pid_engine_con_song": true,
+   "pid_engine_la_tien_trinh_goi": true,
+   "ok": false,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 34.7,
+   "stderr_tail": "",
+   "ket_qua": "FAIL"
+  },
+  {
+   "ca": "thieu_pdiparams",
+   "got": {
+    "DocError": "thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR"
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 2.3,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "pdmodel_rong",
+   "got": {
+    "DocError": "thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR"
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 1.1,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "hop_le_that",
+   "got": {
+    "png": {
+     "src": "ocr",
+     "pages": 1,
+     "text": "Mat ong säm 300ml\nS6 DKSP: 15/2026/DKSP\nNSX: 12/10/2026\nHSD: 12/10/2028\nLOT: L2026-1012\nThé tich thuc: 300ml"
+    },
+    "pdf_scan": {
+     "src": "ocr",
+     "pages": 2,
+     "text": "GIAY TIEP NHAN BAN TU' CONG BO\nSó: 123/2026/DKSP\nNgay cäp: 05/10/2026\nTén sän phäm: Mat ong sam 300ml\nTrang 2 - Co quan "
+    },
+    "pdf_chu": {
+     "src": "pdf_text",
+     "pages": 1,
+     "text": "GIAY TIEP NHAN so 77/2026/DKSP GIAY TIEP NHAN so 77/2026/DKSP GIAY TIEP NHAN so 77/2026/DKSP GIAY TIEP NHAN so 77/2026/D"
+    }
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 16.2,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "trang_hong_qua_trang",
+   "got": {
+    "trang": {
+     "src": "none",
+     "pages": 1,
+     "text": ""
+    },
+    "hong": {
+     "DocError": "ảnh hỏng/không đọc được: UnidentifiedImageError"
+    },
+    "qua_trang": {
+     "DocError": "PDF 31 trang > OCR_MAX_PAGES=30"
+    }
+   },
+   "ok": true,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 11.1,
+   "stderr_tail": "",
+   "ket_qua": "PASS"
+  },
+  {
+   "ca": "cli_sx_label_model_hong",
+   "got": {
+    "rc": 3221225477,
+    "stderr": ""
+   },
+   "ok": false,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 10.6,
+   "stderr_tail": "",
+   "ket_qua": "FAIL"
+  },
+  {
+   "ca": "cli_intake_model_hong",
+   "got": {
+    "rc": 3221225477,
+    "stdout": "[loader-gate] doc_intake: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-02.1 chay_thu, data_platform-02.2 chay_thu → nạp\r\n",
+    "docs": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ]
+   },
+   "ok": false,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 11.1,
+   "stderr_tail": "",
+   "ket_qua": "FAIL"
+  },
+  {
+   "ca": "cli_reprocess_model_hong",
+   "got": {
+    "nap_none_rc": 2,
+    "rc": 3221225477,
+    "stdout": "",
+    "docs": [
+     [
+      0,
+      0
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "ok": false,
+   "mang": [],
+   "exit_tien_trinh_goi": 0,
+   "giay_tong": 13.2,
+   "stderr_tail": "",
+   "ket_qua": "FAIL"
+  }
+ ],
+ "tong": {
+  "PASS": 4,
+  "FAIL": 7
+ }
+}

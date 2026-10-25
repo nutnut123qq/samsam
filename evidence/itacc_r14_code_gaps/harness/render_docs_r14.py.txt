@@ -1,0 +1,184 @@
+"""HARNESS r14 — cập nhật hồ sơ theo kết quả lượt (số lấy từ tong_hop/items/ban_ghi/gate của lượt, không gõ tay số tổng).
+Sửa: docs/handover/nghiem-thu-ky-thuat-noi-bo.md (mục 0 mới; mục 0 r13-fix4 → lịch sử; mục 3/4), DONE.md,
+docs/handover/v13-board.md, docs/handover/doi-chieu-docx.md (A12). Mỗi thay thế kiểm đúng 1 lần.
+  python -I render_docs_r14.py.txt"""
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r14_code_gaps"
+th = json.loads((EV / "tong_hop.json").read_text(encoding="utf-8"))
+tt = th["tom_tat"]
+assert not tt["loi_nhat_quan"]
+T = tt["tong"]
+TOT = f"{T.get('DAT', 0)} ĐẠT / {T.get('CHUA_KIEM', 0)} CHƯA KIỂM / {T.get('BI_CHAN', 0)} BỊ CHẶN"
+SRC = ", ".join(f"{k} {v}" for k, v in sorted(tt["nguon"].items()))
+rows = {r["id"]: r for r in th["items"]}
+
+
+def pfn(r):
+    c = r["ca"]
+    return f"{c.get('PASS', 0)}/{c.get('FAIL', 0)}/{c.get('NOT_RUN', 0)}"
+
+
+def pb(name):
+    d = json.loads((EV / "probes" / name / "ban_ghi.json").read_text(encoding="utf-8"))
+    return f"{d['tong']['PASS']}/{d['tong']['FAIL']}", d
+
+
+FPC = (EV / "FP_CHOT_v2.txt").read_text(encoding="utf-8").split("code ")[1].split()[0]
+full = (EV / "gate" / "full_chot_f1.txt").read_text(encoding="utf-8")
+FULL = next(ln for ln in full.splitlines() if " passed" in ln and " in " in ln).strip()
+assert full.rstrip().endswith("EXIT 0") and "failed" not in FULL and "skipped" not in FULL
+assert f"fp code = {FPC}" in full
+EVAL = next(ln for ln in (EV / "gate" / "eval.txt").read_text(encoding="utf-8").splitlines()
+            if ln.startswith("[done] guardrail v2")).strip()
+RT = next(ln for ln in (EV / "gate" / "redteam.txt").read_text(encoding="utf-8").splitlines()
+          if ln.startswith("tỷ lệ lọt")).strip()
+P1B, P1A = pb("p1_ocr_isolation_truoc"), pb("p1_ocr_isolation_sau_chot3")
+P2B, P2A = pb("p2_anchor_human_truoc"), pb("p2_anchor_human_sau_chot2")
+P3B, P3A = pb("p3_market_refresh_truoc"), pb("p3_market_refresh_sau_chot2")
+for b, a in ((P1B, P1A), (P2B, P2A), (P3B, P3A)):
+    assert b[1]["probe_sha256"] == a[1]["probe_sha256"] and a[1]["fp_code"] == FPC
+HQ = []
+for n in ("a_ocr", "b_stt", "c_image_v2", "d_dossier", "e_market_v2", "f_persona", "g_anchor", "h_feed", "i_incident"):
+    s, d = pb(f"hoiquy_r13_{n}_chot2")
+    assert d["fp_code"] == FPC
+    HQ.append(f"{n} {s}")
+for n in ("l_image_cost", "m_backup_files", "n_anchor_gate", "j_onprem_v3"):
+    s, d = pb(f"hoiquy_fix4_{n}_chot2")
+    assert d["fp_code"] == FPC
+    HQ.append(f"{n} {s}")
+KV2, KV3 = pb("hoiquy_fix4_k_ocr_models_v2_chot2"), pb("k_ocr_models_v3_sau_chot2")
+UP = (EV / "runs" / "upgrade_up1.txt").read_text(encoding="utf-8")
+assert "TONG PASS" in UP
+ID4 = ["production-03", "data_platform-02.1", "farming-06", "data_platform-06"]
+assert all(rows[i]["luot"] == "r14" for i in ID4)
+CA4 = ", ".join(f"{i} {('ĐẠT' if rows[i]['trang_thai'] == 'DAT' else 'BỊ CHẶN')} {pfn(rows[i])}" for i in ID4)
+
+SEC0 = f"""## 0. Checkpoint r14 — phần code còn thiếu bám DOCX: C1 OCR, C2 neo cho người duyệt, C3a refresh token (25/10/2026)
+
+- **Phạm vi:** nhánh `codex/docx-code-gaps` từ `main` `0afa388` (snapshot `D:\\code\\samsam_r14_baseline`, `git archive`), CHƯA
+  commit/merge/push/deploy. Không DB `samsam`; container riêng `samsam-itacc-r14` (127.0.0.1:55455). Bảng việc A/B/C/D lập
+  TRƯỚC khi code: `evidence/itacc_r14_code_gaps/BANG_VIEC.md`; nguồn tài liệu API sàn: `NGUON_TAI_LIEU.md`.
+- **Đính chính:** checkpoint r13/r13-fix4 ghi "bảng chờ CHỈ còn đầu vào ngoài code" và "tài liệu chính thức sàn không truy
+  cập được" — CHƯA đúng: còn code chưa viết (3 việc dưới + quyết toán qua API), tài liệu Shopee/TikTok mở được bằng trình
+  duyệt (công cụ tải trang bị chặn domain). Bảng chờ hiện hành: `dau-vao-va-quyet-dinh.md` mục H.
+
+| Việc | Trước (0afa388) | Sau (fp mã `{FPC[:12]}…`) | Probe trước → sau (PASS/FAIL, cùng sha) | Mức |
+|---|---|---|---|---|
+| C1 OCR chết/treo tiến trình gọi | model đủ tên + khác rỗng nhưng hỏng → PaddleOCR native crash giết intake/reprocess/sx_label (0xC0000005); engine abort giết caller; treo khi khởi tạo không có timeout (kết quả muộn ghi được) | `ingest/ocr_worker.py`: nạp model + render + nhận dạng ở TIẾN TRÌNH CON; cha kiểm model rồi đợi có timeout (bọc cả nạp model), crash/treo/kết quả hỏng → `DocError`; con không nhận DSN | P1 {P1B[0]} → {P1A[0]} | LOCAL (PaddleOCR thật + gói giả crash/treo) |
+| C2 nâng cấp neo cho người duyệt | `upgrade()` chặn mọi người ở giai đoạn có người duyệt; CLI không truyền `--by` | `upgrade(by=)`: cổng theo người + `human_actor` TRƯỚC HTTP; ghi qua function `anchor_upgrade_human` (SECURITY DEFINER, search_path cố định, chỉ app_human EXECUTE); 1 `da_nang_cap`/lần gom (unique) | P2 {P2B[0]} → {P2A[0]} | MOCK calendar, login Postgres THẬT |
+| C3a refresh token sàn | không có | `--refresh` + tự refresh khi < 1 giờ theo tài liệu chính thức (Shopee POST `/api/v2/auth/access_token/get`, TikTok GET `/api/v2/token/refresh`); kho `MARKET_TOKEN_FILE` ngoài repo, ghi nguyên tử, khóa tệp, 1 lần thử, không redirect, không in token; `AUTH_ALLOWED` cứng | P3 {P3B[0]} → {P3A[0]} | CONTRACT_TESTED (server giả) — UNVERIFIED_LIVE |
+
+- **Không làm (B — cần quyết định/tài liệu):** quyết toán qua API — Shopee escrow có tài liệu nhưng ánh xạ ~40 thành phần
+  (gồm thuế khấu trừ VAT/PIT/CIT) vào 7 cột `settlement_rows` là quyết định Kế toán; TikTok finance chưa có tài liệu chính thức
+  bản hiện hành. Tạm dùng `ingest.settlement_csv`.
+- **Probe:** khóa trước khi sửa (`KHOA_PROBE_truoc_sua.txt`). Ca P3 `kho_trong_repo`/`doi_chung_tat` cũng PASS ở baseline do
+  `--refresh` không tồn tại (argparse exit 2, 0 request) — chỉ là đối chứng. P1 lượt `sau_chot2` FAIL 2 ca intake/reprocess
+  do dùng lại DB đã có tài liệu (intake báo trùng) — chạy lại trên DB mới dựng từ cây cuối (`sau_chot3`), probe không đổi.
+  Hồi quy r13/r13-fix4 trên mã cuối: {", ".join(HQ)}; `k_ocr_models_v2` {KV2[0]} (ca đòi PaddleOCR khởi tạo TRONG tiến trình
+  gọi — đúng điều C1 cố ý đổi) → v3 bỏ đúng điều kiện đó: {KV3[0]}.
+- **Kiểm lại 4 mục** (tiêu chí `criteria/r14_v1.json` kế thừa nguyên ca nguồn hiện hành + ca R14 mới, khóa trước): {CA4}.
+  Lô k1 dừng có chủ đích (sửa blocker catalog sai trước khi chốt fingerprint); lô k2: farming-06 FAIL vì harness r13
+  `anchor_ots_run` thay `upgrade.__defaults__` mà chữ ký mới thêm `by` ở vị trí → đổi `by` thành keyword-only (giữ nguyên chữ
+  ký vị trí cũ) → fingerprint chốt v2, chạy lại cả 4 mục (k3).
+- **Schema/roles:** function `anchor_upgrade_human` + chỉ mục unique `anchor_receipts_upgrade_once` + EXECUTE cho app_human;
+  nâng cấp từ DB baseline CÓ DỮ LIỆU ×2: PASS (dòng mọi bảng, đuôi hash chain, verify_action_log 0, quyền chỉ thêm —
+  `runs/upgrade_up1.txt`).
+- **Tổng nội bộ (code sinh `tong_hop.json`):** {TOT} (r13-fix4: 84/0/12). Nguồn: {SRC}; {tt['so_tham_chieu_evidence']} tham chiếu
+  evidence khớp file/hash, 0 vi phạm nhất quán. 12 mục vẫn BỊ CHẶN; data_platform-06 nguyên nhân cập nhật (refresh đã có, quyết
+  toán chưa). Nghiệm thu hợp đồng 0/96.
+- **Full/gate (fp mã `{FPC}`):** full pytest **{FULL}**, EXIT 0, 0 failed / 0 skipped (`gate/full_chot_f1.txt`, DB mới
+  `samsam_itacc_r14_full1`); ruff EXIT 0; eval `{EVAL}` EXIT 0; DPIA --check EXIT 0; red-team `{RT}` EXIT 0; quét secret
+  `gate/secret_scan.txt`.
+- **Giới hạn:** OCR mỗi tài liệu 1 tiến trình (nạp model ~10 s); refresh chưa chạy sandbox; nơi lưu credential cuối cùng chưa
+  chốt; neo vẫn calendar giả. KHÔNG phải tích hợp thật/nghiệm thu hợp đồng.
+
+"""
+nt = REPO / "docs" / "handover" / "nghiem-thu-ky-thuat-noi-bo.md"
+s = nt.read_text(encoding="utf-8")
+old_title = s.splitlines()[0]
+assert old_title.startswith("# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r13-fix4")
+s = s.replace(old_title, "# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r14 (code còn thiếu theo DOCX, 25/10/2026)", 1)
+a = "## 0. Checkpoint r13-fix4 — vá 4 lỗi controller phát hiện ở r13 (25/10/2026)\n"
+assert s.count(a) == 1
+s = s.replace(a, SEC0 + "## 0-r13fix4. Checkpoint r13-fix4 (LỊCH SỬ — xem đính chính ở mục 0) — vá 4 lỗi controller phát hiện ở r13 (25/10/2026)\n")
+for a, b in (("## 3. Kết quả tổng HIỆN HÀNH (r13-fix4) — mẫu số 96", "## 3. Kết quả tổng HIỆN HÀNH (r14) — mẫu số 96"),
+             ("(`evidence/itacc_r13_fix_4/source_map.json`; r13fix4 = kiểm lại lượt vá 4 lỗi, r13 = lượt r13, còn lại kế thừa)",
+              "(`evidence/itacc_r14_code_gaps/source_map.json`; r14 = kiểm lại lượt r14, r13fix4/r13 = lượt trước, còn lại kế thừa)")):
+    assert s.count(a) == 1, a[:50]
+    s = s.replace(a, b)
+i4 = s.index("## 4. Bảng 96 mục")
+head, tab = s[:i4], s[i4:]
+for fid in ID4:
+    r = rows[fid]
+    lines = [ln for ln in tab.split("\n") if ln.startswith(f"| {fid} |")]
+    assert len(lines) == 1, fid
+    cells = lines[0].split(" | ")
+    cells[4] = "r14"
+    cells[7] = pfn(r)
+    tab = tab.replace(lines[0], " | ".join(cells))
+nt.write_text(head + tab, encoding="utf-8", newline="\n")
+
+DONE = f"""## Vòng r14 (25/10/2026) — phần code còn thiếu bám DOCX — CHƯA commit/merge/push/deploy
+
+Nhánh `codex/docx-code-gaps` từ `0afa388`; không DB `samsam`; không đổi `acceptance_status`; không gỡ blocker. fp mã cuối
+`{FPC}`. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ: `dau-vao-va-quyet-dinh.md` mục H.
+
+1. C1 OCR: nạp model + nhận dạng ở tiến trình con `ingest/ocr_worker.py` — model hỏng/crash/treo không giết intake,
+   reprocess, sx_label; timeout bọc cả nạp model. Probe P1 {P1B[0]} → {P1A[0]}.
+2. C2 neo: người được ủy quyền khối farming `--upgrade --by` ở giai đoạn có người duyệt, danh tính DB trước HTTP, ghi qua
+   `anchor_upgrade_human`, 1 `da_nang_cap`/lần gom. Probe P2 (login Postgres thật) {P2B[0]} → {P2A[0]}.
+3. C3a: refresh token Shopee/TikTok theo tài liệu chính thức (kho ngoài repo, xoay vòng, không in token). Probe P3
+   {P3B[0]} → {P3A[0]} (CONTRACT_TESTED). Quyết toán qua API CHƯA viết — chờ Kế toán chốt ánh xạ escrow + tài liệu TikTok.
+4. Schema: function + chỉ mục unique + grant; nâng cấp từ baseline có dữ liệu ×2 PASS. Kiểm lại 4 mục: {CA4}.
+   Tổng 96: **{TOT}** (không đổi).
+5. Gate: full {FULL}, EXIT 0; ruff/eval/DPIA/red-team EXIT 0. Evidence `evidence/itacc_r14_code_gaps/`.
+   Đính chính r13: "chỉ còn đầu vào ngoài code" và "tài liệu sàn không truy cập được" chưa đúng.
+
+"""
+dn = REPO / "DONE.md"
+s = dn.read_text(encoding="utf-8")
+a = "## Vòng r13-fix4 (25/10/2026)"
+assert s.count(a) == 1
+dn.write_text(s.replace(a, DONE + a, 1), encoding="utf-8", newline="\n")
+
+BOARD = f"""## Checkpoint mới — Vòng r14 (25/10/2026): phần code còn thiếu bám DOCX — CHƯA commit/merge/push/deploy
+
+Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ blocker. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ: `dau-vao-va-quyet-dinh.md` mục H. Checkpoint r13-fix4 dưới là LỊCH SỬ.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| C1 OCR model hỏng/crash/treo giết tiến trình gọi | vá: tiến trình con `ingest.ocr_worker`; probe cùng sha {P1B[0]} → {P1A[0]} | `evidence/itacc_r14_code_gaps/probes/p1_*` |
+| C2 người duyệt nâng cấp biên nhận neo | làm: function `anchor_upgrade_human` + `upgrade(by=)`; {P2B[0]} → {P2A[0]} (login Postgres thật) | `probes/p2_*`, `tests/test_r14_code_gaps.py` |
+| C3a refresh token Shopee/TikTok | làm theo tài liệu chính thức; {P3B[0]} → {P3A[0]} (CONTRACT_TESTED) | `probes/p3_*`, `NGUON_TAI_LIEU.md` |
+| C3b/C3c quyết toán qua API | CHƯA — chờ Kế toán chốt ánh xạ escrow + tài liệu finance TikTok | `BANG_VIEC.md` |
+| Kiểm lại 4 mục | {CA4} | `items/`, `runs/`, `criteria/r14_v1.json` |
+| Tổng 96 | **{TOT}** (r13-fix4 84/0/12) | `tong_hop.json`, `source_map.json` |
+| Gate (fp mã `{FPC[:12]}…`) | full {FULL} EXIT 0; ruff 0; eval 0; DPIA 0; red-team 0; nâng cấp schema ×2 PASS | `gate/`, `runs/upgrade_up1.txt` |
+
+"""
+bd = REPO / "docs" / "handover" / "v13-board.md"
+s = bd.read_text(encoding="utf-8")
+a = "## Checkpoint mới — Vòng r13-fix4 (25/10/2026):"
+assert s.count(a) == 1
+bd.write_text(s.replace(a, BOARD + "## Checkpoint (LỊCH SỬ — xem r14) — Vòng r13-fix4 (25/10/2026):"), encoding="utf-8",
+              newline="\n")
+
+dc = REPO / "docs" / "handover" / "doi-chieu-docx.md"
+s = dc.read_text(encoding="utf-8")
+s = s.rstrip("\n") + f"""
+
+### A12. Đợt r14 (25/10/2026) — phần code còn thiếu bám DOCX
+
+**Đính chính:** A11/r13-fix4 coi 12 mục "chỉ còn đầu vào ngoài code" — chưa đúng. r14 làm: C1 OCR tiến trình con
+(production-03, data_platform-02.1), C2 người duyệt nâng cấp biên nhận neo (farming-06), C3a refresh token sàn theo tài liệu
+chính thức (data_platform-06). Vẫn CHƯA có code: quyết toán qua API sàn (chờ Kế toán chốt ánh xạ escrow Shopee; tài liệu
+finance TikTok). Website/chatbot website vẫn ở repo riêng. Kiểm lại: {CA4}. Tổng nội bộ {TOT}; nghiệm thu hợp đồng 0/96.
+Evidence `evidence/itacc_r14_code_gaps/`; hồ sơ `nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ `dau-vao-va-quyet-dinh.md` mục H.
+"""
+dc.write_text(s, encoding="utf-8", newline="\n")
+print("ok", TOT, SRC, FPC[:12], FULL)

@@ -9,6 +9,7 @@ import json
 import math
 import socket
 import struct
+import sys
 import time
 import wave
 from pathlib import Path
@@ -99,16 +100,21 @@ def test_ocr_page_cap_and_corrupt_image(tmp_path, monkeypatch):
 
 
 def test_ocr_timeout(tmp_path, monkeypatch):
-    class Slow:
-        def ocr(self, img, cls=False):
-            time.sleep(1)
-            return [[]]
-    monkeypatch.setattr(di, "_paddle_engine", lambda: Slow())
-    monkeypatch.setattr(di, "OCR_TIMEOUT_S", 0.1)
+    # r14 C1: OCR chạy ở tiến trình con — treo → giết con khi quá hạn
+    for parts in di._PADDLE_SUBDIRS.values():
+        d = tmp_path.joinpath("m", *parts)
+        d.mkdir(parents=True)
+        for f in di._PADDLE_FILES:
+            (d / f).write_bytes(b"x")
+    monkeypatch.setenv("OCR_PADDLE_MODEL_DIR", str(tmp_path / "m"))
+    monkeypatch.setattr(di, "OCR_WORKER", [sys.executable, "-c", "import time; time.sleep(30)"])
+    monkeypatch.setattr(di, "OCR_TIMEOUT_S", 1)
     p = tmp_path / "a.png"
     Image.new("RGB", (20, 20), "white").save(p)
+    t0 = time.monotonic()
     with pytest.raises(di.DocError, match="quá"):
         di._ocr_paddle_local(p)
+    assert time.monotonic() - t0 < 20
 
 
 def test_intake_records_ocr_engine_same_tx(tmp_path, monkeypatch):

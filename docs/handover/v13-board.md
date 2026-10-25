@@ -2,7 +2,33 @@
 
 Bản phát hành mã nguồn 22/10/2026 gồm đợt hoàn thiện DOCX và vá F1/F2. Các checkpoint dưới ghi trạng thái lúc kiểm trước commit; chưa triển khai/nghiệm thu. Biên bản quét: `evidence/contract_g45_release_scan.log`.
 
-## Checkpoint mới — Vòng r13-fix4 (25/10/2026): vá 4 lỗi controller của r13 — CHƯA commit/merge/push/deploy
+## Checkpoint mới — Vòng r14-fix2 (25/10/2026): vá 2 lỗi controller của r14 — CHƯA commit/merge/push/deploy
+
+Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ blocker. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Checkpoint r14 dưới là LỊCH SỬ — sai ở F1/F2.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| F1 credential lọt log lỗi refresh (và `_request`) | vá: chỉ in mã lỗi đúng dạng, không chứa credential; probe cùng sha 6/8 → 14/0 | `evidence/itacc_r14_fix_2/probes/q1_*` |
+| F2 migration lỗi với lịch sử neo trùng hợp lệ | vá: trigger tuần tự hóa thay chỉ mục unique, `created` đúng khi đua; 5/5 → 10/0 (login Postgres thật) | `probes/q2_*`, `runs/upgrade_tu_schema_r14.txt` |
+| Kiểm lại 2 mục | farming-06 BỊ CHẶN 27/0/1, data_platform-06 BỊ CHẶN 9/0/0 | `items/`, `runs/`, `criteria/r14fix2_v1.json` |
+| Tổng 96 | **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (r14 84/0/12) | `tong_hop.json`, `source_map.json` |
+| Gate (fp mã `10c77bd2fb44…`) | full 6893 passed in 4066.75s (1:07:46) EXIT 0; ruff 0; eval 0; DPIA 0; red-team 0 | `gate/` |
+
+## Checkpoint (LỊCH SỬ — 2 đính chính ở r14-fix2) — Vòng r14 (25/10/2026): phần code còn thiếu bám DOCX — CHƯA commit/merge/push/deploy
+
+Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ blocker. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ: `dau-vao-va-quyet-dinh.md` mục H. Checkpoint r13-fix4 dưới là LỊCH SỬ.
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| C1 OCR model hỏng/crash/treo giết tiến trình gọi | vá: tiến trình con `ingest.ocr_worker`; probe cùng sha 4/7 → 11/0 | `evidence/itacc_r14_code_gaps/probes/p1_*` |
+| C2 người duyệt nâng cấp biên nhận neo | làm: function `anchor_upgrade_human` + `upgrade(by=)`; 10/3 → 13/0 (login Postgres thật) | `probes/p2_*`, `tests/test_r14_code_gaps.py` |
+| C3a refresh token Shopee/TikTok | làm theo tài liệu chính thức; 3/7 → 10/0 (CONTRACT_TESTED) | `probes/p3_*`, `NGUON_TAI_LIEU.md` |
+| C3b/C3c quyết toán qua API | CHƯA — chờ Kế toán chốt ánh xạ escrow + tài liệu finance TikTok | `BANG_VIEC.md` |
+| Kiểm lại 4 mục | production-03 BỊ CHẶN 12/0/0, data_platform-02.1 BỊ CHẶN 14/0/0, farming-06 BỊ CHẶN 27/0/1, data_platform-06 BỊ CHẶN 9/0/0 | `items/`, `runs/`, `criteria/r14_v1.json` |
+| Tổng 96 | **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (r13-fix4 84/0/12) | `tong_hop.json`, `source_map.json` |
+| Gate (fp mã `ed6a35516235…`) | full 6882 passed in 4687.76s (1:18:07) EXIT 0; ruff 0; eval 0; DPIA 0; red-team 0; nâng cấp schema ×2 PASS | `gate/`, `runs/upgrade_up1.txt` |
+
+## Checkpoint (LỊCH SỬ — xem r14) — Vòng r13-fix4 (25/10/2026): vá 4 lỗi controller của r13 — CHƯA commit/merge/push/deploy
 
 Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ blocker. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Kết luận r13 bên dưới là LỊCH SỬ — sai ở F1–F4.
 

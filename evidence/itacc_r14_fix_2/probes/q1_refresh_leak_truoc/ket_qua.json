@@ -1,0 +1,176 @@
+{
+ "probe": "q1_refresh_leak_v1",
+ "root": "D:\\code\\samsam_r14fix_snapshot",
+ "ca": [
+  {
+   "ca": "sp_error_phan_chieu_refresh",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [
+     "FAKE_REFRESH_OLD…"
+    ],
+    "stdout": "[err] shopee refresh token: mã lỗi <R_OLD> — kho token KHÔNG đổi.\n",
+    "exc": "shopee refresh token: mã lỗi <R_OLD> | ApiError('shopee refresh token: mã lỗi <R_OLD>')"
+   }
+  },
+  {
+   "ca": "sp_error_phan_chieu_access",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [
+     "FAKE_ACCESS_OLD_…"
+    ],
+    "stdout": "[err] shopee refresh token: mã lỗi <A_OLD> — kho token KHÔNG đổi.\n",
+    "exc": "shopee refresh token: mã lỗi <A_OLD> | ApiError('shopee refresh token: mã lỗi <A_OLD>')"
+   }
+  },
+  {
+   "ca": "sp_error_phan_chieu_partner_key",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [
+     "FAKE_PARTNER_KEY…"
+    ],
+    "stdout": "[err] shopee refresh token: mã lỗi <PKEY> — kho token KHÔNG đổi.\n",
+    "exc": "shopee refresh token: mã lỗi <PKEY> | ApiError('shopee refresh token: mã lỗi <PKEY>')"
+   }
+  },
+  {
+   "ca": "tt_code_phan_chieu_refresh",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [
+     "FAKE_REFRESH_OLD…"
+    ],
+    "stdout": "[err] tiktok refresh token: mã lỗi <R_OLD> — kho token KHÔNG đổi.\n",
+    "exc": "tiktok refresh token: mã lỗi <R_OLD> | ApiError('tiktok refresh token: mã lỗi <R_OLD>')"
+   }
+  },
+  {
+   "ca": "tt_code_phan_chieu_app_secret",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [
+     "FAKE_APP_SECRET_…"
+    ],
+    "stdout": "[err] tiktok refresh token: mã lỗi <TSEC> — kho token KHÔNG đổi.\n",
+    "exc": "tiktok refresh token: mã lỗi <TSEC> | ApiError('tiktok refresh token: mã lỗi <TSEC>')"
+   }
+  },
+  {
+   "ca": "sp_error_dict",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [
+     "FAKE_REFRESH_OLD…"
+    ],
+    "stdout": "[err] shopee refresh token: mã lỗi {'token': '<R_OLD>', 'key': 'FAKE_PARTNER — kho token KHÔNG đổi.\n",
+    "exc": "shopee refresh token: mã lỗi {'token': '<R_OLD>', 'key': 'FAKE_PARTNER | ApiError(\"shopee refresh token: mã lỗi {'token': 'FAKE_REFRESH_OLD_Q"
+   }
+  },
+  {
+   "ca": "tt_code_list",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [
+     "FAKE_REFRESH_OLD…",
+     "FAKE_APP_SECRET_…"
+    ],
+    "stdout": "[err] tiktok refresh token: mã lỗi ['<TSEC>', '<R_OLD>'] — kho token KHÔNG đổi.\n",
+    "exc": "tiktok refresh token: mã lỗi ['<TSEC>', '<R_OLD>'] | ApiError(\"tiktok refresh token: mã lỗi ['<TSEC>', "
+   }
+  },
+  {
+   "ca": "sp_du_lieu_error_phan_chieu_access",
+   "ket_qua": "FAIL",
+   "actual": {
+    "rc": 1,
+    "lo": [
+     "FAKE_ACCESS_OLD_…"
+    ]
+   }
+  },
+  {
+   "ca": "http_500",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [],
+    "stdout": "[err] tiktok refresh token: HTTP 500 — kho token KHÔNG đổi.\n",
+    "exc": "tiktok refresh token: HTTP 500 | ApiError('tiktok refresh token: HTTP 500')"
+   }
+  },
+  {
+   "ca": "redirect_302",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [],
+    "stdout": "[err] tiktok refresh token: HTTP 302 — kho token KHÔNG đổi.\n",
+    "exc": "tiktok refresh token: HTTP 302 | ApiError('tiktok refresh token: HTTP 302')"
+   }
+  },
+  {
+   "ca": "json_hong",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [],
+    "stdout": "[err] tiktok refresh token: JSON hỏng — kho token KHÔNG đổi.\n",
+    "exc": "tiktok refresh token: JSON hỏng | ApiError('tiktok refresh token: JSON hỏng')"
+   }
+  },
+  {
+   "ca": "loi_nghiep_vu_thuong",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "requests": 1,
+    "lo": [],
+    "stdout": "[err] shopee refresh token: mã lỗi error_auth — kho token KHÔNG đổi.\n",
+    "exc": "shopee refresh token: mã lỗi error_auth | ApiError('shopee refresh token: mã lỗi error_auth')"
+   }
+  },
+  {
+   "ca": "thanh_cong_xoay_vong",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "paths": [
+     "/api/v2/auth/access_token/get",
+     "/api/v2/product/get_item_list"
+    ],
+    "lo": []
+   }
+  },
+  {
+   "ca": "tat_0_request",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 2,
+    "n": 0
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 6,
+  "FAIL": 8
+ }
+}

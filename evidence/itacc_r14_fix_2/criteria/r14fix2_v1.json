@@ -1,0 +1,1230 @@
+{
+ "_doc": "HARNESS r14-fix2 — tiêu chí kiểm lại 2 mục bị F1/F2 ảnh hưởng trực tiếp: farming-06 (F2 ghi biên nhận nâng cấp) và\ndata_platform-06 (F1 lỗi refresh/dữ liệu sàn). Nguồn (CHỈ ĐỌC): evidence/itacc_r14_code_gaps/criteria/r14_v1.json (đã khóa,\nhash ghi vào `nguon`). Biến đổi DUY NHẤT: tên DB/dump `samsam_itacc_r14_` → `samsam_itacc_r14fix2_` và thư mục ngoài repo\n`scratchpad/r14/` → `scratchpad/r14fix2/`. Không thêm/bớt/sửa ca (ca F1/F2 mới ở probe Q1/Q2). Khóa TRƯỚC khi chạy.\n  python -I mk_criteria_r14fix2.py.txt",
+ "nguon": {
+  "r14_v1": "cd42398a6b25fc805387db1a800cec9b5be23e43999d04f46077993d1bf7e37c"
+ },
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r14fix2 (127.0.0.1:55456), DB mới mỗi mục dựng bằng working tree; không DB samsam, không sàn/calendar thật",
+ "items": [
+  {
+   "id": "farming-06",
+   "db": "samsam_itacc_r14fix2_f06",
+   "tieu_chi_cu_the": [
+    "T1 `pipelines.anchor --build` gom lá (đầu chuỗi plot_logs + chữ ký/phát hành/thu hồi QR lô không mẫu) → anchor_batches (merkle_root, manifest_sha256, created_by agent:anchor); lá không có tên người ký/mã khoảnh",
+    "T2 --verify OK (đối chiếu nội bộ); --export --out → anchor-<id>.json sha256 = manifest_sha256; --submit provider none → exit 2 không ghi receipt; --status liệt kê",
+    "T3 Ca âm: build lại không đổi → không dòng mới; --dry-run không ghi; neo thật = EXTERNAL_INPUT (không gọi calendar thật)",
+    "T4 Không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+    "T5 (MOI_R13) provider repo vẫn none: `--upgrade` CLI → exit 2 không ghi. Calendar GIẢ đúng định dạng OTS (MOCK, harness anchor_ots_run.py.txt): biên DÙNG rollout (farming-06 chạy thử) chặn submit trước mọi POST; upgrade khi chưa gửi → exit 1; submit chỉ gửi 32 byte digest = manifest_sha256, calendar trả rác bị bỏ, calendar hợp lệ → 1 dòng anchor_receipts da_gui (biên nhận = header OTS ‖ digest ‖ cây); upgrade 404 → 'cho' 0 dòng mới, GET đúng <calendar trong cấu hình>/timestamp/<commitment>; upgrade có attestation Bitcoin → dòng MỚI da_nang_cap (append-only, da_gui giữ nguyên), trạng thái nói 'CHƯA xác minh bên thứ ba'; verify 0 vấn đề; upgrade lại → 0 GET, 0 dòng mới; export .ots = biên nhận da_nang_cap. Neo/xác minh Bitcoin THẬT = NOT_RUN"
+   ],
+   "muc_kiem_de_xuat": "MOCK",
+   "muc_kiem_ghi_chu": "ca r10 = LOCAL (provider none); ca MOI_R13 opentimestamps = MOCK (calendar giả theo định dạng OTS)",
+   "ca": [
+    {
+     "ma": "farming-06__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ triển khai (farming-06 mot_phan → KHÔNG vào sổ → chạy thử fail-closed)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from feature_rollout where feature_id = 'farming-06'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__S02",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "khoảnh FIXTURE IT-K01..K04 (như r12 farming-03.x S02)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import os,psycopg; c=psycopg.connect(os.environ['DATABASE_URL']); c.execute(\"insert into plots (id, variety, tree_count, planted_year, status, source) values ('IT-K01','Sâm Thử IT',1000,2020,'active','fixture:it_g5'),('IT-K02','Sâm Thử IT',null,null,'active','fixture:it_g5'),('IT-K03','Sâm Thử IT',200,2022,'active','fixture:it_g5'),('IT-K04','Sâm Thử IT',200,2022,'active','fixture:it_g5')\"); c.commit(); print('seeded 4 plots')"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plots where source = 'fixture:it_g5' and status = 'active'",
+       "expect": 4
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__S03",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "tiền đề hồ sơ lô — đúng bước r12 farming-03.2__S03 (ảnh IT-K01 kho NGOÀI repo, nhật ký thu hoạch ts cố định, lô IT-LOT-G5-02 source manual + kiểm nhập passed, ánh xạ có 1 ảnh); fixture đọc từ {FX12}/items/farming-03.2",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "scripts/garden_media.py",
+        "--file",
+        "{FX12}/items/farming-03.2/anh_gps.jpg",
+        "--plot",
+        "IT-K01",
+        "--date",
+        "2026-10-22",
+        "--by",
+        "Người Thử IT",
+        "--store",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r14fix2/ext_farming/farming-06-' || md5('{SCR}') || '/media'}"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "agents.garden",
+        "--plot",
+        "IT-K01",
+        "--activity",
+        "thu hoạch",
+        "--detail",
+        "Thu hoạch thử IT 5kg",
+        "--author",
+        "Người Thử IT",
+        "--ts",
+        "2026-10-23T03:24:00Z"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.production",
+        "lots",
+        "--load",
+        "{FX12}/items/farming-03.2/lots2.json",
+        "--source",
+        "manual"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.production",
+        "intake",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--result",
+        "passed",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.qr_trace",
+        "link",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--log",
+        "{sql:select max(id) from plot_logs where activity = 'thu hoạch'}",
+        "--media",
+        "{sql:select sha256 from garden_media where plot_id = 'IT-K01' and ext = 'jpg' order by id limit 1}",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from lot_origins where lot_code = 'IT-LOT-G5-02' and cardinality(media_sha256) = 1",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__S04",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "3 vai ký + phát hành + thu hồi mã (đúng lệnh r12 farming-03.2 C04/C05/C06/C10/C13, harness r10 qr_run.py.txt, allowlist FIXTURE) — r10 F06 chạy trên DB farm chung đã có qr_sig×3 + qr_issue + qr_revoke",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "sign",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--role",
+        "gd_san_xuat",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "vai GĐ Sản xuất đã ký"
+      },
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "sign",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--role",
+        "gd_vung_trong",
+        "--by",
+        "GĐ Vùng Trồng Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "vai GĐ vùng trồng đã ký"
+      },
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "sign",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--role",
+        "phap_che_qa",
+        "--by",
+        "Pháp Chế Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "vai Pháp chế/QA đã ký"
+      },
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "issue",
+        "--lot",
+        "IT-LOT-G5-02",
+        "--by",
+        "GĐ SX Thử IT"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã phát hành mã — người phát hành: GĐ SX Thử IT"
+      },
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/qr_run.py.txt",
+        "--signers",
+        "{FX12}/items/farming-03.2/qr_signers.json",
+        "revoke",
+        "--code",
+        "{sql:select code from qr_codes where lot_code = 'IT-LOT-G5-02' and revoked_at is null}",
+        "--by",
+        "GĐ SX Thử IT",
+        "--reason",
+        "Thu hồi thử IT g5"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "đã thu hồi mã [A-Za-z0-9_-]{22,} — người thu hồi: GĐ SX Thử IT"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from qr_signatures where lot_code = 'IT-LOT-G5-02'",
+       "expect": 3
+      },
+      {
+       "sql": "select count(*) from qr_codes where lot_code = 'IT-LOT-G5-02' and revoked_at is not null",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from qr_codes",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__S05",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "chờ 330 giây: anchor gom tại now() − 5 phút (LAG) — bản ghi vừa seed phải cũ hơn mốc gom (r10 gom sau ~12 phút)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import time; time.sleep(330); print('WAITED 330')"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "WAITED 330"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from plot_logs where created_at > now() - interval '5 minutes'",
+       "expect": 0
+      },
+      {
+       "sql": "select count(*) from qr_codes where revoked_at > now() - interval '5 minutes'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__C01",
+     "nguon_r10": "F06-02",
+     "mo_ta": "Dry-run: 6 lá = plot_logs_head (1) + qr_sig×3 + qr_issue + qr_revoke (dẫn xuất từ collect() + seed S03/S04, trùng r10), không ghi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--build",
+        "--dry-run"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[ok\\] lần gom #None \\(dry-run\\): 6 lá, gốc [0-9a-f]{64}[\\s\\S]*\\[external-dep\\] provider 'none'"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_batches",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__C02",
+     "nguon_r10": "F06-01",
+     "mo_ta": "Build → 1 anchor_batches, 6 lá đúng loại, created_by agent:anchor",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--build"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[ok\\] lần gom #\\d+ \\(mới\\): 6 lá, gốc [0-9a-f]{64}[\\s\\S]*\\[external-dep\\] provider 'none' — lần gom CHƯA NEO"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_batches where created_by = 'agent:anchor' and jsonb_array_length(leaves) = 6 and merkle_root ~ '^[0-9a-f]{64}$' and manifest_sha256 ~ '^[0-9a-f]{64}$'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from anchor_batches b, jsonb_array_elements(b.leaves) e where e->>'k' like 'plot_logs_head:%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from anchor_batches b, jsonb_array_elements(b.leaves) e where e->>'k' like 'qr_sig:%'",
+       "expect": 3
+      },
+      {
+       "sql": "select count(*) from anchor_batches b, jsonb_array_elements(b.leaves) e where e->>'k' like 'qr_issue:%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from anchor_batches b, jsonb_array_elements(b.leaves) e where e->>'k' like 'qr_revoke:%'",
+       "expect": 1
+      },
+      {
+       "sql": "select jsonb_array_length(leaves) = 1 + (select count(*) from qr_signatures)::int + (select count(*) from qr_codes)::int + (select count(*) from qr_codes where revoked_at is not null)::int from anchor_batches order by id desc limit 1",
+       "expect": true
+      },
+      {
+       "sql": "select count(*) from anchor_batches where leaves::text ~ 'GĐ|Thử IT|Pháp Chế|Vùng Trồng|IT-K0'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__C03",
+     "nguon_r10": "F06-03",
+     "mo_ta": "Build lại không đổi → không dòng mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--build"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[ok\\] lần gom #\\d+ \\(không đổi\\): 6 lá"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_batches",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__C04",
+     "nguon_r10": "F06-04",
+     "mo_ta": "Verify (đối chiếu nội bộ)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--verify",
+        "latest"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*\\[lệch\\])[\\s\\S]*\\[ok\\] lần gom #\\d+: khớp DB — chưa neo"
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__C05",
+     "nguon_r10": "F06-05",
+     "mo_ta": "Export → {OUT}/anchor_out/anchor-<id>.json, sha256 = manifest_sha256 (so bằng python -c), chưa có .ots",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--export",
+        "latest",
+        "--out",
+        "{OUT}/anchor_out"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[ok\\] .*anchor-\\d+\\.json"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,hashlib,sys\nf=glob.glob(sys.argv[1]); print('N', len(f))\nprint('SHA_OK', len(f) == 1 and hashlib.sha256(open(f[0], 'rb').read()).hexdigest() == sys.argv[2])\n",
+        "{OUT}/anchor_out/anchor-*.json",
+        "{sql:select manifest_sha256 from anchor_batches order by id desc limit 1}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "N 1[\\s\\S]*SHA_OK True"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/anchor_out/anchor-*.json",
+       "count": 1
+      },
+      {
+       "file_glob": "{OUT}/anchor_out/anchor-*.json.ots",
+       "count": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__C06",
+     "nguon_r10": "F06-06",
+     "mo_ta": "Submit provider none → exit 2, 0 receipt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--submit",
+        "latest"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "\\[external-dep\\] provider 'none' — CHƯA NEO"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__C07",
+     "nguon_r10": "F06-07",
+     "mo_ta": "Status",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--status"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "provider: none[\\s\\S]*#\\d+ \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}Z 6 lá [0-9a-f]{16}… — chưa neo"
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__R01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "--upgrade với provider repo none → exit 2, không ghi",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--upgrade",
+        "latest"
+       ],
+       "expect_exit": 2,
+       "stderr_re": "\\[external-dep\\] provider 'none' — CHƯA NEO"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__R02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK, KHÔNG ép giai đoạn: farming-06 chạy thử → biên DÙNG chặn submit (exit 1) TRƯỚC mọi POST, 0 receipt",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--fake-post",
+        "none",
+        "--submit",
+        "latest"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "^(?![\\s\\S]*\\[FAKE\\] POST https)[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+       "stderr_re": "\\[err\\] neo lần gom #\\d+: tính năng farming-06 đang chạy thử — HĐ 6\\.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__R03v",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK: --upgrade khi chưa có biên nhận đã gửi → exit 1, 0 GET",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--force-mode",
+        "van_hanh",
+        "--fake-get",
+        "none",
+        "--upgrade",
+        "latest"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+       "stderr_re": "\\[err\\] lần gom #\\d+: chưa có biên nhận đã gửi"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 0
+      }
+     ],
+     "thay_the": "farming-06__R03",
+     "ly_do_thay": "tiêu chí r13 chạy --upgrade KHÔNG ép giai đoạn (farming-06 chưa vào sổ → chạy thử fail-closed) và kỳ vọng đi tới calendar = mã hóa lỗi F4; bản thay chỉ thêm --force-mode van_hanh như R04, giữ exit/regex/kiểm"
+    },
+    {
+     "ma": "farming-06__R04",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK (FIXTURE _FORCE_MODE=van_hanh): submit — cal-a trả rác (bị bỏ), cal-b hợp lệ → 1 dòng da_gui; thân POST = đúng 32 byte manifest_sha256; biên nhận = header OTS ‖ digest ‖ cây",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--fake-post",
+        "valid",
+        "--force-mode",
+        "van_hanh",
+        "--submit",
+        "latest"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*\\[FIXTURE\\] rollout\\._FORCE_MODE=van_hanh[\\s\\S]*\\[FAKE\\] POST https://cal-a\\.test/digest 32B timeout=5 body_khop_manifest=True[\\s\\S]*\\[FAKE\\] POST https://cal-b\\.test/digest 32B timeout=5 body_khop_manifest=True[\\s\\S]*\\[ok\\] lần gom #\\d+: đã gửi calendar cal-b\\.test — chờ xác nhận Bitcoin[\\s\\S]*\\[FAKE\\] POST_CALLS 2 GET_CALLS 0 NET_CALLS 0"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from anchor_receipts r join anchor_batches b on b.id = r.batch_id where r.status = 'da_gui' and r.provider = 'opentimestamps' and r.calendar = 'https://cal-b.test' and r.created_by = 'agent:anchor' and substr(r.receipt, 1, 33) = decode('004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e892940108', 'hex') and substr(r.receipt, 34, 32) = decode(b.manifest_sha256, 'hex') and position(decode('83dfe30d2ef90c8e', 'hex') in r.receipt) > 0",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from anchor_receipts where status = 'loi'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__FIX4-01",
+     "nguon_r10": "MOI_R13FIX4",
+     "mo_ta": "F4: đã có biên nhận da_gui (sau R04) nhưng giai đoạn chạy thử fail-closed (chưa vào sổ) → CLI --upgrade bị cổng triển khai chặn TRƯỚC mọi HTTP: exit 1, 0 GET calendar, 0 kết nối mạng, 0 dòng biên nhận mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--fake-get",
+        "none",
+        "--upgrade",
+        "latest"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+       "stderr_re": "\\[err\\] nâng cấp biên nhận lần gom #\\d+: tính năng farming-06 đang"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__FIX4-02",
+     "nguon_r10": "MOI_R13FIX4",
+     "mo_ta": "F4: đã có biên nhận da_gui (sau R04) nhưng giai đoạn TẮT → CLI --upgrade bị cổng triển khai chặn TRƯỚC mọi HTTP: exit 1, 0 GET calendar, 0 kết nối mạng, 0 dòng biên nhận mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--fake-get",
+        "none",
+        "--force-mode",
+        "tat",
+        "--upgrade",
+        "latest"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+       "stderr_re": "\\[err\\] nâng cấp biên nhận lần gom #\\d+: tính năng farming-06 đang"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__FIX4-03",
+     "nguon_r10": "MOI_R13FIX4",
+     "mo_ta": "F4: đã có biên nhận da_gui (sau R04) nhưng giai đoạn có người duyệt — job agent:anchor không phải người → CLI --upgrade bị cổng triển khai chặn TRƯỚC mọi HTTP: exit 1, 0 GET calendar, 0 kết nối mạng, 0 dòng biên nhận mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--fake-get",
+        "none",
+        "--force-mode",
+        "co_nguoi_duyet",
+        "--upgrade",
+        "latest"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0",
+       "stderr_re": "\\[err\\] nâng cấp biên nhận lần gom #\\d+: tính năng farming-06 đang"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__R05v",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK: --upgrade, calendar 404 → [cho], 0 dòng mới; GET đúng https://cal-b.test/timestamp/<sha256(digest‖nonce)>",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--force-mode",
+        "van_hanh",
+        "--fake-get",
+        "404",
+        "--upgrade",
+        "latest"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*\\[FAKE\\] GET https://cal-b\\.test/timestamp/[0-9a-f]{64} timeout=5 khop_commitment=True[\\s\\S]*\\[cho\\] lần gom #\\d+: calendar chưa có attestation Bitcoin[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 1
+      }
+     ],
+     "thay_the": "farming-06__R05",
+     "ly_do_thay": "tiêu chí r13 chạy --upgrade KHÔNG ép giai đoạn (farming-06 chưa vào sổ → chạy thử fail-closed) và kỳ vọng đi tới calendar = mã hóa lỗi F4; bản thay chỉ thêm --force-mode van_hanh như R04, giữ exit/regex/kiểm"
+    },
+    {
+     "ma": "farming-06__R06v",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK: --upgrade, calendar trả attestation Bitcoin (khối 850001) → dòng MỚI da_nang_cap (da_gui giữ nguyên), trạng thái 'CHƯA xác minh bên thứ ba'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--force-mode",
+        "van_hanh",
+        "--fake-get",
+        "bitcoin",
+        "--upgrade",
+        "latest"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*khop_commitment=True[\\s\\S]*\\[ok\\] lần gom #\\d+: calendar cal-b\\.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba[\\s\\S]*· khối \\[850001\\][\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select string_agg(status, ',' order by id) from anchor_receipts",
+       "expect": "da_gui,da_nang_cap"
+      },
+      {
+       "sql": "select count(*) from anchor_receipts r join anchor_batches b on b.id = r.batch_id where r.status = 'da_nang_cap' and r.calendar = 'https://cal-b.test' and r.created_by = 'agent:anchor' and substr(r.receipt, 34, 32) = decode(b.manifest_sha256, 'hex') and position(decode('0588960d73d71901', 'hex') in r.receipt) > 0 and position(decode('83dfe30d2ef90c8e', 'hex') in r.receipt) = 0",
+       "expect": 1
+      }
+     ],
+     "thay_the": "farming-06__R06",
+     "ly_do_thay": "tiêu chí r13 chạy --upgrade KHÔNG ép giai đoạn (farming-06 chưa vào sổ → chạy thử fail-closed) và kỳ vọng đi tới calendar = mã hóa lỗi F4; bản thay chỉ thêm --force-mode van_hanh như R04, giữ exit/regex/kiểm"
+    },
+    {
+     "ma": "farming-06__R07",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "--verify (CLI thật, không giả) sau nâng cấp → 0 vấn đề (phân tích cả 2 biên nhận .ots), trạng thái 'CHƯA xác minh bên thứ ba'",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--verify",
+        "latest"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*\\[lệch\\])[\\s\\S]*\\[ok\\] lần gom #\\d+: khớp DB — calendar cal-b\\.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba"
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__R08v",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "MOCK: --upgrade lần nữa → [ok] không hỏi calendar (0 GET), 0 dòng mới",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--force-mode",
+        "van_hanh",
+        "--fake-get",
+        "none",
+        "--upgrade",
+        "latest"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "^(?![\\s\\S]*KHÔNG ĐƯỢC GỌI)[\\s\\S]*\\[ok\\] lần gom #\\d+: calendar cal-b\\.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba[\\s\\S]*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts",
+       "expect": 2
+      }
+     ],
+     "thay_the": "farming-06__R08",
+     "ly_do_thay": "tiêu chí r13 chạy --upgrade KHÔNG ép giai đoạn (farming-06 chưa vào sổ → chạy thử fail-closed) và kỳ vọng đi tới calendar = mã hóa lỗi F4; bản thay chỉ thêm --force-mode van_hanh như R04, giữ exit/regex/kiểm"
+    },
+    {
+     "ma": "farming-06__R09",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "--export (CLI thật) sau nâng cấp → anchor-<id>.json + .json.ots; .ots = đúng biên nhận da_nang_cap",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.anchor",
+        "--export",
+        "latest",
+        "--out",
+        "{OUT}/anchor_out"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "anchor-\\d+\\.json[\\s\\S]*anchor-\\d+\\.json\\.ots"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,hashlib,sys\nf=glob.glob(sys.argv[1]); print('N', len(f))\nprint('SHA_OK', len(f) == 1 and hashlib.sha256(open(f[0], 'rb').read()).hexdigest() == sys.argv[2])\n",
+        "{OUT}/anchor_out/anchor-*.json.ots",
+        "{sql:select encode(sha256(receipt), 'hex') from anchor_receipts where status = 'da_nang_cap' order by id desc limit 1}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "N 1[\\s\\S]*SHA_OK True"
+      },
+      {
+       "argv": [
+        "python",
+        "-c",
+        "import glob,hashlib,sys\nf=glob.glob(sys.argv[1]); print('N', len(f))\nprint('SHA_OK', len(f) == 1 and hashlib.sha256(open(f[0], 'rb').read()).hexdigest() == sys.argv[2])\n",
+        "{OUT}/anchor_out/anchor-*.json",
+        "{sql:select manifest_sha256 from anchor_batches order by id desc limit 1}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "N 1[\\s\\S]*SHA_OK True"
+      }
+     ],
+     "kiem": [
+      {
+       "file_glob": "{OUT}/anchor_out/anchor-*.json.ots",
+       "count": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__R14-01",
+     "nguon_r10": "MOI_R14",
+     "mo_ta": "C2 (LOCAL, login owner DB thử — login người thật kiểm ở probe P2): lần gom mới (FIXTURE) có biên nhận da_gui; giai đoạn có người duyệt + --by người → hỏi calendar 1 lần, ghi 1 da_nang_cap created_by = người qua function anchor_upgrade_human + log anchor_upgrade; vẫn ghi CHƯA xác minh bên thứ ba",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{HR}/seed_batch_r14.py.txt",
+        "R14-01"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[seed\\] lần gom #\\d+"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--fake-get",
+        "bitcoin",
+        "--force-mode",
+        "co_nguoi_duyet",
+        "--upgrade",
+        "latest",
+        "--by",
+        "Người Duyệt Neo Thử R14"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?!.*KHÔNG ĐƯỢC GỌI)(?=.*CHƯA xác minh bên thứ ba)(?=.*\\[FAKE\\] POST_CALLS 0 GET_CALLS 1 NET_CALLS 0)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select created_by from anchor_receipts where status = 'da_nang_cap' and batch_id = (select max(id) from anchor_batches)",
+       "expect": "Người Duyệt Neo Thử R14"
+      },
+      {
+       "sql": "select count(*) from agent_action_log where action = 'anchor_upgrade' and object_id = (select max(id)::text from anchor_batches)",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__R14-02",
+     "nguon_r10": "MOI_R14",
+     "mo_ta": "C2: chạy lại cùng lần gom → no-op: 0 GET, vẫn đúng 1 da_nang_cap",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--fake-get",
+        "none",
+        "--force-mode",
+        "co_nguoi_duyet",
+        "--upgrade",
+        "latest",
+        "--by",
+        "Người Duyệt Neo Thử R14"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?!.*KHÔNG ĐƯỢC GỌI)(?=.*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts where status = 'da_nang_cap' and batch_id = (select max(id) from anchor_batches)",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__R14-03",
+     "nguon_r10": "MOI_R14",
+     "mo_ta": "C2: lần gom mới, giai đoạn có người duyệt, job agent (không --by) → bị chặn trước HTTP: exit 1, 0 GET, 0 dòng",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{HR}/seed_batch_r14.py.txt",
+        "R14-03"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[seed\\] lần gom #\\d+"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/anchor_ots_run.py.txt",
+        "--fake-get",
+        "none",
+        "--force-mode",
+        "co_nguoi_duyet",
+        "--upgrade",
+        "latest"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "(?s)(?!.*KHÔNG ĐƯỢC GỌI)(?=.*\\[FAKE\\] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0)",
+       "stderr_re": "nâng cấp biên nhận lần gom #\\d+: tính năng farming-06 đang có người duyệt"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from anchor_receipts where batch_id = (select max(id) from anchor_batches)",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "farming-06__R10",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "Neo THẬT: gửi digest tới calendar OpenTimestamps thật + `ots upgrade`/`ots verify` với header khối Bitcoin",
+     "not_run": "EXTERNAL_INPUT: hai bên chưa chọn chuỗi/provider/phí (data/anchor_config.json provider 'none' — không được đổi); không gọi calendar/mạng thật trong kiểm nội bộ; R02–R09 chỉ là calendar GIẢ theo định dạng OTS"
+    }
+   ]
+  },
+  {
+   "id": "data_platform-06",
+   "db": "samsam_itacc_r14fix2_dp06",
+   "muc_kiem_de_xuat": "MOCK",
+   "tieu_chi_cu_the": [
+    "T1 market_api thiếu key → [external-dep] exit 2, 0 request",
+    "T2 Server giả 127.0.0.1 + key FIXTURE → listing vào market_snapshots cùng staging (request có sign/token/partner_id); base URL ngoài allowlist → exit 2, 0 request; chạy lại → [skip]",
+    "T3 Sandbox/app key thật chưa có → BI_CHAN EXTERNAL_INPUT",
+    "T4 không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+    "T5 (MỚI r13) HTTP 429 + Retry-After: 1 ở request đầu → thử lại (chờ đúng 1 s qua `_sleep` vá được, không chờ thật), đúng 2 request get_item_list, snapshot vẫn ghi",
+    "T6 (MỚI r13) tính năng data_platform-06 TẮT trong sổ → exit 2 '[rollout] … data_platform-06' TRƯỚC mọi request (server giả 0 request), 0 snapshot; bật lại"
+   ],
+   "ca": [
+    {
+     "ma": "data_platform-06__S01",
+     "nguon_r10": "MOI",
+     "tien_quyet": true,
+     "mo_ta": "seed sổ rollout (r10 DB samsam_itacc_r10_dp đã seed); data_platform-06 mot_phan nên KHÔNG vào sổ (mode = chạy thử fail-closed)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ \\d+"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__DP06-01",
+     "nguon_r10": "DP06-01",
+     "mo_ta": "Thiếu key (SHOPEE_* đặt rỗng — chặn .env lấp)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "-m",
+        "ingest.market_api",
+        "--channel",
+        "shopee",
+        "--kind",
+        "listing"
+       ],
+       "env": {
+        "SHOPEE_PARTNER_ID": "",
+        "SHOPEE_PARTNER_KEY": "",
+        "SHOPEE_SHOP_ID": "",
+        "SHOPEE_ACCESS_TOKEN": "",
+        "SHOPEE_API_BASE": ""
+       },
+       "expect_exit": 2,
+       "stdout_re": "\\[external-dep\\] thiếu SHOPEE_PARTNER_ID, SHOPEE_PARTNER_KEY, SHOPEE_SHOP_ID, SHOPEE_ACCESS_TOKEN[^\\n]*0 request, không connect DB"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 0
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__DP06-02",
+     "nguon_r10": "DP06-02",
+     "mo_ta": "Server giả (harness r10 nguyên bản, chạy độc lập được)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/fake_shopee.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*\\[done\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 1
+      },
+      {
+       "sql": "select count(*) from market_rows r join market_snapshots s on s.id = r.snapshot_id where s.file_name like 'api:shopee:listing:%' and r.sku_key in ('savina-12v', 'savigout-30v')",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__DP06-03",
+     "nguon_r10": "DP06-03",
+     "mo_ta": "Âm: base ngoài allowlist",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/fake_shopee.py.txt",
+        "--base",
+        "http://example.com"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[err\\] SHOPEE_API_BASE không hợp lệ)(?=[\\s\\S]*SERVER_LOG:\\s*\\(0 request\\))"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__DP06-04",
+     "nguon_r10": "DP06-04",
+     "mo_ta": "Idempotent (chạy lại DP06-02)",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/fake_shopee.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[skip\\] dữ liệu không đổi: snapshot #\\d+ shopee/listing — không ghi gì"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__R13-01",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "429 + Retry-After: 1 ở request đầu rồi bình thường ({H}/fake_shopee_retry_r13.py.txt, giá khác → không bị [skip])",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/fake_shopee_retry_r13.py.txt"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[retry\\] shopee /api/v2/product/get_item_list: HTTP 429 — chờ 1s \\(1/3\\))(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*SLEEPS: \\[1\\.0\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=429)(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=200)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True status=200)(?=[\\s\\S]*N_ITEM_LIST=2\\b)"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 2
+      },
+      {
+       "sql": "select count(*) from market_rows r join market_snapshots s on s.id = r.snapshot_id where s.file_name like 'api:shopee:listing:%' and r.price_vnd in (165000, 445000)",
+       "expect": 2
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__R13-02",
+     "nguon_r10": "MOI_R13",
+     "mo_ta": "tắt data_platform-06 → market_api exit 2 '[rollout]', 0 request; bật lại. FIXTURE: tính năng mot_phan không vào sổ bằng --seed thật → {H}/rollout_fx_r13.py.txt (code_status co_code CHỈ trong tiến trình) cho --seed/--promote; --disable bằng CLI thật",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{H}/rollout_fx_r13.py.txt",
+        "data_platform-06",
+        "--seed",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] vào sổ 1 ·"
+      },
+      {
+       "argv": [
+        "python",
+        "-m",
+        "pipelines.rollout",
+        "--disable",
+        "data_platform-06",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] data_platform-06: chạy thử → tắt"
+      },
+      {
+       "argv": [
+        "python",
+        "{FX10}/g5/harness/fake_shopee.py.txt"
+       ],
+       "expect_exit": 2,
+       "stdout_re": "\\A(?=[\\s\\S]*\\[rollout\\][^\\n]*data_platform-06)(?=[\\s\\S]*SERVER_LOG:\\s*\\(0 request\\))",
+       "out_re": "\\A(?![\\s\\S]*Traceback)"
+      },
+      {
+       "argv": [
+        "python",
+        "{H}/rollout_fx_r13.py.txt",
+        "data_platform-06",
+        "--promote",
+        "data_platform-06",
+        "--by",
+        "Người Thử R13"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "\\[OK\\] data_platform-06: tắt → chạy thử"
+      }
+     ],
+     "kiem": [
+      {
+       "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+       "expect": 2
+      },
+      {
+       "sql": "select stage from feature_rollout where feature_id = 'data_platform-06'",
+       "expect": "chay_thu"
+      },
+      {
+       "sql": "select count(*) from feature_rollout_events where feature_id = 'data_platform-06' and kind = 'disable'",
+       "expect": 1
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__R14-01",
+     "nguon_r10": "MOI_R14",
+     "mo_ta": "C3a (CONTRACT_TESTED server giả): kho token NGOÀI repo hết hạn → CLI refresh theo tài liệu chính thức (POST /api/v2/auth/access_token/get), lưu token xoay vòng, kéo listing bằng token MỚI, nạp snapshot; không lộ token/khóa",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{HR}/market_refresh_run.py.txt",
+        "ok",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r14fix2/ext_dp06/' || md5('{SCR}') || '/kho_ok/kho.json'}"
+       ],
+       "expect_exit": 0,
+       "stdout_re": "(?s)(?=.*\\[ok\\] shopee: đã refresh token)(?=.*\\[load\\] snapshot #\\d+ shopee/listing)(?=.*SERVER_LOG:\\s*POST /api/v2/auth/access_token/get body_refresh=[0-9a-f]{8}\\r?\\nGET /api/v2/product/get_item_list token=(?P<t>[0-9a-f]{8}))(?=.*STORE_ROTATED True)(?=.*NEW_TOKEN_SHA8 (?P=t))(?=.*LEAK 0)"
+      }
+     ]
+    },
+    {
+     "ma": "data_platform-06__R14-02",
+     "nguon_r10": "MOI_R14",
+     "mo_ta": "C3a: refresh bị sàn từ chối (error_auth) → exit 1, kho KHÔNG đổi, 0 request dữ liệu, không lộ token",
+     "buoc": [
+      {
+       "argv": [
+        "python",
+        "{HR}/market_refresh_run.py.txt",
+        "loi",
+        "{sql:select 'C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r14fix2/ext_dp06/' || md5('{SCR}') || '/kho_loi/kho.json'}"
+       ],
+       "expect_exit": 1,
+       "stdout_re": "(?s)(?=.*\\[err\\] shopee refresh token: mã lỗi error_auth — kho token KHÔNG đổi)(?!.*GET /api/v2/product)(?=.*STORE_UNCHANGED True)(?=.*LEAK 0)"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

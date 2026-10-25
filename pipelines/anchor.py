@@ -558,7 +558,7 @@ def http_get(url: str, timeout: int) -> bytes | None:
     return data
 
 
-def upgrade(conn, ref, cfg: dict, get=http_get) -> dict:
+def upgrade(conn, ref, cfg: dict, get=http_get, *, by: str = CREATED_BY) -> dict:
     """r13: hỏi calendar attestation hoàn tất cho biên nhận mới nhất của lần
     gom (GET <calendar>/timestamp/<commitment hex>, chỉ calendar có trong cấu
     hình). Có attestation Bitcoin → dòng `da_nang_cap` mang .ots đã ghép
@@ -568,11 +568,17 @@ def upgrade(conn, ref, cfg: dict, get=http_get) -> dict:
     bid, sha = row[0], row[4]
     # r13-fix4 F4: hỏi calendar = DÙNG ra ngoài như submit → cùng cổng triển khai
     # (HĐ 6.7) TRƯỚC mọi HTTP/INSERT; giai đoạn không xác định → chạy thử (chặn).
-    # Job (agent) không phải người: `co_nguoi_duyet` cũng chặn — không tự mở quyền.
-    why = _rollout().use_reason(conn, FEATURE, f"nâng cấp biên nhận lần gom #{bid}",
-                                False)
+    # r14 C2: `co_nguoi_duyet` chỉ NGƯỜI (job agent vẫn chặn); danh tính + khối
+    # farming kiểm ở DB (human_actor) TRƯỚC HTTP — `--by` chỉ là nhãn yêu cầu.
+    ro = _rollout()
+    human = ro.is_human(by)
+    why = ro.use_reason(conn, FEATURE, f"nâng cấp biên nhận lần gom #{bid}",
+                        human)
     if why:
         raise AnchorError(why)
+    if human:
+        _human_call(conn, "select human_actor(%s, %s)",
+                    (by, FEATURE.split("-")[0]), by, bid)
     rec = conn.execute(
         "select status, calendar, receipt from anchor_receipts where batch_id"
         " = %s and status in ('da_gui', 'da_nang_cap') order by id desc"
@@ -584,7 +590,8 @@ def upgrade(conn, ref, cfg: dict, get=http_get) -> dict:
     tree = parse_receipt(receipt, sha)
     if status == "da_nang_cap" or any(k == "bitcoin" for k, _c, _p in
                                       attestations(tree)):
-        return {"id": bid, "status": "da_nang_cap", "new": False}
+        return {"id": bid, "status": "da_nang_cap", "new": False,
+                "so_dong_nang_cap": _n_upgraded(conn, bid)}
     allowed = set(cfg["calendars"])
     got, errs = 0, []
     for kind, commitment, payload in attestations(tree):
@@ -611,16 +618,43 @@ def upgrade(conn, ref, cfg: dict, get=http_get) -> dict:
         return {"id": bid, "status": "cho", "errors": errs}
     new = OTS_HEAD + bytes.fromhex(sha) + write_tree(tree)
     parse_receipt(new, sha)                    # tự kiểm trước khi ghi
-    with conn.transaction():
-        conn.execute(
-            "insert into anchor_receipts (batch_id, provider, status, calendar,"
-            " receipt, created_by) values (%s, 'opentimestamps', 'da_nang_cap',"
-            " %s, %s, %s)", (bid, cal, new, CREATED_BY))
-    conn.commit()
+    # r14-fix2 F2: ghi dưới khóa advisory theo lần gom (cùng khóa trigger
+    # `anchor_receipts_upgrade_once`), kiểm lại "đã có" DƯỚI khóa — 2 caller đua
+    # chỉ 1 dòng, `new` = có thật sự tạo dòng. Khóa chỉ giữ trong transaction
+    # ghi ngắn, KHÔNG giữ lúc hỏi calendar.
+    if human:   # login người không có INSERT bảng — chỉ qua function kiểm quyền
+        created = _human_call(conn, "select created from anchor_upgrade_human("
+                              "%s, %s, %s, %s)", (bid, cal, new, by), by, bid)
+    else:
+        with conn.transaction():
+            conn.execute("select pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                         (f"anchor_receipts_upgrade:{bid}",))
+            have = conn.execute(
+                "select status from anchor_receipts where batch_id = %s and"
+                " status = 'da_nang_cap' limit 1", (bid,)).fetchone()
+            created = not (have and have[0] == "da_nang_cap")
+            if created:
+                conn.execute(
+                    "insert into anchor_receipts (batch_id, provider, status,"
+                    " calendar, receipt, created_by) values (%s,"
+                    " 'opentimestamps', 'da_nang_cap', %s, %s, %s)",
+                    (bid, cal, new, by))
+        conn.commit()
     heights = sorted(_varuint(p, 0)[0] for k, _c, p in attestations(tree)
                      if k == "bitcoin")
-    return {"id": bid, "status": "da_nang_cap", "new": True,
-            "heights": heights}
+    out = {"id": bid, "status": "da_nang_cap", "new": bool(created),
+           "heights": heights}
+    if not created:
+        out["so_dong_nang_cap"] = _n_upgraded(conn, bid)
+    return out
+
+
+def _n_upgraded(conn, bid: int) -> int:
+    """Số dòng `da_nang_cap` của lần gom — lịch sử trước r14 có thể > 1."""
+    n = conn.execute("select count(*) from anchor_receipts where batch_id = %s"
+                     " and status = 'da_nang_cap'", (bid,)).fetchone()[0]
+    conn.commit()
+    return n if isinstance(n, int) else 1
 
 
 def receipt_state(conn, bid: int) -> str:
@@ -732,7 +766,16 @@ def main(argv=None) -> int:
                 return 1
             print(f"[ok] lần gom #{r['id']}: {receipt_state(conn, r['id'])}")
         elif a.upgrade:
-            r = upgrade(conn, a.upgrade, cfg)
+            # r14 C2: như --submit — `--by <người>` = QUYẾT ĐỊNH khối farming
+            # (auth.cli_gate) trước khi hỏi calendar; job giữ `agent:anchor`.
+            from pipelines import auth  # lười: auth → director → ...
+            if auth.is_human(by):
+                why = auth.cli_gate(conn, by, FEATURE.split("-")[0],
+                                    "approve", "anchor_batch", a.upgrade)
+                if why:
+                    print(f"[từ chối] {why}", file=sys.stderr)
+                    return 1
+            r = upgrade(conn, a.upgrade, cfg, by=by)
             if r["status"] == "chua_gui":
                 print(f"[err] lần gom #{r['id']}: chưa có biên nhận đã gửi",
                       file=sys.stderr)
@@ -742,8 +785,11 @@ def main(argv=None) -> int:
                       " Bitcoin" + (" — " + "; ".join(r["errors"])
                                     if r["errors"] else ""))
                 return 0
+            n = r.get("so_dong_nang_cap", 1)
             print(f"[ok] lần gom #{r['id']}: {receipt_state(conn, r['id'])}"
-                  + (f" · khối {r['heights']}" if r.get("heights") else ""))
+                  + (f" · khối {r['heights']}" if r.get("heights") else "")
+                  + (f" · {n} biên nhận da_nang_cap (lịch sử)" if n > 1
+                     else ""))
         elif a.verify:
             bid, probs = verify(conn, a.verify)
             for p in probs:

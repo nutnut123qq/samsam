@@ -1,0 +1,14 @@
+# Nguồn tài liệu chính thức API sàn (đọc 25/10/2026 qua trình duyệt — không lưu bản sao nội dung, không credential)
+
+Lượt trước (r13) ghi "tài liệu chính thức không truy cập được": công cụ tải trang bị chặn domain, nhưng trình duyệt mở được.
+
+| Nội dung | URL chính thức | Phiên bản / ngày trên trang | Điểm dùng cho code |
+|---|---|---|---|
+| Shopee — Authorization and Authentication (GetAccessToken, RefreshAccessToken) | https://open.shopee.com/developer-guide/20 | "Last Updated: 2026-07-24" | RefreshAccessToken: `POST {host}/api/v2/auth/access_token/get`; query `partner_id`, `timestamp` (hiệu lực 5 phút), `sign` = HMAC-SHA256(partner_key, `partner_id`+path+`timestamp`) hex thường (Public API); body JSON `refresh_token`, `partner_id` (int), `shop_id` (int) HOẶC `merchant_id`; trả `error` (rỗng = thành công), `message`, `request_id`, `access_token` (4 giờ), `refresh_token` MỚI (30 ngày, CHỈ DÙNG 1 LẦN — lần sau phải dùng token mới), `expire_in` (giây), `shop_id`, `partner_id`. Token cũ còn hiệu lực thêm 5 phút. Lưu riêng theo từng shop_id. |
+| Shopee — v2.payment.get_escrow_list | https://open.shopee.com/documents/v2/v2.payment.get_escrow_list?module=97&type=1 | update log 2025-09-08 | GET; `release_time_from`/`release_time_to`, `page_size` ≤100, `page_no`; trả `escrow_list[{order_sn, payout_amount, escrow_release_time}]`, `more`. (Mẫu trả về: kiểu số không nhất quán float/int.) — CHƯA triển khai (B) |
+| Shopee — v2.payment.get_escrow_detail | https://open.shopee.com/documents/v2/v2.payment.get_escrow_detail?module=97&type=1 | — | GET `order_sn`; `order_income.escrow_amount` = công thức ~40 thành phần (gồm `withholding_vat_tax`, `withholding_pit_tax`, `withholding_cit_tax`, phí FBS…), "thay đổi trước khi đơn hoàn tất" — ánh xạ vào cột quyết toán = quyết định kế toán — CHƯA triển khai (B) |
+| TikTok Shop — Authorization overview (Get Access Token, Get Refresh Token) | https://partner.tiktokshop.com/docv2/page/authorization-overview-202407 | trang "202407" | Refresh: `GET https://auth.tiktok-shops.com/api/v2/token/refresh?app_key=&app_secret=&refresh_token=&grant_type=refresh_token`; trả `code` (0 = thành công), `message`, `request_id`, `data.access_token` (mặc định 7 ngày), `data.access_token_expire_in` (Unix timestamp), `data.refresh_token`, `data.refresh_token_expire_in` (Unix timestamp). URL chứa app_secret + refresh_token → không bao giờ in/log URL. |
+| TikTok Shop — finance statement transactions | không tìm được trang chính thức bản hiện hành (đường dẫn đoán trả "No document found"; nguồn bên thứ ba ghi bản 202309 deprecated) | — | CHƯA triển khai (B) — cần Bên B cung cấp tài liệu chính thức |
+
+Nguồn bên thứ ba chỉ dùng để định hướng tìm kiếm, KHÔNG làm căn cứ code: jentic.com/apis/shopee.com, github.com/mu-hanz/shoapi,
+docs.celigo.com (danh sách endpoint TikTok finance), developer.sku.io.

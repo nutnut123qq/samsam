@@ -23,6 +23,36 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Vòng r14-fix2 (25/10/2026) — vá 2 lỗi controller của r14 — CHƯA commit/merge/push/deploy
+
+Không DB `samsam`; không đổi `acceptance_status`; không gỡ blocker. fp mã cuối `10c77bd2fb44271e063e1724d318bb81297ae57a8e9665b66bd995ccb5c89866` (snapshot r14 chưa vá
+`D:\code\samsam_r14fix_snapshot` = `ed6a3551…`). Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0.
+
+1. F1 `ingest/market_api.py`: trường lỗi sàn không còn được in nguyên văn — chỉ mã đúng dạng (`error_*` / số nguyên), không
+   chứa credential; áp refresh + `_request`. Probe Q1 6/8 → 14/0.
+2. F2 `docs/schema.sql` + `pipelines/anchor.py`: bỏ chỉ mục unique (không tạo được trên lịch sử trùng hợp lệ), thay trigger
+   tuần tự hóa theo lần gom (khóa advisory, chỉ chặn dòng mới); function người trả `(receipt_id, created)`; `new` đúng khi đua;
+   lịch sử > 1 dòng được báo. Probe Q2 (lịch sử từ upgrade baseline thật, login Postgres thật) 5/5 → 10/0.
+3. Nâng cấp từ baseline có lịch sử trùng ×2 và từ schema r14 cũ ×2: PASS. Kiểm lại: farming-06 BỊ CHẶN 27/0/1, data_platform-06 BỊ CHẶN 9/0/0. Tổng 96: **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN**.
+4. Gate: full 6893 passed in 4066.75s (1:07:46), EXIT 0; ruff/eval/DPIA/red-team EXIT 0. Evidence `evidence/itacc_r14_fix_2/`.
+   Đính chính r14: "refresh không in token" và "nâng cấp schema ×2 PASS" chưa đúng trước bản vá này.
+
+## Vòng r14 (25/10/2026) — phần code còn thiếu bám DOCX — CHƯA commit/merge/push/deploy (2 đính chính F1/F2 ở r14-fix2 trên)
+
+Nhánh `codex/docx-code-gaps` từ `0afa388`; không DB `samsam`; không đổi `acceptance_status`; không gỡ blocker. fp mã cuối
+`ed6a3551623569aae681df676cb1a4e41dee382f482a1ecc48cc7a8a27e23fca`. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ: `dau-vao-va-quyet-dinh.md` mục H.
+
+1. C1 OCR: nạp model + nhận dạng ở tiến trình con `ingest/ocr_worker.py` — model hỏng/crash/treo không giết intake,
+   reprocess, sx_label; timeout bọc cả nạp model. Probe P1 4/7 → 11/0.
+2. C2 neo: người được ủy quyền khối farming `--upgrade --by` ở giai đoạn có người duyệt, danh tính DB trước HTTP, ghi qua
+   `anchor_upgrade_human`, 1 `da_nang_cap`/lần gom. Probe P2 (login Postgres thật) 10/3 → 13/0.
+3. C3a: refresh token Shopee/TikTok theo tài liệu chính thức (kho ngoài repo, xoay vòng, không in token). Probe P3
+   3/7 → 10/0 (CONTRACT_TESTED). Quyết toán qua API CHƯA viết — chờ Kế toán chốt ánh xạ escrow + tài liệu TikTok.
+4. Schema: function + chỉ mục unique + grant; nâng cấp từ baseline có dữ liệu ×2 PASS. Kiểm lại 4 mục: production-03 BỊ CHẶN 12/0/0, data_platform-02.1 BỊ CHẶN 14/0/0, farming-06 BỊ CHẶN 27/0/1, data_platform-06 BỊ CHẶN 9/0/0.
+   Tổng 96: **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (không đổi).
+5. Gate: full 6882 passed in 4687.76s (1:18:07), EXIT 0; ruff/eval/DPIA/red-team EXIT 0. Evidence `evidence/itacc_r14_code_gaps/`.
+   Đính chính r13: "chỉ còn đầu vào ngoài code" và "tài liệu sàn không truy cập được" chưa đúng.
+
 ## Vòng r13-fix4 (25/10/2026) — vá 4 lỗi controller phát hiện ở r13 — CHƯA commit/merge/push/deploy
 
 Không DB `samsam`; không đổi `acceptance_status`; không gỡ blocker. fp mã cuối `38c4852b68bd8fc04646f543bc6ad46fcc327550510ea0112f50453ab333a19b` (snapshot r13 chưa vá

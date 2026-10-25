@@ -1,0 +1,22 @@
+"""HARNESS r14 — sinh probe_k_ocr_models_v3.py.txt (vào harness r14) từ itacc_r13_fix_4/harness/probe_k_ocr_models_v2.py.txt
+(CHỈ ĐỌC). Lý do v3: ca `du_model_cuc_bo_ocr_that` của v2 đòi PaddleOCR được khởi tạo ĐÚNG 1 lần TRONG tiến trình gọi
+(`len(CTOR) == 1`) — r14 C1 cố ý chuyển khởi tạo + nhận dạng sang tiến trình con `ingest.ocr_worker`, nên bộ đếm ở tiến trình
+gọi = 0 dù OCR chạy đúng (log `probes/hoiquy_fix4_k_ocr_models_v2_chot2`). v3 bỏ DUY NHẤT điều kiện đó; mọi ca/input/
+assertion khác giữ nguyên. Lưu ý: chặn downloader/mạng ở tiến trình gọi KHÔNG phủ tiến trình con — phần đó do probe r14 P1
+(sitecustomize trên PYTHONPATH, mọi tiến trình Python con) kiểm.
+  python -I mk_probe_k_v3.py.txt"""
+from pathlib import Path
+
+H = Path(__file__).resolve().parent
+src = (H.parents[1] / "itacc_r13_fix_4" / "harness" / "probe_k_ocr_models_v2.py.txt").read_text(encoding="utf-8")
+a = "and bool(di.OCR_ENGINES.get(\"paddle_local\")) and not DL and not NET and len(CTOR) == 1)"
+b = "and bool(di.OCR_ENGINES.get(\"paddle_local\")) and not DL and not NET)"
+assert src.count(a) == 1
+s = src.replace(a, b)
+s = s.replace('"""PROBE r13-fix4 K v2', '"""PROBE r13-fix4 K v3 (r14: bỏ điều kiện khởi tạo PaddleOCR TRONG tiến trình gọi ở ca '
+              'du_model — xem harness r14 mk_probe_k_v3) — bản v2', 1)
+s = s.replace('"probe": "k_ocr_models_v2"', '"probe": "k_ocr_models_v3"')
+out = H / "probe_k_ocr_models_v3.py.txt"
+out.open("x", encoding="utf-8", newline="\n").write(s)
+compile(s, "v3", "exec")
+print("ok")

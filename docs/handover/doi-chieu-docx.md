@@ -773,3 +773,15 @@ ngày làm việc).
 Đếm nhãn (một mục có thể nhiều nhãn): BLOCKED_DECISION 43, BLOCKED_INFRA_OR_DATA 45, BLOCKED_VENDOR 8, CODE_PARTIAL 8, CODE_VERIFIED 84, UNVERIFIED_LIVE 94. acceptance_status: chua_nghiem_thu 96.
 
 Nhãn `CODE_PARTIAL` (đợt hoàn thiện; trước gọi MISSING_CODE) = mục `code_status: mot_phan` — adapter OCR/STT/ảnh AI chưa viết vì CHƯA chọn nhà cung cấp (không viết adapter đoán) [đính chính r9: adapter API sàn `market_api` và neo OpenTimestamps CÓ code, mới kiểm giả lập, chưa sandbox], kiểm hồ sơ gốc chờ dữ liệu Bên B, giám sát ngoài máy chờ máy giám sát (hạ tầng).
+
+### A12. Đợt r14 (25/10/2026) — phần code còn thiếu bám DOCX
+
+**Đính chính:** A11/r13-fix4 coi 12 mục "chỉ còn đầu vào ngoài code" — chưa đúng. r14 làm: C1 OCR tiến trình con
+(production-03, data_platform-02.1), C2 người duyệt nâng cấp biên nhận neo (farming-06), C3a refresh token sàn theo tài liệu
+chính thức (data_platform-06). Vẫn CHƯA có code: quyết toán qua API sàn (chờ Kế toán chốt ánh xạ escrow Shopee; tài liệu
+finance TikTok). Website/chatbot website vẫn ở repo riêng. Kiểm lại: production-03 BỊ CHẶN 12/0/0, data_platform-02.1 BỊ CHẶN 14/0/0, farming-06 BỊ CHẶN 27/0/1, data_platform-06 BỊ CHẶN 9/0/0. Tổng nội bộ 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN; nghiệm thu hợp đồng 0/96.
+Evidence `evidence/itacc_r14_code_gaps/`; hồ sơ `nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ `dau-vao-va-quyet-dinh.md` mục H.
+
+**Đính chính r14-fix2 (25/10/2026):** A12/r14 có 2 lỗi controller tái hiện — lỗi refresh/dữ liệu sàn in nguyên văn trường lỗi
+(có thể là token/khóa) và migration không tạo được chỉ mục unique khi lịch sử neo hợp lệ đã có 2 `da_nang_cap` cùng lần gom.
+Đã vá + kiểm lại farming-06, data_platform-06 (farming-06 BỊ CHẶN 27/0/1, data_platform-06 BỊ CHẶN 9/0/0); tổng nội bộ vẫn 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN. Evidence `evidence/itacc_r14_fix_2/`.

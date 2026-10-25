@@ -1,0 +1,12 @@
+FAIL model_hong_paddle_that exit= 3221225477 tiến trình gọi KHÔNG trả kết quả (exit 3221225477)
+FAIL worker_crash_abort exit= 3221226505 tiến trình gọi KHÔNG trả kết quả (exit 3221226505)
+FAIL treo_khoi_tao exit= 0 {'src': 'ocr', 'pages': 1, 'text': 'FAKE-TEXT-MUON'}
+FAIL treo_suy_luan exit= 0 {'DocError': 'OCR quá 8 giây — bỏ'}
+PASS thieu_pdiparams exit= 0 {'DocError': 'thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR'}
+PASS pdmodel_rong exit= 0 {'DocError': 'thiếu model OCR cục bộ (det, rec, cls) ở OCR_PADDLE_MODEL_DIR'}
+PASS hop_le_that exit= 0 {'png': {'src': 'ocr', 'pages': 1, 'text': 'Mat ong säm 300ml\nS6 DKSP: 15/2026/DKSP\nNSX: 12/10/2026\nHSD: 12/10/2028\nLOT: L2026-1012\nThé tich thuc
+PASS trang_hong_qua_trang exit= 0 {'trang': {'src': 'none', 'pages': 1, 'text': ''}, 'hong': {'DocError': 'ảnh hỏng/không đọc được: UnidentifiedImageError'}, 'qua_trang': {'DocError': 
+FAIL cli_sx_label_model_hong exit= 0 {'rc': 3221225477, 'stderr': ''}
+FAIL cli_intake_model_hong exit= 0 {'rc': 3221225477, 'stdout': '[loader-gate] doc_intake: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data
+FAIL cli_reprocess_model_hong exit= 0 {'nap_none_rc': 2, 'rc': 3221225477, 'stdout': '', 'docs': [[0, 0], [1, 1]]}
+TONG {'PASS': 4, 'FAIL': 7}

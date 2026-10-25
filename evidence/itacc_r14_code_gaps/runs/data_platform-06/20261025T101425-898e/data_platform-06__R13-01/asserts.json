@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from market_rows r join market_snapshots s on s.id = r.snapshot_id where s.file_name like 'api:shopee:listing:%' and r.price_vnd in (165000, 445000)",
+  "expect": 2,
+  "actual": 2,
+  "dat": true
+ }
+]

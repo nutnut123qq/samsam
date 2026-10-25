@@ -1,0 +1,17 @@
+"""HARNESS r14 — dựng bộ model OCR ĐỦ TÊN, KHÁC RỖNG nhưng NỘI DUNG HỎNG (byte ngẫu nhiên) dưới <DIR> theo cấu trúc
+`doc_intake._PADDLE_SUBDIRS` của cây đang chạy — PaddleOCR thật nạp sẽ native crash (ca C1).
+  python mk_models_hong.py.txt <DIR>   → in "[models] hong 3 bo"."""
+import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from ingest import doc_intake as di  # noqa: E402
+
+root = Path(sys.argv[1])
+for parts in di._PADDLE_SUBDIRS.values():
+    d = root.joinpath(*parts)
+    d.mkdir(parents=True, exist_ok=False)
+    for f in ("inference.pdmodel", "inference.pdiparams"):
+        (d / f).write_bytes(os.urandom(4096))
+print(f"[models] hong {len(di._PADDLE_SUBDIRS)} bo")

@@ -1,0 +1,247 @@
+"""PROBE r14-fix2 Q2 v1 — F2: nâng cấp schema/roles phải giữ được lịch sử biên nhận neo TRÙNG hợp lệ do code baseline
+`0afa388` tạo (2 lời gọi upgrade() thật đồng thời), và sau nâng cấp mọi đường ghi mới (job, người, người + job) không tạo trùng
+khi chạy đồng thời; kết quả `new` phản ánh đúng việc có tạo dòng. Login Postgres THẬT (app_human + human_logins khối farming;
+svc_job), calendar GIẢ (`race_upgrade.py.txt`, barrier trong lời gọi calendar). DB test riêng trên container của lượt — KHÔNG
+`samsam`. Cùng mã/input/assertion cho snapshot r14 CHƯA vá và bản vá (cây dưới test = <ROOT>).
+  python -I probe_q2_anchor_migration.py.txt <ROOT> <BASE_TREE_0afa388> <ADMIN_ENV> <SIDE> <out.json>
+Dựng: DB `samsam_itacc_r14f2_hist_<side>` bằng schema/roles CỦA BASE_TREE; lần gom L1 (lịch sử thường: 1 upgrade baseline),
+L2 (lịch sử trùng: 2 upgrade baseline đồng thời → 2 `da_nang_cap` hợp lệ). DB `samsam_itacc_r14f2_new_<side>` dựng bằng schema/
+roles của ROOT cho ca D/E. Login tạm `r14f2_<side>_{a,b,j}` (xóa khi xong).
+Tiêu chí (khóa trước khi vá):
+- tien_quyet_lich_su_trung: L2 có đúng 2 `da_nang_cap`, cả 2 parse được cây OTS khớp digest (nếu không → ca này FAIL = lỗi harness).
+- A_B_ap_schema_2_lan: `apply_schema --roles` của ROOT trên DB lịch sử chạy 2 lần đều exit 0.
+- G_giu_lich_su: số dòng MỌI bảng public, nội dung từng dòng anchor_receipts (id, status, sha256 receipt, created_by), đuôi hash
+  chain agent_action_log và quyền bảng (chỉ thêm) không đổi; verify_action_log() 0 vấn đề.
+- C_chay_lai_lich_su_trung: job (svc_job, vận hành) `--upgrade L2` → exit 0, 0 GET, vẫn 2 `da_nang_cap`, stdout nêu
+  "2 biên nhận da_nang_cap (lịch sử)".
+- D1_job_job / D2_nguoi_nguoi / D3_nguoi_job: lần gom mới, 2 caller đồng thời (giai đoạn cho phép) → đúng 1 `da_nang_cap` mới,
+  đúng 1 kết quả `new` True và 1 kết quả `new` False, không lỗi luồng.
+- E1_job_co_nguoi_duyet / E2_nguoi_sai_by / E3_nguoi_chay_thu: 0 GET, 0 dòng mới."""
+import hashlib
+import json
+import os
+import secrets
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT, BASE, ADMIN_ENV, SIDE, OUT = sys.argv[1], sys.argv[2], Path(sys.argv[3]), sys.argv[4], sys.argv[5]
+sys.stdout.reconfigure(encoding="utf-8")
+HX = Path(__file__).resolve().parent
+R14H = HX.parents[1] / "itacc_r14_code_gaps" / "harness"
+import psycopg  # noqa: E402
+from psycopg import conninfo  # noqa: E402
+
+ADM = conninfo.conninfo_to_dict(ADMIN_ENV.read_text(encoding="utf-8").split("'")[1])
+assert ADM["host"] == "127.0.0.1" and ADM["dbname"] == "postgres"
+CAL = "https://cal-b.test"
+A, B, J = (f"r14f2_{SIDE}_{x}" for x in "abj")
+PA, PB = "Người Duyệt Neo A Q2", "Người Duyệt Neo B Q2"
+PW = {r: secrets.token_urlsafe(18) for r in (A, B, J)}
+HIST, NEW = f"samsam_itacc_r14f2_hist_{SIDE}", f"samsam_itacc_r14f2_new_{SIDE}"
+
+
+def dsn(db, role=None):
+    d = {**ADM, "dbname": db}
+    if role:
+        d.update(user=role, password=PW[role])
+    return conninfo.make_conninfo(**d)
+
+
+def clean_env(**kw):
+    env = {k: v for k, v in os.environ.items() if not (k.startswith("PG") or k.endswith("DATABASE_URL")
+                                                       or k in ("AUTH_MODE", "APPROVAL_ENFORCE", "DEPLOY"))}
+    env.update(PYTHONIOENCODING="utf-8", **kw)
+    return env
+
+
+def apply(tree, db):
+    r = subprocess.run([sys.executable, "scripts/apply_schema.py", "--roles"], cwd=tree, capture_output=True,
+                       env=clean_env(DATABASE_URL=dsn(db)), timeout=600)
+    err = r.stderr.decode("utf-8", "replace")
+    return r.returncode, (r.stdout.decode("utf-8", "replace").strip().splitlines() or [""])[-1][:120], err[-300:]
+
+
+def race(tree, bid, force, *callers):
+    env = clean_env(**{f"RACE_DSN_{i + 1}": c[0] for i, c in enumerate(callers)})
+    r = subprocess.run([sys.executable, str(HX / "race_upgrade.py.txt"), tree, str(bid), CAL, force,
+                        *[c[1] for c in callers]], capture_output=True, env=env, timeout=300)
+    line = [x for x in r.stdout.decode("utf-8", "replace").splitlines() if x.startswith("RACE_JSON ")]
+    return json.loads(line[-1][10:]) if line else {"harness_err": r.stderr.decode("utf-8", "replace")[-400:]}
+
+
+with psycopg.connect(dsn("postgres"), autocommit=True, connect_timeout=5) as c:
+    for db in (HIST, NEW):
+        assert not c.execute("select 1 from pg_database where datname = %s", (db,)).fetchone(), f"{db} đã có"
+        c.execute(f"create database {db}")
+rows = []
+
+
+def case(ma, fn):
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:240]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+    return ok
+
+
+sys.path.insert(0, ROOT)
+from pipelines import anchor as an  # noqa: E402  (chỉ dùng hàm định dạng — giống nhau ở 2 cây)
+
+N = [0]
+
+
+def seed(c, tag):
+    N[0] += 1
+    leaves = [{"k": f"q2:{SIDE}:{tag}:{N[0]}", "d": {"n": N[0]}, "h": "0" * 64}]
+    as_of = datetime(2026, 10, 25, tzinfo=timezone.utc) + timedelta(seconds=N[0])
+    root = hashlib.sha256(f"q2{SIDE}{tag}{N[0]}".encode()).hexdigest()
+    sha = hashlib.sha256(an.manifest(int((as_of - an.EPOCH).total_seconds() * 1e6), leaves, root)).hexdigest()
+    bid = c.execute("insert into anchor_batches (as_of, leaves, merkle_root, manifest_sha256, created_by) values"
+                    " (%s, %s::jsonb, %s, %s, 'agent:anchor') returning id",
+                    (as_of, json.dumps(leaves), root, sha)).fetchone()[0]
+    resp = b"\xf0" + an._put_varuint(16) + b"\x22" * 16 + b"\x08" + b"\x00" + an.ATT_PENDING + \
+        an._put_varuint(len(an._put_varuint(len(CAL)) + CAL.encode())) + an._put_varuint(len(CAL)) + CAL.encode()
+    c.execute("insert into anchor_receipts (batch_id, provider, status, calendar, receipt, created_by) values"
+              " (%s, 'opentimestamps', 'da_gui', %s, %s, 'agent:anchor')", (bid, CAL, an.ots_file(bytes.fromhex(sha), resp)))
+    return bid, sha
+
+
+def n_up(c, bid):
+    return c.execute("select count(*) from anchor_receipts where batch_id = %s and status = 'da_nang_cap'",
+                     (bid,)).fetchone()[0]
+
+
+def snap(c):
+    tabs = [r[0] for r in c.execute("select table_name from information_schema.tables where table_schema = 'public'"
+                                    " and table_type = 'BASE TABLE' order by 1")]
+    return ({t: c.execute(f'select count(*) from public."{t}"').fetchone()[0] for t in tabs},
+            c.execute("select id, status, encode(sha256(coalesce(receipt, ''::bytea)), 'hex'), created_by"
+                      " from anchor_receipts order by id").fetchall(),
+            c.execute("select id, row_hash from agent_action_log order by id desc limit 1").fetchone(),
+            set(c.execute("select grantee, table_name, privilege_type from information_schema.role_table_grants"
+                          " where table_schema = 'public' and grantee <> 'postgres'").fetchall()))
+
+
+# ---- dựng lịch sử bằng code BASELINE ----------------------------------------------------------
+rc_b, tail_b, err_b = apply(BASE, HIST)
+assert rc_b == 0, f"dựng schema baseline lỗi: {tail_b} {err_b}"
+adm_h = psycopg.connect(dsn(HIST), autocommit=True, connect_timeout=5)
+L1, sha1 = seed(adm_h, "L1")
+L2, sha2 = seed(adm_h, "L2")
+r1 = race(BASE, L1, "van_hanh", (dsn(HIST), "-"))
+r2 = race(BASE, L2, "van_hanh", (dsn(HIST), "-"), (dsn(HIST), "-"))
+
+
+def c_pre():
+    recs = [bytes(x[0]) for x in adm_h.execute("select receipt from anchor_receipts where batch_id = %s and"
+                                                " status = 'da_nang_cap'", (L2,)).fetchall()]
+    for rr in recs:
+        an.parse_receipt(rr, sha2)
+    return len(recs) == 2 and n_up(adm_h, L1) == 1, {"L1": n_up(adm_h, L1), "L2": len(recs), "race_L2": r2}
+
+
+pre_ok = case("tien_quyet_lich_su_trung", c_pre)
+S0 = snap(adm_h)
+APPLY = [apply(ROOT, HIST), apply(ROOT, HIST)]
+case("A_B_ap_schema_2_lan", lambda: (all(a[0] == 0 for a in APPLY), [list(a) for a in APPLY]))
+
+
+def c_keep():
+    S1 = snap(adm_h)
+    probs = adm_h.execute("select count(*) from verify_action_log()").fetchone()[0]
+    diff = {k: (S0[0][k], S1[0].get(k)) for k in S0[0] if S1[0].get(k) != S0[0][k]}
+    ok = not diff and S1[1] == S0[1] and S1[2] == S0[2] and probs == 0 and S0[3] <= S1[3]
+    return ok, {"counts_diff": diff, "receipts_same": S1[1] == S0[1], "chain_same": S1[2] == S0[2],
+                "verify_problems": probs, "grants_lost": sorted(S0[3] - S1[3])[:5]}
+
+
+case("G_giu_lich_su", c_keep)
+
+
+def mk_roles(c, db):
+    for r, member in ((A, "app_human"), (B, "app_human"), (J, "svc_job")):
+        c.execute(f"drop role if exists {r}")
+        c.execute(f"create role {r} login password '{PW[r]}' in role {member}")
+    for d in (HIST, NEW):
+        for r in (A, B, J):
+            c.execute(f"grant connect on database {d} to {r}")
+
+
+with psycopg.connect(dsn("postgres"), autocommit=True, connect_timeout=5) as c0:
+    mk_roles(c0, HIST)
+
+
+def stage(c, s):
+    c.execute("insert into feature_rollout (feature_id, stage, updated_by) values ('farming-06', %s, 'probe q2')"
+              " on conflict (feature_id) do update set stage = excluded.stage", (s,))
+
+
+def c_rerun_dup():
+    stage(adm_h, "van_hanh")
+    env = clean_env(DATABASE_URL=dsn(HIST, J))
+    r = subprocess.run([sys.executable, str(R14H / "anchor_cli_r14.py.txt"), "--fake-get", "none", "--upgrade",
+                        str(L2)], cwd=ROOT, env=env, capture_output=True, timeout=180)
+    out = r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace")
+    ok = (r.returncode == 0 and "GET_CALLS 0" in out and n_up(adm_h, L2) == 2
+          and "2 biên nhận da_nang_cap (lịch sử)" in out)
+    return ok, {"rc": r.returncode, "out": out[-400:], "L2": n_up(adm_h, L2)}
+
+
+case("C_chay_lai_lich_su_trung", c_rerun_dup)
+
+# ---- ca D/E trên DB mới dựng bằng schema CỦA ROOT ---------------------------------------------
+rc_n, tail_n, err_n = apply(ROOT, NEW)
+adm_n = psycopg.connect(dsn(NEW), autocommit=True, connect_timeout=5)
+for r, p in ((A, PA), (B, PB)):
+    adm_n.execute("insert into human_logins (db_login, person, blocks, granted_by, note) values (%s, %s,"
+                  " array['farming'], 'probe q2 (thử)', 'login tạm') on conflict (db_login) do nothing", (r, p))
+
+
+def pair(st, c1, c2):
+    def f():
+        assert rc_n == 0, f"dựng DB mới lỗi: {tail_n} {err_n}"
+        stage(adm_n, st)
+        bid, _ = seed(adm_n, "D")
+        res = race(ROOT, bid, "none", c1, c2)
+        oks = [x.get("ok") for x in res.get("results", [])]
+        news = sorted(bool(o and o.get("new")) for o in oks)
+        ok = (n_up(adm_n, bid) == 1 and len(oks) == 2 and all(oks) and news == [False, True] and res.get("net") == 0)
+        return ok, {"da_nang_cap": n_up(adm_n, bid), "race": res}
+    return f
+
+
+def blocked(st, caller):
+    def f():
+        assert rc_n == 0, f"dựng DB mới lỗi: {tail_n} {err_n}"
+        stage(adm_n, st)
+        bid, _ = seed(adm_n, "E")
+        res = race(ROOT, bid, "none", caller)
+        x = (res.get("results") or [{}])[0]
+        rows_b = adm_n.execute("select count(*) from anchor_receipts where batch_id = %s", (bid,)).fetchone()[0]
+        return "err" in x and x.get("gets") == 0 and rows_b == 1, {"race": res, "rows": rows_b}
+    return f
+
+
+case("D1_job_job", pair("van_hanh", (dsn(NEW, J), "-"), (dsn(NEW, J), "-")))
+case("D2_nguoi_nguoi", pair("co_nguoi_duyet", (dsn(NEW, A), PA), (dsn(NEW, B), PB)))
+case("D3_nguoi_job", pair("van_hanh", (dsn(NEW, A), PA), (dsn(NEW, J), "-")))
+case("E1_job_co_nguoi_duyet", blocked("co_nguoi_duyet", (dsn(NEW, J), "-")))
+case("E2_nguoi_sai_by", blocked("co_nguoi_duyet", (dsn(NEW, A), PB)))
+case("E3_nguoi_chay_thu", blocked("chay_thu", (dsn(NEW, A), PA)))
+adm_h.close()
+adm_n.close()
+with psycopg.connect(dsn("postgres"), autocommit=True, connect_timeout=5) as c0:
+    for r in (A, B, J):
+        for d in (HIST, NEW):
+            c0.execute(f"revoke connect on database {d} from {r}")
+        c0.execute(f"drop role if exists {r}")
+out = {"probe": "q2_anchor_migration_v1", "root": ROOT, "base": BASE, "tien_quyet": pre_ok, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:220])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)

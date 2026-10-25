@@ -1,0 +1,15 @@
+FAIL sp_error_phan_chieu_refresh {'rc': 1, 'requests': 1, 'lo': ['FAKE_REFRESH_OLD…'], 'stdout': '[err] shopee refresh token: mã lỗi <R_OLD> — kho token KHÔNG đổi.\n', 'exc': "shopee refresh token: mã lỗi <R_OLD> 
+FAIL sp_error_phan_chieu_access {'rc': 1, 'requests': 1, 'lo': ['FAKE_ACCESS_OLD_…'], 'stdout': '[err] shopee refresh token: mã lỗi <A_OLD> — kho token KHÔNG đổi.\n', 'exc': "shopee refresh token: mã lỗi <A_OLD> 
+FAIL sp_error_phan_chieu_partner_key {'rc': 1, 'requests': 1, 'lo': ['FAKE_PARTNER_KEY…'], 'stdout': '[err] shopee refresh token: mã lỗi <PKEY> — kho token KHÔNG đổi.\n', 'exc': "shopee refresh token: mã lỗi <PKEY> | 
+FAIL tt_code_phan_chieu_refresh {'rc': 1, 'requests': 1, 'lo': ['FAKE_REFRESH_OLD…'], 'stdout': '[err] tiktok refresh token: mã lỗi <R_OLD> — kho token KHÔNG đổi.\n', 'exc': "tiktok refresh token: mã lỗi <R_OLD> 
+FAIL tt_code_phan_chieu_app_secret {'rc': 1, 'requests': 1, 'lo': ['FAKE_APP_SECRET_…'], 'stdout': '[err] tiktok refresh token: mã lỗi <TSEC> — kho token KHÔNG đổi.\n', 'exc': "tiktok refresh token: mã lỗi <TSEC> | 
+FAIL sp_error_dict {'rc': 1, 'requests': 1, 'lo': ['FAKE_REFRESH_OLD…'], 'stdout': "[err] shopee refresh token: mã lỗi {'token': '<R_OLD>', 'key': 'FAKE_PARTNER — kho token KHÔNG đổi.\n", 'exc': 'sho
+FAIL tt_code_list {'rc': 1, 'requests': 1, 'lo': ['FAKE_REFRESH_OLD…', 'FAKE_APP_SECRET_…'], 'stdout': "[err] tiktok refresh token: mã lỗi ['<TSEC>', '<R_OLD>'] — kho token KHÔNG đổi.\n", 'exc': 'ti
+FAIL sp_du_lieu_error_phan_chieu_access {'rc': 1, 'lo': ['FAKE_ACCESS_OLD_…']}
+PASS http_500 {'rc': 1, 'requests': 1, 'lo': [], 'stdout': '[err] tiktok refresh token: HTTP 500 — kho token KHÔNG đổi.\n', 'exc': "tiktok refresh token: HTTP 500 | ApiError('tiktok refresh toke
+PASS redirect_302 {'rc': 1, 'requests': 1, 'lo': [], 'stdout': '[err] tiktok refresh token: HTTP 302 — kho token KHÔNG đổi.\n', 'exc': "tiktok refresh token: HTTP 302 | ApiError('tiktok refresh toke
+PASS json_hong {'rc': 1, 'requests': 1, 'lo': [], 'stdout': '[err] tiktok refresh token: JSON hỏng — kho token KHÔNG đổi.\n', 'exc': "tiktok refresh token: JSON hỏng | ApiError('tiktok refresh to
+PASS loi_nghiep_vu_thuong {'rc': 1, 'requests': 1, 'lo': [], 'stdout': '[err] shopee refresh token: mã lỗi error_auth — kho token KHÔNG đổi.\n', 'exc': "shopee refresh token: mã lỗi error_auth | ApiError('s
+PASS thanh_cong_xoay_vong {'rc': 0, 'paths': ['/api/v2/auth/access_token/get', '/api/v2/product/get_item_list'], 'lo': []}
+PASS tat_0_request {'rc': 2, 'n': 0}
+TONG {'PASS': 6, 'FAIL': 8}

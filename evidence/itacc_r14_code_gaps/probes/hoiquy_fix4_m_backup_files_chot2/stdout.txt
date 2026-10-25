@@ -1,0 +1,15 @@
+PASS bo_tep_hop_le {'ban_gan_nhat': 'DAT', 'chi_tiet': 'status=ok; probe_db_20261024_101010_vn.dump.enc mã hóa; dump local + offsite đo khớp size/sha256 manifest', 'offsite': 'DAT
+PASS tai_hien_controller_khong_dump_offsite_rong {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'manifest local thiếu/hỏng — không kiểm được tệp dump', 'offsite': 'DAT'}
+PASS mat_dump_local {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'local: thiếu tệp dump probe_db_20261024_101010_vn.dump.enc', 'offsite': 'DAT'}
+PASS dump_sai_hash_cung_co {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'local: sha256 tệp dump lệch manifest', 'offsite': 'DAT'}
+PASS dump_sai_kich_thuoc {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'local: kích thước tệp dump lệch manifest', 'offsite': 'DAT'}
+PASS thieu_dump_offsite {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'offsite: thiếu tệp dump probe_db_20261024_101010_vn.dump.enc', 'offsite': 'DAT'}
+PASS dump_offsite_sai_hash {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'offsite: sha256 tệp dump lệch manifest', 'offsite': 'DAT'}
+PASS thieu_manifest_offsite {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'offsite: manifest thiếu/hỏng/lệch bản local', 'offsite': 'DAT'}
+PASS manifest_hong_toi_gian {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'manifest local thiếu/hỏng — không kiểm được tệp dump', 'offsite': 'DAT'}
+PASS manifest_khong_ma_hoa {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'bản dump chưa mã hóa', 'offsite': 'DAT'}
+PASS qua_han {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'cách 3.0 giờ (> 1)', 'offsite': 'DAT'}
+PASS thoi_diem_tuong_lai {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'thời điểm trong sổ ở tương lai (5.0 giờ)', 'offsite': 'DAT'}
+PASS log_status_fail {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'status=fail', 'offsite': 'DAT'}
+PASS chua_cau_hinh_offsite {'ban_gan_nhat': 'CHUA_DAT', 'chi_tiet': 'chưa cấu hình offsite dir: — không kiểm được bản sao', 'offsite': 'CHUA_DAT'}
+TONG {'PASS': 14, 'FAIL': 0}

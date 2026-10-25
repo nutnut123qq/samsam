@@ -1,0 +1,127 @@
+{
+ "probe": "p3_market_refresh_v1",
+ "root": "D:\\code\\samsam",
+ "muc_kiem": "CONTRACT_TESTED (server giả) — UNVERIFIED_LIVE",
+ "ca": [
+  {
+   "ca": "shopee_refresh_hop_le",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "reqs": [
+     [
+      "POST",
+      "/api/v2/auth/access_token/get"
+     ]
+    ],
+    "leaked": [],
+    "text": "[ok] shopee: đã refresh token — hết hạn 2026-10-25 17:39 (giờ VN).\n"
+   }
+  },
+  {
+   "ca": "shopee_tu_refresh_roi_keo",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "paths": [
+     "/api/v2/auth/access_token/get",
+     "/api/v2/product/get_item_list"
+    ],
+    "leaked": [],
+    "text": "[ok] shopee: đã refresh token — hết hạn 2026-10-25 17:39 (giờ VN).\n[warn] API shopee/listing trả 0 dòng — không nạp gì.\n[job-runs] ghi job_runs lỗi (RuntimeError) — job vẫn chạy bình thường\n"
+   }
+  },
+  {
+   "ca": "shopee_refresh_loi",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "auth": 1,
+    "data": 0,
+    "redirect_target": null,
+    "leaked": [],
+    "text": "[err] shopee refresh token: mã lỗi error_auth — kho token KHÔNG đổi.\n"
+   }
+  },
+  {
+   "ca": "shopee_thieu_refresh_token",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "auth": 1,
+    "data": 0,
+    "redirect_target": null,
+    "leaked": [],
+    "text": "[err] shopee refresh token: thiếu/sai refresh_token — kho token KHÔNG đổi.\n"
+   }
+  },
+  {
+   "ca": "shopee_refresh_429",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "auth": 1,
+    "data": 0,
+    "redirect_target": null,
+    "leaked": [],
+    "text": "[err] shopee refresh token: HTTP 429 — kho token KHÔNG đổi.\n"
+   }
+  },
+  {
+   "ca": "shopee_refresh_redirect",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "auth": 1,
+    "data": 0,
+    "redirect_target": 0,
+    "leaked": [],
+    "text": "[err] shopee refresh token: HTTP 302 — kho token KHÔNG đổi.\n"
+   }
+  },
+  {
+   "ca": "tiktok_refresh_hop_le",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "n": 1,
+    "leaked": [],
+    "text": "[ok] tiktok: đã refresh token — hết hạn 2026-11-01 13:40 (giờ VN).\n"
+   }
+  },
+  {
+   "ca": "kho_trong_repo",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 2,
+    "n": 0,
+    "text": "[err] MARKET_TOKEN_FILE nằm trong repo — đặt NGOÀI repo — 0 request.\n"
+   }
+  },
+  {
+   "ca": "doi_chung_tat",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 2,
+    "n": 0,
+    "text": "[rollout] kéo dữ liệu API sàn chỉ đọc: tính năng data_platform-06 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra\n"
+   }
+  },
+  {
+   "ca": "doi_chung_listing_env",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "paths": [
+     "/api/v2/product/get_item_list"
+    ],
+    "leaked": [],
+    "text": "[warn] API shopee/listing trả 0 dòng — không nạp gì.\n[job-runs] ghi job_runs lỗi (RuntimeError) — job vẫn chạy bình thường\n"
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 10,
+  "FAIL": 0
+ }
+}

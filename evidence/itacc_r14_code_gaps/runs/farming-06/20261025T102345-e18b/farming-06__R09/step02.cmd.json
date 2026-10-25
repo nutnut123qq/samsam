@@ -1,0 +1,28 @@
+{
+ "buoc": 2,
+ "argv": [
+  "python",
+  "-c",
+  "import glob,hashlib,sys\nf=glob.glob(sys.argv[1]); print('N', len(f))\nprint('SHA_OK', len(f) == 1 and hashlib.sha256(open(f[0], 'rb').read()).hexdigest() == sys.argv[2])\n",
+  "D:\\code\\samsam\\evidence\\itacc_r14_code_gaps\\runs\\farming-06\\20261025T102345-e18b\\farming-06__R09\\out/anchor_out/anchor-*.json.ots",
+  "1858f4b5755ea74fbae1f14fbbf8344aaccee818b19bcef201e2d82b145ffb04"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T10:31:00+07:00",
+ "ket_thuc": "2026-10-25T10:31:01+07:00",
+ "exit": 0,
+ "expect_exit": 0,
+ "regex": [
+  {
+   "stdout_re": "N 1[\\s\\S]*SHA_OK True",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "c48afe8ec45ccd8f65107ab99021db1dd92b4afda9d66098c748c2dff5e7fa3d",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,234 @@
+"""PROBE r14 P2 v1 — C2: nâng cấp biên nhận neo (`anchor --upgrade`) cho NGƯỜI được ủy quyền khối farming ở giai đoạn có
+người duyệt, giữ nguyên biên quyền. Login Postgres THẬT trên DB test riêng dựng từ đúng cây của phía chạy (baseline
+`0afa388` hoặc bản sửa) — KHÔNG phải `samsam`. Calendar GIẢ (`anchor_cli_r14.py.txt`), giai đoạn đọc THẬT từ feature_rollout.
+  python -I probe_p2_anchor_human.py.txt <ROOT> <ADMIN_DB_ENV_FILE> <SIDE_TAG> <out.json>
+Dựng (bằng login owner của DB test): 4 login tạm `r14p2_<side>_{a,s,u,j}` — a: app_human, human_logins khối farming; s:
+app_human, khối sales; u: app_human, KHÔNG ánh xạ; j: svc_job. Mỗi ca 1 lần gom mới + 1 biên nhận da_gui (pending calendar
+cal-b). Xóa login tạm khi xong.
+Tiêu chí (khóa trước khi sửa):
+- nguoi_dung_quyen_bitcoin (co_nguoi_duyet, login a, --by đúng người): exit 0, 1 GET, +1 dòng da_nang_cap created_by = người,
+  có agent_action_log 'anchor_upgrade'; trạng thái nói CHƯA xác minh bên thứ ba.
+- nguoi_dung_quyen_404: exit 0 "[cho]", 1 GET, 0 dòng mới.
+- chay_lai_khong_trung: chạy lại ca 1 → exit 0, 0 GET, 0 dòng mới.
+- job_co_nguoi_duyet (login j, không --by) / gia_by (login a, --by người khác) / login_khong_anh_xa (u) / sai_khoi (s) /
+  nguoi_chay_thu (chay_thu, login a): exit ≠ 0, 0 GET, 0 dòng mới.
+- calendar_ngoai_allowlist (co_nguoi_duyet, login a, pending URI lạ): 0 GET, 0 dòng mới.
+- receipt_cay_hong (da_gui đúng tiền tố digest, thân hỏng; login a): exit ≠ 0, 0 GET, 0 dòng mới.
+- job_van_hanh (van_hanh, login j): exit 0, 1 GET, +1 da_nang_cap created_by agent:anchor (đối chứng giữ nguyên).
+- submit_nguoi_giu_nguyen (co_nguoi_duyet, login a, --submit): +1 da_gui created_by người (đối chứng giữ nguyên).
+- sql_truc_tiep (login a): INSERT/UPDATE/DELETE anchor_receipts trực tiếp đều bị từ chối, 0 thay đổi."""
+import hashlib
+import json
+import os
+import secrets
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT, ADMIN_ENV, SIDE, OUT = sys.argv[1], Path(sys.argv[2]), sys.argv[3], sys.argv[4]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, ROOT)
+os.chdir(ROOT)
+import psycopg  # noqa: E402
+from psycopg import conninfo  # noqa: E402
+from psycopg.types.json import Jsonb  # noqa: E402
+
+from pipelines import anchor as an  # noqa: E402
+
+HX = Path(__file__).resolve().parent
+env0 = {}
+for ln in ADMIN_ENV.read_text(encoding="utf-8").splitlines():
+    if ln.startswith("export ") and "='" in ln:
+        k, v = ln[7:].split("=", 1)
+        env0[k] = v.strip("'")
+ADMIN = env0["DATABASE_URL"]
+d0 = conninfo.conninfo_to_dict(ADMIN)
+assert d0["host"] == "127.0.0.1" and d0["dbname"].startswith("samsam_itacc_r14_") and d0["dbname"] != "samsam"
+DB = d0["dbname"]
+A, S, U, J = (f"r14p2_{SIDE}_{x}" for x in "asuj")
+PERSON_A, PERSON_S = "Người Duyệt Neo Thử", "Người Bán Hàng Thử"
+PW = {r: secrets.token_urlsafe(18) for r in (A, S, U, J)}
+CAL_B = "https://cal-b.test"
+NONCE = b"\x22" * 16
+
+
+def vb(b):
+    return an._put_varuint(len(b)) + b
+
+
+def resp_for(uri):
+    return b"\xf0" + vb(NONCE) + b"\x08" + b"\x00" + an.ATT_PENDING + vb(vb(uri.encode()))
+
+
+def dsn(role):
+    return conninfo.make_conninfo(**{**d0, "user": role, "password": PW[role]})
+
+
+adm = psycopg.connect(ADMIN, autocommit=True, connect_timeout=5)
+for r, member in ((A, "app_human"), (S, "app_human"), (U, "app_human"), (J, "svc_job")):
+    adm.execute(f"drop role if exists {r}")
+    adm.execute(f"create role {r} login password %s in role {member}".replace("%s", "'" + PW[r] + "'"))
+    adm.execute(f"grant connect on database {DB} to {r}")
+for r, person, blocks in ((A, PERSON_A, ["farming"]), (S, PERSON_S, ["sales"])):
+    adm.execute("insert into human_logins (db_login, person, blocks, granted_by, note) values (%s, %s, %s,"
+                " 'probe r14 P2 (thử)', 'login tạm của probe') on conflict (db_login) do nothing", (r, person, blocks))
+N = [0]
+
+
+def stage(s):
+    adm.execute("insert into feature_rollout (feature_id, stage, updated_by) values ('farming-06', %s, 'probe r14')"
+                " on conflict (feature_id) do update set stage = excluded.stage", (s,))
+
+
+def new_batch(cal=CAL_B, junk=False):
+    N[0] += 1
+    leaves = [{"k": f"plot_logs_head:{N[0]}", "d": {"id": N[0], "h": SIDE}, "h": "0" * 64}]
+    as_of = datetime(2026, 10, 25, tzinfo=timezone.utc) + timedelta(seconds=N[0])
+    root = hashlib.sha256(f"{SIDE}{N[0]}".encode()).hexdigest()
+    body = an.manifest(int((as_of - an.EPOCH).total_seconds() * 1e6), leaves, root)
+    sha = hashlib.sha256(body).hexdigest()
+    bid = adm.execute("insert into anchor_batches (as_of, leaves, merkle_root, manifest_sha256, created_by) values"
+                      " (%s, %s, %s, %s, 'probe r14') returning id", (as_of, Jsonb(leaves), root, sha)).fetchone()[0]
+    rec = an.OTS_HEAD + bytes.fromhex(sha) + (b"\xf0\x02junk" if junk else resp_for(cal))
+    adm.execute("insert into anchor_receipts (batch_id, provider, status, calendar, receipt, created_by) values"
+                " (%s, 'opentimestamps', 'da_gui', %s, %s, 'probe r14')", (bid, cal, rec))
+    return bid
+
+
+def n_rows(bid, status=None):
+    q = "select count(*) from anchor_receipts where batch_id = %s" + (" and status = %s" if status else "")
+    return adm.execute(q, (bid, status) if status else (bid,)).fetchone()[0]
+
+
+def cli(role, args, get="none", post="none"):
+    env = {k: v for k, v in os.environ.items() if not (k.endswith("DATABASE_URL") or k.startswith("PG")
+                                                       or k in ("AUTH_MODE", "APPROVAL_ENFORCE", "DEPLOY"))}
+    env.update(DATABASE_URL=dsn(role), PYTHONIOENCODING="utf-8")
+    r = subprocess.run([sys.executable, str(HX / "anchor_cli_r14.py.txt"), "--fake-get", get, "--fake-post", post,
+                        *args], cwd=ROOT, env=env, capture_output=True, timeout=180)
+    so, se = r.stdout.decode("utf-8", "replace"), r.stderr.decode("utf-8", "replace")
+    tail = [ln for ln in so.splitlines() if ln.startswith("[FAKE] POST_CALLS")]
+    p = tail[-1].split() if tail else ["?"] * 7
+    return {"rc": r.returncode, "post": p[2], "get": p[4], "net": p[6], "out": (so[-300:] + " | " + se[-300:])}
+
+
+rows = []
+
+
+def case(ma, fn):
+    try:
+        ok, actual = fn()
+    except Exception as e:  # noqa: BLE001
+        ok, actual = False, f"{type(e).__name__}: {str(e)[:200]}"
+    rows.append({"ca": ma, "ket_qua": "PASS" if ok else "FAIL", "actual": actual})
+
+
+def blocked(role, st, by=None, cal=CAL_B, junk=False, get="bitcoin"):
+    def f():
+        stage(st)
+        bid = new_batch(cal, junk)
+        r = cli(role, ["--upgrade", str(bid)] + (["--by", by] if by else []), get=get)
+        return r["rc"] != 0 and r["get"] == "0" and r["net"] == "0" and n_rows(bid) == 1, r
+    return f
+
+
+def c_human_bitcoin():
+    stage("co_nguoi_duyet")
+    bid = new_batch()
+    r = cli(A, ["--upgrade", str(bid), "--by", PERSON_A], get="bitcoin")
+    row = adm.execute("select created_by from anchor_receipts where batch_id = %s and status = 'da_nang_cap'",
+                      (bid,)).fetchall()
+    log = adm.execute("select count(*) from agent_action_log where action = 'anchor_upgrade' and object_id = %s",
+                      (str(bid),)).fetchone()[0]
+    case.last = bid
+    ok = (r["rc"] == 0 and r["get"] == "1" and r["net"] == "0" and [x[0] for x in row] == [PERSON_A] and log == 1
+          and "CHƯA xác minh bên thứ ba" in r["out"])
+    return ok, {**r, "da_nang_cap": row, "log": log}
+
+
+def c_rerun():
+    bid = case.last
+    r = cli(A, ["--upgrade", str(bid), "--by", PERSON_A], get="none")
+    return r["rc"] == 0 and r["get"] == "0" and n_rows(bid) == 2 and n_rows(bid, "da_nang_cap") == 1, r
+
+
+def c_human_404():
+    stage("co_nguoi_duyet")
+    bid = new_batch()
+    r = cli(A, ["--upgrade", str(bid), "--by", PERSON_A], get="404")
+    return r["rc"] == 0 and r["get"] == "1" and "[cho]" in r["out"] and n_rows(bid) == 1, r
+
+
+def c_outside():
+    stage("co_nguoi_duyet")
+    bid = new_batch(cal="https://cal-la.test")
+    r = cli(A, ["--upgrade", str(bid), "--by", PERSON_A], get="bitcoin")
+    return r["get"] == "0" and r["net"] == "0" and n_rows(bid) == 1, r
+
+
+def c_job_vh():
+    stage("van_hanh")
+    bid = new_batch()
+    r = cli(J, ["--upgrade", str(bid)], get="bitcoin")
+    row = adm.execute("select created_by from anchor_receipts where batch_id = %s and status = 'da_nang_cap'",
+                      (bid,)).fetchall()
+    return r["rc"] == 0 and r["get"] == "1" and [x[0] for x in row] == ["agent:anchor"], {**r, "row": row}
+
+
+def c_submit():
+    stage("co_nguoi_duyet")
+    N[0] += 1
+    leaves = [{"k": f"plot_logs_head:{N[0]}", "d": {"id": N[0], "h": SIDE}, "h": "0" * 64}]
+    as_of = datetime(2026, 10, 25, tzinfo=timezone.utc) + timedelta(seconds=N[0])
+    root = hashlib.sha256(f"{SIDE}{N[0]}".encode()).hexdigest()
+    sha = hashlib.sha256(an.manifest(int((as_of - an.EPOCH).total_seconds() * 1e6), leaves, root)).hexdigest()
+    bid = adm.execute("insert into anchor_batches (as_of, leaves, merkle_root, manifest_sha256, created_by) values"
+                      " (%s, %s, %s, %s, 'probe r14') returning id", (as_of, Jsonb(leaves), root, sha)).fetchone()[0]
+    r = cli(A, ["--submit", str(bid), "--by", PERSON_A], post="valid")
+    row = adm.execute("select status, created_by from anchor_receipts where batch_id = %s", (bid,)).fetchall()
+    return r["rc"] == 0 and [tuple(x) for x in row] == [("da_gui", PERSON_A)], {**r, "row": row}
+
+
+def c_sql():
+    stage("co_nguoi_duyet")
+    bid = new_batch()
+    got = {}
+    with psycopg.connect(dsn(A), autocommit=True, connect_timeout=5) as c:
+        for name, sql in (("insert", "insert into anchor_receipts (batch_id, provider, status, calendar, receipt,"
+                                     " created_by) select batch_id, provider, 'da_nang_cap', calendar, receipt,"
+                                     f" 'x' from anchor_receipts where batch_id = {bid}"),
+                          ("update", f"update anchor_receipts set created_by = 'x' where batch_id = {bid}"),
+                          ("delete", f"delete from anchor_receipts where batch_id = {bid}")):
+            try:
+                c.execute(sql)
+                got[name] = "THANH CONG"
+            except psycopg.Error as e:
+                got[name] = type(e).__name__
+    return all(v != "THANH CONG" for v in got.values()) and n_rows(bid) == 1, got
+
+
+case("nguoi_dung_quyen_bitcoin", c_human_bitcoin)
+case("chay_lai_khong_trung", c_rerun)
+case("nguoi_dung_quyen_404", c_human_404)
+case("job_co_nguoi_duyet", blocked(J, "co_nguoi_duyet"))
+case("gia_by", blocked(A, "co_nguoi_duyet", by=PERSON_S))
+case("login_khong_anh_xa", blocked(U, "co_nguoi_duyet", by=PERSON_A))
+case("sai_khoi", blocked(S, "co_nguoi_duyet", by=PERSON_S))
+case("nguoi_chay_thu", blocked(A, "chay_thu", by=PERSON_A))
+case("calendar_ngoai_allowlist", c_outside)
+case("receipt_cay_hong", blocked(A, "co_nguoi_duyet", by=PERSON_A, junk=True))
+case("job_van_hanh", c_job_vh)
+case("submit_nguoi_giu_nguyen", c_submit)
+case("sql_truc_tiep", c_sql)
+for r in (A, S, U, J):
+    adm.execute(f"revoke connect on database {DB} from {r}")
+    adm.execute(f"drop role if exists {r}")
+adm.close()
+out = {"probe": "p2_anchor_human_v1", "root": ROOT, "db": DB, "ca": rows,
+       "tong": {k: sum(r["ket_qua"] == k for r in rows) for k in ("PASS", "FAIL")}}
+open(OUT, "x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+for r in rows:
+    print(r["ket_qua"], r["ca"], str(r["actual"])[:200])
+print("TONG", out["tong"])
+sys.exit(1 if out["tong"]["FAIL"] else 0)
