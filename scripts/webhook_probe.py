@@ -5,7 +5,8 @@
 
 Mặc định dò `http://127.0.0.1:<ZALO_WEBHOOK_PORT|8788>/readyz` và
 `…:<MESSENGER_WEBHOOK_PORT|8789>/readyz`. Mọi URL 200 + `ready: true` → exit
-0. Có URL không sẵn sàng (không kết nối/timeout/503) → 1 cảnh báo đỏ
+0. Có URL không sẵn sàng (không kết nối/timeout/503/thân không phải JSON
+object) → 1 cảnh báo đỏ
 `webhook_probe` cho ĐỢT sự cố (đã có cảnh báo cùng nguồn chưa ai xác nhận
 trong 24 giờ → không báo lặp) + exit 1. Không theo redirect, timeout 5 giây,
 không in nội dung trả về ngoài mã trạng thái. `--dry-run` không ghi DB.
@@ -48,11 +49,13 @@ def probe(url: str, opener=None) -> tuple[bool, str]:
     try:
         with opener.open(url, timeout=TIMEOUT_S) as r:
             body = json.loads(r.read(4096) or b"{}")
-            ok = r.status == 200 and body.get("ready") is True
+            # r18: thân không phải object ([1]/null/"x") = không sẵn sàng
+            ok = (r.status == 200 and isinstance(body, dict)
+                  and body.get("ready") is True)
             return ok, f"HTTP {r.status}"
     except urllib.error.HTTPError as e:
         return False, f"HTTP {e.code}"
-    except (urllib.error.URLError, OSError, ValueError,
+    except (urllib.error.URLError, OSError, ValueError, RecursionError,
             http.client.HTTPException) as e:   # r17: BadStatusLine...
         return False, type(e).__name__
 

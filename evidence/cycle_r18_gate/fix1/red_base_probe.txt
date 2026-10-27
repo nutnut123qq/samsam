@@ -1,0 +1,10 @@
+# 2026-10-28T02:10:59+07:00 python -I red_base_probe.py (bản sao: fix1/red_base_probe.py.txt) — ca M2 không phụ thuộc hệ, base vs cây làm việc
+BASE 215275f  | [1]                            → LỌT AttributeError
+BASE 215275f  | null                           → LỌT AttributeError
+BASE 215275f  | [ x2000                        → (False, 'JSONDecodeError')
+BASE 215275f  | json.loads ném RecursionError  → LỌT RecursionError
+cây làm việc  | [1]                            → (False, 'HTTP 200')
+cây làm việc  | null                           → (False, 'HTTP 200')
+cây làm việc  | [ x2000                        → (False, 'JSONDecodeError')
+cây làm việc  | json.loads ném RecursionError  → (False, 'RecursionError')
+EXIT 0

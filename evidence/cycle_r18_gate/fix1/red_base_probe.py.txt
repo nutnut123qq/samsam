@@ -1,0 +1,64 @@
+"""Đối chứng cold-check r18 vòng 1: chạy ca M2 mới (không phụ thuộc hệ) trên
+`scripts/webhook_probe.py` của BASE 215275f và của cây làm việc.
+python -I red_base_probe.py <repo> <base_probe.py>"""
+import importlib.util
+import socket
+import sys
+import threading
+from types import SimpleNamespace
+
+repo, base_file = sys.argv[1], sys.argv[2]
+sys.stdout.reconfigure(encoding="utf-8")
+
+
+def load(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def server(body):
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    s.listen(5)
+    payload = (b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+               b"Content-Length: %d\r\n\r\n" % len(body)) + body
+
+    def run():
+        while True:
+            try:
+                cl, _ = s.accept()
+            except OSError:
+                return
+            try:
+                cl.recv(65536)
+                cl.sendall(payload)
+            finally:
+                cl.close()
+    threading.Thread(target=run, daemon=True).start()
+    return s, f"http://127.0.0.1:{s.getsockname()[1]}/readyz"
+
+
+def deep(_raw):
+    raise RecursionError("maximum recursion depth exceeded")
+
+
+for label, path in (("BASE 215275f", base_file),
+                    ("cây làm việc", f"{repo}/scripts/webhook_probe.py")):
+    wp = load(path, "wp_" + label.split()[0])
+    cases = [("[1]", b"[1]", None), ("null", b"null", None),
+             ("[ x2000", b"[" * 2000, None),
+             ("json.loads ném RecursionError", b'{"ready": true}',
+              SimpleNamespace(loads=deep))]
+    for name, body, stub in cases:
+        if stub is not None:
+            wp.json = stub
+        s, url = server(body)
+        try:
+            got = repr(wp.probe(url))
+        except Exception as e:      # noqa: BLE001 — đối chứng: in lớp lỗi lọt
+            got = f"LỌT {type(e).__name__}"
+        finally:
+            s.close()
+        print(f"{label:13} | {name:30} → {got}")

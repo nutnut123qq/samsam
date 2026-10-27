@@ -1,0 +1,404 @@
+# 2026-10-27T23:39:32+07:00 · HEAD 215275f · python -m pytest -q -ra tests/test_r18_nguon_hong.py
+# DB samsam_cycle_r18_gate @ 127.0.0.1 55381 (KHÔNG phải samsam)
+# bảng public 108 · thiếu [] · products 27 · sku_master 13 · roles ['agent_writer', 'app_human', 'svc_job', 'svc_ui', 'svc_webhook']
+# preflight OK
+FFFFFFFFFF.FF..                                                          [100%]
+================================== FAILURES ===================================
+______________ test_m1_post_url_rejects_space_control_surrogate _______________
+
+    def test_m1_post_url_rejects_space_control_surrogate():
+        assert fp.post_url(FB + "1") == FB + "1"
+        for bad in (FB + "1\n", FB + "1\x00", "\t" + FB + "1", FB + "1 2",
+                    FB + "\ud8001", FB + "1\x7f"):
+>           assert fp.post_url(bad) is None, repr(bad)
+E           AssertionError: 'https://www.facebook.com/1234567890/posts/1\n'
+E           assert 'https://www.facebook.com/1234567890/posts/1\n' is None
+E            +  where 'https://www.facebook.com/1234567890/posts/1\n' = <function post_url at 0x0000026FF1FEDE40>('https://www.facebook.com/1234567890/posts/1\n')
+E            +    where <function post_url at 0x0000026FF1FEDE40> = fp.post_url
+
+tests\test_r18_nguon_hong.py:86: AssertionError
+____________________ test_m1_fanpage_rows_skips_unstorable ____________________
+
+servers = <function servers.<locals>.make at 0x0000026FF20FEA20>
+env = <function env.<locals>.set_ at 0x0000026FF20FEAC0>
+
+    def test_m1_fanpage_rows_skips_unstorable(servers, env):
+        s = servers(lambda *a: (200, _page(_fb_posts()), None))
+        env(s.url)
+>       rows, notes, rc = rk.fanpage_rows(None)
+                          ^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r18_nguon_hong.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+agents\ra_kenh.py:735: in fanpage_rows
+    "sha": store.content_sha256(text)})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'Sâm Sâm \ud800 ra mắt'
+
+    def content_sha256(text: str) -> str:
+        """sha256 hex byte-exact UTF-8, không normalize — khớp PG
+        `encode(sha256(convert_to(t, 'UTF8')), 'hex')`."""
+>       return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       UnicodeEncodeError: 'utf-8' codec can't encode character '\ud800' in position 8: surrogates not allowed
+
+pipelines\store.py:134: UnicodeEncodeError
+______________________ test_m1_web_rows_skips_unstorable ______________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3759/test_m1_web_rows_skips_unstora0')
+
+    def test_m1_web_rows_skips_unstorable(tmp_path):
+        _web_file(tmp_path)
+>       rows, notes = rk.web_rows(datetime.now(VN_TZ), tmp_path)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r18_nguon_hong.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+agents\ra_kenh.py:678: in web_rows
+    "sha": store.content_sha256(text)})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'T  a\ud800b'
+
+    def content_sha256(text: str) -> str:
+        """sha256 hex byte-exact UTF-8, không normalize — khớp PG
+        `encode(sha256(convert_to(t, 'UTF8')), 'hex')`."""
+>       return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       UnicodeEncodeError: 'utf-8' codec can't encode character '\ud800' in position 4: surrogates not allowed
+
+pipelines\store.py:134: UnicodeEncodeError
+________________ test_m1_scan_auto_cli_unstorable_rows_db[nul] ________________
+
+db = <psycopg.Connection [INTRANS] (host=127.0.0.1 port=55381 user=postgres database=samsam_cycle_r18_gate) at 0x26ff210fbc0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3759/test_m1_scan_auto_cli_unstorab0')
+servers = <function servers.<locals>.make at 0x0000026FF248A7A0>
+env = <function env.<locals>.set_ at 0x0000026FF2489B20>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000026FF210FA10>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000026FF210FD10>
+sur = False, n_fb = 3, n_web = 2
+
+    @pytest.mark.parametrize("sur,n_fb,n_web", [(False, 3, 2), (True, 5, 4)],
+                             ids=["nul", "nul+surrogate"])
+    def test_m1_scan_auto_cli_unstorable_rows_db(db, tmp_path, servers, env,
+                                                 monkeypatch, capsys, sur, n_fb,
+                                                 n_web):
+        """`nul`: trước vá NUL ở URL web → `psycopg.DataError` trong
+        `_inherit_human` TRƯỚC mọi ghi ([err] exit 2, 0 bài); `nul+surrogate`:
+        trước vá `UnicodeEncodeError` lọt khỏi `web_rows` (traceback)."""
+        _web_file(tmp_path, sur)
+        monkeypatch.setattr(rk, "web_rows",
+                            lambda now: _WEB_ROWS(now, tmp_path))
+        monkeypatch.setattr(rk, "connect", lambda: _TxConn(db))
+        s = servers(lambda *a: (200, _page(_fb_posts(sur)), None))
+        env(s.url)
+>       assert rk.main(["--scan-auto"]) == 0
+E       AssertionError: assert 2 == 0
+E        +  where 2 = <function main at 0x0000026FF201D580>(['--scan-auto'])
+E        +    where <function main at 0x0000026FF201D580> = rk.main
+
+tests\test_r18_nguon_hong.py:120: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[note] web/news: chưa có tệp crawl — chưa quét
+[note] web/products: chưa có tệp crawl — chưa quét
+[err] DataError: PostgreSQL text fields cannot contain NUL (0x00) bytes
+___________ test_m1_scan_auto_cli_unstorable_rows_db[nul+surrogate] ___________
+
+db = <psycopg.Connection [INTRANS] (host=127.0.0.1 port=55381 user=postgres database=samsam_cycle_r18_gate) at 0x26ff24a97f0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3759/test_m1_scan_auto_cli_unstorab1')
+servers = <function servers.<locals>.make at 0x0000026FF2489DA0>
+env = <function env.<locals>.set_ at 0x0000026FF248ADE0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000026FF24ABAA0>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000026FF24A9820>
+sur = True, n_fb = 5, n_web = 4
+
+    @pytest.mark.parametrize("sur,n_fb,n_web", [(False, 3, 2), (True, 5, 4)],
+                             ids=["nul", "nul+surrogate"])
+    def test_m1_scan_auto_cli_unstorable_rows_db(db, tmp_path, servers, env,
+                                                 monkeypatch, capsys, sur, n_fb,
+                                                 n_web):
+        """`nul`: trước vá NUL ở URL web → `psycopg.DataError` trong
+        `_inherit_human` TRƯỚC mọi ghi ([err] exit 2, 0 bài); `nul+surrogate`:
+        trước vá `UnicodeEncodeError` lọt khỏi `web_rows` (traceback)."""
+        _web_file(tmp_path, sur)
+        monkeypatch.setattr(rk, "web_rows",
+                            lambda now: _WEB_ROWS(now, tmp_path))
+        monkeypatch.setattr(rk, "connect", lambda: _TxConn(db))
+        s = servers(lambda *a: (200, _page(_fb_posts(sur)), None))
+        env(s.url)
+>       assert rk.main(["--scan-auto"]) == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r18_nguon_hong.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+agents\ra_kenh.py:1485: in main
+    return _scan_auto_main(a.dry_run)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+agents\ra_kenh.py:1407: in _scan_auto_main
+    rows, notes = web_rows(now)
+                  ^^^^^^^^^^^^^
+tests\test_r18_nguon_hong.py:116: in <lambda>
+    lambda now: _WEB_ROWS(now, tmp_path))
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+agents\ra_kenh.py:678: in web_rows
+    "sha": store.content_sha256(text)})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'T  a\ud800b'
+
+    def content_sha256(text: str) -> str:
+        """sha256 hex byte-exact UTF-8, không normalize — khớp PG
+        `encode(sha256(convert_to(t, 'UTF8')), 'hex')`."""
+>       return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       UnicodeEncodeError: 'utf-8' codec can't encode character '\ud800' in position 4: surrogates not allowed
+
+pipelines\store.py:134: UnicodeEncodeError
+____________ test_m2_webhook_probe_non_object_json_not_ready[list] ____________
+
+body = b'[1]', want = (False, 'HTTP 200')
+
+    @pytest.mark.parametrize("body,want", [
+        (b"[1]", (False, "HTTP 200")), (b'"ready"', (False, "HTTP 200")),
+        (b"null", (False, "HTTP 200")), (b"5", (False, "HTTP 200")),
+        (b"[" * 4096, (False, "RecursionError")),
+        (b'{"ready": true}', (True, "HTTP 200"))],
+        ids=["list", "str", "null", "num", "deep", "ok"])
+    def test_m2_webhook_probe_non_object_json_not_ready(body, want):
+        s, url = _raw_server(_http200(body))
+        try:
+>           assert wp.probe(url + "/readyz") == want
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r18_nguon_hong.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+url = 'http://127.0.0.1:64652/readyz'
+opener = <urllib.request.OpenerDirector object at 0x0000026FF24ABC50>
+
+    def probe(url: str, opener=None) -> tuple[bool, str]:
+        opener = opener or urllib.request.build_opener(_NoRedirect)
+        try:
+            with opener.open(url, timeout=TIMEOUT_S) as r:
+                body = json.loads(r.read(4096) or b"{}")
+>               ok = r.status == 200 and body.get("ready") is True
+                                         ^^^^^^^^
+E               AttributeError: 'list' object has no attribute 'get'
+
+scripts\webhook_probe.py:51: AttributeError
+____________ test_m2_webhook_probe_non_object_json_not_ready[str] _____________
+
+body = b'"ready"', want = (False, 'HTTP 200')
+
+    @pytest.mark.parametrize("body,want", [
+        (b"[1]", (False, "HTTP 200")), (b'"ready"', (False, "HTTP 200")),
+        (b"null", (False, "HTTP 200")), (b"5", (False, "HTTP 200")),
+        (b"[" * 4096, (False, "RecursionError")),
+        (b'{"ready": true}', (True, "HTTP 200"))],
+        ids=["list", "str", "null", "num", "deep", "ok"])
+    def test_m2_webhook_probe_non_object_json_not_ready(body, want):
+        s, url = _raw_server(_http200(body))
+        try:
+>           assert wp.probe(url + "/readyz") == want
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r18_nguon_hong.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+url = 'http://127.0.0.1:64654/readyz'
+opener = <urllib.request.OpenerDirector object at 0x0000026FF210FF80>
+
+    def probe(url: str, opener=None) -> tuple[bool, str]:
+        opener = opener or urllib.request.build_opener(_NoRedirect)
+        try:
+            with opener.open(url, timeout=TIMEOUT_S) as r:
+                body = json.loads(r.read(4096) or b"{}")
+>               ok = r.status == 200 and body.get("ready") is True
+                                         ^^^^^^^^
+E               AttributeError: 'str' object has no attribute 'get'
+
+scripts\webhook_probe.py:51: AttributeError
+____________ test_m2_webhook_probe_non_object_json_not_ready[null] ____________
+
+body = b'null', want = (False, 'HTTP 200')
+
+    @pytest.mark.parametrize("body,want", [
+        (b"[1]", (False, "HTTP 200")), (b'"ready"', (False, "HTTP 200")),
+        (b"null", (False, "HTTP 200")), (b"5", (False, "HTTP 200")),
+        (b"[" * 4096, (False, "RecursionError")),
+        (b'{"ready": true}', (True, "HTTP 200"))],
+        ids=["list", "str", "null", "num", "deep", "ok"])
+    def test_m2_webhook_probe_non_object_json_not_ready(body, want):
+        s, url = _raw_server(_http200(body))
+        try:
+>           assert wp.probe(url + "/readyz") == want
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r18_nguon_hong.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+url = 'http://127.0.0.1:64656/readyz'
+opener = <urllib.request.OpenerDirector object at 0x0000026FF212B170>
+
+    def probe(url: str, opener=None) -> tuple[bool, str]:
+        opener = opener or urllib.request.build_opener(_NoRedirect)
+        try:
+            with opener.open(url, timeout=TIMEOUT_S) as r:
+                body = json.loads(r.read(4096) or b"{}")
+>               ok = r.status == 200 and body.get("ready") is True
+                                         ^^^^^^^^
+E               AttributeError: 'NoneType' object has no attribute 'get'
+
+scripts\webhook_probe.py:51: AttributeError
+____________ test_m2_webhook_probe_non_object_json_not_ready[num] _____________
+
+body = b'5', want = (False, 'HTTP 200')
+
+    @pytest.mark.parametrize("body,want", [
+        (b"[1]", (False, "HTTP 200")), (b'"ready"', (False, "HTTP 200")),
+        (b"null", (False, "HTTP 200")), (b"5", (False, "HTTP 200")),
+        (b"[" * 4096, (False, "RecursionError")),
+        (b'{"ready": true}', (True, "HTTP 200"))],
+        ids=["list", "str", "null", "num", "deep", "ok"])
+    def test_m2_webhook_probe_non_object_json_not_ready(body, want):
+        s, url = _raw_server(_http200(body))
+        try:
+>           assert wp.probe(url + "/readyz") == want
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r18_nguon_hong.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+url = 'http://127.0.0.1:64658/readyz'
+opener = <urllib.request.OpenerDirector object at 0x0000026FF24AAE70>
+
+    def probe(url: str, opener=None) -> tuple[bool, str]:
+        opener = opener or urllib.request.build_opener(_NoRedirect)
+        try:
+            with opener.open(url, timeout=TIMEOUT_S) as r:
+                body = json.loads(r.read(4096) or b"{}")
+>               ok = r.status == 200 and body.get("ready") is True
+                                         ^^^^^^^^
+E               AttributeError: 'int' object has no attribute 'get'
+
+scripts\webhook_probe.py:51: AttributeError
+____________ test_m2_webhook_probe_non_object_json_not_ready[deep] ____________
+
+body = b'[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[...[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[['
+want = (False, 'RecursionError')
+
+    @pytest.mark.parametrize("body,want", [
+        (b"[1]", (False, "HTTP 200")), (b'"ready"', (False, "HTTP 200")),
+        (b"null", (False, "HTTP 200")), (b"5", (False, "HTTP 200")),
+        (b"[" * 4096, (False, "RecursionError")),
+        (b'{"ready": true}', (True, "HTTP 200"))],
+        ids=["list", "str", "null", "num", "deep", "ok"])
+    def test_m2_webhook_probe_non_object_json_not_ready(body, want):
+        s, url = _raw_server(_http200(body))
+        try:
+>           assert wp.probe(url + "/readyz") == want
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r18_nguon_hong.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+scripts\webhook_probe.py:50: in probe
+    body = json.loads(r.read(4096) or b"{}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <json.decoder.JSONDecoder object at 0x0000026FEC6E2BA0>
+s = '[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[...[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[['
+idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+>           obj, end = self.scan_once(s, idx)
+                       ^^^^^^^^^^^^^^^^^^^^^^
+E           RecursionError: maximum recursion depth exceeded while decoding a JSON array from a unicode string
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py:353: RecursionError
+______________ test_m3_scan_auto_dry_run_off_no_plan_no_request _______________
+
+servers = <function servers.<locals>.make at 0x0000026FF248AB60>
+env = <function env.<locals>.set_ at 0x0000026FF2489BC0>, off = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000026FF24549B0>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000026FF24566C0>
+
+    def test_m3_scan_auto_dry_run_off_no_plan_no_request(servers, env, off,
+                                                         monkeypatch, capsys):
+        monkeypatch.setattr(rk, "web_rows", lambda now: ([{
+            "line": 1, "url": WEB + "x.html", "channel": "web",
+            "content_type": "post", "posted_on": None, "is_ai": False,
+            "is_sponsored": False, "sku": None, "draft_id": None, "text": BAD,
+            "sha": "x"}], []))
+        monkeypatch.setattr(rk, "connect", lambda: pytest.fail("connect"))
+        for k in (fp.ENV_PAGE, fp.ENV_TOKEN, fp.ENV_BASE):
+            monkeypatch.delenv(k, raising=False)
+>       assert rk.main(["--scan-auto", "--dry-run"]) == rollout.EXIT_BLOCKED
+E       AssertionError: assert 0 == 2
+E        +  where 0 = <function main at 0x0000026FF201D580>(['--scan-auto', '--dry-run'])
+E        +    where <function main at 0x0000026FF201D580> = rk.main
+E        +  and   2 = rollout.EXIT_BLOCKED
+
+tests\test_r18_nguon_hong.py:169: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[note] fanpage: chưa cấu hình FANPAGE_PAGE_ID/FANPAGE_READ_TOKEN — chưa quét (dùng --file CSV)
+[dry-run] 1 bài web/Fanpage (listing cần DB) — KHÔNG ghi
+[note] dry-run không DB: không kế thừa snapshot người, không kiểm bản duyệt — mức S2 thieu_ban_duyet dưới đây có thể khác lượt thật
+[S1] dòng 1 https://samsam.net.vn/vi/news/r18-x.html — tu_cam, ngam_y_suc_khoe, claim_khong_ro_sku, thieu_khuyen_cao, thieu_ban_duyet → ticket channel_takedown (legal_hr) + red_alert
+    trích: Sâm Sâm chữa khỏi bệnh tiểu đường cho người bị tiểu đường.
+____________________ test_m3_file_and_partner_dry_run_off _____________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3759/test_m3_file_and_partner_dry_r0')
+off = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000026FF212A780>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000026FF212A990>
+
+    def test_m3_file_and_partner_dry_run_off(tmp_path, off, monkeypatch, capsys):
+        monkeypatch.setattr(rk, "connect", lambda: pytest.fail("connect"))
+        p = _csv(tmp_path, f"{WEB}f.html,web,0,2021-01-11,,{BAD}\n")
+>       assert rk.main(["--file", str(p), "--by", "Quản lý MXH",
+                        "--dry-run"]) == rollout.EXIT_BLOCKED
+E       AssertionError: assert 0 == 2
+E        +  where 0 = <function main at 0x0000026FF201D580>(['--file', 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3759\\test_m3_file_and_partner_dry_r0\\x.csv', '--by', 'Quản lý MXH', '--dry-run'])
+E        +    where <function main at 0x0000026FF201D580> = rk.main
+E        +  and   2 = rollout.EXIT_BLOCKED
+
+tests\test_r18_nguon_hong.py:184: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[dry-run] 1 bài — KHÔNG connect DB; chưa kiểm lệch bản duyệt — cần DB
+[S1] dòng 2 https://samsam.net.vn/vi/news/r18-f.html — tu_cam, ngam_y_suc_khoe, claim_khong_ro_sku, thieu_khuyen_cao → ticket channel_takedown (legal_hr) + red_alert
+    trích: Sâm Sâm chữa khỏi bệnh tiểu đường cho người bị tiểu đường.
+=========================== short test summary info ===========================
+FAILED tests/test_r18_nguon_hong.py::test_m1_post_url_rejects_space_control_surrogate
+FAILED tests/test_r18_nguon_hong.py::test_m1_fanpage_rows_skips_unstorable - ...
+FAILED tests/test_r18_nguon_hong.py::test_m1_web_rows_skips_unstorable - Unic...
+FAILED tests/test_r18_nguon_hong.py::test_m1_scan_auto_cli_unstorable_rows_db[nul]
+FAILED tests/test_r18_nguon_hong.py::test_m1_scan_auto_cli_unstorable_rows_db[nul+surrogate]
+FAILED tests/test_r18_nguon_hong.py::test_m2_webhook_probe_non_object_json_not_ready[list]
+FAILED tests/test_r18_nguon_hong.py::test_m2_webhook_probe_non_object_json_not_ready[str]
+FAILED tests/test_r18_nguon_hong.py::test_m2_webhook_probe_non_object_json_not_ready[null]
+FAILED tests/test_r18_nguon_hong.py::test_m2_webhook_probe_non_object_json_not_ready[num]
+FAILED tests/test_r18_nguon_hong.py::test_m2_webhook_probe_non_object_json_not_ready[deep]
+FAILED tests/test_r18_nguon_hong.py::test_m3_scan_auto_dry_run_off_no_plan_no_request
+FAILED tests/test_r18_nguon_hong.py::test_m3_file_and_partner_dry_run_off - A...
+12 failed, 3 passed in 13.24s
+EXIT 1

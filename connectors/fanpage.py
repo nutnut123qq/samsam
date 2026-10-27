@@ -36,6 +36,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -192,8 +193,12 @@ def fetch_posts(cfg: dict) -> list[dict]:
 
 
 def post_url(v) -> str | None:
-    """`permalink_url` hợp lệ (https, host facebook.com hoặc tên miền con)."""
-    if not isinstance(v, str):
+    """`permalink_url` hợp lệ (https, host facebook.com hoặc tên miền con).
+    r18: không khoảng trắng/ký tự điều khiển/surrogate — cùng luật cột `url`
+    của `ra_kenh.read_export`; kiểm chuỗi GỐC vì urlsplit tự bỏ \\t\\r\\n mà
+    vẫn trả `v` (NUL → psycopg DataError, surrogate → UnicodeEncodeError)."""
+    if not isinstance(v, str) or any(
+            ch.isspace() or unicodedata.category(ch)[0] == "C" for ch in v):
         return None
     try:
         u = urllib.parse.urlsplit(v)

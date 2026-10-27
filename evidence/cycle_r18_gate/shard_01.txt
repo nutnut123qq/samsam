@@ -1,0 +1,38 @@
+........................................................................ [ 11%]
+........................................................................ [ 22%]
+........................................................................ [ 33%]
+........................................................................ [ 44%]
+........................................................................ [ 56%]
+................................................F....................... [ 67%]
+........................................................................ [ 78%]
+........................................................................ [ 89%]
+..................................................................       [100%]
+================================== FAILURES ===================================
+_______________________ test_propose_record_follow_e2e ________________________
+
+db = <psycopg.Connection [INTRANS] (host=127.0.0.1 port=55381 user=postgres database=samsam_cycle_r18_full) at 0x21d2ac14d10>
+ceo = {'now': datetime.datetime(2026, 10, 28, 0, 0, 52, 654380, tzinfo=datetime.timezone(datetime.timedelta(seconds=25200))), 'q': (1, 2, 3), 'today': datetime.date(2026, 10, 28), 'tx': <tests.test_ceo_audit.TxConn object at 0x0000021D2AC173E0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x0000021D2AC15640>
+
+    def test_propose_record_follow_e2e(db, ceo, capsys):
+        q1, q2, q3 = ceo["q"]
+        today = ceo["today"]
+        due = (today + timedelta(days=18)).isoformat()
+        assert cd.main(["--record", "--basis", f"approval_queue:{q1}",
+                        "--topic", "Duyệt báo cáo tuần", "--decision",
+                        "Đồng ý phương án", "--by", THU_KY, "--due", due]) == 0
+        row = db.execute("select decided_by, decided_on, recorded_by,"
+                         " follow_status, basis_kind, basis_id from decision_log"
+                         ).fetchone()
+>       assert row == (TGD, today, THU_KY, "mo", "approval_queue", q1)
+E       AssertionError: assert ('TGĐ Giả Lập...val_queue', 1) == ('TGĐ Giả Lập...val_queue', 1)
+E         
+E         At index 1 diff: datetime.date(2026, 10, 27) != datetime.date(2026, 10, 28)
+E         Use -v to get more diff
+
+tests\test_ceo_decisions.py:320: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[done] ghi quyết định #1 (người ghi: Thư Ký Giả Lập)
+=========================== short test summary info ===========================
+FAILED tests/test_ceo_decisions.py::test_propose_record_follow_e2e - Assertio...
+1 failed, 641 passed in 359.34s (0:05:59)
