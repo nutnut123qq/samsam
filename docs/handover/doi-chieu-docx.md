@@ -785,3 +785,17 @@ Evidence `evidence/itacc_r14_code_gaps/`; hồ sơ `nghiem-thu-ky-thuat-noi-bo.m
 **Đính chính r14-fix2 (25/10/2026):** A12/r14 có 2 lỗi controller tái hiện — lỗi refresh/dữ liệu sàn in nguyên văn trường lỗi
 (có thể là token/khóa) và migration không tạo được chỉ mục unique khi lịch sử neo hợp lệ đã có 2 `da_nang_cap` cùng lần gom.
 Đã vá + kiểm lại farming-06, data_platform-06 (farming-06 BỊ CHẶN 27/0/1, data_platform-06 BỊ CHẶN 9/0/0); tổng nội bộ vẫn 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN. Evidence `evidence/itacc_r14_fix_2/`.
+
+**Đợt r15 (25/10/2026) — đính chính + phần code còn thiếu:** r14/r14-fix2 ghi "TikTok finance chưa có tài liệu chính thức
+bản hiện hành" — SAI (Partner Center có Get Statements 202309 / Get Transactions by Statement 202501). data_platform-06: đã viết
+quyết toán qua API (Shopee + TikTok) theo tài liệu chính thức, ghi CÙNG sổ `settlement_rows`, nhưng ghi sổ BỊ CHẶN tới khi Kế
+toán chốt bảng ánh xạ (`data/settlement_api_map.json`) và có API thật — luồng đang dùng vẫn là file CSV. farming-01: hạn STT bọc
+cả nạp model. Kiểm lại data_platform-06 BỊ CHẶN 9/0/0, farming-01 BỊ CHẶN 28/0/3; tổng nội bộ vẫn 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN. Website/chatbot website vẫn là code còn thiếu ở repo riêng. Evidence
+`evidence/itacc_r15_remaining/`.
+
+**Đợt r15-fix1 (26/10/2026) — vá 3 lỗi tiền của r15:** F1 CSV/API chạy đồng thời cùng đơn từng ghi cả hai nguồn (2 dòng,
+view 180.000) → nay khóa (kênh, đơn) quanh kiểm + ghi ở cả hai đường, đúng 1 bên ghi; F2 trường tiền đã ánh xạ thiếu/null/
+sai kiểu từng thành 0 và ghi → nay lỗi dữ liệu, 0 dòng cả lượt (vắng = 0 chỉ khi Kế toán quyết `khi_vang: "bang_0"`, cấm
+cho order_amount/payout); F3 Shopee từng ghi số USD vào cột `*_vnd` → nay đồng tiền theo từng trường theo đặc tả
+get_escrow_detail, không quy đổi. data_platform-06 vẫn BỊ CHẶN (bảng ánh xạ Kế toán + API thật); tổng nội bộ vẫn 84 ĐẠT /
+0 CHƯA KIỂM / 12 BỊ CHẶN; nghiệm thu hợp đồng 0/96. Evidence `evidence/itacc_r15_fix_1/`.

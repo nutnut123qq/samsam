@@ -1,0 +1,23 @@
+# FP mã cuối r15 — khóa 2026-10-25T17:32:52+07:00 TRƯỚC full pytest
+baseline: 70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046 (nhánh codex/remaining-docx-code-r15, HEAD 70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046)
+fp_code = 6c5050519ba7d7c51711ed2bd67a3426e44f86816946ea75ab5eecbc36fefc86
+fp_full = 6c5050519ba7d7c51711ed2bd67a3426e44f86816946ea75ab5eecbc36fefc86
+cách tái lập: bash evidence/itacc_r15_remaining/harness/fp_r15.sh.txt <cây> code|full <đường TUYỆT ĐỐI tới harness/new_files_r15.txt>
+  (git diff 70ff9f7 trên index tạm + tệp mới add -N; loại DONE.md, docs/handover/v13-board.md, evidence/, .gitattributes; code = loại thêm **/*.md)
+tệp mới:
+  ingest/settlement_api.py
+  tests/test_r15_settlement_api.py
+  data/settlement_api_map.json
+tệp tracked đổi (mã):
+   connectors/zalo_garden.py   | 14 +++++++--
+   data/contract_features.json |  4 +--
+   docs/schema.sql             | 12 +++++++
+   env.example                 |  6 ++++
+   ingest/market_api.py        | 77 ++++++++++++++++++++++++++++++++++++++-------
+   ingest/settlement_csv.py    | 32 +++++++++++++++----
+   tests/test_market_api.py    | 13 +++++---
+   7 files changed, 132 insertions(+), 26 deletions(-)
+sha256 tệp mới:
+  d2ec8f5989d1d31c5ea424e5167e232efe271adc500628d4d11e31d1a69d3e8c *ingest/settlement_api.py
+  15839b0baea40f5008c32470c45670020202bb47bef1945d0ba0a972203c1be8 *tests/test_r15_settlement_api.py
+  4dfec8fe5fa90fcbe242e14c8e8f1b64fa20573a8ce0283f7bc2eae945c8ffc4 *data/settlement_api_map.json

@@ -1,0 +1,39 @@
+[PASS] F2 control_valid: đủ trường hợp lệ → ghi 1 dòng
+[PASS] F2 explicit_zero_int: số 0 tường minh (int) hợp lệ → ghi
+[PASS] F2 explicit_zero_str: số 0 tường minh ("0") hợp lệ → ghi
+[PASS] F2 payout_missing: escrow_amount→payout missing → chặn, 0 dòng
+[PASS] F2 payout_null: escrow_amount→payout null → chặn, 0 dòng
+[PASS] F2 payout_garbage: escrow_amount→payout garbage → chặn, 0 dòng
+[PASS] F2 payout_empty_str: escrow_amount→payout empty_str → chặn, 0 dòng
+[PASS] F2 payout_bool: escrow_amount→payout bool → chặn, 0 dòng
+[PASS] F2 payout_fraction: escrow_amount→payout fraction → chặn, 0 dòng
+[PASS] F2 gross_missing: thiếu order_original_price→order_amount → chặn, 0 dòng
+[PASS] F2 fee_missing: thiếu commission_fee (đã ánh xạ, không có quyết định cho phép vắng) → chặn, 0 dòng
+[PASS] F2 fee_garbage: chuỗi rác ở trường phí đã ánh xạ → chặn
+[PASS] F2 unmapped_rate_fraction: trường KHÔNG phải tiền đã quyết bo_qua (exchange_rate lẻ) không làm hỏng lượt → ghi
+[PASS] F2 batch_one_bad: lô 3 đơn, 1 đơn payout null → 0 dòng của CẢ lượt
+[PASS] F2 tt_control_valid: TikTok đủ trường → ghi
+[PASS] F2 tt_explicit_zero: TikTok "0" tường minh → ghi
+[PASS] F2 tt_payout_empty_str: TikTok settlement_amount "" → chặn
+[PASS] F2 tt_payout_missing: TikTok thiếu settlement_amount → chặn
+[PASS] F2 tt_payout_null: TikTok settlement_amount null → chặn
+[PASS] F2 tt_payout_garbage: TikTok chuỗi rác → chặn
+[PASS] F2 tt_gross_missing: TikTok thiếu subtotal_before_discount_amount → chặn
+[PASS] F3 all_vnd: pri=VND, aff=VND, trường thường → ghi; currency không thành thành phần LẠ
+[PASS] F3 pri_usd_aff_vnd: pri=USD, aff=VND, chỉ trường thường (đồng tiền shop affiliate) → ghi (không chặn mù pri≠VND)
+[PASS] F3 both_usd: pri=USD, aff=USD (repro controller) → chặn, 0 dòng
+[PASS] F3 aff_usd_regular_mapped: aff=USD + trường thường (affiliate) ánh xạ → chặn
+[PASS] F3 pri_vnd_aff_usd_pri_mapped: pri=VND, aff=USD, chỉ trường *_pri ánh xạ → ghi
+[PASS] F3 pri_usd_pri_mapped: pri=USD + trường *_pri ánh xạ → chặn
+[PASS] F3 no_currency_no_decision: không có pri/aff_currency, bảng ánh xạ chưa xác nhận đơn vị shop → chặn
+[PASS] F3 aff_missing_pri_present: có pri_currency nhưng thiếu aff_currency cho trường thường → chặn (không xác định)
+[PASS] F3 currency_null: pri/aff_currency null → chặn
+[PASS] F1 csv_then_api: CSV trước (exit 0) → API sau [blocked] exit 2, 1 dòng
+[PASS] F1 api_then_csv: API trước (exit 0) → CSV sau [blocked] exit 2, 1 dòng
+[PASS] F1 same_source_api_many: nhiều giao dịch API cùng đơn (2 lượt, 3 txn_type) → nhận đủ 3 dòng
+[PASS] F1 same_source_csv_two_files: cùng đơn ở 2 file CSV khác nhau (cùng nguồn) → nhận cả hai (overlaps xử lý)
+[PASS] F1 concurrent_csv_api_0: CSV + API đồng thời, 2 kết nối svc_loader thật → đúng 1 bên ghi (exit 0), bên kia [blocked] exit 2; 1 dòng, view 1 khoản 90.000
+[PASS] F1 concurrent_csv_api_1: CSV + API đồng thời, 2 kết nối svc_loader thật → đúng 1 bên ghi (exit 0), bên kia [blocked] exit 2; 1 dòng, view 1 khoản 90.000
+[PASS] F1 concurrent_csv_api_2: CSV + API đồng thời, 2 kết nối svc_loader thật → đúng 1 bên ghi (exit 0), bên kia [blocked] exit 2; 1 dòng, view 1 khoản 90.000
+[PASS] F1 concurrent_same_source_overlapping: 2 lượt API cùng nguồn đồng thời, đơn chồng nhau thứ tự ngược → cả hai exit 0 (không deadlock, không cấm nhầm), 4 dòng
+[probe] PASS 38 / FAIL 0 → probe_sau.json

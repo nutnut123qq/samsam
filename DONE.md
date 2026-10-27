@@ -23,7 +23,86 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
-## Vòng r14-fix2 (25/10/2026) — vá 2 lỗi controller của r14 — CHƯA commit/merge/push/deploy
+## Vòng r15-fix1 (26/10/2026) — vá 3 lỗi tiền F1/F2/F3 của r15 (quyết toán API ↔ CSV) — CLOSED 27/10/2026, commit local, CHƯA push/merge/deploy
+
+Version CLOSED 27/10/2026 (r15 + r15-fix1, chung một commit đóng; /cycle 10 lượt 8). Base: 70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046 (ghi 27/10/2026 khi /cycle resume — = baseline `main` GitHub r15 đã nêu dưới).
+
+/cycle 27/10/2026 (Stage 4, BLOCKED): unit mode (không `DATABASE_URL`) 7 tệp r15/settlement/market_api/store/lead_store/zalo_garden → 319 passed / 37 skipped
+(ca cần DB) / 0 failed; `ruff check . --extend-exclude .agents --extend-exclude output --extend-exclude founder` EXIT 0 (`ruff check .` trần
+EXIT 1 — 154 lỗi đều trong `.agents/` chưa theo dõi). Rà bảo mật diff từ Base: không có lỗi chặn. Gate full CHƯA chạy lại: RAM trống 1.967 MB/16.221 MB,
+Docker Desktop tắt (ca DR/S01 sẽ skip = chưa kiểm) — điều kiện: ≥6 GB trống + Docker bật; `output/` (việc khác, chưa theo dõi) làm hỏng
+`test_data_flow_map::test_every_egress_module_declared` nếu gate chạy trên cây làm việc → chạy trên bản sao sạch hoặc dời `output/` ra ngoài repo.
+
+/cycle 27/10/2026 (Stage 4, gate full PASS): user dời `output/` ra ngoài repo, Docker 28.4.0 bật. RAM trống chỉ ~1–3 GB nên chạy full CHIA LƯỢT:
+11 lượt pytest nối tiếp, mỗi lượt một tiến trình mới, cùng thứ tự file của `--collect-only` (6984 ca / 186 file), cùng DB test riêng
+`samsam_cycle_r15_full` (container `samsam-cycle-r15` 127.0.0.1:55471, dựng bằng bản sao mkdb harness r15-fix1, 4 bước exit 0, preflight OK)
+→ tổng 6984 passed / 0 skipped / 0 failed / 0 error, 0xC0000142×0 ở mọi lượt, fp mã đầu = cuối `48020cb4…2fe41d` (HEAD 70ff9f7 + cây làm việc).
+Ca Docker DR (`test_dr_drill.py` 27) + S01 (`test_safety_s01_rotation.py` 3) PASSED, không skip. Evidence `evidence/cycle_r15_gate/`
+(`full_shards.txt` + `shard_01..11.txt` + runner/preflight/mkdb). Giới hạn: chia lượt không bắt phụ thuộc thứ tự CHÉO lượt (mỗi lượt vẫn chạy
+nối tiếp trong 1 tiến trình, cùng DB tích lũy theo đúng thứ tự full).
+
+/cycle 27/10/2026 (Stage 5): cold-check reviewer ngữ cảnh mới (subagent general-purpose, không kế thừa hội thoại), prompt cố định + ghi chú
+vận hành AGENTS.md. Verdict nguyên văn: "VERDICT: **PASS**. Tôi không tìm thấy lỗi chặn nào ở r15 + r15-fix1; các gate đã claim đều chạy lại
+khớp. Có 1 MINOR và 5 NIT, không cái nào chặn đóng version." Reviewer tự chạy lại: unit 7 tệp 319 passed / 37 skipped; ruff (exclude) EXIT 0;
+`agent_eval --deterministic --no-record`, `dpia_draft --check`, `redteam` EXIT 0; full chia 11 lượt trên DB riêng `samsam_cycle_r15_audit`
+6984 passed / 0 skip / 0 fail, fp đầu = cuối `48020cb4…`; `git status` trước/sau giống hệt. UNVERIFIED (đúng claim): chưa chạy sandbox/shop thật
+(CONTRACT_TESTED server giả); probe F1/F2/F3/S/T/M chỉ đọc log (container harness cũ đã tắt).
+MINOR vá trong commit đóng (chỉ tài liệu, không đổi hành vi → không chạy lại gate): `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` +
+`docs/handover/v13-board.md` còn ghi full "EXIT 1 — KHÔNG PASS" → thêm kết quả chạy lại 27/10. Retro → AGENTS.md Gotchas (full chia lượt khi RAM thấp).
+Someday (cold-check NIT, không chặn): (1) `ingest/settlement_api.py:143` ánh xạ nhận `"dau": 1.0` (float == int) → `to_rows` cộng float,
+`--dry-run` báo sạch, `check_rows` mới chặn với thông báo gây hiểu nhầm — đổi `type(d.get("dau")) is int`; (2) `settlement_api.py:292/345`
+Shopee `pri_currency`/`aff_currency` = `""` bị coi là có mã → lỗi thay vì dùng `tien_te_shop` (dừng an toàn; xác minh trên sandbox);
+(3) `data/contract_features.json` data_platform-06 `output_sources` rỗng, note chưa nhắc `settlement_rows` `source_kind=api_live`;
+(4) `khi_vang: bang_0` cấm order_amount/payout ở MỌI loại giao dịch TikTok, không ánh xạ theo loại — giao dịch điều chỉnh thiếu trường doanh thu
+làm lỗi cả lượt (dừng an toàn; chỉ biết khi có sandbox); (5) lỗi có sẵn từ base: `ingest/settlement_csv.py:735` `counts["thieu_chung_tu"]`
+KeyError khi đối soát `RolloutBlocked` (`counts={}`), sau commit. Hạ tầng gate còn lại ngoài repo: container `samsam-cycle-r15` (DB
+`samsam_cycle_r15_full` + `samsam_cycle_r15_audit`), chờ user cho dọn.
+Someday NIT: `market_api --kind settlement --dry-run` vẫn mở kết nối DB CHỈ ĐỌC qua `rollout.blocked` (đọc sổ triển khai) — chữ "0 DB"/"không đụng DB"
+ở AGENTS.md dòng r15, docstring `ingest/settlement_api.py`, comment `market_api.main` nên đổi thành "không GHI DB".
+
+Controller tái hiện 3 lỗi trên mã r15 chưa vá (fp mã `70f54e56…c5eb`, snapshot `D:\code\samsam_itacc_r15fix1_baseline`).
+Probe hồi quy CÓ ASSERTION (Postgres Docker riêng, login thành viên `svc_loader`, CSV qua `main()`, API qua `_write()`):
+**trước 15 PASS / 23 FAIL → sau 38 PASS / 0 FAIL** (cùng tệp probe; F1 5/3 → 8/0, F2 7/14 → 21/0, F3 3/6 → 9/0). Evidence `evidence/itacc_r15_fix_1/`.
+
+1. F1 — CSV/API chạy đồng thời vượt kiểm chống trùng (cả hai exit 0, 2 dòng 90.000, view 180.000): thêm
+   `settlement_csv.lock_orders` = `pg_advisory_xact_lock` theo (kênh, đơn) (256 ngăn/kênh, lấy theo thứ tự tăng → không
+   deadlock; đòi READ COMMITTED + không autocommit) là câu ĐẦU của transaction ghi ở CẢ HAI đường, trước kiểm file đã nạp +
+   `cross_source` + INSERT. Đồng thời: đúng 1 bên ghi, bên kia chờ khóa rồi `[blocked]` exit 2, 0 dòng. Cùng nguồn nhiều giao
+   dịch/1 đơn vẫn nhận. Không đổi schema, không xóa lịch sử.
+2. F2 — thiếu/null/sai kiểu trường tiền thành 0 và ghi: `_flatten` giữ giá trị THÔ; `to_rows` phán theo ánh xạ — thành phần
+   đã ánh xạ vào cột mà thiếu/null/("" TikTok) = lỗi dữ liệu (trừ `khi_vang: "bang_0"` Kế toán quyết rõ, CẤM cho
+   order_amount/payout); sai kiểu (chuỗi rác, bool, số lẻ) luôn lỗi; cột độc = None; `settlement_api.check_rows` chặn lần cuối
+   trong `_write` trước connect → lỗi 1 dòng = 0 dòng cả lượt. "0"/0 tường minh vẫn nhận; trường không phải tiền đã `bo_qua`
+   (tỷ giá lẻ) không làm hỏng lượt. Cùng lớp ở TikTok đã vá.
+3. F3 — Shopee bỏ qua đơn vị tiền: theo đặc tả get_escrow_detail (đọc lại 26/10/2026) `*_pri` = primary currency →
+   `pri_currency`, trường thường của đơn CB SIP = tiền shop affiliate → `aff_currency`; ghi một trường chỉ khi đồng tiền của
+   ĐÚNG trường đó là VND, không quy đổi. Response không có mã (shop thường, đặc tả chỉ nói "listing currency") → khóa mới
+   `shopee.tien_te_shop` (null ở repo = chặn). Mã tiền tệ không thành thành phần LẠ.
+4. Tổng nội bộ KHÔNG đổi: 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN; nghiệm thu hợp đồng 0/96; API sàn vẫn chỉ kiểm server giả.
+5. Gate (fp mã chốt `f8033335…95e2`, gồm sửa câu `[blocked]` F3 khi đơn có mã tiền nhưng thiếu mã của trường): ruff EXIT 0;
+   pytest tập trung 205 passed / 0 failed / 0 skipped; **full pytest EXIT 1 — 73 failed / 6903 passed / 2 skipped / 6 errors**
+   (2827,95 s, DB `samsam_itacc_r15fix1_full2`, RAM trống 3.354 MB lúc bắt đầu): 66/74 mục lỗi do tiến trình con 0xC0000142
+   (máy cạn bộ nhớ), 7 ca video nhiều khả năng cùng nguyên nhân, 1 ca do `output/`; 0 ca thuộc r15. Gate full CHƯA ĐẠT — chạy lại khi đủ RAM.
+
+## Vòng r15 (25/10/2026) — code còn thiếu của 12 mục DOCX — CHƯA commit/merge/push/deploy
+
+Baseline `main` = GitHub `70ff9f7`; nhánh `codex/remaining-docx-code-r15`; không DB `samsam`; không đổi `acceptance_status`;
+không gỡ blocker. fp mã cuối `70f54e56b1451a0a010328abca139c8c58f0414a88ab62a773a852415a66c5eb`. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ
+`dau-vao-va-quyet-dinh.md` mục I.
+
+1. data_platform-06 — quyết toán qua API (`market_api --kind settlement`, `ingest/settlement_api.py`) theo tài liệu CHÍNH THỨC
+   (Shopee escrow list/detail; TikTok statements 202309 + transactions 202501 — đính chính r14: TikTok CÓ tài liệu): transport,
+   phân trang, kiểm phản hồi, provenance `source_kind`, chống cộng trùng CSV↔API, cổng ánh xạ Kế toán (`data/settlement_api_map.json`
+   mọi quyết định null → ghi sổ BLOCKED). Mã lỗi Payment (`income_not_found`) hiện được, giá trị phản chiếu credential vẫn ẩn.
+   Probe S 2/21 → 23/0 (CONTRACT_TESTED).
+2. farming-01 — `GARDEN_STT_TIMEOUT_S` bọc cả nạp model. Probe T 5/1 → 6/0.
+3. Schema: cột `settlement_rows.source_kind`; nâng cấp từ baseline 70ff9f7 có lịch sử (neo trùng hợp lệ + quyết toán CSV) ×2:
+   probe M 7/0. Hồi quy 8 probe cũ đạt. Kiểm lại: data_platform-06 BỊ CHẶN 9/0/0, farming-01 BỊ CHẶN 28/0/3. Tổng 96: **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN**.
+4. Gate: full 6944 passed in 3537.24s (0:58:57), EXIT 0 (fp v2; lần 1 fp v1: 4 failed ở test drift-guard schema chưa cho phép CHECK `source_kind` →
+   sửa test, chạy lại probe + full); ruff/eval/DPIA/red-team EXIT 0. Evidence `evidence/itacc_r15_remaining/`.
+   Còn thiếu code (cần đặc tả): bảng ánh xạ quyết toán của Kế toán; website/chatbot website ở repo riêng.
+
+## Vòng r14-fix2 (25/10/2026) — vá 2 lỗi controller của r14 — đã phát hành trong 70ff9f7 (đính chính TikTok finance ở r15 trên)
 
 Không DB `samsam`; không đổi `acceptance_status`; không gỡ blocker. fp mã cuối `10c77bd2fb44271e063e1724d318bb81297ae57a8e9665b66bd995ccb5c89866` (snapshot r14 chưa vá
 `D:\code\samsam_r14fix_snapshot` = `ed6a3551…`). Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0.
@@ -22618,3 +22697,4 @@ Quy ước DoD cho phase connector:
 | v2.0-report-agent | WS3 đầu tiên: agent báo cáo định kỳ → FILE markdown `data/reports/` (package `agents/` mới; consume orders/leads/plot_logs/plots/products + convlog file-based; degraded khi DB chết; nhãn *(mẫu)* cho `source 'sample:*'`; `answered` strict `is True`; BẢN NHÁP human-gate, KHÔNG tự gửi) + tab Streamlit thứ 5 "Báo cáo" | 2026-10-10 | `evidence/v20_report.log` (CLI ×2 idempotent + `--until/--days` + dead-host `10.255.255.1` → degraded exit 0) · `v20_report.md` (report mẫu thật) · `v20_streamlit.log` + `v20_report_tab.png`/`v20_report_dead.png` (live + DB-unavailable, console 0 lỗi, warning DEGRADED) · `v20_pytest.log` (147/147, focused 16/16 ×3, ruff clean); commits `1553e81` (contract) + `6cb3da8` (impl) + `fb2f93b` (board) + commit đóng. Cold-check: reviewer subagent quota-exhausted → **PASS coordinator self-review** (precedent v0.3/v0.5 — tự chạy lại 147/147 84s + ruff + CLI live/dead-DB khớp evidence); 4 NIT → someday (collect_chat đếm record thiếu-field, verbatim data không qua guardrail, `by_channel*` hardcode 2 kênh, report_name edge-00:00 + read_text race) |
 | v2.1-garden-log | WS3 thứ 2: agent nhật ký vùng trồng — `agents/garden.py` (vocab+alias fold bỏ dấu, `add_log` insert `source='manual:garden'` FK/unique → warn friendly không raise, `anomaly_check` no-logs/gap/keyword dùng `report.FLAG_KEYS`) + CLI `add`/`--check` + tab Streamlit thứ 6 "Nhật ký vườn" (form + panel Cần chú ý + bảng recent; DB-down → st.info) — feed report v2.0 qua `plot_logs`, KHÔNG tự gửi | 2026-10-11 | `evidence/v21_garden.log` (CLI: add KV-A01→#25, plot-sai/trùng/thiếu-arg → exit 2 warn, dead-host → check exit 0/add exit 2) · `v21_streamlit.log` + `v21_garden_tab.png`/`v21_garden_submit.png`/`v21_garden_dead.png` (live submit → row verify qua DB; dead-DB info, console 0 lỗi) · `v21_pytest.log` (159/159, focused 12/12 ×3, ruff clean); commits `15dd559` (contract) + impl + commit đóng. Cold-check: **PASS coordinator self-review** đợt 1 — subagent quota cạn (precedent v0.3/v0.5); UI E2E bắt bug thật "savepoint-khi-conn-đã-trong-tx" → `conn.commit()` vá trước đóng; NIT → someday (flags_for không fold, "khác…" trống, warns-drop-khi-fail, activity không bound, chat-intake/nhắc-định-kỳ deferred). Audit bù `/cold-audit` range `1553e81..HEAD` khi quota về |
 | v12.0-go-ngoai-pham-vi | Gỡ phần ngoài phạm vi Hợp đồng hợp tác TEDO–Sâm Sâm (khối cơ khí, phòng Dự án trừ DA-01/DA-05 chuyển khối, SX-A6) — 9 khối theo HĐ | 2026-10-15 | DB `samsam_v12_a` apply ×2 (71 bảng) + core/golden exit 0; pytest 1394 passed / 0 failed (31 file: các file đã sửa + test_data_flow_map, test_handover_docs, test_agent_eval, test_ci_workflow, test_kb_internal, test_llm_gateway, test_qa_harness, test_ceo_decisions, test_b2b_form, test_da_b2b, test_da_pmo, test_kd_quote, test_director*, + liên quan); ruff sạch. Chưa push. |
+| r15 + r15-fix1 | Quyết toán qua API sàn Shopee/TikTok vào chung sổ `settlement_rows` (`source_kind` csv\|api_live) + vá 3 lỗi tiền F1 khóa CSV↔API đồng thời, F2 thiếu/null/sai kiểu ≠ 0, F3 đơn vị tiền Shopee theo từng trường; hạn STT bọc nạp model | 2026-10-27 | `evidence/itacc_r15_remaining/`, `evidence/itacc_r15_fix_1/` (probe F1/F2/F3/S/T/M), `evidence/cycle_r15_gate/` — full chia 11 lượt 6984 passed / 0 skip / 0 fail (DB `samsam_cycle_r15_full`), ruff EXIT 0. Cold-check reviewer ngữ cảnh mới **PASS** (tự chạy lại full 6984 passed trên DB `samsam_cycle_r15_audit`); 1 MINOR tài liệu vá trong commit đóng, 5 NIT → someday. Chưa sandbox/shop thật (CONTRACT_TESTED). Base `70ff9f7`; commit local, chưa push |

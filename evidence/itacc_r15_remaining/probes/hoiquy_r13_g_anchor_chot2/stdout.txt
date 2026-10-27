@@ -1,0 +1,6 @@
+PASS bien_nhan_rac_bi_phat_hien varbytes cụt/quá cỡ
+PASS submit_bo_qua_calendar_tra_rac {'r': {'id': 7, 'status': 'da_gui', 'calendar': 'https://cal-b.test', 'new': True}, 'calls': ['https://cal-a.test/digest', 'https://cal-b.test/digest']}
+PASS upgrade_404_cho_khong_ghi {'r': {'id': 7, 'status': 'cho', 'errors': []}, 'gets': ['https://cal-b.test/timestamp/ff3c98b62aabc3f2b584406b736af20d2dfefbb6a59d663cf9bf50603ac404f2']}
+PASS upgrade_bitcoin_da_nang_cap {'r': {'id': 7, 'status': 'da_nang_cap', 'new': True, 'heights': [850001]}, 'n_insert': 1}
+PASS upgrade_khong_hoi_calendar_la {'r': {'id': 7, 'status': 'cho', 'errors': ['calendar ngoài cấu hình — không hỏi']}}
+TONG {'PASS': 5, 'FAIL': 0}

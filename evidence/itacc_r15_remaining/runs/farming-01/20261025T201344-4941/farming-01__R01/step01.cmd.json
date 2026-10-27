@@ -1,0 +1,32 @@
+{
+ "buoc": 1,
+ "argv": [
+  "python",
+  "-m",
+  "connectors.zalo_garden",
+  "--transcribe",
+  "1"
+ ],
+ "env_doi": [
+  "DATABASE_URL",
+  "GARDEN_STT_MODEL_DIR",
+  "GARDEN_STT_PROVIDER"
+ ],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T20:15:03+07:00",
+ "ket_thuc": "2026-10-25T20:15:03+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stderr_re": "^(?![\\s\\S]*không kết nối)[\\s\\S]*\\[blocked\\] whisper_local cần model cục bộ đã duyệt: đặt GARDEN_STT_MODEL_DIR tới thư mục có model\\.bin",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "stderr_sha256": "70e27f9d2f5339b1ee63f5f79c0c7dbaa39b82111007dc0e9c644180ee085c0f"
+}

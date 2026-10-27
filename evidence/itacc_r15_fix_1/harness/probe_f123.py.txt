@@ -1,0 +1,396 @@
+"""PROBE r15-fix1 — hồi quy F1/F2/F3 (quyết toán API sàn ↔ CSV) CÓ ASSERTION PASS/FAIL từng ca.
+
+  python -I probe_f123.py <TREE> <out.json> <dbname samsam_itacc_r15fix1_*>   (env ITACC_ADMIN = DSN admin postgres @127.0.0.1:55461)
+
+Chạy TRONG tiến trình trên cây TREE (sys.path[0] = TREE): parser thật (`settlement_api.fetch_shopee/_flatten/to_rows`),
+ghi thật CSV qua `settlement_csv.main()`, API qua `settlement_api._write()`, Postgres Docker riêng, kết nối bằng login
+THÀNH VIÊN `svc_loader` (không owner). Dữ liệu GIẢ (mã đơn `R15F1_*_FAKE`). Bảng ánh xạ fixture GIẢ — chỉ kiểm cơ chế.
+Seam: `rollout._FORCE_MODE='van_hanh'` (finance-01 đối soát được), `load_dotenv` vô hiệu, F1 đồng thời bọc
+`settlement_csv.cross_source` CHỈ để ép xen kẽ: sau SELECT thật, mỗi caller báo "đã kiểm" rồi CHỜ caller kia tối đa
+HOLD giây (timeout = tiếp tục, KHÔNG ném lỗi) — có khóa đúng thì caller thứ hai đang chờ khóa (pg_locks advisory chưa
+granted) chứ không cùng vượt; không ép cả hai cùng vượt vùng khóa (không deadlock giả).
+PASS/FAIL = kỳ vọng ĐÚNG của sản phẩm (không phải hành vi cũ)."""
+import concurrent.futures
+import contextlib
+import io
+import json
+import os
+import secrets
+import sys
+import threading
+import time
+from datetime import date
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+TREE = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+DB = sys.argv[3]
+assert DB.startswith("samsam_itacc_r15fix1_"), "tên DB không hợp lệ"
+sys.path.insert(0, str(TREE))
+for k in list(os.environ):
+    if (k.startswith(("PG", "SHOPEE_", "TIKTOK_", "MARKET_")) or k.endswith("DATABASE_URL")
+            or k in ("AUTH_MODE", "APPROVAL_ENFORCE", "DEPLOY")):
+        if k != "ITACC_ADMIN":
+            os.environ.pop(k)
+os.environ.update(AUTH_MODE="dev", APPROVAL_ENFORCE="0", DEPLOY="")
+
+import psycopg  # noqa: E402
+from psycopg import conninfo  # noqa: E402
+
+ADM = conninfo.conninfo_to_dict(os.environ["ITACC_ADMIN"])
+assert ADM["host"] == "127.0.0.1" and str(ADM["port"]) == "55461" and ADM["dbname"] == "postgres"
+
+from ingest import market_api as ma  # noqa: E402
+from ingest import settlement_api as sa  # noqa: E402
+from ingest import settlement_csv as sc  # noqa: E402
+from pipelines import rollout  # noqa: E402
+
+rollout._FORCE_MODE = "van_hanh"
+sc.load_dotenv = lambda *a, **k: None
+ma.load_dotenv = lambda *a, **k: None
+W0, W1 = date(2026, 10, 1), date(2026, 10, 7)
+REL = 1759449600                       # 2026-10-03 giờ VN
+HOLD = 4.0
+RES = []
+
+
+def case(group, cid, expect, ok, **obs):
+    RES.append({"group": group, "case": cid, "expect": expect, "result": "PASS" if ok else "FAIL", **obs})
+    print(f"[{'PASS' if ok else 'FAIL'}] {group} {cid}: {expect}", flush=True)
+
+
+# ------------------------------------------------------------ DB riêng
+with psycopg.connect(conninfo.make_conninfo(**ADM), autocommit=True, connect_timeout=5) as c:
+    if c.execute("select 1 from pg_database where datname = %s", (DB,)).fetchone():
+        sys.exit(f"DB {DB} đã tồn tại — không ghi đè")
+    c.execute(f"create database {DB}")
+adm = psycopg.connect(conninfo.make_conninfo(**{**ADM, "dbname": DB}), autocommit=True)
+adm.execute("set search_path to public, pg_temp")
+adm.execute((TREE / "docs/schema.sql").read_text(encoding="utf-8"))
+adm.execute((TREE / "docs/roles.sql").read_text(encoding="utf-8"))
+svc = "r15fix1_loader_" + DB.rsplit("_", 1)[-1]
+pw = secrets.token_urlsafe(24)
+if adm.execute("select 1 from pg_roles where rolname = %s", (svc,)).fetchone():
+    adm.execute(f"drop role {svc}")
+adm.execute(f"create role {svc} login password '{pw}' in role svc_loader")
+assert not adm.execute("select rolsuper from pg_roles where rolname = %s", (svc,)).fetchone()[0]
+os.environ["DATABASE_URL"] = conninfo.make_conninfo(**{**ADM, "dbname": DB, "user": svc, "password": pw})
+fees, why = sc.load_fees()
+assert fees is not None, why
+
+
+def n_rows(ch, oid):
+    return adm.execute("select count(*) from settlement_rows where channel = %s and order_id_hash = %s",
+                       (ch, sc.order_hash(ch, oid))).fetchone()[0]
+
+
+def quiet(fn, *a):
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        rc = fn(*a)
+    return rc, out.getvalue()
+
+
+# ------------------------------------------------------------ F2 / F3 — Shopee qua parser thật
+SP_BASE = {"trang_thai": "da_chot", "duyet_boi": "KE TOAN GIA - PROBE", "can_cu": "FIXTURE PROBE",
+           "ngay_chot": "2026-10-25"}
+SP_TP = {"order_original_price": {"cot": "order_amount", "dau": 1}, "escrow_amount": {"cot": "payout", "dau": 1},
+         "commission_fee": {"cot": "fixed_fee", "dau": 1}, "exchange_rate": {"bo_qua": True}}
+SP_TP_PRI = {"original_price_pri": {"cot": "order_amount", "dau": 1}, "escrow_amount_pri": {"cot": "payout", "dau": 1},
+             "commission_fee_pri": {"cot": "fixed_fee", "dau": 1}, "exchange_rate": {"bo_qua": True},
+             "order_original_price": {"bo_qua": True}, "escrow_amount": {"bo_qua": True},
+             "commission_fee": {"bo_qua": True}}
+MAPDIR = OUT.parent / (OUT.stem + "_maps")
+MAPDIR.mkdir(exist_ok=True)
+
+
+def cfg_for(tp, tien_te_shop):
+    sec = {**SP_BASE, "thanh_phan": tp}
+    if tien_te_shop is not None:
+        sec["tien_te_shop"] = tien_te_shop
+    p = MAPDIR / f"m{len(list(MAPDIR.iterdir()))}.json"
+    p.write_text(json.dumps({"shopee": sec}), encoding="utf-8")
+    cfg, why_ = sa.load_map("shopee", p)
+    assert not why_, why_
+    return cfg
+
+
+def sp_recs(orders):
+    """orders: [(order_sn, order_income)] → recs qua fetch_shopee thật (server giả trong tiến trình)."""
+    def call(method, path, params, body=None, path_params=None):
+        if path == ma.SP_ESCROW_LIST:
+            return {"response": {"more": False, "escrow_list": [
+                {"order_sn": sn, "payout_amount": 90000, "escrow_release_time": REL} for sn, _ in orders]}}
+        sn = params["order_sn"]
+        return {"response": {"order_sn": sn, "order_income": dict(orders)[sn]}}
+    return sa.fetch_shopee(call, W0, W1)
+
+
+def api_attempt(channel, recs_fn, cfg):
+    """→ (bị từ chối trước ghi?, rc _write | None, quan sát). Mọi lỗi parser = từ chối."""
+    try:
+        recs = recs_fn()
+    except ma.DataError as e:
+        return True, None, {"stage": "fetch", "err": str(e)[:160]}
+    rows, blocked, errs, status = sa.to_rows(channel, recs, cfg)
+    obs = {"blocked": blocked[:4], "errors": errs[:4],
+           "rows": [{k: r.get(k) for k in ("order_amount", "fixed_fee", "payout")} for r in rows][:3],
+           "status_keys_currency": sorted(k for k in status if "currency" in k)}
+    rc = None
+    if rows:                                   # như repro controller: thử ghi cả khi parser báo lỗi
+        rc, out = quiet(sa._write, channel, rows, "api_live", fees, W0, W1)
+        obs["write_stdout"] = [ln for ln in out.splitlines() if ln.startswith("[")][:3]
+    obs["rc"] = rc
+    return bool(blocked or errs), rc, obs
+
+
+GOOD = {"order_original_price": 100000, "escrow_amount": 90000, "commission_fee": 10000}
+
+
+def f2_shopee(cid, inc, expect_ok, expect, n=1, bad_index=0):
+    cfg = cfg_for(SP_TP, "VND")
+    orders = [(f"R15F1_F2_{cid.upper()}_{i}_FAKE", (inc if i == bad_index else GOOD)) for i in range(n)]
+    rej, rc, obs = api_attempt("shopee", lambda: sp_recs(orders), cfg)
+    stored = sum(n_rows("shopee", sn) for sn, _ in orders)
+    if expect_ok:
+        ok = (not rej) and rc == 0 and stored == n
+    else:
+        ok = rej and rc in (None, 1, 2) and stored == 0
+    case("F2", cid, expect, ok, stored_rows=stored, **obs)
+
+
+f2_shopee("control_valid", GOOD, True, "đủ trường hợp lệ → ghi 1 dòng")
+f2_shopee("explicit_zero_int", {**GOOD, "commission_fee": 0, "escrow_amount": 0, "order_original_price": 0},
+          True, "số 0 tường minh (int) hợp lệ → ghi")
+f2_shopee("explicit_zero_str", {**GOOD, "commission_fee": "0", "escrow_amount": "0"}, True,
+          'số 0 tường minh ("0") hợp lệ → ghi')
+for cid, val in [("payout_missing", "__drop__"), ("payout_null", None), ("payout_garbage", "NOT_A_NUMBER"),
+                 ("payout_empty_str", ""), ("payout_bool", True), ("payout_fraction", 90000.5)]:
+    inc = {k: v for k, v in GOOD.items() if not (k == "escrow_amount" and val == "__drop__")}
+    if val != "__drop__":
+        inc["escrow_amount"] = val
+    f2_shopee(cid, inc, False, f"escrow_amount→payout {cid.split('_', 1)[1]} → chặn, 0 dòng")
+f2_shopee("gross_missing", {"escrow_amount": 90000, "commission_fee": 10000}, False,
+          "thiếu order_original_price→order_amount → chặn, 0 dòng")
+f2_shopee("fee_missing", {"escrow_amount": 90000, "order_original_price": 100000}, False,
+          "thiếu commission_fee (đã ánh xạ, không có quyết định cho phép vắng) → chặn, 0 dòng")
+f2_shopee("fee_garbage", {**GOOD, "commission_fee": "abc"}, False, "chuỗi rác ở trường phí đã ánh xạ → chặn")
+f2_shopee("unmapped_rate_fraction", {**GOOD, "exchange_rate": 0.00004}, True,
+          "trường KHÔNG phải tiền đã quyết bo_qua (exchange_rate lẻ) không làm hỏng lượt → ghi")
+f2_shopee("batch_one_bad", {**GOOD, "escrow_amount": None}, False,
+          "lô 3 đơn, 1 đơn payout null → 0 dòng của CẢ lượt", n=3, bad_index=1)
+
+# TikTok cùng lớp (strings_are_money=True)
+TT_SEC = {**SP_BASE, "thanh_phan": {
+    "settlement_amount": {"cot": "payout", "dau": 1},
+    "revenue_breakdown.subtotal_before_discount_amount": {"cot": "order_amount", "dau": 1},
+    "fee_tax_breakdown.fee.platform_commission_amount": {"cot": "fixed_fee", "dau": -1}},
+    "loai_giao_dich": {"ORDER": {"ma_don": "order_id", "txn_type": "ORDER"},
+                       "PLATFORM_PENALTY": {"ma_don": "order_id", "txn_type": "PENALTY"}}}
+tp_path = MAPDIR / "tiktok.json"
+tp_path.write_text(json.dumps({"tiktok": TT_SEC}), encoding="utf-8")
+TT_CFG, _w = sa.load_map("tiktok", tp_path)
+assert not _w, _w
+TT_GOOD = {"settlement_amount": "90000", "revenue_breakdown": {"subtotal_before_discount_amount": "100000"},
+           "fee_tax_breakdown": {"fee": {"platform_commission_amount": "-10000"}}}
+
+
+def tt_recs(txns):
+    """txns: [(tx_id, order_id, type, body)] → recs qua fetch_tiktok thật."""
+    def call(method, path, params, body=None, path_params=None):
+        if path == ma.TT_STATEMENTS:
+            return {"data": {"statements": [{"id": "7001", "statement_time": REL, "currency": "VND"}]}}
+        return {"data": {"currency": "VND", "transactions": [
+            {"id": tid, "type": typ, "order_id": oid, **b} for tid, oid, typ, b in txns]}}
+    return sa.fetch_tiktok(call, W0, W1)
+
+
+def f2_tiktok(cid, body, expect_ok, expect):
+    oid = f"R15F1_F2T_{cid.upper()}_FAKE"
+    rej, rc, obs = api_attempt("tiktok", lambda: tt_recs([("9" + str(len(RES)), oid, "ORDER", body)]), TT_CFG)
+    stored = n_rows("tiktok", oid)
+    ok = ((not rej) and rc == 0 and stored == 1) if expect_ok else (rej and stored == 0)
+    case("F2", cid, expect, ok, stored_rows=stored, **obs)
+
+
+f2_tiktok("tt_control_valid", TT_GOOD, True, "TikTok đủ trường → ghi")
+f2_tiktok("tt_explicit_zero", {**TT_GOOD, "settlement_amount": "0"}, True, 'TikTok "0" tường minh → ghi')
+f2_tiktok("tt_payout_empty_str", {**TT_GOOD, "settlement_amount": ""}, False, 'TikTok settlement_amount "" → chặn')
+f2_tiktok("tt_payout_missing", {k: v for k, v in TT_GOOD.items() if k != "settlement_amount"}, False,
+          "TikTok thiếu settlement_amount → chặn")
+f2_tiktok("tt_payout_null", {**TT_GOOD, "settlement_amount": None}, False, "TikTok settlement_amount null → chặn")
+f2_tiktok("tt_payout_garbage", {**TT_GOOD, "settlement_amount": "abc"}, False, "TikTok chuỗi rác → chặn")
+f2_tiktok("tt_gross_missing", {**TT_GOOD, "revenue_breakdown": {}}, False,
+          "TikTok thiếu subtotal_before_discount_amount → chặn")
+
+# ------------------------------------------------------------ F3 — đơn vị tiền Shopee
+
+
+def f3(cid, inc, tp, tien_te_shop, expect_ok, expect):
+    cfg = cfg_for(tp, tien_te_shop)
+    sn = f"R15F1_F3_{cid.upper()}_FAKE"
+    rej, rc, obs = api_attempt("shopee", lambda: sp_recs([(sn, inc)]), cfg)
+    stored = n_rows("shopee", sn)
+    lạ = any("currency" in b for b in obs["blocked"]) or obs["status_keys_currency"]
+    if expect_ok:
+        ok = (not rej) and rc == 0 and stored == 1 and not lạ
+    else:
+        ok = rej and stored == 0 and not any("currency' LẠ" in b for b in obs["blocked"])
+    case("F3", cid, expect, ok, stored_rows=stored, **obs)
+
+
+PRI = {"original_price_pri": 100000, "escrow_amount_pri": 90000, "commission_fee_pri": 10000}
+f3("all_vnd", {**GOOD, "pri_currency": "VND", "aff_currency": "VND", "exchange_rate": 1}, SP_TP, None, True,
+   "pri=VND, aff=VND, trường thường → ghi; currency không thành thành phần LẠ")
+f3("pri_usd_aff_vnd", {**GOOD, "pri_currency": "USD", "aff_currency": "VND", "exchange_rate": 1}, SP_TP, None,
+   True, "pri=USD, aff=VND, chỉ trường thường (đồng tiền shop affiliate) → ghi (không chặn mù pri≠VND)")
+f3("both_usd", {**GOOD, "pri_currency": "USD", "aff_currency": "USD"}, SP_TP, None, False,
+   "pri=USD, aff=USD (repro controller) → chặn, 0 dòng")
+f3("aff_usd_regular_mapped", {**GOOD, "pri_currency": "VND", "aff_currency": "USD"}, SP_TP, None, False,
+   "aff=USD + trường thường (affiliate) ánh xạ → chặn")
+f3("pri_vnd_aff_usd_pri_mapped", {**GOOD, **PRI, "pri_currency": "VND", "aff_currency": "USD"}, SP_TP_PRI, None, True,
+   "pri=VND, aff=USD, chỉ trường *_pri ánh xạ → ghi")
+f3("pri_usd_pri_mapped", {**GOOD, **PRI, "pri_currency": "USD", "aff_currency": "VND"}, SP_TP_PRI, None, False,
+   "pri=USD + trường *_pri ánh xạ → chặn")
+f3("no_currency_no_decision", dict(GOOD), SP_TP, None, False,
+   "không có pri/aff_currency, bảng ánh xạ chưa xác nhận đơn vị shop → chặn")
+f3("aff_missing_pri_present", {**GOOD, "pri_currency": "VND"}, SP_TP, None, False,
+   "có pri_currency nhưng thiếu aff_currency cho trường thường → chặn (không xác định)")
+f3("currency_null", {**GOOD, "pri_currency": None, "aff_currency": None}, SP_TP, None, False,
+   "pri/aff_currency null → chặn")
+
+# ------------------------------------------------------------ F1 — CSV ↔ API chống trùng
+CSV_HDR = ("Order/adjustment ID,Total revenue,Platform commission,Transaction fee,Service fee,"
+           "Total settlement amount,Order settled time\n")
+
+
+def csv_file(tag, oids):
+    p = OUT.parent / f"{OUT.stem}_{tag}.csv"
+    p.write_text(CSV_HDR + "".join(f"{o},100000,-10000,0,0,90000,2026-10-03\n" for o in oids), encoding="utf-8")
+    return p
+
+
+def api_row(oid, txn="ORDER", payout=90000):
+    return {**dict.fromkeys(sc.MONEY, 0), "order_id_hash": sc.order_hash("tiktok", oid), "order_amount": 100000,
+            "fixed_fee": 10000, "payout": payout, "txn_type": txn, "settled_on": date(2026, 10, 3), "row_no": 2}
+
+
+def csv_main(p):
+    return sc.main(["--file", str(p), "--channel", "tiktok"])
+
+
+def api_write(rows):
+    for i, r in enumerate(rows, 2):
+        r["row_no"] = i
+    return sa._write("tiktok", rows, "api_live", fees, W0, W1)
+
+
+def view(oid):
+    n, s = adm.execute("select count(*), coalesce(sum(payout_vnd), 0) from v_settlement_khoan where channel ="
+                       " 'tiktok' and order_id_hash = %s", (sc.order_hash("tiktok", oid),)).fetchone()
+    return n, int(s)
+
+
+o = "R15F1_F1_CSV_THEN_API_FAKE"
+rc1, _ = quiet(csv_main, csv_file("a", [o]))
+rc2, out2 = quiet(api_write, [api_row(o)])
+case("F1", "csv_then_api", "CSV trước (exit 0) → API sau [blocked] exit 2, 1 dòng",
+     rc1 == 0 and rc2 == 2 and n_rows("tiktok", o) == 1 and "[blocked]" in out2, exits=[rc1, rc2],
+     rows=n_rows("tiktok", o))
+o = "R15F1_F1_API_THEN_CSV_FAKE"
+rc1, _ = quiet(api_write, [api_row(o)])
+rc2, out2 = quiet(csv_main, csv_file("b", [o]))
+case("F1", "api_then_csv", "API trước (exit 0) → CSV sau [blocked] exit 2, 1 dòng",
+     rc1 == 0 and rc2 == 2 and n_rows("tiktok", o) == 1 and "[blocked]" in out2, exits=[rc1, rc2],
+     rows=n_rows("tiktok", o))
+
+o = "R15F1_F1_SAME_SOURCE_API_FAKE"
+rc1, _ = quiet(api_write, [api_row(o, "ORDER"), api_row(o, "PENALTY", -5000)])
+rc2, _ = quiet(api_write, [api_row(o, "ADJUST", 1000)])
+case("F1", "same_source_api_many", "nhiều giao dịch API cùng đơn (2 lượt, 3 txn_type) → nhận đủ 3 dòng",
+     rc1 == 0 and rc2 == 0 and n_rows("tiktok", o) == 3, exits=[rc1, rc2], rows=n_rows("tiktok", o))
+o = "R15F1_F1_SAME_SOURCE_CSV_FAKE"
+rc1, _ = quiet(csv_main, csv_file("c1", [o]))
+p2 = csv_file("c2", [o])
+p2.write_text(p2.read_text(encoding="utf-8").replace(",90000,", ",90001,"), encoding="utf-8")
+rc2, _ = quiet(csv_main, p2)
+case("F1", "same_source_csv_two_files", "cùng đơn ở 2 file CSV khác nhau (cùng nguồn) → nhận cả hai (overlaps xử lý)",
+     rc1 == 0 and rc2 == 0 and n_rows("tiktok", o) == 2, exits=[rc1, rc2], rows=n_rows("tiktok", o))
+
+_orig = sc.cross_source
+
+
+def race(callers, tag):
+    """callers: [(nhãn, fn)] chạy song song trên kết nối thật riêng. Barrier chỉ ở ĐẦU; sau SELECT thật của
+    cross_source mỗi caller báo đã kiểm rồi chờ caller kia tối đa HOLD giây (timeout → tiếp tục)."""
+    start = threading.Barrier(len(callers))
+    checked, lock_wait = [], []
+    both = threading.Event()
+
+    def cross(conn, ch, hs, kind):
+        n = _orig(conn, ch, hs, kind)
+        checked.append({"source": kind, "saw_other_source": n, "t": time.monotonic()})
+        if len(checked) >= len(callers):
+            both.set()
+        both.wait(HOLD)
+        return n
+
+    def watch():
+        t_end = time.monotonic() + HOLD + 6
+        while time.monotonic() < t_end and len(lock_wait) == 0:
+            if adm.execute("select count(*) from pg_locks where locktype = 'advisory' and not granted"
+                           " and database = (select oid from pg_database where datname = current_database())"
+                           ).fetchone()[0]:
+                lock_wait.append(True)
+            time.sleep(0.05)
+
+    def run(fn):
+        start.wait(20)
+        return fn()
+
+    sc.cross_source = cross
+    out = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out), concurrent.futures.ThreadPoolExecutor(len(callers) + 1) as pool:
+            w = pool.submit(watch)
+            futs = [pool.submit(run, fn) for _, fn in callers]
+            codes = [f.result(60) for f in futs]
+            w.result(30)
+    finally:
+        sc.cross_source = _orig
+    return codes, checked, bool(lock_wait), out.getvalue()
+
+
+for it in range(3):                       # 3 lượt, đổi thứ tự submit → người thắng có thể khác
+  o = f"R15F1_F1_RACE_{it}_FAKE"
+  pr = csv_file(f"race{it}", [o])
+  callers = [("api", lambda: api_write([api_row(o)])), ("csv", lambda: csv_main(pr))]
+  codes, checked, waited, out = race(callers if it % 2 == 0 else callers[::-1], "race")
+  rows_ = adm.execute("select source_kind, txn_type, payout_vnd from settlement_rows where channel = 'tiktok' and"
+                      " order_id_hash = %s order by id", (sc.order_hash("tiktok", o),)).fetchall()
+  vn, vs = view(o)
+  ov = sc.overlaps(adm, ["tiktok"]).get("tiktok")
+  case("F1", f"concurrent_csv_api_{it}", "CSV + API đồng thời, 2 kết nối svc_loader thật → đúng 1 bên ghi (exit 0), bên kia"
+       " [blocked] exit 2; 1 dòng, view 1 khoản 90.000",
+       sorted(codes) == [0, 2] and len(rows_) == 1 and (vn, vs) == (1, 90000),
+       exits=codes, checks=[{k: v for k, v in c.items() if k != "t"} for c in checked], second_waited_on_lock=waited,
+       raw_rows=[list(r) for r in rows_], view_count=vn, view_payout=vs, overlaps_tiktok=ov,
+       stdout=[ln for ln in out.splitlines() if ln.startswith("[")][:8])
+
+o1, o2 = "R15F1_F1_RACE_SAME_A_FAKE", "R15F1_F1_RACE_SAME_B_FAKE"
+codes, checked, waited, out = race(
+    [("api1", lambda: api_write([api_row(o1, "ORDER"), api_row(o2, "ORDER")])),
+     ("api2", lambda: api_write([api_row(o2, "PENALTY", -1), api_row(o1, "PENALTY", -1)]))], "same")
+case("F1", "concurrent_same_source_overlapping", "2 lượt API cùng nguồn đồng thời, đơn chồng nhau thứ tự ngược →"
+     " cả hai exit 0 (không deadlock, không cấm nhầm), 4 dòng",
+     codes == [0, 0] and n_rows("tiktok", o1) + n_rows("tiktok", o2) == 4, exits=codes,
+     rows=n_rows("tiktok", o1) + n_rows("tiktok", o2),
+     stdout=[ln for ln in out.splitlines() if ln.startswith("[")][:8])
+
+n_tot = adm.execute("select count(*) from settlement_rows").fetchone()[0]
+adm.close()
+summary = {"tree": str(TREE), "db": DB, "pass": sum(r["result"] == "PASS" for r in RES),
+           "fail": sum(r["result"] == "FAIL" for r in RES), "settlement_rows_total": n_tot, "cases": RES}
+OUT.write_text(json.dumps(summary, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+print(f"[probe] PASS {summary['pass']} / FAIL {summary['fail']} → {OUT.name}")

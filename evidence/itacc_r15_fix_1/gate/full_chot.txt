@@ -1,0 +1,2454 @@
+# Full pytest r15-fix1 — chốt (RAM ≥3 GB, người dùng cho phép)
+# ngày (client) 2026-10-26T19:59:12+07:00 · git HEAD 70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046 nhánh codex/remaining-docx-code-r15
+# fp full = db9e251e85dd2ba899d3fb25c3cce81ca1e4b31ae54b33ec5e956fbe45e461af
+# fp code = f8033335a4fab10159b4891f3c41634f1dcb306d09e04347c13be8f90fc995e2
+# Docker: 28.4.0
+# RAM trống trước khi dựng DB: 3354 MB (container cũ samsam-itacc-r15fix1 đã stop)
+## dựng DB samsam_itacc_r15fix1_full2: apply_schema --roles ×2 + core_store + golden_store (mkdb_r15)
+  mkdb rc=0 (log runs/dung_db_samsam_itacc_r15fix1_full2.txt)
+# DB samsam_itacc_r15fix1_full2 @ 127.0.0.1 55463 (KHÔNG phải samsam)
+# bảng public 108 · thiếu [] · products 27 · sku_master 13 · roles ['agent_writer', 'app_human', 'svc_job', 'svc_ui', 'svc_webhook']
+# preflight OK
+## lệnh: python -m pytest -q -ra -p no:cacheprovider
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+.................................................F...................... [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+.......................................................................F [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+......................F................................................. [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+...............................................................F..F..... [ 60%]
+.....................................................................FFF [ 61%]
+FFFF.F.................................................................. [ 62%]
+........................................................................ [ 63%]
+........................................F............................... [ 64%]
+........................F............................................... [ 65%]
+........................................................................ [ 67%]
+.....................F.................................................. [ 68%]
+........................................................................ [ 69%]
+...........................................ss........................... [ 70%]
+........................................................F............... [ 71%]
+..........................................................F............. [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+..................................................................FEE... [ 77%]
+....EFEE...E............................................................ [ 78%]
+............................................F........................... [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+..................................................................FFF... [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+..........F.....FFFFFFFFFFFFF.............F.....FFFFFFF..F.......F...... [ 87%]
+.F..FFFFFFFF............................................................ [ 88%]
+.......................................................................F [ 89%]
+F..........................FF........................................... [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+...............................FFFFFFF.........F.F......F............... [ 95%]
+........................................................................ [ 96%]
+.........................FF............................................. [ 97%]
+........................................................................ [ 98%]
+........................................................................ [100%]
+=================================== ERRORS ====================================
+___________ ERROR at setup of test_strip_video_mov_removes_location ___________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x000001DDBCC4DA60>, _basetemp=WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def mov(tmp_path_factory):
+        if FF is None:
+            pytest.skip("không có ffmpeg")
+        d = tmp_path_factory.mktemp("vid")
+>       data = _make_video(d / "src.mov", "mov")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c05_media.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/vid0/src.mov')
+fmt = 'mov'
+
+    def _make_video(path: Path, fmt: str, *, audio_only=False) -> bytes:
+        """Video 1s 32x32 có metadata vị trí + tiêu đề (tiền điều kiện: nguồn
+        PHẢI có dấu GPS, nếu không test 'đã gỡ' pass ảo)."""
+        src = ([] if audio_only else
+               ["-f", "lavfi", "-i", "testsrc=duration=1:size=32x32:rate=5"])
+        src += ["-f", "lavfi", "-i", "sine=duration=1"]
+        codec = ["-c:a", "aac"] if audio_only else ["-c:v", "libx264", "-c:a",
+                                                     "aac", "-shortest"]
+        extra = ["-movflags", "use_metadata_tags"] if fmt == "mov" else []
+        r = subprocess.run(
+            [FF, "-v", "error", "-y", *src, *codec,
+             "-metadata", f"location={LAT}/",
+             "-metadata", f"com.apple.quicktime.location.ISO6709={LAT}+010.000/",
+             "-metadata", "title=KV-SECRET", *extra, "-f", fmt, str(path)],
+            capture_output=True, check=False)
+>       assert r.returncode == 0, r.stderr[-300:]
+E       AssertionError: b''
+E       assert 3221225794 == 0
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\imageio_ffm...uy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3604\\vid0\\src.mov'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_v13_c05_media.py:67: AssertionError
+_______________ ERROR at setup of test_strip_video_mp4_and_m4v ________________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x000001DDBCC4DA60>, _basetemp=WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def mp4(tmp_path_factory):
+        if FF is None:
+            pytest.skip("không có ffmpeg")
+>       return _make_video(tmp_path_factory.mktemp("vid") / "src.mp4", "mp4")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c05_media.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/vid1/src.mp4')
+fmt = 'mp4'
+
+    def _make_video(path: Path, fmt: str, *, audio_only=False) -> bytes:
+        """Video 1s 32x32 có metadata vị trí + tiêu đề (tiền điều kiện: nguồn
+        PHẢI có dấu GPS, nếu không test 'đã gỡ' pass ảo)."""
+        src = ([] if audio_only else
+               ["-f", "lavfi", "-i", "testsrc=duration=1:size=32x32:rate=5"])
+        src += ["-f", "lavfi", "-i", "sine=duration=1"]
+        codec = ["-c:a", "aac"] if audio_only else ["-c:v", "libx264", "-c:a",
+                                                     "aac", "-shortest"]
+        extra = ["-movflags", "use_metadata_tags"] if fmt == "mov" else []
+        r = subprocess.run(
+            [FF, "-v", "error", "-y", *src, *codec,
+             "-metadata", f"location={LAT}/",
+             "-metadata", f"com.apple.quicktime.location.ISO6709={LAT}+010.000/",
+             "-metadata", "title=KV-SECRET", *extra, "-f", fmt, str(path)],
+            capture_output=True, check=False)
+>       assert r.returncode == 0, r.stderr[-300:]
+E       AssertionError: b''
+E       assert 3221225794 == 0
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\imageio_ffm...uy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3604\\vid1\\src.mp4'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_v13_c05_media.py:67: AssertionError
+____________ ERROR at setup of test_extension_must_match_container ____________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x000001DDBCC4DA60>, _basetemp=WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def mov(tmp_path_factory):
+        if FF is None:
+            pytest.skip("không có ffmpeg")
+        d = tmp_path_factory.mktemp("vid")
+>       data = _make_video(d / "src.mov", "mov")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c05_media.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/vid0/src.mov')
+fmt = 'mov'
+
+    def _make_video(path: Path, fmt: str, *, audio_only=False) -> bytes:
+        """Video 1s 32x32 có metadata vị trí + tiêu đề (tiền điều kiện: nguồn
+        PHẢI có dấu GPS, nếu không test 'đã gỡ' pass ảo)."""
+        src = ([] if audio_only else
+               ["-f", "lavfi", "-i", "testsrc=duration=1:size=32x32:rate=5"])
+        src += ["-f", "lavfi", "-i", "sine=duration=1"]
+        codec = ["-c:a", "aac"] if audio_only else ["-c:v", "libx264", "-c:a",
+                                                     "aac", "-shortest"]
+        extra = ["-movflags", "use_metadata_tags"] if fmt == "mov" else []
+        r = subprocess.run(
+            [FF, "-v", "error", "-y", *src, *codec,
+             "-metadata", f"location={LAT}/",
+             "-metadata", f"com.apple.quicktime.location.ISO6709={LAT}+010.000/",
+             "-metadata", "title=KV-SECRET", *extra, "-f", fmt, str(path)],
+            capture_output=True, check=False)
+>       assert r.returncode == 0, r.stderr[-300:]
+E       AssertionError: b''
+E       assert 3221225794 == 0
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\imageio_ffm...uy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3604\\vid0\\src.mov'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_v13_c05_media.py:67: AssertionError
+_________ ERROR at setup of test_location_surviving_remux_is_rejected _________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x000001DDBCC4DA60>, _basetemp=WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def mov(tmp_path_factory):
+        if FF is None:
+            pytest.skip("không có ffmpeg")
+        d = tmp_path_factory.mktemp("vid")
+>       data = _make_video(d / "src.mov", "mov")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c05_media.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/vid0/src.mov')
+fmt = 'mov'
+
+    def _make_video(path: Path, fmt: str, *, audio_only=False) -> bytes:
+        """Video 1s 32x32 có metadata vị trí + tiêu đề (tiền điều kiện: nguồn
+        PHẢI có dấu GPS, nếu không test 'đã gỡ' pass ảo)."""
+        src = ([] if audio_only else
+               ["-f", "lavfi", "-i", "testsrc=duration=1:size=32x32:rate=5"])
+        src += ["-f", "lavfi", "-i", "sine=duration=1"]
+        codec = ["-c:a", "aac"] if audio_only else ["-c:v", "libx264", "-c:a",
+                                                     "aac", "-shortest"]
+        extra = ["-movflags", "use_metadata_tags"] if fmt == "mov" else []
+        r = subprocess.run(
+            [FF, "-v", "error", "-y", *src, *codec,
+             "-metadata", f"location={LAT}/",
+             "-metadata", f"com.apple.quicktime.location.ISO6709={LAT}+010.000/",
+             "-metadata", "title=KV-SECRET", *extra, "-f", fmt, str(path)],
+            capture_output=True, check=False)
+>       assert r.returncode == 0, r.stderr[-300:]
+E       AssertionError: b''
+E       assert 3221225794 == 0
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\imageio_ffm...uy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3604\\vid0\\src.mov'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_v13_c05_media.py:67: AssertionError
+_________________ ERROR at setup of test_cli_video_end_to_end _________________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x000001DDBCC4DA60>, _basetemp=WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def mov(tmp_path_factory):
+        if FF is None:
+            pytest.skip("không có ffmpeg")
+        d = tmp_path_factory.mktemp("vid")
+>       data = _make_video(d / "src.mov", "mov")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c05_media.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/vid0/src.mov')
+fmt = 'mov'
+
+    def _make_video(path: Path, fmt: str, *, audio_only=False) -> bytes:
+        """Video 1s 32x32 có metadata vị trí + tiêu đề (tiền điều kiện: nguồn
+        PHẢI có dấu GPS, nếu không test 'đã gỡ' pass ảo)."""
+        src = ([] if audio_only else
+               ["-f", "lavfi", "-i", "testsrc=duration=1:size=32x32:rate=5"])
+        src += ["-f", "lavfi", "-i", "sine=duration=1"]
+        codec = ["-c:a", "aac"] if audio_only else ["-c:v", "libx264", "-c:a",
+                                                     "aac", "-shortest"]
+        extra = ["-movflags", "use_metadata_tags"] if fmt == "mov" else []
+        r = subprocess.run(
+            [FF, "-v", "error", "-y", *src, *codec,
+             "-metadata", f"location={LAT}/",
+             "-metadata", f"com.apple.quicktime.location.ISO6709={LAT}+010.000/",
+             "-metadata", "title=KV-SECRET", *extra, "-f", fmt, str(path)],
+            capture_output=True, check=False)
+>       assert r.returncode == 0, r.stderr[-300:]
+E       AssertionError: b''
+E       assert 3221225794 == 0
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\imageio_ffm...uy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3604\\vid0\\src.mov'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_v13_c05_media.py:67: AssertionError
+_______________ ERROR at setup of test_zalo_video_stored_clean ________________
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x000001DDBCC4DA60>, _basetemp=WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def mov(tmp_path_factory):
+        if FF is None:
+            pytest.skip("không có ffmpeg")
+        d = tmp_path_factory.mktemp("vid")
+>       data = _make_video(d / "src.mov", "mov")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c05_media.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/vid0/src.mov')
+fmt = 'mov'
+
+    def _make_video(path: Path, fmt: str, *, audio_only=False) -> bytes:
+        """Video 1s 32x32 có metadata vị trí + tiêu đề (tiền điều kiện: nguồn
+        PHẢI có dấu GPS, nếu không test 'đã gỡ' pass ảo)."""
+        src = ([] if audio_only else
+               ["-f", "lavfi", "-i", "testsrc=duration=1:size=32x32:rate=5"])
+        src += ["-f", "lavfi", "-i", "sine=duration=1"]
+        codec = ["-c:a", "aac"] if audio_only else ["-c:v", "libx264", "-c:a",
+                                                     "aac", "-shortest"]
+        extra = ["-movflags", "use_metadata_tags"] if fmt == "mov" else []
+        r = subprocess.run(
+            [FF, "-v", "error", "-y", *src, *codec,
+             "-metadata", f"location={LAT}/",
+             "-metadata", f"com.apple.quicktime.location.ISO6709={LAT}+010.000/",
+             "-metadata", "title=KV-SECRET", *extra, "-f", fmt, str(path)],
+            capture_output=True, check=False)
+>       assert r.returncode == 0, r.stderr[-300:]
+E       AssertionError: b''
+E       assert 3221225794 == 0
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\imageio_ffm...uy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3604\\vid0\\src.mov'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_v13_c05_media.py:67: AssertionError
+================================== FAILURES ===================================
+______________________ test_every_egress_module_declared ______________________
+
+    def test_every_egress_module_declared():
+        egress = dpia_draft.egress_modules(ROOT)
+        assert KNOWN_EGRESS <= egress, KNOWN_EGRESS - egress   # chống scanner rỗng
+        undeclared = sorted(egress - _declared(dpia_draft.load_map(MAP_PATH)))
+>       assert not undeclared, (
+            "module gửi dữ liệu ra ngoài CHƯA khai báo trong "
+            f"data/data_flow_map.json: {undeclared}")
+E       AssertionError: module gửi dữ liệu ra ngoài CHƯA khai báo trong data/data_flow_map.json: ['output/so-tay-song-khoe-ban-moi/workflow/review/check.py']
+E       assert not ['output/so-tay-song-khoe-ban-moi/workflow/review/check.py']
+
+tests\test_data_flow_map.py:95: AssertionError
+__________________ test_cli_subprocess_refuses_without_dpia ___________________
+
+    def test_cli_subprocess_refuses_without_dpia():
+        env = {k: v for k, v in os.environ.items() if k != "PYTHONIOENCODING"}
+        r = subprocess.run([sys.executable, str(ROOT / "scripts" / "persona_sim.py")],
+                           cwd=ROOT, capture_output=True, timeout=120, env=env,
+                           check=False)
+>       assert r.returncode == 2
+E       AssertionError: assert 3221225794 == 2
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', 'D:\\code\\samsam\\scripts\\persona_sim.py'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_persona_sim.py:483: AssertionError
+____________________ test_deterministic_skips_llm_runners _____________________
+
+env = []
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD6FF6900>
+capsys = <_pytest.capture.CaptureFixture object at 0x000001DDD74EF140>
+
+    def test_deterministic_skips_llm_runners(env, monkeypatch, capsys):
+        monkeypatch.setattr(ae, "_rag_answer",
+                            lambda q: pytest.fail("chatbot không được chạy"))
+        monkeypatch.setattr(llm_gateway, "chat",
+                            lambda *a, **k: pytest.fail("LLM"))
+>       assert ae.main(["--deterministic", "--no-record"]) == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = <function main at 0x000001DDBDCF6700>(['--deterministic', '--no-record'])
+E        +    where <function main at 0x000001DDBDCF6700> = ae.main
+
+tests\test_qa_harness.py:484: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[ok] chatbot v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] fin_qa v1 skeleton owner=finance qa=finance risk=high 3 ca
+[ok] guardrail v2 active owner=legal_hr qa=data_platform risk=high 132 ca
+[ok] intel_qa v1 skeleton owner=intel qa=intel risk=medium 3 ca
+[ok] kd_a1 v2 active owner=sales qa=sales risk=high 43 ca
+[ok] kd_a11 v1 skeleton owner=sales qa=sales risk=high 4 ca
+[ok] kd_a3 v2 active owner=sales qa=sales risk=high 20 ca
+[ok] kd_a5 v1 active owner=sales qa=data_platform risk=high 21 ca
+[ok] kd_a7 v1 active owner=sales qa=sales risk=high 10 ca
+[ok] kd_a9 v1 active owner=sales qa=sales risk=high 8 ca
+[ok] mkt02 v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] mkt03 v1 active owner=marketing qa=data_platform risk=high 15 ca
+[ok] mkt04 v1 active owner=marketing qa=data_platform risk=high 17 ca
+[ok] mkt12 v1 active owner=marketing qa=marketing risk=high 6 ca
+[ok] mkt_13 v1 skeleton owner=marketing qa=marketing risk=high 4 ca
+[ok] mkt_ads_ugc v2 active owner=marketing qa=data_platform risk=high 29 ca
+[ok] mkt_seo v1 active owner=marketing qa=data_platform risk=medium 14 ca
+[ok] pc_a9 v1 skeleton owner=legal_hr qa=legal_hr risk=high 3 ca
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sales_director v1 active owner=sales qa=data_platform risk=medium 26 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 22/22 suite hợp lệ
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=bc378178b239 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[done] kd_a1 v2 PASS 43/43 pass_rate=1.0 (ngưỡng 0.86) prompt_version=c566649ccd37 model=fake_gateway judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a3 v2 PASS 20/20 pass_rate=1.0 (ngưỡng 1.0) prompt_version=7a1646d6635a model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a5 v1 PASS 21/21 pass_rate=1.0 (ngưỡng 1.0) prompt_version=045a5454d45d model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a7 v1 PASS 10/10 pass_rate=1.0 (ngưỡng 1.0) prompt_version=593c166a2990 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a9 v1 PASS 8/8 pass_rate=1.0 (ngưỡng 1.0) prompt_version=fad994b200bf model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] mkt02 v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=9f478475ca1c model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt03 v1 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=b010645900b6 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[mkt04:mkt04-vid-01] FAIL (video_label_meta) — lỗi ffmpeg mã hóa lỗi (rc=3221225794):  | text="mat-ong-sam-300ml × tiktok"
+[mkt04:mkt04-vid-02] FAIL (video_label_meta) — lỗi ffmpeg mã hóa lỗi (rc=3221225794):  | text="mat-ong-sam-300ml × facebook"
+[mkt04:mkt04-meta-01] FAIL (no_location_meta) — lỗi ffmpeg mã hóa lỗi (rc=3221225794):  | text="mat-ong-sam-300ml × facebook"
+[done] mkt04 v1 FAIL 14/17 pass_rate=0.8235 (ngưỡng 1.0) prompt_version=db42c0f63b28 model=rules judge=None
+[done] ca bắt buộc FAIL: mkt04-vid-01, mkt04-vid-02, mkt04-meta-01
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] red_alert — người nhận độc lập (BKS/Pháp chế): chưa cấu hình (external-dep); bản sao chủ khối marketing: chưa cấu hình (external-dep)
+[done] mkt12 v1 PASS 6/6 pass_rate=1.0 (ngưỡng 1.0) prompt_version=98b4dc2f3bf9 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt_ads_ugc v2 PASS 29/29 pass_rate=1.0 (ngưỡng 1.0) prompt_version=ca8e721cea0f model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt_seo v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=3c273848d72a model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] sales_director v1 PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=f5fbd27fdd20 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+___________________ test_ocr_paddle_local_reads_real_label ____________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_paddle_local_reads_re0')
+no_network = []
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD6F17B90>
+
+    @pytest.mark.skipif(not _models_ok(), reason="chưa có paddleocr/model latin cục bộ — OCR thật CHƯA KIỂM")
+    def test_ocr_paddle_local_reads_real_label(tmp_path, no_network, monkeypatch):
+        from agents import sx_label
+        monkeypatch.delenv("OCR_PADDLE_MODEL_DIR", raising=False)
+        p = tmp_path / "nhan.png"
+        _label_png(p)
+>       text, pages, src = di.extract_text(p, "paddle_local")
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r13_batch_a.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ingest\doc_intake.py:374: in extract_text
+    text = _ocr(path, provider)
+           ^^^^^^^^^^^^^^^^^^^^
+ingest\doc_intake.py:339: in _ocr
+    return unicodedata.normalize("NFC", fn(path) or "")
+                                        ^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_paddle_local_reads_re0/nhan.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+______________________________ test_ocr_timeout _______________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_timeout0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD74D3EC0>
+
+    def test_ocr_timeout(tmp_path, monkeypatch):
+        # r14 C1: OCR chạy ở tiến trình con — treo → giết con khi quá hạn
+        for parts in di._PADDLE_SUBDIRS.values():
+            d = tmp_path.joinpath("m", *parts)
+            d.mkdir(parents=True)
+            for f in di._PADDLE_FILES:
+                (d / f).write_bytes(b"x")
+        monkeypatch.setenv("OCR_PADDLE_MODEL_DIR", str(tmp_path / "m"))
+        monkeypatch.setattr(di, "OCR_WORKER", [sys.executable, "-c", "import time; time.sleep(30)"])
+        monkeypatch.setattr(di, "OCR_TIMEOUT_S", 1)
+        p = tmp_path / "a.png"
+        Image.new("RGB", (20, 20), "white").save(p)
+        t0 = time.monotonic()
+        with pytest.raises(di.DocError, match="quá"):
+>           di._ocr_paddle_local(p)
+
+tests\test_r13_batch_a.py:116: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_timeout0/a.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_timeout0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD74D3EC0>
+
+    def test_ocr_timeout(tmp_path, monkeypatch):
+        # r14 C1: OCR chạy ở tiến trình con — treo → giết con khi quá hạn
+        for parts in di._PADDLE_SUBDIRS.values():
+            d = tmp_path.joinpath("m", *parts)
+            d.mkdir(parents=True)
+            for f in di._PADDLE_FILES:
+                (d / f).write_bytes(b"x")
+        monkeypatch.setenv("OCR_PADDLE_MODEL_DIR", str(tmp_path / "m"))
+        monkeypatch.setattr(di, "OCR_WORKER", [sys.executable, "-c", "import time; time.sleep(30)"])
+        monkeypatch.setattr(di, "OCR_TIMEOUT_S", 1)
+        p = tmp_path / "a.png"
+        Image.new("RGB", (20, 20), "white").save(p)
+        t0 = time.monotonic()
+>       with pytest.raises(di.DocError, match="quá"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'quá'
+E         Actual message: 'tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả'
+
+tests\test_r13_batch_a.py:115: AssertionError
+_ test_ocr_worker_failures_are_controlled[import sys; sys.exit(7)-tho\xe1t b\u1ea5t th\u01b0\u1eddng \\(m\xe3 7\\)] _
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c1/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDDA144800>
+code = 'import sys; sys.exit(7)', msg = 'thoát bất thường \\(mã 7\\)'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+        with pytest.raises(di.DocError, match=msg):
+>           di._ocr_paddle_local(ocr_ready)
+
+tests\test_r14_code_gaps.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c1/a.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+
+During handling of the above exception, another exception occurred:
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c1/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDDA144800>
+code = 'import sys; sys.exit(7)', msg = 'thoát bất thường \\(mã 7\\)'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+>       with pytest.raises(di.DocError, match=msg):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'thoát bất thường \\(mã 7\\)'
+E         Actual message: 'tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả'
+
+tests\test_r14_code_gaps.py:57: AssertionError
+_ test_ocr_worker_failures_are_controlled[print('r\xe1c kh\xf4ng ph\u1ea3i k\u1ebft qu\u1ea3')-k\u1ebft qu\u1ea3 h\u1ecfng] _
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c2/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD72B75F0>
+code = "print('rác không phải kết quả')", msg = 'kết quả hỏng'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+        with pytest.raises(di.DocError, match=msg):
+>           di._ocr_paddle_local(ocr_ready)
+
+tests\test_r14_code_gaps.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c2/a.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+
+During handling of the above exception, another exception occurred:
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c2/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD72B75F0>
+code = "print('rác không phải kết quả')", msg = 'kết quả hỏng'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+>       with pytest.raises(di.DocError, match=msg):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'kết quả hỏng'
+E         Actual message: 'tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả'
+
+tests\test_r14_code_gaps.py:57: AssertionError
+_ test_ocr_worker_failures_are_controlled[print('OCR_RESULT {not json')-k\u1ebft qu\u1ea3 h\u1ecfng] _
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c3/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD72B68A0>
+code = "print('OCR_RESULT {not json')", msg = 'kết quả hỏng'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+        with pytest.raises(di.DocError, match=msg):
+>           di._ocr_paddle_local(ocr_ready)
+
+tests\test_r14_code_gaps.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c3/a.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+
+During handling of the above exception, another exception occurred:
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c3/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD72B68A0>
+code = "print('OCR_RESULT {not json')", msg = 'kết quả hỏng'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+>       with pytest.raises(di.DocError, match=msg):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'kết quả hỏng'
+E         Actual message: 'tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả'
+
+tests\test_r14_code_gaps.py:57: AssertionError
+_ test_ocr_worker_failures_are_controlled[print('OCR_RESULT {"ok": true, "text": 5}')-k\u1ebft qu\u1ea3 h\u1ecfng] _
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c4/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD74F7170>
+code = 'print(\'OCR_RESULT {"ok": true, "text": 5}\')', msg = 'kết quả hỏng'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+        with pytest.raises(di.DocError, match=msg):
+>           di._ocr_paddle_local(ocr_ready)
+
+tests\test_r14_code_gaps.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c4/a.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+
+During handling of the above exception, another exception occurred:
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c4/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD74F7170>
+code = 'print(\'OCR_RESULT {"ok": true, "text": 5}\')', msg = 'kết quả hỏng'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+>       with pytest.raises(di.DocError, match=msg):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'kết quả hỏng'
+E         Actual message: 'tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả'
+
+tests\test_r14_code_gaps.py:57: AssertionError
+_ test_ocr_worker_failures_are_controlled[print('OCR_RESULT {"ok": false, "error": "\u1ea3nh h\u1ecfng/kh\xf4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c"}')-\u1ea3nh h\u1ecfng] _
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c5/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD2C79F40>
+code = 'print(\'OCR_RESULT {"ok": false, "error": "ảnh hỏng/không đọc được"}\')'
+msg = 'ảnh hỏng'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+        with pytest.raises(di.DocError, match=msg):
+>           di._ocr_paddle_local(ocr_ready)
+
+tests\test_r14_code_gaps.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c5/a.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+
+During handling of the above exception, another exception occurred:
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_failures_are_c5/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD2C79F40>
+code = 'print(\'OCR_RESULT {"ok": false, "error": "ảnh hỏng/không đọc được"}\')'
+msg = 'ảnh hỏng'
+
+    @pytest.mark.parametrize("code,msg", [
+        ("import os; os.abort()", "thoát bất thường"),                       # crash native/abort
+        ("import sys; sys.exit(7)", r"thoát bất thường \(mã 7\)"),
+        ("print('rác không phải kết quả')", "kết quả hỏng"),
+        ("print('OCR_RESULT {not json')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": true, \"text\": 5}')", "kết quả hỏng"),
+        ("print('OCR_RESULT {\"ok\": false, \"error\": \"ảnh hỏng/không đọc được\"}')", "ảnh hỏng")])
+    def test_ocr_worker_failures_are_controlled(ocr_ready, monkeypatch, code, msg):
+        _worker(monkeypatch, code)
+>       with pytest.raises(di.DocError, match=msg):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'ảnh hỏng'
+E         Actual message: 'tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả'
+
+tests\test_r14_code_gaps.py:57: AssertionError
+_____________________ test_ocr_worker_result_and_request ______________________
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_result_and_req0/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD74F62D0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_result_and_req0')
+
+    def test_ocr_worker_result_and_request(ocr_ready, monkeypatch, tmp_path):
+        seen = tmp_path / "req.json"
+        _worker(monkeypatch, "import sys,json,pathlib; r=sys.stdin.read(); pathlib.Path(sys.argv[1]).write_text(r);"
+                             " print('log engine'); print('OCR_RESULT ' + json.dumps({'ok': True, 'text': 'LOT L1'}))")
+        monkeypatch.setattr(di, "OCR_WORKER", di.OCR_WORKER + [str(seen)])
+        monkeypatch.setenv("DATABASE_URL", "postgresql://u@127.0.0.1:1/khong_dung")
+>       assert di._ocr_paddle_local(ocr_ready) == "LOT L1"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r14_code_gaps.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_result_and_req0/a.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+__________________ test_ocr_worker_env_has_no_db_credentials __________________
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_env_has_no_db_0/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDDA15E7B0>
+
+    def test_ocr_worker_env_has_no_db_credentials(ocr_ready, monkeypatch):
+        # guard pytest đặt biến DSN = "" (chặn dotenv) — chỉ cấm giá trị THẬT lọt sang con
+        _worker(monkeypatch, "import os,json; bad=[k for k, v in os.environ.items() if v and (k.endswith('DATABASE_URL')"
+                             " or k.startswith('PG'))]; print('OCR_RESULT ' + json.dumps({'ok': True, 'text': ','.join(bad)}))")
+        monkeypatch.setenv("DATABASE_URL", "postgresql://u@127.0.0.1:1/khong_dung")
+        monkeypatch.setenv("PGPASSWORD", "khong-dung")
+>       assert di._ocr_paddle_local(ocr_ready) == ""
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_r14_code_gaps.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_worker_env_has_no_db_0/a.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+________________ test_ocr_timeout_kills_worker_no_late_result _________________
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_timeout_kills_worker_0/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD72B4380>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_timeout_kills_worker_0')
+
+    def test_ocr_timeout_kills_worker_no_late_result(ocr_ready, monkeypatch, tmp_path):
+        late = tmp_path / "late"
+        _worker(monkeypatch, f"import time,pathlib; time.sleep(4); pathlib.Path(r'{late}').write_text('muon')")
+        monkeypatch.setattr(di, "OCR_TIMEOUT_S", 1)
+        with pytest.raises(di.DocError, match="quá 1 giây"):
+>           di._ocr_paddle_local(ocr_ready)
+
+tests\test_r14_code_gaps.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_timeout_kills_worker_0/a.png')
+
+    def _ocr_paddle_local(path: Path) -> str:
+        """OCR tại chỗ qua tiến trình con → text. Crash/treo/kết quả hỏng/lỗi
+        engine → DocError có kiểm soát (không ghi gì là thành công)."""
+        root = _model_root()                 # kiểm model ở cha: thiếu → khỏi sinh con
+        req = json.dumps({"path": str(Path(path).resolve()), "model_dir": str(root),
+                          "max_pages": OCR_MAX_PAGES})
+        env = {k: v for k, v in os.environ.items()
+               if not (k.endswith("DATABASE_URL") or k.startswith("PG"))}
+        try:
+            r = subprocess.run(OCR_WORKER, input=req.encode("utf-8"),
+                               capture_output=True, timeout=OCR_TIMEOUT_S, check=False,
+                               cwd=ROOT, env=env)
+        except subprocess.TimeoutExpired:   # run() đã giết + thu hồi tiến trình con
+            raise DocError(f"OCR quá {OCR_TIMEOUT_S:g} giây — đã dừng tiến trình"
+                           " OCR, bỏ") from None
+        except OSError as e:
+            raise DocError(f"không chạy được tiến trình OCR ({type(e).__name__})"
+                           ) from None
+        if r.returncode != 0:
+>           raise DocError(f"tiến trình OCR thoát bất thường (mã {r.returncode})"
+                           " — model/engine hỏng? không có kết quả")
+E           ingest.doc_intake.DocError: tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả
+
+ingest\doc_intake.py:250: DocError
+
+During handling of the above exception, another exception occurred:
+
+ocr_ready = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_timeout_kills_worker_0/a.png')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDD72B4380>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ocr_timeout_kills_worker_0')
+
+    def test_ocr_timeout_kills_worker_no_late_result(ocr_ready, monkeypatch, tmp_path):
+        late = tmp_path / "late"
+        _worker(monkeypatch, f"import time,pathlib; time.sleep(4); pathlib.Path(r'{late}').write_text('muon')")
+        monkeypatch.setattr(di, "OCR_TIMEOUT_S", 1)
+>       with pytest.raises(di.DocError, match="quá 1 giây"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'quá 1 giây'
+E         Actual message: 'tiến trình OCR thoát bất thường (mã 3221225794) — model/engine hỏng? không có kết quả'
+
+tests\test_r14_code_gaps.py:93: AssertionError
+__________________________ test_cli_help_and_db_down __________________________
+
+    def test_cli_help_and_db_down():
+        env = dict(os.environ, PYTHONIOENCODING="utf-8")
+        r = subprocess.run([sys.executable, "-m", "agents.ra_kenh", "--help"],
+                           cwd=ROOT, env=env, capture_output=True, timeout=60,
+                           encoding="utf-8", errors="replace", check=False)
+>       assert r.returncode == 0 and "+07:00" in r.stdout
+E       AssertionError: assert (3221225794 == 0)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'agents.ra_kenh', '--help'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_ra_kenh.py:348: AssertionError
+__________________ test_check_routing_cli_real_config_exit_1 __________________
+
+    def test_check_routing_cli_real_config_exit_1():
+        env = dict(os.environ, PYTHONIOENCODING="utf-8")
+        r = subprocess.run([sys.executable, "-m", "pipelines.red_alert",
+                            "--check-routing"], cwd=ROOT, env=env,
+                           capture_output=True, timeout=60, encoding="utf-8",
+                           errors="replace", check=False)
+>       assert r.returncode == 1 and "thiếu người nhận" in r.stdout, r.stdout
+E       AssertionError: 
+E       assert (3221225794 == 1)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'pipelines.red_alert', '--check-routing'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_red_alert.py:140: AssertionError
+_________________________ test_cli_db_down_exit1_fast _________________________
+
+    def test_cli_db_down_exit1_fast():
+        """Host chết thật (gotcha v2.0 — không `env -u`): exit 1, không treo."""
+        env = dict(os.environ,
+                   DATABASE_URL="postgresql://u@10.255.255.1:5432/x",
+                   PYTHONIOENCODING="utf-8")
+        r = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "review_load.py"),
+             "--today", "2026-10-12"], env=env, capture_output=True,
+            timeout=60, cwd=ROOT, check=False)
+>       assert r.returncode == 1, r.stderr
+E       AssertionError: b''
+E       assert 3221225794 == 1
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', 'D:\\code\\samsam\\scripts\\review_load.py', '--today', '2026-10-12'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_review_load.py:340: AssertionError
+___________________________ test_cli_db_down_exit2 ____________________________
+
+    def test_cli_db_down_exit2():
+        env = dict(os.environ, PYTHONIOENCODING="utf-8",
+                   DATABASE_URL="postgresql://u@10.255.255.1:5432/x")
+        t0 = time.monotonic()
+        r = subprocess.run([sys.executable, "-m", "agents.sales_director",
+                            "--run", "--dry-run"], cwd=ROOT, env=env,
+                           capture_output=True, timeout=120, encoding="utf-8",
+                           errors="replace", check=False)
+>       assert r.returncode == 2 and "[error]" in r.stderr, r.stderr
+E       AssertionError: 
+E       assert (3221225794 == 2)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'agents.sales_director', '--run', '--dry-run'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_sales_director.py:941: AssertionError
+_____________________ test_cli_subprocess_default_console _____________________
+
+    def test_cli_subprocess_default_console():
+        # Không ép PYTHONIOENCODING — console mặc định không UnicodeEncodeError.
+        r = subprocess.run(
+            [sys.executable, "-m", "pipelines.scenario", "--sku",
+             "ruou-sam-chai-thuy-tinh-500ml", "--channel", "shopee", "--weeks",
+             "2", "--start", "2026-10-12"],
+            cwd=ROOT, capture_output=True, timeout=60, check=False)
+>       assert r.returncode == 0, r.stderr[-500:]
+E       AssertionError: b''
+E       assert 3221225794 == 0
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'pipelines.s...500ml', '--channel', 'shopee', '--weeks', '2', '--start', '2026-10-12'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_scenario.py:543: AssertionError
+___________________ test_cli_enforced_arbitrary_by_rejected ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...t_writer_5c4b52be79', 'app_human': 't_c04_app_human_5c4b52be79', 'ben_a_reader': 't_c04_ben_a_reader_5c4b52be79'}, ...}
+
+    def test_cli_enforced_arbitrary_by_rejected(live):
+        """Probe F08 ở biên CLI thật: `APPROVAL_ENFORCE=1`, approvers thật rỗng,
+        login app_human → `--approve --by <tên tùy ý>` exit 1, mục còn pending
+        (trước v13.5: exit 0 'approved')."""
+        with _login(live, "agent_writer") as c:
+            qid = aq.enqueue(c, object_type="price_review", object_id="C1",
+                             block="sales", title="t", payload=PAYLOAD,
+                             risk="low", created_by="agent:kd_price",
+                             sla_hours=24)
+        env = dict(os.environ, PYTHONIOENCODING="utf-8", APPROVAL_ENFORCE="1",
+                   DATABASE_URL=live["dsn"]["app_human"])
+        env.pop("AUTH_MODE", None)
+        r = subprocess.run([sys.executable, "-m", "pipelines.approval_queue",
+                            "--approve", str(qid), "--by", "Bất Kỳ Ai"],
+                           cwd=ROOT, env=env, capture_output=True, timeout=120,
+                           encoding="utf-8", errors="replace", check=False)
+>       assert r.returncode == 1, (r.stdout, r.stderr)
+E       AssertionError: ('', '')
+E       assert 3221225794 == 1
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'pipelines.approval_queue', '--approve', '4', '--by', 'Bất Kỳ Ai'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_v13_c04_authz.py:577: AssertionError
+_________________ test_video_without_picture_stream_rejected __________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_video_without_picture_str0')
+
+    @need_ff
+    def test_video_without_picture_stream_rejected(tmp_path):
+>       audio = _make_video(tmp_path / "a.mp4", "mp4", audio_only=True)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c05_media.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_video_without_picture_str0/a.mp4')
+fmt = 'mp4'
+
+    def _make_video(path: Path, fmt: str, *, audio_only=False) -> bytes:
+        """Video 1s 32x32 có metadata vị trí + tiêu đề (tiền điều kiện: nguồn
+        PHẢI có dấu GPS, nếu không test 'đã gỡ' pass ảo)."""
+        src = ([] if audio_only else
+               ["-f", "lavfi", "-i", "testsrc=duration=1:size=32x32:rate=5"])
+        src += ["-f", "lavfi", "-i", "sine=duration=1"]
+        codec = ["-c:a", "aac"] if audio_only else ["-c:v", "libx264", "-c:a",
+                                                     "aac", "-shortest"]
+        extra = ["-movflags", "use_metadata_tags"] if fmt == "mov" else []
+        r = subprocess.run(
+            [FF, "-v", "error", "-y", *src, *codec,
+             "-metadata", f"location={LAT}/",
+             "-metadata", f"com.apple.quicktime.location.ISO6709={LAT}+010.000/",
+             "-metadata", "title=KV-SECRET", *extra, "-f", fmt, str(path)],
+            capture_output=True, check=False)
+>       assert r.returncode == 0, r.stderr[-300:]
+E       AssertionError: b''
+E       assert 3221225794 == 0
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\imageio_ffm...\pytest-of-hahuy\\pytest-3604\\test_video_without_picture_str0\\a.mp4'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_v13_c05_media.py:67: AssertionError
+__________________________ test_cli_module_help_runs __________________________
+
+    def test_cli_module_help_runs():
+        """`python -m pipelines.job_runs --list` đọc lịch thật, không DB."""
+        import subprocess
+        import sys
+        r = subprocess.run([sys.executable, "-m", "pipelines.job_runs", "--list"],
+                           cwd=ROOT, capture_output=True, timeout=60,
+                           env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                           encoding="utf-8", errors="replace", check=False)
+>       assert r.returncode == 0 and "red_alert_sweep" in r.stdout
+E       AssertionError: assert (3221225794 == 0)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'pipelines.job_runs', '--list'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_v13_c07_ops.py:700: AssertionError
+___________________ test_job_login_report_steps_match_owner ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...svc_backup': 't_p2_svc_backup_856b0aa947', 'svc_job': 't_p2_svc_job_856b0aa947', ...}, 'schema': 't_v14p2l_856b0aa947'}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_job_login_report_steps_ma0')
+
+    def test_job_login_report_steps_match_owner(live, tmp_path):
+        """Bước lịch đọc nhiều bảng (báo cáo TGĐ, báo cáo vận hành tháng) chạy
+        dưới login svc_job cho ĐÚNG kết quả như owner — không có mục âm thầm
+        'lỗi đọc … InsufficientPrivilege'."""
+        # v15.1 (P7.5): hai lần chạy (owner, svc_job) dùng CHUNG một đồng hồ
+        # ghim — báo cáo in "lập lúc dd/mm/yyyy HH:MM"; đồng hồ thật làm hai lần
+        # chạy vắt phút → so khác nhau (chập chờn) dù quyền đúng. Tuần dữ liệu
+        # mẫu cũng tính từ đồng hồ ghim (không từ now() của DB).
+        # lệch 7 phút so với giờ máy → kiểm được báo cáo in giờ GHIM.
+        pinned = (datetime.now(VN_TZ).replace(second=0, microsecond=0)
+                  - timedelta(minutes=7))
+        last_week = (pinned - timedelta(days=7)).date()
+        last_monday = last_week - timedelta(days=last_week.weekday())
+        a = live["admin"]
+        with a.transaction():
+            a.execute(f"set local search_path to {live['schema']}")
+            a.execute("insert into channel_snapshots (channel, metric_id,"
+                      " period_kind, period_start, value, source, source_ref,"
+                      " captured_by) values ('shopee', 'gmv', 'week', %s,"
+                      " 1000000, 'manual_export', 'f.csv', 'Lan')",
+                      (last_monday,))
+        for mod, argv in (("agents.ceo_report", ["--period", "week"]),
+                          ("scripts.ops_monthly", ["--month", "prev"])):
+            outs = {}
+            for who in ("admin", "svc_job"):
+                d = tmp_path / f"{mod}-{who}"
+                rc, text = _run(_pinned_argv(mod, pinned,
+                                             [*argv, "--out-dir", str(d)]),
+                                live["dsn"][who], tmp_path)
+>               assert rc == 0, (argv, who, text)
+E               AssertionError: (['--period', 'week'], 'admin', '')
+E               assert 3221225794 == 0
+
+tests\test_v14_p2_service_auth.py:806: AssertionError
+_______________ test_loader_login_loads_files_and_cannot_erase ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...svc_backup': 't_p2_svc_backup_856b0aa947', 'svc_job': 't_p2_svc_job_856b0aa947', ...}, 'schema': 't_v14p2l_856b0aa947'}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_loader_login_loads_files_0')
+
+    def test_loader_login_loads_files_and_cannot_erase(live, tmp_path):
+        fx = ROOT / "tests" / "fixtures"
+        dsn = live["dsn"]["svc_loader"]
+        for argv in (["-m", "ingest.market_csv", "--file",
+                      str(fx / "market" / "fixture_shopee_order.csv"),
+                      "--channel", "shopee", "--kind", "order"],
+                     ["-m", "agents.kd_orders", "--sync"],
+                     ["-m", "ingest.settlement_csv", "--file",
+                      str(fx / "finance" / "settlement_shopee_MAU.csv"),
+                      "--channel", "shopee"],
+                     ["-m", "ingest.inventory_csv", "--file",
+                      str(ROOT / "data" / "sample_inventory.csv"),
+                      "--source", "sample"]):
+            rc, text = _run(argv, dsn, tmp_path)
+>           assert rc == 0, (argv, text)
+E           AssertionError: (['-m', 'ingest.market_csv', '--file', 'D:\\code\\samsam\\tests\\fixtures\\market\\fixture_shopee_order.csv', '--channel', 'shopee', ...], '')
+E           assert 3221225794 == 0
+
+tests\test_v14_p2_service_auth.py:849: AssertionError
+________________ test_loader_login_golden_cannot_self_approve _________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...svc_backup': 't_p2_svc_backup_856b0aa947', 'svc_job': 't_p2_svc_job_856b0aa947', ...}, 'schema': 't_v14p2l_856b0aa947'}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_loader_login_golden_canno0')
+
+    def test_loader_login_golden_cannot_self_approve(live, tmp_path):
+        """v14 vá review (MAJOR): login svc_loader nạp golden được nhưng KHÔNG
+        tự duyệt giá/map, KHÔNG quyết/xóa phiếu lệch đã quyết. Code cũ: UPDATE
+        toàn bảng price_list/sku_map + mọi quyền golden_discrepancies → 4 câu
+        probe đều chạy được."""
+        dsn = live["dsn"]["svc_loader"]
+        rc, text = _run(["-m", "ingest.golden_store"], dsn, tmp_path)
+>       assert rc == 0, text
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v14_p2_service_auth.py:883: AssertionError
+________________ test_escalate_and_anchor_run_under_job_login _________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...svc_backup': 't_p2_svc_backup_47b98a4040', 'svc_job': 't_p2_svc_job_47b98a4040', ...}, 'schema': 't_v14p2l_47b98a4040'}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_escalate_and_anchor_run_u0')
+
+    def test_escalate_and_anchor_run_under_job_login(live, tmp_path):
+        """Bước lịch mới chạy dưới login svc_job (không owner): không thiếu quyền."""
+        for argv in (["-m", "pipelines.red_alert", "--escalate"],
+                     ["-m", "pipelines.anchor", "--build"]):
+            rc, text = _run(argv, live["dsn"]["svc_job"], tmp_path)
+            assert "InsufficientPrivilege" not in text and \
+                "permission denied" not in text, (argv, text)
+        rc, text = _run(["-m", "pipelines.red_alert", "--escalate"],
+                        live["dsn"]["svc_job"], tmp_path)
+>       assert rc == 0 and "escalated=0" in text, text
+E       AssertionError: 
+E       assert (3221225794 == 0)
+
+tests\test_v14_p6_ops.py:258: AssertionError
+__________ test_p102_authorized_person_completes[da_pmo-set-status] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+path = 'da_pmo-set-status'
+
+    @pytest.mark.parametrize("path", list(OK_PATHS))
+    def test_p102_authorized_person_completes(live, path):
+        who, mod, argv, (sql, args), want, rerun_rc = OK_PATHS[path](live)
+        before = _q(live, sql, args)
+        rc, out = _cli(live, who, mod, *argv)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p102.py:378: AssertionError
+___________ test_p102_authorized_person_completes[da_pmo-apply-due] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+path = 'da_pmo-apply-due'
+
+    @pytest.mark.parametrize("path", list(OK_PATHS))
+    def test_p102_authorized_person_completes(live, path):
+        who, mod, argv, (sql, args), want, rerun_rc = OK_PATHS[path](live)
+        before = _q(live, sql, args)
+        rc, out = _cli(live, who, mod, *argv)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p102.py:378: AssertionError
+___________ test_p102_authorized_person_completes[da_b2b-handover] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+path = 'da_b2b-handover'
+
+    @pytest.mark.parametrize("path", list(OK_PATHS))
+    def test_p102_authorized_person_completes(live, path):
+        who, mod, argv, (sql, args), want, rerun_rc = OK_PATHS[path](live)
+        before = _q(live, sql, args)
+        rc, out = _cli(live, who, mod, *argv)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p102.py:378: AssertionError
+_________ test_p102_authorized_person_completes[ra_kenh-mark-removed] _________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+path = 'ra_kenh-mark-removed'
+
+    @pytest.mark.parametrize("path", list(OK_PATHS))
+    def test_p102_authorized_person_completes(live, path):
+        who, mod, argv, (sql, args), want, rerun_rc = OK_PATHS[path](live)
+        before = _q(live, sql, args)
+        rc, out = _cli(live, who, mod, *argv)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p102.py:378: AssertionError
+_______ test_p102_authorized_person_completes[anchor-submit-by-person] ________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+path = 'anchor-submit-by-person'
+
+    @pytest.mark.parametrize("path", list(OK_PATHS))
+    def test_p102_authorized_person_completes(live, path):
+        who, mod, argv, (sql, args), want, rerun_rc = OK_PATHS[path](live)
+        before = _q(live, sql, args)
+        rc, out = _cli(live, who, mod, *argv)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p102.py:378: AssertionError
+___________ test_p102_authorized_person_completes[kd_quote-outcome] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+path = 'kd_quote-outcome'
+
+    @pytest.mark.parametrize("path", list(OK_PATHS))
+    def test_p102_authorized_person_completes(live, path):
+        who, mod, argv, (sql, args), want, rerun_rc = OK_PATHS[path](live)
+        before = _q(live, sql, args)
+        rc, out = _cli(live, who, mod, *argv)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p102.py:378: AssertionError
+_______ test_p102_authorized_person_completes[kd_quote-verify-send-by] ________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+path = 'kd_quote-verify-send-by'
+
+    @pytest.mark.parametrize("path", list(OK_PATHS))
+    def test_p102_authorized_person_completes(live, path):
+        who, mod, argv, (sql, args), want, rerun_rc = OK_PATHS[path](live)
+        before = _q(live, sql, args)
+        rc, out = _cli(live, who, mod, *argv)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p102.py:378: AssertionError
+________________ test_p102_da_pmo_set_status_authorized_human _________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+
+    def test_p102_da_pmo_set_status_authorized_human(live):
+        """QUYẾT ĐỊNH khối ceo: người được ủy quyền (login của chính họ) đổi
+        trạng thái mốc → exit 0 + DB đổi + log; chạy lại no-op. Trước sửa: exit 2
+        `permission denied for table project_milestones`."""
+        code = "M-P102S"
+        _q(live, "insert into project_milestones (code, title, owner_role,"
+           " due_date, gate, source, updated_by) values (%s, 'Mốc giả P102',"
+           " 'tgd', '2026-12-01', 'biên bản giả', 'test-p102', 'seed')", (code,))
+    
+        def snap():
+            return _q(live, "select status, evidence, updated_by, updated_at"
+                      " from project_milestones where code = %s", (code,))
+    
+        s0 = snap()
+        d0 = _denied(live, "project_milestone", code)
+        args = ("--set-status", code, "--status", "xong", "--evidence",
+                "BB-P102-1")
+        for who, by in (("ceo", "agent:p102"), ("ceo", "system:cron"),
+                        ("sales", P_SALES),          # sai khối
+                        ("sales", P_CEO),            # --by giả (login người khác)
+                        ("nomap", P_NOMAP),          # login chưa ánh xạ (DB)
+                        ("noblock", P_NOBLK)):       # khối không thuộc login (DB)
+            rc, out = _cli(live, who, "agents.da_pmo", *args, "--by", by)
+>           assert rc == 1, (who, by, out)
+E           AssertionError: ('ceo', 'agent:p102', '')
+E           assert 3221225794 == 1
+
+tests\test_v15_fix_p102.py:416: AssertionError
+_________________ test_p102_da_pmo_apply_due_authorized_human _________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+
+    def test_p102_da_pmo_apply_due_authorized_human(live):
+        """THỰC THI mục đã duyệt (danh tính): đúng người áp hạn đã duyệt → exit
+        0 + hạn đổi; chạy lại no-op; DB tự kiểm mục approved + sha bản duyệt."""
+        from agents import da_pmo
+        code = "M-P102D"
+        _q(live, "insert into project_milestones (code, title, owner_role,"
+           " due_date, gate, source, updated_by) values (%s, 'Mốc hạn P102',"
+           " 'tgd', '2026-12-01', 'biên bản giả', 'test-p102', 'seed')", (code,))
+        payload = da_pmo.change_payload(code, date(2026, 12, 1),
+                                        date(2026, 12, 15), P_SALES)
+        qid = _enqueue(live, "milestone_change", f"milestone:{code}", "ceo",
+                       payload, P_SALES)
+    
+        def snap():
+            return _q(live, "select due_date, updated_by, updated_at from"
+                      " project_milestones where code = %s", (code,))
+    
+        s0 = snap()
+        rc, out = _cli(live, "ceo", "agents.da_pmo", "--apply-due", qid, "--by",
+                       P_CEO)
+>       assert rc == 1 and snap() == s0, out                # chưa duyệt
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 
+E       assert (3221225794 == 1)
+
+tests\test_v15_fix_p102.py:473: AssertionError
+_________________ test_p102_da_b2b_handover_authorized_human __________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+
+    def test_p102_da_b2b_handover_authorized_human(live):
+        qid, ids = _batch(live, 1)
+    
+        def snap(q=qid):
+            return _q(live, "select id, status, batch_queue_id, handed_at from"
+                      " org_prospects where batch_queue_id = %s or id = any(%s)"
+                      " order by id", (q, ids))
+    
+        s0 = snap()
+        rc, out = _cli(live, "sales", "agents.da_b2b", "--handover", qid, "--by",
+                       P_SALES)
+>       assert rc == 1 and snap() == s0, out                # chưa duyệt
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 
+E       assert (3221225794 == 1)
+
+tests\test_v15_fix_p102.py:548: AssertionError
+_______________ test_p102_ra_kenh_mark_removed_authorized_human _______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+
+    def test_p102_ra_kenh_mark_removed_authorized_human(live):
+        """QUYẾT ĐỊNH khối legal_hr: Pháp chế ghi nhận đã gỡ → đợt vi phạm đóng
+        `da_go` + log; chạy lại không đổi gì."""
+        oid = hashlib.sha256(URL_RK.encode()).hexdigest()[:12]
+        _q(live, "insert into channel_posts (url, channel, content_type, is_ai,"
+           " text, text_sha256, guardrail, codes, severity, first_detected_at,"
+           " due_at, imported_by, scanned_at) values (%s, 'facebook', 'bai_viet',"
+           " false, 'bài giả p102', %s, '{}'::jsonb, '{tu_cam}', 'S1', now(),"
+           " now() + interval '24 hours', 'MXH Giả P102', now())",
+           (URL_RK, "a" * 64))
+    
+        def snap():
+            return _q(live, "select id, closed_at, close_reason, closed_by from"
+                      " channel_posts where url = %s order by id", (URL_RK,))
+    
+        s0 = snap()
+        d0 = _denied(live, "channel_post", oid)
+        for who, by in (("sales", P_SALES),          # sai khối
+                        ("sales", P_LEGAL),          # --by giả
+                        ("legalnb", P_LNB),          # khối không thuộc login (DB)
+                        ("nomap", P_NOMAP)):         # không thuộc người duyệt
+            rc, out = _cli(live, who, "agents.ra_kenh", "--mark-removed", URL_RK,
+                           "--by", by)
+>           assert rc == 1, (who, by, out)
+E           AssertionError: ('sales', 'Bán Hàng Giả Lập P102', '')
+E           assert 3221225794 == 1
+
+tests\test_v15_fix_p102.py:628: AssertionError
+__________________ test_p102_anchor_submit_authorized_human ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+
+    def test_p102_anchor_submit_authorized_human(live):
+        """QUYẾT ĐỊNH khối farming (giai đoạn có người duyệt): người được ủy
+        quyền gửi digest → 1 biên nhận `da_gui`; chạy lại no-op. Danh tính DB
+        kiểm TRƯỚC khi gửi ra ngoài; job `agent:anchor` vẫn bị cổng rollout."""
+        from pipelines import anchor
+        as_of = _q(live, "select date_trunc('second', now()) - interval '1 hour'"
+                   )[0][0]
+        d = {"t": "plot_logs_head", "id": 1, "row_hash": "c" * 64}
+        leaves = [{"k": "plot_logs_head:1", "d": d, "h": anchor.leaf_hash(d)}]
+        root = anchor.merkle_root([x["h"] for x in leaves])
+        sha = hashlib.sha256(anchor.manifest(anchor._us(as_of), leaves,
+                                             root)).hexdigest()
+        bid = _q(live, "insert into anchor_batches (as_of, leaves, merkle_root,"
+                 " manifest_sha256, created_by) values (%s, %s, %s, %s,"
+                 " 'agent:anchor') returning id",
+                 (as_of, Jsonb(leaves), root, sha))[0][0]
+        posts = live["tmp"] / "anchor_posts.log"
+    
+        def snap():
+            return _q(live, "select id, status, created_by from anchor_receipts"
+                      " where batch_id = %s order by id", (bid,))
+    
+        p0 = len(posts.read_text(encoding="utf-8").splitlines()) \
+            if posts.exists() else 0
+    
+        def n_posts():                     # số lần "gửi" ra calendar GIẢ từ đầu ca
+            return (len(posts.read_text(encoding="utf-8").splitlines())
+                    if posts.exists() else 0) - p0
+    
+        d0 = _denied(live, "anchor_batch", bid)
+        # job (agent:anchor mặc định): giai đoạn có người duyệt → rollout chặn
+        rc, out = _cli(live, "ceo", "pipelines.anchor", "--submit", bid)
+>       assert rc == 1 and snap() == [] and n_posts() == 0, out
+E       AssertionError: 
+E       assert (3221225794 == 1)
+
+tests\test_v15_fix_p102.py:695: AssertionError
+_________ test_p102_kd_quote_verify_send_and_outcome_authorized_human _________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p102cfg0/launch_p102.py'), ...}
+
+    def test_p102_kd_quote_verify_send_and_outcome_authorized_human(live):
+        """NHẬP LIỆU (danh tính): mốc đã gửi + kết quả do NGƯỜI của chính login
+        ghi qua function; INSERT thẳng `b2b_quote_events` (ghi tên người khác)
+        bị từ chối. Trước sửa: login người INSERT thẳng được với tên bất kỳ."""
+        qid = _enqueue(live, "b2b_quote", "BG-20261018-1-p1020001", "sales",
+                       QUOTE_TEXT, "agent:kd_quote")
+        _decide(live, qid)
+        md = live["tmp"] / "bao-gia-p102.md"
+        md.write_text(QUOTE_TEXT, encoding="utf-8", newline="\n")
+        bad = live["tmp"] / "bao-gia-p102-sua.md"
+        bad.write_text(QUOTE_TEXT + "giảm thêm 50%\n", encoding="utf-8",
+                       newline="\n")
+    
+        def ev(kind=None):
+            return _q(live, "select kind, recorded_by, db_role from"
+                      " b2b_quote_events where queue_id = %s"
+                      + (" and kind = %s" if kind else "") + " order by id",
+                      (qid, kind) if kind else (qid,))
+    
+        d0 = _denied(live, "b2b_quote", qid)
+        for who, by in (("sales", "agent:p102"), ("sales", P_CEO),
+                        ("nomap", P_NOMAP)):
+            rc, out = _cli(live, who, "agents.kd_quote", "--verify-send", qid, md,
+                           "--by", by)
+>           assert rc == 1, (who, by, out)
+E           AssertionError: ('sales', 'agent:p102', '')
+E           assert 3221225794 == 1
+
+tests\test_v15_fix_p102.py:773: AssertionError
+__________________ test_p87_valid_report_and_table_approved ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg0/launch_p10.py'), ...}
+p87 = {'dl': 'dl:1', 'feats': {'ceo-01': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': ['agent:ceo_report'], 'bang_c...e, ...}, 'ceo-95': {'code_status': 'co_code', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}]}, ...}}
+
+    def test_p87_valid_report_and_table_approved(live, p87):  # noqa: F811
+        """Luồng hợp lệ vẫn duyệt được — SQL thẳng (báo cáo + bảng) và CLI
+        (báo cáo); danh tính theo login; người khối khác / --by giả vẫn bị chặn.
+        (CLI cho khóa BẢNG: login app_human không SELECT được bảng nguồn như
+        `audit_runs` → bộ đếm Python báo "nguồn chưa đọc được" — có từ trước,
+        ngoài P8.7, ghi ở báo cáo.)"""
+        name = "ceo-risk-2026-10-11.md"
+        _q(live, "insert into report_outputs (feature_id, name, sha256) values"
+           " ('ceo-03', %s, %s)", (name, "1" * 64))
+        ok, msg = _call(live, "ceo-03", f"rp:{name}", "1" * 64, by=P_SALES)
+        assert not ok and _written(live, "ceo-03", f"rp:{name}") == (0, 0), msg
+        ok, msg = _call(live, "ceo-03", f"rp:{name}", "1" * 64, who="sales",
+                        by=P_SALES)
+        assert not ok and _written(live, "ceo-03", f"rp:{name}") == (0, 0), msg
+        ok, rid = _call(live, "ceo-03", f"rp:{name}", "1" * 64)
+        assert ok, rid
+        assert _q(live, "select reviewed_by, db_role, content_sha256, decision"
+                  " from output_reviews where id = %s", (rid,)) == [
+            (P_FARM, live["name"]["farm"], "1" * 64, "approved")]
+        assert _written(live, "ceo-03", f"rp:{name}") == (1, 1)
+        sha = _outputs(live, p87, "ceo-04.6")[K_A]
+        ok, rid = _call(live, "ceo-04.6", K_A, sha)
+        assert ok, rid
+        assert _q(live, "select reviewed_by, db_role, content_sha256 from"
+                  " output_reviews where id = %s", (rid,)) == [
+            (P_FARM, live["name"]["farm"], sha)]
+        name = "ceo-risk-2026-10-13.md"
+        _q(live, "insert into report_outputs (feature_id, name, sha256) values"
+           " ('ceo-03', %s, %s)", (name, "8" * 64))
+        rc, out = _cli(live, "farm", "pipelines.rollout", "--review-output",
+                       "ceo-03", "--key", f"rp:{name}", "--sha", "8" * 64,
+                       "--decision", "approved", "--by", P_FARM)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p87.py:195: AssertionError
+___________________ test_p87b_human_cli_lists_table_outputs ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg1/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.6': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+
+    def test_p87b_human_cli_lists_table_outputs(live, p87b):  # noqa: F811
+        """Đúng người/khối: `--outputs` exit 0, liệt kê khóa nguồn bảng + sha
+        phiên bản hiện hành (= bộ đếm owner), không liệt kê dòng mẫu."""
+        want = _owner_pending(live, p87b, FID)
+        assert K_A in want and K_B in want and K_S not in want
+        rc, out = _cli(live, "farm", "pipelines.rollout", "--outputs", FID)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p87b.py:120: AssertionError
+__________________ test_p87b_human_cli_reviews_table_output ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg1/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.6': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+
+    def test_p87b_human_cli_reviews_table_output(live, p87b):  # noqa: F811
+        """`--review-output` đúng khóa + sha → exit 0, đúng 1 dòng gắn người của
+        login; sha sai → chặn; chạy lại = thêm 1 quyết định (append-only, bản
+        mới nhất thắng — thiết kế sổ), cổng DB vẫn 1 đầu ra đã duyệt."""
+        sha = _owner_pending(live, p87b, FID)[K_A]
+        rc, out = _review(live, "farm", K_A, "e" * 64, P_FARM)
+>       assert rc == 1 and "sha" in out, out
+E       AssertionError: 
+E       assert (3221225794 == 1)
+
+tests\test_v15_fix_p87b.py:138: AssertionError
+___________________ test_p87b_wrong_actor_blocked[sai-khoi] ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg1/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.6': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+who = 'sales', by = 'Bán Hàng Giả Lập', rc_want = 1
+
+    @pytest.mark.parametrize("who, by, rc_want", [
+        ("sales", P_SALES, 1),          # sai khối (người sales, tính năng ceo)
+        ("farm", P_SALES, 1),           # --by giả (tên người khác)
+        ("unmapped", P_FARM, 1),        # login chưa ánh xạ human_logins
+        ("farm", "agent:bks", 2),       # agent không duyệt
+    ], ids=["sai-khoi", "by-gia", "login-chua-anh-xa", "agent"])
+    def test_p87b_wrong_actor_blocked(live, p87b, who, by, rc_want):  # noqa: F811
+        sha = _owner_pending(live, p87b, FID)[K_B]
+        rc, out = _review(live, who, K_B, sha, by)
+>       assert rc == rc_want, out
+E       AssertionError: 
+E       assert 3221225794 == 1
+
+tests\test_v15_fix_p87b.py:169: AssertionError
+____________________ test_p87b_wrong_actor_blocked[by-gia] ____________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg1/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.6': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+who = 'farm', by = 'Bán Hàng Giả Lập', rc_want = 1
+
+    @pytest.mark.parametrize("who, by, rc_want", [
+        ("sales", P_SALES, 1),          # sai khối (người sales, tính năng ceo)
+        ("farm", P_SALES, 1),           # --by giả (tên người khác)
+        ("unmapped", P_FARM, 1),        # login chưa ánh xạ human_logins
+        ("farm", "agent:bks", 2),       # agent không duyệt
+    ], ids=["sai-khoi", "by-gia", "login-chua-anh-xa", "agent"])
+    def test_p87b_wrong_actor_blocked(live, p87b, who, by, rc_want):  # noqa: F811
+        sha = _owner_pending(live, p87b, FID)[K_B]
+        rc, out = _review(live, who, K_B, sha, by)
+>       assert rc == rc_want, out
+E       AssertionError: 
+E       assert 3221225794 == 1
+
+tests\test_v15_fix_p87b.py:169: AssertionError
+______________ test_p87b_wrong_actor_blocked[login-chua-anh-xa] _______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg1/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.6': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+who = 'unmapped', by = 'Vùng Trồng Giả Lập', rc_want = 1
+
+    @pytest.mark.parametrize("who, by, rc_want", [
+        ("sales", P_SALES, 1),          # sai khối (người sales, tính năng ceo)
+        ("farm", P_SALES, 1),           # --by giả (tên người khác)
+        ("unmapped", P_FARM, 1),        # login chưa ánh xạ human_logins
+        ("farm", "agent:bks", 2),       # agent không duyệt
+    ], ids=["sai-khoi", "by-gia", "login-chua-anh-xa", "agent"])
+    def test_p87b_wrong_actor_blocked(live, p87b, who, by, rc_want):  # noqa: F811
+        sha = _owner_pending(live, p87b, FID)[K_B]
+        rc, out = _review(live, who, K_B, sha, by)
+>       assert rc == rc_want, out
+E       AssertionError: 
+E       assert 3221225794 == 1
+
+tests\test_v15_fix_p87b.py:169: AssertionError
+____________________ test_p87b_wrong_actor_blocked[agent] _____________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg1/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.6': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+who = 'farm', by = 'agent:bks', rc_want = 2
+
+    @pytest.mark.parametrize("who, by, rc_want", [
+        ("sales", P_SALES, 1),          # sai khối (người sales, tính năng ceo)
+        ("farm", P_SALES, 1),           # --by giả (tên người khác)
+        ("unmapped", P_FARM, 1),        # login chưa ánh xạ human_logins
+        ("farm", "agent:bks", 2),       # agent không duyệt
+    ], ids=["sai-khoi", "by-gia", "login-chua-anh-xa", "agent"])
+    def test_p87b_wrong_actor_blocked(live, p87b, who, by, rc_want):  # noqa: F811
+        sha = _owner_pending(live, p87b, FID)[K_B]
+        rc, out = _review(live, who, K_B, sha, by)
+>       assert rc == rc_want, out
+E       AssertionError: 
+E       assert 3221225794 == 2
+
+tests\test_v15_fix_p87b.py:169: AssertionError
+_____________________ test_p87b_listing_function_identity _____________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg1/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.6': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+
+    def test_p87b_listing_function_identity(live, p87b):  # noqa: F811
+        """Gọi thẳng function liệt kê: người khối khác / --by giả / login chưa
+        ánh xạ / agent → 42501; CLI `--outputs` của người khối khác không liệt
+        kê gì."""
+        sql = f"select * from {FN}(%s, %s)"
+        _db_raises(live, "sales", sql, (FID, None), "không được ủy quyền khối")
+        _db_raises(live, "farm", sql, (FID, P_SALES), "không phải người của login")
+        _db_raises(live, "unmapped", sql, (FID, None), "chưa được ánh xạ")
+        _db_raises(live, "farm", sql, (FID, "agent:bks"), "không hợp lệ")
+        rc, out = _cli(live, "sales", "pipelines.rollout", "--outputs", FID)
+>       assert rc == 1 and "ar:" not in out, out
+E       AssertionError: 
+E       assert (3221225794 == 1)
+
+tests\test_v15_fix_p87b.py:183: AssertionError
+_________________ test_p87c_valid_backup_listed_and_reviewed __________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_p87c_valid_backup_listed_0')
+
+    def test_p87c_valid_backup_listed_and_reviewed(p87c, tmp_path):
+        bdir = tmp_path / "bk"
+        rc, out = _run(["-m", "pipelines.job_runs", "--run", "backup"], _env(
+            p87c, {"BACKUP_DATABASE_URL": p87c["dsn"]["backup"],
+                   "BACKUP_DIR": str(bdir), "JOB_LOCK_DIR": str(tmp_path)}))
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_fix_p87c.py:240: AssertionError
+______________ test_p87c_human_login_backup_tool_records_nothing ______________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_p87c_human_login_backup_t0')
+
+    def test_p87c_human_login_backup_tool_records_nothing(p87c, tmp_path):
+        """Login người lỡ được cấp vào svc_backup chạy CHÍNH công cụ backup →
+        dump xong nhưng DB từ chối bằng chứng (exit 4, không dòng sổ)."""
+        bdir = tmp_path / "bk"
+        n = _n_ev(p87c)
+        rc, out = _run(["scripts/db_backup.py"], _env(
+            p87c, {"DATABASE_URL": p87c["dsn"]["dpbk"], "BACKUP_DIR": str(bdir)}))
+>       assert rc == 4, out
+E       AssertionError: 
+E       assert 3221225794 == 4
+
+tests\test_v15_fix_p87c.py:289: AssertionError
+___________________ test_p87c_fake_wrong_sample_old_blocked ___________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+
+    def test_p87c_fake_wrong_sample_old_blocked(p87c):
+        k1 = "3" * 64
+        r1 = _rec(k1)
+        _ev(p87c, r1)
+        key1, sha1 = f"bk:{k1}", ro._rec_sha(r1)
+        _blocked(p87c, FID, f"bk:{'f' * 64}", JUNK)                 # khóa giả
+        _blocked(p87c, FID, f"bk:{'f' * 64}", sha1)
+        _blocked(p87c, FID, key1, JUNK)                             # sai sha
+        _blocked(p87c, OTHER, key1, sha1)                           # sai TN
+        _blocked(p87c, FID, f"cv:zalo/{k1}", sha1)                  # sai nguồn
+        # mẫu: dịch vụ ghi kèm is_sample → không liệt kê, không duyệt
+        rs = _rec("4" * 64)
+        _ev(p87c, rs, sample=True)
+        rc, out = _cli(p87c, "dp", "pipelines.rollout", "--outputs", FID)
+>       assert rc == 0 and "4" * 64 not in out, out
+E       AssertionError: 
+E       assert (3221225794 == 0)
+
+tests\test_v15_fix_p87c.py:326: AssertionError
+_________________ test_p10_1_golden_approve_price_human_login _________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg2/launch_p10.py'), ...}
+
+    def test_p10_1_golden_approve_price_human_login(live):
+        pid = _q(live, "insert into price_list (sku_key, channel, kind,"
+                 " price_vnd, valid_from) values (%s, 'shopee', 'list', 150000,"
+                 " '2026-10-01') returning id", (SKU,))[0][0]
+        # sai khối: Pháp chế (legal_hr) duyệt giá → cổng chặn + authz_denied
+        before = _denied(live, "price_list", pid)
+        rc, out = _cli(live, "legal", "ingest.golden_store", "--approve-price",
+                       pid, "--by", P_LEGAL)
+>       assert rc == 1 and "ủy quyền" in out, out
+E       AssertionError: 
+E       assert (3221225794 == 1)
+
+tests\test_v15_p10_human_authz.py:201: AssertionError
+___________________ test_p10_1_xnqc_add_and_set_human_login ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg2/launch_p10.py'), ...}
+
+    def test_p10_1_xnqc_add_and_set_human_login(live):
+        rc, out = _cli(live, "legal", "agents.xnqc", "--add", "--sku", SKU,
+                       "--loai", "maket", "--ten", "maket p10", "--by", P_LEGAL)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_p10_human_authz.py:224: AssertionError
+_______________ test_p10_1_rollout_disable_reenable_human_login _______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg2/launch_p10.py'), ...}
+
+    def test_p10_1_rollout_disable_reenable_human_login(live):
+        _q(live, "insert into feature_rollout (feature_id, stage, updated_by)"
+           " values ('sales-01', 'chay_thu', 'seed-test') on conflict do nothing")
+        before = _denied(live, "feature_rollout", "sales-01")
+        rc, out = _cli(live, "legal", "pipelines.rollout", "--disable",
+                       "sales-01", "--by", P_LEGAL)
+>       assert rc == 1 and _denied(live, "feature_rollout",
+                                   "sales-01") == before + 1, out
+E       AssertionError: 
+E       assert (3221225794 == 1)
+
+tests\test_v15_p10_human_authz.py:248: AssertionError
+_____________________ test_p10_1_crm_all_ops_human_login ______________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg2/launch_p10.py'), ...}
+
+    def test_p10_1_crm_all_ops_human_login(live):
+        rc, out = _cli(live, "legal", "ingest.crm", "--load-dealers", "--by",
+                       P_LEGAL)
+>       assert rc == 1 and "ủy quyền" in out, out
+E       AssertionError: 
+E       assert (3221225794 == 1)
+
+tests\test_v15_p10_human_authz.py:274: AssertionError
+______________________ test_p10_1_doc_verify_human_login ______________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg2/launch_p10.py'), ...}
+
+    def test_p10_1_doc_verify_human_login(live):
+        _q(live, "insert into documents (sha256, filename, doc_type,"
+           " text_source, status) values (%s, 'scan_p10.pdf', 'giay_tiep_nhan',"
+           " 'pdf_text', 'pending_review')", (DOC_SHA,))
+        _q(live, "insert into document_fields (sha256, field, value) values"
+           " (%s, 'so_giay', '1/2026/P10')", (DOC_SHA,))
+        rc, out = _cli(live, "sales", "ingest.doc_intake", "--verify", DOC_SHA,
+                       "--by", P_SALES)
+>       assert rc == 1 and "ủy quyền" in out, out
+E       AssertionError: 
+E       assert (3221225794 == 1)
+
+tests\test_v15_p10_human_authz.py:340: AssertionError
+________________ test_p10_1_garden_adopt_and_purge_human_login ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg2/launch_p10.py'), ...}
+
+    def test_p10_1_garden_adopt_and_purge_human_login(live):
+        _q(live, "insert into plots (id, source) values ('K-P10A', 'sample:p10'),"
+           " ('K-P10B', 'sample:p10')")
+        rc, out = _cli(live, "sales", "agents.garden_director", "--adopt-plot",
+                       "K-P10A", "--by", P_SALES)
+>       assert rc == 1, out
+E       AssertionError: 
+E       assert 3221225794 == 1
+
+tests\test_v15_p10_human_authz.py:355: AssertionError
+_________________ test_p10_1_ra_kenh_partner_file_human_login _________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg2/launch_p10.py'), ...}
+
+    def test_p10_1_ra_kenh_partner_file_human_login(live):
+        f = live["tmp"] / "doi_tac_p10.csv"
+        f.write_bytes(("ma_doi_tac,url,kenh,text,ngay_dang,sku\n"
+                       f"KOC-MAU-01,{URL_P10},tiktok,\"Hộp quà Tết biếu gia đình"
+                       " #quangcao\",2026-10-13,\n").encode())
+        rc, out = _cli(live, "legal", "agents.ra_kenh", "--partner-file", f,
+                       "--by", P_SALES)
+>       assert rc != 0 and "không phải người của login" in out, out
+E       AssertionError: 
+E       assert (3221225794 != 0 and 'không phải người của login' in '')
+
+tests\test_v15_p10_human_authz.py:376: AssertionError
+____________ test_p10_1_ra_kenh_forged_by_violation_writes_nothing ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg2/launch_p10.py'), ...}
+
+    def test_p10_1_ra_kenh_forged_by_violation_writes_nothing(live):
+        """Review v15 (MINOR): bài VI PHẠM (tạo mục hàng duyệt) + `--by` giả →
+        danh tính bị DB chặn TRƯỚC mọi ghi: 0 dòng sổ, 0 mục `approval_queue`
+        mới (trước vá: `director.submit` đã commit mục rồi mới kiểm danh tính)."""
+        url = "https://www.tiktok.com/@p10.gia/video/7300000000000000011"
+        f = live["tmp"] / "doi_tac_p10_vi_pham.csv"
+        f.write_bytes(("ma_doi_tac,url,kenh,text,ngay_dang,sku\n"
+                       f"KOC-MAU-01,{url},tiktok,\"Sâm chữa khỏi bệnh ung thư"
+                       " #quangcao\",2026-10-13,\n").encode())
+    
+        def counts():
+            return (_q(live, "select count(*) from approval_queue where"
+                       " object_type = 'partner_post_review'")[0][0],
+                    _q(live, "select count(*) from partner_post_scans")[0][0])
+    
+        q0, s0 = counts()
+        d0 = _denied(live, "partner_post_scan")
+        rc, out = _cli(live, "legal", "agents.ra_kenh", "--partner-file", f,
+                       "--by", P_SALES)
+>       assert rc != 0 and "không phải người của login" in out, out
+E       AssertionError: 
+E       assert (3221225794 != 0 and 'không phải người của login' in '')
+
+tests\test_v15_p10_human_authz.py:408: AssertionError
+_______________ test_p7_3_six_jobs_run_under_real_svc_job_login _______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...svc_backup': 't_p2_svc_backup_cd8cf122d4', 'svc_job': 't_p2_svc_job_cd8cf122d4', ...}, 'schema': 't_v14p2l_cd8cf122d4'}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_p7_3_six_jobs_run_under_r0')
+
+    def test_p7_3_six_jobs_run_under_real_svc_job_login(live, tmp_path):
+        now = datetime.now(VN)
+        _seed(live, now)
+        env = _env(live, tmp_path)
+        login = live["name"]["svc_job"]
+        for name, (_steps, _src, otype, by) in NEW.items():
+            rc, out = _wrapper(name, env)
+>           assert rc == 0, (name, out)
+E           AssertionError: ('sales_sla', '')
+E           assert 3221225794 == 0
+
+tests\test_v15_p7_jobs.py:330: AssertionError
+______________ test_p7_3_wrapper_refuses_owner_login_and_overlap ______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...svc_backup': 't_p2_svc_backup_cd8cf122d4', 'svc_job': 't_p2_svc_job_cd8cf122d4', ...}, 'schema': 't_v14p2l_cd8cf122d4'}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_p7_3_wrapper_refuses_owne0')
+
+    def test_p7_3_wrapper_refuses_owner_login_and_overlap(live, tmp_path):
+        env = _env(live, tmp_path)
+        # JOB_DATABASE_URL = quản trị/owner → chế độ thực từ chối, 0 bước
+        rc, out = _wrapper("ceo_promo", dict(env,
+                                             JOB_DATABASE_URL=live["dsn"]["admin"]))
+>       assert rc == job_runs.EXIT_SERVICE, out
+E       AssertionError: 
+E       assert 3221225794 == 78
+E        +  where 78 = job_runs.EXIT_SERVICE
+
+tests\test_v15_p7_jobs.py:359: AssertionError
+______________________ test_p8_7_e2e_human_login_review _______________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg3/launch_p10.py'), ...}
+
+    def test_p8_7_e2e_human_login_review(live):  # noqa: F811
+        name = "ceo-risk-2026-10-09.md"
+        sha = hashlib.sha256(b"# R p8\n").hexdigest()
+        _owner_seed(live, [_cat("ceo-03")], datetime.now(VN_TZ)
+                    - timedelta(days=30))       # đường owner: kèm `count_spec`
+        _q(live, "update feature_rollout set stage = 'co_nguoi_duyet' where"
+           " feature_id = 'ceo-03'")
+        _q(live, "insert into report_outputs (feature_id, name, sha256) values"
+           " ('ceo-03', %s, %s)", (name, sha))
+        rc, out = _cli(live, "farm", "pipelines.rollout", "--outputs", "ceo-03")
+>       assert rc == 0 and f"rp:{name}" in out and sha in out \
+            and "CHƯA DUYỆT" in out, out
+E       AssertionError: 
+E       assert (3221225794 == 0)
+
+tests\test_v15_p8_outputs.py:609: AssertionError
+_________________ test_p8_7_db_recounts_outputs_not_evidence __________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/p10cfg3/launch_p10.py'), ...}
+
+    def test_p8_7_db_recounts_outputs_not_evidence(live):  # noqa: F811
+        """Review v15 (MINOR): `rollout_transition_human` TỰ đếm lại đầu ra bằng
+        bộ đếm `count_spec` owner ghi (chính câu SQL Python) — gọi thẳng bằng
+        login người với bằng chứng tự khai KHÔNG vượt cổng PL02 (mọi loại nguồn
+        DB: hàng duyệt, báo cáo + sổ duyệt, bảng riêng; không nguồn = chặn)."""
+        feats = {f["id"]: f for f in ro.load_features()}
+        since = datetime.now(VN_TZ) - timedelta(days=20)
+        nosrc = {"id": "farming-98", "code_status": "co_code",
+                 "output_sources": []}
+        _owner_seed(live, [feats["ceo-02.1"], feats["farming-02.2"],
+                           feats["ceo-02.2"], nosrc], since)
+        assert _q(live, "select feature_id, jsonb_array_length(count_spec->"
+                  "'sql'), count_spec->'workdays' from feature_rollout where"
+                  " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02.2',"
+                  " 'farming-98') order by 1") == [("ceo-02.1", 2, [0, 1, 2, 3, 4]),
+                               ("ceo-02.2", 1, [0, 1, 2, 3, 4]),
+                               # đợt hoàn thiện: farming-02 tách — 02.2 = bản
+                               # tin tuần + plot_log_gap (02.1 = garden_reminders)
+                               ("farming-02.2", 2, [0, 1, 2, 3, 4]),
+                               ("farming-98", 0, [0, 1, 2, 3, 4])]
+        fake = {"outputs": 999, "out_days": 9}
+        # (1) chạy thử → có người duyệt: 0 đầu ra thật, bằng chứng khai 999/9 —
+        # hàng duyệt (ceo-02.1), bảng riêng (ceo-02.2), không nguồn (farming-98)
+        for fid in ("ceo-02.1", "ceo-02.2", "farming-98"):
+            msg = _call_transition(live, fid, "chay_thu", "co_nguoi_duyet", fake)
+            assert "DB đếm lại" in msg, (fid, msg)
+        # (2) có người duyệt → vận hành: 1 báo cáo CHƯA duyệt, khai unreviewed=0
+        _q(live, "update feature_rollout set stage = 'co_nguoi_duyet' where"
+           " feature_id = 'farming-02.2'")
+        _q(live, "insert into report_outputs (feature_id, name, sha256) values"
+           " ('farming-02.2', 'garden-week-2026-W41.md', %s)", ("e" * 64,))
+        msg = _call_transition(live, "farming-02.2", "co_nguoi_duyet", "van_hanh",
+                               {"human": 1, "unapproved": 0, "unreviewed": 0})
+        assert "DB đếm lại" in msg and "1 chưa duyệt" in msg, msg
+        assert _q(live, "select feature_id, stage from feature_rollout where"
+                  " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02.2',"
+                  " 'farming-98') order by 1") == [
+            ("ceo-02.1", "chay_thu"), ("ceo-02.2", "chay_thu"),
+            ("farming-02.2", "co_nguoi_duyet"), ("farming-98", "chay_thu")]
+        # (3) bộ đếm chưa vào sổ DB (dòng cũ trước vá) → fail-closed
+        _q(live, "insert into feature_rollout (feature_id, stage, stage_since,"
+           " updated_by) values ('ceo-05', 'chay_thu', now() - interval"
+           " '20 days', 'test-p8')")
+        msg = _call_transition(live, "ceo-05", "chay_thu", "co_nguoi_duyet", fake)
+        assert "chưa đồng bộ" in msg, msg
+        # (4) đường thật: 50 đầu ra thật rải 5 ngày làm việc → CLI nâng được,
+        # sự kiện ghi kết quả DB đếm lại (khớp số Python)
+        days, d = [], since.date() + timedelta(days=1)
+        while len(days) < 5:
+            if d.weekday() < 5:
+                days.append(d)
+            d += timedelta(days=1)
+        a = live["admin"]
+        with a.transaction():
+            a.execute(f"set local search_path to {live['schema']}")
+            a.execute("set local session_replication_role = replica")
+            for i in range(50):
+                ts = datetime.combine(days[i % 5], datetime.min.time(),
+                                      VN_TZ) + timedelta(hours=10)
+                a.execute(
+                    "insert into approval_queue (object_type, object_id, block,"
+                    " title, payload, content_sha256, risk, guardrail,"
+                    " created_by, created_at, due_at) values ('weekly_board', %s,"
+                    " 'ceo', 'Bảng tuần', 'x', %s, 'low', '{\"ok\": true}',"
+                    " 'agent:da_pmo', %s, %s)",
+                    (f"wb-p8-{i}", "0" * 64, ts, ts + timedelta(days=2)))
+        rc, out = _cli(live, "farm", "pipelines.rollout", "--promote", "ceo-02.1",
+                       "--by", P_FARM)
+>       assert rc == 0, out
+E       AssertionError: 
+E       assert 3221225794 == 0
+
+tests\test_v15_p8_outputs.py:744: AssertionError
+____________________________ test_video_valid_9x16 ____________________________
+
+built = {'base': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630'), 'br': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630/broll'), 'calls': 3, 'files2': [], ...}
+
+    @NEED_RENDER
+    def test_video_valid_9x16(built):
+        r = built["r1"]
+>       assert r["ok"] is True, (r["refused"], r["error"])
+E       AssertionError: (None, 'ffmpeg mã hóa lỗi (rc=3221225794): ')
+E       assert False is True
+
+tests\test_video_studio.py:543: AssertionError
+_______________________________ test_video_1x1 ________________________________
+
+built = {'base': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630'), 'br': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630/broll'), 'calls': 3, 'files2': [], ...}
+
+    @NEED_RENDER
+    def test_video_1x1(built):
+        r = built["r3"]
+>       assert r["ok"] is True, (r["refused"], r["error"])
+E       AssertionError: (None, 'ffmpeg mã hóa lỗi (rc=3221225794): ')
+E       assert False is True
+
+tests\test_video_studio.py:596: AssertionError
+______________________ test_ai_label_in_extracted_frames ______________________
+
+built = {'base': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630'), 'br': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630/broll'), 'calls': 3, 'files2': [], ...}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_ai_label_in_extracted_fra0')
+
+    @NEED_RENDER
+    def test_ai_label_in_extracted_frames(built, tmp_path):
+        """Nhãn AI hiện trên khung TRÍCH từ mp4 (đầu/giữa/cuối): sidecar
+        extract_check ≥ 0.5 + test tự trích lại và so khung nguồn dựng lại
+        (sha khớp frame_sha256 trong sidecar)."""
+        r = built["r1"]
+        m = r["meta"]
+>       assert [c["t_ms"] for c in m["extract_check"]] == [500, 14000, 23500]
+                                   ^^^^^^^^^^^^^^^^^^
+E       TypeError: 'NoneType' object is not subscriptable
+
+tests\test_video_studio.py:622: TypeError
+__________________ test_mp4_has_no_location_device_metadata ___________________
+
+built = {'base': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630'), 'br': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630/broll'), 'calls': 3, 'files2': [], ...}
+
+    @NEED_RENDER
+    def test_mp4_has_no_location_device_metadata(built):
+        r = built["r1"]
+>       data = Path(r["path"]).read_bytes()
+               ^^^^^^^^^^^^^^^
+
+tests\test_video_studio.py:641: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\pathlib.py:1162: in __init__
+    super().__init__(*args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <[AttributeError("'WindowsPath' object has no attribute '_raw_paths'") raised in repr()] WindowsPath object at 0x1dddc069af0>
+args = (None,), paths = [], arg = None, path = None
+
+    def __init__(self, *args):
+        paths = []
+        for arg in args:
+            if isinstance(arg, PurePath):
+                if arg._flavour is ntpath and self._flavour is posixpath:
+                    # GH-103631: Convert separators for backwards compatibility.
+                    paths.extend(path.replace('\\', '/') for path in arg._raw_paths)
+                else:
+                    paths.extend(arg._raw_paths)
+            else:
+                try:
+                    path = os.fspath(arg)
+                except TypeError:
+                    path = arg
+                if not isinstance(path, str):
+>                   raise TypeError(
+                        "argument should be a str or an os.PathLike "
+                        "object where __fspath__ returns a str, "
+                        f"not {type(path).__name__!r}")
+E                   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\pathlib.py:373: TypeError
+__________________ test_deterministic_same_file_sidecar_kept __________________
+
+built = {'base': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630'), 'br': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630/broll'), 'calls': 3, 'files2': [], ...}
+
+    @NEED_RENDER
+    def test_deterministic_same_file_sidecar_kept(built):
+        r1, r2 = built["r1"], built["r2"]
+>       assert r2["ok"] is True and r2["sha256"] == r1["sha256"]
+E       assert (False is True)
+
+tests\test_video_studio.py:659: AssertionError
+___________________ test_tampered_mp4_and_sidecar_rewritten ___________________
+
+built = {'base': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630'), 'br': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630/broll'), 'calls': 3, 'files2': [], ...}
+llm = <function llm.<locals>.set_ at 0x000001DDDC0FB6A0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_tampered_mp4_and_sidecar_0')
+
+    @NEED_RENDER
+    def test_tampered_mp4_and_sidecar_rewritten(built, llm, tmp_path):
+        """mp4 cùng tên bị sửa bytes + sidecar sửa tay (bỏ nhãn) -> ghi lại."""
+        llm(_js(SCENES5))
+        out = tmp_path / "o"
+        shutil.copytree(built["out"], out)
+        sha = built["r1"]["sha256"]
+        with open(out / f"{sha}.mp4", "ab") as f:
+            f.write(b"tampered")
+>       d = json.loads((out / f"{sha}.json").read_bytes().decode("utf-8"))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_video_studio.py:675: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\pathlib.py:1019: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_tampered_mp4_and_sidecar_0/o/None.json')
+mode = 'rb', buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3604\\test_tampered_mp4_and_sidecar_0\\o\\None.json'
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\pathlib.py:1013: FileNotFoundError
+_________________ test_label_lost_in_extracted_frame_refused __________________
+
+built = {'base': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630'), 'br': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630/broll'), 'calls': 3, 'files2': [], ...}
+llm = <function llm.<locals>.set_ at 0x000001DDDC0F9C60>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DDDC10C050>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_label_lost_in_extracted_f0')
+capsys = <_pytest.capture.CaptureFixture object at 0x000001DDDC10DA90>
+
+    @NEED_RENDER
+    def test_label_lost_in_extracted_frame_refused(built, llm, monkeypatch,
+                                                   tmp_path, capsys):
+        """Đột biến: khung trích từ mp4 mất chữ nhãn (vùng nhãn tô đen) ->
+        nhan_ai, xóa mp4, 0 sidecar, không sót thư mục tạm."""
+        llm(_js(SCENES5))
+        real = vs._extract_frame
+    
+        def blackout(ff, path, t_ms):
+            img = real(ff, path, t_ms)
+            cfg = ims.load_config()[0]
+            x, y, w, h = ims._px(cfg["layout"]["9:16"]["label_box"], img.size)
+            ImageDraw.Draw(img).rectangle((x, y, x + w, y + h), fill=(0, 0, 0))
+            return img
+    
+        monkeypatch.setattr(vs, "_extract_frame", blackout)
+        out = tmp_path / "o"
+        r = vs.make_video(HONEY, "tiktok", BRIEF, readiness=R_OK,
+                          packshot_dir=built["pk"], broll_dir=built["br"],
+                          out_dir=out)
+>       assert r["refused"]["code"] == "nhan_ai" and not r["ok"]
+               ^^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'NoneType' object is not subscriptable
+
+tests\test_video_studio.py:709: TypeError
+______________ test_db_save_video_created_skipped_second_channel ______________
+
+db = <psycopg.Connection [INTRANS] (host=127.0.0.1 port=55463 user=postgres database=samsam_itacc_r15fix1_full2) at 0x1dddc10db20>
+built = {'base': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630'), 'br': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630/broll'), 'calls': 3, 'files2': [], ...}
+
+    @NEED_RENDER
+    def test_db_save_video_created_skipped_second_channel(db, built):  # noqa: F811
+        r = built["r1"]
+>       assert r["ok"] is True
+E       assert False is True
+
+tests\test_video_studio.py:872: AssertionError
+____________________ test_video_draft_approvable_by_human _____________________
+
+built = {'base': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630'), 'br': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/v630/broll'), 'calls': 3, 'files2': [], ...}
+
+    @NEED_RENDER
+    def test_video_draft_approvable_by_human(built):
+        """Nháp video duyệt được (re-check guardrail lúc duyệt không ngõ cụt
+        thieu_nhan_ai / thieu_nhan_quang_cao)."""
+        r = built["r1"]
+        base = dict.fromkeys(store.COLS)
+        base.update({"id": 7, "brief": "video", "channel": "tiktok",
+                     "text": r["draft_text"], "guardrail": r["guardrail"],
+                     "status": "pending", "source": "cli",
+                     "created_by": "agent:mkt04", "content_type": "video",
+                     "sku": HONEY, "is_ai": True})
+        conn = _Conn([(("from content_drafts", "where id = %s"),
+                       [tuple(base[c] for c in store.COLS)]),
+                      (("from sku_readiness",), [(HONEY, "tiktok",
+                                                  "TP_THUONG")]),
+                      (("select approve_draft(",), [(1,)])])
+>       assert store.set_status(conn, 7, "approved", "Hoa") == (True, None)
+E       AssertionError: assert (False, 'draf...kèm-ghi-nhận') == (True, None)
+E         
+E         At index 0 diff: False != True
+E         Use -v to get more diff
+
+tests\test_video_studio.py:953: AssertionError
+____________________ test_cli_dead_host_subprocess_exit_2 _____________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3604/test_cli_dead_host_subprocess_1')
+
+    def test_cli_dead_host_subprocess_exit_2(tmp_path):
+        """Gotcha v2.0: host chết thật (KHÔNG `env -u`) — exit 2, 0 file."""
+        o = tmp_path / "o"
+        env = dict(os.environ, PYTHONIOENCODING="utf-8", OPENROUTER_API_KEY="",
+                   DATABASE_URL="postgresql://u@10.255.255.1:5432/x",
+                   VIDEO_OUT_DIR=str(o), PACKSHOT_DIR=str(tmp_path / "p"))
+        for k in ("TTS_PROVIDER", "IMAGE_PROVIDER", "FFMPEG_BIN"):
+            env.pop(k, None)
+        r = subprocess.run([sys.executable, "-m", "pipelines.video_studio",
+                            "--sku", "all", "--channel", "tiktok",
+                            "--brief", "Quà núi rừng"],
+                           cwd=ROOT, env=env, capture_output=True, timeout=120,
+                           encoding="utf-8", errors="replace", check=False)
+>       assert r.returncode == 2, (r.stdout, r.stderr)
+E       AssertionError: ('', '')
+E       assert 3221225794 == 2
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'pipelines.v...tudio', '--sku', 'all', '--channel', 'tiktok', '--brief', 'Quà núi rừng'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_video_studio.py:1054: AssertionError
+_______________________ test_cli_db_down_exit2_no_hang ________________________
+
+    def test_cli_db_down_exit2_no_hang():
+        env = dict(os.environ, PYTHONIOENCODING="utf-8",
+                   DATABASE_URL="postgresql://u@10.255.255.1:5432/x")
+        r = subprocess.run([sys.executable, "-m", "agents.xnqc", "--list"],
+                           cwd=ROOT, env=env, capture_output=True, timeout=60,
+                           encoding="utf-8", errors="replace", check=False)
+>       assert r.returncode == 2 and "DB không truy cập được" in r.stdout
+E       AssertionError: assert (3221225794 == 2)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'agents.xnqc', '--list'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_xnqc.py:132: AssertionError
+_____________________________ test_cli_help_exit0 _____________________________
+
+    def test_cli_help_exit0():
+        r = subprocess.run([sys.executable, "-m", "agents.xnqc", "--help"],
+                           cwd=ROOT, capture_output=True, timeout=60,
+                           encoding="utf-8", errors="replace", check=False)
+>       assert r.returncode == 0 and "--sync-golden" in r.stdout
+E       AssertionError: assert (3221225794 == 0)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'agents.xnqc', '--help'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_xnqc.py:139: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_safety_s01_rotation.py:99: không có docker/image postgres:16-alpine
+SKIPPED [1] tests\test_safety_s01_rotation.py:165: không có docker/image postgres:16-alpine
+ERROR tests/test_v13_c05_media.py::test_strip_video_mov_removes_location - As...
+ERROR tests/test_v13_c05_media.py::test_strip_video_mp4_and_m4v - AssertionEr...
+ERROR tests/test_v13_c05_media.py::test_extension_must_match_container - Asse...
+ERROR tests/test_v13_c05_media.py::test_location_surviving_remux_is_rejected
+ERROR tests/test_v13_c05_media.py::test_cli_video_end_to_end - AssertionError...
+ERROR tests/test_v13_c05_media.py::test_zalo_video_stored_clean - AssertionEr...
+FAILED tests/test_data_flow_map.py::test_every_egress_module_declared - Asser...
+FAILED tests/test_persona_sim.py::test_cli_subprocess_refuses_without_dpia - ...
+FAILED tests/test_qa_harness.py::test_deterministic_skips_llm_runners - Asser...
+FAILED tests/test_r13_batch_a.py::test_ocr_paddle_local_reads_real_label - in...
+FAILED tests/test_r13_batch_a.py::test_ocr_timeout - AssertionError: Regex pa...
+FAILED tests/test_r14_code_gaps.py::test_ocr_worker_failures_are_controlled[import sys; sys.exit(7)-tho\xe1t b\u1ea5t th\u01b0\u1eddng \\(m\xe3 7\\)]
+FAILED tests/test_r14_code_gaps.py::test_ocr_worker_failures_are_controlled[print('r\xe1c kh\xf4ng ph\u1ea3i k\u1ebft qu\u1ea3')-k\u1ebft qu\u1ea3 h\u1ecfng]
+FAILED tests/test_r14_code_gaps.py::test_ocr_worker_failures_are_controlled[print('OCR_RESULT {not json')-k\u1ebft qu\u1ea3 h\u1ecfng]
+FAILED tests/test_r14_code_gaps.py::test_ocr_worker_failures_are_controlled[print('OCR_RESULT {"ok": true, "text": 5}')-k\u1ebft qu\u1ea3 h\u1ecfng]
+FAILED tests/test_r14_code_gaps.py::test_ocr_worker_failures_are_controlled[print('OCR_RESULT {"ok": false, "error": "\u1ea3nh h\u1ecfng/kh\xf4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c"}')-\u1ea3nh h\u1ecfng]
+FAILED tests/test_r14_code_gaps.py::test_ocr_worker_result_and_request - inge...
+FAILED tests/test_r14_code_gaps.py::test_ocr_worker_env_has_no_db_credentials
+FAILED tests/test_r14_code_gaps.py::test_ocr_timeout_kills_worker_no_late_result
+FAILED tests/test_ra_kenh.py::test_cli_help_and_db_down - AssertionError: ass...
+FAILED tests/test_red_alert.py::test_check_routing_cli_real_config_exit_1 - A...
+FAILED tests/test_review_load.py::test_cli_db_down_exit1_fast - AssertionErro...
+FAILED tests/test_sales_director.py::test_cli_db_down_exit2 - AssertionError: 
+FAILED tests/test_scenario.py::test_cli_subprocess_default_console - Assertio...
+FAILED tests/test_v13_c04_authz.py::test_cli_enforced_arbitrary_by_rejected
+FAILED tests/test_v13_c05_media.py::test_video_without_picture_stream_rejected
+FAILED tests/test_v13_c07_ops.py::test_cli_module_help_runs - AssertionError:...
+FAILED tests/test_v14_p2_service_auth.py::test_job_login_report_steps_match_owner
+FAILED tests/test_v14_p2_service_auth.py::test_loader_login_loads_files_and_cannot_erase
+FAILED tests/test_v14_p2_service_auth.py::test_loader_login_golden_cannot_self_approve
+FAILED tests/test_v14_p6_ops.py::test_escalate_and_anchor_run_under_job_login
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-set-status]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-apply-due]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_b2b-handover]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[ra_kenh-mark-removed]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[anchor-submit-by-person]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[kd_quote-outcome]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[kd_quote-verify-send-by]
+FAILED tests/test_v15_fix_p102.py::test_p102_da_pmo_set_status_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_da_pmo_apply_due_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_da_b2b_handover_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_ra_kenh_mark_removed_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_anchor_submit_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_kd_quote_verify_send_and_outcome_authorized_human
+FAILED tests/test_v15_fix_p87.py::test_p87_valid_report_and_table_approved - ...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_human_cli_lists_table_outputs - ...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_human_cli_reviews_table_output
+FAILED tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[sai-khoi] - ...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[by-gia] - As...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[login-chua-anh-xa]
+FAILED tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[agent] - Ass...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_listing_function_identity - Asse...
+FAILED tests/test_v15_fix_p87c.py::test_p87c_valid_backup_listed_and_reviewed
+FAILED tests/test_v15_fix_p87c.py::test_p87c_human_login_backup_tool_records_nothing
+FAILED tests/test_v15_fix_p87c.py::test_p87c_fake_wrong_sample_old_blocked - ...
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_golden_approve_price_human_login
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_xnqc_add_and_set_human_login
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_rollout_disable_reenable_human_login
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_crm_all_ops_human_login
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_doc_verify_human_login
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_garden_adopt_and_purge_human_login
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_ra_kenh_partner_file_human_login
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_ra_kenh_forged_by_violation_writes_nothing
+FAILED tests/test_v15_p7_jobs.py::test_p7_3_six_jobs_run_under_real_svc_job_login
+FAILED tests/test_v15_p7_jobs.py::test_p7_3_wrapper_refuses_owner_login_and_overlap
+FAILED tests/test_v15_p8_outputs.py::test_p8_7_e2e_human_login_review - Asser...
+FAILED tests/test_v15_p8_outputs.py::test_p8_7_db_recounts_outputs_not_evidence
+FAILED tests/test_video_studio.py::test_video_valid_9x16 - AssertionError: (N...
+FAILED tests/test_video_studio.py::test_video_1x1 - AssertionError: (None, 'f...
+FAILED tests/test_video_studio.py::test_ai_label_in_extracted_frames - TypeEr...
+FAILED tests/test_video_studio.py::test_mp4_has_no_location_device_metadata
+FAILED tests/test_video_studio.py::test_deterministic_same_file_sidecar_kept
+FAILED tests/test_video_studio.py::test_tampered_mp4_and_sidecar_rewritten - ...
+FAILED tests/test_video_studio.py::test_label_lost_in_extracted_frame_refused
+FAILED tests/test_video_studio.py::test_db_save_video_created_skipped_second_channel
+FAILED tests/test_video_studio.py::test_video_draft_approvable_by_human - Ass...
+FAILED tests/test_video_studio.py::test_cli_dead_host_subprocess_exit_2 - Ass...
+FAILED tests/test_xnqc.py::test_cli_db_down_exit2_no_hang - AssertionError: a...
+FAILED tests/test_xnqc.py::test_cli_help_exit0 - AssertionError: assert (3221...
+73 failed, 6903 passed, 2 skipped, 6 errors in 2827.95s (0:47:07)
+
+EXIT 1

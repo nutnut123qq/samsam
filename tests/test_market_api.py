@@ -152,15 +152,18 @@ def test_ast_every_endpoint_literal_in_allowlist():
     paths |= auth
     lits = [n.value for n in ast.walk(tree)
             if isinstance(n, ast.Constant) and isinstance(n.value, str)
-            and n.value.startswith(("/api/v2/", "/product/", "/order/"))]
-    assert len(lits) >= 7
+            and n.value.startswith(("/api/v2/", "/product/", "/order/",
+                                    "/finance/"))]
+    assert len(lits) >= 11
     assert set(lits) <= paths, set(lits) - paths
     assert not [p for p in paths - auth if _WRITE_RE.search(p)]
-    assert len(ma.ALLOWED) == 7
+    # r15: +2 Shopee escrow (GET) + 2 TikTok finance (GET) — quyết toán chỉ đọc
+    assert len(ma.ALLOWED) == 11
     assert {m for _c, m, _p in ma.ALLOWED} == {"GET", "POST"}
     assert all(m == "GET" for c, m, _p in ma.ALLOWED if c == "shopee")
-    assert all(p.endswith("/search") for c, _m, p in ma.ALLOWED
-               if c == "tiktok")
+    assert all((m == "POST" and p.endswith("/search"))
+               or (m == "GET" and p.startswith("/finance/"))
+               for c, m, p in ma.ALLOWED if c == "tiktok")
 
 
 def test_no_third_party_http_client():

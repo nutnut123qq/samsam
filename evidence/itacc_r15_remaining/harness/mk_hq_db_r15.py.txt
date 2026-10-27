@@ -1,0 +1,18 @@
+"""HARNESS r15 — tạo DB samsam_itacc_r14_hqr15 = CREATE DATABASE ... TEMPLATE samsam_itacc_r15_t1 (t1 dựng bằng cây r15 đã khóa
+qua mkdb_r15) cho probe hồi quy r14 P2 (probe đòi tiền tố samsam_itacc_r14_; KHÔNG sửa probe). Ghi tệp env (ngoài repo).
+  python -I mk_hq_db_r15.py.txt <admin.sh> <env_t1.sh> <out env_hq.sh>"""
+import sys
+from pathlib import Path
+
+import psycopg
+from psycopg import conninfo
+
+sys.stdout.reconfigure(encoding="utf-8")
+adm = conninfo.conninfo_to_dict(Path(sys.argv[1]).read_text(encoding="utf-8").split("'")[1])
+assert adm["host"] == "127.0.0.1" and str(adm["port"]) == "55457" and adm["dbname"] == "postgres"
+with psycopg.connect(conninfo.make_conninfo(**adm), autocommit=True, connect_timeout=5) as c:
+    assert not c.execute("select 1 from pg_database where datname = 'samsam_itacc_r14_hqr15'").fetchone()
+    c.execute("create database samsam_itacc_r14_hqr15 template samsam_itacc_r15_t1")
+src = Path(sys.argv[2]).read_text(encoding="utf-8")
+Path(sys.argv[3]).write_text(src.replace("dbname=samsam_itacc_r15_t1", "dbname=samsam_itacc_r14_hqr15"), encoding="utf-8")
+print("# tạo samsam_itacc_r14_hqr15 TEMPLATE samsam_itacc_r15_t1 — OK")

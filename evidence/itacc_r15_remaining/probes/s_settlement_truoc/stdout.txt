@@ -1,0 +1,24 @@
+S00: FAIL — exit 2, detail req 0, có 'api_local' False [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S01: FAIL — exit 2, request 0, [blocked] False [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S02: FAIL — exit 2, request 0, 'CHƯA CHỐT' False [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S03: FAIL — exit 2, nêu tên thành phần lạ False, dòng 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S04: FAIL — exit 2, page_no [], page_size set(), detail 0/5 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S05: FAIL — exit 2, trang list 0 (MAX_PAGES 50), dòng 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S06: FAIL — 500/429 → exit 2, list req 0, detail req 0; 403 → exit 2, detail req 0, dòng 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S07: FAIL — JSON hỏng trang 2: exit 2, dòng 0; thiếu order_income: exit 2, dòng 0; số lẻ 12000.5: exit 2, dòng 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S08: FAIL — exit 2, request tới đích redirect 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S09: FAIL — exit 2, request đầu None, token dùng cho list [] [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S11: FAIL — exit 2, request 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S12: FAIL — lần 1 exit 2 dòng 0 nguồn ['(không có cột source_kind)'] đối chiếu 0; lần 2 exit 2 [skip] False dòng 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S13: FAIL — exit 2, dòng thô A 0, khoản theo view 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S14: FAIL — exit 2, lech 0→0, khoản đơn A1 theo view 0 (giữ cả hai) [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S15: FAIL — exit 2, dòng 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S16: FAIL — API khi đơn đã có CSV: exit 2, dòng mới 0; CSV khi đơn đã có api_live: exit 0, dòng 0→1 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S17: FAIL — exit 2, dòng 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S18: FAIL — exit 2, request 0, nêu tính năng False [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S19: FAIL — phân trang/ký/GET: exit 2, statements 0, transactions 0, chữ ký+GET không body True, '4 dòng' False; loại chưa quyết: exit 2, nêu PLATFORM_PENALTY False; currency USD: exit 2; statement_id sai dạng: exit 2, request ngoài statements 0 [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S20: FAIL — cột source_kind False, dòng CSV None, dry-run nguồn api_local False [CLI baseline chưa có --kind settlement (argparse từ chối)]
+S21: FAIL — income_not_found→'(không đúng dạng mã lỗi — đã ẩn)'; order_not_found→'(không đúng dạng mã lỗi — đã ẩn)'; phản chiếu credential→ẩn True; hex token→ẩn True
+S22: PASS — POST /api/v2/payment/get_escrow_list: ScopeError; POST /api/v2/payment/get_escrow_detail: ScopeError; GET /api/v2/payment/set_shop_installment_status: ScopeError; POST /finance/202309/statements: ScopeError; request 0
+S10: PASS — lộ credential/PII 0, mã đơn thô 0
+{"PASS": 2, "FAIL": 21}

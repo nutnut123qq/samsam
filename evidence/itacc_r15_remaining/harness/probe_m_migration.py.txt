@@ -1,0 +1,190 @@
+"""PROBE M r15 — nâng cấp schema/roles từ baseline 70ff9f7 CÓ LỊCH SỬ lên cây dưới test (ROOT), áp 2 lần.
+
+Dựng DB `samsam_itacc_r15_mig_<side>` (container r15, KHÔNG samsam):
+  1) schema/roles của cây 0afa388 (`D:\\code\\samsam_r14_baseline`) + lịch sử neo: lần gom L1 (1 upgrade baseline), L2 (2
+     upgrade baseline ĐỒNG THỜI → 2 `da_nang_cap` hợp lệ) bằng `race_upgrade.py.txt` của r14-fix2 (calendar GIẢ);
+  2) schema/roles của baseline 70ff9f7 (đường nâng cấp đã phát hành) + core_store + golden_store + 1 file quyết toán CSV GIẢ
+     nạp bằng `ingest.settlement_csv` của 70ff9f7 (→ settlement_rows + recon_results);
+  3) chụp S0 → `apply_schema --roles` của ROOT ×2 → chụp S1 → so.
+Tiêu chí: M1 hai lần áp exit 0; M2 số dòng MỌI bảng không đổi; M3 nội dung từng bảng theo đúng danh sách cột lúc S0 không đổi
+(md5 theo hàng); M4 dòng quyết toán cũ source_kind='csv' (cột mới) và v_settlement_khoan không đổi; M5 lịch sử neo trùng giữ
+nguyên (L2 vẫn 2 da_nang_cap, biên nhận byte-y-hệt) + đuôi hash chain agent_action_log không đổi + verify_action_log 0 vấn đề;
+M6 quyền bảng chỉ thêm, không mất; app_human KHÔNG INSERT settlement_rows/anchor_receipts; svc_loader INSERT được cột
+source_kind; mọi function SECURITY DEFINER giữ search_path cố định; function `*_human` không cấp EXECUTE cho PUBLIC.
+  python -I probe_m_migration.py.txt <ROOT> <TREE_0afa388> <TREE_70ff9f7> <ADMIN_ENV> <SIDE> <out.json>"""
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT, B0, B1, ADMIN_ENV, SIDE, OUT = sys.argv[1], sys.argv[2], sys.argv[3], Path(sys.argv[4]), sys.argv[5], sys.argv[6]
+sys.stdout.reconfigure(encoding="utf-8")
+HX = Path(__file__).resolve().parents[2] / "itacc_r14_fix_2" / "harness"
+import psycopg  # noqa: E402
+from psycopg import conninfo  # noqa: E402
+
+ADM = conninfo.conninfo_to_dict(ADMIN_ENV.read_text(encoding="utf-8").split("'")[1])
+assert ADM["host"] == "127.0.0.1" and str(ADM["port"]) == "55457" and ADM["dbname"] == "postgres"
+CAL = "https://cal-b.test"
+DB = f"samsam_itacc_r15_mig_{SIDE}"
+
+
+def dsn(db):
+    return conninfo.make_conninfo(**{**ADM, "dbname": db})
+
+
+def clean_env(**kw):
+    env = {k: v for k, v in os.environ.items() if not (k.startswith("PG") or k.endswith("DATABASE_URL")
+                                                       or k in ("AUTH_MODE", "APPROVAL_ENFORCE", "DEPLOY"))}
+    env.update(PYTHONIOENCODING="utf-8", OPENROUTER_API_KEY="", **kw)
+    return env
+
+
+def py(tree, *args):
+    r = subprocess.run([sys.executable, *args], cwd=tree, capture_output=True, env=clean_env(DATABASE_URL=dsn(DB)),
+                       timeout=900)
+    return r.returncode, (r.stdout.decode("utf-8", "replace").strip().splitlines() or [""])[-1][:160]
+
+
+with psycopg.connect(dsn("postgres"), autocommit=True, connect_timeout=5) as c:
+    assert not c.execute("select 1 from pg_database where datname = %s", (DB,)).fetchone(), f"{DB} đã có"
+    c.execute(f"create database {DB}")
+STEPS = {}
+STEPS["schema_0afa388"] = py(B0, "scripts/apply_schema.py", "--roles")
+sys.path.insert(0, B0)
+from pipelines import anchor as an  # noqa: E402  (hàm định dạng OTS — như probe Q2)
+
+adm = psycopg.connect(dsn(DB), autocommit=True, connect_timeout=5)
+N = [0]
+
+
+def seed(tag):
+    N[0] += 1
+    leaves = [{"k": f"m:{SIDE}:{tag}:{N[0]}", "d": {"n": N[0]}, "h": "0" * 64}]
+    as_of = datetime(2026, 10, 25, tzinfo=timezone.utc) + timedelta(seconds=N[0])
+    root = hashlib.sha256(f"m{SIDE}{tag}{N[0]}".encode()).hexdigest()
+    sha = hashlib.sha256(an.manifest(int((as_of - an.EPOCH).total_seconds() * 1e6), leaves, root)).hexdigest()
+    bid = adm.execute("insert into anchor_batches (as_of, leaves, merkle_root, manifest_sha256, created_by) values"
+                      " (%s, %s::jsonb, %s, %s, 'agent:anchor') returning id",
+                      (as_of, json.dumps(leaves), root, sha)).fetchone()[0]
+    resp = b"\xf0" + an._put_varuint(16) + b"\x22" * 16 + b"\x08" + b"\x00" + an.ATT_PENDING + \
+        an._put_varuint(len(an._put_varuint(len(CAL)) + CAL.encode())) + an._put_varuint(len(CAL)) + CAL.encode()
+    adm.execute("insert into anchor_receipts (batch_id, provider, status, calendar, receipt, created_by) values"
+                " (%s, 'opentimestamps', 'da_gui', %s, %s, 'agent:anchor')", (bid, CAL, an.ots_file(bytes.fromhex(sha), resp)))
+    return bid
+
+
+def race(tree, bid, *callers):
+    env = clean_env(**{f"RACE_DSN_{i + 1}": c for i, c in enumerate(callers)})
+    r = subprocess.run([sys.executable, str(HX / "race_upgrade.py.txt"), tree, str(bid), CAL, "van_hanh",
+                        *["-" for _ in callers]], capture_output=True, env=env, timeout=300)
+    line = [x for x in r.stdout.decode("utf-8", "replace").splitlines() if x.startswith("RACE_JSON ")]
+    return json.loads(line[-1][10:]) if line else {"harness_err": r.stderr.decode("utf-8", "replace")[-300:]}
+
+
+def n_up(bid):
+    return adm.execute("select count(*) from anchor_receipts where batch_id = %s and status = 'da_nang_cap'",
+                       (bid,)).fetchone()[0]
+
+
+L1, L2 = seed("L1"), seed("L2")
+STEPS["race_L1"] = race(B0, L1, dsn(DB))
+STEPS["race_L2"] = race(B0, L2, dsn(DB), dsn(DB))
+STEPS["L1_L2_da_nang_cap"] = [n_up(L1), n_up(L2)]
+STEPS["schema_70ff9f7"] = py(B1, "scripts/apply_schema.py", "--roles")
+STEPS["core_70ff9f7"] = py(B1, "-m", "ingest.core_store")
+STEPS["golden_70ff9f7"] = py(B1, "-m", "ingest.golden_store")
+csv = Path(os.environ.get("TEMP", ".")) / f"r15_mig_{SIDE}.csv"
+csv.write_text("Mã đơn hàng,Giá sản phẩm,Phí cố định,Phí thanh toán,Phí dịch vụ,Tổng tiền đã thanh toán,"
+               "Ngày hoàn thành thanh toán\nMIGFAKE001,200000,-10000,-4000,-8000,178000,2026-10-02\n"
+               "MIGFAKE002,150000,-7500,-3000,-6000,133500,2026-10-03\n", encoding="utf-8")
+STEPS["settlement_csv_70ff9f7"] = py(B1, "-m", "ingest.settlement_csv", "--file", str(csv), "--channel", "shopee")
+csv.unlink()
+
+
+def tables():
+    return [r[0] for r in adm.execute("select table_name from information_schema.tables where table_schema = 'public'"
+                                      " and table_type = 'BASE TABLE' order by 1")]
+
+
+def cols(t):
+    return [r[0] for r in adm.execute("select column_name from information_schema.columns where table_schema ="
+                                      " 'public' and table_name = %s order by ordinal_position", (t,))]
+
+
+def thash(t, cl):
+    q = ", ".join(f'"{c}"' for c in cl)
+    return adm.execute(f'select count(*), md5(coalesce(string_agg(x, \'|\' order by x), \'\')) from'
+                       f' (select row({q})::text as x from public."{t}") s').fetchone()
+
+
+def snap(colmap=None):
+    tabs = tables()
+    colmap = colmap or {t: cols(t) for t in tabs}
+    return {
+        "tables": {t: list(thash(t, colmap[t])) for t in colmap if t in tabs},
+        "colmap": colmap,
+        "receipts": [list(r) for r in adm.execute(
+            "select id, batch_id, status, encode(sha256(coalesce(receipt, ''::bytea)), 'hex'), created_by"
+            " from anchor_receipts order by id")],
+        "chain_tail": list(adm.execute("select id, row_hash from agent_action_log order by id desc limit 1").fetchone()
+                           or []),
+        "verify": adm.execute("select count(*) from verify_action_log()").fetchone()[0],
+        "view_khoan": list(adm.execute("select count(*), md5(coalesce(string_agg(row(channel, order_id_hash, txn_type,"
+                                       " order_amount_vnd, payout_vnd, settled_on, n_ban)::text, '|' order by"
+                                       " order_id_hash), '')) from v_settlement_khoan").fetchone()),
+        "grants": sorted(list(g) for g in adm.execute(
+            "select grantee, table_name, privilege_type from information_schema.role_table_grants where"
+            " table_schema = 'public' and grantee <> 'postgres'")),
+        "secdef": sorted(list(r) for r in adm.execute(
+            "select p.proname, coalesce(array_to_string(p.proconfig, ','), ''), has_function_privilege('public',"
+            " p.oid, 'EXECUTE') from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname ="
+            " 'public' and p.prosecdef")),
+    }
+
+
+S0 = snap()
+APPLY = [py(ROOT, "scripts/apply_schema.py", "--roles"), py(ROOT, "scripts/apply_schema.py", "--roles")]
+S1 = snap(S0["colmap"])
+RES = []
+
+
+def ca(name, ok, detail):
+    RES.append({"ca": name, "ket_qua": "PASS" if ok else "FAIL", "chi_tiet": detail})
+    print(f"{name}: {'PASS' if ok else 'FAIL'} — {json.dumps(detail, ensure_ascii=False)[:600]}")
+
+
+pre = (STEPS["schema_0afa388"][0] == 0 and STEPS["L1_L2_da_nang_cap"] == [1, 2] and STEPS["schema_70ff9f7"][0] == 0
+       and STEPS["settlement_csv_70ff9f7"][0] == 0 and S0["tables"]["settlement_rows"][0] == 2)
+ca("M0_tien_quyet_lich_su", pre, STEPS)
+ca("M1_ap_2_lan", all(a[0] == 0 for a in APPLY), APPLY)
+cnt = {t: (S0["tables"][t][0], S1["tables"].get(t, [None])[0]) for t in S0["tables"]
+       if S1["tables"].get(t, [None])[0] != S0["tables"][t][0]}
+ca("M2_so_dong", not cnt, {"lech": cnt, "so_bang": len(S0["tables"])})
+dif = [t for t in S0["tables"] if S1["tables"].get(t) != S0["tables"][t]]
+ca("M3_noi_dung_theo_cot_cu", not dif, {"bang_khac": dif})
+try:
+    kinds = sorted({r[0] for r in adm.execute("select source_kind from settlement_rows")})
+except psycopg.Error as e:
+    kinds = [f"lỗi {type(e).__name__}"]
+ca("M4_quyet_toan_cu", kinds == ["csv"] and S1["view_khoan"] == S0["view_khoan"],
+   {"source_kind": kinds, "view_khoan_giu": S1["view_khoan"] == S0["view_khoan"]})
+ca("M5_neo_trung_chuoi", S1["receipts"] == S0["receipts"] and n_up(L2) == 2 and S1["chain_tail"] == S0["chain_tail"]
+   and S1["verify"] == 0, {"bien_nhan_giu": S1["receipts"] == S0["receipts"], "L2": n_up(L2),
+                           "duoi_chuoi_giu": S1["chain_tail"] == S0["chain_tail"], "verify": S1["verify"]})
+g0, g1 = {tuple(x) for x in S0["grants"]}, {tuple(x) for x in S1["grants"]}
+hp = adm.execute("select has_table_privilege('app_human', 'settlement_rows', 'INSERT'), has_table_privilege("
+                 "'app_human', 'anchor_receipts', 'INSERT'), has_column_privilege('svc_loader', 'settlement_rows',"
+                 " 'source_kind', 'INSERT')").fetchone()
+bad_def = [r for r in S1["secdef"] if "search_path" not in r[1] or (r[0].endswith("_human") and r[2])]
+ca("M6_quyen", g0 <= g1 and hp == (False, False, True) and not bad_def,
+   {"mat_quyen": sorted(g0 - g1)[:5], "them_quyen": sorted(g1 - g0)[:10], "app_human_insert_sr_ar": hp[:2],
+    "svc_loader_insert_source_kind": hp[2], "secdef_loi": bad_def[:5], "so_secdef": len(S1["secdef"])})
+adm.close()
+tong = {"PASS": sum(r["ket_qua"] == "PASS" for r in RES), "FAIL": sum(r["ket_qua"] == "FAIL" for r in RES)}
+Path(OUT).write_text(json.dumps({"probe": "m_migration", "root": ROOT, "db": DB, "tong": tong, "ca": RES},
+                                ensure_ascii=False, indent=1), encoding="utf-8")
+print(json.dumps(tong))

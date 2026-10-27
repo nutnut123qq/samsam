@@ -1,0 +1,729 @@
+"""PROBE S r15 — data_platform-06: quyết toán qua API sàn (tiêu chí criteria/r15_v1.json probe_s, KHÓA trước khi sửa code).
+
+Chạy TRONG tiến trình trên cây TREE (sys.path[0] = TREE): gọi entry point thật `ingest.market_api.main([...])`, server giả
+http.server 127.0.0.1 (ĐẾM request), Postgres thật DB test (DATABASE_URL phải là samsam_itacc_r15_* @127.0.0.1:55457).
+Dữ liệu GIẢ: mã đơn `S..FAKE`, tên người mua `NGUOI MUA GIA`, credential `*_SECRET_*`. Bảng ánh xạ fixture ghi rõ GIẢ — chỉ
+kiểm cơ chế, KHÔNG xác nhận cách hạch toán. Seam duy nhất của đường ghi: ép `settlement_api.source_kind` = api_live cho
+server giả (đường thật phân loại theo host); seam khác: `_sleep` (không chờ thật), `rollout._FORCE_MODE` (S18),
+`settlement_csv.reconcile` ném lỗi (S17), `load_dotenv` vô hiệu (không đọc .env).
+Phía trước (baseline) không có `ingest.settlement_api` → không áp seam; ca vẫn chạy qua CLI và ghi kết quả quan sát + lý do.
+  python -I probe_s_settlement.py.txt <TREE> <out ket_qua.json>"""
+import contextlib
+import hashlib
+import hmac
+import io
+import json
+import os
+import sys
+import tempfile
+import threading
+import time
+import urllib.parse
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+TREE = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[-1])
+sys.path.insert(0, str(TREE))
+
+import psycopg  # noqa: E402
+from psycopg import conninfo  # noqa: E402
+
+DSN = os.environ.get("DATABASE_URL", "")
+_d = conninfo.conninfo_to_dict(DSN) if DSN else {}
+if not (_d.get("dbname", "").startswith("samsam_itacc_r15_") and _d.get("host") == "127.0.0.1"
+        and str(_d.get("port")) == "55457"):
+    sys.exit("[probe] DATABASE_URL không phải DB test r15 — dừng")
+for k in list(os.environ):
+    if k.startswith(("SHOPEE_", "TIKTOK_", "MARKET_", "PG")) or k in ("AUTH_MODE", "APPROVAL_ENFORCE", "DEPLOY"):
+        del os.environ[k]
+
+from ingest import market_api as ma  # noqa: E402
+from ingest import settlement_csv as sc  # noqa: E402
+from pipelines import rollout  # noqa: E402
+
+try:
+    from ingest import settlement_api as sa
+except ImportError:
+    sa = None
+
+ma.load_dotenv = lambda *a, **k: None
+sc.load_dotenv = lambda *a, **k: None
+ma._sleep = lambda s: None
+
+
+@contextlib.contextmanager
+def _nojob(name):
+    yield {"ok": True, "detail": None}
+
+
+ma.job_run = _nojob
+
+CREDS = {"SHOPEE_PARTNER_ID": "1000001", "SHOPEE_PARTNER_KEY": "SPKEY_SECRET_R15", "SHOPEE_SHOP_ID": "2000002",
+         "SHOPEE_ACCESS_TOKEN": "SPTOKEN_SECRET_R15", "TIKTOK_APP_KEY": "ttappkeyr15",
+         "TIKTOK_APP_SECRET": "TTSECRET_SECRET_R15", "TIKTOK_SHOP_CIPHER": "ROW_cipher_r15",
+         "TIKTOK_ACCESS_TOKEN": "TTTOKEN_SECRET_R15"}
+SECRETS = [*CREDS.values(), "R_OLD_SECRET_R15", "R_NEW_SECRET_R15", "A_NEW_SECRET_R15"]
+PII = ["NGUOI MUA GIA", "nguoimuagia"]
+WIN = ["--from", "2026-10-01", "--to", "2026-10-07"]
+ALL_OUT: list[str] = []
+RES: list[dict] = []
+TMP = Path(tempfile.mkdtemp(prefix="r15_probe_s_"))   # NGOÀI repo (kho token phải ngoài repo)
+
+
+# ------------------------------------------------------------------ server giả
+
+class Srv:
+    def __init__(self, route):
+        self.route, self.req = route, []
+        me = self
+
+        class H(BaseHTTPRequestHandler):
+            def _any(self):
+                u = urllib.parse.urlsplit(self.path)
+                n = int(self.headers.get("Content-Length") or 0)
+                body = self.rfile.read(n).decode("utf-8") if n else ""
+                q = {k: v[0] for k, v in urllib.parse.parse_qs(u.query, keep_blank_values=True).items()}
+                me.req.append({"m": self.command, "p": u.path, "q": q, "body": body,
+                               "h": {k.lower(): v for k, v in self.headers.items()}})
+                st, payload, hd = me.route(self.command, u.path, q, body)
+                data = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
+                self.send_response(st)
+                for k, v in (hd or {}).items():
+                    self.send_header(k, v)
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+            do_GET = do_POST = do_PUT = do_DELETE = _any
+
+            def log_message(self, *a):
+                pass
+        self.h = ThreadingHTTPServer(("127.0.0.1", 0), H)
+        self.url = f"http://127.0.0.1:{self.h.server_address[1]}"
+        threading.Thread(target=self.h.serve_forever, daemon=True).start()
+
+    def close(self):
+        self.h.shutdown()
+        self.h.server_close()
+
+    def paths(self, p):
+        return [r for r in self.req if r["p"] == p]
+
+
+ESC_LIST, ESC_DET = "/api/v2/payment/get_escrow_list", "/api/v2/payment/get_escrow_detail"
+TT_ST, TT_TX = "/finance/202309/statements", "/finance/202501/statements/{sid}/statement_transactions"
+
+
+def income(base, **kw):
+    """order_income GIẢ: chỉ các khóa có trong ánh xạ fixture (trừ khi kw thêm khóa lạ)."""
+    d = {"escrow_amount": base - 30000, "order_original_price": base, "commission_fee": 10000,
+         "service_fee": 8000, "seller_transaction_fee": 4000, "actual_shipping_fee": 15000,
+         "buyer_paid_shipping_fee": 15000, "voucher_from_seller": 0, "order_ams_commission_fee": 8000,
+         "seller_return_refund": 0, "buyer_total_amount": base + 15000, "order_chargeable_weight": 300}
+    d.update(kw)
+    return d
+
+
+def shopee_route(orders, per_page=2, fail=None, more_forever=False):
+    """orders: [(sn, payout, release_ts, income_dict)]; fail(method, path, q, n_seen) → (status, payload, hdr) | None."""
+    seen = {}
+
+    def route(m, p, q, body):
+        key = (p, q.get("page_no"), q.get("order_sn"))
+        seen[key] = seen.get(key, 0) + 1
+        if fail:
+            r = fail(m, p, q, seen[key])
+            if r:
+                return r
+        if p == ESC_LIST:
+            pn = int(q.get("page_no") or 1)
+            chunk = orders[(pn - 1) * per_page: pn * per_page]
+            more = more_forever or pn * per_page < len(orders)
+            return 200, {"error": "", "message": "", "request_id": "rq",
+                         "response": {"more": more, "escrow_list": [
+                             {"order_sn": sn, "payout_amount": pay, "escrow_release_time": rel}
+                             for sn, pay, rel, _inc in chunk]}}, None
+        if p == ESC_DET:
+            for sn, _pay, _rel, inc in orders:
+                if sn == q.get("order_sn"):
+                    return 200, {"error": "", "message": "", "request_id": "rq",
+                                 "response": {"order_sn": sn, "buyer_user_name": "nguoimuagia",
+                                              "return_order_sn_list": [], "order_income": inc}}, None
+            return 200, {"error": "order_not_found", "message": "x"}, None
+        if p == "/api/v2/auth/access_token/get":
+            return 200, {"error": "", "message": "", "access_token": "A_NEW_SECRET_R15",
+                         "refresh_token": "R_NEW_SECRET_R15", "expire_in": 14400}, None
+        return 404, {"error": "error_not_found"}, None
+    return route
+
+
+SP_MAP = {"trang_thai": "da_chot", "duyet_boi": "Kế toán trưởng (GIẢ — chỉ probe)",
+          "can_cu": "FIXTURE r15 — KHÔNG phải bảng ánh xạ thật", "ngay_chot": "2026-10-25",
+          "thanh_phan": {
+              "escrow_amount": {"cot": "payout", "dau": 1},
+              "order_original_price": {"cot": "order_amount", "dau": 1},
+              "commission_fee": {"cot": "fixed_fee", "dau": 1},
+              "service_fee": {"cot": "service_fee", "dau": 1},
+              "seller_transaction_fee": {"cot": "payment_fee", "dau": 1},
+              "actual_shipping_fee": {"cot": "shipping_fee", "dau": 1},
+              "buyer_paid_shipping_fee": {"cot": "shipping_fee", "dau": -1},
+              "voucher_from_seller": {"cot": "voucher_seller", "dau": 1},
+              "order_ams_commission_fee": {"cot": "affiliate", "dau": 1},
+              "seller_return_refund": {"cot": "refund", "dau": -1},
+              "buyer_total_amount": {"bo_qua": True},
+              "order_chargeable_weight": {"bo_qua": True}}}
+TT_MAP = {"trang_thai": "da_chot", "duyet_boi": "Kế toán trưởng (GIẢ — chỉ probe)",
+          "can_cu": "FIXTURE r15 — KHÔNG phải bảng ánh xạ thật", "ngay_chot": "2026-10-25",
+          "thanh_phan": {
+              "settlement_amount": {"cot": "payout", "dau": 1},
+              "revenue_amount": {"bo_qua": True},
+              "revenue_breakdown.subtotal_before_discount_amount": {"cot": "order_amount", "dau": 1},
+              "fee_tax_amount": {"bo_qua": True},
+              "fee_tax_breakdown.fee.platform_commission_amount": {"cot": "fixed_fee", "dau": -1},
+              "fee_tax_breakdown.fee.transaction_fee_amount": {"cot": "payment_fee", "dau": -1},
+              "shipping_cost_amount": {"cot": "shipping_fee", "dau": -1},
+              "adjustment_amount": {"bo_qua": True}},
+          "loai_giao_dich": {"ORDER": {"ma_don": "order_id", "txn_type": None},
+                             "SHIPPING_FEE_ADJUSTMENT": {"bo_qua": True}}}
+
+
+def write_map(name, shopee=None, tiktok=None):
+    p = TMP / name
+    p.write_text(json.dumps({"_doc": "FIXTURE GIẢ probe r15", "shopee": shopee or {"trang_thai": "chua_chot"},
+                             "tiktok": tiktok or {"trang_thai": "chua_chot"}}, ensure_ascii=False), encoding="utf-8")
+    return p
+
+
+MAP_OK = write_map("map_ok.json", SP_MAP, TT_MAP)
+
+
+# ------------------------------------------------------------------ chạy CLI
+
+def env(base, token_file=None):
+    for k, v in CREDS.items():
+        os.environ[k] = v
+    os.environ["SHOPEE_API_BASE"] = base
+    os.environ["TIKTOK_API_BASE"] = base
+    os.environ["TIKTOK_AUTH_BASE"] = base
+    os.environ.pop("MARKET_TOKEN_FILE", None)
+    if token_file:
+        os.environ["MARKET_TOKEN_FILE"] = str(token_file)
+
+
+@contextlib.contextmanager
+def seams(map_file=None, live=False):
+    saved = {}
+    if sa is not None:
+        if map_file is not None:
+            saved["MAP_FILE"] = sa.MAP_FILE
+            sa.MAP_FILE = Path(map_file)
+        if live:
+            saved["source_kind"] = sa.source_kind
+            sa.source_kind = lambda ch, base: "api_live"
+    try:
+        yield
+    finally:
+        for k, v in saved.items():
+            setattr(sa, k, v)
+
+
+def cli(argv, mod=ma):
+    o, e = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(o), contextlib.redirect_stderr(e):
+        try:
+            rc = mod.main(argv)
+        except SystemExit as ex:
+            rc = ex.code if isinstance(ex.code, int) else 2
+    text = o.getvalue() + e.getvalue()
+    ALL_OUT.append(text)
+    return rc, text
+
+
+def h(sn, ch="shopee"):
+    return hashlib.sha256(f"{ch}:{sn}".encode()).hexdigest()[:16]
+
+
+def db():
+    return psycopg.connect(DSN, connect_timeout=5, autocommit=True)
+
+
+def n_rows(sns, ch="shopee"):
+    with db() as c:
+        return c.execute("select count(*) from settlement_rows where channel = %s and order_id_hash = any(%s)",
+                         (ch, [h(s, ch) for s in sns])).fetchone()[0]
+
+
+def why_before(text):
+    if "invalid choice" in text and "settlement" in text:
+        return "CLI baseline chưa có --kind settlement (argparse từ chối)"
+    return None
+
+
+def ca(name, ok, detail, text=""):
+    r = {"ca": name, "ket_qua": "PASS" if ok else "FAIL", "chi_tiet": detail}
+    if not ok and (w := why_before(text)):
+        r["ly_do_truoc"] = w
+    RES.append(r)
+    print(f"{name}: {r['ket_qua']} — {detail}" + (f" [{r['ly_do_truoc']}]" if r.get("ly_do_truoc") else ""))
+
+
+def orders(prefix, n, base=200000, rel=1759460000):
+    return [(f"{prefix}{i:03d}FAKE", base - 30000, rel, income(base + i * 1000, escrow_amount=base + i * 1000 - 30000))
+            for i in range(1, n + 1)]
+
+
+SC = "--kind", "settlement"
+
+
+# ------------------------------------------------------------------ ca
+
+def s00():
+    s = Srv(shopee_route(orders("S00", 3)))
+    env(s.url)
+    with seams(MAP_OK):
+        rc, t = cli(["--channel", "shopee", *SC, *WIN, "--dry-run"])
+    s.close()
+    ok = rc == 0 and "api_local" in t and "escrow_amount" in t and len(s.paths(ESC_DET)) == 3
+    ca("S00", ok, f"exit {rc}, detail req {len(s.paths(ESC_DET))}, có 'api_local' {'api_local' in t}", t)
+
+
+def s01():
+    s = Srv(shopee_route(orders("S01", 2)))
+    env(s.url)
+    with seams(None, live=True):    # bảng ánh xạ của REPO (chưa chốt)
+        rc, t = cli(["--channel", "shopee", *SC, *WIN])
+    s.close()
+    ok = rc == 2 and "[blocked]" in t and s.req == [] and n_rows([o[0] for o in orders("S01", 2)]) == 0
+    ca("S01", ok, f"exit {rc}, request {len(s.req)}, [blocked] {'[blocked]' in t}", t)
+
+
+def s02():
+    s = Srv(shopee_route(orders("S02", 2)))
+    env(s.url)
+    with seams(None):
+        rc, t = cli(["--channel", "shopee", *SC, *WIN, "--dry-run"])
+    s.close()
+    ok = rc == 2 and len(s.req) > 0 and "CHƯA CHỐT" in t and n_rows([o[0] for o in orders("S02", 2)]) == 0
+    ca("S02", ok, f"exit {rc}, request {len(s.req)}, 'CHƯA CHỐT' {'CHƯA CHỐT' in t}", t)
+
+
+def s03():
+    od = orders("S03", 2)
+    od[1] = (od[1][0], od[1][1], od[1][2], {**od[1][3], "new_fee_2027": 1200})
+    s = Srv(shopee_route(od))
+    env(s.url)
+    with seams(MAP_OK, live=True):
+        rc, t = cli(["--channel", "shopee", *SC, *WIN])
+    s.close()
+    ok = rc == 2 and "[blocked]" in t and "new_fee_2027" in t and n_rows([o[0] for o in od]) == 0
+    ca("S03", ok, f"exit {rc}, nêu tên thành phần lạ {'new_fee_2027' in t}, dòng {n_rows([o[0] for o in od])}", t)
+
+
+def s04():
+    od = orders("S04", 5)
+    s = Srv(shopee_route(od, per_page=2))
+    env(s.url)
+    with seams(MAP_OK):
+        rc, t = cli(["--channel", "shopee", *SC, *WIN, "--dry-run"])
+    s.close()
+    lst = s.paths(ESC_LIST)
+    pages = [r["q"].get("page_no") for r in lst]
+    sizes = {r["q"].get("page_size") for r in lst}
+    dets = sorted(r["q"].get("order_sn") for r in s.paths(ESC_DET))
+    ok = rc == 0 and pages == ["1", "2", "3"] and sizes == {"100"} and dets == sorted(o[0] for o in od) \
+        and all(r["m"] == "GET" for r in s.req)
+    ca("S04", ok, f"exit {rc}, page_no {pages}, page_size {sizes}, detail {len(dets)}/5", t)
+
+
+def s05():
+    s = Srv(shopee_route(orders("S05", 1), per_page=1, more_forever=True))
+    env(s.url)
+    with seams(MAP_OK, live=True):
+        rc, t = cli(["--channel", "shopee", *SC, *WIN])
+    s.close()
+    nl = len(s.paths(ESC_LIST))
+    ok = rc == 1 and nl == ma.MAX_PAGES and n_rows(["S05001FAKE"]) == 0
+    ca("S05", ok, f"exit {rc}, trang list {nl} (MAX_PAGES {ma.MAX_PAGES}), dòng {n_rows(['S05001FAKE'])}", t)
+
+
+def s06():
+    det = []
+    od = orders("S06A", 2)
+    s = Srv(shopee_route(od, fail=lambda m, p, q, n: (500, {"error": "x"}, None) if p == ESC_LIST and n == 1 else
+                         ((429, {"error": "x"}, {"Retry-After": "1"}) if p == ESC_DET and n == 1 else None)))
+    env(s.url)
+    with seams(MAP_OK):
+        rc1, t1 = cli(["--channel", "shopee", *SC, *WIN, "--dry-run"])
+    s.close()
+    det.append(f"500/429 → exit {rc1}, list req {len(s.paths(ESC_LIST))}, detail req {len(s.paths(ESC_DET))}")
+    od2 = orders("S06B", 2)
+    s2 = Srv(shopee_route(od2, fail=lambda m, p, q, n: (403, {"error": "x"}, None) if p == ESC_DET else None))
+    env(s2.url)
+    with seams(MAP_OK, live=True):
+        rc2, t2 = cli(["--channel", "shopee", *SC, *WIN])
+    s2.close()
+    n403 = len(s2.paths(ESC_DET))
+    det.append(f"403 → exit {rc2}, detail req {n403}, dòng {n_rows([o[0] for o in od2])}")
+    ok = rc1 == 0 and len(s.paths(ESC_LIST)) == 2 and len(s.paths(ESC_DET)) == 3 and rc2 == 1 and n403 == 1 \
+        and n_rows([o[0] for o in od2]) == 0
+    ca("S06", ok, "; ".join(det), t1 + t2)
+
+
+def s07():
+    det, ok = [], True
+    od = orders("S07A", 3)
+    variants = [
+        ("JSON hỏng trang 2", od, lambda m, p, q, n: (200, b"{not json", None) if p == ESC_LIST and q.get("page_no") == "2" else None),
+        ("thiếu order_income", [(*o[:3], None) for o in orders("S07B", 2)], None),
+        ("số lẻ 12000.5", [(o[0], o[1], o[2], {**o[3], "commission_fee": 12000.5}) for o in orders("S07C", 2)], None),
+    ]
+    text = ""
+    for label, od_, fail in variants:
+        if od_[0][3] is None:
+            def route(m, p, q, b, _od=od_):
+                if p == ESC_DET:
+                    return 200, {"error": "", "message": "", "response": {"order_sn": q.get("order_sn")}}, None
+                return shopee_route([(o[0], o[1], o[2], {}) for o in _od])(m, p, q, b)
+            s = Srv(route)
+        else:
+            s = Srv(shopee_route(od_, per_page=2, fail=fail))
+        env(s.url)
+        with seams(MAP_OK, live=True):
+            rc, t = cli(["--channel", "shopee", *SC, *WIN])
+        s.close()
+        text += t
+        nr = n_rows([o[0] for o in od_])
+        det.append(f"{label}: exit {rc}, dòng {nr}")
+        ok = ok and rc == 1 and nr == 0
+    ca("S07", ok, "; ".join(det), text)
+
+
+def s08():
+    target = Srv(lambda *a: (200, {"error": ""}, None))
+    s = Srv(shopee_route(orders("S08", 1), fail=lambda m, p, q, n: (302, b"", {"Location": target.url + ESC_LIST})
+                          if p == ESC_LIST else None))
+    env(s.url)
+    with seams(MAP_OK, live=True):
+        rc, t = cli(["--channel", "shopee", *SC, *WIN])
+    s.close()
+    target.close()
+    ok = rc == 1 and target.req == [] and n_rows(["S08001FAKE"]) == 0
+    ca("S08", ok, f"exit {rc}, request tới đích redirect {len(target.req)}", t)
+
+
+def s09():
+    tf = TMP / "tokens.json"
+    tf.write_text(json.dumps({"shopee": {"access_token": "A_OLD_SECRET_R15xx", "refresh_token": "R_OLD_SECRET_R15",
+                                         "expire_at": int(time.time()) + 60}}), encoding="utf-8")
+    s = Srv(shopee_route(orders("S09", 1)))
+    env(s.url, tf)
+    os.environ.pop("SHOPEE_ACCESS_TOKEN", None)
+    with seams(MAP_OK):
+        rc, t = cli(["--channel", "shopee", *SC, *WIN, "--dry-run"])
+    s.close()
+    first = s.req[0]["p"] if s.req else None
+    after = [r["q"].get("access_token") for r in s.req if r["p"] == ESC_LIST]
+    ok = rc == 0 and first == "/api/v2/auth/access_token/get" and after and set(after) == {"A_NEW_SECRET_R15"}
+    ca("S09", ok, f"exit {rc}, request đầu {first}, token dùng cho list {'mới' if set(after) == {'A_NEW_SECRET_R15'} else after and 'khác'}", t)
+
+
+def s11():
+    s = Srv(shopee_route(orders("S11", 1)))
+    env(s.url)
+    with seams(MAP_OK):            # KHÔNG ép live: server giả = api_local
+        rc, t = cli(["--channel", "shopee", *SC, *WIN])
+    s.close()
+    ok = rc == 2 and "[blocked]" in t and s.req == [] and n_rows(["S11001FAKE"]) == 0
+    ca("S11", ok, f"exit {rc}, request {len(s.req)}", t)
+
+
+A = orders("S12A", 3)
+
+
+def s12():
+    s = Srv(shopee_route(A))
+    env(s.url)
+    with seams(MAP_OK, live=True):
+        rc1, t1 = cli(["--channel", "shopee", *SC, *WIN])
+        n1 = n_rows([o[0] for o in A])
+        rc2, t2 = cli(["--channel", "shopee", *SC, *WIN])
+    s.close()
+    n2 = n_rows([o[0] for o in A])
+    with db() as c:
+        try:
+            kinds = {r[0] for r in c.execute("select source_kind from settlement_rows where order_id_hash = any(%s)",
+                                             ([h(o[0]) for o in A],))}
+        except psycopg.Error:
+            kinds = {"(không có cột source_kind)"}
+        rec = c.execute("select count(*) from recon_results r join settlement_rows s on s.id = r.settlement_row_id"
+                        " where s.order_id_hash = any(%s)", ([h(o[0]) for o in A],)).fetchone()[0]
+    ok = rc1 == 0 and n1 == 3 and kinds == {"api_live"} and rec == 3 and rc2 == 0 and "[skip]" in t2 and n2 == 3
+    ca("S12", ok, f"lần 1 exit {rc1} dòng {n1} nguồn {sorted(kinds)} đối chiếu {rec}; lần 2 exit {rc2} [skip] {'[skip]' in t2} dòng {n2}", t1 + t2)
+
+
+def view_count(sns):
+    with db() as c:
+        return c.execute("select count(*), coalesce(sum(payout_vnd),0) from v_settlement_khoan where channel='shopee'"
+                         " and order_id_hash = any(%s)", ([h(s) for s in sns],)).fetchone()
+
+
+def s13():
+    extra = orders("S13X", 1)
+    s = Srv(shopee_route(A + extra))
+    env(s.url)
+    with seams(MAP_OK, live=True):
+        rc, t = cli(["--channel", "shopee", "--kind", "settlement", "--from", "2026-10-02", "--to", "2026-10-08"])
+    s.close()
+    vc = view_count([o[0] for o in A])
+    raw = n_rows([o[0] for o in A])
+    ok = rc == 0 and raw == 6 and vc[0] == 3
+    ca("S13", ok, f"exit {rc}, dòng thô A {raw}, khoản theo view {vc[0]}", t)
+
+
+def s14():
+    with db() as c:
+        def lech():
+            return sc.overlaps(c, ["shopee"]).get("shopee", {}).get("lech", 0)
+        before = lech()
+    changed = [(A[0][0], A[0][1], A[0][2], {**A[0][3], "escrow_amount": A[0][3]["escrow_amount"] - 5000})]
+    s = Srv(shopee_route(changed))
+    env(s.url)
+    with seams(MAP_OK, live=True):
+        rc, t = cli(["--channel", "shopee", *SC, "--from", "2026-10-03", "--to", "2026-10-04"])
+    s.close()
+    with db() as c:
+        after = sc.overlaps(c, ["shopee"]).get("shopee", {}).get("lech", 0)
+    vc = view_count([A[0][0]])
+    ok = rc == 0 and after >= before + 1 and vc[0] == 2
+    ca("S14", ok, f"exit {rc}, lech {before}→{after}, khoản đơn A1 theo view {vc[0]} (giữ cả hai)", t)
+
+
+def s15():
+    od = orders("S15", 2)
+    dup = od + [(od[0][0], od[0][1] + 777, od[0][2], od[0][3])]
+    s = Srv(shopee_route(dup, per_page=2))
+    env(s.url)
+    with seams(MAP_OK, live=True):
+        rc, t = cli(["--channel", "shopee", *SC, *WIN])
+    s.close()
+    ok = rc == 1 and n_rows([o[0] for o in od]) == 0
+    ca("S15", ok, f"exit {rc}, dòng {n_rows([o[0] for o in od])}", t)
+
+
+def s16():
+    det, text = [], ""
+    c1 = orders("S16C", 2)
+    with db() as c:
+        c.execute("insert into settlement_rows (file_sha256, file_name, channel, row_no, order_id_hash,"
+                  " order_amount_vnd, payout_vnd) values (%s, 'csv-gia-probe-r15.csv', 'shopee', 2, %s, 100000, 90000)",
+                  (hashlib.sha256(b"probe-r15-s16-csv").hexdigest(), h(c1[0][0])))
+    s = Srv(shopee_route(c1))
+    env(s.url)
+    with seams(MAP_OK, live=True):
+        rc1, t1 = cli(["--channel", "shopee", *SC, *WIN])
+    s.close()
+    text += t1
+    n_api = n_rows([c1[1][0]])
+    det.append(f"API khi đơn đã có CSV: exit {rc1}, dòng mới {n_api}")
+    csv = TMP / "s16.csv"
+    csv.write_text("Mã đơn hàng,Giá sản phẩm,Phí cố định,Phí thanh toán,Phí dịch vụ,Tổng tiền đã thanh toán\n"
+                   f"{A[1][0]},201000,-10000,-4000,-8000,171000\n", encoding="utf-8")
+    before = n_rows([A[1][0]])
+    rc2, t2 = cli(["--file", str(csv), "--channel", "shopee"], mod=sc)
+    text += t2
+    after = n_rows([A[1][0]])
+    det.append(f"CSV khi đơn đã có api_live: exit {rc2}, dòng {before}→{after}")
+    ok = rc1 == 2 and n_api == 0 and rc2 == 2 and after == before
+    ca("S16", ok, "; ".join(det), text)
+
+
+def s17():
+    od = orders("S17", 2)
+    s = Srv(shopee_route(od))
+    env(s.url)
+    orig = sc.reconcile
+
+    def boom(*a, **k):
+        raise psycopg.errors.DataException("probe r15 S17 — lỗi giả sau insert")
+    sc.reconcile = boom
+    try:
+        with seams(MAP_OK, live=True):
+            rc, t = cli(["--channel", "shopee", *SC, *WIN])
+    finally:
+        sc.reconcile = orig
+        s.close()
+    ok = rc == 1 and n_rows([o[0] for o in od]) == 0
+    ca("S17", ok, f"exit {rc}, dòng {n_rows([o[0] for o in od])}", t)
+
+
+def s18():
+    s = Srv(shopee_route(orders("S18", 1)))
+    env(s.url)
+    old = rollout._FORCE_MODE
+    rollout._FORCE_MODE = "tat"
+    try:
+        with seams(MAP_OK, live=True):
+            rc, t = cli(["--channel", "shopee", *SC, *WIN])
+    finally:
+        rollout._FORCE_MODE = old
+        s.close()
+    ok = rc == 2 and s.req == [] and "data_platform-06" in t
+    ca("S18", ok, f"exit {rc}, request {len(s.req)}, nêu tính năng {'data_platform-06' in t}", t)
+
+
+def tt_route(stmts, txs, currency="VND"):
+    """stmts: [[ (sid, ts) ...] theo trang]; txs: {sid: [[tx...] theo trang]}."""
+    def route(m, p, q, body):
+        if p == TT_ST:
+            i = int(q.get("page_token") or 0)
+            page = stmts[i]
+            return 200, {"code": 0, "message": "Success", "request_id": "rq", "data": {
+                "next_page_token": str(i + 1) if i + 1 < len(stmts) else "",
+                "statements": [{"id": sid, "statement_time": ts, "currency": currency, "settlement_amount": "0",
+                                "payment_status": "PAID"} for sid, ts in page]}}, None
+        parts = p.split("/")
+        if len(parts) == 6 and parts[1] == "finance" and parts[4] and parts[5] == "statement_transactions":
+            sid = parts[4]
+            pages = txs.get(sid, [[]])
+            i = int(q.get("page_token") or 0)
+            return 200, {"code": 0, "message": "Success", "request_id": "rq", "data": {
+                "next_page_token": str(i + 1) if i + 1 < len(pages) else "", "id": sid, "currency": currency,
+                "status": "SETTLED", "create_time": 1759449600, "transactions": pages[i]}}, None
+        return 404, {"code": 1, "message": "x"}, None
+    return route
+
+
+def ttx(tid, typ="ORDER", oid=None, amt=100000):
+    t = {"id": tid, "type": typ, "settlement_amount": str(amt - 15000), "revenue_amount": str(amt),
+         "revenue_breakdown": {"subtotal_before_discount_amount": str(amt)},
+         "fee_tax_amount": "-5000", "fee_tax_breakdown": {"fee": {"platform_commission_amount": "-4000",
+                                                                  "transaction_fee_amount": "-1000"}},
+         "shipping_cost_amount": "-10000", "adjustment_amount": "0"}
+    if typ == "ORDER":
+        t["order_id"] = oid or f"TT{tid}FAKE"
+    else:
+        t["adjustment_order_id"] = oid or ""
+    return t
+
+
+def s19():
+    det, ok, text = [], True, ""
+    stmts = [[("7001", 1759449600)], [("7002", 1759536000)]]
+    txs = {"7001": [[ttx("901"), ttx("902")], [ttx("903")]],
+           "7002": [[ttx("904"), ttx("905", "SHIPPING_FEE_ADJUSTMENT", "TT904FAKE", 3000)]]}
+    s = Srv(tt_route(stmts, txs))
+    env(s.url)
+    with seams(MAP_OK):
+        rc, t = cli(["--channel", "tiktok", *SC, *WIN, "--dry-run"])
+    s.close()
+    text += t
+    st = s.paths(TT_ST)
+    txp = [r for r in s.req if r["p"].endswith("/statement_transactions")]
+    sig_ok = True
+    for r in s.req:
+        q = dict(r["q"])
+        sign = q.pop("sign", None)
+        exp = hmac.new(CREDS["TIKTOK_APP_SECRET"].encode(),
+                       (CREDS["TIKTOK_APP_SECRET"] + r["p"] + "".join(f"{k}{q[k]}" for k in sorted(q) if k != "access_token")
+                        + r["body"] + CREDS["TIKTOK_APP_SECRET"]).encode(), hashlib.sha256).hexdigest()
+        sig_ok = sig_ok and sign == exp and r["m"] == "GET" and r["body"] == "" \
+            and r["h"].get("x-tts-access-token") == CREDS["TIKTOK_ACCESS_TOKEN"]
+    paths = sorted({r["p"] for r in txp})
+    c1 = (rc == 0 and len(st) == 2 and st[0]["q"].get("sort_field") == "statement_time"
+          and st[0]["q"].get("page_size") == "100" and st[1]["q"].get("page_token") == "1" and len(txp) == 3
+          and paths == ["/finance/202501/statements/7001/statement_transactions",
+                        "/finance/202501/statements/7002/statement_transactions"] and sig_ok and "4 dòng" in t)
+    det.append(f"phân trang/ký/GET: exit {rc}, statements {len(st)}, transactions {len(txp)}, chữ ký+GET không body {sig_ok}, '4 dòng' {'4 dòng' in t}")
+    ok = ok and c1
+    txs2 = {"7001": [[ttx("911"), ttx("912", "PLATFORM_PENALTY", "")]]}
+    s = Srv(tt_route([[("7001", 1759449600)]], txs2))
+    env(s.url)
+    with seams(MAP_OK):
+        rc, t = cli(["--channel", "tiktok", *SC, *WIN, "--dry-run"])
+    s.close()
+    text += t
+    det.append(f"loại chưa quyết: exit {rc}, nêu PLATFORM_PENALTY {'PLATFORM_PENALTY' in t}")
+    ok = ok and rc == 2 and "PLATFORM_PENALTY" in t
+    s = Srv(tt_route([[("7001", 1759449600)]], {"7001": [[ttx("921")]]}, currency="USD"))
+    env(s.url)
+    with seams(MAP_OK):
+        rc, t = cli(["--channel", "tiktok", *SC, *WIN, "--dry-run"])
+    s.close()
+    text += t
+    det.append(f"currency USD: exit {rc}")
+    ok = ok and rc == 1
+    s = Srv(tt_route([[("70/../x", 1759449600)]], {}))
+    env(s.url)
+    with seams(MAP_OK):
+        rc, t = cli(["--channel", "tiktok", *SC, *WIN, "--dry-run"])
+    s.close()
+    text += t
+    n_tx = len([r for r in s.req if r["p"] != TT_ST])
+    det.append(f"statement_id sai dạng: exit {rc}, request ngoài statements {n_tx}")
+    ok = ok and rc == 1 and n_tx == 0
+    ca("S19", ok, "; ".join(det), text)
+
+
+def s20():
+    with db() as c:
+        col = c.execute("select 1 from information_schema.columns where table_name='settlement_rows'"
+                        " and column_name='source_kind'").fetchone()
+        csv_kind = None
+        if col:
+            csv_kind = {r[0] for r in c.execute("select source_kind from settlement_rows where file_name ="
+                                                 " 'csv-gia-probe-r15.csv'")}
+    s = Srv(shopee_route(orders("S20", 1)))
+    env(s.url)
+    with seams(MAP_OK):
+        rc, t = cli(["--channel", "shopee", *SC, *WIN, "--dry-run"])
+    s.close()
+    ok = bool(col) and csv_kind == {"csv"} and rc == 0 and "api_local" in t
+    ca("S20", ok, f"cột source_kind {bool(col)}, dòng CSV {csv_kind}, dry-run nguồn api_local {'api_local' in t}", t)
+
+
+def s21():
+    a = ma._err_code("income_not_found", {"K": "SPKEY_SECRET_R15"})
+    b = ma._err_code("order_not_found", {"K": "SPKEY_SECRET_R15"})
+    c = ma._err_code("spkey_secret_r15", {"K": "spkey_secret_r15"})
+    d = ma._err_code("SPKEY_SECRET_R15", {"K": "SPKEY_SECRET_R15"})
+    e = ma._err_code("c09222e3fc40ffb25fc947f738b1abf1", {"K": "SPKEY_SECRET_R15"})
+    ok = a == "income_not_found" and b == "order_not_found" and "ẩn" in c and "ẩn" in d and "ẩn" in e
+    ca("S21", ok, f"income_not_found→{a!r}; order_not_found→{b!r}; phản chiếu credential→ẩn {'ẩn' in c and 'ẩn' in d}; hex token→ẩn {'ẩn' in e}")
+
+
+def s22():
+    s = Srv(lambda *a: (200, {"error": ""}, None))
+    res = []
+    for m, p in (("POST", ESC_LIST), ("POST", ESC_DET), ("GET", "/api/v2/payment/set_shop_installment_status"),
+                 ("POST", "/finance/202309/statements")):
+        ch = "tiktok" if p.startswith("/finance") else "shopee"
+        try:
+            ma._request(ch, m, p, {}, creds=CREDS, base=s.url)
+            res.append(f"{m} {p}: KHÔNG chặn")
+        except ma.ScopeError:
+            res.append(f"{m} {p}: ScopeError")
+    s.close()
+    ok = all(x.endswith("ScopeError") for x in res) and s.req == []
+    ca("S22", ok, "; ".join(res) + f"; request {len(s.req)}")
+
+
+def s10():
+    blob = "\n".join(ALL_OUT)
+    leak = [x for x in SECRETS + PII if x in blob]
+    raw_sn = [x for x in ("S12A001FAKE", "S04001FAKE", "TT901FAKE") if x in blob]
+    ca("S10", not leak and not raw_sn, f"lộ credential/PII {len(leak)}, mã đơn thô {len(raw_sn)}")
+
+
+for f in (s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22,
+          s10):
+    try:
+        f()
+    except Exception as ex:  # noqa: BLE001 — ghi FAIL kèm loại lỗi, chạy tiếp ca sau
+        RES.append({"ca": f.__name__.upper(), "ket_qua": "FAIL", "chi_tiet": f"ngoại lệ probe {type(ex).__name__}: {str(ex)[:200]}"})
+        print(f"{f.__name__.upper()}: FAIL — ngoại lệ {type(ex).__name__}: {str(ex)[:200]}")
+
+tong = {"PASS": sum(r["ket_qua"] == "PASS" for r in RES), "FAIL": sum(r["ket_qua"] == "FAIL" for r in RES)}
+OUT.write_text(json.dumps({"probe": "s_settlement", "tree": str(TREE), "co_settlement_api": sa is not None,
+                           "tong": tong, "ca": RES}, ensure_ascii=False, indent=1), encoding="utf-8")
+print(json.dumps(tong))

@@ -455,10 +455,19 @@ _R13_ANCHOR_OK = re.compile(
     r"\([^;]*\))\s*;")
 
 
+# r15 data_platform-06: CHECK nguồn `settlement_rows.source_kind` — chỉ ĐÚNG tên
+# cố định + đúng dạng `check (source_kind in ('csv', 'api_live'))`.
+_R15_SOURCE_OK = re.compile(
+    r"\balter\s+table\s+settlement_rows\s+(?:drop\s+constraint\s+if\s+exists\s+"
+    r"settlement_rows_source_kind_check|add\s+constraint\s+"
+    r"settlement_rows_source_kind_check\s+check\s*\(\s*source_kind\s+in\s*\(\s*"
+    r"'csv',\s*'api_live'\s*\)\s*\))\s*;")
+
+
 def _forbidden_ddl(lower: str) -> list[str]:
-    return re.findall(r"\b(?:alter|drop)\s+table\b", _R13_ANCHOR_OK.sub(
-        "", _DOCX_CHECK_OK.sub("", _V13_CHECK_OK.sub("", _CONSENT_B2B_OK.sub(
-            "", _ALTER_ADD_OK.sub("", lower))))))
+    return re.findall(r"\b(?:alter|drop)\s+table\b", _R15_SOURCE_OK.sub(
+        "", _R13_ANCHOR_OK.sub("", _DOCX_CHECK_OK.sub("", _V13_CHECK_OK.sub(
+            "", _CONSENT_B2B_OK.sub("", _ALTER_ADD_OK.sub("", lower)))))))
 
 
 def test_drift_guard_narrow_alter_only():
@@ -500,7 +509,16 @@ def test_drift_guard_narrow_alter_only():
                 ("alter table anchor_receipts add constraint "
                  "anchor_receipts_status_r13 check (x), drop column receipt;"),
                 ("alter table anchor_batches drop constraint if exists "
-                 "anchor_receipts_check;")):
+                 "anchor_receipts_check;"),
+                ("alter table settlement_rows drop constraint if exists "
+                 "settlement_rows_source_kind_check, drop column payout_vnd;"),
+                ("alter table settlement_rows add constraint "
+                 "settlement_rows_source_kind_check check (true);"),
+                ("alter table settlement_rows add constraint "
+                 "settlement_rows_source_kind_check check (source_kind in "
+                 "('csv', 'api_live', 'api_sandbox'));"),
+                ("alter table orders drop constraint if exists "
+                 "settlement_rows_source_kind_check;")):
         assert _forbidden_ddl(bad), bad
     assert _forbidden_ddl(
         "alter table x add column if not exists y text;") == []

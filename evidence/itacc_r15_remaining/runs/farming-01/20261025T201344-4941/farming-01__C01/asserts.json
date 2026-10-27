@@ -1,0 +1,14 @@
+[
+ {
+  "sql": "select count(*) from plot_logs where source = 'zalo:garden' and author = 'zalo:IT-NV01' and plot_id = 'KV-A01' and activity = 'tưới' and row_hash is not null",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ },
+ {
+  "sql": "select count(*) from plot_logs where source = 'zalo:garden'",
+  "expect": 1,
+  "actual": 1,
+  "dat": true
+ }
+]

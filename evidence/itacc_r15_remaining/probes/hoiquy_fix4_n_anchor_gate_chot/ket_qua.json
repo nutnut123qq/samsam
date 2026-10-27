@@ -1,0 +1,111 @@
+{
+ "probe": "n_anchor_gate_v1",
+ "root": "D:/code/samsam",
+ "ca": [
+  {
+   "ca": "doi_chung_submit_tat_0_post",
+   "ket_qua": "PASS",
+   "actual": {
+    "got": "AnchorError: neo lần gom #7: tính năng farming-06 đang tắt — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng",
+    "posts": []
+   }
+  },
+  {
+   "ca": "upgrade_tat_0_get_0_insert",
+   "ket_qua": "PASS",
+   "actual": {
+    "got": "AnchorError: nâng cấp biên nhận lần gom #7: tính năng farming-06 đang tắt — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng",
+    "gets": [],
+    "inserts": 0
+   }
+  },
+  {
+   "ca": "upgrade_khong_xac_dinh_fail_closed",
+   "ket_qua": "PASS",
+   "actual": {
+    "got": "AnchorError: nâng cấp biên nhận lần gom #7: tính năng farming-06 đang chạy thử — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng",
+    "gets": [],
+    "inserts": 0
+   }
+  },
+  {
+   "ca": "upgrade_chay_thu_0_get",
+   "ket_qua": "PASS",
+   "actual": {
+    "got": "AnchorError: nâng cấp biên nhận lần gom #7: tính năng farming-06 đang chạy thử — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng",
+    "gets": [],
+    "inserts": 0
+   }
+  },
+  {
+   "ca": "upgrade_co_nguoi_duyet_job_khong_tu_mo",
+   "ket_qua": "PASS",
+   "actual": {
+    "got": "AnchorError: nâng cấp biên nhận lần gom #7: tính năng farming-06 đang có người duyệt — HĐ 6.7/PL02 mục 1 — mục chưa được NGƯỜI duyệt từng mục",
+    "gets": [],
+    "inserts": 0
+   }
+  },
+  {
+   "ca": "cli_upgrade_tat_exit_khac_0_0_mang",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 1,
+    "net": [],
+    "inserts": 0,
+    "stderr": "[err] nâng cấp biên nhận lần gom #7: tính năng farming-06 đang tắt — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng\n"
+   }
+  },
+  {
+   "ca": "van_hanh_pending_cho_0_insert",
+   "ket_qua": "PASS",
+   "actual": {
+    "r": {
+     "id": 7,
+     "status": "cho",
+     "errors": []
+    },
+    "gets": [
+     "https://cal-b.test/timestamp/ff3c98b62aabc3f2b584406b736af20d2dfefbb6a59d663cf9bf50603ac404f2"
+    ]
+   }
+  },
+  {
+   "ca": "van_hanh_bitcoin_1_insert_da_nang_cap",
+   "ket_qua": "PASS",
+   "actual": {
+    "r": {
+     "id": 7,
+     "status": "da_nang_cap",
+     "new": true,
+     "heights": [
+      850001
+     ]
+    },
+    "inserts": 1,
+    "kinds": [
+     "bitcoin"
+    ],
+    "state": "calendar cal-b.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba (ots verify với header khối Bitcoin)"
+   }
+  },
+  {
+   "ca": "van_hanh_calendar_ngoai_cau_hinh_0_get",
+   "ket_qua": "PASS",
+   "actual": {
+    "r": {
+     "id": 7,
+     "status": "cho",
+     "errors": [
+      "calendar ngoài cấu hình — không hỏi"
+     ]
+    },
+    "gets": []
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 9,
+  "FAIL": 0
+ }
+}

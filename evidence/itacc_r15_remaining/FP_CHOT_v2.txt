@@ -1,0 +1,21 @@
+# FP mã cuối r15 v2 — khóa 2026-10-25T19:03:32+07:00 TRƯỚC full pytest lần 2
+lý do v2: full lần 1 (fp v1 6c505051…, gate/full_chot_f1.txt) 6940 passed / 4 failed — test drift-guard schema (tests/test_store.py, test_lead_store.py, test_ceo_decisions.py, test_social_vendor.py) chưa cho phép cặp CHECK settlement_rows_source_kind_check mới. Sửa: thêm allowlist hẹp _R15_SOURCE_OK + 4 ca âm (tests/test_store.py, tests/test_lead_store.py). Mã sản phẩm KHÔNG đổi.
+baseline: 70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046 (nhánh codex/remaining-docx-code-r15, HEAD 70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046)
+fp_code = 70f54e56b1451a0a010328abca139c8c58f0414a88ab62a773a852415a66c5eb
+fp_full = 70f54e56b1451a0a010328abca139c8c58f0414a88ab62a773a852415a66c5eb
+cách tái lập: bash evidence/itacc_r15_remaining/harness/fp_r15.sh.txt <cây> code|full <đường TUYỆT ĐỐI tới harness/new_files_r15.txt>
+tệp tracked đổi (mã):
+   connectors/zalo_garden.py   | 14 +++++++--
+   data/contract_features.json |  4 +--
+   docs/schema.sql             | 12 +++++++
+   env.example                 |  6 ++++
+   ingest/market_api.py        | 77 ++++++++++++++++++++++++++++++++++++++-------
+   ingest/settlement_csv.py    | 32 +++++++++++++++----
+   tests/test_lead_store.py    |  3 ++
+   tests/test_market_api.py    | 13 +++++---
+   tests/test_store.py         | 26 ++++++++++++---
+   9 files changed, 157 insertions(+), 30 deletions(-)
+sha256 tệp mới:
+  d2ec8f5989d1d31c5ea424e5167e232efe271adc500628d4d11e31d1a69d3e8c *ingest/settlement_api.py
+  15839b0baea40f5008c32470c45670020202bb47bef1945d0ba0a972203c1be8 *tests/test_r15_settlement_api.py
+  4dfec8fe5fa90fcbe242e14c8e8f1b64fa20573a8ce0283f7bc2eae945c8ffc4 *data/settlement_api_map.json

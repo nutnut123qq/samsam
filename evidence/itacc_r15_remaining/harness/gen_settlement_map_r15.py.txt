@@ -1,0 +1,69 @@
+"""HARNESS r15 — sinh khung data/settlement_api_map.json (MỌI quyết định null, trang_thai chua_chot) từ danh sách trường
+của tài liệu CHÍNH THỨC (NGUON_TAI_LIEU.md). TikTok: tt_params_202501.txt (cây tham số của Get Transactions by Statement
+202501 lấy từ JSON mô tả tài liệu). Chạy lại ghi đè data/settlement_api_map.json bằng khung trống — CHỈ dùng khi dựng khung.
+  python -I gen_settlement_map_r15.py.txt tt_params_202501.txt"""
+import json, sys
+sys.path.insert(0, "D:/code/samsam")
+from ingest.settlement_api import TT_IDENTITY
+names = open(sys.argv[1]).read().strip().split(",")
+# cây con của transactions: các mục sau '^transactions' có ≥2 '^'
+i = names.index("^transactions")
+stack, tt = [], []
+items = names[i + 1:]
+for k, n in enumerate(items):
+    d = len(n) - len(n.lstrip("^"))
+    if d < 2:
+        break
+    nm = n.lstrip("^")
+    lvl = d - 2
+    stack = stack[:lvl] + [nm]
+    nxt = items[k + 1] if k + 1 < len(items) else ""
+    nd = len(nxt) - len(nxt.lstrip("^"))
+    if nd > d:            # object chứa con
+        continue
+    if lvl == 0 and nm in TT_IDENTITY:
+        continue
+    tt.append(".".join(stack))
+SP = """escrow_amount buyer_total_amount order_original_price original_price order_discounted_price order_selling_price
+order_seller_discount bcrs_deposit seller_discount shopee_discount voucher_from_seller voucher_from_shopee
+voucher_from_external_party coins buyer_paid_shipping_fee buyer_transaction_fee cross_border_tax payment_promotion
+commission_fee service_fee seller_transaction_fee seller_lost_compensation seller_coin_cash_back escrow_tax
+estimated_shipping_fee final_shipping_fee actual_shipping_fee shipping_fee_sst order_chargeable_weight
+shopee_shipping_rebate shipping_fee_discount_from_3pl seller_shipping_discount drc_adjustable_refund cost_of_goods_sold
+original_cost_of_goods_sold original_shopee_discount seller_return_refund items[] escrow_amount_pri
+buyer_total_amount_pri original_price_pri seller_return_refund_pri commission_fee_pri service_fee_pri
+drc_adjustable_refund_pri exchange_rate reverse_shipping_fee reverse_shipping_fee_sst final_product_protection
+credit_card_promotion credit_card_transaction_fee final_product_vat_tax final_shipping_vat_tax campaign_fee sip_subsidy
+sip_subsidy_pri rsf_seller_protection_fee_claim_amount shipping_seller_protection_fee_amount final_escrow_product_gst
+final_escrow_shipping_gst delivery_seller_protection_fee_premium_amount order_adjustment[] total_adjustment_amount
+escrow_amount_after_adjustment order_ams_commission_fee sales_tax_on_lvg final_return_to_seller_shipping_fee
+withholding_tax overseas_return_service_fee prorated_coins_value_offset_return_items
+prorated_shopee_voucher_offset_return_items prorated_seller_voucher_offset_return_items
+prorated_payment_channel_promo_bank_offset_return_items prorated_payment_channel_promo_shopee_offset_return_items
+fsf_seller_protection_fee_claim_amount vat_on_imported_goods withholding_vat_tax withholding_pit_tax withholding_cit_tax
+seller_order_processing_fee buyer_paid_packaging_fee trade_in_bonus_by_seller fbs_fee net_commission_fee net_service_fee
+net_commission_fee_info_list[] net_service_fee_info_list[] seller_product_rebate.amount
+seller_product_rebate.commission_fee_offset seller_product_rebate.service_fee_offset pix_discount
+prorated_pix_discount_offset_return_items ads_escrow_top_up_fee_or_technical_support_fee th_import_duty remaining_voucher
+pay_per_sale""".split()
+TYPES = "ORDER,RESERVE,CHARGE_BACK,CUSTOMER_SERVICE_COMPENSATION,DEDUCTIONS_INCURRED_BY_SELLER,GMV_PAYMENT_FOR_ADS,PLATFORM_COMMISSION_ADJUSTMENT,PLATFORM_COMMISSION_COMPENSATION,PLATFORM_PENALTY,PROMOTION_ADJUSTMENT,REBATE,PLATFORM_COMPENSATION,PLATFORM_REIMBURSEMENT,COFUNDED_CREATOR_REWARDS,STAMP_DUTY,FBT_WAREHOUSE_SERVICE_FEE,LOGISTICS_REIMBURSEMENT,SHIPPING_FEE_ADJUSTMENT,SHIPPING_FEE_COMPENSATION,SHIPPING_FEE_REBATE,SAMPLE_SHIPPING_FEE,SELLER_MISSION_REWARD,OTHER_ADJUSTMENT".split(",")
+assert len(SP) == len(set(SP)) and len(tt) == len(set(tt))
+empty = {"trang_thai": "chua_chot", "duyet_boi": None, "can_cu": None, "ngay_chot": None}
+doc = {
+ "_doc": ("r15 data_platform-06 — BẢNG ÁNH XẠ thành phần quyết toán API sàn → cột settlement_rows. ĐÂY LÀ QUYẾT ĐỊNH KẾ "
+          "TOÁN, KHÔNG phải code: mọi quyết định để null (CHƯA CHỐT) — ingest.settlement_api chặn ghi sổ tới khi Kế toán Bên B "
+          "điền đủ, đặt trang_thai=da_chot + duyet_boi (người chốt) + can_cu (biên bản) + ngay_chot. Mỗi thành phần: null | "
+          "{\"cot\": order_amount|fixed_fee|payment_fee|service_fee|shipping_fee|voucher_seller|affiliate|refund|payout, "
+          "\"dau\": 1|-1} (cộng dau×giá trị vào cột; cột khấu trừ DƯƠNG = sàn trừ, như settlement_csv) | {\"bo_qua\": true}. "
+          "Tên kết thúc [] = danh sách chi tiết, chỉ được bo_qua. Thành phần xuất hiện trong dữ liệu mà KHÔNG có tên ở đây = LẠ → "
+          "chặn. TikTok loai_giao_dich: null | {\"ma_don\": order_id|adjustment_order_id|associated_order_id, \"txn_type\": "
+          "chuỗi|null} | {\"bo_qua\": true}. Danh sách tên lấy từ tài liệu CHÍNH THỨC đọc 25/10/2026 (Shopee "
+          "v2.payment.get_escrow_detail order_income; TikTok Get Transactions by Statement 202501) — xem "
+          "evidence/itacc_r15_remaining/NGUON_TAI_LIEU.md. GIẢ ĐỊNH cần Kế toán xác nhận: ngày quyết toán = ngày giờ VN "
+          "(UTC+7) của escrow_release_time (Shopee) / statement_time (TikTok); Shopee 1 dòng/đơn (txn_type null, như file CSV)."),
+ "shopee": {**empty, "thanh_phan": {k: None for k in SP}},
+ "tiktok": {**empty, "thanh_phan": {k: None for k in tt}, "loai_giao_dich": {t: None for t in TYPES}},
+}
+open("D:/code/samsam/data/settlement_api_map.json", "w", encoding="utf-8", newline="\n").write(
+    json.dumps(doc, ensure_ascii=False, indent=1) + "\n")
+print(len(SP), len(tt), len(TYPES))

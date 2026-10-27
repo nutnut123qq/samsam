@@ -1,0 +1,7 @@
+T01: PASS — {"provider": ["whisper_local", "whisper_local cần model cục bộ đã duyệt: đặt GARDEN_STT_MODEL_DIR tới thư mục có model.bin (không tự tải mạng) — chưa cấu hình STT: BLOCKED — cần vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS rồi đặt GARDEN_STT_PROVIDER; tạm thời người nghe ghi âm rồi ghi nhật ký tay (python -m agents.garden) và đóng nháp --done"], "model_init": 0, "tong_giay": 1.1}
+T02: PASS — {"err": "không giải mã được ghi âm (InvalidDataError)", "elapsed": 0.41, "model_init": 0, "tong_giay": 1.4}
+T03: PASS — {"err": "ghi âm 700.0s > 600s", "elapsed": 0.02, "model_init": 0, "tong_giay": 1.0}
+T04: PASS — {"err": "STT quá 2 giây — bỏ", "elapsed": 2.01, "model_init": 1, "tong_giay": 2.9}
+T05: PASS — {"err": "STT quá 2 giây — bỏ", "elapsed": 2.02, "model_init": 1, "tong_giay": 3.0}
+T06: PASS — {"text": "ghi nhat ky gia", "elapsed": 0.02, "model_init": 1, "tong_giay": 0.9}
+{"PASS": 6, "FAIL": 0}

@@ -1,0 +1,72 @@
+{
+ "probe": "t_stt",
+ "tree": "D:\\code\\samsam",
+ "tong": {
+  "PASS": 6,
+  "FAIL": 0
+ },
+ "ca": [
+  {
+   "ca": "T01",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "provider": [
+     "whisper_local",
+     "whisper_local cần model cục bộ đã duyệt: đặt GARDEN_STT_MODEL_DIR tới thư mục có model.bin (không tự tải mạng) — chưa cấu hình STT: BLOCKED — cần vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS rồi đặt GARDEN_STT_PROVIDER; tạm thời người nghe ghi âm rồi ghi nhật ký tay (python -m agents.garden) và đóng nháp --done"
+    ],
+    "model_init": 0,
+    "tong_giay": 1.1
+   }
+  },
+  {
+   "ca": "T02",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "err": "không giải mã được ghi âm (InvalidDataError)",
+    "elapsed": 0.48,
+    "model_init": 0,
+    "tong_giay": 1.4
+   }
+  },
+  {
+   "ca": "T03",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "err": "ghi âm 700.0s > 600s",
+    "elapsed": 0.0,
+    "model_init": 0,
+    "tong_giay": 1.0
+   }
+  },
+  {
+   "ca": "T04",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "err": "STT quá 2 giây — bỏ",
+    "elapsed": 2.02,
+    "model_init": 1,
+    "tong_giay": 3.1
+   }
+  },
+  {
+   "ca": "T05",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "err": "STT quá 2 giây — bỏ",
+    "elapsed": 2.02,
+    "model_init": 1,
+    "tong_giay": 3.6
+   }
+  },
+  {
+   "ca": "T06",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "text": "ghi nhat ky gia",
+    "elapsed": 0.02,
+    "model_init": 1,
+    "tong_giay": 0.9
+   }
+  }
+ ]
+}

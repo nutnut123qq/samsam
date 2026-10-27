@@ -1,0 +1,880 @@
+{
+ "id": "data_platform-06",
+ "ten": "Kết nối API sàn chỉ đọc",
+ "khoi": "data_platform",
+ "giai_doan": "P2",
+ "pham_vi": "nen_tang_tmdt",
+ "can_cu": "PL01 mục 3b + mục 6 — Nền tảng TMĐT: 'từ P2 kết nối API chỉ đọc'",
+ "luot": "r15",
+ "supersedes": {
+  "path": "evidence/itacc_r14_fix_2/items/data_platform-06.json",
+  "sha256": "e6647527f3b2fd9247349bc2e73bab87fca973d4f454fff2f864620dee3ab52d"
+ },
+ "trang_thai_truoc": {
+  "luot": "r14fix2",
+  "trang_thai": "BI_CHAN",
+  "nguyen_nhan": "EXTERNAL_INPUT: refresh token Shopee/TikTok đã viết theo tài liệu chính thức (r14, CONTRACT_TESTED server giả); CHƯA có quyết toán qua API — Shopee escrow cần Kế toán chốt ánh xạ ~40 thành phần (gồm thuế khấu trừ) vào cột settlement_rows, TikTok finance chưa có tài liệu chính thức bản hiện hành; chưa app/key/sandbox nên chữ ký/field/phân trang CHƯA VERIFIED với sàn thật"
+ },
+ "ly_do_chay_lai": "mô-đun của mục đổi ở r15 — quyết toán qua API (ingest/settlement_api.py mới; market_api: allowlist 4 endpoint đọc, tham số path, GET TikTok không body, dạng mã lỗi Payment) (ảnh hưởng trực tiếp); ca chức năng mới ở probe evidence/itacc_r15_remaining/probes/s_settlement_v2_truoc / evidence/itacc_r15_remaining/probes/s_settlement_v2_sau2",
+ "tieu_chi_file": "evidence/itacc_r15_remaining/criteria/r15_items_v1.json",
+ "tieu_chi_sha256": "c300aebfdb44c17ad880c75888a2e3848527f5d6ca9e670ab5b5eed6e7200b35",
+ "tieu_chi_khoa": "r15_items_v1.json c300aebfdb44c17ad880c75888a2e3848527f5d6ca9e670ab5b5eed6e7200b35 2026-10-25T17:45:16+07:00",
+ "tieu_chi": [
+  "T1 market_api thiếu key → [external-dep] exit 2, 0 request",
+  "T2 Server giả 127.0.0.1 + key FIXTURE → listing vào market_snapshots cùng staging (request có sign/token/partner_id); base URL ngoài allowlist → exit 2, 0 request; chạy lại → [skip]",
+  "T3 Sandbox/app key thật chưa có → BI_CHAN EXTERNAL_INPUT",
+  "T4 không gửi/đăng ra ngoài (DEPLOY tắt, không mạng thật), không tự quyết thay người; dữ liệu mẫu không tính vận hành",
+  "T5 (MỚI r13) HTTP 429 + Retry-After: 1 ở request đầu → thử lại (chờ đúng 1 s qua `_sleep` vá được, không chờ thật), đúng 2 request get_item_list, snapshot vẫn ghi",
+  "T6 (MỚI r13) tính năng data_platform-06 TẮT trong sổ → exit 2 '[rollout] … data_platform-06' TRƯỚC mọi request (server giả 0 request), 0 snapshot; bật lại"
+ ],
+ "moi_truong": "Postgres Docker riêng samsam-itacc-r15 (127.0.0.1:55457), DB mới mỗi mục dựng bằng working tree đã khóa fp; không DB samsam, không sàn/calendar/STT thật DB samsam_itacc_r15_dp06.",
+ "run_id": "20261025T201216-e6fc",
+ "ca": [
+  {
+   "ma": "data_platform-06__S01",
+   "nguon_r10": "MOI",
+   "mo_ta": "seed sổ rollout (r10 DB samsam_itacc_r10_dp đã seed); data_platform-06 mot_phan nên KHÔNG vào sổ (mode = chạy thử fail-closed)",
+   "tien_quyet": true,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ \\d+"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m pipelines.rollout --seed --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ \\d+",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:16+07:00",
+      "ket_thuc": "2026-10-25T20:12:19+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__S01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__S01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__S01"
+  },
+  {
+   "ma": "data_platform-06__DP06-01",
+   "nguon_r10": "DP06-01",
+   "mo_ta": "Thiếu key (SHOPEE_* đặt rỗng — chặn .env lấp)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\[external-dep\\] thiếu SHOPEE_PARTNER_ID, SHOPEE_PARTNER_KEY, SHOPEE_SHOP_ID, SHOPEE_ACCESS_TOKEN[^\\n]*0 request, không connect DB"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 0
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python -m ingest.market_api --channel shopee --kind listing",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\[external-dep\\] thiếu SHOPEE_PARTNER_ID, SHOPEE_PARTNER_KEY, SHOPEE_SHOP_ID, SHOPEE_ACCESS_TOKEN[^\\n]*0 request, không connect DB",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:19+07:00",
+      "ket_thuc": "2026-10-25T20:12:21+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 0,
+      "actual": 0,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-01"
+  },
+  {
+   "ma": "data_platform-06__DP06-02",
+   "nguon_r10": "DP06-02",
+   "mo_ta": "Server giả (harness r10 nguyên bản, chạy độc lập được)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*\\[done\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 1
+     },
+     {
+      "sql": "select count(*) from market_rows r join market_snapshots s on s.id = r.snapshot_id where s.file_name like 'api:shopee:listing:%' and r.sku_key in ('savina-12v', 'savigout-30v')",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/fake_shopee.py.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*\\[done\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:21+07:00",
+      "ket_thuc": "2026-10-25T20:12:25+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-02/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from market_rows r join market_snapshots s on s.id = r.snapshot_id where s.file_name like 'api:shopee:listing:%' and r.sku_key in ('savina-12v', 'savigout-30v')",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-02"
+  },
+  {
+   "ma": "data_platform-06__DP06-03",
+   "nguon_r10": "DP06-03",
+   "mo_ta": "Âm: base ngoài allowlist",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\A(?=[\\s\\S]*\\[err\\] SHOPEE_API_BASE không hợp lệ)(?=[\\s\\S]*SERVER_LOG:\\s*\\(0 request\\))"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/fake_shopee.py.txt --base http://example.com",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*\\[err\\] SHOPEE_API_BASE không hợp lệ)(?=[\\s\\S]*SERVER_LOG:\\s*\\(0 request\\))",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:25+07:00",
+      "ket_thuc": "2026-10-25T20:12:28+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-03/step01.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-03/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    2
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-03"
+  },
+  {
+   "ma": "data_platform-06__DP06-04",
+   "nguon_r10": "DP06-04",
+   "mo_ta": "Idempotent (chạy lại DP06-02)",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[skip\\] dữ liệu không đổi: snapshot #\\d+ shopee/listing — không ghi gì"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/fake_shopee.py.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[skip\\] dữ liệu không đổi: snapshot #\\d+ shopee/listing — không ghi gì",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:28+07:00",
+      "ket_thuc": "2026-10-25T20:12:32+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-04/step01.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-04/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-04"
+  },
+  {
+   "ma": "data_platform-06__R13-01",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "429 + Retry-After: 1 ở request đầu rồi bình thường ({H}/fake_shopee_retry_r13.py.txt, giá khác → không bị [skip])",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\A(?=[\\s\\S]*\\[retry\\] shopee /api/v2/product/get_item_list: HTTP 429 — chờ 1s \\(1/3\\))(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*SLEEPS: \\[1\\.0\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=429)(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=200)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True status=200)(?=[\\s\\S]*N_ITEM_LIST=2\\b)"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 2
+     },
+     {
+      "sql": "select count(*) from market_rows r join market_snapshots s on s.id = r.snapshot_id where s.file_name like 'api:shopee:listing:%' and r.price_vnd in (165000, 445000)",
+      "expect": 2
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/fake_shopee_retry_r13.py.txt",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*\\[retry\\] shopee /api/v2/product/get_item_list: HTTP 429 — chờ 1s \\(1/3\\))(?=[\\s\\S]*\\[load\\] snapshot #\\d+ shopee/listing api:shopee:listing:\\d{8}T\\d{4}: 2 dòng, map golden 2)(?=[\\s\\S]*SLEEPS: \\[1\\.0\\])(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=429)(?=[\\s\\S]*GET /api/v2/product/get_item_list sign=True token=True partner_id=True status=200)(?=[\\s\\S]*GET /api/v2/product/get_item_base_info sign=True token=True partner_id=True status=200)(?=[\\s\\S]*N_ITEM_LIST=2\\b)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:33+07:00",
+      "ket_thuc": "2026-10-25T20:12:39+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-01/step01.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from market_rows r join market_snapshots s on s.id = r.snapshot_id where s.file_name like 'api:shopee:listing:%' and r.price_vnd in (165000, 445000)",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-01"
+  },
+  {
+   "ma": "data_platform-06__R13-02",
+   "nguon_r10": "MOI_R13",
+   "mo_ta": "tắt data_platform-06 → market_api exit 2 '[rollout]', 0 request; bật lại. FIXTURE: tính năng mot_phan không vào sổ bằng --seed thật → {H}/rollout_fx_r13.py.txt (code_status co_code CHỈ trong tiến trình) cho --seed/--promote; --disable bằng CLI thật",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] vào sổ 1 ·"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] data_platform-06: chạy thử → tắt"
+     },
+     {
+      "expect_exit": 2,
+      "stdout_re": "\\A(?=[\\s\\S]*\\[rollout\\][^\\n]*data_platform-06)(?=[\\s\\S]*SERVER_LOG:\\s*\\(0 request\\))",
+      "out_re": "\\A(?![\\s\\S]*Traceback)"
+     },
+     {
+      "expect_exit": 0,
+      "stdout_re": "\\[OK\\] data_platform-06: tắt → chạy thử"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 2
+     },
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'data_platform-06'",
+      "expect": "chay_thu"
+     },
+     {
+      "sql": "select count(*) from feature_rollout_events where feature_id = 'data_platform-06' and kind = 'disable'",
+      "expect": 1
+     }
+    ]
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/rollout_fx_r13.py.txt data_platform-06 --seed --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] vào sổ 1 ·",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:39+07:00",
+      "ket_thuc": "2026-10-25T20:12:43+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step01.stderr.txt"
+     },
+     {
+      "argv": "python -m pipelines.rollout --disable data_platform-06 --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] data_platform-06: chạy thử → tắt",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:43+07:00",
+      "ket_thuc": "2026-10-25T20:12:48+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step02.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step02.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r10/g5/harness/fake_shopee.py.txt",
+      "exit": 2,
+      "expect_exit": 2,
+      "regex": [
+       {
+        "stdout_re": "\\A(?=[\\s\\S]*\\[rollout\\][^\\n]*data_platform-06)(?=[\\s\\S]*SERVER_LOG:\\s*\\(0 request\\))",
+        "khop": true
+       },
+       {
+        "out_re": "\\A(?![\\s\\S]*Traceback)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:48+07:00",
+      "ket_thuc": "2026-10-25T20:12:56+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step03.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step03.stderr.txt"
+     },
+     {
+      "argv": "python evidence\\itacc_r13_docx12\\harness/rollout_fx_r13.py.txt data_platform-06 --promote data_platform-06 --by Người Thử R13",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "\\[OK\\] data_platform-06: tắt → chạy thử",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:12:56+07:00",
+      "ket_thuc": "2026-10-25T20:13:03+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step04.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step04.stderr.txt"
+     }
+    ],
+    "kiem": [
+     {
+      "sql": "select count(*) from market_snapshots where channel = 'shopee' and export_kind = 'listing' and file_name like 'api:shopee:listing:%'",
+      "expect": 2,
+      "actual": 2,
+      "dat": true
+     },
+     {
+      "sql": "select stage from feature_rollout where feature_id = 'data_platform-06'",
+      "expect": "chay_thu",
+      "actual": "chay_thu",
+      "dat": true
+     },
+     {
+      "sql": "select count(*) from feature_rollout_events where feature_id = 'data_platform-06' and kind = 'disable'",
+      "expect": 1,
+      "actual": 1,
+      "dat": true
+     }
+    ]
+   },
+   "exit": [
+    0,
+    0,
+    2,
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02"
+  },
+  {
+   "ma": "data_platform-06__R14-01",
+   "nguon_r10": "MOI_R14",
+   "mo_ta": "C3a (CONTRACT_TESTED server giả): kho token NGOÀI repo hết hạn → CLI refresh theo tài liệu chính thức (POST /api/v2/auth/access_token/get), lưu token xoay vòng, kéo listing bằng token MỚI, nạp snapshot; không lộ token/khóa",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 0,
+      "stdout_re": "(?s)(?=.*\\[ok\\] shopee: đã refresh token)(?=.*\\[load\\] snapshot #\\d+ shopee/listing)(?=.*SERVER_LOG:\\s*POST /api/v2/auth/access_token/get body_refresh=[0-9a-f]{8}\\r?\\nGET /api/v2/product/get_item_list token=(?P<t>[0-9a-f]{8}))(?=.*STORE_ROTATED True)(?=.*NEW_TOKEN_SHA8 (?P=t))(?=.*LEAK 0)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r14_code_gaps\\harness/market_refresh_run.py.txt ok C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r15/ext_dp06/2791cb8c9dfb1fbb87fb4fcfad40be27/kho_ok/kho.json",
+      "exit": 0,
+      "expect_exit": 0,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[ok\\] shopee: đã refresh token)(?=.*\\[load\\] snapshot #\\d+ shopee/listing)(?=.*SERVER_LOG:\\s*POST /api/v2/auth/access_token/get body_refresh=[0-9a-f]{8}\\r?\\nGET /api/v2/product/get_item_list token=(?P<t>[0-9a-f]{8}))(?=.*STORE_ROTATED True)(?=.*NEW_TOKEN_SHA8 (?P=t))(?=.*LEAK 0)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:13:03+07:00",
+      "ket_thuc": "2026-10-25T20:13:11+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-01/step01.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-01/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    0
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-01"
+  },
+  {
+   "ma": "data_platform-06__R14-02",
+   "nguon_r10": "MOI_R14",
+   "mo_ta": "C3a: refresh bị sàn từ chối (error_auth) → exit 1, kho KHÔNG đổi, 0 request dữ liệu, không lộ token",
+   "tien_quyet": false,
+   "thay_the": null,
+   "ly_do_thay": null,
+   "expected": {
+    "buoc": [
+     {
+      "expect_exit": 1,
+      "stdout_re": "(?s)(?=.*\\[err\\] shopee refresh token: mã lỗi error_auth — kho token KHÔNG đổi)(?!.*GET /api/v2/product)(?=.*STORE_UNCHANGED True)(?=.*LEAK 0)"
+     }
+    ],
+    "kiem": []
+   },
+   "actual": {
+    "buoc": [
+     {
+      "argv": "python evidence\\itacc_r14_code_gaps\\harness/market_refresh_run.py.txt loi C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r15/ext_dp06/2791cb8c9dfb1fbb87fb4fcfad40be27/kho_loi/kho.json",
+      "exit": 1,
+      "expect_exit": 1,
+      "regex": [
+       {
+        "stdout_re": "(?s)(?=.*\\[err\\] shopee refresh token: mã lỗi error_auth — kho token KHÔNG đổi)(?!.*GET /api/v2/product)(?=.*STORE_UNCHANGED True)(?=.*LEAK 0)",
+        "khop": true
+       }
+      ],
+      "bat_dau": "2026-10-25T20:13:11+07:00",
+      "ket_thuc": "2026-10-25T20:13:17+07:00",
+      "stdout": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-02/step01.stdout.txt",
+      "stderr": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-02/step01.stderr.txt"
+     }
+    ],
+    "kiem": []
+   },
+   "exit": [
+    1
+   ],
+   "ket_qua": "PASS",
+   "ly_do_not_run": null,
+   "loi_harness": null,
+   "thu_muc": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-02"
+  }
+ ],
+ "trang_thai": "BI_CHAN",
+ "muc_kiem": "MOCK",
+ "nguyen_nhan": "EXTERNAL_INPUT: quyết toán qua API ĐÃ viết theo tài liệu CHÍNH THỨC (r15 — Shopee get_escrow_list/get_escrow_detail; TikTok Get Statements 202309 + Get Transactions by Statement 202501 — đính chính r14: TikTok finance CÓ tài liệu chính thức hiện hành), CONTRACT_TESTED server giả + Postgres thật; ghi sổ BỊ CHẶN tới khi Kế toán chốt bảng ánh xạ thành phần → cột settlement_rows (data/settlement_api_map.json: mọi quyết định null) và chỉ nhận nguồn API thật; chưa app/key/sandbox nên chữ ký/field/phân trang CHƯA VERIFIED với sàn thật (refresh token r14 cũng vậy)",
+ "can_de_go": "Kế toán Bên B chốt bảng ánh xạ (điền data/settlement_api_map.json: từng thành phần → cột/dấu hoặc bỏ qua, loại giao dịch TikTok, trang_thai=da_chot + người chốt + căn cứ) + 1 file income thật để đối chiếu; chủ shop cấp app chỉ đọc có quyền Payment/Finance + key/token + sandbox; quyết định nơi lưu credential; chạy `market_api --kind settlement --dry-run` trên sandbox rồi đối chiếu với file income",
+ "gioi_han": " Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r15), fixture/dữ liệu THỬ, sàn/STT giả ở biên nơi ghi MOCK/CONTRACT_TESTED — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.",
+ "luot_bi_thay_the": [],
+ "evidence": [
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-01/asserts.json",
+   "sha256": "ff4d59af5b788839e1cb10595e7e9312755f2c2b595f236213106c776cdcb216"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-01/case.json",
+   "sha256": "629b277dd5f9a8aa24594f465f86bc4630d7e963b2fdaab2421bd243f5368cd7"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-01/step01.cmd.json",
+   "sha256": "4b0220a08185e5cd0a8bdd9d4017414fd71b7d9ad9b86cf976dac10fad43e2c6"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-01/step01.stdout.txt",
+   "sha256": "acc6e43446ad09b067c22b8f33bdc090be76af4c4a9c21ea07103db959398cb4"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-02/asserts.json",
+   "sha256": "3bb35ecfe3b96a0ae5aa68dcaf8b8542beaefb6b2992b589f22efa470c6c7d02"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-02/case.json",
+   "sha256": "1c379e994db32c1ad79b735b964a4a4359482d98e9f9d54b56c25d1bf73db472"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-02/step01.cmd.json",
+   "sha256": "5165739c20cdbf129c114afefbe4f0cb891f4978157ad799ead44c6ffa1d498f"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-02/step01.stdout.txt",
+   "sha256": "8dcd4b4fbf089565c969a52eec726afb09dbb63659248bad632c32b0dd5aafaf"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-03/asserts.json",
+   "sha256": "bd4a81c7acf85f722f64c9b5bae79dc136fabe1282a35fe16667fac6844cda29"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-03/case.json",
+   "sha256": "e25a917c416922f2190814a13711ecc60695da93342de25c0c3ef088c4f5c953"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-03/step01.cmd.json",
+   "sha256": "d2f17836000d5596740e114d04827c1e1f9cc4eecc4e527b4b5ccd268706629e"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-03/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-03/step01.stdout.txt",
+   "sha256": "fe378d618f9ba3b50091eaf00c80012f1a9e2b3b5289bc57995ee55a9fc578b3"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-04/asserts.json",
+   "sha256": "bd4a81c7acf85f722f64c9b5bae79dc136fabe1282a35fe16667fac6844cda29"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-04/case.json",
+   "sha256": "ed0ad8bdd56823f213f816e78f93b03457ec510a8f251c278aee5d33957e0dab"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-04/step01.cmd.json",
+   "sha256": "b2920cc49bcd7898df2f1e2d33aac85db171b2f1088564740068498797db3289"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-04/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__DP06-04/step01.stdout.txt",
+   "sha256": "5f879e904e7106307cf599c645fbc28a3d4040065a89d1dabece9c18eb15f11f"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-01/asserts.json",
+   "sha256": "8802444b09eeac2f5f51409c9288efec2a15dcf1564fd5a4ca30a28697711242"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-01/case.json",
+   "sha256": "e9bd3485e5c3d0f54d9cd1b965b7f8edf38fbe037fb9337839da98af8c95318d"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-01/step01.cmd.json",
+   "sha256": "e241eb4b180c363e54cc59d5eec4c0cfb18adf9645f5ff0166a4e723200ce384"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-01/step01.stdout.txt",
+   "sha256": "55c68103f9c5fa43cabf18b2c1ed15e694e65a0d6b565208b625f65e0d00dad6"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/asserts.json",
+   "sha256": "81d7baa11180e0f344dafd6779dad66f6d8c85cd79481b7c4808c98d23f9fd34"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/case.json",
+   "sha256": "082dfd556505e47e26e72ad36e9abea6949892acd4dbbf5e90b2d47782baea6b"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step01.cmd.json",
+   "sha256": "987b16220fea001a7d2eb467303b4d26cd2cb626ad4f0e0d40458745f2f0dceb"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step01.stderr.txt",
+   "sha256": "a777743385a908c1462c46a146115cbe53fdd6a8ffc2eb2b455d078c69fb62e7"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step01.stdout.txt",
+   "sha256": "21dd8b0d0bd7052b872e208644157ca18b2df6d7119d1425812d215a1bf09f6e"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step02.cmd.json",
+   "sha256": "38641bebbe916b33bc5a2720079a59f90ca2e6899377c80418d2960b6dafb56d"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step02.stderr.txt",
+   "sha256": "7f33755691dff39977e8dd0806a3b82dae1bc35b2afdec1190e4adb940f37aa5"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step02.stdout.txt",
+   "sha256": "e4aa53a6ec1795da404a6992604e8b9fdc4cb365b5f67e2e2be78dad9a489cd9"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step03.cmd.json",
+   "sha256": "6d24bab4bd25ae14878462e9695a444bdeb1457a9c1c0ce5fda2cd60239dba76"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step03.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step03.stdout.txt",
+   "sha256": "32793338bd8402b638b9fe1b1c8e6fed6e477effcce24e53f97bf63c7fc7a7fd"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step04.cmd.json",
+   "sha256": "f1b7e10132de84602a95ec448de1ef43ef25c59bcb362f5d2133b5c213f91b14"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step04.stderr.txt",
+   "sha256": "f2e989f92b8be643ef09f27b25f896a7468294b1018c79cbbb28f71196f0473c"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R13-02/step04.stdout.txt",
+   "sha256": "01c2e1bccc0910a144dd9167f3a6b3c80f97176f87d369bd3468bb2e04833bc8"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-01/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-01/case.json",
+   "sha256": "cc39291cc068d13f2efabf55b0b92ed4993dc4b9bf9e326960a7a018be724dc9"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-01/step01.cmd.json",
+   "sha256": "26f01930651241413e223018e1b812938dd3a7a6b75015aa870587f9d541aab6"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-01/step01.stdout.txt",
+   "sha256": "f17cf02b4243534cf8fe8e05edb7bca354b3dec75cf723d1cc3be1b31610c39b"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-02/asserts.json",
+   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-02/case.json",
+   "sha256": "819bdbf8a612696c920de64772a26f463b9bc987e0610bcfb9324c701f958c92"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-02/step01.cmd.json",
+   "sha256": "deda13c32d47a96628e0e55222caa7116a980393a435834a3dc7bbca41a12175"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-02/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__R14-02/step01.stdout.txt",
+   "sha256": "516bbfb4c6db35cc5ffc00abdc3d2162cd203418a2896b24b5c413cf052910d1"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__S01/asserts.json",
+   "sha256": "ff4d59af5b788839e1cb10595e7e9312755f2c2b595f236213106c776cdcb216"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__S01/case.json",
+   "sha256": "0aff9a6dc8dbc3a230f90e78c4a40d4f1368f3f7e700da95b9e0bdbce5eeb42f"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__S01/step01.cmd.json",
+   "sha256": "c18f642d7133443780a2068c59c92ea64b07cf1c4a36c5839a67bfb69b2fc86e"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__S01/step01.stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/data_platform-06__S01/step01.stdout.txt",
+   "sha256": "2a24ddbab48412262e2b256786e10110e4aaf238d3b6985b26b9034dfceb8abd"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/runs/data_platform-06/20261025T201216-e6fc/ket_qua.json",
+   "sha256": "d0f229b1bba6b4fde38a2d5d305b199afb7bcad83431251bc7a6b807eab8d1a2"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/probes/s_settlement_v2_truoc/ban_ghi.json",
+   "sha256": "2aa9570cbff9b7112e2203ed0222c3213cf2b2b58678537eb67c709f1ba2c6cd"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/probes/s_settlement_v2_truoc/ket_qua.json",
+   "sha256": "c93ea9f7a93daac9bdbfd931be098c13f1fdd6be23a9ad39a77f24ec51638dad"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/probes/s_settlement_v2_truoc/stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/probes/s_settlement_v2_truoc/stdout.txt",
+   "sha256": "4afb877040a32dcf030af921bb4bbf16db23e28d9e3da061310297784cad4db4"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/probes/s_settlement_v2_sau2/ban_ghi.json",
+   "sha256": "33b42732266474851571451b27efc2f212107bc6ae60dc45f2f547cf878463a8"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/probes/s_settlement_v2_sau2/ket_qua.json",
+   "sha256": "191daeb87b98c5b6a7d5b60862ebf432592444c2c1b2ba9838006ecf5ecdc69b"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/probes/s_settlement_v2_sau2/stderr.txt",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "path": "evidence/itacc_r15_remaining/probes/s_settlement_v2_sau2/stdout.txt",
+   "sha256": "a07dabe59efc87dfd478432be0740798af22d5970ff7df6e8e1fdb5f2df8dc13"
+  }
+ ],
+ "loi_san_pham": []
+}

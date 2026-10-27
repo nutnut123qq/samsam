@@ -1,0 +1,111 @@
+"""PROBE T r15 — farming-01: STT tại chỗ `whisper_local` (tiêu chí criteria/r15_v1.json probe_t, KHÓA trước khi sửa code).
+
+Mỗi ca chạy trong TIẾN TRÌNH CON (`python -I -c`, sys.path[0] = TREE) có trần thời gian NGOÀI 25 giây — ca treo được đo
+thay vì làm treo probe. Gói `faster_whisper` GIẢ (tạo trong thư mục tạm, chèn sys.path) — không tải/nạp model thật; ghi tệp
+đánh dấu khi WhisperModel được khởi tạo. Giải mã audio: T02 dùng đường thật `_decode_16k` trên tệp rác; T03–T06 thay
+`_decode_16k` bằng mảng numpy giả N giây (máy dev không có ghi âm thật). GARDEN_STT_TIMEOUT_S=2 cho mọi ca.
+  python -I probe_t_stt.py.txt <TREE> <out ket_qua.json>"""
+import json
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+TREE = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[-1])
+TMP = Path(tempfile.mkdtemp(prefix="r15_probe_t_"))
+FAKE = TMP / "fakepkg" / "faster_whisper"
+FAKE.mkdir(parents=True)
+(FAKE / "__init__.py").write_text('''
+import os, time
+class _Seg:
+    def __init__(self, t): self.text = t
+class WhisperModel:
+    def __init__(self, d, **kw):
+        open(os.environ["FAKE_MARK"], "a").write("init\\n")
+        if os.environ.get("FAKE_HANG_INIT"):
+            time.sleep(60)
+    def transcribe(self, audio, **kw):
+        if os.environ.get("FAKE_HANG_RUN"):
+            time.sleep(60)
+        return iter([_Seg(" ghi nhat ky gia ")]), None
+''', encoding="utf-8")
+MODEL = TMP / "model"
+MODEL.mkdir()
+(MODEL / "model.bin").write_bytes(b"GIA")
+JUNK = TMP / "rac.m4a"
+JUNK.write_bytes(b"\x00\x01khong phai audio" * 50)
+
+CHILD = r'''
+import json, os, sys, time
+from pathlib import Path
+sys.path.insert(0, sys.argv[1]); sys.path.insert(0, sys.argv[2])
+import numpy as np
+from connectors import zalo_garden as zg
+mode, secs = sys.argv[3], float(sys.argv[4])
+out = {}
+if mode == "provider":
+    out["provider"] = zg.stt_provider()
+else:
+    if mode != "decode":
+        zg._decode_16k = lambda p: np.full(int(16000 * secs), 0.01, dtype=np.float32)
+    t0 = time.monotonic()
+    try:
+        out["text"] = zg._stt_whisper_local(Path(sys.argv[5]))
+    except RuntimeError as e:
+        out["err"] = str(e)[:200]
+    out["elapsed"] = round(time.monotonic() - t0, 2)
+mark = Path(os.environ["FAKE_MARK"])
+out["model_init"] = mark.read_text().count("init") if mark.exists() else 0
+print("RESULT " + json.dumps(out, ensure_ascii=False))
+'''
+RES = []
+
+
+def run(name, mode, secs=3, model=True, hang_init=False, hang_run=False, provider=False):
+    mark = TMP / f"mark_{name}.txt"
+    env = {"SYSTEMROOT": "C:\\Windows", "PATH": "", "PYTHONIOENCODING": "utf-8", "FAKE_MARK": str(mark),
+           "GARDEN_STT_TIMEOUT_S": "2", "GARDEN_STT_PROVIDER": "whisper_local"}
+    if model:
+        env["GARDEN_STT_MODEL_DIR"] = str(MODEL)
+    if hang_init:
+        env["FAKE_HANG_INIT"] = "1"
+    if hang_run:
+        env["FAKE_HANG_RUN"] = "1"
+    t0 = time.monotonic()
+    try:
+        r = subprocess.run([sys.executable, "-I", "-c", CHILD, str(TREE), str(TMP / "fakepkg"),
+                            "provider" if provider else mode, str(secs), str(JUNK)],
+                           capture_output=True, text=True, encoding="utf-8", timeout=25, env=env)
+        line = [x for x in r.stdout.splitlines() if x.startswith("RESULT ")]
+        res = json.loads(line[-1][7:]) if line else {"loi_con": (r.stderr or "")[-300:], "exit": r.returncode}
+    except subprocess.TimeoutExpired:
+        res = {"treo": True}
+    res["tong_giay"] = round(time.monotonic() - t0, 1)
+    return res
+
+
+def ca(name, ok, res):
+    RES.append({"ca": name, "ket_qua": "PASS" if ok else "FAIL", "chi_tiet": res})
+    print(f"{name}: {'PASS' if ok else 'FAIL'} — {json.dumps(res, ensure_ascii=False)}")
+
+
+r = run("T01", "", model=False, provider=True)
+ca("T01", bool(r.get("provider")) and r["provider"][1] and "model" in r["provider"][1] and r.get("model_init") == 0, r)
+r = run("T02", "decode")
+ca("T02", "err" in r and "giải mã" in r["err"] and r.get("model_init") == 0, r)
+r = run("T03", "fake", secs=700)
+ca("T03", "err" in r and "600" in r["err"] and r.get("model_init") == 0, r)
+r = run("T04", "fake", hang_init=True)
+ca("T04", not r.get("treo") and "err" in r and "quá" in r["err"] and r.get("elapsed", 99) < 10, r)
+r = run("T05", "fake", hang_run=True)
+ca("T05", not r.get("treo") and "err" in r and "quá" in r["err"] and r.get("elapsed", 99) < 10, r)
+r = run("T06", "fake")
+ca("T06", r.get("text") == "ghi nhat ky gia" and r.get("model_init") == 1, r)
+
+tong = {"PASS": sum(x["ket_qua"] == "PASS" for x in RES), "FAIL": sum(x["ket_qua"] == "FAIL" for x in RES)}
+OUT.write_text(json.dumps({"probe": "t_stt", "tree": str(TREE), "tong": tong, "ca": RES}, ensure_ascii=False, indent=1),
+               encoding="utf-8")
+print(json.dumps(tong))

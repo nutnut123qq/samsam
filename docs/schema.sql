@@ -3477,6 +3477,18 @@ alter table settlement_rows
   add constraint settlement_rows_txn_type_check
   check (txn_type is null or (btrim(txn_type) <> '' and length(txn_type) <= 64));
 
+-- r15 data_platform-06: NGUỒN dòng quyết toán — `csv` (file kế toán xuất tay; mọi
+-- dòng trước r15) | `api_live` (`ingest.settlement_api`, CHỈ API sàn thật —
+-- sandbox/server giả không bao giờ ghi). Hai nguồn có thể gắn `txn_type` khác
+-- nhau cho cùng khoản → đơn đã có dòng từ nguồn kia: caller chặn (cross_source).
+alter table settlement_rows
+  add column if not exists source_kind text not null default 'csv';
+alter table settlement_rows
+  drop constraint if exists settlement_rows_source_kind_check;
+alter table settlement_rows
+  add constraint settlement_rows_source_kind_check
+  check (source_kind in ('csv', 'api_live'));
+
 create or replace view v_settlement_khoan as
 select id, file_sha256, file_name, channel, row_no, order_id_hash, txn_type,
        order_amount_vnd, fixed_fee_vnd, payment_fee_vnd, service_fee_vnd,

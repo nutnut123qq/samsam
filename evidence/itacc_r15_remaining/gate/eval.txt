@@ -1,0 +1,67 @@
+# fp_code=70f54e56b1451a0a010328abca139c8c58f0414a88ab62a773a852415a66c5eb
+## python scripts/agent_eval.py --deterministic --no-record
+[ok] chatbot v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] fin_qa v1 skeleton owner=finance qa=finance risk=high 3 ca
+[ok] guardrail v2 active owner=legal_hr qa=data_platform risk=high 132 ca
+[ok] intel_qa v1 skeleton owner=intel qa=intel risk=medium 3 ca
+[ok] kd_a1 v2 active owner=sales qa=sales risk=high 43 ca
+[ok] kd_a11 v1 skeleton owner=sales qa=sales risk=high 4 ca
+[ok] kd_a3 v2 active owner=sales qa=sales risk=high 20 ca
+[ok] kd_a5 v1 active owner=sales qa=data_platform risk=high 21 ca
+[ok] kd_a7 v1 active owner=sales qa=sales risk=high 10 ca
+[ok] kd_a9 v1 active owner=sales qa=sales risk=high 8 ca
+[ok] mkt02 v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] mkt03 v1 active owner=marketing qa=data_platform risk=high 15 ca
+[ok] mkt04 v1 active owner=marketing qa=data_platform risk=high 17 ca
+[ok] mkt12 v1 active owner=marketing qa=marketing risk=high 6 ca
+[ok] mkt_13 v1 skeleton owner=marketing qa=marketing risk=high 4 ca
+[ok] mkt_ads_ugc v2 active owner=marketing qa=data_platform risk=high 29 ca
+[ok] mkt_seo v1 active owner=marketing qa=data_platform risk=medium 14 ca
+[ok] pc_a9 v1 skeleton owner=legal_hr qa=legal_hr risk=high 3 ca
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sales_director v1 active owner=sales qa=data_platform risk=medium 26 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 22/22 suite hợp lệ
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=bc378178b239 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[done] kd_a1 v2 PASS 43/43 pass_rate=1.0 (ngưỡng 0.86) prompt_version=c566649ccd37 model=fake_gateway judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a3 v2 PASS 20/20 pass_rate=1.0 (ngưỡng 1.0) prompt_version=7a1646d6635a model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a5 v1 PASS 21/21 pass_rate=1.0 (ngưỡng 1.0) prompt_version=045a5454d45d model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a7 v1 PASS 10/10 pass_rate=1.0 (ngưỡng 1.0) prompt_version=593c166a2990 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a9 v1 PASS 8/8 pass_rate=1.0 (ngưỡng 1.0) prompt_version=fad994b200bf model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] mkt02 v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=9f478475ca1c model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt03 v1 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=b010645900b6 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt04 v1 PASS 17/17 pass_rate=1.0 (ngưỡng 1.0) prompt_version=db42c0f63b28 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt12 v1 PASS 6/6 pass_rate=1.0 (ngưỡng 1.0) prompt_version=98b4dc2f3bf9 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt_ads_ugc v2 PASS 29/29 pass_rate=1.0 (ngưỡng 1.0) prompt_version=ca8e721cea0f model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt_seo v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=3c273848d72a model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] sales_director v1 PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=f5fbd27fdd20 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+EXIT 0

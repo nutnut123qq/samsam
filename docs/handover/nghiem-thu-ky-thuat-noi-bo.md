@@ -1,8 +1,66 @@
-# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r14-fix2 (vá 2 lỗi controller của r14, 25/10/2026)
+# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r15 (code còn thiếu của 12 mục DOCX, 25/10/2026)
 
 > **Đây KHÔNG phải nghiệm thu hợp đồng.** Kiểm hành vi phần mềm trên máy dev, DB Postgres thử cô lập, dữ liệu fixture giả. Không xác nhận thay hai bên, không đổi `acceptance_status` (vẫn 0/96 `da_nghiem_thu`), không coi máy này là server Bên B, không dùng số ĐẠT nội bộ thay số nghiệm thu hợp đồng. Ma trận nghiệm thu hợp đồng (`ma-tran-nghiem-thu.md`) giữ vai trò riêng.
 
-## 0. Checkpoint r14-fix2 — vá 2 lỗi controller của r14 (25/10/2026)
+## 0a. Checkpoint r15-fix1 — vá 3 lỗi tiền F1/F2/F3 của r15 (26/10/2026)
+
+- **Phạm vi:** mã r15 CHƯA vá (fp mã `70f54e56b1451a0a010328abca139c8c58f0414a88ab62a773a852415a66c5eb`, snapshot ngoài repo
+  `D:\code\samsam_itacc_r15fix1_baseline` + SHA256SUMS) → bản vá; CHƯA commit/merge/push/deploy; không DB `samsam`;
+  container riêng `samsam-itacc-r15fix1` (127.0.0.1:55461). Evidence `evidence/itacc_r15_fix_1/` (README provenance).
+- **Probe hồi quy (cùng tệp, PASS/FAIL theo kỳ vọng đúng):** Postgres Docker riêng, login THÀNH VIÊN `svc_loader`, CSV qua
+  `settlement_csv.main()`, API qua `settlement_api._write()`, parser thật: **trước 15/23 → sau 38/0**.
+
+| Lỗi | Trước (r15 chưa vá) | Sau | Probe trước → sau |
+|---|---|---|---|
+| F1 CSV/API đồng thời | kiểm "nguồn khác" rồi mới INSERT, không khóa → 3/3 lượt đua cả hai exit 0, 2 dòng, view 180.000 | `lock_orders` (advisory xact lock theo kênh+đơn, 256 ngăn, thứ tự tăng, đòi READ COMMITTED) đầu transaction ghi ở CẢ HAI đường → [0,2], 1 dòng 90.000, bên sau chờ khóa (pg_locks) rồi `[blocked]`; cùng nguồn nhiều giao dịch + 2 lô chồng ngược thứ tự vẫn nhận | 5/3 → 8/0 |
+| F2 trường tiền thiếu/null/sai kiểu | Shopee bỏ qua None/chuỗi/bool; thành phần vắng = 0; TikTok "" = 0 → ghi exit 0 | đã ánh xạ ⇒ phải hợp lệ; vắng = 0 chỉ khi `khi_vang: "bang_0"` (Kế toán; cấm cho order_amount/payout); `check_rows` trong `_write` chặn cột None trước connect; 1 dòng lỗi = 0 dòng cả lượt; 0/"0" vẫn nhận | 7/14 → 21/0 |
+| F3 đơn vị tiền Shopee | pri/aff_currency bị bỏ, số USD vào `*_vnd` | `*_pri` ↔ `pri_currency`, trường thường ↔ `aff_currency` (đặc tả get_escrow_detail đọc lại 26/10/2026), không mã ↔ `tien_te_shop` (null = chặn); chỉ VND, không quy đổi; mã tiền tệ không thành LẠ | 3/6 → 9/0 |
+
+- **Tổng nội bộ:** không đổi — 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN (data_platform-06 vẫn BỊ CHẶN: bảng ánh xạ Kế toán + API thật).
+  Nghiệm thu hợp đồng 0/96. API sàn mới kiểm server giả.
+- **Gate (fp mã chốt `f8033335…95e2`):** ruff EXIT 0; pytest tập trung 4 tệp settlement/market_api 205 passed / 0 failed /
+  0 skipped EXIT 0 (DB test riêng `samsam_itacc_r15fix1_focus2`). **Full pytest (26/10/2026, DB `samsam_itacc_r15fix1_full2`, RAM
+  trống 3.354 MB lúc bắt đầu): 73 failed / 6903 passed / 2 skipped / 6 errors, 2827,95 s, EXIT 1 — KHÔNG PASS.** 66/74 mục lỗi có
+  mã tiến trình con 0xC0000142 (DLL init failed — máy cạn bộ nhớ), 7 ca video nhiều khả năng cùng nguyên nhân (chưa xác minh),
+  1 ca do `output/` chưa theo dõi; 0 ca thuộc settlement/market_api/r15. Chi tiết
+  `evidence/itacc_r15_fix_1/README.md` mục Gate, log `gate/full_chot.txt`.
+  **Chạy lại 27/10/2026 (/cycle): full PASS — 6984 passed / 0 skipped / 0 failed**, chia 11 lượt pytest nối tiếp (mỗi lượt một
+  tiến trình mới, cùng thứ tự `--collect-only`, cùng DB test riêng `samsam_cycle_r15_full`), 0xC0000142×0, Docker bật (DR + S01
+  PASSED), `output/` đã dời ra ngoài repo; cold-check độc lập chạy lại trên DB `samsam_cycle_r15_audit` cũng 6984 passed → PASS.
+  Evidence `evidence/cycle_r15_gate/full_shards.txt`.
+
+## 0. Checkpoint r15 — phần code còn thiếu của 12 mục DOCX (25/10/2026)
+
+- **Phạm vi:** baseline đã phát hành `main` = GitHub `70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046` (snapshot ngoài repo
+  `D:\code\samsam_r15_baseline`, `git archive`, 16.713 tệp khớp blob). Nhánh `codex/remaining-docx-code-r15`; CHƯA
+  commit/merge/push/deploy; không DB `samsam`; container riêng `samsam-itacc-r15` (127.0.0.1:55457). Evidence
+  `evidence/itacc_r15_remaining/` (bảng việc 12 mục `BANG_VIEC.md` lập TRƯỚC khi code; nguồn tài liệu `NGUON_TAI_LIEU.md`).
+  Các dòng "chưa commit / HEAD 0afa388" ở checkpoint r14/r14-fix2 dưới là trạng thái lúc thu evidence — đã phát hành bằng 70ff9f7.
+- **Đính chính r14/r14-fix2:** "TikTok finance chưa có tài liệu chính thức bản hiện hành" SAI — Partner Center có nhóm Finance
+  chính thức hiện hành (Get Statements 202309, Get Transactions by Statement 202501, …); r14 đã đoán đường dẫn.
+
+| Việc (ID) | Trước (70ff9f7) | Sau (fp mã `70f54e56b145…`) | Probe trước → sau (PASS/FAIL, cùng sha) | Mức |
+|---|---|---|---|---|
+| Quyết toán qua API sàn (data_platform-06) | không có — `--kind settlement` bị CLI từ chối; mã lỗi nhóm Payment (`income_not_found`…) bị ẩn | `market_api --kind settlement --from --to [--dry-run]` → `ingest/settlement_api.py`: Shopee escrow list/detail, TikTok statements + transactions (allowlist 4 GET, `{statement_id}` chỉ nhận số), phân trang có trần, 429/5xx thử lại, redirect không theo, refresh trước request; ánh xạ thành phần → cột theo `data/settlement_api_map.json` (chưa chốt/LẠ/null → BLOCKED trước khi ghi; dry-run báo thiếu gì, 0 DB); CHỈ API thật được ghi sổ (`settlement_rows.source_kind` csv\|api_live); CSV ↔ API cùng đơn → chặn; ghi 1 transaction, lỗi → 0 dòng | S 2/21 → 23/0 | CONTRACT_TESTED (server giả + Postgres thật) |
+| Hạn STT bọc nạp model (farming-01) | `GARDEN_STT_TIMEOUT_S` chỉ bọc nhận dạng — nạp model treo làm CLI treo (T04 tới trần ngoài 25 s) | nạp model trong luồng có hạn — lỗi trong hạn; thông điệp lỗi nạp model giữ nguyên | T 5/1 → 6/0 | MOCK (gói faster_whisper giả) |
+
+- **Migration (probe M 7/0):** DB lịch sử: schema 0afa388 + 2 `upgrade()` baseline ĐỒNG THỜI (2 `da_nang_cap` hợp lệ) →
+  schema 70ff9f7 + core/golden + 1 file quyết toán CSV bằng code 70ff9f7 → áp schema/roles r15 ×2 exit 0: số dòng và nội dung
+  MỌI bảng theo cột cũ, `v_settlement_khoan`, biên nhận neo, đuôi hash chain, verify_action_log 0 — giữ nguyên; dòng cũ
+  `source_kind='csv'`; quyền chỉ thêm (0 mất, 0 thêm); app_human không INSERT `settlement_rows`/`anchor_receipts`; svc_loader
+  INSERT được cột mới; mọi SECURITY DEFINER giữ `search_path`, `*_human` không cấp PUBLIC.
+- **Hồi quy (mã cuối):** r14_p1_ocr_isolation 11/0, r14_p2_anchor_human 13/0, r14_p3_market_refresh 10/0, r14fix2_q1_refresh_leak 14/0, r14fix2_q2_anchor_migration 10/0, r13_g_anchor 5/0, r13_e_market_v2 5/0, fix4_n_anchor_gate 9/0.
+- **Kiểm lại 2 mục** (tiêu chí `criteria/r15_items_v1.json` = tiêu chí hiện hành chỉ đổi tên DB/thư mục): data_platform-06 BỊ CHẶN 9/0/0, farming-01 BỊ CHẶN 28/0/3.
+- **Tổng nội bộ (code sinh `tong_hop.json`):** 84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN (r14-fix2: 84/0/12). Nguồn: r10 29, r11 4, r12 42, r12fix 4, r13 9, r13fix4 3, r14 2, r14fix2 1, r15 2; 5408 tham
+  chiếu evidence khớp, 0 vi phạm nhất quán. Nghiệm thu hợp đồng 0/96.
+- **Full/gate (fp mã `70f54e56b1451a0a010328abca139c8c58f0414a88ab62a773a852415a66c5eb`):** full pytest **6944 passed in 3537.24s (0:58:57), EXIT 0** (`gate/full_chot_f2.txt`, DB mới `samsam_itacc_r15_full2`; lần 1 trên fp v1 `gate/full_chot_f1.txt` 6940 passed / 4 failed — test drift-guard schema chưa cho phép CHECK `source_kind` mới → sửa test, khóa fp v2, chạy lại probe + full); ruff
+  EXIT 0; eval `[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=bc378178b239 model=rules judge=None` EXIT 0; DPIA --check EXIT 0; red-team `tỷ lệ lọt: 0/50 = 0.0% (known-gap 0, lọt chưa xử lý 0)` EXIT 0; quét secret `gate/secret_scan.txt`.
+- **Code còn thiếu (B — cần đặc tả trước):** (1) BẢNG ÁNH XẠ quyết toán của Kế toán (thành phần → cột/dấu/bỏ qua, loại giao
+  dịch TikTok → mã đơn + nhãn `txn_type`, thuế khấu trừ) — code chỉ áp bảng, không tự quyết; (2) website + chatbot website ở
+  REPO RIÊNG (chưa có repo/owner/hợp đồng giao tiếp đơn, đặc tả kênh chat).
+- **Còn chờ bên ngoài:** `dau-vao-va-quyet-dinh.md` mục I.
+
+## 0-r14fix2. Checkpoint r14-fix2 (LỊCH SỬ — đính chính TikTok finance ở mục 0) — vá 2 lỗi controller của r14 (25/10/2026)
 
 - **Phạm vi:** nhánh `codex/docx-code-gaps` (HEAD `0afa388`, r14 chưa commit). Snapshot r14 CHƯA vá ngoài repo
   `D:\code\samsam_r14fix_snapshot` (khớp fp mã `ed6a3551…`); lịch sử neo hợp lệ dựng bằng code baseline `0afa388`
@@ -305,7 +363,7 @@
 - Như r10/r11 (tiêu chí khóa trước, entry point thật, assertion máy kiểm, evidence gốc không ghi đè) + r12: probe trước/sau cho từng nhóm lỗi, tiêu chí kiểm lại 48 mục thực thi được, phiên bản tiêu chí mới khi phát hiện lỗi harness/tiêu chí (không sửa tệp đã khóa), tổng hợp 96 bằng code (`harness/aggregate_r12.py.txt`).
 - Phân loại: ĐẠT = mọi ca bắt buộc PASS; CHƯA KIỂM = có NOT_RUN/lỗi harness; BỊ CHẶN = lỗi sản phẩm đã xác minh hoặc lý do ngoài code (giữ nguyên dù ca chạy được PASS). FIXTURE (golden giả, ép van_hanh, lùi ngày hiệu lực giá bằng tắt trigger trong DB thử, setval sequence) chỉ dựng tình huống — không là bằng chứng quyền/append-only/ngày chạy thử hợp đồng.
 
-## 3. Kết quả tổng HIỆN HÀNH (r14-fix2) — mẫu số 96 (89 tính năng AI + 7 hạng mục)
+## 3. Kết quả tổng HIỆN HÀNH (r15) — mẫu số 96 (89 tính năng AI + 7 hạng mục)
 
 | Nhóm | Số mục |
 |---|---|
@@ -338,7 +396,7 @@
 
 ## 4. Bảng 96 mục
 
-Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transport). Lượt = nguồn bản ghi hiện hành (`evidence/itacc_r14_fix_2/source_map.json`; r14fix2/r14 = kiểm lại lượt vá/r14, r13fix4/r13 = lượt trước, còn lại kế thừa). Chi tiết: bản ghi theo đường dẫn trong source_map.
+Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transport). Lượt = nguồn bản ghi hiện hành (`evidence/itacc_r15_remaining/source_map.json`; r15/r14fix2/r14 = kiểm lại lượt r15/vá/r14, r13fix4/r13 = lượt trước, còn lại kế thừa). Chi tiết: bản ghi theo đường dẫn trong source_map.
 
 | ID | Khối | GĐ | Tên | Lượt | Trạng thái | Mức | Ca P/F/N | Nguyên nhân / ghi chú |
 |---|---|---|---|---|---|---|---|---|
@@ -403,7 +461,7 @@ Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transpor
 | production-04.3 | production | P1 | Hồ sơ lô, cảnh báo cận hạn | r12 | **ĐẠT** | LOCAL | 13/0/0 |  |
 | production-05.1 | production | P2 | Tra cứu tài liệu R&D | r12 | **ĐẠT** | MOCK | 7/0/0 |  |
 | production-05.2 | production | P2 | Tóm tắt tài liệu R&D | r12 | **ĐẠT** | MOCK | 8/0/0 |  |
-| farming-01 | farming | P1 | Nhật ký vườn qua Zalo | r13 | **BỊ CHẶN** | MOCK | 28/0/3 | EXTERNAL_INPUT |
+| farming-01 | farming | P1 | Nhật ký vườn qua Zalo | r15 | **BỊ CHẶN** | MOCK | 28/0/3 | EXTERNAL_INPUT |
 | farming-02.1 | farming | P1 | Nhắc người phụ trách khoảnh | r13 | **ĐẠT** | LOCAL | 11/0/0 |  |
 | farming-02.2 | farming | P1 | Báo giám đốc khi vẫn bỏ trống | r13 | **ĐẠT** | LOCAL | 10/0/0 |  |
 | farming-03.1 | farming | P1 | Nối lô thu hoạch với lô sản xuất | r12 | **ĐẠT** | LOCAL | 20/0/0 |  |
@@ -432,7 +490,7 @@ Mức: LOCAL = entry point thật + DB thử; MOCK = fake ở biên (AI/transpor
 | data_platform-07.2 | data_platform | P1 | Backup hằng ngày | r13fix4 | **ĐẠT** | LOCAL | 12/0/0 |  |
 | data_platform-07.3 | data_platform | P1 | Kiểm thử trước khi đưa thay đổi lên | r10 | **ĐẠT** | LOCAL | 7/0/0 |  |
 | sales-08 | sales | P1 | Website bán hàng | r13 | **BỊ CHẶN** | LOCAL | 7/0/1 | SEPARATE_REPO |
-| data_platform-06 | data_platform | P2 | Kết nối API sàn chỉ đọc | r14fix2 | **BỊ CHẶN** | MOCK | 9/0/0 | EXTERNAL_INPUT |
+| data_platform-06 | data_platform | P2 | Kết nối API sàn chỉ đọc | r15 | **BỊ CHẶN** | MOCK | 9/0/0 | EXTERNAL_INPUT |
 | farming-06 | farming | P2 | Neo mã xác thực lên blockchain | r14fix2 | **BỊ CHẶN** | MOCK | 27/0/1 | EXTERNAL_INPUT |
 | finance-06 | finance | P1 | Doanh thu thuần trực tuyến + biên bản đối soát quý | r12 | **ĐẠT** | LOCAL | 12/0/0 |  |
 | data_platform-08 | data_platform | P1 | Sổ triển khai 3 bước + hồ sơ nghiệm thu + báo cáo vận hành tháng | r10 | **ĐẠT** | LOCAL | 10/0/0 |  |

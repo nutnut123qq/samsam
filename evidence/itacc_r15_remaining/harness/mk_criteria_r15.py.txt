@@ -1,0 +1,37 @@
+"""HARNESS r15 — tiêu chí kiểm lại 2 mục có mô-đun đổi ở r15: data_platform-06 (ingest/market_api.py + settlement_api mới) và
+farming-01 (connectors/zalo_garden.py — hạn STT bọc nạp model). Nguồn (CHỈ ĐỌC, hash ghi vào `nguon`):
+  data_platform-06 ← evidence/itacc_r14_fix_2/criteria/r14fix2_v1.json (bản ghi hiện hành r14fix2)
+  farming-01       ← evidence/itacc_r13_docx12/criteria/r13_v1.json (bản ghi hiện hành r13)
+Biến đổi DUY NHẤT: tên DB `samsam_itacc_r14fix2_`/`samsam_itacc_r13_` → `samsam_itacc_r15_` và thư mục ngoài repo
+`scratchpad/r14fix2/`, `scratchpad/r13/` → `scratchpad/r15/`. Không thêm/bớt/sửa ca — ca chức năng mới ở probe S (quyết toán)
+và T (STT) của lượt này. Khóa TRƯỚC khi chạy.
+  python -I mk_criteria_r15.py.txt"""
+import hashlib
+import json
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+H = Path(__file__).resolve().parent
+EV = H.parent
+SRC = {"data_platform-06": H.parents[1] / "itacc_r14_fix_2" / "criteria" / "r14fix2_v1.json",
+       "farming-01": H.parents[1] / "itacc_r13_docx12" / "criteria" / "r13_v1.json"}
+OUT = EV / "criteria" / "r15_items_v1.json"
+LOCK = OUT.with_name("r15_items_v1.lock.txt")
+assert not OUT.exists()
+items = []
+for fid, src in SRC.items():
+    it = next(i for i in json.loads(src.read_text(encoding="utf-8"))["items"] if i["id"] == fid)
+    s = json.dumps(it, ensure_ascii=False)
+    for a, b in (("samsam_itacc_r14fix2_", "samsam_itacc_r15_"), ("samsam_itacc_r13_f01", "samsam_itacc_r15_f01"),
+                 ("scratchpad/r14fix2/", "scratchpad/r15/"), ("scratchpad/r13/", "scratchpad/r15/")):
+        s = s.replace(a, b)
+    items.append(json.loads(s))
+out = {"_doc": __doc__, "nguon": {fid: {"file": str(p.relative_to(H.parents[2])).replace("\\", "/"),
+                                        "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for fid, p in SRC.items()},
+       "moi_truong": "Postgres Docker riêng samsam-itacc-r15 (127.0.0.1:55457), DB mới mỗi mục dựng bằng working tree đã khóa"
+                     " fp; không DB samsam, không sàn/calendar/STT thật", "items": items}
+OUT.parent.mkdir(exist_ok=True)
+OUT.open("x", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1))
+h = hashlib.sha256(OUT.read_bytes()).hexdigest()
+LOCK.open("x", encoding="utf-8").write(f"r15_items_v1.json {h} {datetime.now(timezone(timedelta(hours=7))).isoformat(timespec='seconds')}\n")
+print("OK", h, {i["id"]: (i["db"], len(i["ca"])) for i in items})

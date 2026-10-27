@@ -1,0 +1,12 @@
+# pytest tập trung r15-fix1 (bản chốt) — 2026-10-26T17:21:10+07:00 · HEAD 70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046
+# fp code = f8033335a4fab10159b4891f3c41634f1dcb306d09e04347c13be8f90fc995e2
+# DB samsam_itacc_r15fix1_focus2 @ 127.0.0.1 55463 (KHÔNG phải samsam)
+# bảng public 108 · thiếu [] · products 27 · sku_master 13 · roles ['agent_writer', 'app_human', 'svc_job', 'svc_ui', 'svc_webhook']
+# preflight OK
+## lệnh: python -m pytest -q -ra -p no:cacheprovider tests/test_r15_settlement_api.py tests/test_settlement_csv.py tests/test_settlement_overlap.py tests/test_market_api.py
+........................................................................ [ 35%]
+........................................................................ [ 70%]
+.............................................................            [100%]
+205 passed in 87.98s (0:01:27)
+
+EXIT 0

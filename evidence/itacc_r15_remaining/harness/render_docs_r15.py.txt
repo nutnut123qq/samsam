@@ -1,0 +1,259 @@
+"""HARNESS r15 — cập nhật hồ sơ theo kết quả lượt r15 (số lấy từ tong_hop/ban_ghi/gate, không gõ tay số tổng). Sửa:
+docs/handover/nghiem-thu-ky-thuat-noi-bo.md (mục 0 mới; mục 0 r14-fix2 → lịch sử; mục 3/4), DONE.md, docs/handover/v13-board.md,
+docs/handover/doi-chieu-docx.md (đính chính TikTok finance + kết quả), docs/handover/runbook-ha-tang.md (10.12 quyết toán API),
+docs/handover/dau-vao-va-quyet-dinh.md (mục I thay H), docs/handover/ho-so-san-sang-chay-thu.md (dòng sàn + Kế toán), AGENTS.md
+(dòng r15). Mỗi thay thế kiểm đúng 1 lần.  python -I render_docs_r15.py.txt"""
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r15_remaining"
+th = json.loads((EV / "tong_hop.json").read_text(encoding="utf-8"))
+tt = th["tom_tat"]
+assert not tt["loi_nhat_quan"], tt["loi_nhat_quan"]
+T = tt["tong"]
+TOT = f"{T.get('DAT', 0)} ĐẠT / {T.get('CHUA_KIEM', 0)} CHƯA KIỂM / {T.get('BI_CHAN', 0)} BỊ CHẶN"
+SRC = ", ".join(f"{k} {v}" for k, v in sorted(tt["nguon"].items()))
+rows = {r["id"]: r for r in th["items"]}
+assert (T.get("DAT"), T.get("CHUA_KIEM", 0), T.get("BI_CHAN")) == (84, 0, 12), "tổng đổi — sửa mục 3 bằng tay"
+
+
+def pfn(r):
+    c = r["ca"]
+    return f"{c.get('PASS', 0)}/{c.get('FAIL', 0)}/{c.get('NOT_RUN', 0)}"
+
+
+def pb(name):
+    d = json.loads((EV / "probes" / name / "ban_ghi.json").read_text(encoding="utf-8"))
+    return f"{d['tong']['PASS']}/{d['tong']['FAIL']}", d
+
+
+FPC = (EV / "FP_CHOT_v2.txt").read_text(encoding="utf-8").split("fp_code = ")[1].split()[0]
+full = (EV / "gate" / "full_chot_f2.txt").read_text(encoding="utf-8")
+FULL = next(ln for ln in full.splitlines() if " passed" in ln and " in " in ln).strip()
+assert full.rstrip().endswith("EXIT 0") and "failed" not in FULL and f"fp code = {FPC}" in full
+SKIP = "skipped" in FULL
+EVAL = next(ln for ln in (EV / "gate" / "eval.txt").read_text(encoding="utf-8").splitlines()
+            if ln.startswith("[done] guardrail v2")).strip()
+RT = next(ln for ln in (EV / "gate" / "redteam.txt").read_text(encoding="utf-8").splitlines()
+          if ln.startswith("tỷ lệ lọt")).strip()
+SB, SA = pb("s_settlement_v2_truoc"), pb("s_settlement_v2_sau2")
+TB, TA = pb("t_stt_truoc"), pb("t_stt_sau2")
+MA = pb("m_migration_sau2")
+for b, a in ((SB, SA), (TB, TA)):
+    assert b[1]["probe_sha256"] == a[1]["probe_sha256"] and a[1]["fp_code"] == FPC
+assert MA[1]["fp_code"] == FPC
+HQ = []
+for n in ("r14_p1_ocr_isolation", "r14_p2_anchor_human", "r14_p3_market_refresh", "r14fix2_q1_refresh_leak",
+          "r14fix2_q2_anchor_migration", "r13_g_anchor", "r13_e_market_v2", "fix4_n_anchor_gate"):
+    s, d = pb(f"hoiquy_{n}_chot2")
+    assert d["fp_code"] == FPC
+    HQ.append(f"{n} {s}")
+ID2 = ["data_platform-06", "farming-01"]
+assert all(rows[i]["luot"] == "r15" for i in ID2)
+CA2 = ", ".join(f"{i} {('BỊ CHẶN' if rows[i]['trang_thai'] == 'BI_CHAN' else rows[i]['trang_thai'])} {pfn(rows[i])}"
+                for i in ID2)
+FULLTXT = f"{FULL}, EXIT 0" + ("" if not SKIP else " (có skip — xem log)")
+
+SEC0 = f"""## 0. Checkpoint r15 — phần code còn thiếu của 12 mục DOCX (25/10/2026)
+
+- **Phạm vi:** baseline đã phát hành `main` = GitHub `70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046` (snapshot ngoài repo
+  `D:\\code\\samsam_r15_baseline`, `git archive`, 16.713 tệp khớp blob). Nhánh `codex/remaining-docx-code-r15`; CHƯA
+  commit/merge/push/deploy; không DB `samsam`; container riêng `samsam-itacc-r15` (127.0.0.1:55457). Evidence
+  `evidence/itacc_r15_remaining/` (bảng việc 12 mục `BANG_VIEC.md` lập TRƯỚC khi code; nguồn tài liệu `NGUON_TAI_LIEU.md`).
+  Các dòng "chưa commit / HEAD 0afa388" ở checkpoint r14/r14-fix2 dưới là trạng thái lúc thu evidence — đã phát hành bằng 70ff9f7.
+- **Đính chính r14/r14-fix2:** "TikTok finance chưa có tài liệu chính thức bản hiện hành" SAI — Partner Center có nhóm Finance
+  chính thức hiện hành (Get Statements 202309, Get Transactions by Statement 202501, …); r14 đã đoán đường dẫn.
+
+| Việc (ID) | Trước (70ff9f7) | Sau (fp mã `{FPC[:12]}…`) | Probe trước → sau (PASS/FAIL, cùng sha) | Mức |
+|---|---|---|---|---|
+| Quyết toán qua API sàn (data_platform-06) | không có — `--kind settlement` bị CLI từ chối; mã lỗi nhóm Payment (`income_not_found`…) bị ẩn | `market_api --kind settlement --from --to [--dry-run]` → `ingest/settlement_api.py`: Shopee escrow list/detail, TikTok statements + transactions (allowlist 4 GET, `{{statement_id}}` chỉ nhận số), phân trang có trần, 429/5xx thử lại, redirect không theo, refresh trước request; ánh xạ thành phần → cột theo `data/settlement_api_map.json` (chưa chốt/LẠ/null → BLOCKED trước khi ghi; dry-run báo thiếu gì, 0 DB); CHỈ API thật được ghi sổ (`settlement_rows.source_kind` csv\\|api_live); CSV ↔ API cùng đơn → chặn; ghi 1 transaction, lỗi → 0 dòng | S {SB[0]} → {SA[0]} | CONTRACT_TESTED (server giả + Postgres thật) |
+| Hạn STT bọc nạp model (farming-01) | `GARDEN_STT_TIMEOUT_S` chỉ bọc nhận dạng — nạp model treo làm CLI treo (T04 tới trần ngoài 25 s) | nạp model trong luồng có hạn — lỗi trong hạn; thông điệp lỗi nạp model giữ nguyên | T {TB[0]} → {TA[0]} | MOCK (gói faster_whisper giả) |
+
+- **Migration (probe M {MA[0]}):** DB lịch sử: schema 0afa388 + 2 `upgrade()` baseline ĐỒNG THỜI (2 `da_nang_cap` hợp lệ) →
+  schema 70ff9f7 + core/golden + 1 file quyết toán CSV bằng code 70ff9f7 → áp schema/roles r15 ×2 exit 0: số dòng và nội dung
+  MỌI bảng theo cột cũ, `v_settlement_khoan`, biên nhận neo, đuôi hash chain, verify_action_log 0 — giữ nguyên; dòng cũ
+  `source_kind='csv'`; quyền chỉ thêm (0 mất, 0 thêm); app_human không INSERT `settlement_rows`/`anchor_receipts`; svc_loader
+  INSERT được cột mới; mọi SECURITY DEFINER giữ `search_path`, `*_human` không cấp PUBLIC.
+- **Hồi quy (mã cuối):** {", ".join(HQ)}.
+- **Kiểm lại 2 mục** (tiêu chí `criteria/r15_items_v1.json` = tiêu chí hiện hành chỉ đổi tên DB/thư mục): {CA2}.
+- **Tổng nội bộ (code sinh `tong_hop.json`):** {TOT} (r14-fix2: 84/0/12). Nguồn: {SRC}; {tt['so_tham_chieu_evidence']} tham
+  chiếu evidence khớp, 0 vi phạm nhất quán. Nghiệm thu hợp đồng 0/96.
+- **Full/gate (fp mã `{FPC}`):** full pytest **{FULLTXT}** (`gate/full_chot_f2.txt`, DB mới `samsam_itacc_r15_full2`; lần 1 trên fp v1 `gate/full_chot_f1.txt` 6940 passed / 4 failed — test drift-guard schema chưa cho phép CHECK `source_kind` mới → sửa test, khóa fp v2, chạy lại probe + full); ruff
+  EXIT 0; eval `{EVAL}` EXIT 0; DPIA --check EXIT 0; red-team `{RT}` EXIT 0; quét secret `gate/secret_scan.txt`.
+- **Code còn thiếu (B — cần đặc tả trước):** (1) BẢNG ÁNH XẠ quyết toán của Kế toán (thành phần → cột/dấu/bỏ qua, loại giao
+  dịch TikTok → mã đơn + nhãn `txn_type`, thuế khấu trừ) — code chỉ áp bảng, không tự quyết; (2) website + chatbot website ở
+  REPO RIÊNG (chưa có repo/owner/hợp đồng giao tiếp đơn, đặc tả kênh chat).
+- **Còn chờ bên ngoài:** `dau-vao-va-quyet-dinh.md` mục I.
+
+"""
+nt = REPO / "docs" / "handover" / "nghiem-thu-ky-thuat-noi-bo.md"
+s = nt.read_text(encoding="utf-8")
+old_title = s.splitlines()[0]
+assert old_title.startswith("# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r14-fix2 ")
+s = s.replace(old_title, "# Nghiệm thu KỸ THUẬT NỘI BỘ trên máy dev — checkpoint hiện hành r15 (code còn thiếu của 12 mục DOCX,"
+              " 25/10/2026)", 1)
+a = "## 0. Checkpoint r14-fix2 — vá 2 lỗi controller của r14 (25/10/2026)\n"
+assert s.count(a) == 1
+s = s.replace(a, SEC0 + "## 0-r14fix2. Checkpoint r14-fix2 (LỊCH SỬ — đính chính TikTok finance ở mục 0) — vá 2 lỗi controller"
+              " của r14 (25/10/2026)\n")
+for a, b in (("## 3. Kết quả tổng HIỆN HÀNH (r14-fix2) — mẫu số 96", "## 3. Kết quả tổng HIỆN HÀNH (r15) — mẫu số 96"),
+             ("(`evidence/itacc_r14_fix_2/source_map.json`; r14fix2/r14 = kiểm lại lượt vá/r14, r13fix4/r13 = lượt trước, còn lại kế thừa)",
+              "(`evidence/itacc_r15_remaining/source_map.json`; r15/r14fix2/r14 = kiểm lại lượt r15/vá/r14, r13fix4/r13 = lượt trước, còn lại kế thừa)")):
+    assert s.count(a) == 1, a[:50]
+    s = s.replace(a, b)
+i4 = s.index("## 4. Bảng 96 mục")
+head, tab = s[:i4], s[i4:]
+for fid in ID2:
+    lines = [ln for ln in tab.split("\n") if ln.startswith(f"| {fid} |")]
+    assert len(lines) == 1, fid
+    cells = lines[0].split(" | ")
+    cells[4] = "r15"
+    cells[7] = pfn(rows[fid])
+    tab = tab.replace(lines[0], " | ".join(cells))
+nt.write_text(head + tab, encoding="utf-8", newline="\n")
+
+DONE = f"""## Vòng r15 (25/10/2026) — code còn thiếu của 12 mục DOCX — CHƯA commit/merge/push/deploy
+
+Baseline `main` = GitHub `70ff9f7`; nhánh `codex/remaining-docx-code-r15`; không DB `samsam`; không đổi `acceptance_status`;
+không gỡ blocker. fp mã cuối `{FPC}`. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ
+`dau-vao-va-quyet-dinh.md` mục I.
+
+1. data_platform-06 — quyết toán qua API (`market_api --kind settlement`, `ingest/settlement_api.py`) theo tài liệu CHÍNH THỨC
+   (Shopee escrow list/detail; TikTok statements 202309 + transactions 202501 — đính chính r14: TikTok CÓ tài liệu): transport,
+   phân trang, kiểm phản hồi, provenance `source_kind`, chống cộng trùng CSV↔API, cổng ánh xạ Kế toán (`data/settlement_api_map.json`
+   mọi quyết định null → ghi sổ BLOCKED). Mã lỗi Payment (`income_not_found`) hiện được, giá trị phản chiếu credential vẫn ẩn.
+   Probe S {SB[0]} → {SA[0]} (CONTRACT_TESTED).
+2. farming-01 — `GARDEN_STT_TIMEOUT_S` bọc cả nạp model. Probe T {TB[0]} → {TA[0]}.
+3. Schema: cột `settlement_rows.source_kind`; nâng cấp từ baseline 70ff9f7 có lịch sử (neo trùng hợp lệ + quyết toán CSV) ×2:
+   probe M {MA[0]}. Hồi quy 8 probe cũ đạt. Kiểm lại: {CA2}. Tổng 96: **{TOT}**.
+4. Gate: full {FULLTXT} (fp v2; lần 1 fp v1: 4 failed ở test drift-guard schema chưa cho phép CHECK `source_kind` →
+   sửa test, chạy lại probe + full); ruff/eval/DPIA/red-team EXIT 0. Evidence `evidence/itacc_r15_remaining/`.
+   Còn thiếu code (cần đặc tả): bảng ánh xạ quyết toán của Kế toán; website/chatbot website ở repo riêng.
+
+"""
+dn = REPO / "DONE.md"
+s = dn.read_text(encoding="utf-8")
+a = "## Vòng r14-fix2 (25/10/2026) — vá 2 lỗi controller của r14 — CHƯA commit/merge/push/deploy\n"
+assert s.count(a) == 1
+dn.write_text(s.replace(a, DONE + a.replace("CHƯA commit/merge/push/deploy\n",
+                                            "đã phát hành trong 70ff9f7 (đính chính TikTok finance ở r15 trên)\n")),
+              encoding="utf-8", newline="\n")
+
+BOARD = f"""## Checkpoint mới — Vòng r15 (25/10/2026): code còn thiếu của 12 mục DOCX — CHƯA commit/merge/push/deploy
+
+Baseline `main` 70ff9f7. Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ blocker. Hồ sơ:
+`docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ `dau-vao-va-quyet-dinh.md` mục I. Checkpoint r14-fix2/r14 dưới là
+LỊCH SỬ (đã phát hành trong 70ff9f7; câu "TikTok finance chưa có tài liệu" sai).
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| data_platform-06 quyết toán qua API | code theo tài liệu chính thức Shopee + TikTok; ghi sổ chờ bảng ánh xạ Kế toán + API thật; probe cùng sha {SB[0]} → {SA[0]} | `evidence/itacc_r15_remaining/probes/s_settlement_v2_*` |
+| farming-01 hạn STT bọc nạp model | {TB[0]} → {TA[0]} | `probes/t_stt_*` |
+| Nâng cấp schema từ 70ff9f7 có lịch sử ×2 | {MA[0]} | `probes/m_migration_sau2` |
+| Kiểm lại 2 mục | {CA2} | `items/`, `runs/`, `criteria/r15_items_v1.json` |
+| Tổng 96 | **{TOT}** (r14-fix2 84/0/12) | `tong_hop.json`, `source_map.json` |
+| Gate (fp mã `{FPC[:12]}…`) | full {FULLTXT} (lần 1: 4 failed drift-guard schema → sửa test); ruff 0; eval 0; DPIA 0; red-team 0 | `gate/` |
+| Còn thiếu code (B) | bảng ánh xạ quyết toán (Kế toán); website + chatbot website (repo riêng) | `BANG_VIEC.md` |
+
+"""
+bd = REPO / "docs" / "handover" / "v13-board.md"
+s = bd.read_text(encoding="utf-8")
+a = "## Checkpoint mới — Vòng r14-fix2 (25/10/2026):"
+assert s.count(a) == 1
+bd.write_text(s.replace(a, BOARD + "## Checkpoint (LỊCH SỬ — đã phát hành 70ff9f7; đính chính ở r15) — Vòng r14-fix2 (25/10/2026):"),
+              encoding="utf-8", newline="\n")
+
+dc = REPO / "docs" / "handover" / "doi-chieu-docx.md"
+s = dc.read_text(encoding="utf-8").rstrip("\n") + f"""
+
+**Đợt r15 (25/10/2026) — đính chính + phần code còn thiếu:** r14/r14-fix2 ghi "TikTok finance chưa có tài liệu chính thức
+bản hiện hành" — SAI (Partner Center có Get Statements 202309 / Get Transactions by Statement 202501). data_platform-06: đã viết
+quyết toán qua API (Shopee + TikTok) theo tài liệu chính thức, ghi CÙNG sổ `settlement_rows`, nhưng ghi sổ BỊ CHẶN tới khi Kế
+toán chốt bảng ánh xạ (`data/settlement_api_map.json`) và có API thật — luồng đang dùng vẫn là file CSV. farming-01: hạn STT bọc
+cả nạp model. Kiểm lại {CA2}; tổng nội bộ vẫn {TOT}. Website/chatbot website vẫn là code còn thiếu ở repo riêng. Evidence
+`evidence/itacc_r15_remaining/`.
+"""
+dc.write_text(s, encoding="utf-8", newline="\n")
+
+rb = REPO / "docs" / "handover" / "runbook-ha-tang.md"
+s = rb.read_text(encoding="utf-8")
+a = ("  là quyết định Bên B. Quyết toán qua API CHƯA có — dùng `ingest.settlement_csv`.\n"
+     "  Lỗi từ sàn chỉ in mã đúng dạng (`error_*` Shopee / số TikTok) — mã khác (có thể phản chiếu token) in \"đã ẩn\" (r14-fix2).")
+b = ("  là quyết định Bên B.\n"
+     "  Lỗi từ sàn chỉ in mã đúng dạng (chữ thường nối `_` Shopee, vd `error_param`/`income_not_found`; số TikTok) và không chứa\n"
+     "  credential — giá trị khác in \"đã ẩn\" (r14-fix2, r15).\n"
+     "- Quyết toán qua API (r15, data_platform-06): `python -m ingest.market_api --channel shopee|tiktok --kind settlement --from\n"
+     "  YYYY-MM-DD --to YYYY-MM-DD [--dry-run]` (≤31 ngày, ngày giờ VN). Ghi CÙNG sổ `settlement_rows` của `settlement_csv`\n"
+     "  (đối chiếu finance-01, view `v_settlement_khoan`) với `source_kind='api_live'`. Điều kiện ghi: (1) Kế toán chốt\n"
+     "  `data/settlement_api_map.json` (mỗi thành phần → cột + dấu hoặc `bo_qua`; TikTok từng loại giao dịch → mã đơn +\n"
+     "  `txn_type`; `trang_thai=da_chot` + `duyet_boi` + `can_cu` + `ngay_chot`) — chưa chốt → `[blocked]` exit 2, 0 request;\n"
+     "  (2) nguồn là API THẬT (Shopee host `partner.shopeemobile.com`; TikTok cùng host cho sandbox/thật nên phải khai\n"
+     "  `TIKTOK_API_ENV=live`) — sandbox/server giả chỉ `--dry-run`. Trình tự: chạy `--dry-run` trên sandbox → danh sách thành\n"
+     "  phần/loại `CHƯA CHỐT`/`LẠ` → Kế toán chốt bảng → `--dry-run` sạch → chạy ghi trên shop thật → đối chiếu với file income\n"
+     "  xuất tay (`settlement_csv`). Thành phần mới xuất hiện (sàn thêm trường) → `[blocked]` tới khi bảng được cập nhật. Đơn đã\n"
+     "  có dòng từ file CSV → API chặn (và ngược lại) — người đối soát quyết, không cộng hai lần. Chạy lại cùng dữ liệu → `[skip]`;\n"
+     "  cùng khoản số khác → giữ cả hai, đối soát quý BẤT THƯỜNG.")
+assert s.count(a) == 1, "runbook"
+rb.write_text(s.replace(a, b), encoding="utf-8", newline="\n")
+
+ag = REPO / "AGENTS.md"
+s = ag.read_text(encoding="utf-8")
+a = "· quyết toán qua API CHƯA có (chờ Kế toán chốt ánh xạ escrow / tài liệu finance TikTok) · runbook 10.12, bảng chờ `dau-vao-va-quyet-dinh.md` mục H |\n"
+b = ("· quyết toán qua API: xem dòng r15 · runbook 10.12 |\n"
+     "| Đợt r15 — quyết toán API sàn + hạn STT (25/10/2026) | `python -m ingest.market_api --channel shopee\\|tiktok --kind settlement "
+     "--from YYYY-MM-DD --to YYYY-MM-DD [--dry-run]` (`ingest/settlement_api.py`; Shopee get_escrow_list/detail, TikTok "
+     "statements 202309 + statement_transactions 202501 theo tài liệu chính thức — `evidence/itacc_r15_remaining/NGUON_TAI_LIEU.md`) "
+     "→ CÙNG sổ `settlement_rows` (`source_kind` csv\\|api_live): ghi CHỈ khi Kế toán chốt `data/settlement_api_map.json` "
+     "(repo: mọi quyết định null → `[blocked]` exit 2, 0 request) VÀ nguồn là API thật (TikTok cần `TIKTOK_API_ENV=live`); "
+     "sandbox/server giả chỉ `--dry-run` (liệt kê thành phần CHƯA CHỐT/LẠ, 0 DB); CSV↔API cùng đơn → chặn (`settlement_csv."
+     "cross_source`) · `zalo_garden --transcribe`: `GARDEN_STT_TIMEOUT_S` bọc cả nạp model · bảng chờ `dau-vao-va-quyet-dinh.md` "
+     "mục I |\n")
+assert s.count(a) == 1, "agents"
+ag.write_text(s.replace(a, b), encoding="utf-8", newline="\n")
+
+hs = REPO / "docs" / "handover" / "ho-so-san-sang-chay-thu.md"
+s = hs.read_text(encoding="utf-8")
+a = "rồi sandbox có trần chi phí; sàn: adapter đã có, kiểm sandbox |"
+b = ("rồi sandbox có trần chi phí; sàn: listing/đơn/refresh + quyết toán (r15) có code, kiểm sandbox |\n"
+     "| 3 | Bảng ánh xạ quyết toán API (thành phần → cột/dấu/bỏ qua; loại giao dịch TikTok → mã đơn + txn_type) + 1 file income "
+     "thật + quyền app Payment/Finance | Kế toán Bên B / chủ shop | data_platform-06, finance-01, finance-06 | `market_api --kind "
+     "settlement --dry-run` trên sandbox: 0 thành phần CHƯA CHỐT/LẠ; ghi sổ trên shop thật rồi đối chiếu file income |")
+assert s.count(a) == 1, "ho-so"
+hs.write_text(s.replace(a, b), encoding="utf-8", newline="\n")
+
+r = {i: pfn(rows[i]) for i in rows}
+SEC_I = f"""
+## I. Đợt r15 (25/10/2026) — bảng HIỆN HÀNH 12 mục còn BỊ CHẶN (thay mục H)
+
+Evidence `evidence/itacc_r15_remaining/` (bảng việc `BANG_VIEC.md`, nguồn tài liệu `NGUON_TAI_LIEU.md`). Cột A = code đã làm
+và có evidence; B = code còn thiếu + đặc tả cần để viết; C = code có nhưng chưa chạy với môi trường/dữ liệu thật; D = quyết
+định/hạ tầng/nghĩa vụ/chữ ký. Mức kiểm: LOCAL = entry point thật + DB/model thử trên máy dev; MOCK/CONTRACT_TESTED = biên ngoài
+giả theo tài liệu; SANDBOX/PRODUCTION = chưa có mục nào. "Phép kiểm" chạy trên môi trường được cấp, KHÔNG trên DB `samsam` từ máy
+dev. Nghiệm thu hợp đồng: 0/96.
+
+| ID | A. Code đã làm (evidence) | B. Code còn thiếu — đặc tả cần | C. Code có, chưa chạy thật | D. Quyết định / hạ tầng / nghĩa vụ | Ai cấp — ở đâu | Cấp xong chạy phép kiểm | Mức kiểm |
+|---|---|---|---|---|---|---|---|
+| data_platform-06 | listing/đơn chỉ đọc, 429/5xx, cổng tính năng (r13); refresh token (r14, F1 r14-fix2); **r15: quyết toán Shopee escrow + TikTok statements/transactions theo tài liệu chính thức, cổng ánh xạ, provenance `source_kind`, chống trùng CSV↔API** (probe S {SB[0]} → {SA[0]}; ca mục {r['data_platform-06']}) | phần CHUYỂN ĐỔI nghiệp vụ = BẢNG ÁNH XẠ: từng thành phần `order_income` (Shopee, 96 trường) / transaction (TikTok, 145 trường) → cột `settlement_rows` + dấu hoặc bỏ qua; 23 loại giao dịch TikTok → trường mã đơn + nhãn `txn_type`; thuế khấu trừ VAT/PIT/CIT; xác nhận ngày quyết toán theo giờ VN | chữ ký/endpoint/field/phân trang chưa chạy sandbox hay shop thật | nơi lưu credential (tệp ngoài repo vs kho bí mật) | Kế toán Bên B: điền + ký `data/settlement_api_map.json`, 1 file income thật; chủ shop: app chỉ đọc có quyền Payment (Shopee) / `seller.finance.info` (TikTok), sandbox, credential ngoài repo | `market_api --refresh` → `--kind settlement --dry-run` (sandbox) phải 0 CHƯA CHỐT/LẠ → ghi trên shop thật (`TIKTOK_API_ENV=live` với TikTok) → đối chiếu file income (`settlement_csv`) | CONTRACT_TESTED (server giả + Postgres thật) |
+| production-03 | `sx_label --image` → OCR tiến trình con (r14) → so hồ sơ → `label_check` | không (engine tại chỗ); vendor khác = adapter khi có đặc tả | engine thật trên ảnh nhãn thật | engine dùng thật (+DPA nếu dịch vụ), chốt `data/label_rules.json` | GĐ sản xuất + Pháp chế | `OCR_PROVIDER=<engine> python -m agents.sx_label --sku <sku> --image <ảnh> --submit` + người duyệt `label_check` | LOCAL ({r['production-03']}) |
+| data_platform-02.1 | intake/`--reprocess-pending`/`--verify`, `documents.ocr_engine`, tiến trình con (r14) | không | tài liệu thật + engine | engine, chính sách `data/loader_gate.json`, danh mục tài liệu được phép xử lý | Bên B + Pháp chế/DPO | intake bản sao thật → `--pending` → Pháp chế `--verify` | LOCAL ({r['data_platform-02.1']}) |
+| farming-01 | `whisper_local`; **r15: hạn bọc cả nạp model** (probe T {TB[0]} → {TA[0]}; ca mục {r['farming-01']}) | không cho engine tại chỗ; STT dịch vụ = adapter mới khi chọn vendor (phụ thuộc lựa chọn) | model thật, payload OA thật | model Whisper duyệt tải sẵn hoặc STT trong nước + DPA; danh sách nhân viên; chính sách lưu ghi âm | GĐ vùng trồng + Pháp chế/DPO | `--transcribe` 5–10 ghi âm thật + người đối chiếu | MOCK |
+| marketing-02.1 | `openrouter_images` qua gateway, chi phí ảnh hỏng vẫn ghi (r13-fix4) | không cho OpenRouter; vendor khác = adapter riêng | model/key thật | `IMAGE_MODEL`, điều khoản/DPA, trần `feature_caps_usd.marketing-02.1`, packshot được phép | GĐ Marketing + Pháp chế + TGĐ | 1 ảnh thật qua `image_studio` + người duyệt nháp | MOCK ({r['marketing-02.1']}) |
+| production-02 | `product_dossiers --check` (phiên bản + sha) | không (không tạo hồ sơ giả) | — | 14 hồ sơ gốc + ánh xạ 13 SKU | GĐ sản xuất | tệp hồ sơ gốc ngoài repo → `--check` exit 0 | LOCAL ({r['production-02']}) |
+| intel-05.1 | dry-run; lượt thật đòi DPIA ký + ≥3 nhà cung cấp | không | lượt thật | ký DPIA/TIA (người thật đổi `dpia_signed`), DPA, nhà cung cấp duyệt, key, ngân sách | Pháp chế + TGĐ + DPO | lượt thật nhỏ có trần | LOCAL dry-run ({r['intel-05.1']}) |
+| farming-06 | gom/submit/verify/export/upgrade, quyền người duyệt (r14), trigger chống trùng giữ lịch sử (r14-fix2) | không | calendar thật | chuỗi/provider, phí, người ủy quyền (`human_logins`) | Hai bên | `--submit latest` → sau ≥1 khối `--upgrade latest [--by]` → bên thứ ba `ots verify` | MOCK ({r['farming-06']}) |
+| sales-08 | nguồn dữ liệu website `listing_export --website-feed` + `--verify` (giá web đã duyệt, kiểm phiên bản) | **website (trang SP/giỏ/thanh toán/đơn) — code còn thiếu ở REPO RIÊNG**: cần repo + owner + domain + hợp đồng giao tiếp đơn web (D-HB-08, D-DL-10) | feed chưa nối website | quyết định repo/owner, môi trường | Bên B / owner website | nghiệm thu trên môi trường website (feed ≠ website) | LOCAL chỉ feed ({r['sales-08']}) |
+| sales-09 | không (ngoài repo) | **chatbot website — code còn thiếu ở REPO RIÊNG**; repo này chưa viết giao tiếp vì chưa có đặc tả kênh | — | repo + owner + đặc tả kênh chat website | Bên B / owner website | nghiệm thu trên môi trường website | — |
+| ceo-90 | `scripts/incident_compare.py` (chỉ đọc), sổ nghĩa vụ | không | — | thực hiện/ký N01–N22, PL05; N22 cần backup TRƯỚC sự cố — không có thì KHÔNG kết luận "không ảnh hưởng dữ liệu" | Hai bên + DBA Bên B | biên bản ký; `INCIDENT_BASELINE_URL=… INCIDENT_NOW_URL=… python scripts/incident_compare.py --out <tệp>` | LOCAL công cụ |
+| data_platform-90 | `scripts/onprem_preflight.py` (dump + offsite thật theo manifest), backup bắt buộc mã hóa/offsite khác thiết bị | không | chạy trên server Bên B | server vật lý, UPS, mạng/lưu trữ, offsite máy khác, giám sát độc lập, tài khoản cao nhất, khóa backup | Bên B | `python scripts/onprem_preflight.py --out <tệp>` trên server + diễn tập restore | LOCAL (máy dev ≠ server) |
+"""
+dv = REPO / "docs" / "handover" / "dau-vao-va-quyet-dinh.md"
+s = dv.read_text(encoding="utf-8")
+a = "## H. Đợt r14 (25/10/2026) — bảng HIỆN HÀNH 12 mục còn BỊ CHẶN (thay mục G)"
+assert s.count(a) == 1, "dau-vao"
+s = s.replace(a, "## H. Đợt r14 (25/10/2026) — bảng 12 mục còn BỊ CHẶN (LỊCH SỬ — thay bằng mục I; dòng data_platform-06 "
+              "\"TikTok finance chưa có tài liệu chính thức\" SAI)")
+dv.write_text(s.rstrip("\n") + "\n" + SEC_I, encoding="utf-8", newline="\n")
+print("ok", TOT, SRC, FPC[:12], FULL)

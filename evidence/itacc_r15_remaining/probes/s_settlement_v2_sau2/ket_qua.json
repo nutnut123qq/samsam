@@ -1,0 +1,126 @@
+{
+ "probe": "s_settlement",
+ "tree": "D:\\code\\samsam",
+ "co_settlement_api": true,
+ "tong": {
+  "PASS": 23,
+  "FAIL": 0
+ },
+ "ca": [
+  {
+   "ca": "S00",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 0, detail req 3, có 'api_local' True"
+  },
+  {
+   "ca": "S01",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 2, request 0, [blocked] True"
+  },
+  {
+   "ca": "S02",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 2, request 3, 'CHƯA CHỐT' True"
+  },
+  {
+   "ca": "S03",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 2, nêu tên thành phần lạ True, dòng 0"
+  },
+  {
+   "ca": "S04",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 0, page_no ['1', '2', '3'], page_size {'100'}, detail 5/5"
+  },
+  {
+   "ca": "S05",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 1, trang list 50 (MAX_PAGES 50), dòng 0"
+  },
+  {
+   "ca": "S06",
+   "ket_qua": "PASS",
+   "chi_tiet": "500/429 → exit 0, list req 2, detail req 4; 403 → exit 1, detail req 1, dòng 0"
+  },
+  {
+   "ca": "S07",
+   "ket_qua": "PASS",
+   "chi_tiet": "JSON hỏng trang 2: exit 1, dòng 0; thiếu order_income: exit 1, dòng 0; số lẻ 12000.5: exit 1, dòng 0"
+  },
+  {
+   "ca": "S08",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 1, request tới đích redirect 0"
+  },
+  {
+   "ca": "S09",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 0, request đầu /api/v2/auth/access_token/get, token dùng cho list mới"
+  },
+  {
+   "ca": "S11",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 2, request 0"
+  },
+  {
+   "ca": "S12",
+   "ket_qua": "PASS",
+   "chi_tiet": "lần 1 exit 0 dòng 3 nguồn ['api_live'] đối chiếu 3; lần 2 exit 0 [skip] True dòng 3"
+  },
+  {
+   "ca": "S13",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 0, dòng thô A 6, khoản theo view 3"
+  },
+  {
+   "ca": "S14",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 0, lech 0→1, khoản đơn A1 theo view 2 (giữ cả hai)"
+  },
+  {
+   "ca": "S15",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 1, dòng 0"
+  },
+  {
+   "ca": "S16",
+   "ket_qua": "PASS",
+   "chi_tiet": "API khi đơn đã có CSV: exit 2, dòng mới 0; CSV khi đơn đã có api_live: exit 2, dòng 2→2"
+  },
+  {
+   "ca": "S17",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 1, dòng 0"
+  },
+  {
+   "ca": "S18",
+   "ket_qua": "PASS",
+   "chi_tiet": "exit 2, request 0, nêu tính năng True"
+  },
+  {
+   "ca": "S19",
+   "ket_qua": "PASS",
+   "chi_tiet": "phân trang/ký/GET: exit 0, statements 2, transactions 3, chữ ký+GET không body True, '4 dòng' True; loại chưa quyết: exit 2, nêu PLATFORM_PENALTY True; currency USD: exit 1; statement_id sai dạng: exit 1, request ngoài statements 0"
+  },
+  {
+   "ca": "S20",
+   "ket_qua": "PASS",
+   "chi_tiet": "cột source_kind True, dòng CSV {'csv'}, dry-run nguồn api_local True"
+  },
+  {
+   "ca": "S21",
+   "ket_qua": "PASS",
+   "chi_tiet": "income_not_found→'income_not_found'; order_not_found→'order_not_found'; phản chiếu credential→ẩn True; hex token→ẩn True"
+  },
+  {
+   "ca": "S22",
+   "ket_qua": "PASS",
+   "chi_tiet": "POST /api/v2/payment/get_escrow_list: ScopeError; POST /api/v2/payment/get_escrow_detail: ScopeError; GET /api/v2/payment/set_shop_installment_status: ScopeError; POST /finance/202309/statements: ScopeError; request 0"
+  },
+  {
+   "ca": "S10",
+   "ket_qua": "PASS",
+   "chi_tiet": "lộ credential/PII 0, mã đơn thô 0"
+  }
+ ]
+}

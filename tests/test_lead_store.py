@@ -389,6 +389,9 @@ def test_schema_sql_has_leads_table():
     rest = _DOCX_CHECK_OK.sub("", rest)
     # r13: ràng buộc trạng thái `anchor_receipts` (thêm da_nang_cap).
     rest = _R13_ANCHOR_OK.sub("", rest)
+    # r15: CHECK nguồn `settlement_rows.source_kind` (csv | api_live).
+    from tests.test_store import _R15_SOURCE_OK
+    rest = _R15_SOURCE_OK.sub("", rest)
     assert not re.search(r"\b(alter|drop)\s+table\b", rest)
     assert re.search(r"\b(alter|drop)\s+table\b", re.sub(
         narrow[0], "", "alter table consents drop constraint if exists"

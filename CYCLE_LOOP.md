@@ -16,3 +16,13 @@ Append-only. Mỗi cycle xong ghi 1 dòng. `no-work`/`LOOP-STOP` = dừng cả l
 | 5/10 | v2.2-content-pipeline | PASS đợt 2 — auditor lạ = `subagent_general` read-only (profile reviewer quota cạn): đợt 1 FIX 1 MAJOR (schedule crash format-spec trên str) + 2 MINOR (CLI nuốt op combo; Studio lưu trùng) → coordinator absorb vá `d1237db` → đợt 2 PASS; NIT → someday. 185/185 pytest + ruff + UI Playwright khớp | `a4bddf6`.. + impl `7754980` + vá `d1237db` + đóng `10093c8` (4 commit, pushed) |
 | 6/10 | v2.3-handover-docs | PASS **coordinator self-review** — quota subagent cạn sau khi agent build xong (rate-limit reset ~3.5h): đọc thật 8 docs + 191/191 + ruff + đối chiếu claim-vs-code (12/12 câu, 12/12 tên test, 9 bảng, 7 tab, lệnh SOP); 1 MINOR vá ngay (sop default-model prefix) | `edd3c1c`.. + impl `13db2c6` + vá + đóng (4 commit, pushed). Audit bù `/cold-audit` 1553e81..HEAD |
 | 7/10 | v2.4-polish | PASS đợt 2 (đợt 1 FIX 1 MINOR `_WHERE_INFO_RE` greedy nuốt 'ở đâu' thứ hai → lazy+chặn-cụm+veto-theo-sót; NIT parity render) — auditor lạ profile reviewer (quota về). **Audit bù làm luôn**: reviewer #2 audit `1553e81..7986eb7` (v2.0+v2.1+v2.3) → FIX 1 MAJOR `flags_for`/report quét activity-name flag mọi routine pest-check → vá quét chỉ detail `193c68d` + 2 MINOR/NIT vá ngay → re-audit PASS. 195/195 + ruff | `8ba6dac`.. + impl `fb4b403` + vá `401de13` + vá audit-bù `193c68d` + vá `95bd98b` + đóng (6 commit, pushed) |
+
+## Ledger định dạng mới (từ 2026-10-27)
+
+Run `/cycle 10` mở 2026-10-10 dừng ở 7/10 (v2.4) không ghi status; v3.0–r15 làm ngoài ledger này (codex/itacc). Lượt dưới resume run đó với version đang OPEN — KHÔNG tự coi run là completed/cancelled (user quyết).
+
+| run | k/N | version | stage | status | base | commit | push-target | push | deploy | review |
+|---|---|---|---|---|---|---|---|---|---|---|
+| cycle10-2026-10-10 | 8/10 | r15+r15-fix1 | 4-ship | running | 70ff9f7 | — | — | — | — | — |
+| cycle10-2026-10-10 | 8/10 | r15+r15-fix1 | 4-ship | blocked | 70ff9f7 | — (chưa commit) | — | — | — | — (gate full chưa chạy: RAM trống 1,97 GB, Docker tắt; output/ làm hỏng 1 ca nếu chạy trên cây làm việc) |
+| cycle10-2026-10-10 | 8/10 | r15+r15-fix1 | 4-ship | running | 70ff9f7 | — (chưa commit) | — | — | — | — (gate full chia 11 lượt PASS 6984/6984, 0 skip, fp 48020cb4; chờ cold-check) |

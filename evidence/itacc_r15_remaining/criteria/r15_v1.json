@@ -1,0 +1,45 @@
+{
+ "_doc": "Tiêu chí r15 KHÓA TRƯỚC khi sửa code (25/10/2026). Cùng tệp probe + input + assertion chạy trên snapshot baseline 70ff9f7 và bản sau. Ca chức năng mới: trước = chứng minh yêu cầu chưa đáp ứng qua entry point thật (CLI từ chối/không có), KHÔNG dùng import lỗi làm bằng chứng; ca chỉ đo được khi có chức năng (cơ chế DB) ghi 'KHONG_AP_DUNG' ở phía trước. Fixture đều GIẢ, chỉ kiểm cơ chế, không xác nhận cách hạch toán.",
+ "probe_s": {
+  "id": "data_platform-06 quyết toán API",
+  "entry": "python -m ingest.market_api --channel shopee|tiktok --kind settlement --from YYYY-MM-DD --to YYYY-MM-DD [--dry-run]",
+  "ca": {
+   "S00": "kind settlement tồn tại: dry-run Shopee, ánh xạ fixture đã chốt, server giả → exit 0, báo trạng thái từng thành phần + nguồn api_local; 0 kết nối DB",
+   "S01": "ánh xạ repo (chưa chốt) + không dry-run → exit 2 [blocked], 0 request, 0 dòng settlement_rows",
+   "S02": "ánh xạ chưa chốt + dry-run → có request đọc, liệt kê thành phần 'chưa chốt', exit 2, 0 kết nối DB",
+   "S03": "ánh xạ đã chốt, payload có thành phần LẠ → exit 2 [blocked], 0 dòng",
+   "S04": "phân trang Shopee: page_no 1..3 theo `more`, page_size=100 mọi trang, đủ escrow detail cho mọi đơn",
+   "S05": "vượt MAX_PAGES → exit 1, 0 dòng",
+   "S06": "500 rồi 200 → thử lại rồi đạt; 429 Retry-After → thử lại; 403 → exit 1 không thử lại, 0 dòng",
+   "S07": "JSON hỏng trang 2 / escrow detail thiếu order_income / số lẻ 12000.5 → exit 1, 0 dòng",
+   "S08": "302 → không theo (đích redirect 0 request), exit 1",
+   "S09": "kho token sắp hết hạn → refresh trước request quyết toán đầu tiên",
+   "S10": "stdout/stderr không chứa credential/token, tên người mua, mã đơn thô",
+   "S11": "nguồn server giả (api_local) không dry-run, ánh xạ đã chốt → exit 2 [blocked], 0 request (không ghi sổ ngoài API thật)",
+   "S12": "đường ghi (bộ phân loại nguồn ép api_live cho server giả — chỉ trong probe): ghi N dòng source_kind=api_live, đối chiếu chạy; chạy lại cùng dữ liệu → [skip], số dòng không đổi",
+   "S13": "cửa sổ chồng có dữ liệu trùng nguyên văn → tổng v_settlement_khoan không đổi",
+   "S14": "cùng đơn số khác ở lượt sau → overlaps 'lech' ≥1, giữ cả hai (không tự chọn)",
+   "S15": "trong 1 lượt cùng order_sn xuất hiện 2 lần khác số → exit 1 mâu thuẫn, 0 dòng",
+   "S16": "đơn đã có dòng CSV → API chặn exit 2, 0 dòng mới; ngược lại CSV loader chặn khi đơn đã có dòng api_live",
+   "S17": "lỗi DB giữa lúc ghi (sau insert) → rollback, 0 dòng",
+   "S18": "tính năng data_platform-06 tắt → exit 2, 0 request",
+   "S19": "TikTok: statements + transactions phân trang page_token, GET không body + chữ ký đúng, statement_id thế vào path; loại giao dịch chưa quyết → exit 2; currency ≠ VND → exit 1; statement_id sai dạng → lỗi trước request",
+   "S20": "provenance: dry-run in nguồn api_local; dòng CSV có source_kind=csv",
+   "S21": "mã lỗi nghiệp vụ Payment (income_not_found) hiện được; giá trị phản chiếu credential vẫn ẩn",
+   "S22": "allowlist: POST vào đường escrow / endpoint payment ghi → ScopeError, 0 request"
+  }
+ },
+ "probe_t": {
+  "id": "farming-01 STT whisper_local",
+  "entry": "python -m connectors.zalo_garden --transcribe ID (gọi qua _stt_whisper_local / stt_provider, gói faster_whisper GIẢ trên PYTHONPATH)",
+  "ca": {
+   "T01": "thiếu GARDEN_STT_MODEL_DIR / không có model.bin → stt_provider báo lỗi, 0 nạp model",
+   "T02": "ghi âm hỏng → RuntimeError có kiểm soát",
+   "T03": "ghi âm quá GARDEN_STT_MAX_SECONDS → lỗi trước nạp model",
+   "T04": "NẠP MODEL treo → hết GARDEN_STT_TIMEOUT_S trả lỗi trong hạn (đo bằng tiến trình con có trần ngoài)",
+   "T05": "nhận dạng treo → hết hạn trả lỗi (đối chứng — baseline đã có)",
+   "T06": "đối chứng: model giả trả lời → text"
+  }
+ },
+ "hoi_quy": ["r14 P1 OCR tiến trình con", "r14 P2 quyền nâng cấp neo", "r14 P3 refresh token", "r14-fix2 Q1 (F1)", "r14-fix2 Q2 (F2 migration + ghi đồng thời)", "r13 g_anchor, e_market_v2", "r13-fix4 n_anchor_gate", "nâng cấp schema baseline 70ff9f7 có lịch sử (gồm neo trùng hợp lệ) ×2: số dòng/dữ liệu/hash chain/quyền không đổi, cột source_kind = 'csv' cho dòng cũ"]
+}

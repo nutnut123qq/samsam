@@ -40,7 +40,10 @@ mã đơn). Nhãn ưu tiên: không thấy đơn → `thieu_chung_tu` > hoàn > 
 
 CLI: `--file F --channel K` | `--reconcile` (tính lại MỌI dòng — khi file
 đơn tới sau) | `--report` (theo kênh; trỏ dòng bằng `file dòng N`, không in
-mã đơn/hash/người mua). Exit 0 ok · 1 file/cấu hình/DB lỗi · 2 tham số sai.
+mã đơn/hash/người mua). Exit 0 ok · 1 file/cấu hình/DB lỗi · 2 tham số sai /
+bị chặn (r15: đơn đã có dòng quyết toán từ API sàn — `cross_source`, 0 dòng).
+r15-fix1 F1: `lock_orders` (advisory xact lock theo (kênh, đơn)) là câu đầu của
+transaction ghi — kiểm file đã nạp + nguồn khác + INSERT tuần tự với loader API.
 """
 
 import argparse
@@ -391,20 +394,67 @@ def _connect(dsn: str):
 
 
 def load(conn, rows: list[dict], channel: str, file_name: str,
-         sha: str) -> int:
-    """Insert `settlement_rows` (không commit) → số dòng."""
+         sha: str, source_kind: str = "csv") -> int:
+    """Insert `settlement_rows` (không commit) → số dòng. r15: `source_kind`
+    = nguồn (`csv` file kế toán xuất | `api_live` — `ingest.settlement_api`)."""
     with conn.cursor() as cur:
         cur.executemany(
             "insert into settlement_rows (file_sha256, file_name, channel,"
             " row_no, order_id_hash, order_amount_vnd, fixed_fee_vnd,"
             " payment_fee_vnd, service_fee_vnd, shipping_fee_vnd,"
             " voucher_seller_vnd, affiliate_vnd, refund_vnd, payout_vnd,"
-            " settled_on, txn_type) values (%s, %s, %s, %s, %s, %s, %s, %s,"
-            " %s, %s, %s, %s, %s, %s, %s, %s)",
+            " settled_on, txn_type, source_kind) values (%s, %s, %s, %s, %s,"
+            " %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             [(sha, file_name, channel, r["row_no"], r["order_id_hash"],
-              *(r[c] for c in _COLS), r["settled_on"], r.get("txn_type"))
+              *(r[c] for c in _COLS), r["settled_on"], r.get("txn_type"),
+              source_kind)
              for r in rows])
     return len(rows)
+
+
+def cross_source(conn, channel: str, hashes, source_kind: str) -> int:
+    """r15: số đơn trong `hashes` ĐÃ có dòng quyết toán từ NGUỒN KHÁC
+    `source_kind` (csv ↔ api_live). Hai nguồn có thể gắn `txn_type` khác nhau
+    cho cùng khoản → view/overlaps không nhận ra trùng → caller CHẶN, không
+    cộng hai lần, người đối soát quyết."""
+    return conn.execute(
+        "select count(distinct order_id_hash) from settlement_rows where"
+        " channel = %s and order_id_hash = any(%s) and source_kind <> %s",
+        (channel, sorted(hashes), source_kind)).fetchone()[0]
+
+
+# r15-fix1 F1: khóa (kênh, đơn) quanh "kiểm nguồn khác → INSERT". Đơn → 1 trong
+# LOCK_BUCKETS ngăn theo hash (cùng đơn ⇒ cùng ngăn ⇒ tuần tự; khác đơn cùng
+# ngăn chỉ chờ nhau) — trần số khóa/transaction, không cạn bảng khóa chung khi
+# file nhiều nghìn đơn. Lấy theo thứ tự ngăn tăng dần ở MỌI caller → hai lô
+# chồng nhau không deadlock.
+LOCK_BUCKETS = 256
+
+
+class LockError(Exception):
+    """Kết nối không giữ được khóa tới hết transaction — không nạp."""
+
+
+def _lock_key(channel: str, bucket: int) -> int:
+    d = hashlib.sha256(f"settlement_rows:nguon:{channel}:{bucket}".encode()
+                       ).digest()
+    return int.from_bytes(d[:8], "big", signed=True)
+
+
+def lock_orders(conn, channel: str, hashes) -> None:
+    """`pg_advisory_xact_lock` theo (kênh, đơn) cho cả lô — gọi là câu ĐẦU của
+    transaction ghi, TRƯỚC kiểm file đã nạp + `cross_source` + `load`; nhả khi
+    commit/rollback. READ COMMITTED bắt buộc: câu kiểm sau khóa chụp snapshot
+    mới → thấy dòng bên kia vừa commit (REPEATABLE READ chụp từ câu khóa)."""
+    if getattr(conn, "autocommit", False):
+        raise LockError("kết nối autocommit — khóa không giữ tới lúc ghi")
+    iso = conn.execute("select current_setting('transaction_isolation')"
+                       ).fetchone()[0]
+    if iso != "read committed":
+        raise LockError(f"mức cô lập {_clean(str(iso), 24)} — cần read "
+                        "committed để kiểm nguồn khác sau khóa")
+    for b in sorted({int(h, 16) % LOCK_BUCKETS for h in hashes}):
+        conn.execute("select pg_advisory_xact_lock(%s)", (_lock_key(channel, b),))
 
 
 # Nhóm (kênh, đơn, loại giao dịch) có dòng ở ≥2 file quyết toán. Số bộ giá
@@ -628,10 +678,23 @@ def main(argv: list[str] | None = None) -> int:
             print("[reconcile] " + ", ".join(f"{k}={v}" for k, v in
                                              counts.items()))
             return 0
+        try:
+            lock_orders(conn, args.channel, {r["order_id_hash"] for r in rows})
+        except LockError as e:
+            conn.rollback()
+            print(f"[err] {e} — 0 dòng.", flush=True)
+            return 1
         if conn.execute("select 1 from settlement_rows where file_sha256 ="
                         " %s limit 1", (sha,)).fetchone():
+            conn.rollback()                 # nhả khóa
             print("[skip] file quyết toán đã nạp — không ghi gì.")
             return 0
+        if n := cross_source(conn, args.channel,
+                             {r["order_id_hash"] for r in rows}, "csv"):
+            conn.rollback()
+            print(f"[blocked] {n} đơn đã có dòng quyết toán từ API sàn — không "
+                  "ghi chồng; người đối soát quyết. 0 dòng.", flush=True)
+            return 2
         n = load(conn, rows, args.channel, args.file.name, sha)
         try:
             counts = reconcile(conn, fees, sha)

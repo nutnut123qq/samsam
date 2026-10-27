@@ -1,0 +1,116 @@
+"""HARNESS r15 (bản sao build_items_r14fix2; 2 mục, tiêu chí r15_items_v1) — dựng evidence/itacc_r15_remaining/items/<id>.json
+cho data_platform-06 và farming-01 từ log GỐC lượt r15 (runs/<id>/<run_id>/) + tiêu chí khóa. Trạng thái tính như các lượt
+trước (không chấm tay): mục đang BI_CHAN ở bản ghi hiện hành → giữ BI_CHAN (không gỡ chặn vì code mới/mock pass); có FAIL →
+CHUA_KIEM; NOT_RUN/LOI_HARNESS → CHUA_KIEM; còn lại DAT. supersedes = bản ghi hiện hành theo
+evidence/itacc_r14_fix_2/source_map.json (hash phải khớp). Nguyên nhân/việc gỡ: farming-01 giữ NGUYÊN VĂN (code r15 chỉ thêm
+hạn bọc nạp model, lý do chặn không đổi); data_platform-06 THAY bằng nguyên nhân hiện hành (bản r14 ghi “CHƯA có quyết toán qua
+API … TikTok chưa có tài liệu chính thức” nay SAI: code quyết toán đã viết theo tài liệu chính thức, còn chờ bảng ánh xạ Kế toán
++ app/sandbox) — vẫn EXTERNAL_INPUT.
+  python -I build_items_r15.py.txt <id>=<run_id> [...]"""
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+REPO = Path(__file__).resolve().parents[3]
+EV = REPO / "evidence" / "itacc_r15_remaining"
+PREV = REPO / "evidence" / "itacc_r14_fix_2"
+SMAP = json.loads((PREV / "source_map.json").read_text(encoding="utf-8"))["items"]
+TH = {i["id"]: i for i in json.loads((PREV / "tong_hop.json").read_text(encoding="utf-8"))["items"]}
+FIX = {"data_platform-06": "quyết toán qua API (ingest/settlement_api.py mới; market_api: allowlist 4 endpoint đọc, tham số"
+                           " path, GET TikTok không body, dạng mã lỗi Payment)",
+       "farming-01": "connectors/zalo_garden.py: GARDEN_STT_TIMEOUT_S bọc cả bước nạp model Whisper"}
+PROBE = {"data_platform-06": ["evidence/itacc_r15_remaining/probes/s_settlement_v2_truoc",
+                              "evidence/itacc_r15_remaining/probes/s_settlement_v2_sau2"],
+         "farming-01": ["evidence/itacc_r15_remaining/probes/t_stt_truoc", "evidence/itacc_r15_remaining/probes/t_stt_sau2"]}
+CAUSE_R15 = {"data_platform-06": (
+    "EXTERNAL_INPUT: quyết toán qua API ĐÃ viết theo tài liệu CHÍNH THỨC (r15 — Shopee get_escrow_list/get_escrow_detail;"
+    " TikTok Get Statements 202309 + Get Transactions by Statement 202501 — đính chính r14: TikTok finance CÓ tài liệu chính"
+    " thức hiện hành), CONTRACT_TESTED server giả + Postgres thật; ghi sổ BỊ CHẶN tới khi Kế toán chốt bảng ánh xạ thành phần"
+    " → cột settlement_rows (data/settlement_api_map.json: mọi quyết định null) và chỉ nhận nguồn API thật; chưa app/key/"
+    "sandbox nên chữ ký/field/phân trang CHƯA VERIFIED với sàn thật (refresh token r14 cũng vậy)",
+    "Kế toán Bên B chốt bảng ánh xạ (điền data/settlement_api_map.json: từng thành phần → cột/dấu hoặc bỏ qua, loại giao dịch"
+    " TikTok, trang_thai=da_chot + người chốt + căn cứ) + 1 file income thật để đối chiếu; chủ shop cấp app chỉ đọc có quyền"
+    " Payment/Finance + key/token + sandbox; quyết định nơi lưu credential; chạy `market_api --kind settlement --dry-run`"
+    " trên sandbox rồi đối chiếu với file income")}
+GH = (" Kiểm kỹ thuật nội bộ trên máy dev (Postgres Docker riêng samsam-itacc-r15), fixture/dữ liệu THỬ, sàn/STT giả ở biên"
+      " nơi ghi MOCK/CONTRACT_TESTED — không phải tích hợp thật, không phải nghiệm thu hợp đồng/production.")
+
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def rel(p):
+    p = Path(p).resolve()
+    try:
+        return str(p.relative_to(REPO)).replace("\\", "/")
+    except ValueError:
+        return str(p).replace("\\", "/")
+
+
+for arg in sys.argv[1:]:
+    fid, run_id = arg.split("=", 1)
+    run_id, _, ver = run_id.partition("@")
+    ver = ver or "v1"
+    CRIT = EV / "criteria" / f"r15_items_{ver}.json"
+    lock = CRIT.with_name(f"r15_items_{ver}.lock.txt").read_text(encoding="utf-8").split()
+    crit = json.loads(CRIT.read_text(encoding="utf-8"))
+    citem = next(i for i in crit["items"] if i["id"] == fid)
+    run = EV / "runs" / fid / run_id
+    kq = json.loads((run / "ket_qua.json").read_text(encoding="utf-8"))
+    assert kq["criteria_sha256"] == sha(CRIT) == lock[1], f"{fid}: hash tiêu chí ≠ khóa ≠ lượt"
+    old_p = REPO / SMAP[fid]["path"]
+    assert sha(old_p) == SMAP[fid]["sha256"], f"{fid}: bản ghi hiện hành bị sửa"
+    old = json.loads(old_p.read_text(encoding="utf-8"))
+    cases = []
+    for ca in citem["ca"]:
+        cdir = run / ca["ma"]
+        cr = json.loads((cdir / "case.json").read_text(encoding="utf-8"))
+        asserts = json.loads((cdir / "asserts.json").read_text(encoding="utf-8")) if (cdir / "asserts.json").exists() else []
+        steps = []
+        for st in sorted(cdir.glob("step*.cmd.json")):
+            s = json.loads(st.read_text(encoding="utf-8"))
+            steps.append({"argv": " ".join(s["argv"]).replace(str(REPO) + "\\", "")[:1500], "exit": s["exit"],
+                          "expect_exit": s["expect_exit"], "regex": s["regex"], "bat_dau": s["bat_dau"],
+                          "ket_thuc": s["ket_thuc"], "stdout": rel(st.with_name(st.name.replace(".cmd.json", ".stdout.txt"))),
+                          "stderr": rel(st.with_name(st.name.replace(".cmd.json", ".stderr.txt")))})
+        res = cr["ket_qua"]
+        cases.append({"ma": ca["ma"], "nguon_r10": ca.get("nguon_r10"), "mo_ta": ca.get("mo_ta"),
+                      "tien_quyet": bool(ca.get("tien_quyet")), "thay_the": ca.get("thay_the"),
+                      "ly_do_thay": ca.get("ly_do_thay"),
+                      "expected": {"buoc": [{k: b.get(k) for k in ("expect_exit", "stdout_re", "stderr_re", "out_re")
+                                             if k in b} for b in ca.get("buoc", [])], "kiem": ca.get("kiem", [])},
+                      "actual": {"buoc": steps, "kiem": asserts}, "exit": [s["exit"] for s in steps], "ket_qua": res,
+                      "ly_do_not_run": cr.get("ly_do_not_run") if res == "NOT_RUN" else None,
+                      "loi_harness": cr.get("loi_harness"), "thu_muc": rel(cdir)})
+    res = [x["ket_qua"] for x in cases]
+    if old["trang_thai"] == "BI_CHAN":
+        st, (cause, go) = "BI_CHAN", CAUSE_R15.get(fid, (old["nguyen_nhan"], old["can_de_go"]))
+    elif "FAIL" in res:
+        st, cause, go = "CHUA_KIEM", "CHUA_XAC_MINH", ""
+    elif any(r in ("NOT_RUN", "LOI_HARNESS") for r in res):
+        st, cause, go = "CHUA_KIEM", "XEM_CA", ""
+    else:
+        st, cause, go = "DAT", "", ""
+    files = sorted(p for p in run.rglob("*") if p.is_file())
+    for d in PROBE[fid]:
+        files += sorted(p for p in (REPO / d).rglob("*") if p.is_file())
+    rec = {"id": fid, "ten": old["ten"], "khoi": old["khoi"], "giai_doan": old["giai_doan"], "pham_vi": old["pham_vi"],
+           "can_cu": old["can_cu"], "luot": "r15",
+           "supersedes": {"path": SMAP[fid]["path"], "sha256": SMAP[fid]["sha256"]},
+           "trang_thai_truoc": {"luot": SMAP[fid]["luot"], "trang_thai": TH[fid]["trang_thai"],
+                                "nguyen_nhan": TH[fid]["nguyen_nhan_day_du"]},
+           "ly_do_chay_lai": "mô-đun của mục đổi ở r15 — " + FIX[fid] + " (ảnh hưởng trực tiếp); ca chức năng mới ở probe "
+                             + " / ".join(PROBE[fid]),
+           "tieu_chi_file": rel(CRIT), "tieu_chi_sha256": sha(CRIT), "tieu_chi_khoa": " ".join(lock),
+           "tieu_chi": old.get("tieu_chi"), "moi_truong": crit.get("moi_truong", "") + f" DB {citem['db']}.",
+           "run_id": run_id, "ca": cases, "trang_thai": st, "muc_kiem": old.get("muc_kiem"), "nguyen_nhan": cause,
+           "can_de_go": go, "gioi_han": GH, "luot_bi_thay_the": [],
+           "evidence": [{"path": rel(p), "sha256": sha(p)} for p in files], "loi_san_pham": []}
+    p = EV / "items" / f"{fid}.json"
+    p.parent.mkdir(exist_ok=True)
+    p.open("x", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))
+    print(fid, st, rec["muc_kiem"], f"{res.count('PASS')}/{len(res)} PASS", f"FAIL {res.count('FAIL')}",
+          f"NOT_RUN {res.count('NOT_RUN')}", len(files), "file")

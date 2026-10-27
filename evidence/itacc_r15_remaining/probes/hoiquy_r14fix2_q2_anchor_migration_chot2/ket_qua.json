@@ -1,0 +1,236 @@
+{
+ "probe": "q2_anchor_migration_v1",
+ "root": "D:/code/samsam",
+ "base": "D:/code/samsam_r14_baseline",
+ "tien_quyet": true,
+ "ca": [
+  {
+   "ca": "tien_quyet_lich_su_trung",
+   "ket_qua": "PASS",
+   "actual": {
+    "L1": 1,
+    "L2": 2,
+    "race_L2": {
+     "results": [
+      {
+       "ok": {
+        "id": 2,
+        "status": "da_nang_cap",
+        "new": true,
+        "heights": [
+         850007
+        ]
+       },
+       "gets": 1
+      },
+      {
+       "ok": {
+        "id": 2,
+        "status": "da_nang_cap",
+        "new": true,
+        "heights": [
+         850007
+        ]
+       },
+       "gets": 1
+      }
+     ],
+     "net": 0
+    }
+   }
+  },
+  {
+   "ca": "A_B_ap_schema_2_lan",
+   "ket_qua": "PASS",
+   "actual": [
+    [
+     0,
+     "[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)",
+     ""
+    ],
+    [
+     0,
+     "[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)",
+     ""
+    ]
+   ]
+  },
+  {
+   "ca": "G_giu_lich_su",
+   "ket_qua": "PASS",
+   "actual": {
+    "counts_diff": {},
+    "receipts_same": true,
+    "chain_same": true,
+    "verify_problems": 0,
+    "grants_lost": []
+   }
+  },
+  {
+   "ca": "C_chay_lai_lich_su_trung",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 0,
+    "out": "[ok] lần gom #2: calendar cal-b.test đã trả attestation Bitcoin — CHƯA xác minh bên thứ ba (ots verify với header khối Bitcoin) · 2 biên nhận da_nang_cap (lịch sử)\r\n[FAKE] POST_CALLS 0 GET_CALLS 0 NET_CALLS 0\r\n",
+    "L2": 2
+   }
+  },
+  {
+   "ca": "D1_job_job",
+   "ket_qua": "PASS",
+   "actual": {
+    "da_nang_cap": 1,
+    "race": {
+     "results": [
+      {
+       "ok": {
+        "id": 1,
+        "status": "da_nang_cap",
+        "new": false,
+        "heights": [
+         850007
+        ],
+        "so_dong_nang_cap": 1
+       },
+       "gets": 1
+      },
+      {
+       "ok": {
+        "id": 1,
+        "status": "da_nang_cap",
+        "new": true,
+        "heights": [
+         850007
+        ]
+       },
+       "gets": 1
+      }
+     ],
+     "net": 0
+    }
+   }
+  },
+  {
+   "ca": "D2_nguoi_nguoi",
+   "ket_qua": "PASS",
+   "actual": {
+    "da_nang_cap": 1,
+    "race": {
+     "results": [
+      {
+       "ok": {
+        "id": 2,
+        "status": "da_nang_cap",
+        "new": true,
+        "heights": [
+         850007
+        ]
+       },
+       "gets": 1
+      },
+      {
+       "ok": {
+        "id": 2,
+        "status": "da_nang_cap",
+        "new": false,
+        "heights": [
+         850007
+        ],
+        "so_dong_nang_cap": 1
+       },
+       "gets": 1
+      }
+     ],
+     "net": 0
+    }
+   }
+  },
+  {
+   "ca": "D3_nguoi_job",
+   "ket_qua": "PASS",
+   "actual": {
+    "da_nang_cap": 1,
+    "race": {
+     "results": [
+      {
+       "ok": {
+        "id": 3,
+        "status": "da_nang_cap",
+        "new": false,
+        "heights": [
+         850007
+        ],
+        "so_dong_nang_cap": 1
+       },
+       "gets": 1
+      },
+      {
+       "ok": {
+        "id": 3,
+        "status": "da_nang_cap",
+        "new": true,
+        "heights": [
+         850007
+        ]
+       },
+       "gets": 1
+      }
+     ],
+     "net": 0
+    }
+   }
+  },
+  {
+   "ca": "E1_job_co_nguoi_duyet",
+   "ket_qua": "PASS",
+   "actual": {
+    "race": {
+     "results": [
+      {
+       "err": "AnchorError: nâng cấp biên nhận lần gom #4: tính năng farming-06 đang có người duyệt — HĐ 6.7/PL02 mục 1 — mục chưa được NGƯỜI duyệt từng mục",
+       "gets": 0
+      }
+     ],
+     "net": 0
+    },
+    "rows": 1
+   }
+  },
+  {
+   "ca": "E2_nguoi_sai_by",
+   "ket_qua": "PASS",
+   "actual": {
+    "race": {
+     "results": [
+      {
+       "err": "HumanDenied: --by \"Người Duyệt Neo B Q2\" không phải người của login r14f2_r15b_a — không ghi thay người khác",
+       "gets": 0
+      }
+     ],
+     "net": 0
+    },
+    "rows": 1
+   }
+  },
+  {
+   "ca": "E3_nguoi_chay_thu",
+   "ket_qua": "PASS",
+   "actual": {
+    "race": {
+     "results": [
+      {
+       "err": "AnchorError: nâng cấp biên nhận lần gom #6: tính năng farming-06 đang chạy thử — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng",
+       "gets": 0
+      }
+     ],
+     "net": 0
+    },
+    "rows": 1
+   }
+  }
+ ],
+ "tong": {
+  "PASS": 10,
+  "FAIL": 0
+ }
+}

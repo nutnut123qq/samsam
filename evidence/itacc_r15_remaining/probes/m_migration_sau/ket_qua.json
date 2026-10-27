@@ -1,0 +1,148 @@
+{
+ "probe": "m_migration",
+ "root": "D:/code/samsam",
+ "db": "samsam_itacc_r15_mig_sau",
+ "tong": {
+  "PASS": 7,
+  "FAIL": 0
+ },
+ "ca": [
+  {
+   "ca": "M0_tien_quyet_lich_su",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "schema_0afa388": [
+     0,
+     "[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)"
+    ],
+    "race_L1": {
+     "results": [
+      {
+       "ok": {
+        "id": 1,
+        "status": "da_nang_cap",
+        "new": true,
+        "heights": [
+         850007
+        ]
+       },
+       "gets": 1
+      }
+     ],
+     "net": 0
+    },
+    "race_L2": {
+     "results": [
+      {
+       "ok": {
+        "id": 2,
+        "status": "da_nang_cap",
+        "new": true,
+        "heights": [
+         850007
+        ]
+       },
+       "gets": 1
+      },
+      {
+       "ok": {
+        "id": 2,
+        "status": "da_nang_cap",
+        "new": true,
+        "heights": [
+         850007
+        ]
+       },
+       "gets": 1
+      }
+     ],
+     "net": 0
+    },
+    "L1_L2_da_nang_cap": [
+     1,
+     2
+    ],
+    "schema_70ff9f7": [
+     0,
+     "[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)"
+    ],
+    "core_70ff9f7": [
+     0,
+     "[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219"
+    ],
+    "golden_70ff9f7": [
+     0,
+     "[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39"
+    ],
+    "settlement_csv_70ff9f7": [
+     0,
+     "[done]"
+    ]
+   }
+  },
+  {
+   "ca": "M1_ap_2_lan",
+   "ket_qua": "PASS",
+   "chi_tiet": [
+    [
+     0,
+     "[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)"
+    ],
+    [
+     0,
+     "[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)"
+    ]
+   ]
+  },
+  {
+   "ca": "M2_so_dong",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "lech": {},
+    "so_bang": 100
+   }
+  },
+  {
+   "ca": "M3_noi_dung_theo_cot_cu",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "bang_khac": []
+   }
+  },
+  {
+   "ca": "M4_quyet_toan_cu",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "source_kind": [
+     "csv"
+    ],
+    "view_khoan_giu": true
+   }
+  },
+  {
+   "ca": "M5_neo_trung_chuoi",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "bien_nhan_giu": true,
+    "L2": 2,
+    "duoi_chuoi_giu": true,
+    "verify": 0
+   }
+  },
+  {
+   "ca": "M6_quyen",
+   "ket_qua": "PASS",
+   "chi_tiet": {
+    "mat_quyen": [],
+    "them_quyen": [],
+    "app_human_insert_sr_ar": [
+     false,
+     false
+    ],
+    "svc_loader_insert_source_kind": true,
+    "secdef_loi": [],
+    "so_secdef": 69
+   }
+  }
+ ]
+}

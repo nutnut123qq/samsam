@@ -995,5 +995,17 @@ scram cho local/127.0.0.1/::1. Server Bên B/CI/máy khác: CHƯA kiểm.
   quyền của chủ shop rồi `python -m ingest.market_api --channel shopee --refresh`; sau đó `--kind listing|order` tự refresh khi
   còn < 1 giờ. refresh_token Shopee DÙNG 1 LẦN — mất kho = chủ shop ủy quyền lại; KHÔNG chạy 2 máy cùng một kho. TikTok
   refresh gửi app_secret trong URL theo tài liệu → không bật log URL ở proxy. Nơi lưu credential cuối cùng (tệp vs kho bí mật)
-  là quyết định Bên B. Quyết toán qua API CHƯA có — dùng `ingest.settlement_csv`.
-  Lỗi từ sàn chỉ in mã đúng dạng (`error_*` Shopee / số TikTok) — mã khác (có thể phản chiếu token) in "đã ẩn" (r14-fix2).
+  là quyết định Bên B.
+  Lỗi từ sàn chỉ in mã đúng dạng (chữ thường nối `_` Shopee, vd `error_param`/`income_not_found`; số TikTok) và không chứa
+  credential — giá trị khác in "đã ẩn" (r14-fix2, r15).
+- Quyết toán qua API (r15, data_platform-06): `python -m ingest.market_api --channel shopee|tiktok --kind settlement --from
+  YYYY-MM-DD --to YYYY-MM-DD [--dry-run]` (≤31 ngày, ngày giờ VN). Ghi CÙNG sổ `settlement_rows` của `settlement_csv`
+  (đối chiếu finance-01, view `v_settlement_khoan`) với `source_kind='api_live'`. Điều kiện ghi: (1) Kế toán chốt
+  `data/settlement_api_map.json` (mỗi thành phần → cột + dấu hoặc `bo_qua`; TikTok từng loại giao dịch → mã đơn +
+  `txn_type`; `trang_thai=da_chot` + `duyet_boi` + `can_cu` + `ngay_chot`) — chưa chốt → `[blocked]` exit 2, 0 request;
+  (2) nguồn là API THẬT (Shopee host `partner.shopeemobile.com`; TikTok cùng host cho sandbox/thật nên phải khai
+  `TIKTOK_API_ENV=live`) — sandbox/server giả chỉ `--dry-run`. Trình tự: chạy `--dry-run` trên sandbox → danh sách thành
+  phần/loại `CHƯA CHỐT`/`LẠ` → Kế toán chốt bảng → `--dry-run` sạch → chạy ghi trên shop thật → đối chiếu với file income
+  xuất tay (`settlement_csv`). Thành phần mới xuất hiện (sàn thêm trường) → `[blocked]` tới khi bảng được cập nhật. Đơn đã
+  có dòng từ file CSV → API chặn (và ngược lại) — người đối soát quyết, không cộng hai lần. Chạy lại cùng dữ liệu → `[skip]`;
+  cùng khoản số khác → giữ cả hai, đối soát quý BẤT THƯỜNG.

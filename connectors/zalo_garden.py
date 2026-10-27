@@ -371,7 +371,8 @@ def _decode_16k(path: Path):
 def _stt_whisper_local(path: Path) -> str:
     """Chép lời tiếng Việt TẠI CHỖ → text (đoạn nối bằng khoảng trắng). Giải
     mã bằng PyAV; hỏng → lỗi; dài quá STT_MAX_SECONDS hoặc chạy quá
-    STT_TIMEOUT_S → lỗi (kết quả muộn bị bỏ)."""
+    STT_TIMEOUT_S → lỗi (kết quả muộn bị bỏ). r15: hạn bọc CẢ bước nạp model
+    (model hỏng làm treo khởi tạo → lỗi trong hạn, không treo CLI)."""
     import threading
     try:
         audio = _decode_16k(path)
@@ -383,10 +384,17 @@ def _stt_whisper_local(path: Path) -> str:
         raise RuntimeError("ghi âm rỗng")
     if secs > STT_MAX_SECONDS:
         raise RuntimeError(f"ghi âm {secs:.1f}s > {STT_MAX_SECONDS:g}s")
-    model = _whisper_model()
     box: dict = {}
 
     def work():
+        try:
+            model = _whisper_model()
+        except RuntimeError as e:      # thông điệp của _whisper_model (không dữ liệu)
+            box["load_err"] = str(e)
+            return
+        except Exception as e:  # noqa: BLE001 — chuyển về luồng gọi
+            box["err"] = e
+            return
         try:
             segs, _info = model.transcribe(audio, language="vi", beam_size=5,
                                            vad_filter=True)
@@ -399,6 +407,8 @@ def _stt_whisper_local(path: Path) -> str:
     th.join(STT_TIMEOUT_S)
     if th.is_alive():
         raise RuntimeError(f"STT quá {STT_TIMEOUT_S:g} giây — bỏ")
+    if "load_err" in box:
+        raise RuntimeError(box["load_err"])
     if "err" in box:
         raise RuntimeError(f"STT lỗi ({type(box['err']).__name__})")
     return box.get("text", "")

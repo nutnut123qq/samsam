@@ -1,0 +1,227 @@
+# Full pytest r15 — mã cuối fp 6c505051 (khóa trước full)
+# ngày (client) 2026-10-25T17:43:04+07:00 · git HEAD 70ff9f74c3328cf4ecfd7f173d6a0a6a666f6046 nhánh codex/remaining-docx-code-r15
+# fp full = 6c5050519ba7d7c51711ed2bd67a3426e44f86816946ea75ab5eecbc36fefc86
+# fp code = 6c5050519ba7d7c51711ed2bd67a3426e44f86816946ea75ab5eecbc36fefc86
+# Docker: 28.4.0
+## dựng DB samsam_itacc_r15_full1: apply_schema --roles ×2 + core_store + golden_store (mkdb_r15)
+  mkdb rc=0 (log runs/dung_db_samsam_itacc_r15_full1.txt)
+# DB samsam_itacc_r15_full1 @ 127.0.0.1 55457 (KHÔNG phải samsam)
+# bảng public 108 · thiếu [] · products 27 · sku_master 13 · roles ['agent_writer', 'app_human', 'svc_job', 'svc_ui', 'svc_webhook']
+# preflight OK
+## lệnh: python -m pytest -q -ra -p no:cacheprovider
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+.................F...................................................... [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+.................................................................F...... [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+.....................................F.......................F.......... [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+................................                                         [100%]
+================================== FAILURES ===================================
+_______________________ test_schema_block_no_alter_drop _______________________
+
+    def test_schema_block_no_alter_drop():
+        sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        block = sql[sql.index("v8.1 Sổ quyết định TGĐ"):]
+        # v13: sau v8.1 chỉ cho ALTER cộng thêm theo allowlist hẹp của drift-guard
+        # test_store (add column if not exists, cặp CHECK tên cố định); bảng sổ
+        # quyết định thì không ALTER/DROP nào.
+        from tests.test_store import _forbidden_ddl
+>       assert _forbidden_ddl(block.lower()) == []
+E       AssertionError: assert ['alter table', 'alter table'] == []
+E         
+E         Left contains 2 more items, first extra item: 'alter table'
+E         Use -v to get more diff
+
+tests\test_ceo_decisions.py:131: AssertionError
+_______________________ test_schema_sql_has_leads_table _______________________
+
+    def test_schema_sql_has_leads_table():
+        sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        lower = sql.lower()
+        match = re.search(
+            r"create table if not exists leads\s*\((.*?)\);", lower,
+            re.DOTALL)
+        assert match
+        columns = match.group(1)
+        for name in ("id", "dedup_key", "ts", "channel", "user_hash",
+                     "question", "intent", "status", "source", "created_at"):
+            assert re.search(rf"^\s*{name}\s", columns, re.MULTILINE), name
+        assert "id bigint generated always as identity primary key" in columns
+        assert "dedup_key text not null unique" in columns
+        assert "status text not null default 'new'" in columns
+        assert len(re.findall(
+            r"^create table if not exists", lower, re.MULTILINE)) >= 24
+        # v3.4: nới HẸP — chỉ `alter table <t> add column if not exists
+        # <c> ...;` (1 action) được phép; mọi alter/drop table khác bị bắt.
+        rest = re.sub(r"\balter\s+table\s+\w+\s+add\s+column\s+if\s+not"
+                      r"\s+exists\s+\w+[^;,]*;", "", lower)
+        # v8.2 KD-A3: nới HẸP thêm ĐÚNG cặp drop+add CHECK mục đích consents
+        # (thêm 'b2b') — tên bảng, tên constraint và dạng check đều cố định.
+        narrow = ((r"\balter\s+table\s+consents\s+drop\s+constraint\s+if\s+"
+                   r"exists\s+consents_purpose_check\s*;"),
+                  (r"\balter\s+table\s+consents\s+add\s+constraint\s+"
+                   r"consents_purpose_check\s+check\s*\(\s*purpose\s+in\s*"
+                   r"\(\s*'cskh',\s*'marketing',\s*'dai_ly',\s*'b2b'\s*\)\s*\)"
+                   r"\s*;"))
+        for pat in narrow:
+            assert len(re.findall(pat, rest)) == 1, pat
+            rest = re.sub(pat, "", rest)
+        # v13: cặp CHECK tên cố định (feature_rollout id, settlement_rows
+        # txn_type) — cùng allowlist hẹp với drift-guard test_store.
+        from tests.test_store import _DOCX_CHECK_OK, _R13_ANCHOR_OK, _V13_CHECK_OK
+        rest = _V13_CHECK_OK.sub("", rest)
+        # docx P0: cặp CHECK `file_output_evidence` (nguồn conversations).
+        rest = _DOCX_CHECK_OK.sub("", rest)
+        # r13: ràng buộc trạng thái `anchor_receipts` (thêm da_nang_cap).
+        rest = _R13_ANCHOR_OK.sub("", rest)
+>       assert not re.search(r"\b(alter|drop)\s+table\b", rest)
+E       AssertionError: assert not <re.Match object; span=(163110, 163121), match='alter table'>
+E        +  where <re.Match object; span=(163110, 163121), match='alter table'> = <function search at 0x000002BC34089260>('\\b(alter|drop)\\s+table\\b', '-- schema postgres local cho pilot. chạy tay: psql -d samsam -f docs/schema.sql\n-- embedding lưu float8[] (không cần...n v_id;\nend $$;\nrevoke execute on function plot_log_add_human(text, timestamptz, text, text, text)\n  from public;\n')
+E        +    where <function search at 0x000002BC34089260> = re.search
+
+tests\test_lead_store.py:392: AssertionError
+________________ test_schema_vendor_table_no_identity_columns _________________
+
+    def test_schema_vendor_table_no_identity_columns():
+        sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        blk = sql.split("create table if not exists social_mentions_vendor")[1]
+        blk = blk.split(");")[0].lower()
+        for bad in ("author", "tac_gia", "name", "phone", "sdt", "email", "url",
+                    "link", "user_id"):
+            assert bad not in blk, bad
+        tail = sql.split("v10.3 social listening nhà cung cấp")[1].lower()
+        # v13: ALTER cộng thêm theo allowlist hẹp của drift-guard test_store.
+        from tests.test_store import _forbidden_ddl
+>       assert _forbidden_ddl(tail) == []
+E       AssertionError: assert ['alter table', 'alter table'] == []
+E         
+E         Left contains 2 more items, first extra item: 'alter table'
+E         Use -v to get more diff
+
+tests\test_social_vendor.py:163: AssertionError
+__________________ test_schema_sql_has_content_drafts_table ___________________
+
+    def test_schema_sql_has_content_drafts_table():
+        sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        lower = sql.lower()
+        match = re.search(
+            r"create table if not exists content_drafts\s*\((.*?)\);",
+            lower, re.DOTALL)
+        assert match
+        columns = match.group(1)
+        for name in ("id", "created_at", "brief", "channel", "text",
+                     "guardrail", "status", "reviewer", "reviewed_at",
+                     "review_note", "scheduled_date", "source"):
+            assert re.search(rf"^\s*{name}\s", columns, re.MULTILINE), name
+        assert "id bigint generated always as identity primary key" in columns
+        assert "guardrail jsonb not null" in columns
+        assert "status text not null default 'pending'" in columns
+        assert "scheduled_date date" in columns
+        assert "created_by text" in lower                  # v3.4 add column
+        assert len(re.findall(
+            r"^create table if not exists", lower, re.MULTILINE)) >= 24
+>       assert _forbidden_ddl(lower) == []
+E       AssertionError: assert ['alter table', 'alter table'] == []
+E         
+E         Left contains 2 more items, first extra item: 'alter table'
+E         Use -v to get more diff
+
+tests\test_store.py:405: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_ceo_decisions.py::test_schema_block_no_alter_drop - Asserti...
+FAILED tests/test_lead_store.py::test_schema_sql_has_leads_table - AssertionE...
+FAILED tests/test_social_vendor.py::test_schema_vendor_table_no_identity_columns
+FAILED tests/test_store.py::test_schema_sql_has_content_drafts_table - Assert...
+4 failed, 6940 passed in 3720.64s (1:02:00)
+
+EXIT 1

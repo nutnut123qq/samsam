@@ -1,0 +1,55 @@
+{
+ "probe": "e_market_v2",
+ "root": "D:/code/samsam",
+ "ca": [
+  {
+   "ca": "429_retry_after_roi_200",
+   "ket_qua": "PASS",
+   "actual": {
+    "req": 2,
+    "waits": [
+     2.0
+    ]
+   }
+  },
+  {
+   "ca": "503_het_luot_thu_lai",
+   "ket_qua": "PASS",
+   "actual": {
+    "req": 4,
+    "waits": [
+     1.0,
+     2.0,
+     4.0
+    ],
+    "err": "shopee /api/v2/product/get_item_list: HTTP 503 sau 4 lần"
+   }
+  },
+  {
+   "ca": "400_khong_thu_lai",
+   "ket_qua": "PASS",
+   "actual": {
+    "req": 1,
+    "err": "shopee /api/v2/product/get_item_list: HTTP 400"
+   }
+  },
+  {
+   "ca": "tinh_nang_tat_0_request",
+   "ket_qua": "PASS",
+   "actual": {
+    "rc": 2,
+    "req": 0,
+    "out": "[rollout] kéo dữ liệu API sàn chỉ đọc: tính năng data_platform-06 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra\n"
+   }
+  },
+  {
+   "ca": "endpoint_ghi_bi_chan",
+   "ket_qua": "PASS",
+   "actual": "ScopeError"
+  }
+ ],
+ "tong": {
+  "PASS": 5,
+  "FAIL": 0
+ }
+}

@@ -1,0 +1,936 @@
+{
+ "tree": "D:\\code\\samsam",
+ "db": "samsam_itacc_r15fix1_sau",
+ "pass": 38,
+ "fail": 0,
+ "settlement_rows_total": 23,
+ "cases": [
+  {
+   "group": "F2",
+   "case": "control_valid",
+   "expect": "đủ trường hợp lệ → ghi 1 dòng",
+   "result": "PASS",
+   "stored_rows": 1,
+   "blocked": [],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[load] quyết toán shopee api-shopee-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[done]"
+   ],
+   "rc": 0
+  },
+  {
+   "group": "F2",
+   "case": "explicit_zero_int",
+   "expect": "số 0 tường minh (int) hợp lệ → ghi",
+   "result": "PASS",
+   "stored_rows": 1,
+   "blocked": [],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": 0,
+     "fixed_fee": 0,
+     "payout": 0
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[load] quyết toán shopee api-shopee-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[done]"
+   ],
+   "rc": 0
+  },
+  {
+   "group": "F2",
+   "case": "explicit_zero_str",
+   "expect": "số 0 tường minh (\"0\") hợp lệ → ghi",
+   "result": "PASS",
+   "stored_rows": 1,
+   "blocked": [],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 0,
+     "payout": 0
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[load] quyết toán shopee api-shopee-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[done]"
+   ],
+   "rc": 0
+  },
+  {
+   "group": "F2",
+   "case": "payout_missing",
+   "expect": "escrow_amount→payout missing → chặn, 0 dòng",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'escrow_amount' (cột payout) thiếu/null — không coi là 0 (khi_vang chưa quyết)"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "payout_null",
+   "expect": "escrow_amount→payout null → chặn, 0 dòng",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'escrow_amount' (cột payout) thiếu/null — không coi là 0 (khi_vang chưa quyết)"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "payout_garbage",
+   "expect": "escrow_amount→payout garbage → chặn, 0 dòng",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'escrow_amount' (cột payout) sai kiểu — không phải số nguyên VND"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "payout_empty_str",
+   "expect": "escrow_amount→payout empty_str → chặn, 0 dòng",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'escrow_amount' (cột payout) sai kiểu — không phải số nguyên VND"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "payout_bool",
+   "expect": "escrow_amount→payout bool → chặn, 0 dòng",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'escrow_amount' (cột payout) sai kiểu — không phải số nguyên VND"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "payout_fraction",
+   "expect": "escrow_amount→payout fraction → chặn, 0 dòng",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'escrow_amount' (cột payout) sai kiểu — không phải số nguyên VND"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "gross_missing",
+   "expect": "thiếu order_original_price→order_amount → chặn, 0 dòng",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'order_original_price' (cột order_amount) thiếu/null — không coi là 0 (khi_vang chưa quyết)"
+   ],
+   "rows": [
+    {
+     "order_amount": null,
+     "fixed_fee": 10000,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột order_amount thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "fee_missing",
+   "expect": "thiếu commission_fee (đã ánh xạ, không có quyết định cho phép vắng) → chặn, 0 dòng",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'commission_fee' (cột fixed_fee) thiếu/null — không coi là 0 (khi_vang chưa quyết)"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": null,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột fixed_fee thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "fee_garbage",
+   "expect": "chuỗi rác ở trường phí đã ánh xạ → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'commission_fee' (cột fixed_fee) sai kiểu — không phải số nguyên VND"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": null,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột fixed_fee thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "unmapped_rate_fraction",
+   "expect": "trường KHÔNG phải tiền đã quyết bo_qua (exchange_rate lẻ) không làm hỏng lượt → ghi",
+   "result": "PASS",
+   "stored_rows": 1,
+   "blocked": [],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[load] quyết toán shopee api-shopee-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[done]"
+   ],
+   "rc": 0
+  },
+  {
+   "group": "F2",
+   "case": "batch_one_bad",
+   "expect": "lô 3 đơn, 1 đơn payout null → 0 dòng của CẢ lượt",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'escrow_amount' (cột payout) thiếu/null — không coi là 0 (khi_vang chưa quyết)"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": 90000
+    },
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": 90000
+    },
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 3: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "tt_control_valid",
+   "expect": "TikTok đủ trường → ghi",
+   "result": "PASS",
+   "stored_rows": 1,
+   "blocked": [],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[load] quyết toán tiktok api-tiktok-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[done]"
+   ],
+   "rc": 0
+  },
+  {
+   "group": "F2",
+   "case": "tt_explicit_zero",
+   "expect": "TikTok \"0\" tường minh → ghi",
+   "result": "PASS",
+   "stored_rows": 1,
+   "blocked": [],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": 0
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[load] quyết toán tiktok api-tiktok-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[done]"
+   ],
+   "rc": 0
+  },
+  {
+   "group": "F2",
+   "case": "tt_payout_empty_str",
+   "expect": "TikTok settlement_amount \"\" → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'settlement_amount' (cột payout) thiếu/null — không coi là 0 (khi_vang chưa quyết)"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "tt_payout_missing",
+   "expect": "TikTok thiếu settlement_amount → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'settlement_amount' (cột payout) thiếu/null — không coi là 0 (khi_vang chưa quyết)"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "tt_payout_null",
+   "expect": "TikTok settlement_amount null → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'settlement_amount' (cột payout) thiếu/null — không coi là 0 (khi_vang chưa quyết)"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "tt_payout_garbage",
+   "expect": "TikTok chuỗi rác → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'settlement_amount' (cột payout) sai kiểu — không phải số nguyên VND"
+   ],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F2",
+   "case": "tt_gross_missing",
+   "expect": "TikTok thiếu subtotal_before_discount_amount → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'revenue_breakdown.subtotal_before_discount_amount' (cột order_amount) thiếu/null — không coi là 0 (khi_vang chưa quyết)"
+   ],
+   "rows": [
+    {
+     "order_amount": null,
+     "fixed_fee": 10000,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột order_amount thiếu/không phải số nguyên VND",
+    "[err] dòng quyết toán không hợp lệ — không connect, 0 dòng."
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F3",
+   "case": "all_vnd",
+   "expect": "pri=VND, aff=VND, trường thường → ghi; currency không thành thành phần LẠ",
+   "result": "PASS",
+   "stored_rows": 1,
+   "blocked": [],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[load] quyết toán shopee api-shopee-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[done]"
+   ],
+   "rc": 0
+  },
+  {
+   "group": "F3",
+   "case": "pri_usd_aff_vnd",
+   "expect": "pri=USD, aff=VND, chỉ trường thường (đồng tiền shop affiliate) → ghi (không chặn mù pri≠VND)",
+   "result": "PASS",
+   "stored_rows": 1,
+   "blocked": [],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[load] quyết toán shopee api-shopee-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[done]"
+   ],
+   "rc": 0
+  },
+  {
+   "group": "F3",
+   "case": "both_usd",
+   "expect": "pri=USD, aff=USD (repro controller) → chặn, 0 dòng",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'commission_fee': đơn vị tiền 'USD' không phải VND — sổ chỉ nhận VND, không quy đổi tỷ giá",
+    "thành phần 'escrow_amount': đơn vị tiền 'USD' không phải VND — sổ chỉ nhận VND, không quy đổi tỷ giá",
+    "thành phần 'order_original_price': đơn vị tiền 'USD' không phải VND — sổ chỉ nhận VND, không quy đổi tỷ giá"
+   ],
+   "rows": [
+    {
+     "order_amount": null,
+     "fixed_fee": null,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột order_amount thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột fixed_fee thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND"
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F3",
+   "case": "aff_usd_regular_mapped",
+   "expect": "aff=USD + trường thường (affiliate) ánh xạ → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'commission_fee': đơn vị tiền 'USD' không phải VND — sổ chỉ nhận VND, không quy đổi tỷ giá",
+    "thành phần 'escrow_amount': đơn vị tiền 'USD' không phải VND — sổ chỉ nhận VND, không quy đổi tỷ giá",
+    "thành phần 'order_original_price': đơn vị tiền 'USD' không phải VND — sổ chỉ nhận VND, không quy đổi tỷ giá"
+   ],
+   "rows": [
+    {
+     "order_amount": null,
+     "fixed_fee": null,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột order_amount thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột fixed_fee thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND"
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F3",
+   "case": "pri_vnd_aff_usd_pri_mapped",
+   "expect": "pri=VND, aff=USD, chỉ trường *_pri ánh xạ → ghi",
+   "result": "PASS",
+   "stored_rows": 1,
+   "blocked": [],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": 100000,
+     "fixed_fee": 10000,
+     "payout": 90000
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[load] quyết toán shopee api-shopee-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[done]"
+   ],
+   "rc": 0
+  },
+  {
+   "group": "F3",
+   "case": "pri_usd_pri_mapped",
+   "expect": "pri=USD + trường *_pri ánh xạ → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [],
+   "errors": [
+    "thành phần 'commission_fee_pri': đơn vị tiền 'USD' không phải VND — sổ chỉ nhận VND, không quy đổi tỷ giá",
+    "thành phần 'escrow_amount_pri': đơn vị tiền 'USD' không phải VND — sổ chỉ nhận VND, không quy đổi tỷ giá",
+    "thành phần 'original_price_pri': đơn vị tiền 'USD' không phải VND — sổ chỉ nhận VND, không quy đổi tỷ giá"
+   ],
+   "rows": [
+    {
+     "order_amount": null,
+     "fixed_fee": null,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột order_amount thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột fixed_fee thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND"
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F3",
+   "case": "no_currency_no_decision",
+   "expect": "không có pri/aff_currency, bảng ánh xạ chưa xác nhận đơn vị shop → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [
+    "thành phần 'commission_fee': không xác định được đơn vị tiền (response không có mã; tien_te_shop chưa xác nhận)",
+    "thành phần 'escrow_amount': không xác định được đơn vị tiền (response không có mã; tien_te_shop chưa xác nhận)",
+    "thành phần 'order_original_price': không xác định được đơn vị tiền (response không có mã; tien_te_shop chưa xác nhận)"
+   ],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": null,
+     "fixed_fee": null,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột order_amount thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột fixed_fee thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND"
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F3",
+   "case": "aff_missing_pri_present",
+   "expect": "có pri_currency nhưng thiếu aff_currency cho trường thường → chặn (không xác định)",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [
+    "thành phần 'commission_fee': không xác định được đơn vị tiền (response không có mã; tien_te_shop chưa xác nhận)",
+    "thành phần 'escrow_amount': không xác định được đơn vị tiền (response không có mã; tien_te_shop chưa xác nhận)",
+    "thành phần 'order_original_price': không xác định được đơn vị tiền (response không có mã; tien_te_shop chưa xác nhận)"
+   ],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": null,
+     "fixed_fee": null,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột order_amount thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột fixed_fee thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND"
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F3",
+   "case": "currency_null",
+   "expect": "pri/aff_currency null → chặn",
+   "result": "PASS",
+   "stored_rows": 0,
+   "blocked": [
+    "thành phần 'commission_fee': không xác định được đơn vị tiền (response không có mã; tien_te_shop chưa xác nhận)",
+    "thành phần 'escrow_amount': không xác định được đơn vị tiền (response không có mã; tien_te_shop chưa xác nhận)",
+    "thành phần 'order_original_price': không xác định được đơn vị tiền (response không có mã; tien_te_shop chưa xác nhận)"
+   ],
+   "errors": [],
+   "rows": [
+    {
+     "order_amount": null,
+     "fixed_fee": null,
+     "payout": null
+    }
+   ],
+   "status_keys_currency": [],
+   "write_stdout": [
+    "[err] dòng 1: cột order_amount thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột fixed_fee thiếu/không phải số nguyên VND",
+    "[err] dòng 1: cột payout thiếu/không phải số nguyên VND"
+   ],
+   "rc": 1
+  },
+  {
+   "group": "F1",
+   "case": "csv_then_api",
+   "expect": "CSV trước (exit 0) → API sau [blocked] exit 2, 1 dòng",
+   "result": "PASS",
+   "exits": [
+    0,
+    2
+   ],
+   "rows": 1
+  },
+  {
+   "group": "F1",
+   "case": "api_then_csv",
+   "expect": "API trước (exit 0) → CSV sau [blocked] exit 2, 1 dòng",
+   "result": "PASS",
+   "exits": [
+    0,
+    2
+   ],
+   "rows": 1
+  },
+  {
+   "group": "F1",
+   "case": "same_source_api_many",
+   "expect": "nhiều giao dịch API cùng đơn (2 lượt, 3 txn_type) → nhận đủ 3 dòng",
+   "result": "PASS",
+   "exits": [
+    0,
+    0
+   ],
+   "rows": 3
+  },
+  {
+   "group": "F1",
+   "case": "same_source_csv_two_files",
+   "expect": "cùng đơn ở 2 file CSV khác nhau (cùng nguồn) → nhận cả hai (overlaps xử lý)",
+   "result": "PASS",
+   "exits": [
+    0,
+    0
+   ],
+   "rows": 2
+  },
+  {
+   "group": "F1",
+   "case": "concurrent_csv_api_0",
+   "expect": "CSV + API đồng thời, 2 kết nối svc_loader thật → đúng 1 bên ghi (exit 0), bên kia [blocked] exit 2; 1 dòng, view 1 khoản 90.000",
+   "result": "PASS",
+   "exits": [
+    2,
+    0
+   ],
+   "checks": [
+    {
+     "source": "csv",
+     "saw_other_source": 0
+    },
+    {
+     "source": "api_live",
+     "saw_other_source": 1
+    }
+   ],
+   "second_waited_on_lock": true,
+   "raw_rows": [
+    [
+     "csv",
+     null,
+     90000
+    ]
+   ],
+   "view_count": 1,
+   "view_payout": 90000,
+   "overlaps_tiktok": {
+    "trung": 0,
+    "lech": 1,
+    "files": [
+     "probe_sau_c1.csv",
+     "probe_sau_c2.csv"
+    ]
+   },
+   "stdout": [
+    "[load] quyết toán tiktok probe_sau_race0.csv: 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[warn] khoản xuất lại ở ≥2 file (chồng kỳ): trùng 0, lệch 1 — probe_sau_c1.csv, probe_sau_c2.csv. Trùng nguyên văn tính 1 lần; lệch giữ cả hai → đối soát quý BẤT THƯỜNG, không tính phí tới khi người đối soát xử lý.",
+    "[warn] 1 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.",
+    "[done]",
+    "[blocked] 1 đơn đã có dòng quyết toán từ NGUỒN KHÁC (file CSV) — không ghi chồng; người đối soát quyết. 0 dòng."
+   ]
+  },
+  {
+   "group": "F1",
+   "case": "concurrent_csv_api_1",
+   "expect": "CSV + API đồng thời, 2 kết nối svc_loader thật → đúng 1 bên ghi (exit 0), bên kia [blocked] exit 2; 1 dòng, view 1 khoản 90.000",
+   "result": "PASS",
+   "exits": [
+    0,
+    2
+   ],
+   "checks": [
+    {
+     "source": "csv",
+     "saw_other_source": 0
+    },
+    {
+     "source": "api_live",
+     "saw_other_source": 1
+    }
+   ],
+   "second_waited_on_lock": true,
+   "raw_rows": [
+    [
+     "csv",
+     null,
+     90000
+    ]
+   ],
+   "view_count": 1,
+   "view_payout": 90000,
+   "overlaps_tiktok": {
+    "trung": 0,
+    "lech": 1,
+    "files": [
+     "probe_sau_c1.csv",
+     "probe_sau_c2.csv"
+    ]
+   },
+   "stdout": [
+    "[load] quyết toán tiktok probe_sau_race1.csv: 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[warn] khoản xuất lại ở ≥2 file (chồng kỳ): trùng 0, lệch 1 — probe_sau_c1.csv, probe_sau_c2.csv. Trùng nguyên văn tính 1 lần; lệch giữ cả hai → đối soát quý BẤT THƯỜNG, không tính phí tới khi người đối soát xử lý.",
+    "[warn] 1 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.",
+    "[done]",
+    "[blocked] 1 đơn đã có dòng quyết toán từ NGUỒN KHÁC (file CSV) — không ghi chồng; người đối soát quyết. 0 dòng."
+   ]
+  },
+  {
+   "group": "F1",
+   "case": "concurrent_csv_api_2",
+   "expect": "CSV + API đồng thời, 2 kết nối svc_loader thật → đúng 1 bên ghi (exit 0), bên kia [blocked] exit 2; 1 dòng, view 1 khoản 90.000",
+   "result": "PASS",
+   "exits": [
+    0,
+    2
+   ],
+   "checks": [
+    {
+     "source": "api_live",
+     "saw_other_source": 0
+    },
+    {
+     "source": "csv",
+     "saw_other_source": 1
+    }
+   ],
+   "second_waited_on_lock": true,
+   "raw_rows": [
+    [
+     "api_live",
+     "ORDER",
+     90000
+    ]
+   ],
+   "view_count": 1,
+   "view_payout": 90000,
+   "overlaps_tiktok": {
+    "trung": 0,
+    "lech": 1,
+    "files": [
+     "probe_sau_c1.csv",
+     "probe_sau_c2.csv"
+    ]
+   },
+   "stdout": [
+    "[load] quyết toán tiktok api-tiktok-quyet-toan-20261001-20261007 (nguồn api_live): 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0",
+    "[warn] khoản xuất lại ở ≥2 lần nạp: trùng 0, lệch 1 — lệch giữ cả hai, chờ người đối soát.",
+    "[done]",
+    "[blocked] 1 đơn đã có dòng quyết toán từ API sàn — không ghi chồng; người đối soát quyết. 0 dòng."
+   ]
+  },
+  {
+   "group": "F1",
+   "case": "concurrent_same_source_overlapping",
+   "expect": "2 lượt API cùng nguồn đồng thời, đơn chồng nhau thứ tự ngược → cả hai exit 0 (không deadlock, không cấm nhầm), 4 dòng",
+   "result": "PASS",
+   "exits": [
+    0,
+    0
+   ],
+   "rows": 4,
+   "stdout": [
+    "[load] quyết toán tiktok api-tiktok-quyet-toan-20261001-20261007 (nguồn api_live): 2 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=2, hoan=0",
+    "[warn] khoản xuất lại ở ≥2 lần nạp: trùng 0, lệch 1 — lệch giữ cả hai, chờ người đối soát.",
+    "[done]",
+    "[load] quyết toán tiktok api-tiktok-quyet-toan-20261001-20261007 (nguồn api_live): 2 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=2, hoan=0",
+    "[warn] khoản xuất lại ở ≥2 lần nạp: trùng 0, lệch 1 — lệch giữ cả hai, chờ người đối soát.",
+    "[done]"
+   ]
+  }
+ ]
+}

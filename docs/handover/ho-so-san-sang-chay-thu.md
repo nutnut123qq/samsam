@@ -22,7 +22,8 @@ Gửi qua kênh an toàn của Bên B; KHÔNG gửi mật khẩu/key vào chat h
 | 1 | Người nhận cảnh báo độc lập, trực ngoài giờ, cấp 2, SMTP | Pháp chế + TGĐ | E3, KPI 2 giờ | `red_alert --check-routing` exit 0 + thử gửi |
 | 2 | Lịch nghỉ lễ/Tết | Hành chính | đếm 5/10 ngày LV | cảnh báo `rollout --status` biến mất |
 | 2 | 14 hồ sơ gốc, giá/mô tả đã duyệt, file sàn/đơn/công nợ/vườn thật | GĐ từng khối | production-02, giá, KPI | `product_dossiers --check` exit 0; loader nạp file thật |
-| 3 | Chọn vendor OCR/STT/ảnh AI + đặc tả API + DPA + key; app key sàn | QL AI / Bên B | 02.1, 03, farming-01, marketing-02.1, data_platform-06 | OCR/STT/ảnh AI: adapter CHƯA viết (registry chỉ `none`) — dev viết adapter sau khi chọn vendor + contract test, rồi sandbox có trần chi phí; sàn: adapter đã có, kiểm sandbox |
+| 3 | Chọn vendor OCR/STT/ảnh AI + đặc tả API + DPA + key; app key sàn | QL AI / Bên B | 02.1, 03, farming-01, marketing-02.1, data_platform-06 | OCR/STT/ảnh AI: adapter CHƯA viết (registry chỉ `none`) — dev viết adapter sau khi chọn vendor + contract test, rồi sandbox có trần chi phí; sàn: listing/đơn/refresh + quyết toán (r15) có code, kiểm sandbox |
+| 3 | Bảng ánh xạ quyết toán API (thành phần → cột/dấu/bỏ qua; loại giao dịch TikTok → mã đơn + txn_type) + 1 file income thật + quyền app Payment/Finance | Kế toán Bên B / chủ shop | data_platform-06, finance-01, finance-06 | `market_api --kind settlement --dry-run` trên sandbox: 0 thành phần CHƯA CHỐT/LẠ; ghi sổ trên shop thật rồi đối chiếu file income |
 | 3 | Trần chi phí AI từng tính năng, retention, loader, guardrail (Pháp chế rà), DPIA, tham số nghiệp vụ | Chủ khối / Pháp chế / QL AI | mục 2 dưới | lệnh kiểm từng dòng mục 2 |
 | 4 | Repo + owner website/chatbot website, định dạng đơn web | Bên B / owner website | sales-08, sales-09 | kiểm xuyên repo trên staging |
 | 4 | Ngày ký, ngày vận hành, phí/thưởng, PL05, chuỗi neo blockchain | Hai bên | finance-06, nghiệm thu, farming-06 | biên bản ký |

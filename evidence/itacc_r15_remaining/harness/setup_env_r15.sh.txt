@@ -1,0 +1,22 @@
+#!/bin/bash
+# HARNESS r15 (bản sao r14) — dựng container Postgres MỚI samsam-itacc-r15 (postgres:17-alpine, 127.0.0.1:55457) cho lượt này.
+# Mật khẩu admin SINH vào tệp tạm NGOÀI repo (scratchpad/r15/secret), đưa vào container bằng POSTGRES_PASSWORD_FILE
+# (không lọt argv/docker inspect env); không in giá trị. Container đã có → dừng (không đè).
+#   bash setup_env_r12fix.sh.txt
+set -u
+SEC="/c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/86c80dd1-dfb9-4a98-ba2d-8954bd0353d0/scratchpad/r15/secret"
+NAME=samsam-itacc-r15
+docker inspect "$NAME" >/dev/null 2>&1 && { echo "container $NAME đã có — dừng"; exit 2; }
+mkdir -p "$SEC"
+python -I -c "import secrets,sys; open(sys.argv[1],'x').write(secrets.token_urlsafe(32))" "$SEC/pg_admin_pw.txt" || exit 3
+MSYS_NO_PATHCONV=1 docker run -d --name "$NAME" -p 127.0.0.1:55457:5432 \
+  -v "$(cygpath -w "$SEC/pg_admin_pw.txt"):/run/secrets/pgpw:ro" -e POSTGRES_PASSWORD_FILE=/run/secrets/pgpw \
+  postgres:17-alpine >/dev/null || exit 4
+for i in $(seq 1 60); do docker exec "$NAME" pg_isready -U postgres -h 127.0.0.1 >/dev/null 2>&1 && break; sleep 1; done
+python -I -c "
+import sys
+pw = open(sys.argv[1]).read().strip()
+open(sys.argv[2], 'x').write(\"export ITACC_ADMIN='host=127.0.0.1 port=55457 dbname=postgres user=postgres password=%s'\n\" % pw)
+" "$SEC/pg_admin_pw.txt" "$SEC/admin.sh" || exit 5
+docker exec "$NAME" psql -U postgres -tAc "select version()"
+echo "OK $NAME 127.0.0.1:55457"

@@ -1,0 +1,45 @@
+#!/bin/bash
+# HARNESS r15 (bản sao r14-fix2) — full pytest (gồm 3 ca DR Docker) trên DB test MỚI dựng bằng mkdb_r13 từ working tree.
+#   bash run_full_r13.sh.txt <db samsam_itacc_r15fix1_*> <log> <nhan>
+# Khác run_full_r12: (1) dựng DB lỗi hoặc preflight lỗi → DỪNG, không chạy pytest (exit 10/11); (2) exit code lấy NGAY sau
+# pytest và truyền qua đường ống ghi log (PIPESTATUS) — exit của script = exit pytest; (3) che cả URL DSN lẫn libpq
+# `password=...` trong log; (4) không in DSN — chỉ dbname/host/port qua conninfo_to_dict.
+DB="$1"; LOG="$2"; NHAN="$3"
+SP="<SCRATCHPAD>"
+H="<SCRATCHPAD>/h"; E="/d/code/samsam/evidence/itacc_r15_fix_1"
+case "$DB" in samsam_itacc_r15fix1_*) ;; *) echo "tên DB không hợp lệ"; exit 2;; esac
+[ -e "$LOG" ] && { echo "log $LOG đã có — không ghi đè"; exit 2; }
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY CONV_SAMPLE
+cd /d/code/samsam
+
+main() {
+  echo "# Full pytest r15-fix1 — $NHAN"
+  echo "# ngày (client) $(date -Iseconds) · git HEAD $(git rev-parse HEAD) nhánh $(git rev-parse --abbrev-ref HEAD)"
+  echo "# fp full = $(bash "$H/fp.sh" /d/code/samsam full "$H/new_files.txt")"
+  echo "# fp code = $(bash "$H/fp.sh" /d/code/samsam code "$H/new_files.txt")"
+  echo "# Docker: $(docker version --format '{{.Server.Version}}' 2>/dev/null || echo 'không chạy → DR skip = UNVERIFIED')"
+  echo "## dựng DB $DB: apply_schema --roles ×2 + core_store + golden_store (mkdb_r15)"
+  bash "$H/mkdb.sh" /d/code/samsam "$DB" "$SP/secret/admin.sh" "$SP/secret/env_$DB.sh" \
+    "$E/runs/dung_db_$DB.txt"
+  local rc=$?
+  echo "  mkdb rc=$rc (log runs/dung_db_$DB.txt)"
+  [ $rc -ne 0 ] && { echo "DỪNG: dựng DB lỗi — không chạy pytest"; return 10; }
+  source "$SP/secret/env_$DB.sh"
+  export PYTHONIOENCODING=utf-8 OPENROUTER_API_KEY=""
+  python -I "$H/preflight.py"
+  rc=$?
+  [ $rc -ne 0 ] && { echo "DỪNG: preflight lỗi rc=$rc — không chạy pytest"; return 11; }
+  echo "## lệnh: python -m pytest -q -ra -p no:cacheprovider"
+  python -m pytest -q -ra -p no:cacheprovider
+  rc=$?
+  echo
+  echo "EXIT $rc"
+  return $rc
+}
+
+main 2>&1 | sed -E -e 's#(postgres(ql)?://[^:/@[:space:]]+:)[^@[:space:]]+@#\1***@#g' \
+                  -e 's/(password=)[^[:space:]'"'"'"]+/\1***/g' > "$LOG"
+RC=${PIPESTATUS[0]}
+echo "EXIT_SCRIPT $RC (log $LOG)"
+exit $RC

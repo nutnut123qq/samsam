@@ -1,0 +1,87 @@
+{
+ "source": "https://open.shopee.com/documents/v2/v2.payment.get_escrow_detail?module=97&type=1",
+ "read": "2026-10-26",
+ "via": "JSON mô tả tài liệu mà chính trang tải: https://open.shopee.com/opservice/api/v1/doc/api/?version=2&api_name=v2.payment.get_escrow_detail (sha256 bản tải 746e1f73759f9b3e7f8e4607afc5554822ddc013559b3ff37664dc13acb48661; không lưu bản sao toàn văn)",
+ "fields": [
+  {
+   "field": "response.order_income.order_original_price",
+   "type": "float",
+   "description": "The original price of the item before ANY promotion/discount in the listing currency. It returns the subtotal of that specific item if quantity exceeds 1."
+  },
+  {
+   "field": "response.order_income.commission_fee",
+   "type": "float",
+   "description": "The commission fee charged by Shopee platform if applicable.      For cb sip affiliate shop: commission_fee=commission_fee_pri * exchange_rate"
+  },
+  {
+   "field": "response.order_income.service_fee",
+   "type": "float",
+   "description": "Amount charged by Shopee to seller for additional services.     For cb sip affiliate shop: service_fee=service_fee_pri * exchange_rate     For tw shop, there will be pre-order service fee included"
+  },
+  {
+   "field": "response.order_income.items.original_price_pri",
+   "type": "float",
+   "description": "The agreed settlement price of items used as settlement basis, amount is in the primary currency. (Only display for CB SIP affiliate shop.)"
+  },
+  {
+   "field": "response.order_income.escrow_amount_pri",
+   "type": "float",
+   "description": "The total amount in the prim currency that the seller is expected to receive for the order and will change before order completed . escrow_amount_pri=original_price_pri-seller_return_refund_pri-commission_fee_pri-service_fee_pri-drc_adjustable_refund_pri.(Only display for cb sip affiliate order. )"
+  },
+  {
+   "field": "response.order_income.buyer_total_amount_pri",
+   "type": "float",
+   "description": "The total amount that paid by buyer in the primary currency. (Only display for cb sip affiliate order. )"
+  },
+  {
+   "field": "response.order_income.original_price_pri",
+   "type": "float",
+   "description": "The original price of the item before ANY promotion/discount in the primary currency. It returns the subtotal of that specific item if quantity exceeds 1.(Only display for cb sip affiliate order. )"
+  },
+  {
+   "field": "response.order_income.seller_return_refund_pri",
+   "type": "float",
+   "description": "Amount returned to Seller in the event of Partial Return in the primary currency. (Only display for cb sip affiliate shop. )"
+  },
+  {
+   "field": "response.order_income.commission_fee_pri",
+   "type": "float",
+   "description": "The commission fee charged by Shopee platform if applicable in the primary currency. (Only display for cb sip affiliate shop. )"
+  },
+  {
+   "field": "response.order_income.service_fee_pri",
+   "type": "float",
+   "description": "Amount charged by Shopee to seller for additional services in the primary currency. (Only display for cb sip affiliate shop. )"
+  },
+  {
+   "field": "response.order_income.drc_adjustable_refund_pri",
+   "type": "float",
+   "description": "The adjustable refund amount from Shopee Dispute Resolution Center in the primary currency after proration. (Only applicable for cb sip affiliate shop.)"
+  },
+  {
+   "field": "response.order_income.pri_currency",
+   "type": "string",
+   "description": "The currency of the country or region where the shop that real seller operates. (Only display for cb sip affiliate shop. )"
+  },
+  {
+   "field": "response.order_income.aff_currency",
+   "type": "string",
+   "description": "The currency of the country or region where shop opened in. (Only display for cb sip affiliate shop. )"
+  },
+  {
+   "field": "response.order_income.exchange_rate",
+   "type": "float",
+   "description": "Exchange rate from primary shop currency to affiliate shop currency."
+  },
+  {
+   "field": "response.order_income.sip_subsidy_pri",
+   "type": "float",
+   "description": "The SIP subsidy amount is the difference between the item settlement price set by seller and item price actually paid by buyer. This value is in the primary currency. (Only available for CB SIP A Shops)"
+  },
+  {
+   "field": "response.order_income.order_adjustment.currency",
+   "type": "string",
+   "description": "order level adjustment transaction's currency type."
+  }
+ ]
+}

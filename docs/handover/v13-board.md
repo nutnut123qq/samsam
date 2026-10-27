@@ -2,7 +2,33 @@
 
 Bản phát hành mã nguồn 22/10/2026 gồm đợt hoàn thiện DOCX và vá F1/F2. Các checkpoint dưới ghi trạng thái lúc kiểm trước commit; chưa triển khai/nghiệm thu. Biên bản quét: `evidence/contract_g45_release_scan.log`.
 
-## Checkpoint mới — Vòng r14-fix2 (25/10/2026): vá 2 lỗi controller của r14 — CHƯA commit/merge/push/deploy
+## Checkpoint mới — Vòng r15-fix1 (26/10/2026): vá 3 lỗi tiền F1/F2/F3 của r15 — CHƯA commit/merge/push/deploy
+
+| Lỗi | Vá | Probe trước → sau | Evidence |
+|---|---|---|---|
+| F1 CSV/API đồng thời vượt chống trùng | `settlement_csv.lock_orders` (advisory xact lock theo kênh+đơn) đầu transaction ghi ở CSV `main()` + API `_write()` | 5/3 → 8/0 (3 lượt đồng thời: [0,0] 2 dòng/180.000 → [0,2] 1 dòng/90.000, bên sau chờ khóa) | `evidence/itacc_r15_fix_1/` |
+| F2 thiếu/null/sai kiểu thành 0 | trường đã ánh xạ phải hợp lệ; `khi_vang` chỉ do Kế toán; `check_rows` trong `_write`; cùng lớp TikTok | 7/14 → 21/0 | như trên |
+| F3 Shopee bỏ qua đơn vị tiền | đồng tiền theo TỪNG trường (`*_pri`→pri_currency, thường→aff_currency, không mã→`tien_te_shop`) | 3/6 → 9/0 | như trên |
+| Tổng 96 | **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (không đổi); nghiệm thu hợp đồng 0/96 | — | — |
+| Gate (fp mã chốt `f8033335…95e2`) | ruff EXIT 0; pytest tập trung 205 passed / 0 failed / 0 skipped; **full EXIT 1: 73 failed / 6903 passed / 2 skipped / 6 errors** (66/74 lỗi = tiến trình con 0xC0000142 do cạn RAM, 7 video nhiều khả năng cùng nguyên nhân, 1 do `output/`; 0 thuộc r15) — 26/10 CHƯA ĐẠT; **chạy lại 27/10 chia 11 lượt: 6984 passed / 0 skipped / 0 failed, cold-check độc lập PASS** | — | `evidence/itacc_r15_fix_1/gate/`, `evidence/cycle_r15_gate/` |
+
+## Checkpoint (LỊCH SỬ) — Vòng r15 (25/10/2026): code còn thiếu của 12 mục DOCX — CHƯA commit/merge/push/deploy
+
+Baseline `main` 70ff9f7. Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ blocker. Hồ sơ:
+`docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0; bảng chờ `dau-vao-va-quyet-dinh.md` mục I. Checkpoint r14-fix2/r14 dưới là
+LỊCH SỬ (đã phát hành trong 70ff9f7; câu "TikTok finance chưa có tài liệu" sai).
+
+| Hạng mục | Kết quả | Evidence |
+|---|---|---|
+| data_platform-06 quyết toán qua API | code theo tài liệu chính thức Shopee + TikTok; ghi sổ chờ bảng ánh xạ Kế toán + API thật; probe cùng sha 2/21 → 23/0 | `evidence/itacc_r15_remaining/probes/s_settlement_v2_*` |
+| farming-01 hạn STT bọc nạp model | 5/1 → 6/0 | `probes/t_stt_*` |
+| Nâng cấp schema từ 70ff9f7 có lịch sử ×2 | 7/0 | `probes/m_migration_sau2` |
+| Kiểm lại 2 mục | data_platform-06 BỊ CHẶN 9/0/0, farming-01 BỊ CHẶN 28/0/3 | `items/`, `runs/`, `criteria/r15_items_v1.json` |
+| Tổng 96 | **84 ĐẠT / 0 CHƯA KIỂM / 12 BỊ CHẶN** (r14-fix2 84/0/12) | `tong_hop.json`, `source_map.json` |
+| Gate (fp mã `70f54e56b145…`) | full 6944 passed in 3537.24s (0:58:57), EXIT 0 (lần 1: 4 failed drift-guard schema → sửa test); ruff 0; eval 0; DPIA 0; red-team 0 | `gate/` |
+| Còn thiếu code (B) | bảng ánh xạ quyết toán (Kế toán); website + chatbot website (repo riêng) | `BANG_VIEC.md` |
+
+## Checkpoint (LỊCH SỬ — đã phát hành 70ff9f7; đính chính ở r15) — Vòng r14-fix2 (25/10/2026): vá 2 lỗi controller của r14 — CHƯA commit/merge/push/deploy
 
 Không DB `samsam`; không đổi `acceptance_status` (0/96); không gỡ blocker. Hồ sơ: `docs/handover/nghiem-thu-ky-thuat-noi-bo.md` mục 0. Checkpoint r14 dưới là LỊCH SỬ — sai ở F1/F2.
 

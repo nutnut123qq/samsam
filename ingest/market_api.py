@@ -46,9 +46,13 @@ liệu công khai. Không ghi "đã kết nối API sàn" vào hồ sơ nghiệm
 chạy được với sandbox thật.
 r14: refresh token Shopee/TikTok viết theo TÀI LIỆU CHÍNH THỨC (`--refresh`;
 tự refresh khi token trong kho `MARKET_TOKEN_FILE` còn < 1 giờ) — kiểm bằng
-server giả (CONTRACT_TESTED), CHƯA chạy sandbox. Quyết toán/escrow qua API CHƯA
-viết: chờ Kế toán chốt ánh xạ trường escrow → cột `settlement_rows` (Shopee) và
-tài liệu chính thức finance hiện hành (TikTok); tạm dùng `ingest.settlement_csv`.
+server giả (CONTRACT_TESTED), CHƯA chạy sandbox.
+r15: quyết toán qua API (`--kind settlement --from --to [--dry-run]` →
+`ingest.settlement_api`) theo tài liệu CHÍNH THỨC — Shopee escrow list/detail,
+TikTok statements 202309 + statement_transactions 202501 (GET, tham số path
+`{statement_id}` chỉ nhận số, thế vào SAU allowlist). Ghi sổ CHỈ khi bảng ánh xạ
+Kế toán đã chốt và nguồn là API thật — hiện bảng để trống → BLOCKED; luồng đang
+dùng vẫn là `ingest.settlement_csv`. CONTRACT_TESTED server giả, CHƯA sandbox.
 
 CLI: `python -m ingest.market_api --channel shopee|tiktok --kind
 listing|order [--days N]` — thiếu key env → `[external-dep]` exit 2 (0
@@ -97,6 +101,13 @@ SP_ORDER_LIST = "/api/v2/order/get_order_list"
 SP_ORDER_DETAIL = "/api/v2/order/get_order_detail"
 TT_PRODUCT_SEARCH = "/product/202309/products/search"
 TT_ORDER_SEARCH = "/order/202309/orders/search"
+# r15: quyết toán CHỈ ĐỌC theo tài liệu CHÍNH THỨC (đọc 25/10/2026 —
+# evidence/itacc_r15_remaining/NGUON_TAI_LIEU.md) — dùng bởi ingest.settlement_api.
+SP_ESCROW_LIST = "/api/v2/payment/get_escrow_list"
+SP_ESCROW_DETAIL = "/api/v2/payment/get_escrow_detail"
+TT_STATEMENTS = "/finance/202309/statements"
+TT_STATEMENT_TX = "/finance/202501/statements/{statement_id}/statement_transactions"
+_PATH_PARAM_RE = re.compile(r"[0-9]{1,30}")
 
 ALLOWED = frozenset({
     ("shopee", "GET", SP_ITEM_LIST),
@@ -104,8 +115,12 @@ ALLOWED = frozenset({
     ("shopee", "GET", SP_MODEL_LIST),
     ("shopee", "GET", SP_ORDER_LIST),
     ("shopee", "GET", SP_ORDER_DETAIL),
+    ("shopee", "GET", SP_ESCROW_LIST),
+    ("shopee", "GET", SP_ESCROW_DETAIL),
     ("tiktok", "POST", TT_PRODUCT_SEARCH),
     ("tiktok", "POST", TT_ORDER_SEARCH),
+    ("tiktok", "GET", TT_STATEMENTS),
+    ("tiktok", "GET", TT_STATEMENT_TX),
 })
 
 # r14 C3a: refresh token theo tài liệu CHÍNH THỨC (đọc 25/10/2026 —
@@ -254,12 +269,20 @@ def _sleep(s: float) -> None:      # test thay để không chờ thật
 
 def _request(channel: str, method: str, path: str, params: dict | None,
              body: dict | None = None, *, creds: dict | None = None,
-             base: str | None = None, timestamp: int | None = None) -> dict:
-    """Cửa DUY NHẤT ra sàn. Allowlist kiểm ĐẦU TIÊN."""
+             base: str | None = None, timestamp: int | None = None,
+             path_params: dict | None = None) -> dict:
+    """Cửa DUY NHẤT ra sàn. Allowlist kiểm ĐẦU TIÊN (theo MẪU path); r15: tham
+    số path (`{statement_id}`) chỉ nhận số, thế vào SAU khi qua allowlist."""
     if (channel, method, path) not in ALLOWED:
         raise ScopeError(f"{mc._clean(channel, 20)} {mc._clean(method, 10)} "
                          f"{mc._clean(path, 100)}: ngoài allowlist chỉ đọc "
                          "— từ chối, không gửi request")
+    for k, v in (path_params or {}).items():
+        if not isinstance(v, str) or not _PATH_PARAM_RE.fullmatch(v):
+            raise DataError(f"{channel} {path}: tham số path '{k}' sai dạng")
+        path = path.replace("{" + k + "}", v)
+    if "{" in path:
+        raise ScopeError(f"{mc._clean(path, 100)}: thiếu tham số path")
     creds = read_creds(channel) if creds is None else creds
     base = api_base(channel) if base is None else base
     ts = int(time.time()) if timestamp is None else int(timestamp)
@@ -274,8 +297,9 @@ def _request(channel: str, method: str, path: str, params: dict | None,
             creds["SHOPEE_PARTNER_KEY"], creds["SHOPEE_PARTNER_ID"], path, ts,
             creds["SHOPEE_ACCESS_TOKEN"], creds["SHOPEE_SHOP_ID"])
     else:
-        body_s = json.dumps(body or {}, separators=(",", ":"),
-                            ensure_ascii=False, sort_keys=True)
+        # r15: GET không có body — chữ ký TikTok nối body RỖNG (finance GET).
+        body_s = "" if method == "GET" else json.dumps(
+            body or {}, separators=(",", ":"), ensure_ascii=False, sort_keys=True)
         query = {k: str(v) for k, v in query.items()}
         query.update(app_key=creds["TIKTOK_APP_KEY"], timestamp=str(ts),
                      shop_cipher=creds["TIKTOK_SHOP_CIPHER"])
@@ -283,7 +307,7 @@ def _request(channel: str, method: str, path: str, params: dict | None,
                                     body_s)
         headers["x-tts-access-token"] = creds["TIKTOK_ACCESS_TOKEN"]
         headers["Content-Type"] = "application/json"
-        data = body_s.encode("utf-8")
+        data = body_s.encode("utf-8") if method != "GET" else None
     url = f"{base}{path}?{urllib.parse.urlencode(query, doseq=True)}"
     req = urllib.request.Request(url, data=data, headers=headers,
                                  method=method)
@@ -298,8 +322,11 @@ def _request(channel: str, method: str, path: str, params: dict | None,
 
 
 # r14-fix2 F1: trường lỗi do SÀN trả có thể phản chiếu token/khóa → chỉ in mã đã
-# kiểm kiểu/dạng (Shopee `error_*`, TikTok số nguyên), mọi giá trị khác ẩn.
-_ERR_CODE_RE = re.compile(r"error_[a-z0-9_]{1,40}")
+# kiểm kiểu/dạng (Shopee chữ thường nối `_`, TikTok số nguyên), mọi giá trị khác
+# ẩn. r15: nhóm Payment dùng mã không tiền tố `error_` (`income_not_found`,
+# `order_not_found`) → nhận cụm chữ cái thường nối `_` (không chữ số — token hex
+# không lọt), vẫn ẩn mọi giá trị chứa credential đã biết.
+_ERR_CODE_RE = re.compile(r"[a-z]{2,24}(?:_[a-z]{1,24}){1,6}")
 
 
 def _err_code(v, creds: dict, *extra: str) -> str:
@@ -841,12 +868,18 @@ def main(argv: list[str] | None = None) -> int:
         prog="python -m ingest.market_api",
         description="Kéo listing/đơn qua API sàn CHỈ ĐỌC vào staging v3.3.")
     ap.add_argument("--channel", choices=CHANNELS, required=True)
-    ap.add_argument("--kind", choices=(*KINDS, "ads"))
+    ap.add_argument("--kind", choices=(*KINDS, "settlement", "ads"))
     ap.add_argument("--refresh", action="store_true",
                     help=f"refresh access token (kho {TOKEN_FILE_VAR}) rồi thoát")
     ap.add_argument("--days", type=int,
                     help=f"order: số ngày gần nhất 1..{DAYS_MAX} "
                          f"(mặc định {DAYS_DEFAULT})")
+    ap.add_argument("--from", dest="date_from", metavar="YYYY-MM-DD",
+                    help="settlement: ngày đầu (giờ VN)")
+    ap.add_argument("--to", dest="date_to", metavar="YYYY-MM-DD",
+                    help="settlement: ngày cuối, gồm cả ngày này (≤31 ngày)")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="settlement: kéo + báo trạng thái ánh xạ, KHÔNG ghi sổ")
     args = ap.parse_args(argv)
     if bool(args.kind) == args.refresh:
         ap.error("chọn đúng 1: --kind hoặc --refresh")
@@ -855,6 +888,15 @@ def main(argv: list[str] | None = None) -> int:
                  "external-dep)")
     if args.days is not None and args.kind != "order":  # --refresh: kind None
         ap.error("--days chỉ dùng với --kind order")
+    if args.kind == "settlement":
+        from ingest import settlement_api as sa
+        if not (args.date_from and args.date_to):
+            ap.error("--kind settlement cần --from và --to")
+        args.window = sa.parse_window(args.date_from, args.date_to)
+        if isinstance(args.window, str):
+            ap.error(args.window)
+    elif args.date_from or args.date_to or args.dry_run:
+        ap.error("--from/--to/--dry-run chỉ dùng với --kind settlement")
     if args.days is None:
         args.days = DAYS_DEFAULT
     if not 1 <= args.days <= DAYS_MAX:
@@ -884,6 +926,12 @@ def main(argv: list[str] | None = None) -> int:
     except ConfigError as e:
         print(f"[err] {e}", flush=True)
         return 2
+    if args.kind == "settlement":
+        # r15: bảng ánh xạ chưa chốt / nguồn không phải API thật → chặn TRƯỚC
+        # mọi request (kể cả refresh); --dry-run vẫn kéo để báo thiếu gì.
+        cfg, fees, kind, rc = sa.precheck(args.channel, base, args.dry_run)
+        if rc is not None:
+            return rc
     # r13: tính năng TẮT (sổ triển khai, HĐ 6.7) → 0 request ra sàn, không nạp.
     from pipelines import rollout
     if why := rollout.blocked(None, "kéo dữ liệu API sàn chỉ đọc", FEATURE):
@@ -898,6 +946,13 @@ def main(argv: list[str] | None = None) -> int:
         creds[KEYS[args.channel][3]] = tok
     if args.refresh:
         return 0
+    if args.kind == "settlement":
+        if args.dry_run:            # không đụng DB, kể cả sổ job_runs
+            return sa.run(args, creds, base, cfg, fees, kind)
+        with job_run("ingest.settlement_api") as run:
+            rc = sa.run(args, creds, base, cfg, fees, kind)
+            run["ok"] = rc == 0
+        return rc
     try:
         smap = load_status_map()
     except ConfigError as e:

@@ -1,0 +1,29 @@
+{
+ "buoc": 3,
+ "argv": [
+  "python",
+  "D:\\code\\samsam\\evidence\\itacc_r10/g5/harness/fake_shopee.py.txt"
+ ],
+ "env_doi": [],
+ "stdin_sha256": null,
+ "bat_dau": "2026-10-25T20:12:48+07:00",
+ "ket_thuc": "2026-10-25T20:12:56+07:00",
+ "exit": 2,
+ "expect_exit": 2,
+ "regex": [
+  {
+   "stdout_re": "\\A(?=[\\s\\S]*\\[rollout\\][^\\n]*data_platform-06)(?=[\\s\\S]*SERVER_LOG:\\s*\\(0 request\\))",
+   "khop": true
+  },
+  {
+   "out_re": "\\A(?![\\s\\S]*Traceback)",
+   "khop": true
+  }
+ ],
+ "dat": true,
+ "bo_loc": {
+  "dsn_mat_khau_regex": true
+ },
+ "stdout_sha256": "32793338bd8402b638b9fe1b1c8e6fed6e477effcce24e53f97bf63c7fc7a7fd",
+ "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
