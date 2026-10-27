@@ -1,0 +1,21 @@
+## probe CLI thật ra_kenh --scan-auto + server Graph giả (DB samsam_cycle_r16_full, container samsam-cycle-r16b) — sau vá cold-check — 2026-10-27T14:25:33+07:00
+## lần 1: exit 1
+   [scan-auto] 2 mục: mới 2, trùng 0, S1 1, S2 1, đóng 0, ticket 2 — Fanpage: 2 bài
+   token trong output: False
+## lần 2: exit 1
+   [scan-auto] 2 mục: mới 0, trùng 2, S1 0, S2 0, đóng 0, ticket 0 — Fanpage: 2 bài
+   token trong output: False
+## request tới server giả:
+   ('GET', '/v26.0/1234567890/published_posts', ['id,message,created_time,permalink_url'], ['100'], None, True)
+   ('GET', '/v26.0/1234567890/published_posts', ['id,message,created_time,permalink_url'], ['100'], ['C1'], True)
+   ('GET', '/v26.0/1234567890/published_posts', ['id,message,created_time,permalink_url'], ['100'], ['C2'], True)
+   ('GET', '/v26.0/1234567890/published_posts', ['id,message,created_time,permalink_url'], ['100'], None, True)
+   ('GET', '/v26.0/1234567890/published_posts', ['id,message,created_time,permalink_url'], ['100'], ['C1'], True)
+   ('GET', '/v26.0/1234567890/published_posts', ['id,message,created_time,permalink_url'], ['100'], ['C2'], True)
+## channel_posts Fanpage:
+   ('https://www.facebook.com/1234567890/posts/901', 'facebook', 'S1', 'agent:phap_che_a4', datetime.timedelta(days=1))
+   ('https://www.facebook.com/1234567890/posts/902', 'facebook', 'S2', 'agent:phap_che_a4', datetime.timedelta(days=1))
+## mục legal_hr/channel_takedown cho bài 901: 1
+PROBE PASS
+EXIT 0
+# exit 1 ở cả 2 lần = tệp crawl web data/*.jsonl ngày 2026-10-03 cũ > 7 ngày → web KHÔNG quét (luật C12 có sẵn).

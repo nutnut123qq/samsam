@@ -1,0 +1,37 @@
+## TRƯỚC khi vá (mã r16 vòng 1, chỉ thêm test) — 2026-10-27T14:20:57+07:00 · sha256 ra_kenh.py=e9d07a9377c790d3 fanpage.py=031eb01e03b69aba
+## python -m pytest tests/test_r16_fanpage.py -k 'fix1 or fix2' -q -rA --tb=line
+FFF..FFF                                                                 [100%]
+================================== FAILURES ===================================
+E   assert [(1, 1, 0), (...1), (1, 1, 0)] == [(0, 0, 0), (...0), (0, 0, 0)]
+      
+      At index 0 diff: (1, 1, 0) != (0, 0, 0)
+      Use -v to get more diff
+D:\code\samsam\tests\test_r16_fanpage.py:302: assert [(1, 1, 0), (...1), (1, 1, 0)] == [(0, 0, 0), (...0), (0, 0, 0)]
+E   assert [(1, 1, 0), (...1), (1, 1, 0)] == [(0, 0, 0), (...0), (0, 0, 0)]
+      
+      At index 0 diff: (1, 1, 0) != (0, 0, 0)
+      Use -v to get more diff
+D:\code\samsam\tests\test_r16_fanpage.py:302: assert [(1, 1, 0), (...1), (1, 1, 0)] == [(0, 0, 0), (...0), (0, 0, 0)]
+E   assert [(0, 0, 0), (...0), (0, 1, 1)] == [(0, 0, 0), (...0), (0, 0, 0)]
+      
+      At index 1 diff: (0, 1, 1) != (0, 0, 0)
+      Use -v to get more diff
+D:\code\samsam\tests\test_r16_fanpage.py:327: assert [(0, 0, 0), (...0), (0, 1, 1)] == [(0, 0, 0), (...0), (0, 0, 0)]
+E   http.client.BadStatusLine: GARBAGE NOT HTTP
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\http\client.py:313: http.client.BadStatusLine: GARBAGE NOT HTTP
+E   http.client.HTTPException: got more than 100 headers
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\http\client.py:226: http.client.HTTPException: got more than 100 headers
+E   http.client.LineTooLong: got more than 65536 bytes when reading header line
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\http\client.py:223: http.client.LineTooLong: got more than 65536 bytes when reading header line
+=================================== PASSES ====================================
+=========================== short test summary info ===========================
+PASSED tests/test_r16_fanpage.py::test_fix1_no_human_snapshot_keeps_defaults_and_agent_ignored
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[cut]
+FAILED tests/test_r16_fanpage.py::test_fix1a_auto_inherits_ai_flag_no_fake_close[facebook-https://www.facebook.com/1234567890/posts/78]
+FAILED tests/test_r16_fanpage.py::test_fix1a_auto_inherits_ai_flag_no_fake_close[web-https://samsamngoclinh.com/bai-78/]
+FAILED tests/test_r16_fanpage.py::test_fix1b_auto_inherits_approved_draft_no_ticket
+FAILED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[status]
+FAILED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[headers]
+FAILED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[line]
+6 failed, 2 passed, 23 deselected in 6.60s
+EXIT 1

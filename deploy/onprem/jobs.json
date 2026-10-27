@@ -20,7 +20,7 @@
       "on_calendar": "*-*-* 07:00:00",
       "max_gap_hours": 26,
       "steps": [["-m", "crawler.collect"], ["-m", "agents.ra_kenh", "--scan-auto"]],
-      "muc_dich": "Đợt hợp đồng C12 (legal_hr-04, PL01 Pháp chế 'quét web, Fanpage, listing; mở yêu cầu gỡ bài vi phạm trong 24 giờ'): thu trang CÔNG KHAI của Bên B (robots + ≥1s/host) rồi quét web + listing sàn đã nạp → ticket 24h khối legal_hr/S1 cảnh báo đỏ. Fanpage CHƯA có nguồn tự thu (Graph API + page token Bên B) — vẫn CSV --file. 07:00 GIẢ ĐỊNH"
+      "muc_dich": "Đợt hợp đồng C12 (legal_hr-04, PL01 Pháp chế 'quét web, Fanpage, listing; mở yêu cầu gỡ bài vi phạm trong 24 giờ'): thu trang CÔNG KHAI của Bên B (robots + ≥1s/host) rồi quét web + listing sàn đã nạp → ticket 24h khối legal_hr/S1 cảnh báo đỏ. r16: Fanpage tự thu qua Graph API chỉ đọc khi có FANPAGE_PAGE_ID + FANPAGE_READ_TOKEN (.env server, Bên B cấp) — chưa cấu hình thì vẫn CSV --file. 07:00 GIẢ ĐỊNH"
     },
     "hdtv_month": {
       "on_calendar": "*-*-03 08:30:00",

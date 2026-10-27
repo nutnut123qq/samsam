@@ -470,23 +470,23 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Nghĩa vụ kế toán/thuế + thực hiện hợp đồng mua bán — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Mapping cột + biểu phí là GIẢ ĐỊNH — chờ file settlement thật ≥2 tuần mỗi sàn; Hạn lưu `settlement_rows` chưa chốt |
 
-### DF-26 — Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4)
+### DF-26 — Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4) + tự thu web/listing/Fanpage (C12, r16)
 
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-26 |
-| Module (code) | `agents/ra_kenh.py` |
+| Module (code) | `agents/ra_kenh.py`; `connectors/fanpage.py` |
 | Mục đích | Phát hiện bài đang đăng vi phạm luật quảng cáo/lệch bản đã duyệt để Pháp chế ra lệnh gỡ/sửa trong 24 giờ |
-| Dữ liệu | Text bài CÔNG KHAI của công ty trên website/fanpage/sàn (url, kênh, ngày đăng, draft_id) do Quản lý MXH xuất tay; kết quả guardrail, mã vi phạm, hạn 24 giờ |
+| Dữ liệu | Text bài CÔNG KHAI của công ty trên website/fanpage/sàn (url, kênh, ngày đăng, draft_id) do Quản lý MXH xuất tay; r16: bài do CHÍNH Fanpage công ty đăng đọc qua Graph API (chỉ id, message, created_time, permalink_url — không bài khách, không bình luận/inbox, không field người); kết quả guardrail, mã vi phạm, hạn 24 giờ |
 | Lớp | Xanh |
 | Chủ thể | không — chỉ bài của công ty, không bình luận/người tương tác (cột lạ trong file → từ chối cả file) |
 | Nơi lưu | Bảng `channel_posts` + `approval_queue` (lệnh gỡ/sửa, không chép đoạn vi phạm) + `red_alerts` (S1) |
 | Thời hạn lưu | không giới hạn — GAP (Pháp chế chốt) |
-| Bên nhận | nội bộ, không gửi ra ngoài (không LLM, không gọi API kênh) |
+| Bên nhận | Nội bộ (không LLM). r16: Meta Platforms — graph.facebook.com (GET `/{page-id}/published_posts`, Graph API v26.0) chỉ NHẬN về bài của chính Page; hệ thống chỉ GỬI Page ID + page token + tham số phân trang, KHÔNG gửi dữ liệu cá nhân ra ngoài |
 | Chuyển ra nước ngoài | Không |
-| Biện pháp bảo vệ (có trong code) | File xuất tay kiểm toàn bộ trước khi ghi DB; cột lạ (bình luận, tên người) → từ chối, lỗi không in giá trị ô; Đoạn trích in ra/báo cáo qua `_mask_pii` (hotline, email trong bài); Agent không gỡ/sửa bài, không sửa golden — chỉ đề xuất vào hàng duyệt cho người quyết |
+| Biện pháp bảo vệ (có trong code) | File xuất tay kiểm toàn bộ trước khi ghi DB; cột lạ (bình luận, tên người) → từ chối, lỗi không in giá trị ô; Đoạn trích in ra/báo cáo qua `_mask_pii` (hotline, email trong bài); Agent không gỡ/sửa bài, không sửa golden — chỉ đề xuất vào hàng duyệt cho người quyết; r16 Fanpage: 1 endpoint đọc cứng trong code, token riêng `FANPAGE_READ_TOKEN` chỉ ở env; không theo redirect, base chỉ https hoặc localhost (server giả), trần byte/trang; lỗi chỉ in HTTP status + mã số — không URL (chứa token), không body; tính năng TẮT → 0 request |
 | Căn cứ xử lý | Nội dung công khai của chính công ty, không phải dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN |
-| GAP | Thời hạn lưu `channel_posts` chưa chốt; Quyền đọc kênh qua API thật chưa có — chỉ file xuất tay (external-dep) |
+| GAP | Thời hạn lưu `channel_posts` chưa chốt; Fanpage qua Graph API CHƯA chạy với Page/token thật (external-dep: app Meta quyền đọc + page token Bên B; `appsecret_proof` nếu app bật Require App Secret — chưa làm); TikTok/Zalo OA vẫn chỉ file xuất tay |
 
 ### DF-27 — FP&A tài chính–kế hoạch — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền (v9.1)
 
@@ -825,7 +825,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-19 | Lô hóa đơn điện tử NHÁP — ACC-Invoice (v9.0) | Đỏ | cao | không | 3 |
 | DF-20 | Công nợ đại lý + hoa hồng — ACC-AR (v9.0) | Đỏ | cao | không | 2 |
 | DF-25 | Đối soát quyết toán sàn — ACC-Recon (v9.0) | Đỏ | cao | không | 2 |
-| DF-26 | Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4) | Xanh | thấp | không | 2 |
+| DF-26 | Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4) + tự thu web/listing/Fanpage (C12, r16) | Xanh | thấp | không | 2 |
 | DF-27 | FP&A tài chính–kế hoạch — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền (v9.1) | Vàng | trung bình | không | 5 |
 | DF-29 | Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1) | Đỏ | cao | có | 4 |
 | DF-30 | Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1) | Đỏ | cao | có | 2 |
@@ -883,7 +883,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-25] Mapping cột + biểu phí là GIẢ ĐỊNH — chờ file settlement thật ≥2 tuần mỗi sàn
 - [DF-25] Hạn lưu `settlement_rows` chưa chốt
 - [DF-26] Thời hạn lưu `channel_posts` chưa chốt
-- [DF-26] Quyền đọc kênh qua API thật chưa có — chỉ file xuất tay (external-dep)
+- [DF-26] Fanpage qua Graph API CHƯA chạy với Page/token thật (external-dep: app Meta quyền đọc + page token Bên B; `appsecret_proof` nếu app bật Require App Secret — chưa làm); TikTok/Zalo OA vẫn chỉ file xuất tay
 - [DF-27] Giá vốn thật + người lập/duyệt thật = external-dep (bảng `cogs_versions` trên DB thật để trống)
 - [DF-27] Hóa đơn cloud/SaaS thật (thay `opex_MAU.csv`) = external-dep
 - [DF-27] Ngưỡng biên, hệ số ngân sách, trần chi phí, ngưỡng X, tỷ giá, chi cố định, độ trễ tiền sàn, số dư đầu kỳ (`data/fpa_config.json`) — GĐ tài chính chốt

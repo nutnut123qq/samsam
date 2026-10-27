@@ -1,0 +1,47 @@
+## SAU khi vá vòng 2 — 2026-10-27T17:41:34+07:00 · sha256 ra_kenh.py=30735d80244e00b2 fanpage.py=ff78859e4e3d4518 test=68b0fe356dcb7884
+## python -m pytest tests/test_r16_fanpage.py -k 'fix2' -q -rA --tb=line
+...........                                                              [100%]
+=================================== PASSES ====================================
+_____________ test_fix2c_fanpage_edited_after_approval_still_lech _____________
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+=========================== short test summary info ===========================
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[cut]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[status]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[headers]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[line]
+PASSED tests/test_r16_fanpage.py::test_fix2a_web_title_body_vs_csv_body_with_draft[truoc_12_10]
+PASSED tests/test_r16_fanpage.py::test_fix2a_web_title_body_vs_csv_body_with_draft[tu_12_10]
+PASSED tests/test_r16_fanpage.py::test_fix2a_web_violation_period_not_reset
+PASSED tests/test_r16_fanpage.py::test_fix2b_same_text_still_green
+PASSED tests/test_r16_fanpage.py::test_fix2c_fanpage_edited_after_approval_still_lech
+PASSED tests/test_r16_fanpage.py::test_fix2_minor_fanpage_text_kept_like_csv
+PASSED tests/test_r16_fanpage.py::test_fix2_nit_dry_run_notes_no_db
+11 passed, 27 deselected in 10.31s
+EXIT 0
+## toàn bộ tests/test_r16_fanpage.py
+......................................                                   [100%]
+38 passed in 28.23s
+EXIT 0
+## SAU khi vá vòng 2 — ca thêm (web mang thieu_ban_duyet của người) — 2026-10-27T17:42:41+07:00 · test=7136224f764b084a
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[cut]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[status]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[headers]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[line]
+PASSED tests/test_r16_fanpage.py::test_fix2a_web_title_body_vs_csv_body_with_draft[truoc_12_10]
+PASSED tests/test_r16_fanpage.py::test_fix2a_web_title_body_vs_csv_body_with_draft[tu_12_10]
+PASSED tests/test_r16_fanpage.py::test_fix2a_web_violation_period_not_reset
+PASSED tests/test_r16_fanpage.py::test_fix2b_same_text_still_green
+PASSED tests/test_r16_fanpage.py::test_fix2c_fanpage_edited_after_approval_still_lech
+PASSED tests/test_r16_fanpage.py::test_fix2_minor_fanpage_text_kept_like_csv
+PASSED tests/test_r16_fanpage.py::test_fix2_nit_dry_run_notes_no_db
+PASSED tests/test_r16_fanpage.py::test_fix2a_web_carries_human_thieu_ban_duyet
+12 passed, 27 deselected in 11.62s
+EXIT 0
+## probe của reviewer (scratchpad/probe_audit/test_probe_fix1_text.py, chỉ in số) chạy trên DB test của lượt
+[sau_va] web per-day (new, closed, tickets, S2, codes) = [(1, 0, 0, 0, [[]]), (1, 0, 0, 0, [[]]), (1, 0, 0, 0, [[]]), (1, 0, 0, 0, [[]])]; channel_post_fixed=0 takedown_tickets=0
+[truoc_va] web per-day (new, closed, tickets, S2, codes) = [(1, 0, 0, 0, [[]]), (1, 0, 0, 0, [[]]), (1, 0, 0, 0, [[]]), (1, 0, 0, 0, [[]])]; channel_post_fixed=0 takedown_tickets=0
+[sau_va] fanpage per-day (new, closed, tickets, S2, codes) = [(1, 0, 0, 0, [[]]), (1, 0, 0, 0, [[]]), (1, 0, 0, 0, [[]]), (1, 0, 0, 0, [[]])]; channel_post_fixed=0 takedown_tickets=0
+[truoc_va] fanpage per-day (new, closed, tickets, S2, codes) = [(1, 0, 0, 0, [[]]), (1, 0, 1, 1, [['thieu_ban_duyet']]), (1, 1, 0, 0, [[]]), (1, 0, 1, 1, [['thieu_ban_duyet']])]; channel_post_fixed=1 takedown_tickets=2
+4 passed in 8.29s
+EXIT 0

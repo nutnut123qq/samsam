@@ -127,6 +127,12 @@ Bổ sung vòng 2 — **Fanpage (C12):** quét bài Fanpage tự động cần M
 API (page access token do Bên B cấp, quyền đọc bài của Page, phiên bản API
 còn hiệu lực). Hiện: thiếu credential + thiếu đặc tả quyền/phiên bản → KHÔNG
 viết adapter (không đoán endpoint). Dự phòng: `ra_kenh --file` CSV xuất tay.
+**Đính chính r16 (27/10/2026):** đặc tả quyền/phiên bản CÓ trong tài liệu chính thức
+(developers.facebook.com, Graph API v26.0: `GET /{page-id}/published_posts`, Page token +
+`pages_read_engagement`, phân trang cursor, mã lỗi) → đã viết adapter chỉ đọc `connectors/fanpage.py`
+(`ra_kenh --scan-auto`), CONTRACT_TESTED server giả (`tests/test_r16_fanpage.py`). Còn chờ Bên B:
+app Meta + page token đọc (`FANPAGE_PAGE_ID`/`FANPAGE_READ_TOKEN` trong `.env` server); chưa cấu hình →
+vẫn CSV `--file`.
 Web công khai + listing sàn đã tự thu (`ra_kenh --scan-auto`, job
 `channel_scan`).
 

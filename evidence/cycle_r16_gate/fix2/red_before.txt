@@ -1,0 +1,42 @@
+## TRƯỚC khi vá vòng 2 (mã FIX1, chỉ thêm test) — 2026-10-27T17:40:17+07:00 · sha256 ra_kenh.py=638a2555661331f1 fanpage.py=ff78859e4e3d4518 test=317f1331edf5fc4a
+## python -m pytest tests/test_r16_fanpage.py -k 'fix2' -q -rA --tb=line
+....FF...FF                                                              [100%]
+================================== FAILURES ===================================
+E   assert [(0, 0, 0, 0)... (0, 1, 1, 0)] == [(0, 0, 0, 0)... (0, 0, 0, 0)]
+      
+      At index 1 diff: (0, 1, 1, 0) != (0, 0, 0, 0)
+      Use -v to get more diff
+D:\code\samsam\tests\test_r16_fanpage.py:444: assert [(0, 0, 0, 0)... (0, 1, 1, 0)] == [(0, 0, 0, 0)... (0, 0, 0, 0)]
+E   assert [(0, 0, 0, 0)... (0, 1, 1, 0)] == [(0, 0, 0, 0)... (0, 0, 0, 0)]
+      
+      At index 1 diff: (0, 1, 1, 0) != (0, 0, 0, 0)
+      Use -v to get more diff
+D:\code\samsam\tests\test_r16_fanpage.py:444: assert [(0, 0, 0, 0)... (0, 1, 1, 0)] == [(0, 0, 0, 0)... (0, 0, 0, 0)]
+E   AssertionError: assert (None is None and ['https://www...890/posts/84'] == ['https://www...890/posts/83']
+      
+      Left contains one more item: 'https://www.facebook.com/1234567890/posts/84'
+      Use -v to get more diff)
+D:\code\samsam\tests\test_r16_fanpage.py:522: AssertionError: assert (None is None and ['https://www...890/posts/84'] == ['https://www...890/posts/83']
+E   AssertionError: assert 'không kế thừa snapshot người' in '[dry-run] 1 bài web/Fanpage (listing cần DB) — KHÔNG ghi\n[S2] dòng None https://www.facebook.com/1234567890/posts/1 — thieu_ban_duyet → ticket channel_takedown (legal_hr)\n    trích: Sâm Sâm ra mắt hộp quà Tết mới.\n'
+     +  where '[dry-run] 1 bài web/Fanpage (listing cần DB) — KHÔNG ghi\n[S2] dòng None https://www.facebook.com/1234567890/posts/1 — thieu_ban_duyet → ticket channel_takedown (legal_hr)\n    trích: Sâm Sâm ra mắt hộp quà Tết mới.\n' = CaptureResult(out='[dry-run] 1 bài web/Fanpage (listing cần DB) — KHÔNG ghi\n[S2] dòng None https://www.facebook.com/1.../posts/1 — thieu_ban_duyet → ticket channel_takedown (legal_hr)\n    trích: Sâm Sâm ra mắt hộp quà Tết mới.\n', err='').out
+     +    where CaptureResult(out='[dry-run] 1 bài web/Fanpage (listing cần DB) — KHÔNG ghi\n[S2] dòng None https://www.facebook.com/1.../posts/1 — thieu_ban_duyet → ticket channel_takedown (legal_hr)\n    trích: Sâm Sâm ra mắt hộp quà Tết mới.\n', err='') = readouterr()
+     +      where readouterr = <_pytest.capture.CaptureFixture object at 0x000001BF0C155D60>.readouterr
+D:\code\samsam\tests\test_r16_fanpage.py:538: AssertionError: assert 'không kế thừa snapshot người' in '[dry-run] 1 bài web/Fanpage (listing cần DB) — KHÔNG ghi\n[S2] dòng None https://www.facebook.com/1234567890/posts/1 — thieu_ban_duyet → ticket channel_takedown (legal_hr)\n    trích: Sâm Sâm ra mắt hộp quà Tết mới.\n'
+=================================== PASSES ====================================
+_____________ test_fix2c_fanpage_edited_after_approval_still_lech _____________
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+=========================== short test summary info ===========================
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[cut]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[status]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[headers]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[line]
+PASSED tests/test_r16_fanpage.py::test_fix2a_web_violation_period_not_reset
+PASSED tests/test_r16_fanpage.py::test_fix2b_same_text_still_green
+PASSED tests/test_r16_fanpage.py::test_fix2c_fanpage_edited_after_approval_still_lech
+FAILED tests/test_r16_fanpage.py::test_fix2a_web_title_body_vs_csv_body_with_draft[truoc_12_10]
+FAILED tests/test_r16_fanpage.py::test_fix2a_web_title_body_vs_csv_body_with_draft[tu_12_10]
+FAILED tests/test_r16_fanpage.py::test_fix2_minor_fanpage_text_kept_like_csv
+FAILED tests/test_r16_fanpage.py::test_fix2_nit_dry_run_notes_no_db - Asserti...
+4 failed, 7 passed, 27 deselected in 10.11s
+EXIT 1

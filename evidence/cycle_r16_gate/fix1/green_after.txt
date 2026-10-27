@@ -1,0 +1,20 @@
+## SAU khi vá — 2026-10-27T14:22:03+07:00 · sha256 ra_kenh.py=638a2555661331f1 fanpage.py=ff78859e4e3d4518 test=56e676c004823827
+## python -m pytest tests/test_r16_fanpage.py -k 'fix1 or fix2' -q -rA --tb=line
+........                                                                 [100%]
+=================================== PASSES ====================================
+=========================== short test summary info ===========================
+PASSED tests/test_r16_fanpage.py::test_fix1a_auto_inherits_ai_flag_no_fake_close[facebook-https://www.facebook.com/1234567890/posts/78]
+PASSED tests/test_r16_fanpage.py::test_fix1a_auto_inherits_ai_flag_no_fake_close[web-https://samsamngoclinh.com/bai-78/]
+PASSED tests/test_r16_fanpage.py::test_fix1b_auto_inherits_approved_draft_no_ticket
+PASSED tests/test_r16_fanpage.py::test_fix1_no_human_snapshot_keeps_defaults_and_agent_ignored
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[cut]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[status]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[headers]
+PASSED tests/test_r16_fanpage.py::test_fix2_http_client_errors_become_fanpage_error[line]
+8 passed, 23 deselected in 7.10s
+EXIT 0
+## focused: test_r16_fanpage + c12 + ra_kenh + data_flow_map + dpia_draft + rollout + market_api
+........................................................................ [ 93%]
+...........................                                              [100%]
+387 passed in 137.14s (0:02:17)
+EXIT 0

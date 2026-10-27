@@ -631,27 +631,29 @@
     },
     {
       "id": "DF-26",
-      "name": "Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4)",
+      "name": "Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4) + tự thu web/listing/Fanpage (C12, r16)",
       "modules": [
-        "agents/ra_kenh.py"
+        "agents/ra_kenh.py",
+        "connectors/fanpage.py"
       ],
-      "data": "Text bài CÔNG KHAI của công ty trên website/fanpage/sàn (url, kênh, ngày đăng, draft_id) do Quản lý MXH xuất tay; kết quả guardrail, mã vi phạm, hạn 24 giờ",
+      "data": "Text bài CÔNG KHAI của công ty trên website/fanpage/sàn (url, kênh, ngày đăng, draft_id) do Quản lý MXH xuất tay; r16: bài do CHÍNH Fanpage công ty đăng đọc qua Graph API (chỉ id, message, created_time, permalink_url — không bài khách, không bình luận/inbox, không field người); kết quả guardrail, mã vi phạm, hạn 24 giờ",
       "class": "xanh",
       "subjects": "không — chỉ bài của công ty, không bình luận/người tương tác (cột lạ trong file → từ chối cả file)",
       "purpose": "Phát hiện bài đang đăng vi phạm luật quảng cáo/lệch bản đã duyệt để Pháp chế ra lệnh gỡ/sửa trong 24 giờ",
       "storage": "Bảng `channel_posts` + `approval_queue` (lệnh gỡ/sửa, không chép đoạn vi phạm) + `red_alerts` (S1)",
       "retention": "không giới hạn — GAP (Pháp chế chốt)",
-      "recipients": "nội bộ, không gửi ra ngoài (không LLM, không gọi API kênh)",
+      "recipients": "Nội bộ (không LLM). r16: Meta Platforms — graph.facebook.com (GET `/{page-id}/published_posts`, Graph API v26.0) chỉ NHẬN về bài của chính Page; hệ thống chỉ GỬI Page ID + page token + tham số phân trang, KHÔNG gửi dữ liệu cá nhân ra ngoài",
       "cross_border": false,
       "safeguards": [
         "File xuất tay kiểm toàn bộ trước khi ghi DB; cột lạ (bình luận, tên người) → từ chối, lỗi không in giá trị ô",
         "Đoạn trích in ra/báo cáo qua `_mask_pii` (hotline, email trong bài)",
-        "Agent không gỡ/sửa bài, không sửa golden — chỉ đề xuất vào hàng duyệt cho người quyết"
+        "Agent không gỡ/sửa bài, không sửa golden — chỉ đề xuất vào hàng duyệt cho người quyết",
+        "r16 Fanpage: 1 endpoint đọc cứng trong code, token riêng `FANPAGE_READ_TOKEN` chỉ ở env; không theo redirect, base chỉ https hoặc localhost (server giả), trần byte/trang; lỗi chỉ in HTTP status + mã số — không URL (chứa token), không body; tính năng TẮT → 0 request"
       ],
       "legal_basis": "Nội dung công khai của chính công ty, không phải dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN",
       "gaps": [
         "Thời hạn lưu `channel_posts` chưa chốt",
-        "Quyền đọc kênh qua API thật chưa có — chỉ file xuất tay (external-dep)"
+        "Fanpage qua Graph API CHƯA chạy với Page/token thật (external-dep: app Meta quyền đọc + page token Bên B; `appsecret_proof` nếu app bật Require App Secret — chưa làm); TikTok/Zalo OA vẫn chỉ file xuất tay"
       ]
     },
     {

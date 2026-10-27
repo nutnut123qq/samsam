@@ -9,7 +9,8 @@ mở 1 mục hàng duyệt (`director.submit`) cho mỗi "đợt vi phạm" củ
 hạn 24 giờ ĐỒNG HỒ THẬT (gồm T7/CN/Tết — plan §9), S1 → `red_alerts`.
 
 Ranh giới (Agent CHỈ phát hiện + đề xuất):
-  - KHÔNG gỡ/sửa/ẩn bài trên kênh, KHÔNG gọi API kênh (chỉ file xuất tay).
+  - KHÔNG gỡ/sửa/ẩn bài trên kênh, KHÔNG gọi API kênh ngoài một đường ĐỌC
+    bài Fanpage của `--scan-auto` (r16, `connectors.fanpage`).
   - KHÔNG sửa golden, KHÔNG ghi thẳng bảng duyệt — mọi ghi hàng duyệt/cảnh
     báo đi qua `director.submit` / `red_alert.raise_alert`.
   - Mục hàng duyệt do NGƯỜI quyết; approve = Pháp chế xác nhận lệnh gỡ/sửa,
@@ -407,6 +408,35 @@ _POST_COLS = ("id", "url", "channel", "content_type", "codes", "severity",
               "text_sha256")
 
 
+# r16 cold-check FIX1: nguồn tự thu (web/Fanpage) không biết nhãn AI, tài trợ,
+# SKU, bản duyệt, loại, ngày do NGƯỜI khai ở CSV `--file` → kế thừa từ snapshot
+# NGƯỜI nạp gần nhất cùng URL; nếu không, so `_SAME_COLS` lệch → snapshot mới
+# giả (đóng `da_sua`, reset hạn 24h, nhân ticket) khi hai đường chạy xen kẽ.
+# Cold-check vòng 2: `draft_id` chỉ kiểm lại trên chữ tự thu khi chữ đó CÙNG
+# biểu diễn với chữ người khai — cùng sha, hoặc nguồn trả đúng chữ bài
+# (`text_is_post`: Fanpage `message`). Web tự thu = tiêu đề + thân (khác
+# biểu diễn, `verify_publish` so byte) → không kiểm lại, MANG phán quyết duyệt
+# (`lech_ban_duyet`/`thieu_ban_duyet`) của snapshot người.
+_HUMAN_COLS = ("content_type", "posted_on", "is_ai", "is_sponsored", "sku",
+               "draft_id")
+_APPROVAL_CODES = (THIEU, LECH)
+
+
+def _inherit_human(conn, row: dict) -> dict:
+    h = conn.execute(
+        f"select {', '.join(_HUMAN_COLS)}, text_sha256, codes from"
+        " channel_posts where url = %s"
+        r" and imported_by !~* '^\s*(agent|system)\s*:' order by id desc"
+        " limit 1", (row["url"],)).fetchone()
+    if not h:
+        return row
+    meta = dict(zip(_HUMAN_COLS, h[:-2]))
+    if row["sha"] == h[-2] or row.get("text_is_post"):
+        return {**row, **meta}
+    return {**row, **meta, "draft_id": None, "require_draft": False,
+            "approval_codes": [c for c in _APPROVAL_CODES if c in h[-1]]}
+
+
 def _post(conn, post_id) -> dict | None:
     r = conn.execute(f"select {', '.join(_POST_COLS)} from channel_posts"
                      " where id = %s and closed_at is null"
@@ -491,6 +521,8 @@ def ingest(conn, rows: list[dict], cfg: dict, *, by: str,
         raise ValueError(err)
     now = _aware(now)
     dcfg = {b: director.load_config(b) for b in ("legal_hr", "data_platform")}
+    if auto:
+        rows = [_inherit_human(conn, r) for r in rows]
     scans = [scan_row(r, cfg) for r in rows]
     if any("config" in s["codes"] for s in scans):
         raise ValueError("guardrail cấu hình hỏng — không nạp (fail-closed)")
@@ -502,6 +534,11 @@ def ingest(conn, rows: list[dict], cfg: dict, *, by: str,
                 and not store.verify_publish(conn, r["draft_id"], r["text"])):
             codes.append(LECH)
             sev = sev or "S2"
+        for code in r.get("approval_codes", ()) if s["kind"] == "content" \
+                else ():
+            if code not in codes:
+                codes.append(code)
+                sev = sev or "S2"
         last = conn.execute(
             f"select id, close_reason, {', '.join(_SAME_COLS)} from"
             " channel_posts where url = %s order by id desc limit 1",
@@ -586,9 +623,13 @@ def ingest(conn, rows: list[dict], cfg: dict, *, by: str,
 #   - listing: snapshot `listing` MỚI NHẤT mỗi sàn đã nạp (`market_rows`):
 #     tiêu đề + mô tả nếu file có; KHÔNG cộng `thieu_ban_duyet` (đối chiếu
 #     bản duyệt listing là việc của ceo_audit — tránh mở trùng);
-#   - Fanpage: cần Graph API + page token Bên B cấp — CHƯA có adapter (không
-#     đoán endpoint/quyền); dùng `--file` CSV xuất tay.
+#   - Fanpage (r16): bài do CHÍNH Page đăng qua Graph API chỉ đọc
+#     (`connectors.fanpage`, tài liệu chính thức v26.0) — chưa cấu hình
+#     `FANPAGE_PAGE_ID`/`FANPAGE_READ_TOKEN` → ghi chú, vẫn `--file` CSV; lỗi
+#     nguồn → ghi chú + exit 1 (web/listing vẫn nạp); tính năng TẮT → 0
+#     request, exit 2. Không rõ ngày đăng → `posted_on` None (coi như bài mới).
 AUTO_BY = AGENT
+FEATURE = "legal_hr-04"
 WEB_FILES = ("articles", "news", "products")
 WEB_MAX_AGE_DAYS = 7
 
@@ -633,6 +674,66 @@ def web_rows(now: datetime, data_dir=None) -> tuple[list[dict], list[str]]:
                          "draft_id": None, "text": text,
                          "sha": store.content_sha256(text)})
     return rows, notes
+
+
+def _fb_date(v) -> date | None:
+    try:
+        if isinstance(v, int) and not isinstance(v, bool):
+            dt = datetime.fromtimestamp(v, VN_TZ)
+        elif isinstance(v, str):
+            dt = datetime.strptime(v, "%Y-%m-%dT%H:%M:%S%z")
+        else:
+            return None
+    except (ValueError, OverflowError, OSError):
+        return None
+    return dt.astimezone(VN_TZ).date()
+
+
+def fanpage_rows(conn) -> tuple[list[dict], list[str], int | None]:
+    """r16: bài Fanpage → (rows, ghi chú, rc). rc None = đọc được hoặc chưa
+    cấu hình; 1 = lỗi nguồn; 2 = cấu hình hỏng / tính năng TẮT (0 request)."""
+    from connectors import fanpage
+    from ingest.market_api import ConfigError
+    from pipelines import rollout
+    try:
+        cfg = fanpage.config()
+    except ConfigError as e:
+        return [], [f"fanpage: {e} — chưa quét"], 2
+    if cfg is None:
+        return [], [(f"fanpage: chưa cấu hình {fanpage.ENV_PAGE}/"
+                     f"{fanpage.ENV_TOKEN} — chưa quét (dùng --file CSV)")
+                    ], None
+    if why := rollout.blocked(conn, "đọc bài Fanpage qua Graph API", FEATURE):
+        return [], [f"fanpage: {why}"], rollout.EXIT_BLOCKED
+    try:
+        posts = fanpage.fetch_posts(cfg)
+    except fanpage.FanpageError as e:
+        return [], [f"{e} — chưa quét"], 1
+    rows, notes, seen, bad = [], [], set(), 0
+    for p in posts:
+        url = fanpage.post_url(p.get("permalink_url"))
+        text = p.get("message")
+        # Cùng biểu diễn với CSV `read_export` (bản duyệt so byte): chỉ đổi
+        # \r\n → \n, KHÔNG strip/cắt; strip chỉ để kiểm rỗng; > MAX_TEXT →
+        # bỏ (CSV cũng từ chối dòng đó).
+        text = text.replace("\r\n", "\n") if isinstance(text, str) else None
+        if (url is None or len(url.encode()) > MAX_URL or text is None
+                or not text.strip() or len(text) > MAX_TEXT):
+            bad += 1
+            continue
+        if url in seen:
+            continue
+        seen.add(url)
+        rows.append({"line": None, "url": url, "channel": "facebook",
+                     "content_type": "post",
+                     "posted_on": _fb_date(p.get("created_time")),
+                     "is_ai": False, "is_sponsored": False, "sku": None,
+                     "draft_id": None, "text": text, "text_is_post": True,
+                     "sha": store.content_sha256(text)})
+    if bad:
+        notes.append(f"fanpage: bỏ {bad} bài không có chữ, dài quá {MAX_TEXT}"
+                     " ký tự hoặc permalink không hợp lệ")
+    return rows, notes, None
 
 
 def listing_rows(conn) -> list[dict]:
@@ -1305,16 +1406,24 @@ def _scan_auto_main(dry_run: bool) -> int:
         print("[err] DB không truy cập được")
         return 2
     try:
+        # Fanpage TRƯỚC câu SELECT đầu: cổng rollout tự commit → conn không
+        # giữ transaction mở trong lúc chờ mạng.
+        fb, fb_notes, fb_rc = fanpage_rows(conn)
+        notes += fb_notes
         if conn is not None:
             rows += listing_rows(conn)
+        rows += fb
         for n in notes:
             print(f"[note] {n}")
         if dry_run:
             scans = [scan_row(r, cfg) for r in rows]
-            print(f"[dry-run] {len(rows)} bài web (listing cần DB) — KHÔNG"
-                  " ghi")
+            print(f"[dry-run] {len(rows)} bài web/Fanpage (listing cần DB) —"
+                  " KHÔNG ghi")
+            print("[note] dry-run không DB: không kế thừa snapshot người, không"
+                  " kiểm bản duyệt — mức S2 thieu_ban_duyet dưới đây có thể"
+                  " khác lượt thật")
             _print_plan(rows, scans)
-            return 0
+            return fb_rc or 0
         st = ingest(conn, rows, cfg, by=AUTO_BY, now=now, auto=True)
     except (psycopg.Error, ValueError) as e:
         if conn is not None:
@@ -1326,8 +1435,8 @@ def _scan_auto_main(dry_run: bool) -> int:
             conn.close()
     print(f"[scan-auto] {st['rows']} mục: mới {st['new']}, trùng {st['skip']},"
           f" S1 {st['S1']}, S2 {st['S2']}, đóng {st['closed']}, ticket "
-          f"{st['tickets']} — Fanpage: chưa có nguồn tự thu (CSV --file)")
-    return 1 if any("cũ" in n for n in notes) else 0
+          f"{st['tickets']} — Fanpage: {len(fb)} bài")
+    return max(fb_rc or 0, 1 if any("cũ" in n for n in notes) else 0)
 
 
 def main(argv=None) -> int:

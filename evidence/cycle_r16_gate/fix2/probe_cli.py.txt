@@ -1,0 +1,84 @@
+"""Probe r16: CLI THẬT `python -m agents.ra_kenh --scan-auto` (không dry-run) trên DB test riêng
++ server Graph giả 127.0.0.1 (2 trang, trang 2 rỗng có next, trang 3 hết). Kiểm: request đúng
+path/version/fields, bài Fanpage vào channel_posts, ticket legal_hr, chạy lại không nhân bản,
+token không xuất hiện trong stdout. Chạy: python probe_cli.py (env DATABASE_URL = DB test)."""
+import json
+import os
+import subprocess
+import sys
+import threading
+import urllib.parse
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+import psycopg
+
+sys.stdout.reconfigure(encoding="utf-8")
+TOKEN = "FBTOKEN_SECRET_probe_r16"
+PAGE = "1234567890"
+BAD = "Sâm Sâm chữa khỏi bệnh tiểu đường cho người bị tiểu đường."
+reqs = []
+
+
+def doc(after):
+    p = lambda i, t: {"id": f"{PAGE}_{i}", "message": t,  # noqa: E731
+                      "created_time": "2026-10-26T02:00:00+0000",
+                      "permalink_url": f"https://www.facebook.com/{PAGE}/posts/{i}"}
+    if after is None:
+        return {"data": [p(901, BAD)], "paging": {"cursors": {"after": "C1"}, "next": "x"}}
+    if after == "C1":
+        return {"data": [], "paging": {"cursors": {"after": "C2"}, "next": "x"}}
+    return {"data": [p(902, "Sâm Sâm ra mắt hộp quà Tết mới.")]}
+
+
+class H(BaseHTTPRequestHandler):
+    def do_GET(self):
+        u = urllib.parse.urlsplit(self.path)
+        q = urllib.parse.parse_qs(u.query)
+        reqs.append((self.command, u.path, q.get("fields"), q.get("limit"), q.get("after"),
+                     q.get("access_token") == [TOKEN]))
+        b = json.dumps(doc((q.get("after") or [None])[0])).encode()
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
+
+    def log_message(self, *a):
+        pass
+
+
+srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+env = dict(os.environ, FANPAGE_PAGE_ID=PAGE, FANPAGE_READ_TOKEN=TOKEN,
+           FANPAGE_API_BASE=f"http://127.0.0.1:{srv.server_address[1]}")
+ok = True
+for run in (1, 2):
+    p = subprocess.run([sys.executable, "-m", "agents.ra_kenh", "--scan-auto"], env=env,
+                       capture_output=True, text=True, encoding="utf-8", cwd="D:/code/samsam")
+    out = p.stdout + p.stderr
+    lines = [ln for ln in out.splitlines() if "fanpage" in ln.lower() or ln.startswith("[scan-auto]")]
+    print(f"## lần {run}: exit {p.returncode}")
+    for ln in lines:
+        print("   " + ln[:220])
+    leak = TOKEN in out
+    print(f"   token trong output: {leak}")
+    ok &= not leak
+print("## request tới server giả:")
+for r in reqs:
+    print("  ", r)
+ok &= len(reqs) == 6 and all(r[0] == "GET" and r[1] == f"/v26.0/{PAGE}/published_posts"
+                             and r[2] == ["id,message,created_time,permalink_url"]
+                             and r[3] == ["100"] and r[5] for r in reqs)
+ok &= [r[4] for r in reqs[:3]] == [None, ["C1"], ["C2"]]
+with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=5) as c:
+    rows = c.execute("select url, channel, severity, imported_by, due_at - first_detected_at from"
+                     " channel_posts where url like 'https://www.facebook.com/%%' order by url").fetchall()
+    q = c.execute("select count(*) from approval_queue a join channel_posts p on p.queue_id = a.id"
+                  " where a.block = 'legal_hr' and a.object_type = 'channel_takedown' and p.url ="
+                  " 'https://www.facebook.com/1234567890/posts/901'").fetchone()[0]
+print("## channel_posts Fanpage:")
+for r in rows:
+    print("  ", r)
+print(f"## mục legal_hr/channel_takedown cho bài 901: {q}")
+ok &= len(rows) == 2 and rows[0][2] == "S1" and q >= 1
+print("PROBE", "PASS" if ok else "FAIL")
+sys.exit(0 if ok else 1)
