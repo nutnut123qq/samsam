@@ -670,7 +670,7 @@ def web_rows(now: datetime, data_dir=None) -> tuple[list[dict], list[str]]:
                 continue
             try:
                 o = json.loads(ln.decode("utf-8", errors="replace"))
-            except ValueError:
+            except (ValueError, RecursionError):   # r19: JSON lồng quá sâu
                 notes.append(f"web/{name}: dòng {n} hỏng — bỏ")
                 continue
             if not isinstance(o, dict):
@@ -688,8 +688,7 @@ def web_rows(now: datetime, data_dir=None) -> tuple[list[dict], list[str]]:
             text = text[:MAX_TEXT]
             rows.append({"line": n, "url": url, "channel": "web",
                          "content_type": "post",
-                         "posted_on": (date.fromisoformat(pub)
-                                       if _DATE_RE.fullmatch(pub) else None),
+                         "posted_on": _web_date(pub),
                          "is_ai": False, "is_sponsored": False, "sku": None,
                          "draft_id": None, "text": text,
                          "sha": store.content_sha256(text)})
@@ -697,6 +696,17 @@ def web_rows(now: datetime, data_dir=None) -> tuple[list[dict], list[str]]:
             notes.append(f"web/{name}: bỏ {bad} dòng có ký tự không lưu được"
                          " (NUL/surrogate) ở url/chữ")
     return rows, notes
+
+
+def _web_date(s: str) -> date | None:
+    """r19: ngày crawl đúng dạng mà không có thật (`2026-13-45`) → None như
+    `_fb_date` (không rõ ngày đăng → coi như bài mới), không hỏng cả lượt."""
+    if not _DATE_RE.fullmatch(s):
+        return None
+    try:
+        return date.fromisoformat(s)
+    except ValueError:
+        return None
 
 
 def _fb_date(v) -> date | None:

@@ -1,0 +1,55 @@
+"""r19 M2 — đối chứng lượt thật + dry-run khi tính năng TẮT trên DB test thật (không giả connect).
+
+    python -I red_base_probe.py <cây mã> <thư mục báo cáo tạm>
+
+Chạy cùng script trên cây base (git archive 62b665b) và cây làm việc; `rollout._FORCE_MODE = "tat"` (đúng
+cơ chế ép giai đoạn của test). Mỗi ca in: mã thoát | lỗi lọt (nếu có) | dòng đầu stdout | có tệp seo-san- không.
+DATABASE_URL = DB test riêng của lượt (preflight kiểm trước).
+"""
+import contextlib
+import io
+import sys
+from pathlib import Path
+
+tree, rep = Path(sys.argv[1]), Path(sys.argv[2])
+sys.path.insert(0, str(tree))
+sys.stdout.reconfigure(encoding="utf-8")
+
+from agents import kd_care, kd_listing, mkt_koc, mkt_ugc, seo_san  # noqa: E402
+from pipelines import legal_updates, rollout  # noqa: E402
+
+rollout._FORCE_MODE = "tat"
+REV = str(tree / "tests" / "fixtures" / "mkt" / "review_shopee_MAU.csv")
+KOC = ["--kit", "--koc", "KOC-MAU-01", "--sku", "mat-ong-sam-300ml", "--draft-ids", "1", "--by", "Lan"]
+CASES = [
+    ("kd_care --run --dry-run", kd_care, ["--run", "--dry-run"]),
+    ("kd_care --plan", kd_care, ["--plan"]),
+    ("kd_care --run", kd_care, ["--run"]),
+    ("kd_listing --run --dry-run", kd_listing, ["--run", "--dry-run"]),
+    ("kd_listing --run", kd_listing, ["--run"]),
+    ("mkt_koc --kit --dry-run", mkt_koc, KOC + ["--dry-run"]),
+    ("mkt_koc --kit", mkt_koc, KOC),
+    ("mkt_ugc --reviews --dry-run", mkt_ugc, ["--reviews", REV, "--channel", "shopee", "--by", "Lan", "--dry-run"]),
+    ("mkt_ugc --reviews", mkt_ugc, ["--reviews", REV, "--channel", "shopee", "--by", "Lan"]),
+    ("mkt_ugc --mentions --dry-run", mkt_ugc, ["--mentions", "--since", "2026-10-01", "--by", "Lan", "--dry-run"]),
+    ("seo_san --run --dry-run", seo_san, ["--run", "--dry-run", "--out-dir", str(rep)]),
+    ("seo_san --run", seo_san, ["--run", "--out-dir", str(rep)]),
+    ("legal_updates --submit --dry-run", legal_updates, ["--submit", "--dry-run"]),
+    ("legal_updates --submit", legal_updates, ["--submit"]),
+]
+print(f"# cây {tree.name} · _FORCE_MODE=tat")
+for name, mod, argv in CASES:
+    out, err = io.StringIO(), io.StringIO()
+    leak = ""
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        try:
+            rc = mod.main(argv)
+        except SystemExit as e:
+            rc = e.code
+        except BaseException as e:  # noqa: BLE001 — ghi lỗi lọt, không dừng probe
+            rc, leak = "LỌT", f"{type(e).__name__}"
+    first = (out.getvalue().strip().splitlines() or err.getvalue().strip().splitlines() or [""])[0][:110]
+    files = sorted(p.name for p in rep.glob("seo-san-*")) if rep.exists() else []
+    print(f"{name:34} | rc={rc} {leak:16} | {first} | tệp seo-san: {files or '-'}")
+    for p in rep.glob("seo-san-*"):
+        p.unlink()

@@ -23,6 +23,82 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Vòng r19 (28/10/2026) — ngày/JSON hỏng ở crawl web + cổng TẮT sớm ở 6 CLI sinh đầu ra (HĐ 6.7) — CLOSED 28/10/2026 (/cycle 20 lượt 2), commit local, CHƯA push/merge/deploy
+
+Base: 62b665bdb25161efdf486c5407d25bddf0afde70 (ghi 28/10/2026 khi mở).
+
+Căn cứ scope (không bịa): bảng 12 mục BỊ CHẶN (`docs/handover/dau-vao-va-quyet-dinh.md` mục I) vẫn "B. Code còn thiếu: không" (sales-08/09
+= repo riêng); việc build được còn lại = lỗi ĐÃ GHI trong someday r18 (tiền lệ r17/r18): (6) MINOR cold-check `agents/ra_kenh.py:691`
+`published_at` đúng dạng nhưng ngày sai → `date.fromisoformat` ValueError lọt khỏi `web_rows` (gọi ngoài `try`) → traceback, job
+`channel_scan` chết cả lượt (web + Fanpage + listing — PL01 Pháp chế "Quét web, Fanpage, listing"); (7) NIT `ra_kenh.py:672` dòng crawl JSON
+lồng sâu → `RecursionError` lọt; (2) CLI có `--dry-run` mà không import `rollout` — đã rà 10 tệp: 6 tệp sinh đầu ra của ĐÚNG 1 tính năng
+chưa kiểm cổng SINH SỚM (r12 RB `rollout.blocked`: "trước mọi side effect — gọi AI, ghi file, in nội dung, ghi DB"; CLI bị chặn →
+`[rollout]` exit 2, "không traceback, không exit 0"): khi TẮT, dry-run vẫn in/ghi kế hoạch và lượt thật dừng ở `aq.enqueue`/`save_draft`/
+`write_report` bằng `RolloutBlocked` (lớp con ValueError) → traceback hoặc `[error]` exit 1. Phương án bảo thủ: vá đúng 2 lỗi `web_rows` +
+cổng sớm ở 6 CLI một tính năng; KHÔNG đụng 4 tệp còn lại (lý do ở M2), không đổi schema/danh mục/acceptance/egress.
+Ghi nhận ngoài code (không vá, someday r18 (5)): CI GitHub — API công khai (không cần đăng nhập) cho thấy cả 24 lần chạy `ci` từ 15/10 đều
+fail ở bước 6 `ruff check .` (các bước sau `skipped`), annotation chỉ có "Process completed with exit code 1" ở dòng log 2899; ruff trên
+PyPI 0.17.0 phát hành 09/10, mới nhất 0.17.3; `requirements.txt` ghim `ruff>=0.6` → CI cài 0.17.x, local 0.16.10 (bản checkout sạch HEAD
+pass cả thường lẫn `--isolated`). Giả thuyết ruff 0.17 CHƯA kiểm (cần tải ruff 0.17.x — ngoài quyền lượt này).
+
+Must-have:
+- [x] M1 `ra_kenh.web_rows`: `published_at` đúng dạng `YYYY-MM-DD` nhưng ngày không có thật (`2026-13-45`, `0000-00-00`) → `posted_on` None
+      (cùng luật "không rõ ngày đăng → coi như bài mới" của Fanpage `_fb_date`), dòng JSON lồng quá sâu → "dòng n hỏng — bỏ" (cùng nhánh
+      JSON hỏng). `--scan-auto` CLI không traceback, bài khác + Fanpage + listing vẫn nạp. Test — TRƯỚC vá FAIL, SAU PASS.
+      `ra_kenh._web_date` (regex + `date.fromisoformat` trong `try` → None) thay biểu thức inline; `except (ValueError, RecursionError)`.
+      Test: `2026-13-45`/`0000-00-00`/`2026-02-30` → None, ngày đúng giữ nguyên; dòng `{"a":` × 50 000 không lọt lỗi (chấp nhận cả hai
+      kết cục theo hệ — Gotcha r18) + ca ép `RecursionError` bằng monkeypatch `json` → "dòng 1 hỏng — bỏ" mọi hệ; CLI `--scan-auto` trên
+      DB thật → exit 0, 4 snapshot (3 `posted_on` NULL), 1 S1. RED base: `ValueError: month must be in 1..12` (ra_kenh.py:691) ở cả hàm lẫn CLI.
+- [x] M2 cổng TẮT sớm (`rollout.blocked` → `say_blocked`, trước connect/đọc nguồn/in/ghi) cho lượt thật + `--dry-run` ở 6 CLI một tính năng:
+      `kd_care --run/--plan` (sales-07.2), `kd_listing --run` (sales-03), `mkt_koc --kit` (marketing-04.1), `mkt_ugc --reviews/--mentions/
+      --reuse-request/--reuse` (marketing-05.2), `seo_san --run` (marketing-07.1), `legal_updates --submit` (legal_hr-07) → `[rollout] …`
+      exit 2, không in kế hoạch, 0 ghi. Test — TRƯỚC FAIL, SAU PASS; giai đoạn `chay_thu`/`van_hanh` như cũ.
+      Không vá (rà, có lý do): `pipelines/director --dry-run` chỉ kiểm cấu hình (không đầu ra); `pipelines/red_alert`, `scripts/
+      retention_purge` là vận hành — lượt thật cũng không qua cổng tính năng nên dry-run khớp lượt thật; `agents/sales_director` gom NHIỀU
+      tính năng (dry-run chỉ in SỐ ĐẾM theo loại việc; chặn cả lệnh theo 1 tính năng sẽ chặn phần được phép — docstring `blocked` "mỗi tính
+      năng kiểm RIÊNG") → someday. `kd_care --record/--verify-send`, `kd_listing --report` (tiền tố `catalog-sync-` không thuộc danh mục),
+      `mkt_koc --release/--list` không phải biên SINH → không đổi.
+      Mỗi CLI: `from pipelines import rollout` lười (như `ra_kenh`) + `rollout.blocked(None, "<việc>", fid=…)` ngay sau kiểm usage (lỗi usage
+      vẫn exit 2 của argparse), mã tính năng tường minh (`market_alert_s1` thuộc 2 tính năng nên không suy từ `output_sources`). Test
+      `tests/test_r19_ngay_cong_som.py` 16 ca TẮT (connect giả = fail; đúng 1 dòng `[rollout] …<mã>`, không tệp báo cáo) + 32 ca
+      `chay_thu`/`van_hanh` (tới connect như cũ). Đối chứng DB thật cùng script trên base và cây làm việc (`red_base_probe.txt`): base khi TẮT
+      → dry-run/`--plan` in kế hoạch exit 0 (kd_care, kd_listing, mkt_ugc, legal_updates), lượt thật exit 0 khi chưa có gì để đẩy (kd_care,
+      kd_listing, legal_updates) hoặc `[error] RolloutBlocked` exit 1 (mkt_ugc --reviews, seo_san --run), mkt_koc chạy đủ luật kit (`[chặn]
+      KIT_CAM` exit 1), `seo_san --run --dry-run` → `RolloutBlocked` LỌT (traceback, từ `write_report`); cây làm việc → 14/14 `[rollout]`
+      exit 2. (kd_listing lượt thật có mục để đẩy → `RolloutBlocked` lọt khỏi `_main` vì chỉ bắt `psycopg.Error` — đọc mã, probe DB trống
+      không chạm.)
+- [x] M3 Gate: ruff; pytest tập trung; full chia lượt trên DB test container riêng; `agent_eval --deterministic --no-record`;
+      `dpia_draft --check`; `redteam`; secret scan rỗng. Evidence `evidence/cycle_r19_gate/`.
+      fp mã đầu = cuối = lúc ghi DONE `db37a753daac41056c5a2c4d0168ac8205377fc7f45459c128ad13ae549d76ae` (HEAD 62b665b + cây làm việc, trừ
+      DONE/CYCLE_LOOP/evidence): ruff 0.16.10 EXIT 0 (`ruff.txt`); `tests/test_r19_ngay_cong_som.py` trên base (`git archive 62b665b` + tệp
+      test) **19 failed / 32 passed** (`red_before.txt`; 32 = ca `chay_thu`/`van_hanh` — hành vi khi bật không đổi) → cây làm việc **51
+      passed** (`green_after.txt`; bản không DB `red_before_unit.txt` 18 failed / 32 passed / 1 skipped); đối chứng DB thật
+      `red_base_probe.txt` + `.py.txt` (DB `samsam_cycle_r19_probe`); tập trung 30 tệp **1164 passed / 0 skipped** (`focused.txt`); **full chia
+      12 lượt 7104 passed / 0 failed / 0 skipped** (= collect-only 7104 ca / 190 file = 7053 r18 + 51 mới; 0xC0000142×0, không chạy lại lượt
+      nào; `full_shards.txt` + `shard_01..12.txt`, `per_file.txt`, `shards.txt`) trên DB mới `samsam_cycle_r19_full` container riêng
+      `samsam-cycle-r19` (postgres:17-alpine, ĐÃ DỌN sau lượt, mật khẩu chỉ ở scratchpad — đã xóa); `agent_eval --deterministic --no-record` EXIT 0 (khác r18 đúng 4
+      dòng `prompt_version` của kd_a5/kd_a7/mkt_ads_ugc/mkt_seo — hash mã nguồn module vừa sửa, vẫn PASS 100%), `dpia_draft --check`,
+      `redteam` (0/50 lọt) EXIT 0; secret scan rỗng (`secret_scan.txt`; đối chứng dương: mật khẩu container khớp 1 lần trong tệp scratchpad).
+      Harness: `mkdb.sh.txt`, `preflight.py.txt`, `run_shards.sh.txt`, `run_focused.sh.txt`, `gates.sh.txt`, `dung_db_*.txt`.
+- [x] AGENTS.md: 1 dòng lệnh "Ngày/JSON hỏng + cổng TẮT sớm (r19)".
+
+Rà bảo mật diff từ Base (Stage 4, self — chưa phải cold-check): cổng mới chỉ THÊM đường trả sớm fail-closed theo `rollout.mode` (DB down /
+chưa vào sổ = chạy thử như mọi biên khác — không chặn nhầm), dòng `[rollout]` chỉ mang mã tính năng + tên việc (không PII/URL/token); cổng
+dùng `rollout.connect` cùng DSN với CLI (không login/quyền mới); `_web_date` chỉ nới lỗi thành None (không nhận thêm dữ liệu). Không đổi
+schema/quyền/danh mục/egress. Không lỗi chặn.
+
+External-dependency: không (lỗi nội bộ code).
+Someday (thấy trên đường, KHÔNG làm): (1) `agents/sales_director --run --dry-run` khi một trong các tính năng của nó TẮT vẫn in số đếm loại
+việc của tính năng đó (lượt thật chặn từng mục ở `aq.enqueue`) — lọc kế hoạch theo tính năng từng loại việc; (2) job lịch `kd_listing`
+(`deploy/onprem/jobs.json`) và `legal_updates` khi tính năng TẮT giờ ghi `job_runs` ok=false "bước 1 exit 2" mỗi lượt (trước: exit 0 khi
+chưa có gì để đẩy) — nhất quán quy ước r12 RB/r17 `channel_scan`, nhưng bản tin sức khỏe sẽ báo đỏ hằng ngày cho tính năng tắt có chủ đích;
+(3) CI GitHub đỏ ở `ruff check .` (ghi nhận ở đầu mục) — kiểm giả thuyết ruff 0.17.x cần tải ruff 0.17.x hoặc đọc log CI (quyền admin repo).
+Someday từ cold-check vòng 1 (KHÔNG vá ở r19): (4) NIT `agents/ra_kenh.py:679-680` cửa sổ hẹp còn lọt `RecursionError`: dòng crawl lồng sâu đúng ngưỡng `json.loads` còn nhận (độ sâu 2996 trên Windows CPython 3.12) parse qua, rồi `str(o.get(k))` trong `" ".join` vượt giới hạn khi lấy repr → lọt khỏi `web_rows` (gọi ngoài `try` ở `:1443`) → traceback, `channel_scan` chết cả lượt; từ 2997 trở lên đã vào nhánh "dòng n hỏng — bỏ"; test chỉ dùng độ sâu 50 000 (hỏng ngay ở parse) nên không chạm; nguồn là crawler của chính công ty → rủi ro thấp; (5) NIT `agents/kd_listing.py:519-523` + `agents/sales_director.py:897-903` sales-03 TẮT → `--run` trả về trước `job_run(JOB)` nên mục 6 bản tin GĐ KD vẫn hiện "lần chạy gần nhất … ok" cũ, không nói tính năng đang tắt (chỉ hiển thị, cùng nhóm someday (2)).
+
+Cold-check (reviewer ngữ cảnh mới, prompt cố định, read-only — `git status` trước/sau trùng): vòng 1 **PASS**; tự tính fp `db37a753…d76ae` trùng gate, đầu = cuối lượt full; RED ở base (`git archive 62b665b` + test r19 → 19 failed / 32 passed, khớp `red_before.txt`) → GREEN 51 passed; probe đường production KHÔNG ép `_FORCE_MODE` (đặt `feature_rollout.stage` trong DB test): `tat` → 14/14 ca đúng 1 dòng `[rollout]` exit 2, 0 ghi `approval_queue`/`content_drafts`/`job_runs`/`report_outputs`, 0 tệp `seo-san-`; `chay_thu` → 14 ca chạy như cũ; tự chạy lại trên container riêng `samsam-coldaudit-r19` (đã dọn): ruff 0.16.10 EXIT 0 (thường + `--isolated`); collect 7104 ca / 190 tệp; **full chia 12 lượt 7104 passed / 0 failed / 0 skipped, 0xC0000142×0**; `agent_eval --deterministic --no-record` (trùng `eval.txt`), `dpia_draft --check`, `redteam` (0/50 lọt) EXIT 0; secret scan rỗng. Verdict nguyên văn: "VERDICT: **PASS**. Không có BLOCKER; 1 NIT và 1 NIT nhẹ ghi vào someday khi đóng version." → someday (4)–(5). UNVERIFIED (không phải claim `[x]`): ghi nhận CI GitHub đỏ ở `ruff check .` (chưa đọc log, chưa cài ruff 0.17.x).
+Retro: không có bài học repo mới (vòng 1 PASS; NIT (4) thuộc lớp đã có Gotcha "probe pathological trước khi claim xong").
+Version CLOSED 28/10/2026 (r19; /cycle 20 lượt 2).
+
 ## Vòng r18 (27/10/2026) — dữ liệu nguồn hỏng → lỗi có kiểm soát + dry-run khi TẮT (legal_hr-04, data_platform-07.1) — CLOSED 28/10/2026 (/cycle 20 lượt 1), commit local, CHƯA push/merge/deploy
 
 Base: 215275fcd2e13e263f1acdacd5dd1b373a71fef9 (ghi 27/10/2026 khi mở).
@@ -22925,3 +23001,4 @@ Quy ước DoD cho phase connector:
 | r16 | legal_hr-04: quét bài Fanpage do chính Page đăng qua Graph API v26.0 chỉ đọc (`connectors/fanpage.py`, `GET /{page-id}/published_posts`) gộp vào `agents.ra_kenh --scan-auto`; tự thu kế thừa cột bài từ snapshot NGƯỜI cùng URL, chỉ kiểm lại bản duyệt khi chữ cùng biểu diễn (web mang phán quyết người) | 2026-10-27 | `evidence/cycle_r16_gate/` (+ `fix1/`, `fix2/`) — full chia 11 lượt 7023 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới FIX → FIX → **PASS** vòng 3 (tự chạy lại full 7023 passed); 1 MINOR tài liệu ghi trong commit đóng + someday, 2 NIT → someday. CONTRACT_TESTED server giả, chưa Page thật. Base `34d9f9d`; commit local, chưa push |
 | r17 | cổng TẮT HĐ 6.7 trước mọi ghi ở `ra_kenh` (legal_hr-04, `--file` + `--scan-auto`); `settlement_csv`/`settlement_api` đối soát bị chặn → exit 2 thay KeyError/exit 0; bắt `http.client.HTTPException` ở `market_api`, `anchor --submit/--upgrade`, `webhook_probe` | 2026-10-27 | `evidence/cycle_r17_gate/` — RED 13 failed → GREEN 13 passed, full chia 11 lượt 7036 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới **PASS** vòng 1 (tự chạy lại full 7036 passed); 1 NIT tài liệu vá trong commit đóng, 3 NIT + 1 ghi nhận → someday. Base `7652045`; commit local, chưa push |
 | r18 | dữ liệu nguồn hỏng → lỗi có kiểm soát: `post_url` Fanpage từ chối khoảng trắng/điều khiển/surrogate, `_storable` lọc chữ/url Fanpage + web trước ghi (NUL/surrogate → bỏ bài, ghi chú số bài), `webhook_probe` thân không phải object / `RecursionError` → không sẵn sàng; `ra_kenh` `--dry-run` khi legal_hr-04 TẮT → `[rollout]` exit 2 trước gọi Fanpage/in kế hoạch | 2026-10-28 | `evidence/cycle_r18_gate/` + `fix1/` — RED 12 failed → GREEN 17 passed, full chia 11 lượt 7053 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới vòng 1 **FIX** (BLOCKER test phụ thuộc OS) → vòng 2 **PASS** (tự chạy lại full 7053/7053); 1 MINOR + 2 NIT → someday. Base `215275f`; commit local, chưa push |
+| r19 | ngày/JSON hỏng ở crawl web: `published_at` ngày không có thật → `posted_on` rỗng (`_web_date`), dòng lồng quá sâu → bỏ + ghi chú (không traceback `channel_scan`); cổng TẮT HĐ 6.7 ngay sau kiểm tham số ở 6 CLI (`kd_care`, `kd_listing`, `mkt_koc`, `mkt_ugc`, `seo_san`, `legal_updates`) — lượt thật + `--dry-run` → `[rollout]` exit 2 trước kết nối/đọc/in/ghi | 2026-10-28 | `evidence/cycle_r19_gate/` — RED 19 failed → GREEN 51 passed, full chia 12 lượt 7104 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới **PASS** vòng 1 (tự chạy lại full 7104/7104 + probe đường DB thật); 2 NIT → someday. Base `62b665b`; commit local, chưa push |

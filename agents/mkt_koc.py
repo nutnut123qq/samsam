@@ -423,6 +423,10 @@ def main(argv=None) -> int:
         channel = a.channel or koc["platform"]
         if channel != koc["platform"]:
             ap.error(f"--channel phải trùng nền tảng KOC ({koc['platform']})")
+        from pipelines import rollout
+        # r19 (r12 RB): tắt → không dựng kit/đẩy mục, cả --dry-run.
+        if why := rollout.blocked(None, "kit KOC", fid="marketing-04.1"):
+            return rollout.say_blocked(why)
     try:
         dcfg = director.load_config("marketing")
     except director.DirectorConfigError as e:

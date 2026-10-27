@@ -1,0 +1,12 @@
+#!/bin/bash
+# bash run_focused.sh <env_file> <out_file> <pytest args...> — chạy pytest trên DB test của lượt, redact DSN.
+ENVF="$1"; OUT="$2"; shift 2
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY CONV_SAMPLE
+source "$ENVF"; export PYTHONIOENCODING=utf-8 OPENROUTER_API_KEY=""
+cd /d/code/samsam
+red() { sed -E -e 's#(postgres(ql)?://[^:/@[:space:]]+:)[^@[:space:]]+@#\1***@#g' -e 's/(password=)[^[:space:]'"'"'"]+/\1***/g'; }
+{ echo "# $(date -Iseconds) · HEAD $(git rev-parse --short HEAD) · python -m pytest $*"
+  python -I "$(dirname "$0")/preflight.py" 2>&1
+  python -m pytest -p no:cacheprovider "$@" 2>&1; echo "EXIT $?"; } | red > "$OUT"
+tail -3 "$OUT"

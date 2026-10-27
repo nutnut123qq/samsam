@@ -516,6 +516,11 @@ def main(argv=None) -> int:
         ap.error("cần --run hoặc --report")
     if args.dry_run and not args.run:
         ap.error("--dry-run chỉ đi với --run")
+    from pipelines import rollout
+    # r19 (r12 RB): tắt → không đọc listing/in kế hoạch/đẩy mục, cả --dry-run.
+    if args.run and (why := rollout.blocked(None, "rà listing sàn",
+                                            fid="sales-03")):
+        return rollout.say_blocked(why)
     mapping, why = load_mapping()
     if mapping is None:
         print(f"[error] {why}", file=sys.stderr)

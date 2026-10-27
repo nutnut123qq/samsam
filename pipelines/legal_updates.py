@@ -123,6 +123,11 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if not 1 <= a.limit <= 200:
         ap.error("--limit 1..200")
+    from pipelines import rollout
+    # r19 (r12 RB): tắt → không đọc tin/đẩy mục, cả --dry-run.
+    if why := rollout.blocked(None, "văn bản pháp luật mới",
+                              fid="legal_hr-07"):
+        return rollout.say_blocked(why)
     try:
         rules = ia.load_rules()
     except ia.IntelAlertConfigError as e:

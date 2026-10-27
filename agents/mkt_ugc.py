@@ -523,6 +523,11 @@ def main(argv=None) -> int:
         ap.error("--mentions cần --since YYYY-MM-DD")
     if a.reuse is not None and (a.contact_id is None or a.contact_id <= 0):
         ap.error("--reuse cần --contact-id N (số dương)")
+    from pipelines import rollout
+    # r19 (r12 RB): mọi thao tác sinh ugc_reply/ugc_reuse — tắt → không đọc
+    # nguồn/in thống kê/đẩy mục, cả --dry-run.
+    if why := rollout.blocked(None, "đề xuất UGC", fid="marketing-05.2"):
+        return rollout.say_blocked(why)
     try:
         rules = load_rules()
         dcfg = director.load_config("marketing")
