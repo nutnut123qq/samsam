@@ -23,6 +23,61 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Vòng r17 (27/10/2026) — cổng TẮT (HĐ 6.7) + lỗi transport còn sót từ cold-check r15/r16 — CLOSED 27/10/2026 (/cycle 10 lượt 10), commit local, CHƯA push/merge/deploy
+
+Base: 76520453a9e2117b20049bff3f7d577c94b15b64 (ghi 27/10/2026 khi mở).
+
+Căn cứ scope (không bịa): bảng hiện hành 12 mục BỊ CHẶN (`docs/handover/dau-vao-va-quyet-dinh.md` mục I) đều "B. Code còn thiếu: không"
+(trừ bảng ánh xạ quyết toán = quyết định Kế toán, website/chatbot website = repo riêng); C01–C12 (`doi-chieu-docx.md` 1.3) đã xong.
+Việc build được còn lại = lỗi ĐÃ GHI có file:line trong someday cold-check: r16 (13) legal_hr-04 TẮT mà `ra_kenh` vẫn ghi snapshot
+(trái HĐ 6.7 "tắt → không sinh", PL02 mục 1), r15 (5) `settlement_csv` KeyError sau commit khi đối soát bị cổng chặn, r16 (11)
+`market_api._send` lọt `http.client.HTTPException` (cùng lớp r16 FIX2 — AGENTS.md "vá theo idiom: grep cùng pattern" → cả cụm transport
+urllib). Phương án bảo thủ: chỉ vá đúng 3 lỗi + cụm cùng idiom; KHÔNG mở adapter mới (marketing-06.2 Page Insights / marketing-05.1
+bình luận Graph — PL01 không đòi tự thu, 05.1 có PII + DPIA chưa ký), không đổi schema/danh mục/acceptance.
+
+Must-have:
+- [x] M1 `agents/ra_kenh.ingest` kiểm cổng SINH legal_hr-04 TRƯỚC mọi ghi (chung `--file` + `--scan-auto`, như `ingest_partner`): TẮT →
+      `RolloutBlocked`, 0 dòng `channel_posts`, 0 đóng `da_sua`/`channel_post_fixed`, 0 hàng duyệt/cảnh báo; CLI in `[rollout] …` exit 2.
+      Test DB: TẮT ở cả hai đường (có đợt mở sẵn + bài sạch → không đóng giả) — TRƯỚC vá FAIL, SAU PASS.
+      `rollout.check_generate(conn, FEATURE, …)` ngay sau kiểm `by` (trước `_inherit_human`/mọi ghi); `main` + `_scan_auto_main` bắt
+      `RolloutBlocked` → `rollout.say_blocked` (trước: `--file` ghi snapshot rồi `[err] RolloutBlocked`; bài sạch đóng đợt `da_sua` khi tắt).
+- [x] M2 `ingest/settlement_csv.main` đối soát bị chặn (finance-01 TẮT) → không KeyError: in kết quả nạp, exit 2 (`EXIT_BLOCKED` "một phần")
+      — cùng mã ở đường API `settlement_api._write` (hai đường chung ngữ nghĩa); dòng đã nạp giữ nguyên (chạy lại = `[skip]`).
+      Test: CSV `main()` + API `_write()` TẮT → rc 2, `recon_results` 0, không traceback — TRƯỚC vá CSV FAIL.
+      `counts.get("thieu_chung_tu")` + `rc` = `EXIT_BLOCKED` khi đối soát bị chặn ở cả hai đường (API trước vá exit 0 — lệch quy ước r12 RB).
+- [x] M3 `http.client.HTTPException` (BadStatusLine/LineTooLong/quá 100 header/IncompleteRead) → lỗi có kiểm soát ở transport urllib còn
+      sót: `ingest/market_api._send` (→ `ApiError` "lỗi mạng (<Loại>)"), `pipelines/anchor.submit`/`upgrade` (→ lỗi calendar, thử calendar
+      kế / dòng `loi`), `scripts/webhook_probe.probe` (→ không sẵn sàng + tên lỗi). Test socket thô — TRƯỚC FAIL, SAU PASS, token không lộ.
+      Thêm `http.client.HTTPException` vào tuple bắt lỗi (4 chỗ). Anchor chỉ nhận https → test anchor dùng `post`/`get` giả ném ĐÚNG lớp
+      lỗi opener ném (market_api/webhook_probe chứng minh trên opener thật + socket thô); `health_bulletin.notify` đã bắt `Exception`.
+- [x] M4 Gate: ruff (exclude `.agents`/`output`/`founder`); pytest tập trung; full chia lượt trên DB test container riêng; `agent_eval
+      --deterministic --no-record`; `dpia_draft --check`; `redteam`; secret scan rỗng. Evidence `evidence/cycle_r17_gate/`.
+      fp mã đầu = cuối `b198d0a5f55c5abbe3bd4895b5d68444e403a5caa4cb4db7150a6b1e3f6c3e5e` (HEAD 7652045 + cây làm việc, trừ DONE/CYCLE_LOOP/evidence):
+      ruff EXIT 0; `tests/test_r17_cong_tat.py` TRƯỚC vá 13 FAILED (`red_before.txt`, đúng lý do: DID NOT RAISE / snapshot ghi + `[err]` /
+      KeyError / API rc 0 / BadStatusLine·HTTPException·LineTooLong lọt) → SAU 13 PASSED (`green_after.txt`); tập trung 17 tệp 709 passed
+      (`focused.txt`); **full chia 11 lượt 7036 passed / 0 skipped / 0 failed** (= collect-only 7036 ca / 188 file = 7023 r16 + 13 mới; DR 3 +
+      S01 8 ca chạy, 0xC0000142×0; `full_shards.txt` + `shard_01..11.txt`) trên DB mới `samsam_cycle_r17_full` container riêng
+      `samsam-cycle-r17` (postgres:17-alpine, ĐÃ DỌN sau lượt, mật khẩu chỉ ở scratchpad — đã xóa); `agent_eval --deterministic --no-record`,
+      `dpia_draft --check`, `redteam` (0/50 lọt) EXIT 0; secret scan rỗng (`secret_scan.txt`). Harness: `mkdb.sh.txt`, `preflight.py.txt`,
+      `run_shards.sh.txt`, `per_file.txt`, `shards.txt`, `dung_db_*.txt`.
+- [x] AGENTS.md: 1 dòng lệnh "Cổng tắt + lỗi mạng còn sót (r17)" (hành vi exit/0 ghi mới). Docstring `settlement_csv` thêm exit 2 khi chặn một phần.
+
+Rà bảo mật diff từ Base (Stage 4, self — chưa phải cold-check): lỗi mới chỉ in tên lớp lỗi (`from None`, không URL/body/token); cổng tắt
+fail-closed TRƯỚC ghi; exit 2 khi chặn một phần không đổi dữ liệu đã nạp (chạy lại `[skip]`); không đổi schema/quyền/danh mục. Không lỗi chặn.
+Grep cùng idiom M1 (ghi + `director.submit`/`aq.enqueue` không cổng): `acc_ar`, `acc_invoice`, `da_b2b`, `fp_opscost`, `kd_care` nạp dữ liệu
+NGUỒN (dealer_ar/invoice_lines/org_prospects/opex_entries/care_purchases), `sales_director` ghi `sla_escalations` theo sau hàng duyệt,
+`agent_eval` ghi `eval_runs` — không phải trạng thái đợt như `channel_posts` → không cùng lớp, không vá.
+
+External-dependency: không (lỗi nội bộ code).
+Someday (thấy trên đường, KHÔNG làm): (1) `scripts/webhook_probe.probe` thân JSON không phải object (`[1]`) → `body.get` AttributeError lọt
+(cùng hàm, khác lớp lỗi — server được dò trả rác); (2) `ra_kenh --scan-auto --dry-run` khi legal_hr-04 TẮT vẫn in kế hoạch web/listing
+(không ghi; chỉ Fanpage 0 request) — docstring `rollout.blocked` coi "in nội dung" là side effect; (3) chưa có test DB cho `ra_kenh` cổng
+tắt ở giai đoạn thật qua bảng `feature_rollout` (test dùng `_FORCE_MODE`) — `mode()` đọc sổ đã có test riêng ở `test_rollout`.
+Someday từ cold-check vòng 1 (KHÔNG vá ở r17): (4) NIT `ra_kenh.py:1433` nhánh `except RolloutBlocked` gọi `conn.rollback()` không kiểm `conn is not None` (nhánh dưới có kiểm; hiện không chạm được vì `--dry-run` return trước `ingest`); (5) NIT M3 liệt kê IncompleteRead nhưng không có ca test riêng (lớp con `HTTPException` nên vẫn được bắt); (6) NIT `settlement_csv.py:727-729` / `settlement_api.py:719-721` khi đối soát bị chặn vẫn in "đối chiếu: " danh sách rỗng; (7) ghi nhận `market_api.py:958` `run["ok"] = rc == 0` → finance-01 TẮT thì mỗi lượt API quyết toán ghi `job_runs` ok=False (nhất quán "chặn một phần = exit 2"; `jobs.json` chưa có job đường này). Ghi chú (3) đã được reviewer probe bằng CLI thật + sổ `feature_rollout` (tat → rc 2, 0 ghi; chay_thu → ghi bình thường) nhưng chưa thành test trong repo.
+
+Cold-check (reviewer ngữ cảnh mới, prompt cố định, read-only — `git status` trước/sau trùng): vòng 1 **PASS**, tự tính fp `b198d0a5…3e5e` trùng gate; RED ở base (`git archive` + test r17 → 13 failed đúng lý do) → GREEN 13 passed; probe CLI thật M1/M2 trên DB riêng; tự chạy lại trên container riêng `samsam-audit-r17` (đã dọn): ruff EXIT 0; **full chia 11 lượt 7036 passed / 0 skipped / 0 failed** (0xC0000142×0); `agent_eval --deterministic`, `dpia_draft --check`, `redteam` (0/50 lọt) EXIT 0; secret scan rỗng. Verdict nguyên văn: "VERDICT: PASS" — "không có BLOCKER"; 4 NIT + 1 ghi nhận. NIT tài liệu AGENTS.md dòng r17 (`anchor --upgrade` không ghi dòng `loi` mà trả `cho` kèm lỗi) vá trong commit đóng (chỉ chữ, không đổi hành vi); còn lại → someday (4)–(7). UNVERIFIED ngoài code: anchor chỉ test bằng `post`/`get` giả (opener thật chỉ nhận https); chưa chạy API sàn/Graph/calendar OTS thật.
+Version CLOSED 27/10/2026 (r17; /cycle 10 lượt 10).
+
 ## Vòng r16 (27/10/2026) — legal_hr-04: quét bài Fanpage tự thu qua Graph API chỉ đọc — CLOSED 27/10/2026 (/cycle 10 lượt 9), commit local, CHƯA push/merge/deploy
 
 Base: 34d9f9d9b6db4e42db0b4e027d84fca95ed9ed43 (ghi 27/10/2026 khi mở).
@@ -87,8 +142,8 @@ Someday (thấy trên đường, KHÔNG làm): (1) ~~bài Fanpage/web tự thu k
 luận/inbox Fanpage qua Graph API (có PII — cần DPIA ký) vẫn file xuất tay; (4) `docs/handover/ma-tran-nghiem-thu.md` lệch danh mục ở ≥6 dòng khác
 (sales-09, marketing-02.1, intel-05.1, production-02/03, farming-01) — sinh lại bằng `acceptance --matrix --db` trên server; (5) `doi-chieu-docx.md`
 bảng A5 còn ghi "Fanpage … không có adapter" (bảng lịch sử, chưa sửa).
-Someday từ cold-check vòng 1 (NIT, KHÔNG vá ở r16): (6) `fanpage.post_url` trả chuỗi gốc dù đã parse host (fanpage.py ~200); (7) mã rate-limit 32/613/80001 chưa coi là tạm thời, backoff 1/2/4 s (fanpage.py ~60); (8) MAX_PAGES=50 không có `since` — Page > 5000 bài luôn lỗi (fanpage.py ~54); (9) thiếu test MAX_RESP_BYTES và 2xx khác 200; (10) `FANPAGE_API_BASE` nhận mọi host https (cùng luật `market_api.api_base`); (11) `ingest/market_api.py` `_send` (~365) cùng lỗ `http.client.HTTPException` lọt — có từ trước r16; (12) bài Page đã ẩn (`is_hidden`) vẫn có thể nằm trong `published_posts` → sau khi NGƯỜI `--mark-removed` (da_go), tự thu mở lại đợt (ngữ nghĩa có sẵn của `ingest`) — cân nhắc xin field `is_hidden` và bỏ bài ẩn.
-Someday từ cold-check vòng 2 (NIT, KHÔNG vá ở r16): (13) legal_hr-04 TẮT → Fanpage 0 request exit 2 đúng, nhưng web/listing của `--scan-auto` vẫn ghi snapshot `channel_posts` rồi `director.submit` raise `RolloutBlocked`, exit 2 — lệch luật "không sinh đầu ra" (có từ trước r16, C12).
+Someday từ cold-check vòng 1 (NIT, KHÔNG vá ở r16): (6) `fanpage.post_url` trả chuỗi gốc dù đã parse host (fanpage.py ~200); (7) mã rate-limit 32/613/80001 chưa coi là tạm thời, backoff 1/2/4 s (fanpage.py ~60); (8) MAX_PAGES=50 không có `since` — Page > 5000 bài luôn lỗi (fanpage.py ~54); (9) thiếu test MAX_RESP_BYTES và 2xx khác 200; (10) `FANPAGE_API_BASE` nhận mọi host https (cùng luật `market_api.api_base`); ~~(11) `ingest/market_api.py` `_send` (~365) cùng lỗ `http.client.HTTPException` lọt — có từ trước r16~~ vá ở r17 (M3); (12) bài Page đã ẩn (`is_hidden`) vẫn có thể nằm trong `published_posts` → sau khi NGƯỜI `--mark-removed` (da_go), tự thu mở lại đợt (ngữ nghĩa có sẵn của `ingest`) — cân nhắc xin field `is_hidden` và bỏ bài ẩn.
+Someday từ cold-check vòng 2 (NIT, KHÔNG vá ở r16): ~~(13) legal_hr-04 TẮT → Fanpage 0 request exit 2 đúng, nhưng web/listing của `--scan-auto` vẫn ghi snapshot `channel_posts` rồi `director.submit` raise `RolloutBlocked`, exit 2 — lệch luật "không sinh đầu ra" (có từ trước r16, C12).~~ vá ở r17 (M1, cả `--file`).
 Someday từ cold-check vòng 3 (KHÔNG vá ở r16): (14) MINOR chuẩn hóa URL Facebook (vanity ↔ page_id/post_id, bỏ tham số theo dõi, m.facebook.com) trước khi kế thừa/gộp đợt — hiện chỉ ghi quy ước ở "Giới hạn vận hành" (`ra_kenh.py` ~425-437, 544, 560, 714); (15) NIT dữ liệu Fanpage chưa làm sạch như `read_export`: NUL trong `message` → `psycopg.DataError` khi insert (exit 2, bài sau bị bỏ), NUL trong permalink → lỗi trong `_inherit_human` trước mọi ghi (web/listing không nạp, exit 2), surrogate lẻ → `UnicodeEncodeError` trong `fanpage_rows`; `post_url` nhận `https://www.facebook.com/x` kèm xuống dòng — lệch luật M2 "lỗi nguồn → ghi chú + exit 1" (nguồn Meta nên ít xảy ra; `ra_kenh.py` ~714-732, `fanpage.py` ~194-206).
 
 External-dependency (không treo version): page token + Page ID Bên B (app Meta quyền đọc, người cấp có task trên Page), app review nếu cần,
@@ -128,8 +183,8 @@ Someday (cold-check NIT, không chặn): (1) `ingest/settlement_api.py:143` ánh
 Shopee `pri_currency`/`aff_currency` = `""` bị coi là có mã → lỗi thay vì dùng `tien_te_shop` (dừng an toàn; xác minh trên sandbox);
 (3) `data/contract_features.json` data_platform-06 `output_sources` rỗng, note chưa nhắc `settlement_rows` `source_kind=api_live`;
 (4) `khi_vang: bang_0` cấm order_amount/payout ở MỌI loại giao dịch TikTok, không ánh xạ theo loại — giao dịch điều chỉnh thiếu trường doanh thu
-làm lỗi cả lượt (dừng an toàn; chỉ biết khi có sandbox); (5) lỗi có sẵn từ base: `ingest/settlement_csv.py:735` `counts["thieu_chung_tu"]`
-KeyError khi đối soát `RolloutBlocked` (`counts={}`), sau commit. Hạ tầng gate còn lại ngoài repo: container `samsam-cycle-r15` (DB
+làm lỗi cả lượt (dừng an toàn; chỉ biết khi có sandbox); ~~(5) lỗi có sẵn từ base: `ingest/settlement_csv.py:735` `counts["thieu_chung_tu"]`
+KeyError khi đối soát `RolloutBlocked` (`counts={}`), sau commit.~~ vá ở r17 (M2). Hạ tầng gate còn lại ngoài repo: container `samsam-cycle-r15` (DB
 `samsam_cycle_r15_full` + `samsam_cycle_r15_audit`), chờ user cho dọn.
 Someday NIT: `market_api --kind settlement --dry-run` vẫn mở kết nối DB CHỈ ĐỌC qua `rollout.blocked` (đọc sổ triển khai) — chữ "0 DB"/"không đụng DB"
 ở AGENTS.md dòng r15, docstring `ingest/settlement_api.py`, comment `market_api.main` nên đổi thành "không GHI DB".
@@ -22773,3 +22828,4 @@ Quy ước DoD cho phase connector:
 | v12.0-go-ngoai-pham-vi | Gỡ phần ngoài phạm vi Hợp đồng hợp tác TEDO–Sâm Sâm (khối cơ khí, phòng Dự án trừ DA-01/DA-05 chuyển khối, SX-A6) — 9 khối theo HĐ | 2026-10-15 | DB `samsam_v12_a` apply ×2 (71 bảng) + core/golden exit 0; pytest 1394 passed / 0 failed (31 file: các file đã sửa + test_data_flow_map, test_handover_docs, test_agent_eval, test_ci_workflow, test_kb_internal, test_llm_gateway, test_qa_harness, test_ceo_decisions, test_b2b_form, test_da_b2b, test_da_pmo, test_kd_quote, test_director*, + liên quan); ruff sạch. Chưa push. |
 | r15 + r15-fix1 | Quyết toán qua API sàn Shopee/TikTok vào chung sổ `settlement_rows` (`source_kind` csv\|api_live) + vá 3 lỗi tiền F1 khóa CSV↔API đồng thời, F2 thiếu/null/sai kiểu ≠ 0, F3 đơn vị tiền Shopee theo từng trường; hạn STT bọc nạp model | 2026-10-27 | `evidence/itacc_r15_remaining/`, `evidence/itacc_r15_fix_1/` (probe F1/F2/F3/S/T/M), `evidence/cycle_r15_gate/` — full chia 11 lượt 6984 passed / 0 skip / 0 fail (DB `samsam_cycle_r15_full`), ruff EXIT 0. Cold-check reviewer ngữ cảnh mới **PASS** (tự chạy lại full 6984 passed trên DB `samsam_cycle_r15_audit`); 1 MINOR tài liệu vá trong commit đóng, 5 NIT → someday. Chưa sandbox/shop thật (CONTRACT_TESTED). Base `70ff9f7`; commit local, chưa push |
 | r16 | legal_hr-04: quét bài Fanpage do chính Page đăng qua Graph API v26.0 chỉ đọc (`connectors/fanpage.py`, `GET /{page-id}/published_posts`) gộp vào `agents.ra_kenh --scan-auto`; tự thu kế thừa cột bài từ snapshot NGƯỜI cùng URL, chỉ kiểm lại bản duyệt khi chữ cùng biểu diễn (web mang phán quyết người) | 2026-10-27 | `evidence/cycle_r16_gate/` (+ `fix1/`, `fix2/`) — full chia 11 lượt 7023 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới FIX → FIX → **PASS** vòng 3 (tự chạy lại full 7023 passed); 1 MINOR tài liệu ghi trong commit đóng + someday, 2 NIT → someday. CONTRACT_TESTED server giả, chưa Page thật. Base `34d9f9d`; commit local, chưa push |
+| r17 | cổng TẮT HĐ 6.7 trước mọi ghi ở `ra_kenh` (legal_hr-04, `--file` + `--scan-auto`); `settlement_csv`/`settlement_api` đối soát bị chặn → exit 2 thay KeyError/exit 0; bắt `http.client.HTTPException` ở `market_api`, `anchor --submit/--upgrade`, `webhook_probe` | 2026-10-27 | `evidence/cycle_r17_gate/` — RED 13 failed → GREEN 13 passed, full chia 11 lượt 7036 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới **PASS** vòng 1 (tự chạy lại full 7036 passed); 1 NIT tài liệu vá trong commit đóng, 3 NIT + 1 ghi nhận → someday. Base `7652045`; commit local, chưa push |

@@ -1,0 +1,41 @@
+# RED trước vá — HEAD 7652045 + tests/test_r17_cong_tat.py (code chưa sửa), 2026-10-27T20:08:59+07:00
+E   Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+D:\code\samsam\tests\test_r17_cong_tat.py:84: Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+E   AssertionError: assert ('[rollout]' in '[err] RolloutBlocked: hàng duyệt legal_hr/channel_takedown: tính năng legal_hr-04 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra\n')
+D:\code\samsam\tests\test_r17_cong_tat.py:107: AssertionError: assert ('[rollout]' in '[err] RolloutBlocked: hàng duyệt legal_hr/channel_takedown: tính năng legal_hr-04 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra\n')
+E   KeyError: 'thieu_chung_tu'
+D:\code\samsam\ingest\settlement_csv.py:735: KeyError: 'thieu_chung_tu'
+E   AssertionError: assert 0 == 2
+D:\code\samsam\tests\test_r17_cong_tat.py:144: AssertionError: assert 0 == 2
+E   http.client.BadStatusLine: GARBAGE NOT HTTP
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\http\client.py:313: http.client.BadStatusLine: GARBAGE NOT HTTP
+E   http.client.HTTPException: got more than 100 headers
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\http\client.py:226: http.client.HTTPException: got more than 100 headers
+E   http.client.LineTooLong: got more than 65536 bytes when reading header line
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\http\client.py:223: http.client.LineTooLong: got more than 65536 bytes when reading header line
+E   http.client.BadStatusLine: GARBAGE NOT HTTP
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\http\client.py:313: http.client.BadStatusLine: GARBAGE NOT HTTP
+E   http.client.HTTPException: got more than 100 headers
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\http\client.py:226: http.client.HTTPException: got more than 100 headers
+E   http.client.LineTooLong: got more than 65536 bytes when reading header line
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\http\client.py:223: http.client.LineTooLong: got more than 65536 bytes when reading header line
+E   http.client.BadStatusLine: GARBAGE
+D:\code\samsam\tests\test_r17_cong_tat.py:208: http.client.BadStatusLine: GARBAGE
+E   http.client.HTTPException: got more than 100 headers
+D:\code\samsam\tests\test_r17_cong_tat.py:208: http.client.HTTPException: got more than 100 headers
+E   http.client.LineTooLong: got more than 65536 bytes when reading header line
+D:\code\samsam\tests\test_r17_cong_tat.py:208: http.client.LineTooLong: got more than 65536 bytes when reading header line
+FAILED tests/test_r17_cong_tat.py::test_m1_ingest_off_writes_nothing_both_paths
+FAILED tests/test_r17_cong_tat.py::test_m1_cli_file_and_scan_auto_off_exit2_zero_rows
+FAILED tests/test_r17_cong_tat.py::test_m2_csv_recon_blocked_prints_load_exit2
+FAILED tests/test_r17_cong_tat.py::test_m2_api_recon_blocked_exit2 - Assertio...
+FAILED tests/test_r17_cong_tat.py::test_m3_market_api_send_http_client_error_is_api_error[status]
+FAILED tests/test_r17_cong_tat.py::test_m3_market_api_send_http_client_error_is_api_error[headers]
+FAILED tests/test_r17_cong_tat.py::test_m3_market_api_send_http_client_error_is_api_error[line]
+FAILED tests/test_r17_cong_tat.py::test_m3_webhook_probe_http_client_error_not_ready[status]
+FAILED tests/test_r17_cong_tat.py::test_m3_webhook_probe_http_client_error_not_ready[headers]
+FAILED tests/test_r17_cong_tat.py::test_m3_webhook_probe_http_client_error_not_ready[line]
+FAILED tests/test_r17_cong_tat.py::test_m3_anchor_submit_upgrade_http_client_error[status]
+FAILED tests/test_r17_cong_tat.py::test_m3_anchor_submit_upgrade_http_client_error[headers]
+FAILED tests/test_r17_cong_tat.py::test_m3_anchor_submit_upgrade_http_client_error[line]
+13 failed in 10.65s

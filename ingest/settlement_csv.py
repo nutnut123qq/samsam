@@ -41,7 +41,8 @@ mã đơn). Nhãn ưu tiên: không thấy đơn → `thieu_chung_tu` > hoàn > 
 CLI: `--file F --channel K` | `--reconcile` (tính lại MỌI dòng — khi file
 đơn tới sau) | `--report` (theo kênh; trỏ dòng bằng `file dòng N`, không in
 mã đơn/hash/người mua). Exit 0 ok · 1 file/cấu hình/DB lỗi · 2 tham số sai /
-bị chặn (r15: đơn đã có dòng quyết toán từ API sàn — `cross_source`, 0 dòng).
+bị chặn (r15: đơn đã có dòng quyết toán từ API sàn — `cross_source`, 0 dòng;
+r17: finance-01 TẮT → dòng ĐÃ nạp + commit, KHÔNG đối soát — chặn một phần).
 r15-fix1 F1: `lock_orders` (advisory xact lock theo (kênh, đơn)) là câu đầu của
 transaction ghi — kiểm file đã nạp + nguồn khác + INSERT tuần tự với loader API.
 """
@@ -696,12 +697,13 @@ def main(argv: list[str] | None = None) -> int:
                   "ghi chồng; người đối soát quyết. 0 dòng.", flush=True)
             return 2
         n = load(conn, rows, args.channel, args.file.name, sha)
+        rc = 0
         try:
             counts = reconcile(conn, fees, sha)
         except rollout.RolloutBlocked as e:   # chỉ nạp, không đối soát
             print(f"[blocked] {e} — đã nạp dòng quyết toán, KHÔNG đối "
                   "soát.", flush=True)
-            counts = {}
+            counts, rc = {}, rollout.EXIT_BLOCKED   # chặn MỘT PHẦN (r12 RB)
         ov = overlaps(conn, [args.channel]).get(args.channel)
         conn.commit()
     except psycopg.errors.UniqueViolation as e:
@@ -732,12 +734,12 @@ def main(argv: list[str] | None = None) -> int:
               + ". Trùng nguyên văn tính 1 lần; lệch giữ cả hai → đối soát"
               " quý BẤT THƯỜNG, không tính phí tới khi người đối soát xử"
               " lý.")
-    if counts["thieu_chung_tu"]:
+    if counts.get("thieu_chung_tu"):
         print(f"[warn] {counts['thieu_chung_tu']} dòng chưa thấy đơn sàn — "
               "nạp file đơn (`python -m ingest.market_csv --kind order`) rồi"
               " chạy `--reconcile`.")
     print("[done]")
-    return 0
+    return rc
 
 
 if __name__ == "__main__":

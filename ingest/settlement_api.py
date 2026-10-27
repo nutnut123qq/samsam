@@ -692,12 +692,13 @@ def _write(channel: str, rows: list[dict], kind: str, fees: dict, d0: date,
                   flush=True)
             return 2
         sc.load(conn, rows, channel, fname, sha, source_kind=kind)
+        rc = 0
         try:
             counts = sc.reconcile(conn, fees, sha)
         except rollout.RolloutBlocked as e:
             print(f"[blocked] {e} — nạp dòng quyết toán, KHÔNG đối soát.",
                   flush=True)
-            counts = {}
+            counts, rc = {}, rollout.EXIT_BLOCKED   # như settlement_csv.main
         ov = sc.overlaps(conn, [channel]).get(channel)
         conn.commit()
     except psycopg.errors.UniqueViolation as e:
@@ -722,7 +723,7 @@ def _write(channel: str, rows: list[dict], kind: str, fees: dict, d0: date,
         print(f"[warn] khoản xuất lại ở ≥2 lần nạp: trùng {ov['trung']}, lệch "
               f"{ov['lech']} — lệch giữ cả hai, chờ người đối soát.", flush=True)
     print("[done]", flush=True)
-    return 0
+    return rc
 
 
 def _connect(dsn: str):

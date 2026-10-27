@@ -46,6 +46,7 @@ Exit: 0 ok · 1 từ chối (chuỗi hỏng / 0 lá / lệch / gửi lỗi) · 2
 
 import argparse
 import hashlib
+import http.client
 import json
 import sys
 import urllib.error
@@ -448,7 +449,8 @@ def submit(conn, ref, cfg: dict, by: str = CREATED_BY,
         try:
             resp = post(cal + "/digest", digest, cfg["timeout_s"])
             parse_receipt(ots_file(digest, resp), digest.hex())   # r13: kiểm cây
-        except (OSError, ValueError, urllib.error.URLError) as e:
+        except (OSError, ValueError, urllib.error.URLError,
+                http.client.HTTPException) as e:   # r17: BadStatusLine...
             errs.append(f"{cal.removeprefix('https://')}: {type(e).__name__}")
             continue
         _receipt(conn, bid, "da_gui", cal, ots_file(digest, resp), None, by,
@@ -604,7 +606,8 @@ def upgrade(conn, ref, cfg: dict, get=http_get, *, by: str = CREATED_BY) -> dict
             continue
         try:
             body = get(f"{uri}/timestamp/{commitment.hex()}", cfg["timeout_s"])
-        except (OSError, ValueError, urllib.error.URLError) as e:
+        except (OSError, ValueError, urllib.error.URLError,
+                http.client.HTTPException) as e:   # r17: BadStatusLine...
             errs.append(f"{uri.removeprefix('https://')}: {type(e).__name__}")
             continue
         if body is None:

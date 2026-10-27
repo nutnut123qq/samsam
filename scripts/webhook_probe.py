@@ -12,6 +12,7 @@ không in nội dung trả về ngoài mã trạng thái. `--dry-run` không ghi
 """
 
 import argparse
+import http.client
 import json
 import os
 import sys
@@ -51,7 +52,8 @@ def probe(url: str, opener=None) -> tuple[bool, str]:
             return ok, f"HTTP {r.status}"
     except urllib.error.HTTPError as e:
         return False, f"HTTP {e.code}"
-    except (urllib.error.URLError, OSError, ValueError) as e:
+    except (urllib.error.URLError, OSError, ValueError,
+            http.client.HTTPException) as e:   # r17: BadStatusLine...
         return False, type(e).__name__
 
 

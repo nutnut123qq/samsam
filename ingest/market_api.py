@@ -64,6 +64,7 @@ transaction `market_csv.load` + `market_csv.reconcile` → `conn.commit()`.
 import argparse
 import hashlib
 import hmac
+import http.client
 import json
 import os
 import re
@@ -362,7 +363,10 @@ def _send(req, where: str, retries: int = RETRY_MAX) -> dict:
                   f"{min(wait, RETRY_WAIT_MAX):g}s ({attempt + 1}/{RETRY_MAX})",
                   flush=True)
             _sleep(min(wait, RETRY_WAIT_MAX))
-        except (urllib.error.URLError, OSError, ValueError) as e:
+        # r17: http.client.HTTPException (BadStatusLine, LineTooLong, quá 100
+        # header) không phải OSError — như connectors/fanpage (r16 FIX2).
+        except (urllib.error.URLError, OSError, ValueError,
+                http.client.HTTPException) as e:
             raise ApiError(f"{where}: lỗi mạng ({type(e).__name__})") from None
     if status != 200:
         raise ApiError(f"{where}: HTTP {status}")

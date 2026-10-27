@@ -512,13 +512,16 @@ def ingest(conn, rows: list[dict], cfg: dict, *, by: str,
     """Nạp snapshot + mở/kế thừa/đóng đợt vi phạm → thống kê. Mỗi bài:
     snapshot trong 1 transaction + commit, rồi gắn mục hàng duyệt/cảnh báo
     (2 module đó tự commit). `auto` (C12): nguồn tự thu — người nạp là
-    `AUTO_BY` (agent), không giả tên người."""
+    `AUTO_BY` (agent), không giả tên người. Tính năng TẮT → RolloutBlocked
+    TRƯỚC mọi ghi (r17: snapshot/đóng `da_sua` cũng là trạng thái của đợt)."""
+    from pipelines import rollout  # lười: rollout → director → ...
     if auto:
         err = None if by == AUTO_BY else "auto chỉ với AUTO_BY"
     else:
         err = by_error(by)
     if err:
         raise ValueError(err)
+    rollout.check_generate(conn, FEATURE, "rà kênh (snapshot + đợt vi phạm)")
     now = _aware(now)
     dcfg = {b: director.load_config(b) for b in ("legal_hr", "data_platform")}
     if auto:
@@ -1394,6 +1397,7 @@ def _print_plan(rows, scans) -> None:
 
 
 def _scan_auto_main(dry_run: bool) -> int:
+    from pipelines import rollout
     try:
         cfg = load_config()
     except ValueError as e:
@@ -1425,6 +1429,9 @@ def _scan_auto_main(dry_run: bool) -> int:
             _print_plan(rows, scans)
             return fb_rc or 0
         st = ingest(conn, rows, cfg, by=AUTO_BY, now=now, auto=True)
+    except rollout.RolloutBlocked as e:
+        conn.rollback()
+        return rollout.say_blocked(str(e))
     except (psycopg.Error, ValueError) as e:
         if conn is not None:
             conn.rollback()
@@ -1440,6 +1447,7 @@ def _scan_auto_main(dry_run: bool) -> int:
 
 
 def main(argv=None) -> int:
+    from pipelines import rollout
     ap = argparse.ArgumentParser(
         prog="python -m agents.ra_kenh",
         description="PC-A4 rà bài đang đăng trên kênh sở hữu (file xuất tay)"
@@ -1555,6 +1563,9 @@ def main(argv=None) -> int:
             print(f"[ok] đã ghi data/reports/{path.name}")
             return 0
         st = ingest(conn, rows, cfg, by=a.by, now=now)
+    except rollout.RolloutBlocked as e:
+        conn.rollback()
+        return rollout.say_blocked(str(e))
     except (psycopg.Error, ValueError) as e:
         conn.rollback()
         print(f"[err] {type(e).__name__}: {safe(_mask_pii(str(e)))[:200]}")
