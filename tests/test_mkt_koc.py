@@ -9,7 +9,7 @@ rollback (`tests.test_fp_pnl.fpa_conn`); hợp đồng chép sang thư mục t�
 
 import json
 import shutil
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import pytest
 
@@ -105,6 +105,24 @@ def test_load_kocs_fail_closed(tmp_path, doc):
         p.write_text(doc if isinstance(doc, str) else json.dumps(doc),
                      encoding="utf-8")
     with pytest.raises(mk.KocConfigError):
+        mk.load_kocs(p)
+
+
+@pytest.mark.parametrize("cf", ["C:/a.md", "C:a.md", "\\\\srv\\chia\\a.md",
+                                "/a.md", "a\\..\\..\\b.md", "../a.md"])
+def test_contract_file_rule_same_on_posix(tmp_path, monkeypatch, cf):
+    """r20 FIX2: CI ubuntu + server on-prem là Linux — `Path("C:/a.md")` ở đó
+    không absolute. Giả lập ngữ nghĩa POSIX cho chuỗi trong cấu hình: luật
+    contract_file vẫn từ chối y như trên Windows."""
+    real = mk.Path
+    monkeypatch.setattr(mk, "Path", lambda *a: PurePosixPath(*a)
+                        if a and isinstance(a[0], str) else real(*a))
+    p = tmp_path / "k.json"
+    p.write_text(json.dumps({"_doc": "x", "kocs": [{
+        "code": "KOC-MAU-01", "platform": "tiktok", "niche": "a",
+        "contract_file": cf, "contract_status": "NHAP_MAU"}]}),
+        encoding="utf-8")
+    with pytest.raises(mk.KocConfigError, match="contract_file"):
         mk.load_kocs(p)
 
 

@@ -1,7 +1,7 @@
 """W35.5 — drift-guard .github/workflows/ci.yml (parse YAML, không chạy CI).
 
-PyYAML không nằm trong requirements -> importorskip. PyYAML (YAML 1.1)
-đọc key `on:` thành True."""
+r20: PyYAML đã vào requirements (CI chạy được tệp này); importorskip chỉ còn
+cho máy thiếu gói. PyYAML (YAML 1.1) đọc key `on:` thành True."""
 import re
 from pathlib import Path
 
@@ -53,6 +53,35 @@ def test_test_job_postgres_and_commands(doc):
     # v4.5: eval tất định (validate mọi suite + guardrail), không chạy
     # suite gọi LLM trong job test.
     assert "agent_eval.py --agent chatbot" not in runs
+
+
+def test_ruff_pinned_exact():
+    """r20: CI cài ruff từ requirements; repo không cấu hình ruff nên bản mới
+    đổi mặc định là CI đỏ (0.17: target 3.10 → 3.11, UP017 ×117) — ghim."""
+    req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+    pins = re.findall(r"(?m)^ruff\b.*$", req)
+    assert len(pins) == 1, pins
+    assert re.fullmatch(r"ruff==\d+\.\d+\.\d+", pins[0].strip()), pins
+
+
+def test_test_job_db_setup_matches_preflight(doc):
+    """r20: job test dựng DB đúng các lệnh `_db_guard._FIX` TRƯỚC pytest —
+    thiếu role agent_writer / sku_master rỗng thì preflight dừng exit 4."""
+    from tests import _db_guard
+    runs = _runs(doc["jobs"]["test"])
+    before = runs[:runs.index("python -m pytest -q")]
+    need = re.findall(r"`([^`]+)`", _db_guard._FIX)
+    assert need and all(c in before for c in need), (need, before)
+    assert before.count("python scripts/apply_schema.py --roles") == 2
+    # đúng thứ tự của _FIX: schema+role (cả 2 lần) → core_store → golden_store
+    last = [len(before) - 1 - before[::-1].index(c) for c in need]
+    first = [before.index(c) for c in need]
+    assert all(last[k] < first[k + 1] for k in range(len(need) - 1)), before
+
+
+def test_test_job_timeout_covers_full_suite(doc):
+    # r20: full suite đo local 46–173 phút — 20 phút cũ hủy job giữa pytest
+    assert doc["jobs"]["test"]["timeout-minutes"] >= 180
 
 
 def test_deterministic_suites_are_rule_based():

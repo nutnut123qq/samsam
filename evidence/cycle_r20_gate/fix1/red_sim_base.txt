@@ -1,0 +1,29 @@
+# 2026-10-28T12:12:42+07:00 · cây ad0e620 (git archive) · không .env · không DATABASE_URL
+# bao đóng requirements.txt (marker Linux x86_64): 65 gói đã cài
+# THIẾU local (CI có, không kiểm được; phụ thuộc cấp sau của chúng không biết): []
+# gói đã cài ngoài bao đóng: 208 · module top-level bị chặn: 282
+# plugin pytest11 trong bao đóng (nạp bằng -p): ['anyio'] · ngoài bao đóng (tắt): ['asyncio (pytest-asyncio)', 'langsmith_plugin (langsmith)']
+  fitz: CHẶN
+  yaml: CHẶN
+E       ModuleNotFoundError: No module named 'fitz'
+tests\test_r13_batch_a.py:83: ModuleNotFoundError
+PASSED tests/test_r13_batch_a.py::test_ocr_missing_models_refused_without_network
+PASSED tests/test_r13_batch_a.py::test_ocr_timeout
+PASSED tests/test_r13_batch_a.py::test_intake_records_ocr_engine_same_tx
+PASSED tests/test_r13_batch_a.py::test_stt_without_model_blocked_before_db
+PASSED tests/test_r13_batch_a.py::test_image_openrouter_success_contract
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[no_model]
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[no_key]
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[kill]
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[spend_unknown]
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[over_cap]
+PASSED tests/test_r13_batch_a.py::test_image_retry_once_then_fail
+PASSED tests/test_r13_batch_a.py::test_ocr_missing_cls_model_refused
+PASSED tests/test_r13_batch_a.py::test_intake_cli_ocr_empty_not_silent
+SKIPPED [1] tests\test_ci_workflow.py:10: could not import 'yaml': No module named 'yaml'
+SKIPPED [1] tests\test_r13_batch_a.py:58: chưa có paddleocr/model latin cục bộ — OCR thật CHƯA KIỂM
+SKIPPED [1] tests\test_r13_batch_a.py:196: could not import 'av': No module named 'av'
+SKIPPED [1] tests\test_r13_batch_a.py:208: could not import 'av': No module named 'av'
+FAILED tests/test_r13_batch_a.py::test_ocr_page_cap_and_corrupt_image - Modul...
+1 failed, 13 passed, 4 skipped in 4.37s
+EXIT 1

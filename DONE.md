@@ -23,6 +23,147 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Vòng r20 (28/10/2026) — CI nghiệm thu (F17.1, `.github/workflows/ci.yml` job `test`) chạy được: ruff ghim phiên bản + DB CI dựng như preflight + hạn job — CLOSED 28/10/2026 (/cycle 20 lượt 3), commit local, CHƯA push/merge/deploy
+
+Base: ad0e620830134278b7d11e707b2b82e6bb2fe3af (ghi 28/10/2026 khi mở).
+
+Căn cứ scope (không bịa): bảng 12 mục BỊ CHẶN (`docs/handover/dau-vao-va-quyet-dinh.md` mục I) vẫn "B. Code còn thiếu: không" (sales-08/09
+= repo riêng; nghiệm thu 0/96 chờ đầu vào ngoài). Việc build được = someday r18 (5) + r19 (3): CI GitHub `main` đỏ ở bước `ruff check .` ở
+cả 24 lần chạy từ 15/10 → pytest/eval/redteam Linux CHƯA từng chạy; job `test` là CI nghiệm thu (đầu `ci.yml`: "v3.5 (WP06, F17.1) — CI
+nghiệm thu", `docs/handover/sop.md:2128` "mỗi push/PR chạy ruff + pytest + eval"). Kiểm giả thuyết KHÔNG cần tải gì: changelog ruff 0.17.0
+(github.com/astral-sh/ruff/releases/tag/0.17.0, mục Breaking changes): không cấu hình `target-version` thì mặc định Python 3.11 thay 3.10;
+repo KHÔNG có cấu hình ruff và `requirements.txt` ghim `ruff>=0.6` (PyPI mới nhất 0.17.3) → CI cài 0.17.x. Tái hiện bằng ruff 0.16.10 local
+trên checkout sạch `git archive ad0e620`: `ruff check --isolated .` EXIT 0; `--isolated --target-version py311` → **122 lỗi, 2639 dòng output**
+(117 `UP017` datetime-timezone-utc — luật nằm trong bộ mặc định 0.16, chỉ bật khi target ≥ 3.11 — + 4 `FURB162` + 1 `invalid-syntax`
+`agents/report.py:479` do cờ ép cả kiểm cú pháp về 3.11; 0.17 không cấu hình kiểm cú pháp theo 3.15 nên ước ~121 lỗi luật) — khớp cỡ log CI
+fail ở dòng 2899. Đọc tiếp đường chạy sau ruff (dây chuyền: vá ruff một mình CI vẫn đỏ): job `test` dựng DB bằng `apply_schema.py` (KHÔNG
+`--roles`) + `ingest.core_store` (KHÔNG `golden_store`) trong khi `tests/_db_guard.preflight` (đợt hợp đồng 20/10, sau lần sửa `ci.yml`
+cuối 15/10) đòi role `agent_writer` + `sku_master` có dòng → `pytest` exit 4; `timeout-minutes: 20` trong khi full suite đo local
+2765 s (~46 phút, `evidence/cycle_r19_gate/full_shards.txt`). Phương án bảo thủ (đề xuất): ghim ruff đúng bản mọi gate r15–r19 đã dùng
+(không đổi mã nguồn 100+ chỗ `timezone.utc`, không thêm tệp cấu hình), bước dựng DB của job `test` = đúng `_db_guard._FIX`, nâng hạn job;
+KHÔNG đụng job `eval` (chỉ chạy khi có secret, không chạy pytest), không chia shard CI, không ghim pytest/thư viện khác (chưa có bằng chứng lỗi).
+Phương án khác (không chọn): (b) `target-version = "py312"` + sửa 122 lỗi — diff lớn, 0.17 còn đổi luật khác chưa kiểm được; (c)
+`target-version = "py310"` — khai sai bản Python dự án (3.12).
+
+Must-have:
+- [x] M1 ruff tất định: `requirements.txt` `ruff>=0.6` → `ruff==0.16.10` (PyPI có `ruff-0.16.10-py3-none-manylinux_2_17_x86_64…whl`, phát
+      hành 01/10/2026; comment KHÔNG dấu như các dòng khác của tệp — pip trên Windows đọc theo code page). CI cài đúng bản local → `ruff
+      check .` cho cùng kết quả. Drift-guard `tests/test_ci_workflow.py::test_ruff_pinned_exact` (đúng 1 dòng `ruff==X.Y.Z`).
+      Evidence `ruff.txt`: checkout sạch base `ruff check --isolated .` EXIT 0; mô phỏng mặc định 0.17 `--target-version py311` EXIT 1 —
+      122 lỗi / 2639 dòng (117 UP017 ở 66 tệp + 4 FURB162 + 1 invalid-syntax); cây làm việc cuối EXIT 0 (thường + `--isolated`).
+- [x] M2 job `test` dựng DB như preflight: `apply_schema.py --roles` ×2 + `ingest.core_store` + `ingest.golden_store` (đúng các lệnh trong
+      `_db_guard._FIX`) trước `python -m pytest -q`. Drift-guard `test_test_job_db_setup_matches_preflight` (mọi lệnh backtick trong `_FIX`
+      có trong các bước trước pytest, `--roles` đúng 2 lần). Tái hiện các bước `run:` của job `test` đọc từ `ci.yml` CỦA CÂY ĐÓ
+      (`ci_repro.sh.txt`; bỏ `pip install` — dùng môi trường local) trên cây SẠCH: repo git riêng trong scratchpad, tree commit checkout
+      TRÙNG `ad0e620^{tree}` = `b0c6454a…` (byte + mode y hệt checkout CI, không `.env`/tệp ignore/thư mục lạ), DB mới trên container riêng
+      postgres:16-alpine (CI dùng service `postgres:16`), môi trường chỉ `DATABASE_URL` (bỏ PG*/OPENROUTER_API_KEY/AUTH_MODE/…):
+      **base** (`ci_repro_base.txt`, cụm mới chỉ role `postgres`) → ruff 0.16.10 exit 0, `apply_schema.py` exit 0, `core_store` exit 0,
+      `python -m pytest -q` **exit 4** `[db-guard] DB test 'samsam_ci_base' chưa dựng (thiếu role agent_writer)` → dừng như CI; **cây làm
+      việc** (`ci_repro_work.txt`, cụm mới) → 9 bước, bước dựng DB exit 0, preflight OK, pytest + agent_eval + redteam exit 0 (M4).
+- [x] M3 `timeout-minutes` job `test` 20 → **120** (FIX1: → **240**, xem dưới). Đặt 90 lúc mở; full tái hiện trên cây sạch đo pytest 5133 s (~86 phút — cây trong Temp,
+      Defender quét, lượt 3 Docker DR 27 phút; r19 trong repo 46 phút) sát 90 → nâng 120 (≥ 1,4× lần đo chậm nhất; repo public nên phút runner
+      không tính phí). Drift-guard `test_test_job_timeout_covers_full_suite` ≥ 90 [FIX1: ≥ 180]. Thời gian thật trên `ubuntu-latest` CHƯA đo ([!] dưới).
+- [x] M4 Gate (fp mã cuối `0cb5567c24a931d16154ca1d3b3d8d1cf8ed631aaf19edf0c12ab85df1dc7c3d`, HEAD ad0e620 + cây làm việc, trừ
+      DONE/CYCLE_LOOP/evidence): ruff EXIT 0 (`ruff.txt`); `tests/test_ci_workflow.py` trên base (`git -c core.autocrlf=false archive
+      ad0e620` + tệp test) **3 failed / 7 passed** (`red_before.txt`: `ruff>=0.6`, thiếu `--roles`/`golden_store`, `20 >= 90`) → cây làm
+      việc **10 passed** (`green_after.txt`); **full tái hiện job `test` chia 12 lượt trên cây sạch 7106 passed / 1 skipped / 0 failed**
+      (= collect-only 7107 ca / 190 tệp = 7104 r19 + 3 mới; 0xC0000142×0, không chạy lại lượt nào; `ci_repro_work.txt` + `shard_01..12.txt`,
+      `per_file.txt`, `shards.txt`; DB `samsam_ci`) — 1 skipped = `tests/test_lead_store.py:224` "không có convlog trong máy" (convlog
+      `data/conversations.jsonl*` gitignore — CI cũng skip; trong repo dev có tệp nên r19 0 skip); sau pytest `git status --porcelain` cây
+      0 dòng → `agent_eval.py --deterministic` (như CI, KHÔNG `--no-record`: ghi `eval_runs` vào DB test, dòng cuối #13 `commit_sha` = HEAD cây sạch) exit 0, `redteam.py` (0/50
+      lọt) exit 0; `dpia_draft --check` EXIT 0 (`dpia.txt`); secret scan rỗng (`secret_scan.txt` + `secret_scan.sh.txt`, đối chứng dương 1).
+      Full chạy trên fp `4ada2aca…` (timeout 90, ngưỡng ≥60, và 3 tệp `ci.yml`/`requirements.txt`/`test_ci_workflow.py` vào cây dạng CRLF do
+      bản đầu harness lấy diff với `core.autocrlf=false`); cây cuối khác ĐÚNG 3 chỗ chữ (timeout 90→120 + comment, ngưỡng ≥60→≥90 + comment,
+      dòng AGENTS.md) + CR cuối dòng (`fp_delta.txt`) — không chạm mã/test khác nên không chạy lại full; cây cuối (diff chuẩn hóa như commit,
+      0 CR ở 3 tệp) chạy lại `ci_repro_final.txt` mode probe: 9 bước, dựng DB + preflight + `tests/test_ci_workflow.py` 10 passed +
+      agent_eval + redteam EXIT 0, fp đầu = cuối `0cb5567c…`. Container riêng `samsam-cycle-r20` (postgres:16-alpine; dựng lại 1 lần giữa
+      lượt để cụm mới cho base) ĐÃ DỌN, mật khẩu chỉ ở scratchpad — đã xóa. Harness `ci_repro.sh.txt` (sau lượt chạy chỉ sửa cách ghép URL
+      DSN để secret scan không bắt nhầm mẫu mã — URL ra y hệt) + `secret_scan.sh.txt`.
+- [x] AGENTS.md: 1 dòng lệnh "CI nghiệm thu chạy được (r20)".
+
+- [x] FIX1 (cold-check vòng 1 = FIX, 28/10): BLOCKER `tests/test_r13_batch_a.py:83` `import fitz` không guard — PyMuPDF KHÔNG có trong
+      `requirements.txt` và không gói nào trong bao đóng kéo theo → runner CI `ModuleNotFoundError`, pytest exit 1 (có từ `70ff9f7`; vòng 1
+      che vì tái hiện chạy bằng môi trường dev có thêm ~250 gói — MINOR 2). Vá: phần ảnh hỏng/GIF chạy trước, phần PDF `fitz =
+      pytest.importorskip("fitz")` (KHÔNG thêm PyMuPDF vào requirements: AGPL — chọn engine/giấy phép là việc hai bên, PyMuPDF chỉ đi cùng
+      engine OCR tùy chọn `paddle_local`); comment cũ `requirements.txt` "fitz KHONG dung" sửa đúng. MINOR 3: thêm `PyYAML>=6.0` (MIT) vào
+      requirements nhóm Dev → `tests/test_ci_workflow.py` (3 drift-guard r20 + 7 cũ) không còn skip trên CI. MINOR 4: `timeout-minutes` 120 →
+      **240** (reviewer đo 8630 s ≈ 144 phút dưới tranh tài nguyên > 120; FIX1 đo 6238 s ≈ 104 phút khi session btc chạy pytest song song từ
+      13:11; 240 ≥ 1,6× lần chậm nhất, dưới trần 360 phút của runner), drift-guard ≥ 180. NIT thứ tự: drift-guard kiểm lệnh dựng DB đúng thứ tự
+      `_FIX` (mọi lần `--roles` trước `core_store` trước `golden_store`). NIT harness: `fix1/ci_repro.sh.txt` tự đủ (`setup`/`run`/`teardown`
+      — tự dựng/xóa container + `<SP>/secret/admin.sh`, REPO suy từ vị trí script, kết quả ghi vào `<OUT>` tham số, không ghi đè evidence đang
+      theo dõi, dọn cây/DSN tạm sau `run`); `../ci_repro.sh.txt` giữ nguyên làm bằng chứng vòng 1; dòng AGENTS.md trỏ bản mới [SAI ở FIX1 — dòng vẫn trỏ `../ci_repro.sh.txt`; sửa ở FIX2]. NIT tính độc lập
+      (reviewer cùng session) — không vá ở cycle-agent (quyết của coordinator).
+      Giả lập môi trường runner KHÔNG tải/cài gì (`fix1/ci_env_sim.py.txt`): bao đóng phụ thuộc bắc cầu của `requirements.txt` CỦA CÂY từ metadata
+      gói đã cài, marker Linux x86_64 (66 gói; `streamlit` không cài trên máy dev → phụ thuộc lấy từ PyPI `requires_dist` 1.66.1 —
+      `fix1/missing_requires.json.txt`; thiếu local còn lại: 0), chặn 280 module top-level của 207 gói ngoài bao đóng (fitz, paddleocr, av,
+      psycopg2, pytest_asyncio, langsmith…; `yaml` cho qua sau FIX1) bằng `sitecustomize` bọc finder (import → ModuleNotFoundError,
+      `importlib.util.find_spec` → None như gói vắng thật) + `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 -p anyio` (plugin duy nhất trong bao đóng).
+      Giới hạn ghi rõ: colorama/tzdata (chỉ Windows) để lại; module nạp qua .pth trước sitecustomize; `importlib.metadata` vẫn thấy gói bị chặn;
+      bản gói local ≠ bản mới nhất CI cài; tiến trình con `python -I` không bị chặn. Quét AST (`fix1/import_scan.txt`): 9 import tới module bị
+      chặn, sau FIX1 mọi import trong `tests/` đều qua `importorskip` hoặc try/except ImportError; 2 import trong hàm ở mã nguồn không chặn lỗi (`ingest/doc_intake.py:178` fitz,
+      `connectors/zalo_garden.py:358` av) → someday (8)–(9).
+- [x] Gate sau FIX1 (fp mã đầu = cuối `10c062d66a50871c0ac8e341bad5d80c8d32fe61bb6b6b2b305a5a52821cd2de`, HEAD ad0e620 + cây làm việc, trừ
+      DONE/CYCLE_LOOP/evidence; evidence `evidence/cycle_r20_gate/fix1/`): ruff 0.16.10 EXIT 0 thường + `--isolated` (`ruff.txt`); RED trong
+      giả lập trên base `ad0e620` (`red_sim_base.txt`): `test_ocr_page_cap_and_corrupt_image` **FAILED ModuleNotFoundError fitz**, cả
+      `test_ci_workflow.py` SKIPPED (yaml) — khớp BLOCKER + MINOR 3 → cây làm việc (`green_sim_work.txt`) 23 passed / 4 skipped (fitz, av ×2,
+      model paddleocr), test_ci_workflow 10 passed; môi trường dev đầy đủ 27 passed (`green_dev_env.txt`); **tái hiện job `test` trên cây
+      sạch + giả lập runner + DB postgres:16-alpine mới, full chia 12 lượt: 7100 passed / 7 skipped / 0 failed** (= collect 7107 ca / 190 tệp;
+      0xC0000142×0; `ci_repro_work_shards_sim.txt` + `shard_01..12.txt`, `per_file.txt`, `shards.txt`) — 7 skip đều do gói/tệp vắng trên CI:
+      psycopg2 ×2 (`test_db_guard.py:77/236`), fitz, av ×2, model paddleocr, convlog; bước dựng DB exit 0, sau pytest `git status` cây 0
+      dòng, `agent_eval.py --deterministic` (ghi `eval_runs`, dòng cuối #13 commit = HEAD cây sạch) + `redteam.py` (0/50 lọt) exit 0 trong
+      giả lập; probe trước đó trên cụm mới (`ci_repro_work_probe_sim.txt`, role cụm lúc tạo chỉ `postgres`) 62 passed / 6 skipped + 9 bước
+      exit 0; `dpia_draft --check` EXIT 0; secret scan rỗng (`secret_scan.txt` + `secret_scan.sh.txt`, đối chứng dương 1). Container riêng
+      `samsam-ci-repro` ĐÃ DỌN (`teardown`), mật khẩu chỉ ở scratchpad — đã xóa. Lượt full chạy song song với pytest của session btc từ
+      13:11 (bắt đầu lúc máy rảnh 12:21), RAM trống 0,8–2,1 GB.
+
+- [x] FIX2 (cold-check vòng 2 = FIX, 28/10 — vòng sửa cuối): BLOCKER `agents/mkt_koc.py:125` luật `contract_file` dùng
+      `Path(cf).is_absolute()` phụ thuộc OS — trên Linux (ubuntu-latest, server on-prem) `"C:/a.md"` không absolute, không `..` → `load_kocs`
+      không raise → `tests/test_mkt_koc.py::test_load_kocs_fail_closed[doc10]` fail trên CI (có từ v6.4 `b2feaaf`; giả lập FIX1 chỉ đổi gói,
+      không đổi ngữ nghĩa đường dẫn nên không bắt được). Vá mã (không đổi test cũ): `PureWindowsPath(cf)` cho MỌI OS — từ chối ổ đĩa
+      (`C:/`, `C:a`), UNC, gốc `/`·`\`, `..` theo cả hai dấu tách (Windows cũ nhận `/a.md` vì có gốc mà không ổ đĩa — nay cũng từ chối);
+      `load_contract` vẫn `resolve().relative_to(ROOT)` như cũ. Test mới `test_contract_file_rule_same_on_posix` (6 ca) giả lập ngữ nghĩa POSIX
+      bằng thay `mk.Path` → `PurePosixPath` cho chuỗi cấu hình. Rà cùng idiom (`is_absolute()`/`.drive`/`Pure*Path` toàn repo): chỉ 2 chỗ —
+      `scripts/agent_eval.py:278` `_safe_rel` KHÔNG vá (dây chuyền không: sau kiểm còn `(ROOT / p).resolve().relative_to(ROOT)` + `is_file()`
+      nên `C:/…` trên Linux vẫn ra False, không test nào truyền ổ đĩa) → someday (11). MINOR dòng AGENTS.md r20 trỏ harness vòng 1 (không
+      giả lập) → trỏ `fix1/ci_repro.sh.txt` + ghi `sim` đừng bỏ + luật đường dẫn độc lập OS. NIT docstring `tests/test_ci_workflow.py:3`
+      sửa (PyYAML đã vào requirements). MINOR flake tải `tests/test_docx_p0_rollout_gate.py:220` (ngoài diff) → someday (12).
+- [x] Gate sau FIX2 (fp mã cuối `36e28a584d10c96cf6b8a5b2c79d56c37aae89f384f619a49aefd393d3fb3d53`, đầu = cuối ở cả 2 lượt probe; evidence
+      `evidence/cycle_r20_gate/fix2/`): ruff 0.16.10 EXIT 0 thường + `--isolated`; RED trên base `ad0e620` + test mới (`red_before.txt`): 4
+      failed (`C:/a.md`, `C:a.md`, UNC, `a\..\..\b.md`) / 16 passed — `/a.md`, `../a.md` vốn bị chặn → cây làm việc: dev đủ gói 45 passed / 1
+      skipped (ca DB, lượt unit — `green_dev_env.txt`); tái hiện job `test` trên cây sạch + giả lập runner + DB postgres:16-alpine mới (cụm
+      mới, role lúc tạo chỉ `postgres`), mode probe: (a) 7 tệp chạm `mkt_koc`/drift-guard/FIX1 (`test_mkt_koc`, `test_kd_affiliate`,
+      `test_mkt_ads`, `test_r19_ngay_cong_som`, `test_v14_p5_mkt_ceo_intel`, `test_ci_workflow`, `test_r13_batch_a`) **275 passed / 4 skipped**
+      (fitz, av ×2, model paddleocr) — `ci_repro_probe_koc.txt`; (b) 5 tệp gọi `ra_kenh --partner-file`→`load_kocs`/`agent_eval`
+      (`test_ra_kenh`, `test_v15_p12_policies`, `test_v15_p10_human_authz`, `test_docx_p2`, `test_agent_eval`) **293 passed** —
+      `ci_repro_probe_ra_kenh.txt`; mỗi lượt 9 bước exit 0 (dựng DB, `agent_eval --deterministic`, `redteam`), sau pytest cây 0 dòng; `dpia_draft
+      --check` EXIT 0; secret scan rỗng (`secret_scan.txt`, đối chứng dương 1); container `samsam-ci-repro` ĐÃ DỌN. KHÔNG chạy lại full: so với
+      full giả lập FIX1 (fp `10c062d6…`, 7100/7/0) cây cuối chỉ khác điều kiện `contract_file` trong `load_kocs` + import, 6 ca test mới,
+      docstring test và chữ AGENTS.md (`fp_delta.txt`) — mọi tệp test gọi tới `load_kocs` đã chạy lại trong (a)/(b).
+
+Rà bảo mật diff từ Base (Stage 4, self — chưa phải cold-check): job `test` vẫn `permissions: contents: read`, không secret (drift-guard
+`test_test_job_has_no_secrets` PASS), action không đổi; ghim ruff bản chính xác giảm rủi ro chuỗi cung ứng (bản mới không tự vào CI); bước
+`--roles` tạo role NOLOGIN (`agent_writer`, `app_human`) trong service container dùng một lần; không đổi mã ứng dụng/schema/quyền/egress/
+danh mục. DSN `postgres:postgres` của service CI có từ trước, không thêm dòng chứa DSN. FIX1: chỉ thêm PyYAML (MIT, dùng `yaml.safe_load` trong test) vào requirements, không thêm PyMuPDF (AGPL); test PDF skip có điều kiện; không đổi mã ứng dụng. Không lỗi chặn.
+
+External-dependency: [!] chạy THẬT trên GitHub Actions `ubuntu-latest` — cần push (user giữ quyền push; lượt này không push): (a) test
+chỉ-Linux (tiền lệ r18 trần đệ quy JSON) chưa chạy; (b) thời gian thật của job chưa đo (máy dev 46–173 phút); (c) DR Docker
+(`tests/test_dr_drill.py`) trên runner Linux có thể skip/khác (đòi `pg_dump` cùng major); (d) `pip install` ruff 0.16.10 trên runner chưa
+thấy chạy (wheel manylinux có trên PyPI). Sau push: đọc run `ci` mới — lỗi chỉ-Linux → version kế.
+Someday (thấy trên đường, KHÔNG làm): (1) job `eval` (nightly/bấm tay khi có secret) vẫn dựng DB bằng `apply_schema.py` không `--roles` +
+`embed_store` — không chạy pytest nên preflight không chặn, chưa rà `agent_eval --agent chatbot` có cần role/golden không; (2) `pytest>=8.0`
+và thư viện khác vẫn không ghim (local pytest 9.0.3) — CI có thể lệch bản như ruff, chưa có bằng chứng lỗi; (3) [đã vá ở FIX1 — PyYAML vào requirements]; (4) `docs/handover/sop.md:2128`
+mô tả CI "mỗi push/PR chạy ruff + pytest + eval" — đúng sau r20 nhưng chưa ghi bước dựng DB; (5) dòng log "warning: in the working copy …
+LF will be replaced by CRLF" của git lọt vào evidence (chỉ nhiễu). Someday từ cold-check vòng 1 / FIX1 (KHÔNG vá ở r20): (6) `tests/test_db_guard.py:77/236` hai ca `importorskip("psycopg2")` luôn skip trên CI (psycopg2 ngoài requirements) — cổng chặn DB `samsam` qua psycopg2 chỉ kiểm được trên máy có gói; (7) `docs/handover/runbook-ha-tang.md` mục OCR (`paddle_local`) chưa ghi PyMuPDF (AGPL) là phụ thuộc cho PDF scan; (8) `ingest/doc_intake.py:178` `import fitz` trong `_page_images` không chặn lỗi — server có PaddleOCR mà thiếu PyMuPDF thì PDF scan ra ModuleNotFoundError trong tiến trình OCR con (chưa rà có thành DocError không); (9) `connectors/zalo_garden.py:358` `import av` trong hàm không chặn lỗi (đường STT `whisper_local`); (10) giả lập môi trường dùng bản gói local, không phải bản mới nhất CI cài — lệch bản (như ruff) chỉ lộ trên runner; (11) `scripts/agent_eval.py:278` `_safe_rel` cùng idiom `Path.is_absolute()`/`.drive` phụ thuộc OS — kết quả hiện đúng nhờ `resolve().relative_to(ROOT)` + `is_file()` phía sau (`C:/…` trên Linux ra False), đổi sang `PureWindowsPath` cho nhất quán khi chạm tới; (12) MINOR flake tải (cold-check vòng 2): `ingest/lead_store.py:53` `connect_timeout=3` + `pipelines/rollout.py:2184` nuốt lý do → máy nặng thành `[FAIL] DB không kết nối được` exit 2 thay 1 ở `tests/test_docx_p0_rollout_gate.py:220` (reviewer: 1 failed trong full, chạy riêng 26/26); (13) chưa kiểm trên Linux: font `image_studio`, DR drill trên runner, bản thư viện mới hơn.
+Ghi nhận vận hành lượt này: (i) lần chạy work đầu bị dừng tay (pytest 1 tiến trình do lệnh dính CR từ `print` Windows + session crawl chờ
+máy rảnh) — sửa harness (`newline=LF`, chặn lệnh có CR), dựng lại container rồi chạy lại từ đầu; (ii) khi dọn tiến trình harness, bộ lọc
+`-match 'ci_repro'` (không phân biệt hoa thường) đã dừng nhầm 3 tiến trình `grep.exe` của session khác (monitor cũ từ 27/10 08:21–08:32,
+mẫu lọc chứa chữ `CI_REPRO_ALL_OK`) — không phải pytest/gate, nhưng là tiến trình của session khác.
+Someday từ cold-check vòng 3 (KHÔNG vá ở r20): (14) MINOR phụ thuộc ngầm môi trường CI — job `test` chỉ xanh nếu runner có `/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf` (phần tử cuối `fonts` trong `data/image_studio.json`): reviewer probe không có font tiếng Việt nào → 8 FAILED (`test_video_studio` ×3, `test_agent_eval` ×5 mkt03/mkt04 — không có skip `NEED_FONT`) + `agent_eval --deterministic` EXIT 1; chỉ có DejaVu → 315 passed, eval mkt03 15/15, mkt04 17/17; có từ v6.2–v6.4; ubuntu-latest nhiều khả năng có fonts-dejavu-core (chưa kiểm) — cụ thể hóa (13): bước cài/kiểm font trong `ci.yml` hoặc guard 8 ca + eval, quyết khi đọc run CI đầu; (15) NIT `tests/test_ci_workflow.py:10` `importorskip("yaml")` — PyYAML nay là requirement, gỡ gói thì drift-guard skip im lặng thay vì đỏ (docstring đã ghi).
+
+Cold-check (reviewer ngữ cảnh mới, prompt cố định, read-only — `git status` trước/sau trùng cả 3 vòng; reviewer là subagent cùng session — scratchpad chung, không đọc prompt/script của session build): vòng 1 **FIX** — BLOCKER `tests/test_r13_batch_a.py:83` `import fitz` không guard (giả lập môi trường CI trên 11 tệp: 1 failed / 520 passed / 6 skipped đúng ca này) + MINOR tái hiện dùng env dev / drift-guard skip trên CI (PyYAML) / timeout 120 < 144 phút đo lại + 3 NIT → FIX1. Vòng 2 **FIX** — BLOCKER `agents/mkt_koc.py:125` + `tests/test_mkt_koc.py:91` `is_absolute()` phụ thuộc OS (`C:/a.md` lọt trên Linux, chứng minh bằng luật POSIX) + MINOR AGENTS.md trỏ harness vòng 1 + MINOR flake tải (full chạy lại 7099/7/1 `test_docx_p0_rollout_gate`, riêng tệp 26/26) + NIT docstring → FIX2. Vòng 3 **PASS**: fp mã đầu = cuối `36e28a58…` trùng FIX2; RED base test_ci_workflow 3 failed / 7 passed, base + test mới mkt_koc 4 failed / 16 passed; `gh run view 40541390898` (main `215275f`) job test fail ở bước `ruff check .`; PyPI có wheel manylinux 0.16.10; ruff 0.16.10 EXIT 0 thường + `--isolated` trên cây sạch; **tái hiện 9 bước job `test` bằng `fix1/ci_repro.sh.txt` chế độ sim, DB postgres:16-alpine mới, 12 lượt tuần tự: collect 7113 ca / 190 tệp → 7106 passed / 7 skipped / 0 failed, 0xC0000142×0** (7 skip đúng bộ đã khai; pytest 10357 s ≈ 173 phút, lượt 3 có DR drill 67 phút, RAM trống 0,7–2,2 GB); sau pytest cây 0 dòng; `agent_eval --deterministic` (ghi eval_runs) + `redteam` (0/50 lọt) EXIT 0; `dpia_draft --check` EXIT 0; grep lại `is_absolute`/`.drive`/`isabs`/`Pure*Path` toàn repo chỉ 2 chỗ khớp claim; săn lỗi chỉ-Linux tĩnh (đường sai hoa/thường 17328 tệp → 0, backslash trong data/*.json → 0, leak GITHUB_SHA qua fixture delenv, nhánh POSIX-only có xử lý lỗi, DR drill trên runner skip không fail) không thấy lỗi chặn; secret scan rỗng; container `samsam-ci-repro` đã dọn. Verdict nguyên văn: "VERDICT: PASS (r20 — CI nghiệm thu chạy được; chưa từng chạy trên runner GitHub thật)"; 1 MINOR (font) + 3 NIT → someday (14)–(15) + sửa chữ khi đóng (con số 46–173 phút ở `ci.yml:33`, `tests/test_ci_workflow.py:83`, AGENTS.md dòng r20, mục [!] (b); chữ M3 "≥ 90" ghi [FIX1: ≥ 180]). UNVERIFIED (giới hạn môi trường, không phải lỗi version): chạy trên GitHub Actions `ubuntu-latest` (cần push), bản thư viện mới nhất pip cài, ngữ nghĩa Linux, thời gian thật của job — khớp [!] (a)–(d).
+Retro: 1 Gotcha AGENTS.md "Tái hiện CI phải khớp CẢ tập gói LẪN ngữ nghĩa OS của runner" (kèm luật dọn tiến trình theo PID) + câu cuối Gotcha r18 ghi r20 vá local chờ push; sửa chữ con số đo ở 2 comment + tài liệu (không đổi hành vi — kiểm lại `ruff check .` + `tests/test_ci_workflow.py` sau khi sửa, không chạy lại full).
+Version CLOSED 28/10/2026 (r20; /cycle 20 lượt 3).
+
 ## Vòng r19 (28/10/2026) — ngày/JSON hỏng ở crawl web + cổng TẮT sớm ở 6 CLI sinh đầu ra (HĐ 6.7) — CLOSED 28/10/2026 (/cycle 20 lượt 2), commit local, CHƯA push/merge/deploy
 
 Base: 62b665bdb25161efdf486c5407d25bddf0afde70 (ghi 28/10/2026 khi mở).
@@ -23002,3 +23143,4 @@ Quy ước DoD cho phase connector:
 | r17 | cổng TẮT HĐ 6.7 trước mọi ghi ở `ra_kenh` (legal_hr-04, `--file` + `--scan-auto`); `settlement_csv`/`settlement_api` đối soát bị chặn → exit 2 thay KeyError/exit 0; bắt `http.client.HTTPException` ở `market_api`, `anchor --submit/--upgrade`, `webhook_probe` | 2026-10-27 | `evidence/cycle_r17_gate/` — RED 13 failed → GREEN 13 passed, full chia 11 lượt 7036 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới **PASS** vòng 1 (tự chạy lại full 7036 passed); 1 NIT tài liệu vá trong commit đóng, 3 NIT + 1 ghi nhận → someday. Base `7652045`; commit local, chưa push |
 | r18 | dữ liệu nguồn hỏng → lỗi có kiểm soát: `post_url` Fanpage từ chối khoảng trắng/điều khiển/surrogate, `_storable` lọc chữ/url Fanpage + web trước ghi (NUL/surrogate → bỏ bài, ghi chú số bài), `webhook_probe` thân không phải object / `RecursionError` → không sẵn sàng; `ra_kenh` `--dry-run` khi legal_hr-04 TẮT → `[rollout]` exit 2 trước gọi Fanpage/in kế hoạch | 2026-10-28 | `evidence/cycle_r18_gate/` + `fix1/` — RED 12 failed → GREEN 17 passed, full chia 11 lượt 7053 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới vòng 1 **FIX** (BLOCKER test phụ thuộc OS) → vòng 2 **PASS** (tự chạy lại full 7053/7053); 1 MINOR + 2 NIT → someday. Base `215275f`; commit local, chưa push |
 | r19 | ngày/JSON hỏng ở crawl web: `published_at` ngày không có thật → `posted_on` rỗng (`_web_date`), dòng lồng quá sâu → bỏ + ghi chú (không traceback `channel_scan`); cổng TẮT HĐ 6.7 ngay sau kiểm tham số ở 6 CLI (`kd_care`, `kd_listing`, `mkt_koc`, `mkt_ugc`, `seo_san`, `legal_updates`) — lượt thật + `--dry-run` → `[rollout]` exit 2 trước kết nối/đọc/in/ghi | 2026-10-28 | `evidence/cycle_r19_gate/` — RED 19 failed → GREEN 51 passed, full chia 12 lượt 7104 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới **PASS** vòng 1 (tự chạy lại full 7104/7104 + probe đường DB thật); 2 NIT → someday. Base `62b665b`; commit local, chưa push |
+| r20 | CI nghiệm thu (F17.1) chạy được: `ruff==0.16.10` ghim (0.17 đổi target mặc định → UP017 ×117 làm đỏ `main` từ 15/10), job `test` dựng DB đúng `_db_guard._FIX` (`--roles` ×2 + core + golden), `timeout-minutes` 240, PyYAML vào requirements Dev, test PDF `importorskip("fitz")` (PyMuPDF AGPL chưa thêm), `mkt_koc` kiểm `contract_file` bằng `PureWindowsPath` mọi OS; harness tái hiện job + giả lập gói runner `fix1/ci_repro.sh.txt`/`ci_env_sim` | 2026-10-28 | `evidence/cycle_r20_gate/` + `fix1/` + `fix2/` — RED base pytest CI exit 4 [db-guard], giả lập runner full 12 lượt 7100/7/0 (FIX1), FIX2 tệp liên quan 275+293 passed. Cold-check reviewer ngữ cảnh mới vòng 1 **FIX** (fitz) → vòng 2 **FIX** (`is_absolute` phụ thuộc OS) → vòng 3 **PASS** (tự chạy lại full sim 7106/7/0 trên 7113 ca); 1 MINOR font + NIT → someday. CHƯA chạy trên GitHub Actions (cần push). Base `ad0e620`; commit local, chưa push |

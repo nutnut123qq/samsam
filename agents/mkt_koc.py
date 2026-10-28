@@ -41,7 +41,7 @@ import json
 import re
 import sys
 from contextlib import suppress
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import psycopg
 
@@ -122,8 +122,11 @@ def load_kocs(path: Path | None = None) -> list[dict]:
                 k["niche"].strip()) <= 60:
             raise KocConfigError(f"kocs[{i}].niche phải 1..60 ký tự")
         cf = k["contract_file"]
-        if (not isinstance(cf, str) or not cf.strip() or Path(cf).is_absolute()
-                or ".." in Path(cf).parts):
+        # r20: luật Windows cho mọi OS — trên Linux `Path("C:/a.md")` không
+        # absolute; ổ đĩa/UNC/gốc `/`·`\` hay `..` (cả hai dấu tách) đều từ chối
+        w = PureWindowsPath(cf) if isinstance(cf, str) else None
+        if (w is None or not cf.strip() or w.drive or w.root
+                or ".." in w.parts):
             raise KocConfigError(f"kocs[{i}].contract_file phải đường dẫn "
                                  "tương đối trong repo")
         if k["contract_status"] != "NHAP_MAU":

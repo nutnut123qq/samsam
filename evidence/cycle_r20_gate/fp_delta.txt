@@ -1,0 +1,19 @@
+## khác biệt cây full-run (ci_work, fp 4ada2aca…) → cây cuối (ci_final, fp 0cb5567c…) — 2026-10-28T09:07:17+07:00
+## tệp đổi so với HEAD ở cây cuối: .github/workflows/ci.yml AGENTS.md CYCLE_LOOP.md DONE.md requirements.txt tests/test_ci_workflow.py 
+## (a) khác nội dung bỏ qua CR cuối dòng (DONE.md/CYCLE_LOOP.md loại khỏi fp):
+ .github/workflows/ci.yml:  1 file changed, 2 insertions(+), 2 deletions(-)
+-    # r20: full suite đo local ~46 phút (evidence/cycle_r19_gate/full_shards.txt)
+-    timeout-minutes: 90
++    # r20: full suite đo local 46–86 phút (evidence/cycle_r19_gate, cycle_r20_gate)
++    timeout-minutes: 120
+ AGENTS.md:  1 file changed, 1 insertion(+), 1 deletion(-)
+-| CI nghiệm thu chạy được (r20) | `.github/workflows/ci.yml` job `test` (F17.1): `ruff==0.16.10` GHIM trong `requirements.txt` (repo không cấu hình ruff — 0.17 đổi target mặc đị
++| CI nghiệm thu chạy được (r20) | `.github/workflows/ci.yml` job `test` (F17.1): `ruff==0.16.10` GHIM trong `requirements.txt` (repo không cấu hình ruff — 0.17 đổi target mặc đị
+ tests/test_ci_workflow.py:  1 file changed, 2 insertions(+), 2 deletions(-)
+-    # r20: full suite đo local ~46 phút (r19) — 20 phút cũ hủy job giữa pytest
+-    assert doc["jobs"]["test"]["timeout-minutes"] >= 60
++    # r20: full suite đo local 46–86 phút — 20 phút cũ hủy job giữa pytest
++    assert doc["jobs"]["test"]["timeout-minutes"] >= 90
+## (b) số byte CR ở cây full-run ci_work (bản đầu harness lấy diff với core.autocrlf=false → 3 tệp w/crlf vào cây dạng CRLF): .github/workflows/ci.yml=114 requirements.txt=43 tests/test_ci_workflow.py=147
+## (c) số byte CR ở cây cuối ci_final (diff chuẩn hóa như commit): .github/workflows/ci.yml=0 requirements.txt=0 tests/test_ci_workflow.py=0
+## kết luận: ngoài DONE/CYCLE_LOOP, cây cuối khác cây full-run đúng 3 chỗ (timeout 90→120 + comment, ngưỡng drift-guard ≥60→≥90 + comment, chữ dòng AGENTS.md) và CR cuối dòng của 3 tệp; không chạm mã/test khác → kết quả full không đổi; cây cuối chạy lại probe (bước dựng DB + preflight + test_ci_workflow + agent_eval + redteam) — ci_repro_final.txt

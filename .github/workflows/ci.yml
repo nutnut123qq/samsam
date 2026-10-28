@@ -30,7 +30,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # r20: full suite đo local 46–173 phút (máy dev Windows; runner chưa đo)
+    timeout-minutes: 240
     services:
       postgres:
         image: postgres:16
@@ -55,8 +56,12 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: ruff check .
-      - run: python scripts/apply_schema.py
+      # r20: dựng DB đúng như tests/_db_guard._FIX — thiếu role agent_writer
+      # hoặc sku_master rỗng thì preflight dừng pytest exit 4
+      - run: python scripts/apply_schema.py --roles
+      - run: python scripts/apply_schema.py --roles
       - run: python -m ingest.core_store
+      - run: python -m ingest.golden_store
       - run: python -m pytest -q
       - run: python scripts/agent_eval.py --deterministic
       # v4.2 PC-A9: bộ red-team cố định (luật thuần, không LLM/secret)

@@ -1,0 +1,24 @@
+## base ad0e620 (git -c core.autocrlf=false archive, cây sạch không .env) + tests/test_ci_workflow.py của cây làm việc — không DATABASE_URL (lượt unit; tệp không cần DB) — 2026-10-28T09:07:44+07:00
+## sha256 tệp test (CRLF bản đĩa repo) a5188675f4d65a854832d3de38517b39e6fca44946373320ba206b7e8077b390
+E       AssertionError: ['ruff>=0.6']
+E       assert None
+E        +  where None = <function fullmatch at 0x00000249809D91C0>('ruff==\\d+\\.\\d+\\.\\d+', 'ruff>=0.6')
+E        +    where <function fullmatch at 0x00000249809D91C0> = re.fullmatch
+E        +    and   'ruff>=0.6' = <built-in method strip of str object at 0x0000024986D1EAF0>()
+E        +      where <built-in method strip of str object at 0x0000024986D1EAF0> = 'ruff>=0.6'.strip
+E       AssertionError: (['python scripts/apply_schema.py --roles', 'python -m ingest.core_store', 'python -m ingest.golden_store'], ['pip install -r requirements.txt', 'ruff check .', 'python scripts/apply_schema.py', 'python -m ingest.core_store'])
+E       assert (['python scripts/apply_schema.py --roles', 'python -m ingest.core_store', 'python -m ingest.golden_store'] and False)
+E        +  where False = all(<generator object test_test_job_db_setup_matches_preflight.<locals>.<genexpr> at 0x0000024986A40110>)
+E       assert 20 >= 90
+PASSED tests/test_ci_workflow.py::test_triggers_and_permissions
+PASSED tests/test_ci_workflow.py::test_jobs_have_timeout_and_pinned_actions
+PASSED tests/test_ci_workflow.py::test_test_job_postgres_and_commands
+PASSED tests/test_ci_workflow.py::test_deterministic_suites_are_rule_based
+PASSED tests/test_ci_workflow.py::test_test_job_has_no_secrets
+PASSED tests/test_ci_workflow.py::test_eval_job_dispatch_only_and_guarded
+PASSED tests/test_ci_workflow.py::test_referenced_scripts_exist
+FAILED tests/test_ci_workflow.py::test_ruff_pinned_exact - AssertionError: ['...
+FAILED tests/test_ci_workflow.py::test_test_job_db_setup_matches_preflight - ...
+FAILED tests/test_ci_workflow.py::test_test_job_timeout_covers_full_suite - a...
+3 failed, 7 passed in 2.65s
+EXIT 1

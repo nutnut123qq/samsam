@@ -80,15 +80,6 @@ def test_ocr_missing_models_refused_without_network(tmp_path, monkeypatch, no_ne
 
 
 def test_ocr_page_cap_and_corrupt_image(tmp_path, monkeypatch):
-    import fitz
-    monkeypatch.setattr(di, "OCR_MAX_PAGES", 2)
-    doc = fitz.open()
-    for _ in range(3):
-        doc.new_page(width=50, height=50)
-    pdf = tmp_path / "x.pdf"
-    doc.save(pdf)
-    with pytest.raises(di.DocError, match="OCR_MAX_PAGES"):
-        di._page_images(pdf)
     bad = tmp_path / "x.jpg"
     bad.write_bytes(b"\xff\xd8\xff\xe0" + bytes(200))
     with pytest.raises(di.DocError, match="ảnh hỏng"):
@@ -97,6 +88,17 @@ def test_ocr_page_cap_and_corrupt_image(tmp_path, monkeypatch):
     Image.new("RGB", (8, 8)).save(gif, "GIF")
     with pytest.raises(di.DocError, match="GIF"):
         di._page_images(gif)
+    # r20: PyMuPDF (AGPL) chỉ đi cùng engine OCR tùy chọn, không có trong
+    # requirements/CI — phần PDF skip khi thiếu, phần ảnh vẫn chạy ở trên
+    fitz = pytest.importorskip("fitz")
+    monkeypatch.setattr(di, "OCR_MAX_PAGES", 2)
+    doc = fitz.open()
+    for _ in range(3):
+        doc.new_page(width=50, height=50)
+    pdf = tmp_path / "x.pdf"
+    doc.save(pdf)
+    with pytest.raises(di.DocError, match="OCR_MAX_PAGES"):
+        di._page_images(pdf)
 
 
 def test_ocr_timeout(tmp_path, monkeypatch):

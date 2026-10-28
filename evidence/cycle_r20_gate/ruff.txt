@@ -1,0 +1,26 @@
+## ruff — 2026-10-28T06:59:59+07:00 · ruff 0.16.10 (bản local mọi gate r15–r19; requirements cây làm việc ghim cùng bản)
+## (1) checkout sạch base ad0e620 (git -c core.autocrlf=false archive — LF như checkout CI Linux; không .agents/founder/.venv): ruff check --isolated .
+All checks passed!
+EXIT 0
+## (2) cùng cây, mô phỏng mặc định ruff 0.17 (changelog 0.17.0 Breaking changes: không cấu hình target → Python 3.11): ruff check --isolated --target-version py311 .
+EXIT 1
+số dòng output (format full mặc định): 2639
+Found 122 errors.
+[*] 117 fixable with the `--fix` option (4 hidden fixes can be enabled with the `--unsafe-fixes` option).
+theo mã:
+      4 : FURB162
+    117 : UP017
+      1 : invalid-syntax
+invalid-syntax (do cờ ép cả kiểm cú pháp 3.11; 0.17 không cấu hình kiểm cú pháp theo 3.15):
+agents\report.py:479:17: invalid-syntax: Cannot use line breaks in non-triple-quoted f-string replacement fields on Python 3.11 (syntax was added in Python 3.12)
+số tệp có UP017: 66
+## (3) cây làm việc (repo): ruff check . (exclude thư mục lạ không theo dõi .agents/founder/output)
+All checks passed!
+EXIT 0
+All checks passed!
+EXIT (--isolated) 0
+## (4) cây làm việc CUỐI (sau đổi timeout 90→120) — 2026-10-28T09:08:06+07:00
+All checks passed!
+EXIT 0
+All checks passed!
+EXIT (--isolated) 0

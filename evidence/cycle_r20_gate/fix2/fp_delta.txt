@@ -1,0 +1,41 @@
+## khác biệt fp 10c062d6… (full giả lập FIX1) → fp cuối FIX2 — chỉ các tệp FIX2 chạm (DONE/CYCLE_LOOP/evidence loại khỏi fp) — 2026-10-28T17:59:12+07:00
+## tệp: agents/mkt_koc.py (luật contract_file), tests/test_mkt_koc.py (+6 ca posix), tests/test_ci_workflow.py (docstring), AGENTS.md (dòng r20)
+diff --git a/agents/mkt_koc.py b/agents/mkt_koc.py
+index a8a9ceb..b6190f6 100644
+--- a/agents/mkt_koc.py
++++ b/agents/mkt_koc.py
+@@ -41,7 +41,7 @@ import json
+ import re
+ import sys
+ from contextlib import suppress
+-from pathlib import Path
++from pathlib import Path, PureWindowsPath
+ 
+ import psycopg
+ 
+@@ -122,8 +122,11 @@ def load_kocs(path: Path | None = None) -> list[dict]:
+                 k["niche"].strip()) <= 60:
+             raise KocConfigError(f"kocs[{i}].niche phải 1..60 ký tự")
+         cf = k["contract_file"]
+-        if (not isinstance(cf, str) or not cf.strip() or Path(cf).is_absolute()
+-                or ".." in Path(cf).parts):
++        # r20: luật Windows cho mọi OS — trên Linux `Path("C:/a.md")` không
++        # absolute; ổ đĩa/UNC/gốc `/`·`\` hay `..` (cả hai dấu tách) đều từ chối
++        w = PureWindowsPath(cf) if isinstance(cf, str) else None
++        if (w is None or not cf.strip() or w.drive or w.root
++                or ".." in w.parts):
+             raise KocConfigError(f"kocs[{i}].contract_file phải đường dẫn "
+                                  "tương đối trong repo")
+         if k["contract_status"] != "NHAP_MAU":
+diff --git a/tests/test_ci_workflow.py b/tests/test_ci_workflow.py
+index 3212c53..57ef801 100644
+--- a/tests/test_ci_workflow.py
++++ b/tests/test_ci_workflow.py
+@@ -3,2 +3,2 @@
+-PyYAML không nằm trong requirements -> importorskip. PyYAML (YAML 1.1)
+-đọc key `on:` thành True."""
++r20: PyYAML đã vào requirements (CI chạy được tệp này); importorskip chỉ còn
++cho máy thiếu gói. PyYAML (YAML 1.1) đọc key `on:` thành True."""
+@@ -57,0 +58,29 @@ def test_test_job_postgres_and_commands(doc):
++def test_ruff_pinned_exact():
++    """r20: CI cài ruff từ requirements; repo không cấu hình ruff nên bản mới

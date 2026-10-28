@@ -1,0 +1,165 @@
+#!/bin/bash
+# r20 FIX1 — tái hiện job `test` của .github/workflows/ci.yml trên máy dev Windows, TỰ ĐỦ (bản vòng 1:
+# ../ci_repro.sh.txt — giữ nguyên làm bằng chứng của lần chạy đó).
+#   bash ci_repro.sh.txt setup <SP>                 container riêng postgres:16-alpine (CI: service postgres:16), cổng +
+#                                                   mật khẩu ngẫu nhiên → <SP>/secret/admin.sh (chỉ scratchpad)
+#   bash ci_repro.sh.txt run <SP> <OUT> <SHA|work> <real|shards|probe> [sim|nosim] [ca_mỗi_lượt]
+#   bash ci_repro.sh.txt teardown <SP>              xóa container + <SP>/secret
+# run: cây SẠCH như actions/checkout trong <SP> (git archive <SHA> — hoặc HEAD + `git diff HEAD --binary` chuẩn hóa như
+# commit khi `work`; repo git riêng, không .env/tệp ignore/thư mục lạ), DB MỚI `samsam_ci_<giờ>` trên container của setup,
+# môi trường chỉ DATABASE_URL. Bước = `run:` của job `test` đọc TỪ ci.yml CỦA CÂY ĐÓ, tuần tự, DỪNG ở bước lỗi đầu tiên.
+# Khác CI (ghi rõ): bỏ `pip install` — dùng môi trường local; `sim` (mặc định) thay cho pip install bằng giả lập môi trường
+# runner: ci_env_sim.py.txt chặn mọi module ngoài bao đóng phụ thuộc của requirements.txt CỦA CÂY + PYTEST_DISABLE_PLUGIN_
+# AUTOLOAD (chỉ nạp plugin trong bao đóng) cho MỌI bước sau pip install; pytest: real = đúng lệnh, shards = chia lượt cùng
+# thứ tự --collect-only (Gotcha 0xC0000142 — CI chạy 1 tiến trình), probe = `python -m pytest -q $PROBE_FILES` (mặc định
+# tests/test_ci_workflow.py). Kết quả ghi vào <OUT> (tham số — không ghi đè evidence đang theo dõi).
+ACT="$1"; SP="$2"
+HERE=$(cd "$(dirname "$0")" && pwd); REPO=$(git -C "$HERE" rev-parse --show-toplevel)
+CT=samsam-ci-repro
+case "$ACT" in
+  setup)
+    mkdir -p "$SP/secret" || exit 2
+    [ -e "$SP/secret/admin.sh" ] && { echo "đã có $SP/secret/admin.sh — teardown trước"; exit 2; }
+    python -I - "$SP/secret/admin.sh" <<'PY' || exit 2
+import secrets, socket, sys
+pw = secrets.token_urlsafe(24)
+for _ in range(50):
+    port = 55000 + secrets.randbelow(4000)
+    s = socket.socket()
+    try:
+        s.bind(("127.0.0.1", port)); s.close(); break
+    except OSError:
+        s.close()
+open(sys.argv[1], "w").write(f"export CT_PORT={port}\nexport CT_PW='{pw}'\n"
+                             f"export CYCLE_ADMIN='host=127.0.0.1 port={port} user=postgres password={pw} dbname=postgres'\n")
+PY
+    source "$SP/secret/admin.sh"
+    docker run -d --name "$CT" -e POSTGRES_PASSWORD="$CT_PW" -p "127.0.0.1:$CT_PORT:5432" postgres:16-alpine >/dev/null || exit 2
+    echo "container $CT postgres:16-alpine @ 127.0.0.1:$CT_PORT"; exit 0;;
+  teardown)
+    docker rm -f "$CT" >/dev/null 2>&1; rm -rf "$SP/secret"; echo "đã xóa $CT + $SP/secret"; exit 0;;
+  run) ;;
+  *) echo "setup|run|teardown"; exit 2;;
+esac
+OUT="$3"; WHICH="$4"; MODE="$5"; SIM="${6:-sim}"; TARGET="${7:-600}"
+case "$MODE" in real|shards|probe) ;; *) echo "mode real|shards|probe"; exit 2;; esac
+case "$SIM" in sim|nosim) ;; *) echo "sim|nosim"; exit 2;; esac
+[ -e "$SP/secret/admin.sh" ] || { echo "chưa setup"; exit 2; }
+if [ "$WHICH" = work ]; then SRC=HEAD; else SRC=$(git -C "$REPO" rev-parse --verify "$WHICH^{commit}") || exit 2; fi
+TAG=$(date +%H%M%S); DB="samsam_ci_$TAG"; T="$SP/ci_$TAG"; mkdir -p "$OUT" || exit 2
+LOG="$OUT/ci_repro_${WHICH:0:7}_${MODE}_${SIM}.txt"
+red() { sed -E -e 's#(postgres(ql)?://[^:/@[:space:]]+:)[^@[:space:]]+@#\1***@#g' -e 's/(password=)[^[:space:]'"'"'"]+/\1***/g'; }
+ram() { powershell -NoProfile -Command "[int]((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory/1024)" | tr -d '\r'; }
+fp() { { git -C "$REPO" diff HEAD --binary -- . ':(exclude)DONE.md' ':(exclude)CYCLE_LOOP.md'
+         git -C "$REPO" ls-files --others --exclude-standard | grep -vE '^(evidence/|\.agents/|founder/|lv2-market-top\.png)' | sort |
+           while read -r f; do echo "== $f"; cat "$REPO/$f"; done; } 2>/dev/null | sha256sum | cut -c1-64; }
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY CONV_SAMPLE OPENROUTER_API_KEY PYTHONPATH PYTEST_ADDOPTS
+export PYTHONIOENCODING=utf-8
+G() { git -C "$T" -c user.name=ci-repro -c user.email=ci-repro@localhost -c core.autocrlf=false -c core.longpaths=true "$@"; }
+mkdir "$T" || exit 2
+{
+echo "# tái hiện job test ci.yml — $(date -Iseconds) · cây $WHICH · DB $DB · mode $MODE · $SIM"
+echo "# repo HEAD $(git -C "$REPO" rev-parse HEAD) · fp mã đầu = $(fp)"
+git -C "$REPO" -c core.autocrlf=false archive "$SRC" | tar -x -C "$T"
+G init -q && G config core.autocrlf false && G add -A -f && G commit -qm "checkout" || exit 3
+if [ "$WHICH" = work ]; then
+  git -C "$REPO" diff HEAD --binary > "$SP/work_$TAG.patch" 2>/dev/null
+  if [ -s "$SP/work_$TAG.patch" ]; then G apply "$SP/work_$TAG.patch" && G add -A && G commit -qm "work" || { echo "áp diff lỗi"; exit 3; }; fi
+  echo "# diff áp vào cây: sha256 $(G diff HEAD~1 HEAD --binary | sha256sum | cut -c1-16) vs patch $(sha256sum < "$SP/work_$TAG.patch" | cut -c1-16)"
+  ck=HEAD~1
+else ck=HEAD; fi
+echo "# cây sạch: tree commit checkout $(G rev-parse "$ck^{tree}") vs repo $SRC $(git -C "$REPO" rev-parse "$SRC^{tree}") (trùng = byte + mode y hệt checkout CI) · $(G ls-files | wc -l) tệp · git status $(G status --porcelain | wc -l) dòng · .env $( [ -e "$T/.env" ] && echo CÓ || echo không)"
+source "$SP/secret/admin.sh"
+python -I - "$DB" "$SP/secret/env_$TAG.sh" <<'PY' || exit 3
+import os, sys, time
+import psycopg
+from psycopg import conninfo
+sys.stdout.reconfigure(encoding="utf-8")
+db, out = sys.argv[1], sys.argv[2]
+d = conninfo.conninfo_to_dict(os.environ["CYCLE_ADMIN"])
+assert d["host"] == "127.0.0.1" and d["dbname"] == "postgres" and db != "samsam"
+for _ in range(30):
+    try:
+        c = psycopg.connect(conninfo.make_conninfo(**d), autocommit=True, connect_timeout=5)
+        break
+    except psycopg.OperationalError:
+        time.sleep(1)
+else:
+    sys.exit("không kết nối được container")
+with c:
+    if c.execute("select 1 from pg_database where datname = %s", (db,)).fetchone():
+        sys.exit(f"DB {db} đã tồn tại — không drop/ghi đè")
+    roles = [r[0] for r in c.execute("select rolname from pg_roles where rolname !~ '^pg_' order by 1")]
+    c.execute(f"create database {db}")
+print(f"# DB mới {db} @ 127.0.0.1:{d['port']} · role cụm lúc tạo: {roles}")
+# DATABASE_URL dạng URL như CI; ghép chuỗi để quét bí mật không bắt nhầm mẫu mã
+url = "postgresql" + "://" + d["user"] + ":" + d["password"] + "@127.0.0.1:" + str(d["port"]) + "/" + db
+open(out, "w").write("export DATABASE_URL='" + url + "'\n")
+PY
+unset CYCLE_ADMIN CT_PW
+source "$SP/secret/env_$TAG.sh"
+python -I - "$T/.github/workflows/ci.yml" > "$SP/steps_$TAG.txt" 2> "$SP/timeout_$TAG.txt" <<'PY'
+import sys, yaml
+sys.stdout.reconfigure(encoding="utf-8", newline=chr(10))  # print Windows mặc định CRLF → bash đọc lệnh dính CR
+job = yaml.safe_load(open(sys.argv[1], encoding="utf-8"))["jobs"]["test"]
+print(f"timeout-minutes {job.get('timeout-minutes')}", file=sys.stderr)
+for s in job["steps"]:
+    if "run" in s:
+        print(s["run"].strip())
+PY
+echo "# ci.yml của cây: job test $(cat "$SP/timeout_$TAG.txt") · $(wc -l < "$SP/steps_$TAG.txt") bước run"
+cd "$T" || exit 3
+ALL=0; n=0
+while IFS= read -r cmd <&3; do
+  n=$((n + 1)); t0=$(date +%s)
+  case "$cmd" in *$'\r'*) echo "lệnh có CR — dừng"; exit 3;; esac
+  case "$cmd" in
+    "pip install"*)
+      echo "## bước $n: $cmd → BỎ (môi trường local: $(ruff --version), $(python --version 2>&1))"
+      if [ "$SIM" = sim ]; then
+        python -I "$HERE/ci_env_sim.py.txt" "$T/requirements.txt" "$T" "$SP/sim_$TAG" "$HERE/missing_requires.json.txt" | sed 's/^/    /'
+        export PYTHONPATH="$SP/sim_$TAG" CI_SIM_BLOCKED="$SP/sim_$TAG/blocked.json" PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+        export PYTEST_ADDOPTS="$(cat "$SP/sim_$TAG/plugins.txt")"
+        echo "    # giả lập runner BẬT cho các bước sau: PYTEST_ADDOPTS='$PYTEST_ADDOPTS' · kiểm: $(python -c 'import importlib.util as u; print("fitz", u.find_spec("fitz"), "· yaml", u.find_spec("yaml") is not None)')"
+      fi
+      continue;;
+    "python -m pytest -q")
+      if [ "$MODE" = real ]; then
+        python -m pytest -q > "$SP/step.log" 2>&1; rc=$?
+      elif [ "$MODE" = probe ]; then
+        python -m pytest -q -ra ${PROBE_FILES:-tests/test_ci_workflow.py} > "$SP/step.log" 2>&1; rc=$?
+        grep -E "^(FAILED|ERROR|SKIPPED)" "$SP/step.log" | red | sed 's/^/    /'
+      else
+        python -m pytest --collect-only -q > "$SP/collect_$TAG.txt" 2>&1; rc=$?
+        if [ $rc -eq 0 ]; then
+          grep '::' "$SP/collect_$TAG.txt" | sed 's/::.*//' | uniq -c | awk '{print $2, $1}' > "$OUT/per_file.txt"
+          awk -v t="$TARGET" '{ if (k >= t) { s++; k = 0 } print s+1, $1; k += $2 }' "$OUT/per_file.txt" > "$OUT/shards.txt"
+          S=$(tail -1 "$OUT/shards.txt" | cut -d' ' -f1)
+          echo "# collect-only: $(tail -1 "$SP/collect_$TAG.txt") · $(awk '{s+=$2} END {print s}' "$OUT/per_file.txt") ca / $(wc -l < "$OUT/per_file.txt") tệp → $S lượt"
+          for i in $(seq 1 "$S"); do
+            files=$(awk -v i="$i" '$1 == i {print $2}' "$OUT/shards.txt"); nf=$(echo "$files" | wc -l)
+            r0=$(ram); s0=$(date +%s); f="$OUT/shard_$(printf %02d "$i").txt"
+            python -m pytest -q -ra $files 2>&1 | red > "$f"; sr=${PIPESTATUS[0]}
+            s1=$(date +%s); r1=$(ram)
+            echo "lượt $i/$S: $nf tệp · RAM trống $r0→$r1 MB · $((s1 - s0)) s · rc=$sr · 0xC0000142×$(grep -c "3221225794\|0xC0000142" "$f") · $(tail -1 "$f" | grep -oE '[0-9]+ (passed|failed|skipped|errors?)[^=]*' | head -1)"
+            [ "$sr" -ne 0 ] && rc=1
+          done
+        else
+          tail -5 "$SP/collect_$TAG.txt" | red
+        fi
+        echo "tóm tắt pytest chia lượt" > "$SP/step.log"
+      fi;;
+    *) bash -c "$cmd" > "$SP/step.log" 2>&1; rc=$?;;
+  esac
+  echo "## bước $n: $cmd → exit $rc ($(( $(date +%s) - t0 )) s)"; tail -n 6 "$SP/step.log" | red | sed 's/^/    /'
+  if [ "$cmd" = "python -m pytest -q" ]; then echo "    # sau pytest: git status --porcelain của cây $(G status --porcelain | wc -l) dòng"; G status --porcelain | head -5 | sed 's/^/    /'; fi
+  [ $rc -ne 0 ] && { ALL=$rc; echo "DỪNG ở bước lỗi đầu tiên (như CI — các bước sau skipped)"; break; }
+done 3< "$SP/steps_$TAG.txt"
+echo "# fp mã cuối = $(fp)"
+echo "EXIT $ALL"
+exit "$ALL"
+} 2>&1 | red > "$LOG"
+rc=${PIPESTATUS[0]}
+rm -rf "$T" "$SP/work_$TAG.patch" "$SP/steps_$TAG.txt" "$SP/timeout_$TAG.txt" "$SP/collect_$TAG.txt" "$SP/sim_$TAG" "$SP/secret/env_$TAG.sh"
+exit "$rc"
