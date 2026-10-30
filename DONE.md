@@ -23,6 +23,101 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Vòng r21 (28/10/2026) — 3 test chập chờn thành tất định (CI GitHub nay là cổng thật) — CLOSED 31/10/2026 (/cycle 5 lượt 1), commit local, CHƯA push/merge/deploy
+
+Base: 43263c5fd92760d0d36356f39cfd9049955ef045 (ghi 28/10/2026 khi mở).
+
+Căn cứ scope (user chỉ định thứ tự cho run `cycle5-2026-10-28`): (1) lỗi làm CI GitHub đỏ → (2) 3 test chập chờn đã ghi someday → (3)
+no-work. **(1) KHÔNG nhận được lỗi nào là "đã biết"** — chưa có tên ca fail (chi tiết mục [!] dưới) → chuyển (2). Phương án bảo thủ
+(chọn): vá Ở TEST, 0 dòng mã ứng dụng — cả 3 là lỗi của chính ca kiểm (đồng hồ/race/độ trễ máy), mã ứng dụng đúng. Phương án khác (không
+chọn): nâng `ingest/lead_store.CONNECT_TIMEOUT_S` 3 → 10 cho mọi 69 module (đổi hành vi dashboard/CLI khi DB chết — quyết của người);
+in lý do lỗi connect trong `lead_store.connect` (đổi stderr của 69 module) — ghi someday.
+
+Must-have:
+- [x] M1 `tests/test_ceo_decisions.py` fixture `ceo`: `now = now()` DB (= `decided_at`, cùng tx) thay `+ 1 phút` — trước: chạy trong phút
+      cuối trước 00:00 VN thì `today` (= ngày của `now`) sang ngày mới còn `decided_on` (ngày VN của `decided_at`) ở ngày cũ → `row == (…,
+      today, …)` fail (r18 gate: lượt 1 lúc 00:00:52 VN). `now == decided_at` vẫn thỏa `_PROPOSE_SQL` (`decided_at <= now`), `parse_now`
+      giữ micro giây. Rà cùng idiom (`select now()` + `timedelta` + `.date()` trong 16 tệp test): 0 chỗ khác.
+- [x] M2 `tests/test_b2b_form.py`: POST bị từ chối TRƯỚC khi đọc body (415, 429, và 404 ở `test_post_bad_input_400_no_echo` — cùng
+      idiom) gửi CHỈ header qua raw socket (`_Srv.early`) — `http.client` gửi header và body bằng 2 lần `send()`; server đọc xong header,
+      từ chối, đóng khi body chưa đọc → RST → client mất phản hồi (`ConnectionAbortedError` 10053 Windows; Linux tương ứng
+      ECONNRESET/EPIPE). Gotcha AGENTS.md "server REJECT-sớm → raw socket". 5 POST 200 vẫn qua `http.client` (server đọc hết body).
+- [x] M3 `tests/test_docx_p0_rollout_gate.py` LAUNCHER: `lead_store.CONNECT_TIMEOUT_S = 30` trong tiến trình CLI của test — trước: máy
+      nặng làm connect > 3 s → `[FAIL] DB không kết nối được` exit 2 thay mã ca kiểm (`_side_conn` của auth lấy cùng `connect_timeout`
+      từ tham số conn nên cũng 30). Không đổi mã ứng dụng.
+- [x] M4 Gate (fp mã đầu = cuối `0b6e8446504b0d20e8fd4747df0caf303f992ef234735b3341e5404a4ce3c956`, HEAD 43263c5 + cây làm việc, trừ
+      DONE/CYCLE_LOOP/evidence; evidence `evidence/cycle_r21_gate/`): ruff 0.16.10 EXIT 0 thường + `--isolated` (`ruff.txt`); RED/GREEN
+      từng mục: M1 chạy THẬT quanh 00:00 VN 28→29/10 (`m1_midnight_probe.txt`, `midnight.sh.txt`: base HEAD và cây làm việc song song
+      mỗi vòng, 9 vòng 16:58:20–17:00:53 UTC — base **4 failed** ở vòng 3–6 = phút 23:59 VN "At index 1 diff: date(2026, 10, 28) !=
+      date(2026, 10, 29)", 5 vòng ngoài phút đó pass; cây làm việc 9/9 passed); M2 ép cửa sổ race bằng plugin chèn 0,3 s giữa send header
+      và send body (`m2_race_probe.txt`, `probe_delay_body.py.txt`): base **2 failed** `ConnectionAbortedError [WinError 10053]` (415/429
+      và 404) → cây làm việc 2 passed (không probe: cả hai 2 passed); M3 proxy TCP chậm 4 s mỗi kết nối (`m3_slow_connect_probe.txt`,
+      `slow_proxy.py.txt`): base **1 failed** `[FAIL] DB không kết nối được (DATABASE_URL)` `assert 2 == 0` → cây làm việc 1 passed;
+      3 tệp đích trên DB test riêng 121 passed. **Full tái hiện job `test` bằng `fix1/ci_repro.sh.txt run … work shards sim` (cây sạch
+      tree `20e1a944…` trùng HEAD, giả lập runner chặn 280 module ngoài bao đóng requirements, THÊM `TZ=UTC0` = giờ địa phương UTC như
+      runner, DB mới `samsam_ci_161510` trên container riêng postgres:16-alpine), 12 lượt tuần tự 16:15–18:04 UTC (qua 00:00 VN lúc lượt
+      3): collect 7113 ca / 190 tệp → 7106 passed / 7 skipped / 0 failed, 0xC0000142×0** (`full/ci_repro_work_shards_sim.txt`,
+      `full/shard_01..12.txt`, `per_file.txt`, `shards.txt`; pytest 6318 s, RAM trống 1,1–2,9 GB) — 7 skip đúng bộ r20 (psycopg2 ×2,
+      convlog, model paddleocr, fitz, av ×2); 9 bước exit 0 (dựng DB ×4, preflight, sau pytest cây 0 dòng, `agent_eval --deterministic`
+      ghi `eval_runs`, `redteam` 0/50 lọt). Giới hạn: cụm container lúc tạo DB đã có role (do DB dev `samsam_r21` dựng trước) — bước
+      `--roles` trên cụm trắng đã kiểm ở r20. Secret scan rỗng (`secret_scan.txt` + `secret_scan.sh.txt`, đối chứng dương 1).
+      Container `samsam-ci-repro` + `<SP>/secret` + `<SP>/base_tree` ĐÃ DỌN.
+
+Rà bảo mật diff từ Base (Stage 4, self — chưa phải cold-check): chỉ 3 tệp test; 0 mã ứng dụng/schema/quyền/egress/`ci.yml`; raw socket mới
+chỉ tới server test `127.0.0.1` port 0 (timeout 10 s như `raw()` cũ); `CONNECT_TIMEOUT_S = 30` chỉ trong tiến trình CLI do test sinh. Không
+lỗi chặn. Ghi chú 30/10 (cold-check vòng 1, MINOR): cây làm việc nay lẫn việc dở của 2 luồng khác KHÔNG thuộc r21 (bản viết lại TS:
+`ci.yml`, `.gitignore`, `data/data_flow_map.json`, `docs/legal/{DPIA,TIA}-nhap.md`, `ts/`…; dọn Docker 29/10: `AGENTS.md` khối ci_repro,
+`tests/test_safety_s01_rotation.py`, `tests/test_docker_test_cleanup.py`, `scripts/ci_repro.sh`) — commit đóng r21 chỉ stage tường minh 3
+tệp test + `DONE.md` + `CYCLE_LOOP.md` + `evidence/cycle_r21_gate/` (+ hunk retro của r21 trong `AGENTS.md`), không `-a`/`add -u`.
+
+[!] CI GitHub đỏ (ưu tiên 1) — CHƯA xác định ca fail: run 40715909367 (push `ai-infra` @43263c5, job `test` 122913412750,
+ubuntu-latest) bước `python -m pytest -q` 15:27:17–15:47:10 UTC (~20 phút, full suite chạy hết) exit 1 = có ca FAILED (không phải
+preflight exit 4 / lỗi collect exit 2); log job cần token (403), `gh` hết hạn (401) — evidence `evidence/cycle_r21_gate/ci_run.txt`.
+Đã loại trừ bằng bằng chứng kiểm được: (a) TZ: mã ứng dụng 0 lời gọi giờ địa phương naive (`datetime.now()`/`date.today()`/
+`.astimezone()` không đối số/`time.localtime`), 14 `datetime(…)` naive trong test đều cố ý (kiểm từ chối, `noqa: DTZ001`), schema 0
+cột `timestamp` không múi giờ; gate full lượt này chạy với `TZ=UTC0` (Python Windows đổi giờ địa phương theo TZ — `tz_probe.txt`)
+→ 7106/7/0 (M4); (b) nhánh theo OS trong mã: `job_runs` flock, `onprem_preflight.check_timers` (Linux → CHUA_DAT, test vẫn chờ exit 1),
+`db_backup` `.exe`, `zalo` — không thấy ca kiểm nào đổi kết quả; 0 test `skipif` theo nền tảng. CHƯA kiểm được: font DejaVu
+(`toolset-2404.json` của actions/runner-images chỉ liệt kê `fonts-noto-color-emoji`; DejaVu có thể vào qua phụ thuộc — chưa xác minh),
+ubuntu-latest đang chuyển dần sang 26.04 (image thật của run chỉ có trong log), bản gói pip mới nhất. Cần user: `gh auth login`
+(hoặc tải log job) → tên ca fail → version kế.
+**Cập nhật 30/10/2026 — đã có tên ca fail** (`gh` đã đăng nhập lại; `gh run view 40715909367 --log-failed`, trích
+`evidence/cycle_r21_gate/ci_log_failed_excerpt.txt`): image `ubuntu-26.04` (20261025.179), `3 failed, 7097 passed, 13 skipped` — đúng 3 ca
+diễn tập khôi phục `tests/test_db_backup.py` (`test_encrypted_backup_and_drill`, `test_drill_ok_and_dropped`,
+`test_drill_mismatch_still_drops`): `tool native:/usr/bin/pg_dump` (bản trên PATH runner, mới hơn server) → `pg_restore … unrecognized
+configuration parameter "transaction_timeout" Command was: SET transaction_timeout = 0;` vào service `postgres:16`. Không thuộc 3 test r21;
+local pass vì máy không có pg trên PATH → `find_tool` rơi về docker `postgres:16-alpine` đúng major. Rủi ro thật cho diễn tập khôi phục
+PL02 (30/11, 18/12) khi client trên server mới hơn server → vá ở version kế (r22), không mở lại r21.
+
+Someday (thấy trên đường, KHÔNG làm): (1) cùng lớp M3 — LAUNCHER chạy CLI tiến trình con qua `lead_store.connect` 3 s ở 4 tệp khác
+(`test_docx_p0c_person_login`, `test_v15_fix_p102`, `test_v15_p10_human_authz`, `test_v15_fix_p87c` dùng lại LAUNCHER của p10) và mọi
+test spawn CLI có DB thật — chưa thấy flake, vá cùng một dòng khi thấy; (2) `ingest/lead_store.connect` nuốt lý do (`except
+psycopg.Error: return None`) → 69 module in "[FAIL] DB không kết nối được" không phân biệt timeout / sai mật khẩu / hết kết nối — đề
+xuất in `type(e).__name__` + sqlstate (không DSN), quyết của người vì đổi stderr mọi CLI; (3) `CONNECT_TIMEOUT_S = 3` cho CLI trên server
+on-prem đang tải có thể báo DB chết giả — cân với dashboard (v1.9: đã có trần, chỉ cần không treo vô hạn); (4) CI chưa tất định về
+image: actions/runner-images#14748 — `ubuntu-latest` chuyển dần 24.04 → 26.04 từ 19/10 tới 19/11/2026, mỗi run rơi ngẫu nhiên một bản
+→ ghim `runs-on: ubuntu-24.04` (hoặc 26.04) là quyết định của người; (5) tên ca fail CI chỉ đọc được bằng token — tùy chọn cho người:
+bước CI phát `::error::` cho từng FAILED (annotation đọc được qua API công khai, trần 10/bước); (6) cảnh báo Node 20 bị ép chạy Node 24
+cho `actions/checkout@v4`, `actions/setup-python@v5` (chưa gây lỗi).
+
+Cold-check (reviewer ngữ cảnh mới, prompt cố định, read-only, chạy bằng workflow; `git status` trước/sau trùng; nguyên văn
+`evidence/cycle_r21_gate/coldcheck_verdicts.txt`): vòng 1 (30/10) **UNVERIFIED** — 0 BLOCKER/FIX mã, gate cần DB + full không chạy lại được
+vì môi trường hỏng giữa audit (Postgres local sập lỗi 1455 hết bộ nhớ cam kết, Docker chết) → khởi động lại máy, dựng lại môi trường, audit
+lại. Vòng 2 (30–31/10) **PASS (r21, trong phạm vi M1–M4)**: snapshot 3 tệp trùng fp `0b6e8446…`; M1 chạy THẬT quanh 00:00 VN 30→31/10 base
+6/16 vòng fail / cây r21 16/16 pass; M2 race 0,3 s base 2 failed 10053 / cây 2 passed; M3 proxy chậm 4 s base 1 failed / cây 1 passed;
+ruff EXIT 0; 3 tệp 121 passed (cả `TZ=UTC0`); tự chạy lại `ci_repro.sh … work shards sim` trên clone HEAD + đúng diff r21: 7113 ca → 7106
+passed / 7 skipped / 0 failed, 9 bước exit 0. UNVERIFIED không chặn: chưa có lượt GitHub Linux cho 3 test (cần push; run 40715909367 đỏ ở
+3 ca `test_db_backup` → r22), 6 skip chênh CI 13 / local 7 chưa giải thích; SP dài dưới `%TEMP%` làm bước `agent_eval` báo cây bẩn (nghi
+giới hạn đường của git, chưa chứng minh). Finding: **MINOR** (có từ base, không phải mã r21) `tests/test_safety_s01_rotation.py:96`
+`docker rm -f` thiếu `-v` → mỗi full bỏ lại 2 volume ẩn danh — dòng "Container … ĐÃ DỌN" ở M4 đúng với container, KHÔNG đúng với volume
+(volume `dffddfe19e9a…` tạo 28/10 17:42Z, trong khung lượt full r21, còn lại — chưa xóa); bản vá `-v` nằm trong việc dở chưa commit của luồng
+dọn Docker 29/10, commit ở luồng đó. **NIT** hunk retro r21 chưa có trong `AGENTS.md` lúc audit → đã thêm, commit stage bằng
+`git apply --cached` (không add nguyên tệp).
+Retro: 3 Gotcha `AGENTS.md` cuối mục Gotchas (gate nặng chạy chồng → lỗi 1455, kiểm `FreeVirtualMemory`, không hạ verdict; cây lẫn nhiều
+luồng → gate trên commit tạm `GIT_INDEX_FILE` + `commit-tree` + `ci_repro.sh <SHA>`, SP ngắn; `gh run view --log-failed` + `gh auth status`
+lúc resume). Sau review chỉ thêm tài liệu/evidence (Gotcha, verdict, mục này) — không đổi mã/test, không chạy lại gate.
+Version CLOSED 31/10/2026 (r21; /cycle 5 lượt 1).
+
 ## Vòng r20 (28/10/2026) — CI nghiệm thu (F17.1, `.github/workflows/ci.yml` job `test`) chạy được: ruff ghim phiên bản + DB CI dựng như preflight + hạn job — CLOSED 28/10/2026 (/cycle 20 lượt 3), commit local, CHƯA push/merge/deploy
 
 Base: ad0e620830134278b7d11e707b2b82e6bb2fe3af (ghi 28/10/2026 khi mở).
@@ -23144,3 +23239,4 @@ Quy ước DoD cho phase connector:
 | r18 | dữ liệu nguồn hỏng → lỗi có kiểm soát: `post_url` Fanpage từ chối khoảng trắng/điều khiển/surrogate, `_storable` lọc chữ/url Fanpage + web trước ghi (NUL/surrogate → bỏ bài, ghi chú số bài), `webhook_probe` thân không phải object / `RecursionError` → không sẵn sàng; `ra_kenh` `--dry-run` khi legal_hr-04 TẮT → `[rollout]` exit 2 trước gọi Fanpage/in kế hoạch | 2026-10-28 | `evidence/cycle_r18_gate/` + `fix1/` — RED 12 failed → GREEN 17 passed, full chia 11 lượt 7053 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới vòng 1 **FIX** (BLOCKER test phụ thuộc OS) → vòng 2 **PASS** (tự chạy lại full 7053/7053); 1 MINOR + 2 NIT → someday. Base `215275f`; commit local, chưa push |
 | r19 | ngày/JSON hỏng ở crawl web: `published_at` ngày không có thật → `posted_on` rỗng (`_web_date`), dòng lồng quá sâu → bỏ + ghi chú (không traceback `channel_scan`); cổng TẮT HĐ 6.7 ngay sau kiểm tham số ở 6 CLI (`kd_care`, `kd_listing`, `mkt_koc`, `mkt_ugc`, `seo_san`, `legal_updates`) — lượt thật + `--dry-run` → `[rollout]` exit 2 trước kết nối/đọc/in/ghi | 2026-10-28 | `evidence/cycle_r19_gate/` — RED 19 failed → GREEN 51 passed, full chia 12 lượt 7104 passed / 0 skip / 0 fail, ruff/eval/dpia/redteam EXIT 0. Cold-check reviewer ngữ cảnh mới **PASS** vòng 1 (tự chạy lại full 7104/7104 + probe đường DB thật); 2 NIT → someday. Base `62b665b`; commit local, chưa push |
 | r20 | CI nghiệm thu (F17.1) chạy được: `ruff==0.16.10` ghim (0.17 đổi target mặc định → UP017 ×117 làm đỏ `main` từ 15/10), job `test` dựng DB đúng `_db_guard._FIX` (`--roles` ×2 + core + golden), `timeout-minutes` 240, PyYAML vào requirements Dev, test PDF `importorskip("fitz")` (PyMuPDF AGPL chưa thêm), `mkt_koc` kiểm `contract_file` bằng `PureWindowsPath` mọi OS; harness tái hiện job + giả lập gói runner `fix1/ci_repro.sh.txt`/`ci_env_sim` | 2026-10-28 | `evidence/cycle_r20_gate/` + `fix1/` + `fix2/` — RED base pytest CI exit 4 [db-guard], giả lập runner full 12 lượt 7100/7/0 (FIX1), FIX2 tệp liên quan 275+293 passed. Cold-check reviewer ngữ cảnh mới vòng 1 **FIX** (fitz) → vòng 2 **FIX** (`is_absolute` phụ thuộc OS) → vòng 3 **PASS** (tự chạy lại full sim 7106/7/0 trên 7113 ca); 1 MINOR font + NIT → someday. CHƯA chạy trên GitHub Actions (cần push). Base `ad0e620`; commit local, chưa push |
+| r21 | 3 test chập chờn thành tất định, 0 dòng mã ứng dụng: `test_ceo_decisions` `now` = `now()` DB cùng tx (hết lệch ngày quanh 00:00 VN), `test_b2b_form` POST bị từ chối trước khi đọc body gửi chỉ header qua raw socket (hết RST 10053), `test_docx_p0_rollout_gate` LAUNCHER `CONNECT_TIMEOUT_S = 30` (hết exit 2 khi máy nặng); tên ca fail CI `main` = 3 ca diễn tập `test_db_backup` (pg client runner mới hơn server, `transaction_timeout`) → r22 | 2026-10-31 | `evidence/cycle_r21_gate/` — RED/GREEN thật từng mục (nửa đêm, race ép 0,3 s, proxy chậm 4 s), full sim 12 lượt 7106/7/0 trên 7113 ca, ruff EXIT 0, trích log CI. Cold-check reviewer ngữ cảnh mới vòng 1 **UNVERIFIED** (môi trường sập, lỗi 1455) → vòng 2 **PASS** (tự chạy lại full sim 7106/7/0); 1 MINOR volume Docker (luồng dọn Docker vá) + 1 NIT. Base `43263c5`; commit local, chưa push |

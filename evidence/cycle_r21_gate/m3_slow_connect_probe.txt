@@ -1,0 +1,8 @@
+# M3 RED/GREEN — proxy TCP chậm 4 s mỗi kết nối mới (slow_proxy.py.txt) giữa test và Postgres; DATABASE_URL trỏ proxy
+# base = git archive HEAD 43263c5 · work = cây làm việc · ca test_p0a_human_cli_promotes_when_db_count_passes
+== base qua proxy chậm 4 s/kết nối
+E       AssertionError: [FAIL] DB không kết nối được (DATABASE_URL)
+E       assert 2 == 0
+1 failed in 21.59s
+== work qua proxy chậm 4 s/kết nối
+1 passed in 24.22s

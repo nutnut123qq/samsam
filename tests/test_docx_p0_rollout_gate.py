@@ -53,7 +53,10 @@ LAUNCHER = '''import runpy, sys
 from pathlib import Path
 sys.path.insert(0, sys.argv[1])
 from pipelines import auth
+from ingest import lead_store
 auth.DIRECTORS_DIR = Path(sys.argv[2])
+# máy nặng: connect > 3 s → "[FAIL] DB không kết nối được" exit 2 thay mã ca kiểm
+lead_store.CONNECT_TIMEOUT_S = 30
 mod = sys.argv[3]
 sys.argv = [mod] + sys.argv[4:]
 runpy.run_module(mod, run_name="__main__", alter_sys=True)

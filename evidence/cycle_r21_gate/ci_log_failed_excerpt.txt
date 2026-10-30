@@ -1,0 +1,16 @@
+# trích log job test run 40715909367 — đọc 30/10/2026 bằng: gh run view 40715909367 --log-failed (gh đã đăng nhập)
+# chỉ các dòng image runner, công cụ pg, lỗi diễn tập và tóm tắt pytest; DSN đã che
+17:test	UNKNOWN STEP	2026-10-28T15:26:11.0890024Z Image: ubuntu-26.04
+20:test	UNKNOWN STEP	2026-10-28T15:26:11.0894409Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261025.179
+680:test	UNKNOWN STEP	2026-10-28T15:47:09.3180175Z [done] samsam_ci_20261028_223410_vn.dump.enc — 38585520 bytes, sha256 309b098bf9fe20f8…, tool native:/usr/bin/pg_dump, 100 bảng
+683:test	UNKNOWN STEP	2026-10-28T15:47:09.3182212Z [err] diễn tập lỗi: pg_restore exit 1: pg_restore: error: could not execute query: ERROR: unrecognized configuration parameter "transaction_timeout" Command was: SET transaction_timeout = 0;
+700:test	UNKNOWN STEP	2026-10-28T15:47:09.3191962Z [err] diễn tập lỗi: pg_restore exit 1: pg_restore: error: could not execute query: ERROR: unrecognized configuration parameter "transaction_timeout" Command was: SET transaction_timeout = 0;
+723:test	UNKNOWN STEP	2026-10-28T15:47:09.3200262Z [done] samsam_ci_20261028_223445_vn.dump — 38586493 bytes, sha256 bb66cec64858bf46…, tool native:/usr/bin/pg_dump, 100 bảng
+727:test	UNKNOWN STEP	2026-10-28T15:47:09.3204195Z [err] diễn tập lỗi: pg_restore exit 1: pg_restore: error: could not execute query: ERROR: unrecognized configuration parameter "transaction_timeout" Command was: SET transaction_timeout = 0;
+761:test	UNKNOWN STEP	2026-10-28T15:47:09.3227701Z FAILED tests/test_db_backup.py::test_encrypted_backup_and_drill - AssertionError: assert 1 == 0
+764:test	UNKNOWN STEP	2026-10-28T15:47:09.3231126Z FAILED tests/test_db_backup.py::test_drill_ok_and_dropped - assert 1 == 0
+767:test	UNKNOWN STEP	2026-10-28T15:47:09.7418321Z FAILED tests/test_db_backup.py::test_drill_mismatch_still_drops - AssertionError: assert ('fail' == 'mismatch'
+771:test	UNKNOWN STEP	2026-10-28T15:47:09.7420435Z 3 failed, 7097 passed, 13 skipped, 15 warnings in 1189.76s (0:19:49)
+1685:test	UNKNOWN STEP	2026-10-28T15:47:11.2057858Z  2026-10-28 15:32:14.440 UTC [896] ERROR:  unrecognized configuration parameter "transaction_timeout"
+1693:test	UNKNOWN STEP	2026-10-28T15:47:11.2064196Z  2026-10-28 15:32:22.184 UTC [930] ERROR:  unrecognized configuration parameter "transaction_timeout"
+1705:test	UNKNOWN STEP	2026-10-28T15:47:11.2071874Z  2026-10-28 15:32:49.011 UTC [1040] ERROR:  unrecognized configuration parameter "transaction_timeout"

@@ -1,0 +1,22 @@
+# M1 RED/GREEN THẬT quanh 00:00 VN (= 17:00 UTC) 28→29/10/2026 — midnight.sh.txt: mỗi vòng chạy SONG SONG
+# base = git archive HEAD 43263c5 (fixture +1 phút) và cây làm việc (now = now() DB), ca test_propose_record_follow_e2e, DB test riêng samsam_r21
+vòng 1: UTC 16:58:20.208 → 16:58:42.125 · base(HEAD 43263c5) rc=0 1 passed in 7.51s · cây làm việc rc=0 1 passed in 6.81s
+vòng 2: UTC 16:58:42.692 → 16:58:56.649 · base(HEAD 43263c5) rc=0 1 passed in 7.08s · cây làm việc rc=0 1 passed in 6.34s
+vòng 3: UTC 16:58:57.192 → 16:59:14.038 · base(HEAD 43263c5) rc=1 1 failed in 8.98s · cây làm việc rc=0 1 passed in 6.23s
+    base: E       AssertionError: assert ('TGĐ Giả Lập...val_queue', 1) == ('TGĐ Giả Lập...val_queue', 1)
+vòng 4: UTC 16:59:14.591 → 16:59:33.202 · base(HEAD 43263c5) rc=1 1 failed in 10.23s · cây làm việc rc=0 1 passed in 6.73s
+    base: E       AssertionError: assert ('TGĐ Giả Lập...val_queue', 1) == ('TGĐ Giả Lập...val_queue', 1)
+vòng 5: UTC 16:59:33.626 → 16:59:48.970 · base(HEAD 43263c5) rc=1 1 failed in 8.34s · cây làm việc rc=0 1 passed in 5.88s
+    base: E       AssertionError: assert ('TGĐ Giả Lập...val_queue', 1) == ('TGĐ Giả Lập...val_queue', 1)
+vòng 6: UTC 16:59:49.385 → 17:00:05.330 · base(HEAD 43263c5) rc=1 1 failed in 8.67s · cây làm việc rc=0 1 passed in 6.25s
+    base: E       AssertionError: assert ('TGĐ Giả Lập...val_queue', 1) == ('TGĐ Giả Lập...val_queue', 1)
+vòng 7: UTC 17:00:05.817 → 17:00:19.633 · base(HEAD 43263c5) rc=0 1 passed in 6.05s · cây làm việc rc=0 1 passed in 5.38s
+vòng 8: UTC 17:00:20.253 → 17:00:37.483 · base(HEAD 43263c5) rc=0 1 passed in 8.83s · cây làm việc rc=0 1 passed in 7.74s
+vòng 9: UTC 17:00:38.006 → 17:00:53.170 · base(HEAD 43263c5) rc=0 1 passed in 7.66s · cây làm việc rc=0 1 passed in 6.69s
+DONE
+
+# chi tiết assert base vòng 3 (decided_on 28/10 vs today 29/10):
+E       AssertionError: assert ('TGĐ Giả Lập...val_queue', 1) == ('TGĐ Giả Lập...val_queue', 1)
+E         
+E         At index 1 diff: datetime.date(2026, 10, 28) != datetime.date(2026, 10, 29)
+E         Use -v to get more diff

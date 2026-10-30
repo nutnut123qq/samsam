@@ -445,3 +445,15 @@ chat lẫn embeddings) + Streamlit.
   (chặt nhất) cho MỌI OS; tái hiện CI dùng `fix1/ci_repro.sh.txt ... sim`, không bỏ `sim`. Kèm (vận hành máy chung):
   dọn tiến trình theo PID mình tạo, KHÔNG lọc theo chuỗi dòng lệnh — `-match 'ci_repro'` (không phân biệt hoa thường)
   đã dừng nhầm `grep.exe` của session khác.
+- **Gate nặng chạy chồng tiến trình của session khác → hết bộ nhớ CAM KẾT (Windows lỗi 1455)** (r21 cold-check vòng 1):
+  Postgres local sập, Docker chết giữa audit → verdict UNVERIFIED do môi trường, không do mã. Trước gate nặng kiểm
+  `FreeVirtualMemory` (`Get-CimInstance Win32_OperatingSystem`), không chỉ RAM trống; sự cố môi trường → dựng lại rồi audit lại
+  bằng reviewer mới, KHÔNG hạ verdict bằng self-review.
+- **Cây làm việc lẫn việc dở của nhiều luồng → gate version phải chạy trên ĐÚNG nội dung sẽ commit** (r21): `ci_repro.sh … work`
+  áp TOÀN BỘ diff tracked (cả luồng khác) và bỏ file untracked. Dựng commit tạm chỉ chứa tệp của version mà không đụng index/cây
+  thật (`GIT_INDEX_FILE=<tmp> git read-tree HEAD` → `git add <tệp>` → `write-tree` → `commit-tree`) rồi
+  `bash scripts/ci_repro.sh <SP> <OUT> <SHA> shards sim`; commit đóng version stage theo danh sách, hunk `AGENTS.md` của mình
+  bằng `git apply --cached`. Đặt `<SP>` đường NGẮN — SP dài dưới `%TEMP%` từng làm bước `agent_eval` báo "cây bẩn" (nghi giới hạn
+  độ dài đường của git, chưa chứng minh).
+- **Đọc ca fail CI bằng `gh run view <id> --log-failed`** (log job cần token): r21 treo `[!]` một ngày vì ghi "gh hết hạn" từ
+  lượt trước trong khi user đã đăng nhập lại — lúc resume chạy `gh auth status` trước khi kết luận thiếu quyền.

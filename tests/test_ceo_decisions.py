@@ -300,7 +300,8 @@ def ceo(db, monkeypatch):
     q2 = _ceo_item(tx, "qd-2", "rejected")
     q3 = _ceo_item(tx, "qd-3")
     dbnow = db.execute("select now()").fetchone()[0]
-    now = dbnow.astimezone(VN_TZ) + timedelta(minutes=1)
+    # = decided_at (cùng tx): +1 phút từng vượt 00:00 VN → today ≠ decided_on
+    now = dbnow.astimezone(VN_TZ)
     monkeypatch.setattr(cd, "connect", lambda: tx)
     monkeypatch.setattr(cd, "_now", lambda: now)
     return {"tx": tx, "q": (q1, q2, q3), "now": now,

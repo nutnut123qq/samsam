@@ -1,0 +1,15 @@
+# M2 RED/GREEN — probe ép cửa sổ race (plugin probe_delay_body.py.txt: chèn 0,3 s giữa send header và send body của http.client)
+# base = git archive HEAD 43263c5 (tests/test_b2b_form.py cũ) · work = cây làm việc · DB test riêng samsam_r21
+# T = test_post_wrong_type_415_and_429 + test_post_bad_input_400_no_echo
+== base, probe chèn 0,3 s giữa header và body
+E               ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+E               ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+FAILED tests/test_b2b_form.py::test_post_wrong_type_415_and_429 - ConnectionA...
+FAILED tests/test_b2b_form.py::test_post_bad_input_400_no_echo - ConnectionAb...
+2 failed in 4.78s
+== base, không probe
+2 passed in 2.00s
+== work, probe chèn 0,3 s giữa header và body
+2 passed in 7.30s
+== work, không probe
+2 passed in 1.99s
