@@ -37,7 +37,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ci_pw_k7q3
           POSTGRES_DB: samsam_ci
         ports:
           - 5432:5432
@@ -47,7 +47,9 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/samsam_ci
+      # mật khẩu KHÔNG được là chữ thường gặp: test backup kiểm mật khẩu không lọt manifest/log, mà `postgres` trùng
+      # đường công cụ `/usr/lib/postgresql/<major>/bin` ghi trong manifest (giả dương). Chỉ là service CI tạm.
+      DATABASE_URL: postgresql://postgres:ci_pw_k7q3@localhost:5432/samsam_ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -83,7 +85,7 @@ jobs:
         image: pgvector/pgvector:0.8.6-pg17-trixie
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ci_pw_k7q3
           POSTGRES_DB: postgres
         ports:
           - 5432:5432
@@ -93,7 +95,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      TS_TEST_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      TS_TEST_ADMIN_URL: postgresql://postgres:ci_pw_k7q3@localhost:5432/postgres
     defaults:
       run:
         working-directory: ts
@@ -130,7 +132,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ci_pw_k7q3
           POSTGRES_DB: samsam_ci
         ports:
           - 5432:5432
@@ -140,7 +142,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/samsam_ci
+      DATABASE_URL: postgresql://postgres:ci_pw_k7q3@localhost:5432/samsam_ci
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     steps:
       - name: Kiểm secret

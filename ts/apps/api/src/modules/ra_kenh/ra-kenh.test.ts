@@ -176,7 +176,9 @@ describe('golden Python — nguồn tự thu (web/Fanpage)', () => {
       for (const [f, { text, age }] of Object.entries(c.files)) {
         const p = join(d, `${f}.jsonl`);
         writeFileSync(p, Buffer.from(text, 'utf8'));
-        const t = Date.now() / 1000 - age * 86400;
+        // tệp ghi "sau now" 1 giây như lúc sinh golden (ghi sau khi lấy now) — tất định; Date.now() trùng ms với now
+        // trên máy nhanh (runner Linux) cho tuổi ĐÚNG 30 ngày → "cũ 30 ngày" thay "29" của golden
+        const t = now.getTime() / 1000 - age * 86400 + 1;
         utimesSync(p, t, t);
       }
       const [rows, notes] = rk.webRows(now, d);

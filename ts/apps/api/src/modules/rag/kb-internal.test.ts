@@ -57,7 +57,10 @@ describe('kb-internal golden', () => {
     expect(chunkText(readFileSync(SAMPLE, 'utf8')).length).toBe(gold.sample_chunks);
   });
   it.each(Object.entries(gold.parse_args))('parseKbArgs %s', (_k, c) => {
-    const r = parseKbArgs(fromArgv(c.argv));
+    // golden ghi đường tuyệt đối của máy sinh golden (Windows) → trỏ về tệp mẫu của checkout này
+    const r = parseKbArgs(
+      fromArgv(c.argv.map((a) => (a.endsWith('kb_noi_bo_MAU.md') ? SAMPLE : a))),
+    );
     if ('err' in c) expect(r).toEqual({ error: c.err });
     else
       expect(r).toMatchObject({

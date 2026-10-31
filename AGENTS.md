@@ -476,3 +476,11 @@ chat lẫn embeddings) + Streamlit.
   thử lại giữ SHARED chớp mắt → `database is locked` ném trong Worker. Vitest báo "Errors 1" và `npm test` exit 1 dù 0 failed — đọc dòng
   `Errors`/`EXIT`, không chỉ dòng `Tests`. Race chỉ lộ khi chạy full dưới tải (0/12 chạy riêng): ép cơ chế bằng script tất định hai
   luồng (giữ SHARED rồi nhả theo hẹn giờ) thay vì lặp test mong trúng.
+- **Lần chạy CI Linux đầu tiên lộ 4 giả định chỉ-Windows trong golden TS** (r22, PR nutnut123qq/samsam#1, job `ts` 25 ca / 9 tệp):
+  (1) sha BYTE tệp mẫu CSV/JSON/HTML sinh trên checkout CRLF → vá `.gitattributes` `text=auto eol=crlf` cho ĐÚNG tệp golden ghim
+  (blob vẫn LF); kiểm bằng clone + `core.autocrlf=false core.eol=lf` checkout TOÀN cây — `git archive` hay checkout từng phần khi cây
+  chưa có `.gitattributes` mới thì attr không áp, ra kết luận sai; (2) golden ghi đường tuyệt đối máy sinh (`D:\code\samsam\…`) → test ánh
+  xạ về `repoPath`; (3) mtime đặt bằng `Date.now()` sau `now` — máy nhanh trùng ms → tuổi tròn 30 ngày thay 29: đặt theo `now` + độ lệch
+  cố định; (4) mật khẩu service CI `postgres` trùng chữ trong đường công cụ `/usr/lib/postgresql/<major>/bin` → test "mật khẩu không lọt
+  manifest" giả dương (cả Python lẫn TS) — mật khẩu CI phải là chuỗi không gặp tự nhiên. `ci_repro.sh` chỉ tái hiện job `test`
+  (Python, mật khẩu ngẫu nhiên); job `ts` chưa có bản tái hiện Linux → cả 4 chỉ lộ trên runner.

@@ -133,6 +133,17 @@ Chờ user quyết: push/merge (cần để CI GitHub kiểm A1 + job `ts`); ghi
 commit `scripts/ci_repro.sh` + bản vá Docker của luồng dọn Docker (AGENTS.md đã trỏ runner này); xóa volume Docker ẩn danh do
 `test_safety_s01_rotation` để lại.
 
+Sau đóng (31/10, user "push đi" → push `43263c5..ca39417`; "Mở PR nháp vào main" → PR nutnut123qq/samsam#1; Auto-fix bật): lượt CI đầu
+trên runner Linux (run 41164952643) — bước PGDG `postgresql-client-17` + `npm ci` + biome/typecheck/`db:template` XANH; job `ts` `npm test`
+đỏ 25 ca / 9 tệp, 4 lớp giả định chỉ-Windows: (1) golden ghim sha byte tệp mẫu (`tests/fixtures/{intel_import,social_vendor,finance}/**`,
+`data/harvest_assumptions.json`, `data/b2b_form.html`) sinh trên checkout CRLF, runner checkout LF → `.gitattributes` `text=auto eol=crlf`
+cho đúng các tệp đó (blob vẫn LF; clone + checkout `core.autocrlf=false core.eol=lf`: 25/25 tệp trùng byte Windows, sha khớp golden);
+(2) golden `kb_internal` ghi `--file D:\code\samsam\…` → test ánh xạ về `SAMPLE`; (3) `ra-kenh` c12 mtime `Date.now()` trùng ms với `now`
+→ "30 ngày" ≠ golden "29" → mtime theo `now` + 1 giây (đột biến bỏ `+ 1` tái hiện đúng lỗi CI); (4) `backup.db.test` "mật khẩu không lọt
+manifest" giả dương vì mật khẩu service CI `postgres` ⊂ `/usr/lib/postgresql/17/bin/pg_dump` (Python `test_db_backup` cùng lỗi, job `test`
+sẽ đỏ) → `ci.yml` mật khẩu service `ci_pw_k7q3` (3 job). Local: 10 tệp liên quan 580 passed, biome ci exit 0, `test_ci_workflow` 10 passed.
+Kiểm thật = lượt CI kế.
+
 ## Vòng r21 (28/10/2026) — 3 test chập chờn thành tất định (CI GitHub nay là cổng thật) — CLOSED 31/10/2026 (/cycle 5 lượt 1), commit local, CHƯA push/merge/deploy
 
 Base: 43263c5fd92760d0d36356f39cfd9049955ef045 (ghi 28/10/2026 khi mở).
