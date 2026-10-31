@@ -483,4 +483,6 @@ chat lẫn embeddings) + Streamlit.
   xạ về `repoPath`; (3) mtime đặt bằng `Date.now()` sau `now` — máy nhanh trùng ms → tuổi tròn 30 ngày thay 29: đặt theo `now` + độ lệch
   cố định; (4) mật khẩu service CI `postgres` trùng chữ trong đường công cụ `/usr/lib/postgresql/<major>/bin` → test "mật khẩu không lọt
   manifest" giả dương (cả Python lẫn TS) — mật khẩu CI phải là chuỗi không gặp tự nhiên. `ci_repro.sh` chỉ tái hiện job `test`
-  (Python, mật khẩu ngẫu nhiên); job `ts` chưa có bản tái hiện Linux → cả 4 chỉ lộ trên runner.
+  (Python, mật khẩu ngẫu nhiên); job `ts` chưa có bản tái hiện Linux → cả 4 chỉ lộ trên runner. Lượt 2 thêm (5): mốc `until` lấy
+  bằng `select now()` thành `Date` JS (cắt µs) rồi đếm `created_at <= until` — runner ghi dòng và lấy mốc trong CÙNG ms → mốc nhỏ
+  hơn created_at → dòng vừa ghi bị loại (`rollout.db.test`); Python giữ µs nên không gặp. Mốc từ DB dùng làm cận trên phải +1 ms.

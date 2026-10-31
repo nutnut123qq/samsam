@@ -142,7 +142,11 @@ cho đúng các tệp đó (blob vẫn LF; clone + checkout `core.autocrlf=false
 → "30 ngày" ≠ golden "29" → mtime theo `now` + 1 giây (đột biến bỏ `+ 1` tái hiện đúng lỗi CI); (4) `backup.db.test` "mật khẩu không lọt
 manifest" giả dương vì mật khẩu service CI `postgres` ⊂ `/usr/lib/postgresql/17/bin/pg_dump` (Python `test_db_backup` cùng lỗi, job `test`
 sẽ đỏ) → `ci.yml` mật khẩu service `ci_pw_k7q3` (3 job). Local: 10 tệp liên quan 580 passed, biome ci exit 0, `test_ci_workflow` 10 passed.
-Kiểm thật = lượt CI kế.
+Kiểm thật = lượt CI kế. Job `test` lượt cũ (`ca39417`): 1 failed (đúng (4)) / 7137 passed / 13 skipped → diễn tập khôi phục A1 chạy được
+trên runner. Lượt 2 (`00049af`, run 41166755462): job `ts` 5946 passed / 2 failed / 9 skipped — chỉ còn `rollout.db.test.ts` (2 ca): mốc
+`dbNow()` = `select now()` thành `Date` JS cắt µs, runner ghi dòng rồi lấy mốc trong CÙNG ms → mốc < `created_at` → `created_at <= until`
+loại dòng vừa ghi (phiên bản báo cáo mới / dòng `audit_runs`) → mốc +1 ms; cơ chế tái hiện tất định bằng 1 transaction (bảng tạm):
+mốc cắt ms đếm 0 dòng, mốc +1 ms đếm 1 dòng, 3/3 (`ci_linux/ms_trunc.txt`); `packages/core/src/rollout` 53 passed, biome exit 0.
 
 ## Vòng r21 (28/10/2026) — 3 test chập chờn thành tất định (CI GitHub nay là cổng thật) — CLOSED 31/10/2026 (/cycle 5 lượt 1), commit local, CHƯA push/merge/deploy
 

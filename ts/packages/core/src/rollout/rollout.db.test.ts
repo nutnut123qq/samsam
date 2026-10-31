@@ -211,7 +211,10 @@ describe.skipIf(!HAS_DB)('rollout (DB)', () => {
     ).rows.map((r) => r.kind);
   const count = async (sql: string) => Number((await pool.query(sql)).rows[0].n);
   // mốc `until` theo đồng hồ DB: created_at = now() của DB, đồng hồ container có thể lệch vài ms so với máy chủ
-  const dbNow = async (): Promise<Date> => (await pool.query('select now() as t')).rows[0].t;
+  // + 1 ms: Date của JS cắt µs của now() → máy nhanh (runner Linux) ghi dòng rồi lấy mốc trong CÙNG ms thì mốc
+  // < created_at của dòng vừa ghi → `created_at <= until` loại mất dòng đó (Python giữ µs nên không gặp)
+  const dbNow = async (): Promise<Date> =>
+    new Date((await pool.query('select now() as t')).rows[0].t.getTime() + 1);
   async function stageOf(fid: string, stage: string, since: Date | null = null): Promise<void> {
     await seed(pool, [cat(fid)], BY, since ?? new Date(Date.now() - DAY));
     await pool.query('update feature_rollout set stage = $1 where feature_id = $2', [stage, fid]);
