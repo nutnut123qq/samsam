@@ -1,0 +1,2880 @@
+{
+ "valid_heads": [
+  {
+   "raw": "null",
+   "out": null
+  },
+  {
+   "raw": "[]",
+   "out": null
+  },
+  {
+   "raw": "\"x\"",
+   "out": null
+  },
+  {
+   "raw": "5",
+   "out": null
+  },
+  {
+   "raw": "true",
+   "out": null
+  },
+  {
+   "raw": "{\"agent_action_log\": [1, 2], \"plot_logs\": \"x\"}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": 5, \"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": 3}, \"plot_logs\": {\"max_id\": null, \"row_hash\": null, \"n\": 0}, \"khac\": {\"max_id\": 1, \"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": 1}}",
+   "out": {
+    "agent_action_log": {
+     "max_id": 5,
+     "row_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "n": 3
+    },
+    "plot_logs": {
+     "max_id": null,
+     "row_hash": null,
+     "n": 0
+    }
+   }
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": \"5\", \"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": \"3\"}}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": true, \"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": 1}}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": 1, \"row_hash\": \"XYZ\", \"n\": 1}}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": 1, \"row_hash\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\", \"n\": 1}}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": 1, \"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": -1}}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": 1, \"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": false}}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": 1.0, \"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": 1}}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": 1, \"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": 1.0}}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"max_id\": 1, \"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": 0}}",
+   "out": {}
+  },
+  {
+   "raw": "{\"agent_action_log\": {\"row_hash\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"n\": 0}}",
+   "out": {
+    "agent_action_log": {
+     "max_id": null,
+     "row_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "n": 0
+    }
+   }
+  },
+  {
+   "raw": "{\"plot_logs\": {\"max_id\": 7, \"row_hash\": null, \"n\": 2}}",
+   "out": {
+    "plot_logs": {
+     "max_id": 7,
+     "row_hash": null,
+     "n": 2
+    }
+   }
+  }
+ ],
+ "norm": [
+  {
+   "in": "",
+   "out": ""
+  },
+  {
+   "in": null,
+   "out": ""
+  },
+  {
+   "in": "  Mai  Gia\tLap ",
+   "out": "mai gia lap"
+  },
+  {
+   "in": "MAI GIA LAP",
+   "out": "mai gia lap"
+  },
+  {
+   "in": "a\u3000b",
+   "out": "a b"
+  },
+  {
+   "in": "\u0110 \u0102",
+   "out": "\u0111 \u0103"
+  },
+  {
+   "in": "x\u2028y",
+   "out": "x y"
+  },
+  {
+   "in": "\u0130stanbul",
+   "out": "i\u0307stanbul"
+  }
+ ],
+ "override_line": [
+  {
+   "in": {
+    "id": 1,
+    "queue_id": 2,
+    "block": "ceo",
+    "created_at": {
+     "__dt__": "2026-09-01T00:00:00+07:00"
+    },
+    "by": "Mai <b>|</b>",
+    "reason": "g\u1ecdi 0905123456 [x](http://e.vn) `code` ![a](b)"
+   },
+   "out": "- #1 \u00b7 m\u1ee5c #2 \u00b7 kh\u1ed1i ceo \u00b7 01/09/2026 \u00b7 ng\u01b0\u1eddi quy\u1ebft: Mai \u2039b\u203a/\u2039/b\u203a \u00b7 l\u00fd do: g\u1ecdi \u00b7\u00b7\u00b7 (x)(http://e.vn) 'code' !(a)(b)"
+  },
+  {
+   "in": {
+    "id": 10,
+    "queue_id": 20,
+    "block": "sales",
+    "created_at": {
+     "__dt__": "2026-09-30T16:30:00+07:00"
+    },
+    "by": null,
+    "reason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa *\u0111\u1eadm* _nghi\u00eang_ <script>"
+   },
+   "out": "- #10 \u00b7 m\u1ee5c #20 \u00b7 kh\u1ed1i sales \u00b7 30/09/2026 \u00b7 ng\u01b0\u1eddi quy\u1ebft:  \u00b7 l\u00fd do: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u2026"
+  },
+  {
+   "in": {
+    "id": 3,
+    "queue_id": 4,
+    "block": "ceo",
+    "created_at": null,
+    "by": "Lan\u0000\u202eGia Lap",
+    "reason": "email x@y.vn\nxu\u1ed1ng d\u00f2ng\r\n"
+   },
+   "out": "- #3 \u00b7 m\u1ee5c #4 \u00b7 kh\u1ed1i ceo \u00b7 \u2014 \u00b7 ng\u01b0\u1eddi quy\u1ebft: Lan??Gia Lap \u00b7 l\u00fd do: email \u00b7\u00b7\u00b7?xu\u1ed1ng d\u00f2ng??"
+  }
+ ],
+ "finding_line": [
+  {
+   "in": {
+    "code": "chuoi_bi_sua",
+    "table": "agent_action_log",
+    "id": 5,
+    "problem": "row_hash"
+   },
+   "out": "- [chuoi_bi_sua] agent_action_log #5 \u2014 row_hash"
+  },
+  {
+   "in": {
+    "code": "mat_duoi_chuoi",
+    "table": "plot_logs",
+    "id": 9,
+    "problem": "dong_neo_mat,so_dong_giam"
+   },
+   "out": "- [mat_duoi_chuoi] plot_logs #9 \u2014 dong_neo_mat,so_dong_giam"
+  },
+  {
+   "in": {
+    "code": "khong_kiem_duoc",
+    "table": "plot_logs",
+    "detail": "verify_plot_logs(): InsufficientPrivilege: permission denied"
+   },
+   "out": "- [khong_kiem_duoc] plot_logs \u2014 verify_plot_logs(): InsufficientPrivilege: permission denied"
+  },
+  {
+   "in": {
+    "code": "noi_dung_lech_ban_duyet",
+    "table": "approval_queue",
+    "id": 3,
+    "object_type": "board_pack",
+    "block": "ceo"
+   },
+   "out": "- [noi_dung_lech_ban_duyet] approval_queue #3 object_type board_pack block ceo"
+  },
+  {
+   "in": {
+    "code": "duyet_ngoai_function",
+    "table": "approvals",
+    "id": 4,
+    "object_type": "x\u001b[31m"
+   },
+   "out": "- [duyet_ngoai_function] approvals #4 object_type x?[31m"
+  },
+  {
+   "in": {
+    "code": "tu_duyet",
+    "table": "content_drafts",
+    "id": 7,
+    "block": null
+   },
+   "out": "- [tu_duyet] content_drafts #7"
+  },
+  {
+   "in": {
+    "code": "override_don_dap",
+    "table": "decisions",
+    "id": 1,
+    "ids": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "n": 4
+   },
+   "out": "- [override_don_dap] decisions #1 \u2014 4 l\u1ea7n (#1, #2, #3, #4)"
+  },
+  {
+   "in": {
+    "code": "can_cu_sai",
+    "table": "decision_log",
+    "id": 2,
+    "queue_id": 11
+   },
+   "out": "- [can_cu_sai] decision_log #2 m\u1ee5c #11"
+  },
+  {
+   "in": {
+    "code": "override_tu_trinh",
+    "table": "decisions",
+    "id": 0,
+    "queue_id": 0,
+    "block": ""
+   },
+   "out": "- [override_tu_trinh] decisions #0 m\u1ee5c #0"
+  },
+  {
+   "in": {
+    "code": "quyen_vuot",
+    "role": "bks_reader",
+    "table": "function decide_item(bigint,text,text,text)",
+    "priv": "EXECUTE"
+   },
+   "out": "- [quyen_vuot] role bks_reader c\u00f3 EXECUTE tr\u00ean function decide_item(bigint,text,text,text)"
+  },
+  {
+   "in": {
+    "code": "khong_kiem_duoc"
+   },
+   "out": "- [khong_kiem_duoc] ?"
+  }
+ ],
+ "by_code": {
+  "chuoi_bi_sua": 1,
+  "mat_duoi_chuoi": 1,
+  "khong_kiem_duoc": 2,
+  "noi_dung_lech_ban_duyet": 1,
+  "duyet_ngoai_function": 1,
+  "tu_duyet": 1,
+  "qa_fail_khong_override": 0,
+  "override_tu_trinh": 1,
+  "tu_ep_tu_duyet": 0,
+  "override_don_dap": 1,
+  "can_cu_sai": 1,
+  "quyen_vuot": 1
+ },
+ "render": [
+  {
+   "in": {
+    "data": {
+     "prev_heads": null,
+     "heads": {
+      "agent_action_log": {
+       "max_id": 12,
+       "row_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+       "n": 12
+      },
+      "plot_logs": {
+       "max_id": null,
+       "row_hash": null,
+       "n": 0
+      }
+     },
+     "findings": [],
+     "overrides": []
+    },
+    "label": "2026-09"
+   },
+   "out": "# Audit inside-out BKS \u2014 k\u1ef3 2026-09\n\nSinh l\u00fac 14/10/2026 09:00 gi\u1edd VN b\u1edfi `agent:bks_audit` (s\u1ed5 l\u1ea7n ch\u1ea1y M\u00c1Y \u2014 KH\u00d4NG ph\u1ea3i ch\u1eef k\u00fd Ban ki\u1ec3m so\u00e1t). Ch\u1ec9 \u0111\u1ecdc: h\u1ec7 th\u1ed1ng kh\u00f4ng s\u1eeda/x\u00f3a/duy\u1ec7t g\u00ec.\n\n## T\u1ed5ng theo m\u00e3\n\n| M\u00e3 | S\u1ed1 ph\u00e1t hi\u1ec7n |\n|---|---|\n| chuoi_bi_sua | 0 |\n| mat_duoi_chuoi | 0 |\n| khong_kiem_duoc | 0 |\n| noi_dung_lech_ban_duyet | 0 |\n| duyet_ngoai_function | 0 |\n| tu_duyet | 0 |\n| qa_fail_khong_override | 0 |\n| override_tu_trinh | 0 |\n| tu_ep_tu_duyet | 0 |\n| override_don_dap | 0 |\n| can_cu_sai | 0 |\n| quyen_vuot | 0 |\n\nT\u1ed5ng: 0 ph\u00e1t hi\u1ec7n.\n\n## Chu\u1ed7i hash + neo \u0111u\u00f4i\n\n- agent_action_log: 12 d\u00f2ng \u0111\u00e3 chain \u00b7 \u0111\u1ea7u #12 \u00b7 b\u0103m \u0111\u1ea7u bbbbbbbbbbbb\n- plot_logs: 0 d\u00f2ng \u0111\u00e3 chain (chu\u1ed7i r\u1ed7ng)\n- ch\u01b0a c\u00f3 neo tr\u01b0\u1edbc \u2014 l\u1ea7n audit \u0111\u1ea7u (\u0111u\u00f4i chu\u1ed7i ch\u01b0a \u0111\u1ed1i chi\u1ebfu)\n\n## Chi ti\u1ebft ph\u00e1t hi\u1ec7n\n\n- (kh\u00f4ng c\u00f3 ph\u00e1t hi\u1ec7n)\n\n## \u00c9p tr\u00ecnh QA (override_qa) trong k\u1ef3\n\n- (kh\u00f4ng c\u00f3 override_qa trong k\u1ef3)\n\n## Gi\u1edbi h\u1ea1n\n\n- Neo \u0111u\u00f4i chu\u1ed7i ch\u1ec9 l\u00e0 neo N\u1ed8I B\u1ed8 (`audit_runs.params.heads`): superuser x\u00f3a c\u1ea3 s\u1ed5 `audit_runs` th\u00ec neo m\u1ea5t \u2014 neo object-lock ngo\u00e0i + b\u1ed9 ki\u1ec3m ch\u1ee9ng \u0111\u1ed9c l\u1eadp trong t\u00e0i kho\u1ea3n cloud do H\u0110TV \u0111\u1ee9ng t\u00ean l\u00e0 external-dep.\n- Audit t\u00ednh l\u1ea1i t\u1ea1i l\u00fac ch\u1ea1y t\u1eeb DB; n\u1ed9i dung b\u00e0i/payload KH\u00d4NG ch\u00e9p ra b\u00e1o c\u00e1o (ch\u1ec9 #id, b\u1ea3ng, kh\u1ed1i).\n\n---\n*B\u1ea2N NH\u00c1P \u2014 ch\u1edd BKS k\u00fd (external-dep); h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 g\u1eedi.*\n"
+  },
+  {
+   "in": {
+    "data": {
+     "prev_heads": {
+      "agent_action_log": {
+       "max_id": 12,
+       "row_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+       "n": 12
+      },
+      "plot_logs": {
+       "max_id": null,
+       "row_hash": null,
+       "n": 0
+      }
+     },
+     "heads": {
+      "plot_logs": {
+       "max_id": 3,
+       "row_hash": null,
+       "n": 3
+      }
+     },
+     "findings": [
+      {
+       "code": "chuoi_bi_sua",
+       "table": "agent_action_log",
+       "id": 5,
+       "problem": "row_hash"
+      },
+      {
+       "code": "mat_duoi_chuoi",
+       "table": "plot_logs",
+       "id": 9,
+       "problem": "dong_neo_mat,so_dong_giam"
+      },
+      {
+       "code": "khong_kiem_duoc",
+       "table": "plot_logs",
+       "detail": "verify_plot_logs(): InsufficientPrivilege: permission denied"
+      },
+      {
+       "code": "noi_dung_lech_ban_duyet",
+       "table": "approval_queue",
+       "id": 3,
+       "object_type": "board_pack",
+       "block": "ceo"
+      },
+      {
+       "code": "duyet_ngoai_function",
+       "table": "approvals",
+       "id": 4,
+       "object_type": "x\u001b[31m"
+      },
+      {
+       "code": "tu_duyet",
+       "table": "content_drafts",
+       "id": 7,
+       "block": null
+      },
+      {
+       "code": "override_don_dap",
+       "table": "decisions",
+       "id": 1,
+       "ids": [
+        1,
+        2,
+        3,
+        4
+       ],
+       "n": 4
+      },
+      {
+       "code": "can_cu_sai",
+       "table": "decision_log",
+       "id": 2,
+       "queue_id": 11
+      },
+      {
+       "code": "override_tu_trinh",
+       "table": "decisions",
+       "id": 0,
+       "queue_id": 0,
+       "block": ""
+      },
+      {
+       "code": "quyen_vuot",
+       "role": "bks_reader",
+       "table": "function decide_item(bigint,text,text,text)",
+       "priv": "EXECUTE"
+      },
+      {
+       "code": "khong_kiem_duoc"
+      }
+     ],
+     "overrides": [
+      {
+       "id": 1,
+       "queue_id": 2,
+       "block": "ceo",
+       "created_at": {
+        "__dt__": "2026-09-01T00:00:00+07:00"
+       },
+       "by": "Mai <b>|</b>",
+       "reason": "g\u1ecdi 0905123456 [x](http://e.vn) `code` ![a](b)"
+      },
+      {
+       "id": 10,
+       "queue_id": 20,
+       "block": "sales",
+       "created_at": {
+        "__dt__": "2026-09-30T16:30:00+07:00"
+       },
+       "by": null,
+       "reason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa *\u0111\u1eadm* _nghi\u00eang_ <script>"
+      },
+      {
+       "id": 3,
+       "queue_id": 4,
+       "block": "ceo",
+       "created_at": null,
+       "by": "Lan\u0000\u202eGia Lap",
+       "reason": "email x@y.vn\nxu\u1ed1ng d\u00f2ng\r\n"
+      }
+     ]
+    },
+    "label": "2026-08"
+   },
+   "out": "# Audit inside-out BKS \u2014 k\u1ef3 2026-08\n\nSinh l\u00fac 14/10/2026 09:00 gi\u1edd VN b\u1edfi `agent:bks_audit` (s\u1ed5 l\u1ea7n ch\u1ea1y M\u00c1Y \u2014 KH\u00d4NG ph\u1ea3i ch\u1eef k\u00fd Ban ki\u1ec3m so\u00e1t). Ch\u1ec9 \u0111\u1ecdc: h\u1ec7 th\u1ed1ng kh\u00f4ng s\u1eeda/x\u00f3a/duy\u1ec7t g\u00ec.\n\n## T\u1ed5ng theo m\u00e3\n\n| M\u00e3 | S\u1ed1 ph\u00e1t hi\u1ec7n |\n|---|---|\n| chuoi_bi_sua | 1 |\n| mat_duoi_chuoi | 1 |\n| khong_kiem_duoc | 2 |\n| noi_dung_lech_ban_duyet | 1 |\n| duyet_ngoai_function | 1 |\n| tu_duyet | 1 |\n| qa_fail_khong_override | 0 |\n| override_tu_trinh | 1 |\n| tu_ep_tu_duyet | 0 |\n| override_don_dap | 1 |\n| can_cu_sai | 1 |\n| quyen_vuot | 1 |\n\nT\u1ed5ng: 11 ph\u00e1t hi\u1ec7n.\n\n## Chu\u1ed7i hash + neo \u0111u\u00f4i\n\n- agent_action_log: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c \u0111\u1ea7u chu\u1ed7i\n- plot_logs: 3 d\u00f2ng \u0111\u00e3 chain \u00b7 \u0111\u1ea7u #3 \u00b7 b\u0103m \u0111\u1ea7u \u2014\n- \u0110\u1ed1i chi\u1ebfu neo c\u1ee7a l\u1ea7n audit inside-out ghi s\u1ed5 g\u1ea7n nh\u1ea5t (`audit_runs`).\n\n## Chi ti\u1ebft ph\u00e1t hi\u1ec7n\n\n- [chuoi_bi_sua] agent_action_log #5 \u2014 row_hash\n- [mat_duoi_chuoi] plot_logs #9 \u2014 dong_neo_mat,so_dong_giam\n- [khong_kiem_duoc] plot_logs \u2014 verify_plot_logs(): InsufficientPrivilege: permission denied\n- [noi_dung_lech_ban_duyet] approval_queue #3 object_type board_pack block ceo\n- [duyet_ngoai_function] approvals #4 object_type x?[31m\n- [tu_duyet] content_drafts #7\n- [override_don_dap] decisions #1 \u2014 4 l\u1ea7n (#1, #2, #3, #4)\n- [can_cu_sai] decision_log #2 m\u1ee5c #11\n- [override_tu_trinh] decisions #0 m\u1ee5c #0\n- [quyen_vuot] role bks_reader c\u00f3 EXECUTE tr\u00ean function decide_item(bigint,text,text,text)\n- [khong_kiem_duoc] ?\n\n## \u00c9p tr\u00ecnh QA (override_qa) trong k\u1ef3\n\n- #1 \u00b7 m\u1ee5c #2 \u00b7 kh\u1ed1i ceo \u00b7 01/09/2026 \u00b7 ng\u01b0\u1eddi quy\u1ebft: Mai \u2039b\u203a/\u2039/b\u203a \u00b7 l\u00fd do: g\u1ecdi \u00b7\u00b7\u00b7 (x)(http://e.vn) 'code' !(a)(b)\n- #10 \u00b7 m\u1ee5c #20 \u00b7 kh\u1ed1i sales \u00b7 30/09/2026 \u00b7 ng\u01b0\u1eddi quy\u1ebft:  \u00b7 l\u00fd do: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u2026\n- #3 \u00b7 m\u1ee5c #4 \u00b7 kh\u1ed1i ceo \u00b7 \u2014 \u00b7 ng\u01b0\u1eddi quy\u1ebft: Lan??Gia Lap \u00b7 l\u00fd do: email \u00b7\u00b7\u00b7?xu\u1ed1ng d\u00f2ng??\n\n## Gi\u1edbi h\u1ea1n\n\n- Neo \u0111u\u00f4i chu\u1ed7i ch\u1ec9 l\u00e0 neo N\u1ed8I B\u1ed8 (`audit_runs.params.heads`): superuser x\u00f3a c\u1ea3 s\u1ed5 `audit_runs` th\u00ec neo m\u1ea5t \u2014 neo object-lock ngo\u00e0i + b\u1ed9 ki\u1ec3m ch\u1ee9ng \u0111\u1ed9c l\u1eadp trong t\u00e0i kho\u1ea3n cloud do H\u0110TV \u0111\u1ee9ng t\u00ean l\u00e0 external-dep.\n- Audit t\u00ednh l\u1ea1i t\u1ea1i l\u00fac ch\u1ea1y t\u1eeb DB; n\u1ed9i dung b\u00e0i/payload KH\u00d4NG ch\u00e9p ra b\u00e1o c\u00e1o (ch\u1ec9 #id, b\u1ea3ng, kh\u1ed1i).\n\n---\n*B\u1ea2N NH\u00c1P \u2014 ch\u1edd BKS k\u00fd (external-dep); h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 g\u1eedi.*\n"
+  }
+ ],
+ "fingerprint": [
+  {
+   "in": [
+    {
+     "code": "chuoi_bi_sua",
+     "table": "agent_action_log",
+     "id": 5,
+     "problem": "row_hash"
+    }
+   ],
+   "out": "07f5321933a92761b2589e53adfded2d422696f064d45f6be7db6bf9809a32a2"
+  },
+  {
+   "in": [
+    {
+     "code": "khong_kiem_duoc",
+     "table": "plot_logs",
+     "detail": "verify_plot_logs(): InsufficientPrivilege: permission denied"
+    },
+    {
+     "code": "chuoi_bi_sua",
+     "table": "agent_action_log",
+     "id": 5,
+     "problem": "row_hash"
+    },
+    {
+     "code": "mat_duoi_chuoi",
+     "table": "plot_logs",
+     "id": 9,
+     "problem": "dong_neo_mat,so_dong_giam"
+    }
+   ],
+   "out": "80b5976fff92b073868cb9ba82db3559144da69dfa5ec5da9caf90b2f112aaed"
+  },
+  {
+   "in": [
+    {
+     "code": "khong_kiem_duoc",
+     "table": "audit_runs",
+     "detail": "neo \u0111u\u00f4i: UndefinedTable: x"
+    }
+   ],
+   "out": "2860af41cc92d1e4f17957533ea84b1a5cd2ab7d680f6ce46dd6cdc08a7b3d63"
+  },
+  {
+   "in": [
+    {
+     "code": "chuoi_bi_sua",
+     "table": "plot_logs",
+     "id": 0,
+     "problem": "unchained"
+    }
+   ],
+   "out": "f59ff18643087fa581cef411ea0957f4da998a95b70b88c3f76751a29f189510"
+  },
+  {
+   "in": [
+    {
+     "code": "\u1eb0",
+     "table": "z",
+     "id": null
+    },
+    {
+     "code": "a",
+     "table": null
+    }
+   ],
+   "out": "851dea4e0ae3c764d1c80144d7363f302c3d9ca400f48c8119d248d858d9d743"
+  }
+ ],
+ "month_bounds": [
+  {
+   "arg": null,
+   "now": "2026-10-14T09:00:00+07:00",
+   "out": {
+    "ok": [
+     "2026-09",
+     {
+      "__dt__": "2026-09-01T00:00:00+07:00"
+     },
+     {
+      "__dt__": "2026-10-01T00:00:00+07:00"
+     }
+    ]
+   }
+  },
+  {
+   "arg": "2026-09",
+   "now": "2026-10-14T09:00:00+07:00",
+   "out": {
+    "ok": [
+     "2026-09",
+     {
+      "__dt__": "2026-09-01T00:00:00+07:00"
+     },
+     {
+      "__dt__": "2026-10-01T00:00:00+07:00"
+     }
+    ]
+   }
+  },
+  {
+   "arg": "2026-10",
+   "now": "2026-10-14T09:00:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ch\u01b0a \u0111\u00f3ng (2026-10-01 \u2192 h\u1ebft 2026-10-31 gi\u1edd VN)"
+   }
+  },
+  {
+   "arg": "2026-13",
+   "now": "2026-10-14T09:00:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "--month ph\u1ea3i d\u1ea1ng YYYY-MM"
+   }
+  },
+  {
+   "arg": "2026-9",
+   "now": "2026-10-14T09:00:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "--month ph\u1ea3i d\u1ea1ng YYYY-MM"
+   }
+  },
+  {
+   "arg": null,
+   "now": "2026-01-01T00:00:00+07:00",
+   "out": {
+    "ok": [
+     "2025-12",
+     {
+      "__dt__": "2025-12-01T00:00:00+07:00"
+     },
+     {
+      "__dt__": "2026-01-01T00:00:00+07:00"
+     }
+    ]
+   }
+  },
+  {
+   "arg": "2025-12",
+   "now": "2026-01-01T00:00:00+07:00",
+   "out": {
+    "ok": [
+     "2025-12",
+     {
+      "__dt__": "2025-12-01T00:00:00+07:00"
+     },
+     {
+      "__dt__": "2026-01-01T00:00:00+07:00"
+     }
+    ]
+   }
+  },
+  {
+   "arg": "2026-12",
+   "now": "2026-12-31T23:59:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ch\u01b0a \u0111\u00f3ng (2026-12-01 \u2192 h\u1ebft 2026-12-31 gi\u1edd VN)"
+   }
+  }
+ ],
+ "constants": {
+  "CODES": [
+   "chuoi_bi_sua",
+   "mat_duoi_chuoi",
+   "khong_kiem_duoc",
+   "noi_dung_lech_ban_duyet",
+   "duyet_ngoai_function",
+   "tu_duyet",
+   "qa_fail_khong_override",
+   "override_tu_trinh",
+   "tu_ep_tu_duyet",
+   "override_don_dap",
+   "can_cu_sai",
+   "quyen_vuot"
+  ],
+  "APPEND_ONLY": [
+   "approvals",
+   "agent_action_log",
+   "decisions",
+   "decision_log",
+   "audit_runs",
+   "plot_logs",
+   "settlement_rows",
+   "order_history",
+   "report_outputs",
+   "san_suggestions",
+   "san_suggestion_uses",
+   "output_reviews",
+   "file_output_evidence",
+   "lot_test_certificates",
+   "production_plans",
+   "production_plan_lots",
+   "garden_media_releases"
+  ],
+  "FUNC_ONLY_INSERT": [
+   "approvals",
+   "file_output_evidence"
+  ],
+  "WATCH_ROLES": [
+   "agent_writer",
+   "app_human",
+   "bks_reader",
+   "ben_a_reader",
+   "svc_webhook",
+   "svc_job",
+   "svc_loader",
+   "svc_backup"
+  ],
+  "READ_ONLY_ROLES": [
+   "ben_a_reader",
+   "svc_backup"
+  ],
+  "BEN_A_READS": [
+   "revenue_quarters",
+   "v_ben_a_settlement_daily",
+   "v_ben_a_orders_daily"
+  ],
+  "PII_TABLES": [
+   "contacts",
+   "consents"
+  ],
+  "READ_FUNCS": [
+   "verify_action_log",
+   "verify_plot_logs",
+   "verify_publish"
+  ],
+  "ROLE_FUNCS": {
+   "svc_backup": [
+    "file_output_evidence_backup"
+   ]
+  },
+  "APPROVAL_ACTIONS": [
+   "draft_approve",
+   "draft_reject",
+   "queue_approve",
+   "queue_reject",
+   "queue_auto_approve",
+   "alloc_approve",
+   "alloc_reject",
+   "lot_intake",
+   "qr_lot_sign",
+   "cogs_approve"
+  ],
+  "KIND_FEATURE": {
+   "inside_out": "ceo-04.6",
+   "recon": "ceo-04.6",
+   "hdtv_pack": "ceo-05"
+  },
+  "FIRST_RUN": "ch\u01b0a c\u00f3 neo tr\u01b0\u1edbc \u2014 l\u1ea7n audit \u0111\u1ea7u (\u0111u\u00f4i chu\u1ed7i ch\u01b0a \u0111\u1ed1i chi\u1ebfu)",
+  "LIMIT_NOTE": "Neo \u0111u\u00f4i chu\u1ed7i ch\u1ec9 l\u00e0 neo N\u1ed8I B\u1ed8 (`audit_runs.params.heads`): superuser x\u00f3a c\u1ea3 s\u1ed5 `audit_runs` th\u00ec neo m\u1ea5t \u2014 neo object-lock ngo\u00e0i + b\u1ed9 ki\u1ec3m ch\u1ee9ng \u0111\u1ed9c l\u1eadp trong t\u00e0i kho\u1ea3n cloud do H\u0110TV \u0111\u1ee9ng t\u00ean l\u00e0 external-dep.",
+  "CHAIN_CODES": [
+   "chuoi_bi_sua",
+   "mat_duoi_chuoi",
+   "khong_kiem_duoc"
+  ],
+  "SQL": {
+   "A": "select id from content_drafts where status = 'approved' and not coalesce(verify_publish('content_draft', id::text, text), false) order by id",
+   "B": "select q.id, q.object_type, q.block from approval_queue q where q.status = 'approved' and (encode(sha256(convert_to(q.payload, 'UTF8')), 'hex') is distinct from q.content_sha256 or not exists (select 1 from approvals a where a.object_type = q.object_type and a.object_id = q.object_id and a.decision = 'approved' and a.content_sha256 = q.content_sha256 and a.approved_at <= q.decided_at)) order by q.id",
+   "C": "select a.id, a.object_type from approvals a where not exists (select 1 from agent_action_log l where l.action = any(%s) and l.detail ->> 'approval_id' = a.id::text and l.object_id = a.object_id and l.actor = a.approved_by and l.db_role = a.db_role and l.ts = a.approved_at) order by a.id",
+   "D": "select 'content_drafts', d.id, null::text from approvals a join content_drafts d on a.object_type = 'content_draft' and a.object_id = d.id::text where a.decision = 'approved' and lower(btrim(regexp_replace(a.approved_by, '\\s+', ' ', 'g'))) = lower(btrim(regexp_replace(d.created_by, '\\s+', ' ', 'g'))) union all select 'approval_queue', q.id, q.block from approval_queue q where q.status = 'approved' and lower(btrim(regexp_replace(q.decided_by, '\\s+', ' ', 'g'))) = lower(btrim(regexp_replace(q.created_by, '\\s+', ' ', 'g'))) union all select 'cogs_versions', c.id, null from cogs_versions c where c.approved_by is not null and lower(btrim(regexp_replace(c.approved_by, '\\s+', ' ', 'g'))) = lower(btrim(regexp_replace(c.created_by, '\\s+', ' ', 'g'))) order by 1, 2",
+   "E": "select q.id, q.object_type, q.block from approval_queue q where q.status = 'approved' and q.qa_status = 'fail' and not exists (select 1 from decisions d where d.queue_id = q.id and d.kind = 'override_qa') order by q.id",
+   "OVR": "select d.id, d.queue_id, q.block, q.object_type, d.created_at, d.decided_by, d.reason, q.created_by, q.decided_by, q.status from decisions d join approval_queue q on q.id = d.queue_id where d.kind = 'override_qa' and d.created_at >= %s and d.created_at < %s order by d.id",
+   "BASIS": "select l.id, l.basis_id from decision_log l left join approval_queue q on q.id = l.basis_id where l.entry_kind = 'quyet_dinh' and l.basis_kind = 'approval_queue' and (q.id is null or q.status not in ('approved', 'rejected')) order by l.id",
+   "PRIV": "select c.relname, p.priv from pg_class c cross join unnest(array['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']) p(priv) where c.relnamespace = current_schema()::regnamespace and c.relkind in ('r', 'p') and case when p.priv in ('INSERT', 'UPDATE') then has_any_column_privilege(%s, c.oid, p.priv) else has_table_privilege(%s, c.oid, p.priv) end order by 1, 2",
+   "FUNC": "select p.oid::regprocedure::text from pg_proc p where p.pronamespace = current_schema()::regnamespace and p.prosecdef and p.proname <> all(%s) and has_function_privilege(%s, p.oid, 'EXECUTE') order by 1",
+   "MEMBER": "select a.rolname, b.rolname from pg_roles a join pg_roles b on a.oid <> b.oid where a.rolname = any(%s) and b.rolname = any(%s) and pg_has_role(a.oid, b.oid, 'USAGE')",
+   "SEL": "select c.relname from pg_class c where c.relnamespace = current_schema()::regnamespace and c.relkind in ('r', 'p', 'v', 'm') and (has_table_privilege(%s, c.oid, 'SELECT') or has_any_column_privilege(%s, c.oid, 'SELECT')) order by 1"
+  }
+ },
+ "excess": [
+  [
+   "agent_writer",
+   "approvals",
+   "INSERT",
+   true
+  ],
+  [
+   "agent_writer",
+   "approvals",
+   "UPDATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "approvals",
+   "DELETE",
+   true
+  ],
+  [
+   "agent_writer",
+   "approvals",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "approvals",
+   "SELECT",
+   false
+  ],
+  [
+   "agent_writer",
+   "audit_runs",
+   "INSERT",
+   false
+  ],
+  [
+   "agent_writer",
+   "audit_runs",
+   "UPDATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "audit_runs",
+   "DELETE",
+   true
+  ],
+  [
+   "agent_writer",
+   "audit_runs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "audit_runs",
+   "SELECT",
+   false
+  ],
+  [
+   "agent_writer",
+   "report_outputs",
+   "INSERT",
+   false
+  ],
+  [
+   "agent_writer",
+   "report_outputs",
+   "UPDATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "report_outputs",
+   "DELETE",
+   true
+  ],
+  [
+   "agent_writer",
+   "report_outputs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "report_outputs",
+   "SELECT",
+   false
+  ],
+  [
+   "agent_writer",
+   "plot_logs",
+   "INSERT",
+   false
+  ],
+  [
+   "agent_writer",
+   "plot_logs",
+   "UPDATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "plot_logs",
+   "DELETE",
+   true
+  ],
+  [
+   "agent_writer",
+   "plot_logs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "plot_logs",
+   "SELECT",
+   false
+  ],
+  [
+   "agent_writer",
+   "content_drafts",
+   "INSERT",
+   false
+  ],
+  [
+   "agent_writer",
+   "content_drafts",
+   "UPDATE",
+   false
+  ],
+  [
+   "agent_writer",
+   "content_drafts",
+   "DELETE",
+   false
+  ],
+  [
+   "agent_writer",
+   "content_drafts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "agent_writer",
+   "content_drafts",
+   "SELECT",
+   false
+  ],
+  [
+   "agent_writer",
+   "file_output_evidence",
+   "INSERT",
+   true
+  ],
+  [
+   "agent_writer",
+   "file_output_evidence",
+   "UPDATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "file_output_evidence",
+   "DELETE",
+   true
+  ],
+  [
+   "agent_writer",
+   "file_output_evidence",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "file_output_evidence",
+   "SELECT",
+   false
+  ],
+  [
+   "agent_writer",
+   "contacts",
+   "INSERT",
+   false
+  ],
+  [
+   "agent_writer",
+   "contacts",
+   "UPDATE",
+   false
+  ],
+  [
+   "agent_writer",
+   "contacts",
+   "DELETE",
+   false
+  ],
+  [
+   "agent_writer",
+   "contacts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "agent_writer",
+   "contacts",
+   "SELECT",
+   true
+  ],
+  [
+   "agent_writer",
+   "revenue_quarters",
+   "INSERT",
+   false
+  ],
+  [
+   "agent_writer",
+   "revenue_quarters",
+   "UPDATE",
+   false
+  ],
+  [
+   "agent_writer",
+   "revenue_quarters",
+   "DELETE",
+   false
+  ],
+  [
+   "agent_writer",
+   "revenue_quarters",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "agent_writer",
+   "revenue_quarters",
+   "SELECT",
+   false
+  ],
+  [
+   "agent_writer",
+   "settlement_rows",
+   "INSERT",
+   false
+  ],
+  [
+   "agent_writer",
+   "settlement_rows",
+   "UPDATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "settlement_rows",
+   "DELETE",
+   true
+  ],
+  [
+   "agent_writer",
+   "settlement_rows",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "agent_writer",
+   "settlement_rows",
+   "SELECT",
+   false
+  ],
+  [
+   "app_human",
+   "approvals",
+   "INSERT",
+   true
+  ],
+  [
+   "app_human",
+   "approvals",
+   "UPDATE",
+   true
+  ],
+  [
+   "app_human",
+   "approvals",
+   "DELETE",
+   true
+  ],
+  [
+   "app_human",
+   "approvals",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "app_human",
+   "approvals",
+   "SELECT",
+   false
+  ],
+  [
+   "app_human",
+   "audit_runs",
+   "INSERT",
+   false
+  ],
+  [
+   "app_human",
+   "audit_runs",
+   "UPDATE",
+   true
+  ],
+  [
+   "app_human",
+   "audit_runs",
+   "DELETE",
+   true
+  ],
+  [
+   "app_human",
+   "audit_runs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "app_human",
+   "audit_runs",
+   "SELECT",
+   false
+  ],
+  [
+   "app_human",
+   "report_outputs",
+   "INSERT",
+   false
+  ],
+  [
+   "app_human",
+   "report_outputs",
+   "UPDATE",
+   true
+  ],
+  [
+   "app_human",
+   "report_outputs",
+   "DELETE",
+   true
+  ],
+  [
+   "app_human",
+   "report_outputs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "app_human",
+   "report_outputs",
+   "SELECT",
+   false
+  ],
+  [
+   "app_human",
+   "plot_logs",
+   "INSERT",
+   false
+  ],
+  [
+   "app_human",
+   "plot_logs",
+   "UPDATE",
+   true
+  ],
+  [
+   "app_human",
+   "plot_logs",
+   "DELETE",
+   true
+  ],
+  [
+   "app_human",
+   "plot_logs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "app_human",
+   "plot_logs",
+   "SELECT",
+   false
+  ],
+  [
+   "app_human",
+   "content_drafts",
+   "INSERT",
+   false
+  ],
+  [
+   "app_human",
+   "content_drafts",
+   "UPDATE",
+   false
+  ],
+  [
+   "app_human",
+   "content_drafts",
+   "DELETE",
+   false
+  ],
+  [
+   "app_human",
+   "content_drafts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "app_human",
+   "content_drafts",
+   "SELECT",
+   false
+  ],
+  [
+   "app_human",
+   "file_output_evidence",
+   "INSERT",
+   true
+  ],
+  [
+   "app_human",
+   "file_output_evidence",
+   "UPDATE",
+   true
+  ],
+  [
+   "app_human",
+   "file_output_evidence",
+   "DELETE",
+   true
+  ],
+  [
+   "app_human",
+   "file_output_evidence",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "app_human",
+   "file_output_evidence",
+   "SELECT",
+   false
+  ],
+  [
+   "app_human",
+   "contacts",
+   "INSERT",
+   false
+  ],
+  [
+   "app_human",
+   "contacts",
+   "UPDATE",
+   false
+  ],
+  [
+   "app_human",
+   "contacts",
+   "DELETE",
+   false
+  ],
+  [
+   "app_human",
+   "contacts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "app_human",
+   "contacts",
+   "SELECT",
+   true
+  ],
+  [
+   "app_human",
+   "revenue_quarters",
+   "INSERT",
+   false
+  ],
+  [
+   "app_human",
+   "revenue_quarters",
+   "UPDATE",
+   false
+  ],
+  [
+   "app_human",
+   "revenue_quarters",
+   "DELETE",
+   false
+  ],
+  [
+   "app_human",
+   "revenue_quarters",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "app_human",
+   "revenue_quarters",
+   "SELECT",
+   false
+  ],
+  [
+   "app_human",
+   "settlement_rows",
+   "INSERT",
+   false
+  ],
+  [
+   "app_human",
+   "settlement_rows",
+   "UPDATE",
+   true
+  ],
+  [
+   "app_human",
+   "settlement_rows",
+   "DELETE",
+   true
+  ],
+  [
+   "app_human",
+   "settlement_rows",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "app_human",
+   "settlement_rows",
+   "SELECT",
+   false
+  ],
+  [
+   "bks_reader",
+   "approvals",
+   "INSERT",
+   true
+  ],
+  [
+   "bks_reader",
+   "approvals",
+   "UPDATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "approvals",
+   "DELETE",
+   true
+  ],
+  [
+   "bks_reader",
+   "approvals",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "approvals",
+   "SELECT",
+   false
+  ],
+  [
+   "bks_reader",
+   "audit_runs",
+   "INSERT",
+   false
+  ],
+  [
+   "bks_reader",
+   "audit_runs",
+   "UPDATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "audit_runs",
+   "DELETE",
+   true
+  ],
+  [
+   "bks_reader",
+   "audit_runs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "audit_runs",
+   "SELECT",
+   false
+  ],
+  [
+   "bks_reader",
+   "report_outputs",
+   "INSERT",
+   false
+  ],
+  [
+   "bks_reader",
+   "report_outputs",
+   "UPDATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "report_outputs",
+   "DELETE",
+   true
+  ],
+  [
+   "bks_reader",
+   "report_outputs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "report_outputs",
+   "SELECT",
+   false
+  ],
+  [
+   "bks_reader",
+   "plot_logs",
+   "INSERT",
+   true
+  ],
+  [
+   "bks_reader",
+   "plot_logs",
+   "UPDATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "plot_logs",
+   "DELETE",
+   true
+  ],
+  [
+   "bks_reader",
+   "plot_logs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "plot_logs",
+   "SELECT",
+   false
+  ],
+  [
+   "bks_reader",
+   "content_drafts",
+   "INSERT",
+   true
+  ],
+  [
+   "bks_reader",
+   "content_drafts",
+   "UPDATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "content_drafts",
+   "DELETE",
+   true
+  ],
+  [
+   "bks_reader",
+   "content_drafts",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "content_drafts",
+   "SELECT",
+   false
+  ],
+  [
+   "bks_reader",
+   "file_output_evidence",
+   "INSERT",
+   true
+  ],
+  [
+   "bks_reader",
+   "file_output_evidence",
+   "UPDATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "file_output_evidence",
+   "DELETE",
+   true
+  ],
+  [
+   "bks_reader",
+   "file_output_evidence",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "file_output_evidence",
+   "SELECT",
+   false
+  ],
+  [
+   "bks_reader",
+   "contacts",
+   "INSERT",
+   true
+  ],
+  [
+   "bks_reader",
+   "contacts",
+   "UPDATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "contacts",
+   "DELETE",
+   true
+  ],
+  [
+   "bks_reader",
+   "contacts",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "contacts",
+   "SELECT",
+   true
+  ],
+  [
+   "bks_reader",
+   "revenue_quarters",
+   "INSERT",
+   true
+  ],
+  [
+   "bks_reader",
+   "revenue_quarters",
+   "UPDATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "revenue_quarters",
+   "DELETE",
+   true
+  ],
+  [
+   "bks_reader",
+   "revenue_quarters",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "revenue_quarters",
+   "SELECT",
+   false
+  ],
+  [
+   "bks_reader",
+   "settlement_rows",
+   "INSERT",
+   true
+  ],
+  [
+   "bks_reader",
+   "settlement_rows",
+   "UPDATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "settlement_rows",
+   "DELETE",
+   true
+  ],
+  [
+   "bks_reader",
+   "settlement_rows",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "bks_reader",
+   "settlement_rows",
+   "SELECT",
+   false
+  ],
+  [
+   "ben_a_reader",
+   "approvals",
+   "INSERT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "approvals",
+   "UPDATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "approvals",
+   "DELETE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "approvals",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "approvals",
+   "SELECT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "audit_runs",
+   "INSERT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "audit_runs",
+   "UPDATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "audit_runs",
+   "DELETE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "audit_runs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "audit_runs",
+   "SELECT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "report_outputs",
+   "INSERT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "report_outputs",
+   "UPDATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "report_outputs",
+   "DELETE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "report_outputs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "report_outputs",
+   "SELECT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "plot_logs",
+   "INSERT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "plot_logs",
+   "UPDATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "plot_logs",
+   "DELETE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "plot_logs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "plot_logs",
+   "SELECT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "content_drafts",
+   "INSERT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "content_drafts",
+   "UPDATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "content_drafts",
+   "DELETE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "content_drafts",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "content_drafts",
+   "SELECT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "file_output_evidence",
+   "INSERT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "file_output_evidence",
+   "UPDATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "file_output_evidence",
+   "DELETE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "file_output_evidence",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "file_output_evidence",
+   "SELECT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "contacts",
+   "INSERT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "contacts",
+   "UPDATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "contacts",
+   "DELETE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "contacts",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "contacts",
+   "SELECT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "revenue_quarters",
+   "INSERT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "revenue_quarters",
+   "UPDATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "revenue_quarters",
+   "DELETE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "revenue_quarters",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "revenue_quarters",
+   "SELECT",
+   false
+  ],
+  [
+   "ben_a_reader",
+   "settlement_rows",
+   "INSERT",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "settlement_rows",
+   "UPDATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "settlement_rows",
+   "DELETE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "settlement_rows",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "ben_a_reader",
+   "settlement_rows",
+   "SELECT",
+   true
+  ],
+  [
+   "svc_webhook",
+   "approvals",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_webhook",
+   "approvals",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "approvals",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "approvals",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "approvals",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "audit_runs",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "audit_runs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "audit_runs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "audit_runs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "audit_runs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "report_outputs",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "report_outputs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "report_outputs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "report_outputs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "report_outputs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "plot_logs",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "plot_logs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "plot_logs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "plot_logs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "plot_logs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "content_drafts",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "content_drafts",
+   "UPDATE",
+   false
+  ],
+  [
+   "svc_webhook",
+   "content_drafts",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_webhook",
+   "content_drafts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "svc_webhook",
+   "content_drafts",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "file_output_evidence",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_webhook",
+   "file_output_evidence",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "file_output_evidence",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "file_output_evidence",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "file_output_evidence",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "contacts",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "contacts",
+   "UPDATE",
+   false
+  ],
+  [
+   "svc_webhook",
+   "contacts",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_webhook",
+   "contacts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "svc_webhook",
+   "contacts",
+   "SELECT",
+   true
+  ],
+  [
+   "svc_webhook",
+   "revenue_quarters",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "revenue_quarters",
+   "UPDATE",
+   false
+  ],
+  [
+   "svc_webhook",
+   "revenue_quarters",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_webhook",
+   "revenue_quarters",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "svc_webhook",
+   "revenue_quarters",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "settlement_rows",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_webhook",
+   "settlement_rows",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "settlement_rows",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "settlement_rows",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_webhook",
+   "settlement_rows",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_job",
+   "approvals",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_job",
+   "approvals",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_job",
+   "approvals",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_job",
+   "approvals",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_job",
+   "approvals",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_job",
+   "audit_runs",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_job",
+   "audit_runs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_job",
+   "audit_runs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_job",
+   "audit_runs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_job",
+   "audit_runs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_job",
+   "report_outputs",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_job",
+   "report_outputs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_job",
+   "report_outputs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_job",
+   "report_outputs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_job",
+   "report_outputs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_job",
+   "plot_logs",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_job",
+   "plot_logs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_job",
+   "plot_logs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_job",
+   "plot_logs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_job",
+   "plot_logs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_job",
+   "content_drafts",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_job",
+   "content_drafts",
+   "UPDATE",
+   false
+  ],
+  [
+   "svc_job",
+   "content_drafts",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_job",
+   "content_drafts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "svc_job",
+   "content_drafts",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_job",
+   "file_output_evidence",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_job",
+   "file_output_evidence",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_job",
+   "file_output_evidence",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_job",
+   "file_output_evidence",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_job",
+   "file_output_evidence",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_job",
+   "contacts",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_job",
+   "contacts",
+   "UPDATE",
+   false
+  ],
+  [
+   "svc_job",
+   "contacts",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_job",
+   "contacts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "svc_job",
+   "contacts",
+   "SELECT",
+   true
+  ],
+  [
+   "svc_job",
+   "revenue_quarters",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_job",
+   "revenue_quarters",
+   "UPDATE",
+   false
+  ],
+  [
+   "svc_job",
+   "revenue_quarters",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_job",
+   "revenue_quarters",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "svc_job",
+   "revenue_quarters",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_job",
+   "settlement_rows",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_job",
+   "settlement_rows",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_job",
+   "settlement_rows",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_job",
+   "settlement_rows",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_job",
+   "settlement_rows",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_loader",
+   "approvals",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_loader",
+   "approvals",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "approvals",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_loader",
+   "approvals",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "approvals",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_loader",
+   "audit_runs",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_loader",
+   "audit_runs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "audit_runs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_loader",
+   "audit_runs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "audit_runs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_loader",
+   "report_outputs",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_loader",
+   "report_outputs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "report_outputs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_loader",
+   "report_outputs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "report_outputs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_loader",
+   "plot_logs",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_loader",
+   "plot_logs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "plot_logs",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_loader",
+   "plot_logs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "plot_logs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_loader",
+   "content_drafts",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_loader",
+   "content_drafts",
+   "UPDATE",
+   false
+  ],
+  [
+   "svc_loader",
+   "content_drafts",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_loader",
+   "content_drafts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "svc_loader",
+   "content_drafts",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_loader",
+   "file_output_evidence",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_loader",
+   "file_output_evidence",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "file_output_evidence",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_loader",
+   "file_output_evidence",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "file_output_evidence",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_loader",
+   "contacts",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_loader",
+   "contacts",
+   "UPDATE",
+   false
+  ],
+  [
+   "svc_loader",
+   "contacts",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_loader",
+   "contacts",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "svc_loader",
+   "contacts",
+   "SELECT",
+   true
+  ],
+  [
+   "svc_loader",
+   "revenue_quarters",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_loader",
+   "revenue_quarters",
+   "UPDATE",
+   false
+  ],
+  [
+   "svc_loader",
+   "revenue_quarters",
+   "DELETE",
+   false
+  ],
+  [
+   "svc_loader",
+   "revenue_quarters",
+   "TRUNCATE",
+   false
+  ],
+  [
+   "svc_loader",
+   "revenue_quarters",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_loader",
+   "settlement_rows",
+   "INSERT",
+   false
+  ],
+  [
+   "svc_loader",
+   "settlement_rows",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "settlement_rows",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_loader",
+   "settlement_rows",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_loader",
+   "settlement_rows",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_backup",
+   "approvals",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_backup",
+   "approvals",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "approvals",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_backup",
+   "approvals",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "approvals",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_backup",
+   "audit_runs",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_backup",
+   "audit_runs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "audit_runs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_backup",
+   "audit_runs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "audit_runs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_backup",
+   "report_outputs",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_backup",
+   "report_outputs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "report_outputs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_backup",
+   "report_outputs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "report_outputs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_backup",
+   "plot_logs",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_backup",
+   "plot_logs",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "plot_logs",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_backup",
+   "plot_logs",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "plot_logs",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_backup",
+   "content_drafts",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_backup",
+   "content_drafts",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "content_drafts",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_backup",
+   "content_drafts",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "content_drafts",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_backup",
+   "file_output_evidence",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_backup",
+   "file_output_evidence",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "file_output_evidence",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_backup",
+   "file_output_evidence",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "file_output_evidence",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_backup",
+   "contacts",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_backup",
+   "contacts",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "contacts",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_backup",
+   "contacts",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "contacts",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_backup",
+   "revenue_quarters",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_backup",
+   "revenue_quarters",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "revenue_quarters",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_backup",
+   "revenue_quarters",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "revenue_quarters",
+   "SELECT",
+   false
+  ],
+  [
+   "svc_backup",
+   "settlement_rows",
+   "INSERT",
+   true
+  ],
+  [
+   "svc_backup",
+   "settlement_rows",
+   "UPDATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "settlement_rows",
+   "DELETE",
+   true
+  ],
+  [
+   "svc_backup",
+   "settlement_rows",
+   "TRUNCATE",
+   true
+  ],
+  [
+   "svc_backup",
+   "settlement_rows",
+   "SELECT",
+   false
+  ]
+ ]
+}

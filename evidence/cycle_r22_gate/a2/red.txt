@@ -1,0 +1,122 @@
+# RED — mã gốc (docs/roles.sql + docs/schema.sql chưa sửa; git diff --stat rỗng):
+$ DATABASE_URL=<r22_a2 trên samsam-ts-db> python -m pytest tests/test_r22_webhook_garden.py -p no:cacheprovider -q -rA
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+________________________ test_text_to_chained_plot_log ________________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=63198 user=postgres database=r22_a2) at 0x28c89af8470>, 'dsn...g dbname=r22_a2 host=127.0.0.1 port=63198 options='-c search_path=t_r22a2_fc7afc8551'", 'schema': 't_r22a2_fc7afc8551'}
+hook = None
+
+    def test_text_to_chained_plot_log(live, hook):
+        out = _run("user_send_text", {"text": "kv-t01 tưới 30 phút"})
+>       assert out.startswith("Đã ghi nhật ký #") and "KV-T01 — tưới" in out, out
+E       AssertionError: Hệ thống gặp lỗi, chưa ghi được — vui lòng gửi lại sau ít phút.
+E       assert (False)
+E        +  where False = <built-in method startswith of str object at 0x0000028C894E0990>('Đã ghi nhật ký #')
+E        +    where <built-in method startswith of str object at 0x0000028C894E0990> = 'Hệ thống gặp lỗi, chưa ghi được — vui lòng gửi lại sau ít phút.'.startswith
+
+tests\test_r22_webhook_garden.py:115: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[warn] garden: lỗi InsufficientPrivilege (uh=22085aa929bcd7af)
+[garden] zalo: user_send_text -> sent (uh=22085aa929bcd7af)
+_________________________ test_image_to_garden_media __________________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=63198 user=postgres database=r22_a2) at 0x28c89af8470>, 'dsn...g dbname=r22_a2 host=127.0.0.1 port=63198 options='-c search_path=t_r22a2_fc7afc8551'", 'schema': 't_r22a2_fc7afc8551'}
+hook = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C8A279EB0>
+
+    def test_image_to_garden_media(live, hook, monkeypatch):
+        data = _jpeg_gps()
+        monkeypatch.setattr(zg, "_fetch", lambda *a, **k: data)
+        out = _run("user_send_image", _img("kv-t01 lá vàng"))
+>       assert out.startswith("Đã lưu 1/1 ảnh cho khoảnh KV-T01"), out
+E       AssertionError: Hệ thống gặp lỗi, chưa ghi được — vui lòng gửi lại sau ít phút.
+E       assert False
+E        +  where False = <built-in method startswith of str object at 0x0000028C894E0990>('Đã lưu 1/1 ảnh cho khoảnh KV-T01')
+E        +    where <built-in method startswith of str object at 0x0000028C894E0990> = 'Hệ thống gặp lỗi, chưa ghi được — vui lòng gửi lại sau ít phút.'.startswith
+
+tests\test_r22_webhook_garden.py:126: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[warn] garden: lỗi InsufficientPrivilege (uh=22085aa929bcd7af)
+[garden] zalo: user_send_image -> sent (uh=22085aa929bcd7af)
+__________________________ test_audio_to_voice_draft __________________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=63198 user=postgres database=r22_a2) at 0x28c89af8470>, 'dsn...g dbname=r22_a2 host=127.0.0.1 port=63198 options='-c search_path=t_r22a2_fc7afc8551'", 'schema': 't_r22a2_fc7afc8551'}
+hook = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C8A3A3F80>
+
+    def test_audio_to_voice_draft(live, hook, monkeypatch):
+        monkeypatch.setattr(zg, "_fetch", lambda *a, **k: ADTS)
+        msg = {"text": "KV-T01", "attachments": [
+            {"type": "audio", "payload": {"url": AUDIO}}]}
+        out = _run("user_send_audio", msg)
+>       assert out.startswith("Đã nhận 1 ghi âm (khoảnh KV-T01)"), out
+E       AssertionError: Hệ thống gặp lỗi, chưa ghi được — vui lòng gửi lại sau ít phút.
+E       assert False
+E        +  where False = <built-in method startswith of str object at 0x0000028C894E0990>('Đã nhận 1 ghi âm (khoảnh KV-T01)')
+E        +    where <built-in method startswith of str object at 0x0000028C894E0990> = 'Hệ thống gặp lỗi, chưa ghi được — vui lòng gửi lại sau ít phút.'.startswith
+
+tests\test_r22_webhook_garden.py:137: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[warn] garden: lỗi InsufficientPrivilege (uh=22085aa929bcd7af)
+[garden] zalo: user_send_audio -> sent (uh=22085aa929bcd7af)
+__________________ test_webhook_login_only_zalo_garden_rows ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=127.0.0.1 port=63198 user=postgres database=r22_a2) at 0x28c89af8470>, 'dsn...g dbname=r22_a2 host=127.0.0.1 port=63198 options='-c search_path=t_r22a2_fc7afc8551'", 'schema': 't_r22a2_fc7afc8551'}
+
+    def test_webhook_login_only_zalo_garden_rows(live):
+        """Ngoài đúng luồng Zalo vườn: tên người / nguồn khác / cột hash chain /
+        sửa / xóa / đọc cột-bảng khác → 42501, không ghi gì."""
+        sha = lambda ch: ch * 64  # noqa: E731
+        with psycopg.connect(live["dsn"], connect_timeout=5) as c:
+>           assert c.execute("select id from plots where upper(id) ="
+                             " upper('kv-t01')").fetchall() == [("KV-T01",)]
+
+tests\test_r22_webhook_garden.py:148: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [BAD] at 0x28c8a3a3890>
+query = "select id from plots where upper(id) = upper('kv-t01')", params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table plots
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: InsufficientPrivilege
+=========================== short test summary info ===========================
+FAILED tests/test_r22_webhook_garden.py::test_text_to_chained_plot_log - Asse...
+FAILED tests/test_r22_webhook_garden.py::test_image_to_garden_media - Asserti...
+FAILED tests/test_r22_webhook_garden.py::test_audio_to_voice_draft - Assertio...
+FAILED tests/test_r22_webhook_garden.py::test_webhook_login_only_zalo_garden_rows
+4 failed in 4.73s
+[exit 1]
+
+# RED probe — 4 câu SQL webhook vườn bằng login tạm in role svc_webhook, schema public r22_a2 dựng từ roles.sql GỐC (rollback, login drop):
+$ python <scratchpad>/a2/probe.py
+ERR 42501 permission denied for table plots <- select id from plots where upper(id) = upper(%s) order by id
+ERR 42501 permission denied for table plot_logs <- insert into plot_logs
+ERR 42501 permission denied for table garden_media <- insert into garden_media
+ERR 42501 permission denied for table garden_voice_drafts <- insert into garden_voice_drafts
+[exit 0]

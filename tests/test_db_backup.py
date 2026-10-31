@@ -1,6 +1,7 @@
 """v3.6 — scripts/db_backup.py + scripts/db_restore_drill.py + deploy/cloud.
 
-Unit (không DB): usage exit 2 trước connect, resolver công cụ 4 bước, argv
+Unit (không DB): usage exit 2 trước connect, resolver công cụ (r22: chọn đúng
+major server trước bản mới hơn), argv
 docker không chứa mật khẩu, retention theo created_at, drift-guard README.
 E2E (DB thật `DATABASE_URL`, gate yêu cầu 0 skipped): backup → manifest/
 sha256/row_counts khớp live; retention + offsite; mã hóa; s3 exit 3;
@@ -87,28 +88,104 @@ def test_find_tool_order(monkeypatch, tmp_path):
     pgbin = tmp_path / "pgbin"
     pgbin.mkdir()
     (pgbin / exe).write_bytes(b"")
-    base = tmp_path / "PostgreSQL"
-    (base / "17" / "bin").mkdir(parents=True)
-    (base / "17" / "bin" / exe).write_bytes(b"")
-    monkeypatch.setattr(bk, "PG_WIN_BASE", str(base))
+    deb, win = tmp_path / "deb", tmp_path / "PostgreSQL"
+    for base in (deb, win):
+        (base / "17" / "bin").mkdir(parents=True)
+        (base / "17" / "bin" / exe).write_bytes(b"")
+    monkeypatch.setattr(bk, "PG_DEB_BASE", str(deb))
+    monkeypatch.setattr(bk, "PG_WIN_BASE", str(win))
     monkeypatch.setattr(bk.shutil, "which", lambda n: "/usr/bin/pg_dump")
-    monkeypatch.setattr(bk, "_docker_has_image", lambda img: True)
+    images = {"postgres:16-alpine", "postgres:16"}
+    monkeypatch.setattr(bk, "_docker_has_image", lambda img: img in images)
     # (1) PG_BIN
     monkeypatch.setenv("PG_BIN", str(pgbin))
     assert bk.find_tool("pg_dump", 17) == ("native",
                                            (pgbin / exe).as_posix())
-    # (2) PATH
+    # (2) bố cục Debian/Ubuntu theo major server
     monkeypatch.delenv("PG_BIN")
     assert bk.find_tool("pg_dump", 17) == (
-        "native", Path("/usr/bin/pg_dump").as_posix())
+        "native", (deb / "17" / "bin" / exe).as_posix())
     # (3) bộ cài Windows theo major server
-    monkeypatch.setattr(bk.shutil, "which", lambda n: None)
+    (deb / "17" / "bin" / exe).unlink()
     assert bk.find_tool("pg_dump", 17) == (
-        "native", (base / "17" / "bin" / exe).as_posix())
-    # (4) docker image có sẵn
+        "native", (win / "17" / "bin" / exe).as_posix())
+    # (4) PATH
+    assert bk.find_tool("pg_dump", 16) == (
+        "native", Path("/usr/bin/pg_dump").as_posix())
+    # (5) docker image có sẵn: -alpine trước, rồi bản đầy đủ
+    monkeypatch.setattr(bk.shutil, "which", lambda n: None)
     assert bk.find_tool("pg_dump", 16) == ("docker", "postgres:16-alpine")
-    monkeypatch.setattr(bk, "_docker_has_image", lambda img: False)
+    images.discard("postgres:16-alpine")
+    assert bk.find_tool("pg_dump", 16) == ("docker", "postgres:16")
+    images.clear()
     assert bk.find_tool("pg_dump", 16) is None
+
+
+@pytest.fixture
+def tools(monkeypatch, tmp_path, clean_env):
+    """r22: PATH có pg_restore 17 (mới hơn server 16), docker có thể có
+    postgres:16-alpine; ghi lại image đã inspect (kiểm sinh lười)."""
+    monkeypatch.setattr(bk, "PG_DEB_BASE", str(tmp_path / "deb"))
+    monkeypatch.setattr(bk, "PG_WIN_BASE", str(tmp_path / "win"))
+    monkeypatch.setattr(bk.shutil, "which", lambda n: "/usr/bin/" + n)
+    st = {"images": {"postgres:16-alpine"}, "inspected": []}
+
+    def has(img):
+        st["inspected"].append(img)
+        return img in st["images"]
+    monkeypatch.setattr(bk, "_docker_has_image", has)
+    majors = {"/usr/bin/pg_restore": 17, "postgres:16-alpine": 16}
+    monkeypatch.setattr(bk, "tool_major", lambda t, n, e: (
+        majors.get(t[1], 18), f"{n} {majors.get(t[1], 18)}"))
+    return st
+
+
+def test_resolve_tool_prefers_server_major_over_newer_path(tools, capsys):
+    # CI r21: pg_restore mới hơn trên PATH → SET transaction_timeout bị
+    # server 16 từ chối. Có docker đúng major → chọn docker, không cảnh báo.
+    tool, text = bk.resolve_tool("pg_restore", 16, {})
+    assert tool == ("docker", "postgres:16-alpine") and text.endswith("16")
+    assert "[warn]" not in capsys.readouterr().out
+
+
+def test_resolve_tool_only_newer_warns(tools, capsys):
+    tools["images"].clear()
+    tool, _ = bk.resolve_tool("pg_restore", 16, {})
+    assert tool == ("native", Path("/usr/bin/pg_restore").as_posix())
+    out = capsys.readouterr().out
+    assert "[warn]" in out and "major 17" in out
+
+
+def test_resolve_tool_same_major_skips_docker_probe(tools, monkeypatch):
+    monkeypatch.setattr(bk, "tool_major", lambda t, n, e: (16, "16"))
+    tool, _ = bk.resolve_tool("pg_restore", 16, {})
+    assert tool == ("native", Path("/usr/bin/pg_restore").as_posix())
+    assert tools["inspected"] == []
+
+
+def test_resolve_tool_pg_bin_always_wins(tools, monkeypatch, tmp_path,
+                                         capsys):
+    pgbin = tmp_path / "pgbin"
+    pgbin.mkdir()
+    (pgbin / bk._exe("pg_restore")).write_bytes(b"")
+    monkeypatch.setenv("PG_BIN", str(pgbin))
+    tool, text = bk.resolve_tool("pg_restore", 16, {})
+    assert tool == ("native", (pgbin / bk._exe("pg_restore")).as_posix())
+    assert text.endswith("18") and "[warn] PG_BIN" in capsys.readouterr().out
+    assert tools["inspected"] == []
+    monkeypatch.setattr(bk, "tool_major", lambda *a: (15, "15"))
+    with pytest.raises(RuntimeError, match="major 15 < server 16"):
+        bk.resolve_tool("pg_restore", 16, {})
+
+
+def test_resolve_tool_none_at_least_server(tools, monkeypatch):
+    monkeypatch.setattr(bk, "tool_major", lambda *a: (15, "15"))
+    with pytest.raises(RuntimeError, match="major 15 < server 16"):
+        bk.resolve_tool("pg_restore", 16, {})
+    monkeypatch.setattr(bk.shutil, "which", lambda n: None)
+    tools["images"].clear()
+    with pytest.raises(RuntimeError, match="không tìm thấy pg_restore"):
+        bk.resolve_tool("pg_restore", 16, {})
 
 
 def test_docker_argv_no_password():
@@ -117,6 +194,13 @@ def test_docker_argv_no_password():
                         ["-Fc"], env)
     joined = " ".join(argv)
     assert "PGHOST=host.docker.internal" in argv
+    # r22: docker engine Linux (runner/on-prem) không tự có tên này
+    assert "--add-host=host.docker.internal:host-gateway" in argv
+    assert argv.index("postgres:17-alpine") > argv.index(
+        "--add-host=host.docker.internal:host-gateway")
+    remote = bk.pg_env("postgresql://u:p@db.example.vn:5432/db1")
+    assert not any(a.startswith("--add-host") for a in bk.tool_argv(
+        ("docker", "postgres:17-alpine"), "pg_dump", ["-Fc"], remote))
     assert argv[argv.index("PGPASSWORD") - 1] == "-e"
     assert "s3cretPW" not in joined and "usr" not in argv
     assert env["PGPASSWORD"] == "s3cretPW"

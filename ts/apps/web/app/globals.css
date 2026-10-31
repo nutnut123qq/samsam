@@ -1,0 +1,172 @@
+:root {
+  --bg: #fff;
+  --fg: #1f2328;
+  --muted: #59636e;
+  --line: #d1d9e0;
+  --accent: #1a7f37;
+  --ok-bg: #dafbe1;
+  --err-bg: #ffebe9;
+  --warn-bg: #fff8c5;
+  --info-bg: #ddf4ff;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+  margin: 0;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 16px;
+}
+
+.topbar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+
+.topbar nav a {
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.topbar nav a:hover {
+  background: var(--info-bg);
+}
+
+.who {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.caption {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.notice {
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  white-space: pre-wrap;
+}
+
+.notice.success {
+  background: var(--ok-bg);
+}
+
+.notice.error {
+  background: var(--err-bg);
+}
+
+.notice.warning {
+  background: var(--warn-bg);
+}
+
+.notice.info {
+  background: var(--info-bg);
+}
+
+.plain {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 8px 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+th,
+td {
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 8px 0;
+}
+
+.metric b {
+  display: block;
+  font-size: 24px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin: 8px 0;
+}
+
+.row label,
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+
+button {
+  font: inherit;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.msg {
+  border-left: 3px solid var(--line);
+  padding: 4px 12px;
+  margin: 12px 0;
+}
+
+.msg.user {
+  border-color: var(--accent);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 24px 0;
+}

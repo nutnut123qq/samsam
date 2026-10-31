@@ -185,6 +185,14 @@ class _Srv:
                 resp += chunk
         return resp
 
+    def early(self, path="/b2b", ctype=bf.FORM_CT) -> int:
+        """POST bị từ chối TRƯỚC khi đọc body: CHỈ gửi header — body gửi kèm
+        nằm chưa đọc lúc server đóng → RST, client mất phản hồi (10053)."""
+        resp = self.raw(f"POST {path} HTTP/1.1\r\nHost: x\r\nContent-Type: "
+                        f"{ctype}\r\nContent-Length: {len(_body())}\r\n\r\n"
+                        .encode())
+        return int(resp.split(b" ", 2)[1])
+
     def close(self):
         self.srv.shutdown()
         self.srv.server_close()
@@ -260,21 +268,18 @@ def test_post_missing_length_411(stub):
 
 
 def test_post_wrong_type_415_and_429(stub):
-    st, _ = stub.req("POST", body=_body(), ctype="text/plain")
-    assert st == 415 and stub.calls == []
+    assert stub.early(ctype="text/plain") == 415 and stub.calls == []
     for i in range(5):
         st, body = stub.req("POST", body=_body())
         assert st == 200 and body == bf.PAGE_OK and "YC-" not in body, i
-    st, body = stub.req("POST", body=_body())
-    assert st == 429 and len(stub.calls) == 5
+    assert stub.early() == 429 and len(stub.calls) == 5
 
 
 def test_post_bad_input_400_no_echo(stub):
     st, body = stub.req("POST", body=_body(org_name="Công ty <b>BIMAT</b>",
                                            phone="12"))
     assert st == 400 and "BIMAT" not in body and stub.calls == []
-    st, body = stub.req("POST", "/khac", body=_body())
-    assert st == 404
+    assert stub.early("/khac") == 404
 
 
 def test_post_honeypot_200_no_intake(stub):

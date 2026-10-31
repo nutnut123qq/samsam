@@ -1,0 +1,2482 @@
+{
+ "cases": [
+  {
+   "name": "complete",
+   "doc": {
+    "so_ho_so_hop_dong": 2,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     },
+     {
+      "ma_ho_so": "HS-02",
+      "ten": "SP B",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "TCB 02",
+      "loai": "food",
+      "sku_keys": [
+       "sku-b"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": "HS-02"
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [],
+    "missing": [],
+    "dossiers": 2,
+    "mapped": 2,
+    "skus": 2
+   }
+  },
+  {
+   "name": "incomplete",
+   "doc": {
+    "so_ho_so_hop_dong": 2,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [],
+    "missing": [
+     "danh m\u1ee5c h\u1ed3 s\u01a1 g\u1ed1c: 1/2 (B\u00ean B cung c\u1ea5p t\u00ean, th\u00e0nh ph\u1ea7n, quy c\u00e1ch, s\u1ed1 c\u00f4ng b\u1ed1 + c\u0103n c\u1ee9)",
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err0",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": "",
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].thanh_phan: thi\u1ebfu/r\u1ed7ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err1",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].thanh_phan: thi\u1ebfu/r\u1ed7ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err2",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": "S\u00e2m",
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err3",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       " "
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].thanh_phan: thi\u1ebfu/r\u1ed7ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err4",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": " ",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].quy_cach: thi\u1ebfu/r\u1ed7ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err5",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "x",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].loai: ph\u1ea3i \u2208 tpbvsk|food|alcohol"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err6",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": null,
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].loai: thi\u1ebfu/r\u1ed7ng",
+     "danh_muc_ho_so_goc[0].loai: ph\u1ea3i \u2208 tpbvsk|food|alcohol"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err7",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "agent:sx",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].xac_nhan_boi: ph\u1ea3i l\u00e0 NG\u01af\u1edcI (kh\u00f4ng agent:/system:)"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err8",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": " System:x",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].xac_nhan_boi: ph\u1ea3i l\u00e0 NG\u01af\u1edcI (kh\u00f4ng agent:/system:)"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err9",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "auto_policy:y",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].xac_nhan_boi: ph\u1ea3i l\u00e0 NG\u01af\u1edcI (kh\u00f4ng agent:/system:)"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err10",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "99/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0]: s\u1ed1 c\u00f4ng b\u1ed1 l\u1ec7ch golden c\u1ee7a sku-a"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err11",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": " 01/2020/\u0111ksp ",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err12",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-z"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].sku_keys: 'sku-z' kh\u00f4ng c\u00f3 trong golden",
+     "sku[sku-a]: g\u1eafn HS-01 nh\u01b0ng h\u1ed3 s\u01a1 kh\u00f4ng li\u1ec7t k\u00ea SKU n\u00e0y"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err13",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].sku_keys: thi\u1ebfu/r\u1ed7ng",
+     "sku[sku-a]: g\u1eafn HS-01 nh\u01b0ng h\u1ed3 s\u01a1 kh\u00f4ng li\u1ec7t k\u00ea SKU n\u00e0y"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err14",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].phien_ban: thi\u1ebfu/r\u1ed7ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err15",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "xyz"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].tep_sha256: thi\u1ebfu/r\u1ed7ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err16",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].tep_sha256: thi\u1ebfu/r\u1ed7ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err17",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mau": true
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0]: h\u1ed3 s\u01a1 M\u1eaaU (mau=true) \u2014 kh\u00f4ng t\u00ednh l\u00e0 h\u1ed3 s\u01a1 g\u1ed1c th\u1eadt",
+     "sku[sku-a].ho_so_goc: 'HS-01' kh\u00f4ng c\u00f3 trong danh m\u1ee5c"
+    ],
+    "missing": [
+     "danh m\u1ee5c h\u1ed3 s\u01a1 g\u1ed1c: 0/1 (B\u00ean B cung c\u1ea5p t\u00ean, th\u00e0nh ph\u1ea7n, quy c\u00e1ch, s\u1ed1 c\u00f4ng b\u1ed1 + c\u0103n c\u1ee9)",
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 0/2 \u2014 ch\u01b0a g\u1eafn: sku-a, sku-b"
+    ],
+    "dossiers": 0,
+    "mapped": 0,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err18",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mau": 1
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err19",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].ma_ho_so: thi\u1ebfu/r\u1ed7ng",
+     "sku[sku-a].ho_so_goc: 'HS-01' kh\u00f4ng c\u00f3 trong danh m\u1ee5c"
+    ],
+    "missing": [
+     "danh m\u1ee5c h\u1ed3 s\u01a1 g\u1ed1c: 0/1 (B\u00ean B cung c\u1ea5p t\u00ean, th\u00e0nh ph\u1ea7n, quy c\u00e1ch, s\u1ed1 c\u00f4ng b\u1ed1 + c\u0103n c\u1ee9)",
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 0/2 \u2014 ch\u01b0a g\u1eafn: sku-a, sku-b"
+    ],
+    "dossiers": 0,
+    "mapped": 0,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err20",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": null,
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].ma_ho_so: thi\u1ebfu/r\u1ed7ng",
+     "sku[sku-a].ho_so_goc: 'HS-01' kh\u00f4ng c\u00f3 trong danh m\u1ee5c"
+    ],
+    "missing": [
+     "danh m\u1ee5c h\u1ed3 s\u01a1 g\u1ed1c: 0/1 (B\u00ean B cung c\u1ea5p t\u00ean, th\u00e0nh ph\u1ea7n, quy c\u00e1ch, s\u1ed1 c\u00f4ng b\u1ed1 + c\u0103n c\u1ee9)",
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 0/2 \u2014 ch\u01b0a g\u1eafn: sku-a, sku-b"
+    ],
+    "dossiers": 0,
+    "mapped": 0,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err21",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": 5,
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].can_cu: thi\u1ebfu/r\u1ed7ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err22",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a",
+       "sku-b"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err23",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": "sku-a",
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].sku_keys: thi\u1ebfu/r\u1ed7ng",
+     "danh_muc_ho_so_goc[0].sku_keys: 's' kh\u00f4ng c\u00f3 trong golden",
+     "danh_muc_ho_so_goc[0].sku_keys: 'k' kh\u00f4ng c\u00f3 trong golden",
+     "danh_muc_ho_so_goc[0].sku_keys: 'u' kh\u00f4ng c\u00f3 trong golden",
+     "danh_muc_ho_so_goc[0].sku_keys: '-' kh\u00f4ng c\u00f3 trong golden",
+     "danh_muc_ho_so_goc[0].sku_keys: 'a' kh\u00f4ng c\u00f3 trong golden"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "err24",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       5,
+       null
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0].sku_keys: thi\u1ebfu/r\u1ed7ng",
+     "danh_muc_ho_so_goc[0].sku_keys: '5' kh\u00f4ng c\u00f3 trong golden",
+     "danh_muc_ho_so_goc[0].sku_keys: 'None' kh\u00f4ng c\u00f3 trong golden",
+     "sku[sku-a]: g\u1eafn HS-01 nh\u01b0ng h\u1ed3 s\u01a1 kh\u00f4ng li\u1ec7t k\u00ea SKU n\u00e0y"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "not_list",
+   "doc": {
+    "danh_muc_ho_so_goc": {}
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc: ph\u1ea3i l\u00e0 list"
+    ],
+    "missing": [],
+    "dossiers": 0,
+    "mapped": 0,
+    "skus": 2
+   }
+  },
+  {
+   "name": "missing",
+   "doc": {},
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc: ph\u1ea3i l\u00e0 list"
+    ],
+    "missing": [],
+    "dossiers": 0,
+    "mapped": 0,
+    "skus": 2
+   }
+  },
+  {
+   "name": "item_not_obj",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     1,
+     "x",
+     null
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[0]: ph\u1ea3i l\u00e0 object",
+     "danh_muc_ho_so_goc[1]: ph\u1ea3i l\u00e0 object",
+     "danh_muc_ho_so_goc[2]: ph\u1ea3i l\u00e0 object",
+     "sku[sku-a].ho_so_goc: 'HS-01' kh\u00f4ng c\u00f3 trong danh m\u1ee5c"
+    ],
+    "missing": [
+     "danh m\u1ee5c h\u1ed3 s\u01a1 g\u1ed1c: 0/1 (B\u00ean B cung c\u1ea5p t\u00ean, th\u00e0nh ph\u1ea7n, quy c\u00e1ch, s\u1ed1 c\u00f4ng b\u1ed1 + c\u0103n c\u1ee9)",
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 0/2 \u2014 ch\u01b0a g\u1eafn: sku-a, sku-b"
+    ],
+    "dossiers": 0,
+    "mapped": 0,
+    "skus": 2
+   }
+  },
+  {
+   "name": "dup",
+   "doc": {
+    "so_ho_so_hop_dong": 1,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     },
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "danh_muc_ho_so_goc[1].ma_ho_so: tr\u00f9ng HS-01"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 1,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "rows_bad",
+   "doc": {
+    "so_ho_so_hop_dong": 2,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     },
+     {
+      "ma_ho_so": "HS-02",
+      "ten": "SP B",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "TCB 02",
+      "loai": "food",
+      "sku_keys": [
+       "sku-b"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-09"
+     },
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-02"
+     },
+     "x",
+     {
+      "sku_key": null
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "sku[sku-a].ho_so_goc: 'HS-09' kh\u00f4ng c\u00f3 trong danh m\u1ee5c",
+     "sku[sku-a]: g\u1eafn HS-02 nh\u01b0ng h\u1ed3 s\u01a1 kh\u00f4ng li\u1ec7t k\u00ea SKU n\u00e0y",
+     "sku: SKU golden 'sku-a' ph\u1ea3i c\u00f3 \u0111\u00fang 1 d\u00f2ng",
+     "sku: SKU golden 'sku-b' ph\u1ea3i c\u00f3 \u0111\u00fang 1 d\u00f2ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 1/2 \u2014 ch\u01b0a g\u1eafn: sku-b"
+    ],
+    "dossiers": 2,
+    "mapped": 1,
+    "skus": 2
+   }
+  },
+  {
+   "name": "rows_not_list",
+   "doc": {
+    "so_ho_so_hop_dong": 2,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     },
+     {
+      "ma_ho_so": "HS-02",
+      "ten": "SP B",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "TCB 02",
+      "loai": "food",
+      "sku_keys": [
+       "sku-b"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": "x"
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "sku: SKU golden 'sku-a' ph\u1ea3i c\u00f3 \u0111\u00fang 1 d\u00f2ng",
+     "sku: SKU golden 'sku-b' ph\u1ea3i c\u00f3 \u0111\u00fang 1 d\u00f2ng"
+    ],
+    "missing": [
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 0/2 \u2014 ch\u01b0a g\u1eafn: sku-a, sku-b"
+    ],
+    "dossiers": 2,
+    "mapped": 0,
+    "skus": 2
+   }
+  },
+  {
+   "name": "need_bad",
+   "doc": {
+    "so_ho_so_hop_dong": true,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     },
+     {
+      "ma_ho_so": "HS-02",
+      "ten": "SP B",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "TCB 02",
+      "loai": "food",
+      "sku_keys": [
+       "sku-b"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": "HS-02"
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "so_ho_so_hop_dong: ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean \u2265 1"
+    ],
+    "missing": [],
+    "dossiers": 2,
+    "mapped": 2,
+    "skus": 2
+   }
+  },
+  {
+   "name": "need_zero",
+   "doc": {
+    "so_ho_so_hop_dong": 0,
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     },
+     {
+      "ma_ho_so": "HS-02",
+      "ten": "SP B",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "TCB 02",
+      "loai": "food",
+      "sku_keys": [
+       "sku-b"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": "HS-02"
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "so_ho_so_hop_dong: ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean \u2265 1"
+    ],
+    "missing": [],
+    "dossiers": 2,
+    "mapped": 2,
+    "skus": 2
+   }
+  },
+  {
+   "name": "need_str",
+   "doc": {
+    "so_ho_so_hop_dong": "2",
+    "danh_muc_ho_so_goc": [
+     {
+      "ma_ho_so": "HS-01",
+      "ten": "SP A",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "01/2020/\u0110KSP",
+      "loai": "tpbvsk",
+      "sku_keys": [
+       "sku-a"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     },
+     {
+      "ma_ho_so": "HS-02",
+      "ten": "SP B",
+      "thanh_phan": [
+       "S\u00e2m"
+      ],
+      "quy_cach": "H\u1ed9p 20 vi\u00ean",
+      "so_cong_bo": "TCB 02",
+      "loai": "food",
+      "sku_keys": [
+       "sku-b"
+      ],
+      "xac_nhan_boi": "Ph\u00e1p ch\u1ebf M\u1eaaU",
+      "can_cu": "BB giao 01",
+      "phien_ban": "v1",
+      "tep_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     }
+    ],
+    "sku": [
+     {
+      "sku_key": "sku-a",
+      "ho_so_goc": "HS-01"
+     },
+     {
+      "sku_key": "sku-b",
+      "ho_so_goc": "HS-02"
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "sku-a",
+     "receipt_no": "01/2020/\u0110KSP"
+    },
+    {
+     "sku_key": "sku-b",
+     "receipt_no": null
+    }
+   ],
+   "res": {
+    "errors": [
+     "so_ho_so_hop_dong: ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean \u2265 1"
+    ],
+    "missing": [],
+    "dossiers": 2,
+    "mapped": 2,
+    "skus": 2
+   }
+  },
+  {
+   "name": "real",
+   "doc": {
+    "_doc": "v13.4 C05 \u2014 \u0110\u1ed1i chi\u1ebfu 'H\u1ed3 s\u01a1 g\u1ed1c 14 s\u1ea3n ph\u1ea9m' (PL01 m\u1ee5c 2, S\u1ea3n xu\u1ea5t R&D / H\u1ed3 s\u01a1 s\u1ea3n ph\u1ea9m) v\u1edbi golden master `data/golden_skus.json` (13 SKU, g\u1ed3m combo/g\u00f3i nhi\u1ec1u \u0111\u01a1n v\u1ecb). B\u1ea2N \u0110\u1ed0I CHI\u1ebeU CH\u01afA X\u00c1C NH\u1eacN: m\u1ed7i SKU golden \u0111\u00fang 1 d\u00f2ng, `ho_so_goc` = null (m\u00e3 h\u1ed3 s\u01a1 trong danh m\u1ee5c 14 c\u1ee7a B\u00ean B \u2014 ch\u01b0a c\u00f3), `trang_thai` = chua_xac_nhan. KH\u00d4NG nh\u00e2n b\u1ea3n/t\u00e1ch SKU cho \u0111\u1ee7 14 v\u00e0 KH\u00d4NG g\u1ed9p SKU c\u00f9ng s\u1ed1 c\u00f4ng b\u1ed1 th\u00e0nh 1 h\u1ed3 s\u01a1 \u2014 13 SKU \u1ee9ng v\u1edbi bao nhi\u00eau h\u1ed3 s\u01a1 g\u1ed1c l\u00e0 vi\u1ec7c B\u00ean B x\u00e1c nh\u1eadn. `ghi_chu_doi_chieu` ch\u1ec9 ghi s\u1ef1 ki\u1ec7n \u0111\u1ecdc \u0111\u01b0\u1ee3c t\u1eeb golden (c\u00f9ng s\u1ed1 \u0110KSP, th\u00e0nh ph\u1ea7n combo theo t\u00ean). `so_cong_bo` sao t\u1eeb golden `receipt_no` (test kh\u00f3a tr\u00f9ng kh\u1edbp). Ch\u1ec9 ng\u01b0\u1eddi c\u00f3 th\u1ea9m quy\u1ec1n B\u00ean B \u0111i\u1ec1n `danh_muc_ho_so_goc` + `ho_so_goc` + \u0111\u1ed5i tr\u1ea1ng th\u00e1i.",
+    "nguon": "PL01 m\u1ee5c 2 \u2014 S\u1ea3n xu\u1ea5t, R&D / H\u1ed3 s\u01a1 s\u1ea3n ph\u1ea9m: 'H\u1ed3 s\u01a1 g\u1ed1c 14 s\u1ea3n ph\u1ea9m (th\u00e0nh ph\u1ea7n, quy c\u00e1ch, s\u1ed1 c\u00f4ng b\u1ed1)'",
+    "so_ho_so_hop_dong": 14,
+    "so_sku_golden": 13,
+    "trang_thai_doi_chieu": "chua_xac_nhan",
+    "blocker": "B\u00ean B cung c\u1ea5p danh m\u1ee5c 14 h\u1ed3 s\u01a1 g\u1ed1c (t\u00ean, th\u00e0nh ph\u1ea7n, quy c\u00e1ch, s\u1ed1 c\u00f4ng b\u1ed1) \u2014 ch\u01b0a c\u00f3 th\u00ec kh\u00f4ng x\u00e1c \u0111\u1ecbnh \u0111\u01b0\u1ee3c SKU n\u00e0o \u1ee9ng v\u1edbi h\u1ed3 s\u01a1 n\u00e0o v\u00e0 h\u1ed3 s\u01a1 n\u00e0o ch\u01b0a c\u00f3 SKU",
+    "danh_muc_ho_so_goc": [],
+    "sku": [
+     {
+      "sku_key": "savina-12v",
+      "so_cong_bo": "8014/2021/\u0110KSP",
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": null
+     },
+     {
+      "sku_key": "saphraton-20v",
+      "so_cong_bo": "2778/2018/\u0110KSP",
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": "C\u00f9ng s\u1ed1 \u0110KSP v\u1edbi 3 SKU Saphraton kh\u00e1c (combo 2x20, 40 vi\u00ean, 80 vi\u00ean) \u2014 ch\u1edd B\u00ean B x\u00e1c nh\u1eadn 1 hay nhi\u1ec1u h\u1ed3 s\u01a1 g\u1ed1c"
+     },
+     {
+      "sku_key": "saphraton-combo-2x20v",
+      "so_cong_bo": "2778/2018/\u0110KSP",
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": "Combo 2 h\u1ed9p x 20 vi\u00ean (theo t\u00ean golden) \u2014 golden ghi ch\u1edd KD x\u00e1c nh\u1eadn c\u00f3 tr\u00f9ng Saphraton 40 vi\u00ean kh\u00f4ng"
+     },
+     {
+      "sku_key": "saphraton-40v",
+      "so_cong_bo": "2778/2018/\u0110KSP",
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": "C\u00f9ng s\u1ed1 \u0110KSP Saphraton"
+     },
+     {
+      "sku_key": "saphraton-80v",
+      "so_cong_bo": "2778/2018/\u0110KSP",
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": "C\u00f9ng s\u1ed1 \u0110KSP Saphraton"
+     },
+     {
+      "sku_key": "savigout-30v",
+      "so_cong_bo": "8560/2019/\u0110KSP",
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": null
+     },
+     {
+      "sku_key": "sapentol-30v",
+      "so_cong_bo": "5191/2020/\u0110KSP",
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": null
+     },
+     {
+      "sku_key": "da-an-sam-30v",
+      "so_cong_bo": "11129/2021/\u0110KSP",
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": null
+     },
+     {
+      "sku_key": "mat-ong-sam-120ml-1hu",
+      "so_cong_bo": null,
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": "Golden ch\u01b0a c\u00f3 s\u1ed1 c\u00f4ng b\u1ed1/t\u1ef1 c\u00f4ng b\u1ed1"
+     },
+     {
+      "sku_key": "mat-ong-sam-120ml-2hu",
+      "so_cong_bo": null,
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": "G\u00f3i 2 h\u0169 120ml (theo t\u00ean golden) \u2014 golden ch\u01b0a c\u00f3 s\u1ed1 c\u00f4ng b\u1ed1/t\u1ef1 c\u00f4ng b\u1ed1"
+     },
+     {
+      "sku_key": "mat-ong-sam-300ml",
+      "so_cong_bo": null,
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": "Golden ch\u01b0a c\u00f3 s\u1ed1 c\u00f4ng b\u1ed1/t\u1ef1 c\u00f4ng b\u1ed1"
+     },
+     {
+      "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+      "so_cong_bo": null,
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": "Golden ch\u01b0a c\u00f3 s\u1ed1 c\u00f4ng b\u1ed1/t\u1ef1 c\u00f4ng b\u1ed1"
+     },
+     {
+      "sku_key": "ruou-sam-binh-su-do-500ml",
+      "so_cong_bo": null,
+      "ho_so_goc": null,
+      "trang_thai": "chua_xac_nhan",
+      "ghi_chu_doi_chieu": "Golden ch\u01b0a c\u00f3 s\u1ed1 c\u00f4ng b\u1ed1/t\u1ef1 c\u00f4ng b\u1ed1"
+     }
+    ]
+   },
+   "gold": [
+    {
+     "sku_key": "savina-12v",
+     "name": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm",
+     "category": "tpbvsk",
+     "pack_spec": "12 vi\u00ean ng\u1eadm (tu\u00fdp PP)",
+     "receipt_no": "8014/2021/\u0110KSP",
+     "receipt_date": "2021-09-07",
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "27357883504",
+     "product_ids": [
+      "wc-2298",
+      "wc-349",
+      "nv-savina-tuyp-12-vien-bk"
+     ],
+     "prices": {
+      "shopee": {
+       "floor": 128000,
+       "list": 159000,
+       "promo": 132000
+      }
+     },
+     "note": null
+    },
+    {
+     "sku_key": "saphraton-20v",
+     "name": "Saphraton 20 vi\u00ean",
+     "category": "tpbvsk",
+     "pack_spec": "20 vi\u00ean nang m\u1ec1m (2 v\u1ec9 x 10 vi\u00ean)",
+     "receipt_no": "2778/2018/\u0110KSP",
+     "receipt_date": "2018-05-22",
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "24825885894",
+     "product_ids": [
+      "wc-2300",
+      "wc-344",
+      "nv-saphraton-51"
+     ],
+     "prices": {
+      "shopee": {
+       "floor": 236000,
+       "list": 299000,
+       "promo": 250000
+      }
+     },
+     "note": null
+    },
+    {
+     "sku_key": "saphraton-combo-2x20v",
+     "name": "Combo Saphraton 2 h\u1ed9p x 20 vi\u00ean",
+     "category": "tpbvsk",
+     "pack_spec": "40 vi\u00ean nang m\u1ec1m (combo 2 h\u1ed9p x 20 vi\u00ean)",
+     "receipt_no": "2778/2018/\u0110KSP",
+     "receipt_date": "2018-05-22",
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "28003783932",
+     "product_ids": [],
+     "prices": {
+      "shopee": {
+       "floor": 469000,
+       "list": 698000,
+       "promo": 480000
+      }
+     },
+     "note": "Ch\u1edd KD x\u00e1c nh\u1eadn combo 2x20 c\u00f3 tr\u00f9ng SKU Saphraton 40 vi\u00ean kh\u00f4ng \u2014 gi\u1eef 2 sku_key ri\u00eang, kh\u00f4ng t\u1ef1 g\u1ed9p."
+    },
+    {
+     "sku_key": "saphraton-40v",
+     "name": "Saphraton 40 vi\u00ean",
+     "category": "tpbvsk",
+     "pack_spec": "40 vi\u00ean nang m\u1ec1m (4 v\u1ec9 x 10 vi\u00ean)",
+     "receipt_no": "2778/2018/\u0110KSP",
+     "receipt_date": "2018-05-22",
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [],
+     "shopee_item_id": null,
+     "product_ids": [],
+     "prices": {
+      "shopee": {
+       "floor": 450000
+      }
+     },
+     "note": "M\u1edbi c\u00f3 gi\u00e1 s\u00e0n; gi\u00e1 th\u01b0\u1eddng/KM ch\u1edd G\u0110 b\u00e1n h\u00e0ng. Ch\u1edd KD x\u00e1c nh\u1eadn c\u00f3 tr\u00f9ng combo 2x20 kh\u00f4ng."
+    },
+    {
+     "sku_key": "saphraton-80v",
+     "name": "Saphraton 80 vi\u00ean",
+     "category": "tpbvsk",
+     "pack_spec": "80 vi\u00ean nang m\u1ec1m (8 v\u1ec9 x 10 vi\u00ean)",
+     "receipt_no": "2778/2018/\u0110KSP",
+     "receipt_date": "2018-05-22",
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "29368491427",
+     "product_ids": [
+      "wc-2307",
+      "wc-331",
+      "nv-saphraton-48"
+     ],
+     "prices": {
+      "shopee": {
+       "floor": 1000000,
+       "list": 1490000,
+       "promo": 1100000
+      }
+     },
+     "note": "Map trang web 'Saphraton' (kh\u00f4ng ghi quy c\u00e1ch) sang 80 vi\u00ean ch\u1ec9 suy t\u1eeb gi\u00e1 web = gi\u00e1 s\u00e0n 80 vi\u00ean \u2014 ch\u1edd S\u1ea3n xu\u1ea5t x\u00e1c nh\u1eadn."
+    },
+    {
+     "sku_key": "savigout-30v",
+     "name": "Savigout 30 vi\u00ean",
+     "category": "tpbvsk",
+     "pack_spec": "30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)",
+     "receipt_no": "8560/2019/\u0110KSP",
+     "receipt_date": "2019-07-02",
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "24325987926",
+     "product_ids": [
+      "wc-2304",
+      "wc-336",
+      "nv-savigout-bk"
+     ],
+     "prices": {
+      "shopee": {
+       "floor": 295000,
+       "list": 439000,
+       "promo": 350000
+      }
+     },
+     "note": "File t\u1ed5ng h\u1ee3p TPBVSK 22.01.2026 ghi Savigout s\u1ed1 5191/2020/\u0110KSP (tr\u00f9ng s\u1ed1 c\u1ee7a Sapentol) \u2014 l\u1ec7ch v\u1edbi s\u1ed1 8560/2019/\u0110KSP \u0111ang d\u00f9ng \u1edf \u0111\u00e2y, ch\u1edd Ph\u00e1p ch\u1ebf x\u00e1c nh\u1eadn."
+    },
+    {
+     "sku_key": "sapentol-30v",
+     "name": "Sapentol 30 vi\u00ean",
+     "category": "tpbvsk",
+     "pack_spec": "30 vi\u00ean nang c\u1ee9ng (h\u1ed9p 1 l\u1ecd)",
+     "receipt_no": "5191/2020/\u0110KSP",
+     "receipt_date": "2020-06-10",
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "27257950771",
+     "product_ids": [
+      "wc-2309",
+      "wc-324",
+      "nv-sapentol"
+     ],
+     "prices": {
+      "shopee": {
+       "floor": 280000,
+       "list": 417000,
+       "promo": 330000
+      }
+     },
+     "note": null
+    },
+    {
+     "sku_key": "da-an-sam-30v",
+     "name": "D\u1ea1 An S\u00e2m 30 vi\u00ean",
+     "category": "tpbvsk",
+     "pack_spec": "30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)",
+     "receipt_no": "11129/2021/\u0110KSP",
+     "receipt_date": "2021-12-29",
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "26857946153",
+     "product_ids": [],
+     "prices": {
+      "shopee": {
+       "floor": 340000,
+       "list": 506000,
+       "promo": 399000
+      }
+     },
+     "note": null
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "name": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)",
+     "category": "food",
+     "pack_spec": "120ml x 1 h\u0169",
+     "receipt_no": null,
+     "receipt_date": null,
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "54916394790",
+     "product_ids": [],
+     "prices": {
+      "shopee": {
+       "floor": 500000,
+       "list": 745000,
+       "promo": 550000
+      }
+     },
+     "note": "H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh. Chung item Shopee v\u1edbi bi\u1ebfn th\u1ec3 2 h\u0169."
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-2hu",
+     "name": "M\u1eadt ong s\u00e2m 120ml (2 h\u0169)",
+     "category": "food",
+     "pack_spec": "120ml x 2 h\u0169",
+     "receipt_no": null,
+     "receipt_date": null,
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "54916394790",
+     "product_ids": [],
+     "prices": {
+      "shopee": {
+       "floor": 900000,
+       "list": 1340000,
+       "promo": 950000
+      }
+     },
+     "note": "H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh. Chung item Shopee v\u1edbi bi\u1ebfn th\u1ec3 1 h\u0169."
+    },
+    {
+     "sku_key": "mat-ong-sam-300ml",
+     "name": "M\u1eadt ong s\u00e2m 300ml",
+     "category": "food",
+     "pack_spec": "300ml x 1 h\u0169",
+     "receipt_no": null,
+     "receipt_date": null,
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "29007947088",
+     "product_ids": [],
+     "prices": {
+      "shopee": {
+       "floor": 2000000,
+       "list": 2980000,
+       "promo": 2100000
+      }
+     },
+     "note": "H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh."
+    },
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "name": "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml",
+     "category": "alcohol",
+     "pack_spec": "500ml chai th\u1ee7y tinh",
+     "receipt_no": null,
+     "receipt_date": null,
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "27325048614",
+     "product_ids": [],
+     "prices": {
+      "shopee": {
+       "floor": 500000,
+       "list": 745000,
+       "promo": 550000
+      }
+     },
+     "note": "N\u1ed3ng \u0111\u1ed9 ghi 27,5% CH\u01afA x\u00e1c minh. \u0110ang c\u00f3 listing Shopee \u2014 r\u01b0\u1ee3u kh\u00f4ng \u0111\u01b0\u1ee3c qu\u1ea3ng b\u00e1/b\u00e1n online, ch\u1edd Ph\u00e1p ch\u1ebf."
+    },
+    {
+     "sku_key": "ruou-sam-binh-su-do-500ml",
+     "name": "R\u01b0\u1ee3u s\u00e2m b\u00ecnh s\u1ee9 \u0111\u1ecf 500ml",
+     "category": "alcohol",
+     "pack_spec": "500ml b\u00ecnh s\u1ee9 \u0111\u1ecf",
+     "receipt_no": null,
+     "receipt_date": null,
+     "xnqc_status": "none",
+     "self_declaration_ok": null,
+     "allowed_channels": [
+      "shopee"
+     ],
+     "shopee_item_id": "26975028961",
+     "product_ids": [],
+     "prices": {},
+     "note": "Ch\u01b0a c\u00f3 gi\u00e1 trong b\u1ea3ng gi\u00e1. N\u1ed3ng \u0111\u1ed9 CH\u01afA x\u00e1c minh. \u0110ang c\u00f3 listing Shopee \u2014 ch\u1edd Ph\u00e1p ch\u1ebf."
+    }
+   ],
+   "res": {
+    "errors": [],
+    "missing": [
+     "danh m\u1ee5c h\u1ed3 s\u01a1 g\u1ed1c: 0/14 (B\u00ean B cung c\u1ea5p t\u00ean, th\u00e0nh ph\u1ea7n, quy c\u00e1ch, s\u1ed1 c\u00f4ng b\u1ed1 + c\u0103n c\u1ee9)",
+     "SKU golden \u0111\u00e3 g\u1eafn h\u1ed3 s\u01a1 g\u1ed1c: 0/13 \u2014 ch\u01b0a g\u1eafn: da-an-sam-30v, mat-ong-sam-120ml-1hu, mat-ong-sam-120ml-2hu, mat-ong-sam-300ml, ruou-sam-binh-su-do-500ml, ruou-sam-chai-thuy-tinh-500ml, sapentol-30v, saphraton-20v, saphraton-40v, saphraton-80v, saphraton-combo-2x20v, savigout-30v, savina-12v"
+    ],
+    "dossiers": 0,
+    "mapped": 0,
+    "skus": 13
+   }
+  }
+ ]
+}

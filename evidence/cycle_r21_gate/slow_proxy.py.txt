@@ -1,0 +1,33 @@
+"""Probe r21 M3 (KHÔNG commit): proxy TCP chờ DELAY giây trước khi nối tới Postgres
+cho MỖI kết nối mới — giả lập máy nặng làm bước connect chậm hơn 3 s."""
+import socket, sys, threading, time
+
+lport, uhost, uport, delay = int(sys.argv[1]), sys.argv[2], int(sys.argv[3]), float(sys.argv[4])
+
+
+def pipe(a, b):
+    try:
+        while (d := a.recv(65536)):
+            b.sendall(d)
+    except OSError:
+        pass
+    finally:
+        for s in (a, b):
+            try:
+                s.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
+
+def handle(c):
+    time.sleep(delay)
+    u = socket.create_connection((uhost, uport))
+    threading.Thread(target=pipe, args=(c, u), daemon=True).start()
+    pipe(u, c)
+
+
+srv = socket.create_server(("127.0.0.1", lport))
+print("ready", flush=True)
+while True:
+    c, _ = srv.accept()
+    threading.Thread(target=handle, args=(c,), daemon=True).start()

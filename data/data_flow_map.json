@@ -1,6 +1,6 @@
 {
   "_doc": "Bản đồ luồng dữ liệu (PC-A5, v4.4 W44.2) — rà từ code thật ngày 2026-10-12. Nguồn sinh docs/legal/DPIA-nhap.md + TIA-nhap.md qua `python scripts/dpia_draft.py`. Sửa code thêm luồng gửi dữ liệu ra ngoài (import openai/httpx/requests/smtplib/urllib.request..., hoặc chat/embed từ pipelines.llm_gateway) PHẢI thêm module vào `modules` của 1 flow ở đây — tests/test_data_flow_map.py đỏ nếu thiếu. Sửa file này xong chạy lại dpia_draft (test --check đỏ nếu docs lệch). Lớp theo plan_data_platform §2: do = Đỏ, vang = Vàng, xanh = Xanh. Đây là NHÁP kỹ thuật để Pháp chế rà — không kết luận tuân thủ.",
-  "version": "2026-10-14",
+  "version": "2026-10-30",
   "classes": {
     "do": "Đỏ — orders/đơn sàn, leads, liên hệ đại lý, log hội thoại, mọi tin nhắn có yếu tố sức khỏe, user_id thô. Không được đi ra LLM nước ngoài.",
     "vang": "Vàng — câu hỏi thường SAU `_mask_pii` (che SĐT/email), tài liệu nội bộ. Được gửi LLM qua gateway (mask + provider routing).",
@@ -12,7 +12,8 @@
       "name": "Kênh Zalo OA — nhận tin và trả lời khách",
       "modules": [
         "connectors/zalo.py",
-        "connectors/channels.py"
+        "connectors/channels.py",
+        "ts/apps/api/src/modules/zalo/zalo.sender.ts"
       ],
       "data": "user_id Zalo thô, nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại",
       "class": "do",
@@ -42,7 +43,8 @@
       "id": "DF-02",
       "name": "Preflight token Zalo trước khi mở public",
       "modules": [
-        "scripts/zalo_preflight.py"
+        "scripts/zalo_preflight.py",
+        "ts/apps/api/src/modules/zalo/zalo-preflight.ts"
       ],
       "data": "Access/refresh token OA, thông tin OA (getoa) — không có dữ liệu khách",
       "class": "xanh",
@@ -289,7 +291,9 @@
       "name": "Bản tin sức khỏe hệ thống",
       "modules": [
         "scripts/health_bulletin.py",
-        "scripts/webhook_probe.py"
+        "scripts/webhook_probe.py",
+        "ts/apps/api/src/modules/pmo_ops/health-bulletin.ts",
+        "ts/apps/api/src/modules/zalo/webhook-probe.ts"
       ],
       "data": "Chỉ số tổng hợp vận hành (job, eval, chi phí, số mục) — không có dữ liệu cá nhân",
       "class": "xanh",
@@ -312,7 +316,8 @@
       "name": "Crawl website công khai của công ty",
       "modules": [
         "crawler/collect.py",
-        "crawler/sources.py"
+        "crawler/sources.py",
+        "ts/apps/api/src/modules/intel_crawl/collect.ts"
       ],
       "data": "Trang public (sản phẩm, bài viết) — không thu dữ liệu cá nhân",
       "class": "xanh",
@@ -379,7 +384,8 @@
       "name": "Thu tin thị trường tầng A/B (intel — v7.0)",
       "modules": [
         "crawler/intel.py",
-        "scripts/intel_bulletin.py"
+        "scripts/intel_bulletin.py",
+        "ts/apps/api/src/modules/intel_crawl/intel.ts"
       ],
       "data": "Tiêu đề + trích ≤300 ký tự + link tin RSS/Atom công khai (đã che SĐT/email); có thể nhắc tên người trong tin báo chí",
       "class": "xanh",
@@ -634,7 +640,8 @@
       "name": "Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4) + tự thu web/listing/Fanpage (C12, r16)",
       "modules": [
         "agents/ra_kenh.py",
-        "connectors/fanpage.py"
+        "connectors/fanpage.py",
+        "ts/apps/api/src/modules/messenger_fanpage/fanpage.ts"
       ],
       "data": "Text bài CÔNG KHAI của công ty trên website/fanpage/sàn (url, kênh, ngày đăng, draft_id) do Quản lý MXH xuất tay; r16: bài do CHÍNH Fanpage công ty đăng đọc qua Graph API (chỉ id, message, created_time, permalink_url — không bài khách, không bình luận/inbox, không field người); kết quả guardrail, mã vi phạm, hạn 24 giờ",
       "class": "xanh",
@@ -695,7 +702,8 @@
       "modules": [
         "connectors/messenger.py",
         "connectors/zalo.py",
-        "connectors/channels.py"
+        "connectors/channels.py",
+        "ts/apps/api/src/modules/messenger_fanpage/messenger.service.ts"
       ],
       "data": "PSID Messenger thô (trong RAM/khóa lock), nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại",
       "class": "do",
@@ -749,7 +757,8 @@
       "id": "DF-31",
       "name": "Rà SEO website công ty (v6.5)",
       "modules": [
-        "agents/seo_web.py"
+        "agents/seo_web.py",
+        "ts/apps/api/src/modules/mkt_koc_ugc_seo/seo-web.ts"
       ],
       "data": "HTML công khai các trang của chính website công ty (title, meta description, H1, thẻ img/alt, link nội bộ, mã HTTP) + dữ liệu đã crawl data/*.jsonl; không có dữ liệu cá nhân",
       "class": "xanh",
@@ -771,7 +780,9 @@
       "id": "DF-32",
       "name": "Connector API sàn chỉ đọc (ingest/market_api.py)",
       "modules": [
-        "ingest/market_api.py"
+        "ingest/market_api.py",
+        "ts/apps/api/src/modules/market/market-api.ts",
+        "ts/apps/api/src/modules/settlement/market-api-lite.ts"
       ],
       "data": "Gửi đi: thông tin xác thực app (partner_id/app_key, access token, chữ ký HMAC) + tham số truy vấn (offset/cursor, khoảng thời gian, danh sách mã sản phẩm/mã đơn) — không dữ liệu cá nhân. Nhận về: listing (mã/tên sản phẩm, SKU, giá, tồn, trạng thái) và đơn (mã đơn, trạng thái, dòng hàng) — response đơn CÓ THỂ chứa PII người mua (tên/SĐT/địa chỉ người nhận) chỉ nằm trong RAM của lời gọi và bị bỏ NGAY: chỉ trích field allowlist như market_csv, mã đơn → order_id_hash",
       "class": "do",
@@ -856,7 +867,8 @@
       "modules": [
         "connectors/b2b_form.py",
         "agents/kd_quote.py",
-        "ingest/crm.py"
+        "ingest/crm.py",
+        "ts/apps/api/src/modules/channels/b2b-form.service.ts"
       ],
       "data": "Tên + loại + tỉnh của TỔ CHỨC, tên/SĐT/email NGƯỜI LIÊN HỆ của tổ chức (vault Fernet), sản phẩm/số lượng/ngày cần hàng, IP người gửi (chỉ băm sha256 in-memory cho rate-limit, không ghi đĩa)",
       "class": "do",
@@ -915,7 +927,8 @@
       "id": "DF-37",
       "name": "Dự báo thời tiết VT (v10.2)",
       "modules": [
-        "agents/vt_thoitiet.py"
+        "agents/vt_thoitiet.py",
+        "ts/apps/api/src/modules/garden_director/vt-thoitiet.ts"
       ],
       "data": "Tọa độ VÙNG trồng đã làm tròn 0,1° (~11 km, không phải tọa độ khoảnh) + số ngày dự báo gửi nhà cung cấp dự báo; dự báo mưa/nhiệt trả về; nhật ký `plot_logs` (chỉ mã khoảnh, ngày, cờ từ `detail`) đọc nội bộ",
       "class": "xanh",
@@ -1029,7 +1042,8 @@
       "modules": [
         "connectors/zalo_garden.py",
         "connectors/zalo.py",
-        "scripts/garden_media.py"
+        "scripts/garden_media.py",
+        "ts/apps/api/src/modules/garden_zalo/garden-zalo.service.ts"
       ],
       "data": "Tin của NHÂN VIÊN vườn (trong allowlist `user_hash`): chữ nhật ký (mã khoảnh, hoạt động, chi tiết — đã `_mask_pii`), ảnh vườn (có thể có mặt người; EXIF/GPS bị gỡ), video vườn (có thể có mặt/giọng người; metadata/GPS gỡ bằng remux ffmpeg cục bộ), ghi âm giọng nói nhân viên; user_id Zalo thô chỉ trong RAM lúc xử lý",
       "class": "vang",
@@ -1057,7 +1071,8 @@
       "id": "DF-45",
       "name": "Cảnh báo đỏ gửi email tới người nhận độc lập (v13.7)",
       "modules": [
-        "pipelines/red_alert.py"
+        "pipelines/red_alert.py",
+        "ts/packages/core/src/ops/red-alert.ts"
       ],
       "data": "Tiêu đề cảnh báo đỏ đã `_mask_pii` (vd 'SLA trễ', 'tin pháp lý mới', 'bài vi phạm'), mã cảnh báo, câu hướng dẫn xác nhận; KHÔNG gửi `detail`/nội dung khách/URL bài. Địa chỉ email người nhận (nhân sự Pháp chế/BKS) chỉ nằm trong env máy chủ (`email:$BIEN`) hoặc `data/red_alert_routing.json`",
       "class": "vang",
@@ -1083,7 +1098,8 @@
       "id": "DF-47",
       "name": "Neo mã xác thực chuỗi truy xuất lên blockchain — chỉ digest 32 byte (v13.8 C09)",
       "modules": [
-        "pipelines/anchor.py"
+        "pipelines/anchor.py",
+        "ts/apps/api/src/modules/qr_anchor/anchor.ts"
       ],
       "data": "sha256 của bản kê lần gom (gốc Merkle trên đầu chuỗi plot_logs + chữ ký/phát hành/thu hồi QR: mã lô, vai, sha, thời điểm) — 32 byte; KHÔNG tên người ký, KHÔNG nội dung nhật ký, KHÔNG tọa độ/khoảnh/GPS",
       "class": "xanh",
@@ -1109,7 +1125,8 @@
       "id": "DF-48",
       "name": "Ảnh nền AI cho nháp ảnh marketing qua OpenRouter Images API (r13, marketing-02.1)",
       "modules": [
-        "pipelines/image_provider_openrouter.py"
+        "pipelines/image_provider_openrouter.py",
+        "ts/apps/api/src/modules/image_video/openrouter.ts"
       ],
       "data": "Gửi đi: CHỈ mô tả nền (prompt dựng từ --scene đã qua check_scene/guardrail, không tên người/SĐT/sản phẩm thật) + kích thước ảnh + model + danh sách provider được phép; KHÔNG gửi ảnh sản phẩm/packshot (ghép tại chỗ). Nhận về: ảnh nền PNG (base64) + usage.cost",
       "class": "vang",
@@ -1129,6 +1146,49 @@
       "gaps": [
         "Chưa chọn vendor/model, chưa có DPA/điều khoản bản quyền ảnh sinh (external-dep)",
         "Chỉ kiểm bằng transport giả theo schema tài liệu — chưa gọi API thật"
+      ]
+    },
+    {
+      "id": "DF-49",
+      "name": "AI Gateway bản viết lại TS — Ollama nội bộ (mặc định), Claude/Anthropic CHỈ khi data/ai_policy.json cho phép",
+      "modules": [
+        "ts/packages/core/src/ai/gateway.ts",
+        "ts/packages/core/src/ai/providers.ts",
+        "ts/packages/core/src/ai/ai-worker.ts",
+        "ts/packages/core/src/security/guardrail-llm.ts",
+        "ts/apps/api/src/modules/rag/rag.service.ts",
+        "ts/apps/api/src/modules/rag/embed-store.ts",
+        "ts/apps/api/src/modules/content/content.ts",
+        "ts/apps/api/src/modules/image_video/video-studio.ts",
+        "ts/apps/api/src/modules/ceo_report/ceo-report.ts",
+        "ts/apps/api/src/modules/intel_alert/intel-bulletin.ts",
+        "ts/apps/api/src/modules/intel_alert/persona-sim.ts",
+        "ts/apps/api/src/modules/intel_crawl/intel.ts",
+        "ts/apps/api/src/modules/intel_crawl/intel-crawl.command.ts",
+        "ts/apps/api/src/modules/intel_import/intel-weekly.ts",
+        "ts/apps/api/src/modules/kd_listing_live/kd-live.ts",
+        "ts/apps/api/src/modules/mkt_koc_ugc_seo/mkt-youtube.ts",
+        "ts/apps/api/src/modules/sx_docs/sx-tracuu.ts"
+      ],
+      "data": "Prompt + đầu vào embedding của từng tính năng AI (cùng dữ liệu các luồng Python DF-06/07/08/09/16/17/21/23/24/36/39) SAU `maskPii`/`maskIdentity` ở gateway; ảnh scan/ghi âm vườn gửi ai_worker nội bộ (OCR/STT, nháp STT đã che PII)",
+      "class": "vang",
+      "subjects": "Khách hàng chat, nhân viên (tài liệu nội bộ, ghi âm nhật ký vườn)",
+      "purpose": "Sinh câu trả lời/nháp/tóm tắt + embedding BGE-M3 1024 chiều cho các tính năng AI; OCR/STT tài liệu và ghi âm",
+      "storage": "Gateway không lưu prompt/response; `llm_usage` (metadata, feature_id); Ollama + ai_worker chạy trên server vật lý Sâm Sâm, mạng `ai_private` internal (không ra internet)",
+      "retention": "Theo luồng nguồn của từng tính năng; Ollama `OLLAMA_NO_CLOUD=1`, không lưu hội thoại; phía Anthropic (khi được phép) — điều khoản lưu CHƯA rà",
+      "recipients": "Ollama nội bộ (qwen3:8b + bge-m3, mạng ai_private) — MẶC ĐỊNH; ai_worker nội bộ (OCR/STT); Anthropic api.anthropic.com (Mỹ) CHỈ khi data/ai_policy.json cho phép đúng tính năng (người phê duyệt + hạn + lớp dữ liệu) — không tự fallback từ local lên cloud",
+      "cross_border": true,
+      "safeguards": [
+        "`feature=` bắt buộc; kill switch agent/tính năng, trần chi phí, cổng rollout `tat` → GatewayBlocked (fail-closed)",
+        "`maskPii` + `maskIdentity` mọi message và input embedding trước khi gửi nhà cung cấp",
+        "Cloud chỉ theo data/ai_policy.json (repo hiện: chưa tính năng nào được cloud); thiếu điều kiện → chặn, không fallback local → cloud",
+        "Ollama/ai_worker trong mạng internal, 1 request song song; drift-guard ts/apps/api/src/data-flow-map.test.ts bắt egress TS chưa khai"
+      ],
+      "legal_basis": "Như luồng nguồn của từng tính năng; chuyển ra nước ngoài (Anthropic) CHƯA bật — cần đồng ý + TIA trước khi ai_policy cho phép: GAP",
+      "gaps": [
+        "Chưa có DPA/điều khoản lưu với Anthropic (external-dep, chỉ cần khi bật cloud)",
+        "Chất lượng tiếng Việt Qwen3 8B chưa đo trên server đích (KE_HOACH mục 5)",
+        "Server đích (RTX 5060 Ti) chưa xác nhận là server vật lý của Sâm Sâm theo HĐ"
       ]
     }
   ]

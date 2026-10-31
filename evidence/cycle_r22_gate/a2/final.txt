@@ -1,0 +1,18 @@
+# FINAL — tệp cuối cùng (sau sửa comment header roles.sql + định dạng ruff test mới):
+ docs/roles.sql  | 27 ++++++++++++++++++++++++++-
+ docs/schema.sql | 39 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 65 insertions(+), 1 deletion(-)
+$ python scripts/apply_schema.py --roles  (DB r22_a2)
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+$ ruff check tests/test_r22_webhook_garden.py
+All checks passed!
+$ python -m pytest tests/test_r22_webhook_garden.py -p no:cacheprovider -q -rA
+PASSED tests/test_r22_webhook_garden.py::test_text_to_chained_plot_log
+PASSED tests/test_r22_webhook_garden.py::test_image_to_garden_media
+PASSED tests/test_r22_webhook_garden.py::test_audio_to_voice_draft
+PASSED tests/test_r22_webhook_garden.py::test_webhook_login_only_zalo_garden_rows
+4 passed in 1.24s
+[exit 0]
+roles t_r22a2_*: []
+roles t_p2_* (v14.2 test): 0
+dbs: ['postgres', 'samsam_ts_tpl', 'template0', 'template1']

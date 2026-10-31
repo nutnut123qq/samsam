@@ -1,0 +1,6 @@
+# Python — tệp liên quan (test mới + nhắc svc_webhook / roles.sql+vườn/quyền / zalo_garden / apply_schema / garden_chain / person_login), sau khi sửa, DB test r22_a2 (samsam-ts-db pg17):
+$ DATABASE_URL=<r22_a2> PYTHONIOENCODING=utf-8 python -m pytest -p no:cacheprovider -q tests/test_r22_webhook_garden.py tests/test_v14_p2_service_auth.py tests/test_docx_p0_rollout_gate.py tests/test_bks_audit.py tests/test_qr_trace.py tests/test_v13_c09_anchor_legal.py tests/test_v15_fix_p102.py tests/test_v15_p10_human_authz.py tests/test_vt_thoitiet.py tests/test_vt_thuhoach.py tests/test_zalo_garden.py tests/test_zalo.py tests/test_contract_c02_garden_remind.py tests/test_docx_p1.py tests/test_r13_batch_a.py tests/test_r15_settlement_api.py tests/test_v13_c05_media.py tests/test_v13_c07_ops.py tests/test_v13_review_fix.py tests/test_v15_fix_p81.py tests/test_apply_schema_pgvector.py tests/test_garden_chain.py tests/test_docx_p0c_person_login.py
+............................................                             [100%]
+908 passed in 415.38s (0:06:55)
+[exit 0]
+(ghi chú: trong lúc chạy chỉ sửa COMMENT header svc_webhook ở roles.sql + định dạng ruff ở test mới — chạy lại test mới ở final.txt)

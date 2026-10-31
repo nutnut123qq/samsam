@@ -1,0 +1,1833 @@
+{
+ "cfg_repo": {
+  "usd_vnd": 25000,
+  "budget_vnd": {
+   "ai": 5000000,
+   "cloud": 4000000,
+   "saas": 7000000,
+   "ads": 20000000,
+   "khac": 2000000,
+   "tong": 35000000
+  },
+  "warn_pct": 80,
+  "stop_pct": 100,
+  "threshold_x_vnd": 5000000
+ },
+ "cfg_variants": [
+  {
+   "name": "usd_0",
+   "over": {
+    "usd_vnd": 0
+   },
+   "cfg": null,
+   "why": "opscost.usd_vnd: ph\u1ea3i int 1..1000000"
+  },
+  {
+   "name": "usd_bool",
+   "over": {
+    "usd_vnd": true
+   },
+   "cfg": null,
+   "why": "opscost.usd_vnd: ph\u1ea3i int 1..1000000"
+  },
+  {
+   "name": "usd_float",
+   "over": {
+    "usd_vnd": 25000.0
+   },
+   "cfg": null,
+   "why": "opscost.usd_vnd: ph\u1ea3i int 1..1000000"
+  },
+  {
+   "name": "scope_lazada",
+   "over": {
+    "budget_vnd": {
+     "lazada": 1
+    }
+   },
+   "cfg": null,
+   "why": "opscost.budget_vnd: scope l\u1ea1 'lazada'"
+  },
+  {
+   "name": "scope_ctrl",
+   "over": {
+    "budget_vnd": {
+     "x\u0001y": 1
+    }
+   },
+   "cfg": null,
+   "why": "opscost.budget_vnd: scope l\u1ea1 'x?y'"
+  },
+  {
+   "name": "scope_ai_ok",
+   "over": {
+    "budget_vnd": {
+     "ai:content": 5,
+     "ai:a.b:c-d_e": 1
+    }
+   },
+   "cfg": {
+    "usd_vnd": 25000,
+    "budget_vnd": {
+     "ai:content": 5,
+     "ai:a.b:c-d_e": 1
+    },
+    "warn_pct": 80,
+    "stop_pct": 100,
+    "threshold_x_vnd": 5000000
+   },
+   "why": null
+  },
+  {
+   "name": "scope_ai_bad",
+   "over": {
+    "budget_vnd": {
+     "ai:Content": 5
+    }
+   },
+   "cfg": null,
+   "why": "opscost.budget_vnd: scope l\u1ea1 'ai:Content'"
+  },
+  {
+   "name": "budget_0",
+   "over": {
+    "budget_vnd": {
+     "ai:content": 0
+    }
+   },
+   "cfg": null,
+   "why": "opscost.budget_vnd.ai:content: ph\u1ea3i int > 0"
+  },
+  {
+   "name": "budget_not_obj",
+   "over": {
+    "budget_vnd": [
+     1
+    ]
+   },
+   "cfg": null,
+   "why": "opscost.budget_vnd: ph\u1ea3i l\u00e0 object {scope: VND}"
+  },
+  {
+   "name": "warn_100",
+   "over": {
+    "warn_pct": 100
+   },
+   "cfg": null,
+   "why": "opscost.warn_pct/stop_pct: int 1..1000, warn < stop"
+  },
+  {
+   "name": "warn_bool",
+   "over": {
+    "warn_pct": true
+   },
+   "cfg": null,
+   "why": "opscost.warn_pct/stop_pct: int 1..1000, warn < stop"
+  },
+  {
+   "name": "stop_1001",
+   "over": {
+    "stop_pct": 1001
+   },
+   "cfg": null,
+   "why": "opscost.warn_pct/stop_pct: int 1..1000, warn < stop"
+  },
+  {
+   "name": "x_neg",
+   "over": {
+    "threshold_x_vnd": -1
+   },
+   "cfg": null,
+   "why": "opscost.threshold_x_vnd: ph\u1ea3i int > 0"
+  },
+  {
+   "name": "x_missing",
+   "over": {
+    "threshold_x_vnd": null
+   },
+   "cfg": null,
+   "why": "opscost.threshold_x_vnd: ph\u1ea3i int > 0"
+  },
+  {
+   "name": "warn_default",
+   "over": {
+    "warn_pct": null
+   },
+   "cfg": {
+    "usd_vnd": 25000,
+    "budget_vnd": {
+     "ai": 5000000,
+     "cloud": 4000000,
+     "saas": 7000000,
+     "ads": 20000000,
+     "khac": 2000000,
+     "tong": 35000000
+    },
+    "warn_pct": 80,
+    "stop_pct": 100,
+    "threshold_x_vnd": 5000000
+   },
+   "why": null
+  }
+ ],
+ "read_opex": [
+  {
+   "label": "bad_rows",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-10,cloud,aws,-5000,X1\n2026-10,luong,aws,5000,\n2026-13,cloud,my svc,0,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'amount_vnd' ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean VND > 0",
+    "d\u00f2ng 3: field 'category' ph\u1ea3i thu\u1ed9c ('cloud', 'saas', 'ads', 'khac')",
+    "d\u00f2ng 4: field 'month' ph\u1ea3i d\u1ea1ng YYYY-MM",
+    "d\u00f2ng 4: field 'service' ph\u1ea3i m\u00e3 ^[a-z0-9][a-z0-9_.-]{1,39}$ (kh\u00f4ng d\u1ea5u c\u00e1ch)",
+    "d\u00f2ng 4: field 'amount_vnd' ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean VND > 0"
+   ],
+   "sha": "70127e44cc300e0adae6377fa36de8542e3c5e1949380d03705c590d0b7d79ed"
+  },
+  {
+   "label": "header_only",
+   "body": "month,category,service,amount_vnd,doc_ref\n",
+   "entries": [],
+   "errs": [
+    "file ch\u1ec9 c\u00f3 header, kh\u00f4ng c\u00f3 d\u00f2ng d\u1eef li\u1ec7u"
+   ],
+   "sha": "a923c55e397c844e017bef686d7e5d05ea335f8161955eaf1f1c11059776a92a"
+  },
+  {
+   "label": "empty",
+   "body": "",
+   "entries": [],
+   "errs": [
+    "file r\u1ed7ng"
+   ],
+   "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "label": "extra_col",
+   "body": "month,category,service,amount_vnd,ten_nguoi\n",
+   "entries": [],
+   "errs": [
+    "c\u1ed9t l\u1ea1 'ten_nguoi' (kh\u00f4ng thu\u1ed9c required/optional/drop \u2014 th\u00eam v\u00e0o mapping sau khi x\u00e1c minh)"
+   ],
+   "sha": "ef1e570eb4de6b28cefae9ce452a771643e279c7267ef23808fd508c5e766656"
+  },
+  {
+   "label": "extra_cell",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-10,cloud,aws,5000,X1,thua\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: th\u1eeba \u00f4 ngo\u00e0i header"
+   ],
+   "sha": "a977cf372877a370419611e3171f87a21ffba3901584b39b17feec0fa7f51344"
+  },
+  {
+   "label": "missing_req",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-10,,aws,5000,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'category' tr\u1ed1ng"
+   ],
+   "sha": "9e71775818155784e4f630dd6f6ce835f44ca1f4d05fff86c2f78317c50fad44"
+  },
+  {
+   "label": "ref_long",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-10,cloud,aws,5000,RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'doc_ref' d\u00e0i qu\u00e1 64 ho\u1eb7c c\u00f3 k\u00fd t\u1ef1 \u0111i\u1ec1u khi\u1ec3n"
+   ],
+   "sha": "989f2ef709a3173c4302864ed32f7f5f5b84ccc5251861581ce7bf5a2828dd30"
+  },
+  {
+   "label": "ref_ctrl",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-10,cloud,aws,5000,\"a\tb\"\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'doc_ref' d\u00e0i qu\u00e1 64 ho\u1eb7c c\u00f3 k\u00fd t\u1ef1 \u0111i\u1ec1u khi\u1ec3n"
+   ],
+   "sha": "715b142945e7caaceae8559a36e0ee95090382d97b45f8bebbf264bd6cb52e67"
+  },
+  {
+   "label": "order_cols",
+   "body": "service,amount_vnd,month,category\naws,\"1,200,000\",2026-11,saas\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "month": "2026-11-01",
+     "category": "saas",
+     "service": "aws",
+     "amount_vnd": 1200000,
+     "doc_ref": null
+    }
+   ],
+   "errs": [],
+   "sha": "5d1edb7510702cc825e07d1479bc61e091246c8d38571f91cd27d30937a9f571"
+  },
+  {
+   "label": "vnd_suffix",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-10,ads,fb-ads,1.500.000 VND,\n2026-10,khac,x9,500\u20ab,R\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "month": "2026-10-01",
+     "category": "ads",
+     "service": "fb-ads",
+     "amount_vnd": 1500000,
+     "doc_ref": null
+    },
+    {
+     "row_no": 3,
+     "month": "2026-10-01",
+     "category": "khac",
+     "service": "x9",
+     "amount_vnd": 500,
+     "doc_ref": "R"
+    }
+   ],
+   "errs": [],
+   "sha": "51828c4822e5ac1705d2e6a4aad371bbd9eb2d06ddd7d897a6b3736998a5ffb1"
+  },
+  {
+   "label": "short_row",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-10,cloud,aws\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'amount_vnd' tr\u1ed1ng"
+   ],
+   "sha": "4cdc83849657a0ec17bb18c354cb24f523bd19ab03ff4cd25fd51ad724a41d97"
+  },
+  {
+   "label": "dup_header",
+   "body": "month,month,category,service,amount_vnd\n",
+   "entries": [],
+   "errs": [
+    "header tr\u00f9ng: 'month'"
+   ],
+   "sha": "3602fd225fe3dd8c671485ce483f2b4b521fcddd7a8b3f029b5620fb14bb6865"
+  },
+  {
+   "label": "bad_service",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-10,cloud,a,5,\n2026-10,cloud,-ab,5,\n2026-10,cloud,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,5,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'service' ph\u1ea3i m\u00e3 ^[a-z0-9][a-z0-9_.-]{1,39}$ (kh\u00f4ng d\u1ea5u c\u00e1ch)",
+    "d\u00f2ng 3: field 'service' ph\u1ea3i m\u00e3 ^[a-z0-9][a-z0-9_.-]{1,39}$ (kh\u00f4ng d\u1ea5u c\u00e1ch)",
+    "d\u00f2ng 4: field 'service' ph\u1ea3i m\u00e3 ^[a-z0-9][a-z0-9_.-]{1,39}$ (kh\u00f4ng d\u1ea5u c\u00e1ch)"
+   ],
+   "sha": "ec2d56da37faac222bf9544a11f2693a30137bced9a6473f9d9f438baf3d8e80"
+  },
+  {
+   "label": "month_year0",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-1,cloud,aws,5,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'month' ph\u1ea3i d\u1ea1ng YYYY-MM"
+   ],
+   "sha": "afaeba615311ea3c24c7497c854b091789a53bc3a860e54aa427b6bbe3bee0a5"
+  },
+  {
+   "label": "cap",
+   "body": "month,category,service,amount_vnd,doc_ref\n2026-10,cloud,aws,10000000000001,\n2026-10,cloud,aws2,10000000000000,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'amount_vnd' ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean VND > 0"
+   ],
+   "sha": "a09817d9f0c7a006683dba262f47d15489f63e6ebab91b30feab9667309f8d7d"
+  },
+  {
+   "label": "data_first",
+   "body": "2026-10,cloud,aws,5000,X1\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng \u0111\u1ea7u kh\u00f4ng kh\u1edbp header chi ph\u00ed v\u1eadn h\u00e0nh (5 c\u1ed9t, 0/4 c\u1ed9t b\u1eaft bu\u1ed9c) \u2014 sai k\u00eanh/lo\u1ea1i file ho\u1eb7c thi\u1ebfu d\u00f2ng header"
+   ],
+   "sha": "cd7ed617c8b25d8e779b3058663e92d72436d81489fd2c73374b918c9ba68afe"
+  },
+  {
+   "label": "bad_ext",
+   "body": "x",
+   "entries": [],
+   "errs": [
+    "\u0111u\u00f4i '.txt' kh\u00f4ng h\u1ed7 tr\u1ee3 \u2014 ch\u1ec9 .csv / .xlsx"
+   ],
+   "sha": null
+  }
+ ],
+ "read_opex_fixture": {
+  "entries": [
+   {
+    "row_no": 2,
+    "month": "2026-10-01",
+    "category": "cloud",
+    "service": "supabase-db",
+    "amount_vnd": 2500000,
+    "doc_ref": "HD-MAU-001"
+   },
+   {
+    "row_no": 3,
+    "month": "2026-10-01",
+    "category": "cloud",
+    "service": "cloudflare",
+    "amount_vnd": 800000,
+    "doc_ref": "HD-MAU-002"
+   },
+   {
+    "row_no": 4,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "google-workspace",
+    "amount_vnd": 1200000,
+    "doc_ref": "HD-MAU-003"
+   },
+   {
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 6000000,
+    "doc_ref": "HD-MAU-004"
+   },
+   {
+    "row_no": 6,
+    "month": "2026-10-01",
+    "category": "ads",
+    "service": "shopee-ads",
+    "amount_vnd": 12000000,
+    "doc_ref": "HD-MAU-005"
+   },
+   {
+    "row_no": 7,
+    "month": "2026-10-01",
+    "category": "khac",
+    "service": "ten-mien",
+    "amount_vnd": 400000,
+    "doc_ref": null
+   },
+   {
+    "row_no": 8,
+    "month": "2026-09-01",
+    "category": "cloud",
+    "service": "supabase-db",
+    "amount_vnd": 2500000,
+    "doc_ref": "HD-MAU-000"
+   }
+  ],
+  "errs": [],
+  "sha": "76aae46c0f5243069d7c427975984a39771ea5f6a16b99de7ebb270945f9424a"
+ },
+ "ai_vnd": [
+  [
+   "159.99996",
+   25000,
+   3999999
+  ],
+  [
+   "160",
+   25000,
+   4000000
+  ],
+  [
+   "0.1",
+   3,
+   0
+  ],
+  [
+   "0.5",
+   1,
+   1
+  ],
+  [
+   "0.000020",
+   25000,
+   1
+  ],
+  [
+   "1.5",
+   1,
+   2
+  ],
+  [
+   "2.5",
+   1,
+   3
+  ],
+  [
+   "123456.123456",
+   25321,
+   3126032502
+  ],
+  [
+   "0",
+   25000,
+   0
+  ]
+ ],
+ "actuals": {
+  "ai_usd": {
+   "content": "160",
+   "chatbot": "1"
+  },
+  "opex": [
+   {
+    "category": "cloud",
+    "amount_vnd": 7
+   },
+   {
+    "category": "saas",
+    "amount_vnd": 5
+   }
+  ],
+  "rate": 25000,
+  "out": {
+   "ai:chatbot": 25000,
+   "ai:content": 4000000,
+   "ai": 4025000,
+   "cloud": 7,
+   "saas": 5,
+   "ads": 0,
+   "khac": 0,
+   "tong": 4025012
+  }
+ },
+ "alerts": [
+  {
+   "spent": 3999999,
+   "warn": 80,
+   "out": []
+  },
+  {
+   "spent": 3999999,
+   "warn": 90,
+   "out": []
+  },
+  {
+   "spent": 4000000,
+   "warn": 80,
+   "out": [
+    {
+     "scope": "ai:content",
+     "level": 80,
+     "label": "C\u1ea2NH B\u00c1O",
+     "spent": 4000000,
+     "budget": 5000000
+    }
+   ]
+  },
+  {
+   "spent": 4000000,
+   "warn": 90,
+   "out": []
+  },
+  {
+   "spent": 4100000,
+   "warn": 80,
+   "out": [
+    {
+     "scope": "ai:content",
+     "level": 80,
+     "label": "C\u1ea2NH B\u00c1O",
+     "spent": 4100000,
+     "budget": 5000000
+    }
+   ]
+  },
+  {
+   "spent": 4100000,
+   "warn": 90,
+   "out": []
+  },
+  {
+   "spent": 4999999,
+   "warn": 80,
+   "out": [
+    {
+     "scope": "ai:content",
+     "level": 80,
+     "label": "C\u1ea2NH B\u00c1O",
+     "spent": 4999999,
+     "budget": 5000000
+    }
+   ]
+  },
+  {
+   "spent": 4999999,
+   "warn": 90,
+   "out": [
+    {
+     "scope": "ai:content",
+     "level": 90,
+     "label": "C\u1ea2NH B\u00c1O",
+     "spent": 4999999,
+     "budget": 5000000
+    }
+   ]
+  },
+  {
+   "spent": 5000000,
+   "warn": 80,
+   "out": [
+    {
+     "scope": "ai:content",
+     "level": 100,
+     "label": "V\u01af\u1ee2T TR\u1ea6N",
+     "spent": 5000000,
+     "budget": 5000000
+    }
+   ]
+  },
+  {
+   "spent": 5000000,
+   "warn": 90,
+   "out": [
+    {
+     "scope": "ai:content",
+     "level": 100,
+     "label": "V\u01af\u1ee2T TR\u1ea6N",
+     "spent": 5000000,
+     "budget": 5000000
+    }
+   ]
+  },
+  {
+   "spent": 5050000,
+   "warn": 80,
+   "out": [
+    {
+     "scope": "ai:content",
+     "level": 100,
+     "label": "V\u01af\u1ee2T TR\u1ea6N",
+     "spent": 5050000,
+     "budget": 5000000
+    }
+   ]
+  },
+  {
+   "spent": 5050000,
+   "warn": 90,
+   "out": [
+    {
+     "scope": "ai:content",
+     "level": 100,
+     "label": "V\u01af\u1ee2T TR\u1ea6N",
+     "spent": 5050000,
+     "budget": 5000000
+    }
+   ]
+  },
+  {
+   "spent": 0,
+   "warn": 80,
+   "out": []
+  },
+  {
+   "spent": 0,
+   "warn": 90,
+   "out": []
+  }
+ ],
+ "alerts_multi": [
+  {
+   "scope": "ai",
+   "level": 80,
+   "label": "C\u1ea2NH B\u00c1O",
+   "spent": 4000000,
+   "budget": 5000000
+  },
+  {
+   "scope": "saas",
+   "level": 100,
+   "label": "V\u01af\u1ee2T TR\u1ea6N",
+   "spent": 9000000,
+   "budget": 7000000
+  },
+  {
+   "scope": "tong",
+   "level": 100,
+   "label": "V\u01af\u1ee2T TR\u1ea6N",
+   "spent": 35000000,
+   "budget": 35000000
+  }
+ ],
+ "pct": [
+  [
+   4000000,
+   5000000,
+   "80.0%"
+  ],
+  [
+   1,
+   3,
+   "33.3%"
+  ],
+  [
+   2,
+   3,
+   "66.7%"
+  ],
+  [
+   0,
+   7,
+   "0.0%"
+  ],
+  [
+   1,
+   8000,
+   "0.0%"
+  ],
+  [
+   5,
+   40000,
+   "0.0%"
+  ],
+  [
+   25,
+   200000,
+   "0.0%"
+  ],
+  [
+   1,
+   2000,
+   "0.0%"
+  ],
+  [
+   3,
+   2000,
+   "0.2%"
+  ],
+  [
+   35000000,
+   35000000,
+   "100.0%"
+  ],
+  [
+   123456789,
+   7,
+   "1763668414.3%"
+  ]
+ ],
+ "verdict": [
+  {
+   "name": "in_threshold",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000000
+   },
+   "items": [],
+   "users": {},
+   "x": 5000000,
+   "out": [
+    "trong_nguong",
+    null
+   ]
+  },
+  {
+   "name": "none",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "other_role",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "banhang@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "khac_vai_tro"
+   ]
+  },
+  {
+   "name": "tgd_spaces_case",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "  TGD@SamSam.test "
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "duoc_chi",
+    "tgd_ky"
+   ]
+  },
+  {
+   "name": "no_users",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {},
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "khac_vai_tro"
+   ]
+  },
+  {
+   "name": "auto_policy",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "auto_policy",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "khac_vai_tro"
+   ]
+  },
+  {
+   "name": "status_rejected",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "rejected",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "status_expired",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "expired",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "status_pending",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "pending",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "cho_ky"
+   ]
+  },
+  {
+   "name": "other_oid",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-8",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "other_type",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "budget_change",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "decided_none",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": null
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "khac_vai_tro"
+   ]
+  },
+  {
+   "name": "ok",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "duoc_chi",
+    "tgd_ky"
+   ]
+  },
+  {
+   "name": "new_id_same_key",
+   "entry": {
+    "id": 99,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "duoc_chi",
+    "tgd_ky"
+   ]
+  },
+  {
+   "name": "other_row",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 6,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "other_file",
+   "entry": {
+    "id": 7,
+    "file_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "changed_amount",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 500000000
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "changed_service",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "aws",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "changed_month",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-11-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "x_changed",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 1000000,
+   "out": [
+    "duoc_chi",
+    "tgd_ky"
+   ]
+  },
+  {
+   "name": "forged_payload",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 500000000
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "0ae9d9de1637f4dc1892801134690c36a471ccf444a1323ce4e637430f3006e6",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "forged_block",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 500000000
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "marketing",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "a45d71ce690268b95d40733cf86f289a484a67d81c4c22c72272ee263b6c2c66",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "forged_creator",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 500000000
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:other",
+     "content_sha256": "a45d71ce690268b95d40733cf86f289a484a67d81c4c22c72272ee263b6c2c66",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "forged_all",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 500000000
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "marketing",
+     "created_by": "agent:other",
+     "content_sha256": "0ae9d9de1637f4dc1892801134690c36a471ccf444a1323ce4e637430f3006e6",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "chua_co"
+   ]
+  },
+  {
+   "name": "big_ok",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 500000000
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "a45d71ce690268b95d40733cf86f289a484a67d81c4c22c72272ee263b6c2c66",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "duoc_chi",
+    "tgd_ky"
+   ]
+  },
+  {
+   "name": "other_plus_pending",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "banhang@samsam.test"
+    },
+    {
+     "id": 2,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "pending",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "cho_ky"
+   ]
+  },
+  {
+   "name": "other_plus_ok",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "banhang@samsam.test"
+    },
+    {
+     "id": 2,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:fp_opscost",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "approved",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "duoc_chi",
+    "tgd_ky"
+   ]
+  },
+  {
+   "name": "forged_pending",
+   "entry": {
+    "id": 7,
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "row_no": 5,
+    "month": "2026-10-01",
+    "category": "saas",
+    "service": "misa-amis",
+    "amount_vnd": 5000001
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "opex_over_x",
+     "object_id": "opex-aaaaaaaaaaaaaaaa-5",
+     "block": "finance",
+     "created_by": "agent:other",
+     "content_sha256": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+     "status": "pending",
+     "lane": "per_item",
+     "decided_by": "tgd@samsam.test"
+    }
+   ],
+   "users": {
+    "tgd@samsam.test": {
+     "role": "tgd"
+    },
+    "banhang@samsam.test": {
+     "role": "gd_ban_hang"
+    }
+   },
+   "x": 5000000,
+   "out": [
+    "cho_tgd_ky",
+    "bi_chan"
+   ]
+  }
+ ],
+ "why": {
+  "tgd_ky": "TG\u0110 \u0111\u00e3 k\u00fd",
+  "cho_ky": "\u0111ang ch\u1edd TG\u0110 k\u00fd",
+  "khac_vai_tro": "\u0111\u00e3 duy\u1ec7t b\u1edfi vai tr\u00f2 kh\u00e1c \u2014 c\u1ea7n TG\u0110 (ch\u1ea1y --submit-over-x \u0111\u1ec3 \u0111\u1ea9y l\u1ea1i)",
+  "bi_chan": "m\u1ee5c ch\u1edd duy\u1ec7t KH\u00d4NG h\u1ee3p l\u1ec7 (kh\u00e1c kh\u1ed1i/agent/n\u1ed9i dung) \u0111ang ch\u1eb7n \u2014 ng\u01b0\u1eddi duy\u1ec7t reject m\u1ee5c \u0111\u00f3",
+  "chua_co": "ch\u01b0a c\u00f3 m\u1ee5c ch\u1edd TG\u0110 k\u00fd (ho\u1eb7c \u0111\u00e3 b\u1ecb t\u1eeb ch\u1ed1i/h\u1ebft h\u1ea1n)"
+ },
+ "over_x": {
+  "entry": {
+   "id": 7,
+   "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "row_no": 5,
+   "month": "2026-10-01",
+   "category": "saas",
+   "service": "misa-amis",
+   "amount_vnd": 5000001
+  },
+  "text": "# Kho\u1ea3n chi v\u01b0\u1ee3t ng\u01b0\u1ee1ng X \u2014 ch\u1edd TG\u0110 k\u00fd\n\n- Th\u00e1ng: 10/2026\n- Nh\u00f3m: `saas` \u00b7 d\u1ecbch v\u1ee5 `misa-amis`\n- S\u1ed1 ti\u1ec1n: 5.000.001\u0111\n- Ch\u1eef k\u00fd g\u1eafn v\u1edbi \u0111\u00fang d\u00f2ng file chi ph\u00ed \u0111\u00e3 n\u1ea1p + n\u1ed9i dung tr\u00ean; n\u1ed9i dung \u0111\u1ed5i \u2192 ph\u1ea3i k\u00fd l\u1ea1i.\n\n**CH\u1edc TG\u0110 K\u00dd \u2014 agent kh\u00f4ng chi, kh\u00f4ng t\u1eaft key, kh\u00f4ng \u0111\u1ed5i limit. Ch\u1ec9 \"\u0111\u01b0\u1ee3c chi\" khi ng\u01b0\u1eddi c\u00f3 vai tr\u00f2 `tgd` duy\u1ec7t \u0111\u00fang m\u1ee5c n\u00e0y (per_item).**\n",
+  "sha": "13c829625a728c521f88f6dc27fb8763fa852d6d548c9f78084abc771b379a7e",
+  "key": "opex-aaaaaaaaaaaaaaaa-5"
+ },
+ "report": {
+  "ai_usd": {
+   "content": "150.123456",
+   "chatbot": "0.5"
+  },
+  "acts": {
+   "ai:chatbot": 12500,
+   "ai:content": 3753086,
+   "ai": 3765586,
+   "cloud": 3300000,
+   "saas": 7200000,
+   "ads": 12000000,
+   "khac": 400000,
+   "tong": 26665586
+  },
+  "alerts": [
+   {
+    "scope": "cloud",
+    "level": 80,
+    "label": "C\u1ea2NH B\u00c1O",
+    "spent": 3300000,
+    "budget": 4000000
+   },
+   {
+    "scope": "saas",
+    "level": 100,
+    "label": "V\u01af\u1ee2T TR\u1ea6N",
+    "spent": 7200000,
+    "budget": 7000000
+   }
+  ],
+  "over_status": [
+   "cho_tgd_ky",
+   "cho_tgd_ky"
+  ],
+  "text": "# Chi ph\u00ed v\u1eadn h\u00e0nh th\u00e1ng 10/2026 \u2014 so tr\u1ea7n (GI\u1ea2 \u0110\u1ecaNH)\n\nT\u1ef7 gi\u00e1 quy \u0111\u1ed5i chi ph\u00ed AI 25.000\u0111/USD; c\u1ea3nh b\u00e1o 80% / 100% tr\u1ea7n; ng\u01b0\u1ee1ng X 5.000.000\u0111 \u2014 `data/fpa_config.json` ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t.\n\n| Ph\u1ea1m vi | Th\u1ef1c chi | Tr\u1ea7n | % tr\u1ea7n |\n|---|---|---|---|\n| `ads` | 12.000.000\u0111 | 20.000.000\u0111 | 60.0% |\n| `ai` | 3.765.586\u0111 | 5.000.000\u0111 | 75.3% |\n| `ai:chatbot` | 12.500\u0111 | ch\u01b0a c\u00f3 tr\u1ea7n | \u2014 |\n| `ai:content` | 3.753.086\u0111 | ch\u01b0a c\u00f3 tr\u1ea7n | \u2014 |\n| `cloud` | 3.300.000\u0111 | 4.000.000\u0111 | 82.5% |\n| `khac` | 400.000\u0111 | 2.000.000\u0111 | 20.0% |\n| `saas` | 7.200.000\u0111 | 7.000.000\u0111 | 102.9% |\n| `tong` | 26.665.586\u0111 | 35.000.000\u0111 | 76.2% |\n\nC\u1ea3nh b\u00e1o:\n- [C\u1ea2NH B\u00c1O 80%] `cloud`: 3.300.000\u0111 / tr\u1ea7n 4.000.000\u0111\n- [V\u01af\u1ee2T TR\u1ea6N 100%] `saas`: 7.200.000\u0111 / tr\u1ea7n 7.000.000\u0111\n\nKho\u1ea3n > ng\u01b0\u1ee1ng X: 2 \u2014 \u0111ang ch\u1edd TG\u0110 k\u00fd: 2, \u0111\u01b0\u1ee3c chi: 0.\n\nAgent ch\u1ec9 c\u1ea3nh b\u00e1o \u2014 kh\u00f4ng chi, kh\u00f4ng t\u1eaft key, kh\u00f4ng \u0111\u1ed5i h\u1ea1n m\u1ee9c; ng\u01b0\u1eddi quy\u1ebft theo quy tr\u00ecnh t\u00e0i ch\u00ednh.\n"
+ },
+ "report_no_alerts": {
+  "acts": {
+   "ai:chatbot": 25000,
+   "ai:content": 4000000,
+   "ai": 4025000,
+   "cloud": 0,
+   "saas": 0,
+   "ads": 0,
+   "khac": 0,
+   "tong": 4025000
+  },
+  "text": "# Chi ph\u00ed v\u1eadn h\u00e0nh th\u00e1ng 10/2026 \u2014 so tr\u1ea7n (GI\u1ea2 \u0110\u1ecaNH)\n\nT\u1ef7 gi\u00e1 quy \u0111\u1ed5i chi ph\u00ed AI 25.000\u0111/USD; c\u1ea3nh b\u00e1o 80% / 100% tr\u1ea7n; ng\u01b0\u1ee1ng X 5.000.000\u0111 \u2014 `data/fpa_config.json` ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t.\n\n| Ph\u1ea1m vi | Th\u1ef1c chi | Tr\u1ea7n | % tr\u1ea7n |\n|---|---|---|---|\n| `ai` | 4.025.000\u0111 | ch\u01b0a c\u00f3 tr\u1ea7n | \u2014 |\n| `ai:chatbot` | 25.000\u0111 | ch\u01b0a c\u00f3 tr\u1ea7n | \u2014 |\n| `ai:content` | 4.000.000\u0111 | 5.000.000\u0111 | 80.0% |\n| `tong` | 4.025.000\u0111 | ch\u01b0a c\u00f3 tr\u1ea7n | \u2014 |\n\nC\u1ea3nh b\u00e1o:\n- (kh\u00f4ng c\u00f3)\n\nKho\u1ea3n > ng\u01b0\u1ee1ng X: 0 \u2014 \u0111ang ch\u1edd TG\u0110 k\u00fd: 0, \u0111\u01b0\u1ee3c chi: 0.\n\nAgent ch\u1ec9 c\u1ea3nh b\u00e1o \u2014 kh\u00f4ng chi, kh\u00f4ng t\u1eaft key, kh\u00f4ng \u0111\u1ed5i h\u1ea1n m\u1ee9c; ng\u01b0\u1eddi quy\u1ebft theo quy tr\u00ecnh t\u00e0i ch\u00ednh.\n"
+ },
+ "over_titles": [
+  "Kho\u1ea3n chi v\u01b0\u1ee3t ng\u01b0\u1ee1ng X 5.000.000\u0111: saas/misa-amis 6.000.000\u0111",
+  "Kho\u1ea3n chi v\u01b0\u1ee3t ng\u01b0\u1ee1ng X 5.000.000\u0111: ads/shopee-ads 12.000.000\u0111"
+ ]
+}

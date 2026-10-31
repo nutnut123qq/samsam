@@ -1,0 +1,55 @@
+"""r20 FIX1 — quét AST mọi `import` trong tệp .py theo dõi (git ls-files) → tên top-level thuộc danh sách CHẶN của
+ci_env_sim (gói không có trên runner CI). In tệp:dòng, mức (module-level / trong hàm), và có trong try/except
+ImportError hay `pytest.importorskip` không — để biết ca nào CI sẽ ModuleNotFoundError.
+  python -I import_scan.py.txt <gốc repo> <blocked.json>
+"""
+import ast
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
+root, blocked = Path(sys.argv[1]), set(json.loads(Path(sys.argv[2]).read_text(encoding="utf-8")))
+files = subprocess.run(["git", "-C", str(root), "ls-files", "*.py"], capture_output=True, text=True,
+                       encoding="utf-8").stdout.split()
+
+
+def guarded(node, parents):
+    for p in parents:
+        if isinstance(p, ast.Try) and any(
+                h.type is None or any(isinstance(n, ast.Name) and n.id in ("ImportError", "ModuleNotFoundError",
+                                                                            "Exception")
+                                      for n in ast.walk(h.type)) for h in p.handlers):
+            return True
+    return False
+
+
+hits = []
+for f in files:
+    try:
+        tree = ast.parse((root / f).read_bytes())
+    except SyntaxError:
+        continue
+    stack = [(tree, [])]
+    while stack:
+        node, parents = stack.pop()
+        names = []
+        if isinstance(node, ast.Import):
+            names = [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            names = [node.module]
+        elif (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "importorskip"
+              and node.args and isinstance(node.args[0], ast.Constant)):
+            if str(node.args[0].value).split(".")[0] in blocked:
+                hits.append((f, node.lineno, node.args[0].value, "importorskip", True))
+        for n in names:
+            top = n.split(".")[0]
+            if top in blocked:
+                infn = any(isinstance(p, (ast.FunctionDef, ast.AsyncFunctionDef)) for p in parents)
+                hits.append((f, node.lineno, n, "trong hàm" if infn else "module-level", guarded(node, parents)))
+        for c in ast.iter_child_nodes(node):
+            stack.append((c, parents + [node]))
+print(f"# {len(files)} tệp .py theo dõi · {len(hits)} import tới module bị chặn")
+for f, ln, n, lvl, g in sorted(hits):
+    print(f"{f}:{ln}: {n} · {lvl} · {'có chặn lỗi/skip' if g else 'KHÔNG chặn lỗi'}")

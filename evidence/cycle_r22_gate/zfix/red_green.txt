@@ -1,0 +1,13 @@
+# node --no-warnings busy_commit_rg.mjs 0|5000, mỗi giá trị 3 lượt (31/10/2026)
+busy_timeout=0: COMMIT lỗi: database is locked (errcode 5); dòng msgr:x sau đó = 0
+EXIT 1
+busy_timeout=0: COMMIT lỗi: database is locked (errcode 5); dòng msgr:x sau đó = 0
+EXIT 1
+busy_timeout=0: COMMIT lỗi: database is locked (errcode 5); dòng msgr:x sau đó = 0
+EXIT 1
+busy_timeout=5000: COMMIT ok; dòng msgr:x sau đó = 1
+EXIT 0
+busy_timeout=5000: COMMIT ok; dòng msgr:x sau đó = 1
+EXIT 0
+busy_timeout=5000: COMMIT ok; dòng msgr:x sau đó = 1
+EXIT 0

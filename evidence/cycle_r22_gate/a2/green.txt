@@ -1,0 +1,52 @@
+# GREEN — sau khi sửa (docs/roles.sql khối svc_webhook + docs/schema.sql khối r22 A2):
+ docs/roles.sql  | 23 +++++++++++++++++++++++
+ docs/schema.sql | 39 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 62 insertions(+)
+$ python scripts/apply_schema.py --roles   (áp lại lên DB r22_a2 — tệp sau sửa, chạy 2 lần: idempotent)
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[exit 0]
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[exit 0]
+$ DATABASE_URL=<r22_a2 trên samsam-ts-db> python -m pytest tests/test_r22_webhook_garden.py -p no:cacheprovider -q -rA
+________________________ test_text_to_chained_plot_log ________________________
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_text -> sent (uh=22085aa929bcd7af)
+_________________________ test_image_to_garden_media __________________________
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_image -> sent (uh=22085aa929bcd7af)
+__________________________ test_audio_to_voice_draft __________________________
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_audio -> sent (uh=22085aa929bcd7af)
+=========================== short test summary info ===========================
+PASSED tests/test_r22_webhook_garden.py::test_text_to_chained_plot_log
+PASSED tests/test_r22_webhook_garden.py::test_image_to_garden_media
+PASSED tests/test_r22_webhook_garden.py::test_audio_to_voice_draft
+PASSED tests/test_r22_webhook_garden.py::test_webhook_login_only_zalo_garden_rows
+4 passed in 1.30s
+[exit 0]
+
+# GREEN probe — cùng 4 câu SQL webhook vườn, login tạm in role svc_webhook, schema public r22_a2 (rollback, login drop):
+OK   select id from plots where upper(id) = upper(%s) order by id
+OK   insert into plot_logs
+OK   insert into garden_media
+OK   insert into garden_voice_drafts
+[exit 0]
+
+# Đột biến (mutation) — bỏ khối trigger r22 A2 khỏi SCHEMA_SQL trong bộ nhớ (grant roles.sql giữ) → ca chặn phải ĐỎ:
+.                                                                        [100%]
+============================== warnings summary ===============================
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\_pytest\config\__init__.py:1309
+  C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\_pytest\config\__init__.py:1309: PytestAssertRewriteWarning: Module already imported so cannot be rewritten; anyio
+    self._mark_plugins_for_rewrite(hook, disable_autoload)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 3 deselected, 1 warning in 0.72s
+[exit 0]
+  ^ lần đột biến 1 VÔ HIỆU: patch module 'tests.test_r22_webhook_garden' nhưng pytest (prepend, tests/ không __init__) nạp tên trần 'test_r22_webhook_garden' bản chưa đột biến — không tính.
+
+# Đột biến lần 2 (đúng tên module pytest nạp) — bỏ khối trigger r22 A2 khỏi SCHEMA_SQL trong bộ nhớ, grant roles.sql giữ:
+$ python -c 'sys.path.insert(0,"tests"); import test_r22_webhook_garden as t; t.SCHEMA_SQL = t.SCHEMA_SQL[:index("-- ===== r22 A2")]; pytest.main([... -k only_zalo])'
+51:E               Failed: DID NOT RAISE <class 'psycopg.errors.InsufficientPrivilege'>
+61:FAILED tests/test_r22_webhook_garden.py::test_webhook_login_only_zalo_garden_rows
+62:1 failed, 3 deselected, 1 warning in 1.42s
+63:[exit 1]

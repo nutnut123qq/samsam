@@ -1,0 +1,23 @@
+#!/bin/bash
+# M1 RED/GREEN thật quanh 00:00 VN (17:00 UTC): base (HEAD) và cây làm việc chạy SONG SONG mỗi vòng
+SP="$1"; OUT="$2"; source "$SP/secret/dev.sh"
+for k in $(env | grep -oE '^PG[A-Z_]*=' | tr -d '='); do unset $k; done
+export PYTHONIOENCODING=utf-8
+red() { sed -E 's#(postgres(ql)?://[^:]+:)[^@]+@#\1***@#g'; }
+T=tests/test_ceo_decisions.py::test_propose_record_follow_e2e
+python -c "
+import time, datetime as d
+t = d.datetime.now(d.timezone.utc).replace(hour=16, minute=58, second=20, microsecond=0)
+time.sleep(max(0, (t - d.datetime.now(d.timezone.utc)).total_seconds()))"
+: > "$OUT"
+i=0
+while [ "$(date -u +%H%M%S)" \< "170045" ]; do
+  i=$((i+1)); t0=$(date -u +%T.%N | cut -c1-12)
+  (cd "$SP/base_tree" && python -m pytest -q -p no:cacheprovider "$T" > "$SP/mn_base_$i.txt" 2>&1; echo $? > "$SP/mn_base_$i.rc") &
+  (cd /d/code/samsam && python -m pytest -q -p no:cacheprovider "$T" > "$SP/mn_work_$i.txt" 2>&1; echo $? > "$SP/mn_work_$i.rc") &
+  wait
+  t1=$(date -u +%T.%N | cut -c1-12)
+  echo "vòng $i: UTC $t0 → $t1 · base(HEAD 43263c5) rc=$(cat "$SP/mn_base_$i.rc") $(tail -1 "$SP/mn_base_$i.txt") · cây làm việc rc=$(cat "$SP/mn_work_$i.rc") $(tail -1 "$SP/mn_work_$i.txt")" | red >> "$OUT"
+  grep -E "^E +(assert|AssertionError)|^E +[+-] " "$SP/mn_base_$i.txt" | head -6 | sed 's/^/    base: /' | red >> "$OUT"
+done
+echo DONE >> "$OUT"

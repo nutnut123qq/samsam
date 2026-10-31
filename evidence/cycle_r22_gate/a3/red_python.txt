@@ -1,0 +1,52 @@
+# RED (mã gốc agents/bks_audit.py chưa sửa) 2026-10-31T00:15:58+07:00
+$ git diff --stat -- agents/bks_audit.py
+$ python -m pytest -q tests/test_bks_audit.py -k 'masked' -p no:cacheprovider
+FF                                                                       [100%]
+================================== FAILURES ===================================
+_________________ test_chain_alert_dup_when_stored_fp_masked __________________
+
+db = <psycopg.Connection [INTRANS] (host=127.0.0.1 port=63198 user=postgres database=r22_a3) at 0x27843ab3440>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000027843AB3320>
+
+    def test_chain_alert_dup_when_stored_fp_masked(db, monkeypatch):
+        """fp bị che khi lưu vẫn khớp khóa chống lặp: 3 lần chạy cùng phát hiện
+        → đúng 1 cảnh báo đỏ (trước vá: mỗi lần chạy 1 cảnh báo mới)."""
+        _fixed_finding(monkeypatch)
+        c = TxConn(db)
+        rs = [ba.chain_alert(c, routing={}) for _ in range(3)]
+        stored = db.execute("select detail ->> 'fp' from red_alerts where id ="
+                            " %s", (rs[0]["alert_id"],)).fetchone()[0]
+        assert stored == FP_MASKED != FP_HEX      # tiền đề: fp bị che khi lưu
+>       assert [r["dup"] for r in rs] == [False, True, True]
+E       assert [False, False, False] == [False, True, True]
+E         
+E         At index 1 diff: False != True
+E         Use -v to get more diff
+
+tests\test_bks_audit.py:814: AssertionError
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+[RED-ALERT][warn] cảnh báo đỏ #2 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+[RED-ALERT][warn] cảnh báo đỏ #3 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+_________________ test_chain_alert_dup_against_old_masked_row _________________
+
+db = <psycopg.Connection [INTRANS] (host=127.0.0.1 port=63198 user=postgres database=r22_a3) at 0x27843ab0c80>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000027843AB2A50>
+
+    def test_chain_alert_dup_against_old_masked_row(db, monkeypatch):
+        """Dòng CŨ (trước vá) đã lưu fp bị che → không mở thêm cảnh báo."""
+        _fixed_finding(monkeypatch)
+        db.execute("insert into red_alerts (source_agent, title, detail) values"
+                   " (%s, 'cũ', %s)", (ba.CHAIN_AGENT, Jsonb({"fp": FP_MASKED})))
+        r = ba.chain_alert(TxConn(db), routing={})
+>       assert r["dup"] and r["alert_id"] is None
+E       assert (False)
+
+tests\test_bks_audit.py:824: AssertionError
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #2 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+=========================== short test summary info ===========================
+FAILED tests/test_bks_audit.py::test_chain_alert_dup_when_stored_fp_masked - ...
+FAILED tests/test_bks_audit.py::test_chain_alert_dup_against_old_masked_row
+2 failed, 57 deselected in 1.99s
+exit=1

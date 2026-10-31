@@ -13,8 +13,9 @@ openpyxl>=3.1
 # LLM + embeddings qua OpenRouter (openai client troi base_url)
 openai>=1.40
 
-# v3.8 doc intake - doc lop text PDF (thuan Python, khong dep native;
-# reportlab/fitz/PIL KHONG dung)
+# v3.8 doc intake - doc lop text PDF (thuan Python, khong dep native)
+# r20: fitz (PyMuPDF, AGPL) chi dung o engine OCR tuy chon paddle_local
+# (render PDF scan) - cai cung PaddleOCR khi hai ben chon engine, KHONG o day
 pypdf>=4
 
 # v5.2 CRM contact_vault (ingest.crm) - Fernet ma hoa PII + HKDF khoa HMAC
@@ -28,7 +29,11 @@ python-dotenv>=1.0
 
 # Dev
 pytest>=8.0
-ruff>=0.6
+# r20: ghim dung ban - repo khong cau hinh ruff, ruff 0.17 doi target mac dinh
+# 3.10 -> 3.11 (UP017 x117 lam CI do o buoc `ruff check .`); nang ban = co chu dich
+ruff==0.16.10
+# r20: tests/test_ci_workflow.py doc ci.yml (drift-guard CI) - thieu thi ca tep skip
+PyYAML>=6.0
 
 # Dev — chi can khi quay lai video demo (scripts/record_demo.py)
 playwright>=1.63

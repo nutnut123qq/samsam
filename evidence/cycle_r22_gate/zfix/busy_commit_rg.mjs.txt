@@ -1,0 +1,48 @@
+// RED/GREEN tất định cho cơ chế lỗi ở zalo.reply.test.ts (cold-check r22 vòng 2):
+// Worker giữ RESERVED (BEGIN IMMEDIATE + INSERT); luồng chính giữ SHARED rồi nhả sau 150 ms.
+// Worker COMMIT (cần EXCLUSIVE) trong lúc SHARED còn giữ:
+//   busy_timeout 0 (bản cũ)     → 'database is locked' ngay  (RED)
+//   busy_timeout 5000 (bản vá)  → chờ SHARED nhả rồi COMMIT ok (GREEN)
+// Dùng: node busy_commit_rg.mjs <busy_timeout_ms>
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import { Worker } from 'node:worker_threads';
+
+const ms = Number(process.argv[2] ?? 0);
+const dir = mkdtempSync(join(tmpdir(), 'seen-rg-'));
+const p = join(dir, 'zalo_seen.db');
+const b = new DatabaseSync(p);
+b.exec('PRAGMA busy_timeout = 5000');
+b.exec('CREATE TABLE IF NOT EXISTS seen(event_id TEXT PRIMARY KEY, ts REAL)');
+
+const w = new Worker(
+  `const { parentPort, workerData } = require('node:worker_threads');
+   const { DatabaseSync } = require('node:sqlite');
+   const db = new DatabaseSync(workerData.p);
+   if (workerData.ms) db.exec('PRAGMA busy_timeout = ' + workerData.ms);
+   db.exec('BEGIN IMMEDIATE');
+   db.prepare('INSERT OR IGNORE INTO seen VALUES (?, ?)').run('msgr:x', 1);
+   parentPort.postMessage('locked');
+   parentPort.once('message', () => {
+     let r;
+     try { db.exec('COMMIT'); r = 'COMMIT ok'; } catch (e) { r = 'COMMIT lỗi: ' + e.message + ' (errcode ' + e.errcode + ')'; try { db.exec('ROLLBACK'); } catch {} }
+     db.close();
+     parentPort.postMessage(r);
+   });`,
+  { eval: true, workerData: { p, ms } },
+);
+await new Promise((res) => w.once('message', res));
+b.exec('BEGIN');
+b.prepare('SELECT count(*) FROM seen').get(); // SHARED
+const result = new Promise((res) => w.once('message', res));
+w.postMessage('commit');
+setTimeout(() => b.exec('COMMIT'), 150); // nhả SHARED khi Worker đang chờ (hoặc đã lỗi)
+const r = await result;
+await new Promise((res) => w.once('exit', res));
+const n = b.prepare("SELECT count(*) AS n FROM seen WHERE event_id = 'msgr:x'").get().n;
+b.close();
+rmSync(dir, { recursive: true, force: true });
+console.log(`busy_timeout=${ms}: ${r}; dòng msgr:x sau đó = ${n}`);
+process.exit(r === 'COMMIT ok' ? 0 : 1);

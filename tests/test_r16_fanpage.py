@@ -180,7 +180,8 @@ def test_fanpage_rows_mapping(servers, env):
     assert {(r["channel"], r["content_type"], r["is_ai"]) for r in rows} == {
         ("facebook", "post", False)}
     assert notes == [(f"fanpage: bỏ 3 bài không có chữ, dài quá {rk.MAX_TEXT}"
-                      " ký tự hoặc permalink không hợp lệ")]
+                      " ký tự, chữ có ký tự không lưu được (NUL/surrogate)"
+                      " hoặc permalink không hợp lệ")]
     assert rk.scan_row(rows[0], rk.load_config())["severity"] == "S1"
 
 

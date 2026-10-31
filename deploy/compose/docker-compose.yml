@@ -1,0 +1,207 @@
+# Hệ thống lõi Sâm Sâm trên server vật lý (docs/rewrite/KE_HOACH.md mục 2) — xem README.md cùng thư mục.
+# Kiểm cú pháp: docker compose --env-file compose.env.example config -q   (KHÔNG up/pull ở máy dev)
+# Mạng: edge = cổng mở CHỈ trên IP WireGuard; backend + ai_private = internal (không ra internet).
+name: samsam
+
+x-ts-env: &ts-env
+  NODE_ENV: production
+  APPROVAL_ENFORCE: "1" # chế độ thực: login dịch vụ riêng, người duyệt đối chiếu approvers
+  DEPLOY: ${DEPLOY:-0} # 1 = được gửi thật ra Zalo/Meta — chỉ bật khi Bên B duyệt
+  REDIS_URL: redis://:${REDIS_PASSWORD:?}@redis:6379/0
+  OLLAMA_URL: http://ollama:11434
+  AI_WORKER_URL: http://ai_worker:8790
+  OIDC_ISSUER: ${KC_PUBLIC_URL:?}/realms/samsam
+  OIDC_AUDIENCE: samsam-api
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg17-trixie
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_OWNER:-samsam_owner}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: samsam
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d samsam"]
+      interval: 10s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?}"]
+    volumes:
+      - redisdata:/data
+    networks: [backend]
+
+  # DB riêng cho Keycloak: tách danh tính khỏi DB nghiệp vụ.
+  keycloak-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:?}
+      POSTGRES_DB: keycloak
+    volumes:
+      - kcdata:/var/lib/postgresql/data
+    networks: [backend]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    restart: unless-stopped
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:?}
+      KC_HOSTNAME: ${KC_PUBLIC_URL:?}
+      KC_HTTP_ENABLED: "true" # TLS kết thúc ở reverse proxy nội bộ (README mục TLS)
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USER:?}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?}
+      # placeholder trong realm-samsam.json
+      SAMSAM_WEB_ORIGIN: ${WEB_PUBLIC_URL:?}
+      SAMSAM_WEB_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    depends_on: [keycloak-db]
+    ports:
+      - ${WG_BIND_IP:?}:8080:8080
+    networks: [edge, backend]
+
+  # Mô hình nội bộ: chỉ mạng ai_private (internal) — không ra internet; model tải TRƯỚC (README).
+  ollama:
+    image: ollama/ollama:0.12.6
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_NO_CLOUD: "1"
+      OLLAMA_KEEP_ALIVE: 24h
+    volumes:
+      - ollama:/root/.ollama
+    networks: [ai_private]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # OCR (paddle_local/Docling) + STT (faster-whisper) bản Python, HTTP nội bộ; model ở AI_MODELS_DIR.
+  ai_worker:
+    build:
+      context: ../..
+      dockerfile: deploy/compose/ai_worker.Dockerfile
+    restart: unless-stopped
+    environment:
+      # Nghe mọi giao diện TRONG mạng ai_private (mặc định 127.0.0.1 thì api không gọi tới được);
+      # ứng dụng vẫn chỉ nhận client loopback/RFC1918/ULA.
+      AI_WORKER_HOST: 0.0.0.0
+      OCR_PROVIDER: paddle_local
+      OCR_PADDLE_MODEL_DIR: /models/paddle
+      GARDEN_STT_PROVIDER: whisper_local
+      GARDEN_STT_MODEL_DIR: /models/whisper
+    volumes:
+      - ${AI_MODELS_DIR:?}:/models:ro
+    networks: [ai_private]
+
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/compose/api.Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *ts-env
+      API_HOST: 0.0.0.0
+      API_PORT: "3001"
+      UI_DATABASE_URL: ${UI_DATABASE_URL:?}
+      WEBHOOK_DATABASE_URL: ${WEBHOOK_DATABASE_URL:?}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-} # chỉ dùng khi data/ai_policy.json cho phép
+      # Webhook kênh chat: thiếu secret → /zalo-webhook 503, /messenger-webhook 403 (fail-closed).
+      ZALO_OA_SECRET: ${ZALO_OA_SECRET:?}
+      ZALO_ACCESS_TOKEN: ${ZALO_ACCESS_TOKEN:-} # hoặc token store data/zalo_tokens.json
+      ZALO_REFRESH_TOKEN: ${ZALO_REFRESH_TOKEN:-}
+      ZALO_APP_ID: ${ZALO_APP_ID:-}
+      ZALO_APP_SECRET: ${ZALO_APP_SECRET:-}
+      MESSENGER_APP_SECRET: ${MESSENGER_APP_SECRET:?}
+      MESSENGER_VERIFY_TOKEN: ${MESSENGER_VERIFY_TOKEN:?}
+      MESSENGER_PAGE_TOKEN: ${MESSENGER_PAGE_TOKEN:-}
+      CHANNEL_HASH_SALT: ${CHANNEL_HASH_SALT:?}
+    volumes:
+      - ${SAMSAM_DATA_DIR:-../../data}:/app/data
+    depends_on: [postgres, redis]
+    ports:
+      - ${WG_BIND_IP:?}:3001:3001
+    networks: [edge, backend, ai_private]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/readyz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 30s
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: deploy/compose/api.Dockerfile
+    restart: unless-stopped
+    command: ["node_modules/.bin/tsx", "apps/api/src/worker.ts"]
+    environment:
+      <<: *ts-env
+      JOB_DATABASE_URL: ${JOB_DATABASE_URL:?}
+      LOADER_DATABASE_URL: ${LOADER_DATABASE_URL:?}
+      BACKUP_DATABASE_URL: ${BACKUP_DATABASE_URL:?}
+      # Job đã chuyển khỏi systemd (README mục 7). TRỐNG = worker exit 78 (fail-closed: timer Python
+      # còn chạy → chạy chồng); `all` = cả lịch trừ restore_drill/dr_drill (cần Python/docker).
+      WORKER_JOBS: ${WORKER_JOBS:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Cảnh báo đỏ gửi THẬT qua SMTP (pipelines.red_alert) — thiếu = cảnh báo chỉ nằm trong DB.
+      RED_ALERT_NOTIFY: ${RED_ALERT_NOTIFY:?}
+      SMTP_HOST: ${SMTP_HOST:?}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      # Bản tin sức khỏe (health_bulletin): kênh tùy chọn
+      HEALTH_NOTIFY: ${HEALTH_NOTIFY:-}
+      HEALTH_MAIL_TO: ${HEALTH_MAIL_TO:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    volumes:
+      - ${SAMSAM_DATA_DIR:-../../data}:/app/data
+    depends_on: [postgres, redis]
+    networks: [edge, backend, ai_private]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/compose/web.Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_URL: http://api:3001
+      OIDC_ISSUER: ${KC_PUBLIC_URL:?}/realms/samsam
+      OIDC_CLIENT_ID: samsam-web
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
+      OIDC_REDIRECT_URI: ${WEB_PUBLIC_URL:?}/api/auth/callback
+    depends_on: [api, keycloak]
+    ports:
+      - ${WG_BIND_IP:?}:3000:3000
+    networks: [edge]
+
+networks:
+  edge: {}
+  backend:
+    internal: true
+  ai_private:
+    internal: true
+
+volumes:
+  pgdata: { name: samsam_pgdata }
+  redisdata: { name: samsam_redisdata }
+  kcdata: { name: samsam_kcdata }
+  ollama: { name: samsam_ollama }

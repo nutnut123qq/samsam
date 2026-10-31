@@ -1,0 +1,23 @@
+#!/bin/bash
+# r20 FIX1 — RED/GREEN của BLOCKER cold-check vòng 1 (`import fitz` không guard) TRONG giả lập môi trường runner CI
+# (ci_env_sim.py.txt, requirements.txt CỦA CÂY ĐÓ), lượt unit (không DATABASE_URL — các tệp này không cần DB).
+#   bash red_sim.sh.txt <SP> <OUT> <SHA|work> <tệp test ...>
+SP="$1"; OUT="$2"; WHICH="$3"; shift 3
+HERE=$(cd "$(dirname "$0")" && pwd); REPO=$(git -C "$HERE" rev-parse --show-toplevel)
+T="$SP/red_sim_$(date +%H%M%S)"; mkdir "$T" || exit 2
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset PYTHONPATH PYTEST_ADDOPTS OPENROUTER_API_KEY; export PYTHONIOENCODING=utf-8
+if [ "$WHICH" = work ]; then
+  git -C "$REPO" -c core.autocrlf=false archive HEAD | tar -x -C "$T"
+  git -C "$REPO" diff HEAD --binary 2>/dev/null | git -C "$T" -c core.autocrlf=false apply || exit 3
+else git -C "$REPO" -c core.autocrlf=false archive "$WHICH" | tar -x -C "$T" || exit 3; fi
+{
+echo "# $(date -Iseconds) · cây $WHICH (git archive$( [ "$WHICH" = work ] && echo ' HEAD + diff làm việc')) · không .env · không DATABASE_URL"
+python -I "$HERE/ci_env_sim.py.txt" "$T/requirements.txt" "$T" "$T/.sim" "$HERE/missing_requires.json.txt" | grep -E '^# (bao|THIẾU|gói|plugin)|^  (fitz|yaml):'
+cd "$T" && PYTHONPATH="$T/.sim" CI_SIM_BLOCKED="$T/.sim/blocked.json" PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
+  PYTEST_ADDOPTS="$(cat "$T/.sim/plugins.txt")" python -m pytest -q -rA -p no:cacheprovider "$@" 2>&1 |
+  grep -E "^(PASSED|FAILED|ERROR|SKIPPED)|ModuleNotFoundError|passed|failed|skipped" | head -60
+echo "EXIT ${PIPESTATUS[0]}"
+} > "$OUT"
+cd / && rm -rf "$T"
+cat "$OUT"

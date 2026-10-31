@@ -1,0 +1,29 @@
+#!/bin/bash
+# Cổng nhẹ r18: ghi chú lượt 1 chạy lại + agent_eval/dpia/redteam (không DB) + secret scan.
+SP="$1"
+E=/d/code/samsam/evidence/cycle_r18_gate
+cd /d/code/samsam
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY CONV_SAMPLE
+export PYTHONIOENCODING=utf-8 OPENROUTER_API_KEY=""
+fp() { { git diff HEAD --binary -- . ':(exclude)DONE.md' ':(exclude)CYCLE_LOOP.md'
+         git ls-files --others --exclude-standard | grep -vE '^(evidence/|\.agents/|founder/|lv2-market-top\.png)' | sort |
+           while read -r f; do echo "== $f"; cat "$f"; done; } 2>/dev/null | sha256sum | cut -c1-64; }
+{ echo "# $(date -Iseconds) lượt 1 CHẠY LẠI (tiến trình pytest mới, cùng 16 file, cùng DB): $(tail -2 "$E/shard_01_rerun.txt" | head -1) — lần đầu 1 failed = flake nửa đêm tests/test_ceo_decisions.py:303 (now() đầu tx + 1 phút vượt 00:00 VN), không thuộc diff r18"
+  echo "# fp mã lúc chạy lại = $(fp)"; } >> "$E/full_shards.txt"
+for c in "scripts/agent_eval.py --deterministic --no-record:eval" "scripts/dpia_draft.py --check:dpia" "scripts/redteam.py:redteam"; do
+  cmd="${c%%:*}"; out="${c##*:}"
+  { echo "## python $cmd"; python $cmd 2>&1; echo "EXIT $?"; } > "$E/$out.txt"
+  echo "$out: $(tail -1 "$E/$out.txt")"
+done
+PW=$(sed -E "s/.*password=([^' ]+).*/\1/" "$SP/secret/admin.sh")
+{ echo "## secret scan evidence/cycle_r18_gate + tests/test_r18_nguon_hong.py + diff từ Base (dòng thêm) — $(date -Iseconds)"
+  T="$E tests/test_r18_nguon_hong.py"
+  echo "### grep -rEn 'postgres(ql)?://[^ ]*:[^*@]+@' → (rỗng = đạt)"
+  grep -rEn 'postgres(ql)?://[^ ]*:[^*@]+@' $T; git diff 215275f -- . | grep '^+' | grep -En 'postgres(ql)?://[^ ]*:[^*@]+@'
+  echo "### grep -rn 'sk-[o]r' (tiền tố khóa OpenRouter) → (rỗng = đạt)"
+  grep -rn 'sk-[o]r' $T; git diff 215275f -- . | grep '^+' | grep -n 'sk-[o]r'
+  echo "### mật khẩu container (sinh ở scratchpad) trong tệp theo dõi + chưa theo dõi (trừ .agents/, founder/) → (rỗng = đạt)"
+  { git ls-files; git ls-files --others --exclude-standard | grep -vE '^(\.agents/|founder/)'; } | while read -r f; do [ -f "$f" ] && grep -lF "$PW" "$f"; done
+  echo "EXIT 0"; } > "$E/secret_scan.txt" 2>&1
+grep -v '^warning' "$E/secret_scan.txt"

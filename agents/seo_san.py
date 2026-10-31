@@ -302,6 +302,10 @@ def main(argv=None, now=None) -> int:
     args = ap.parse_args(argv)
     if not args.run:
         ap.error("cần --run")
+    from pipelines import rollout
+    # r19 (r12 RB): tắt → không ghi nháp/báo cáo seo-san- (cả --dry-run).
+    if why := rollout.blocked(None, "SEO sàn", fid="marketing-07.1"):
+        return rollout.say_blocked(why)
     try:
         rules = load_rules()
     except SeoRulesError as e:

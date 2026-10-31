@@ -1,0 +1,1654 @@
+{
+ "real": [],
+ "mau": [],
+ "not-object": [
+  "ma tr\u1eadn kh\u00f4ng ph\u1ea3i object JSON"
+ ],
+ "muts": {
+  "tiers-chong": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 40,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "tiers[1]: ph\u1ea3i li\u1ec1n ngay sau b\u1eadc tr\u01b0\u1edbc (kh\u00f4ng ch\u1ed3ng, kh\u00f4ng h\u1edf)"
+   ]
+  },
+  "tiers-ho": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 60,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "tiers[1]: ph\u1ea3i li\u1ec1n ngay sau b\u1eadc tr\u01b0\u1edbc (kh\u00f4ng ch\u1ed3ng, kh\u00f4ng h\u1edf)"
+   ]
+  },
+  "ck-60": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 60
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "tiers[0]: discount_pct nguy\u00ean 0..50"
+   ]
+  },
+  "ck-float": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5.5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "tiers[0]: discount_pct nguy\u00ean 0..50"
+   ]
+  },
+  "ck-bool": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": true
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "tiers[0]: discount_pct nguy\u00ean 0..50"
+   ]
+  },
+  "key-ruou": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     },
+     "ruou-sam-chai-thuy-tinh-500ml": {
+      "max_discount_pct": 5
+     }
+    }
+   },
+   "errs": [
+    "items[ruou-sam-chai-thuy-tinh-500ml]: r\u01b0\u1ee3u kh\u00f4ng \u0111\u01b0\u1ee3c v\u00e0o ma tr\u1eadn b\u00e1o gi\u00e1"
+   ]
+  },
+  "key-ruou-ten-la": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     },
+     "ruou-sam-moi": {
+      "max_discount_pct": 5
+     }
+    }
+   },
+   "errs": [
+    "items[ruou-sam-moi]: r\u01b0\u1ee3u kh\u00f4ng \u0111\u01b0\u1ee3c v\u00e0o ma tr\u1eadn b\u00e1o gi\u00e1"
+   ]
+  },
+  "finance-by-trang": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": {
+     "by": "  ",
+     "at": "2026-10-01"
+    },
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'finance_confirmed' ph\u1ea3i null ho\u1eb7c {by: t\u00ean ng\u01b0\u1eddi, at: YYYY-MM-DD}"
+   ]
+  },
+  "sales-at-sai": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": {
+     "by": "X",
+     "at": "01/10/2026"
+    },
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'sales_confirmed' ph\u1ea3i null ho\u1eb7c {by: t\u00ean ng\u01b0\u1eddi, at: YYYY-MM-DD}"
+   ]
+  },
+  "sales-at-khong-co-that": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": {
+     "by": "X",
+     "at": "2026-02-30"
+    },
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'sales_confirmed' ph\u1ea3i null ho\u1eb7c {by: t\u00ean ng\u01b0\u1eddi, at: YYYY-MM-DD}"
+   ]
+  },
+  "bien-91": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 91,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'min_margin_pct' ph\u1ea3i s\u1ed1 nguy\u00ean 0..90"
+   ]
+  },
+  "base-kenh-la": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "lazada",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'base' ph\u1ea3i {channel \u2208 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot'), kind \u2208 ('floor', 'list', 'promo')}"
+   ]
+  },
+  "base-kind-la": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "vip"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'base' ph\u1ea3i {channel \u2208 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot'), kind \u2208 ('floor', 'list', 'promo')}"
+   ]
+  },
+  "key-khong-slug": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     },
+     "Mat Ong": {
+      "max_discount_pct": 5
+     }
+    }
+   },
+   "errs": [
+    "items: key 'Mat Ong' kh\u00f4ng ph\u1ea3i slug"
+   ]
+  },
+  "thieu-finance": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "thi\u1ebfu 'finance_confirmed' (null = ch\u01b0a x\u00e1c nh\u1eadn)"
+   ]
+  },
+  "status-trong": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "  ",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "thi\u1ebfu 'status' (GI\u1ea2 \u0110\u1ecaNH/\u0111\u00e3 ch\u1ed1t)"
+   ]
+  },
+  "version-0": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 0,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'version' ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 1"
+   ]
+  },
+  "rounding-0": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 0,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'rounding_vnd' ph\u1ea3i s\u1ed1 nguy\u00ean 1..1.000.000"
+   ]
+  },
+  "valid-91": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 91,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'quote_valid_days' ph\u1ea3i s\u1ed1 nguy\u00ean 1..90"
+   ]
+  },
+  "tiers-rong": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "'tiers' ph\u1ea3i list kh\u00e1c r\u1ed7ng"
+   ]
+  },
+  "tier-max-lt-min": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 5,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "tiers[0]: min_qty/max_qty nguy\u00ean 1..100000, max \u2265 min"
+   ]
+  },
+  "tier-khong-object": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     "x",
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "tiers[0]: min_qty/max_qty nguy\u00ean 1..100000, max \u2265 min"
+   ]
+  },
+  "items-rong": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {}
+   },
+   "errs": [
+    "'items' ph\u1ea3i object kh\u00e1c r\u1ed7ng"
+   ]
+  },
+  "item-pk-am": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": -1
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "items[mat-ong-sam-120ml-1hu]: packaging_cost_vnd null ho\u1eb7c nguy\u00ean \u2265 0"
+   ]
+  },
+  "item-key-la": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12,
+      "la": 1
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "items[mat-ong-sam-120ml-1hu]: key l\u1ea1"
+   ]
+  },
+  "item-khong-object": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     },
+     "abc": 5
+    }
+   },
+   "errs": [
+    "items[abc]: max_discount_pct nguy\u00ean 0..50"
+   ]
+  },
+  "item-ck-qua": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 51
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": [
+    "items[mat-ong-sam-120ml-1hu]: max_discount_pct nguy\u00ean 0..50"
+   ]
+  },
+  "key-dai-khong-slug": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": null,
+    "sales_confirmed": null,
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     },
+     "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n": {
+      "max_discount_pct": 1
+     }
+    }
+   },
+   "errs": [
+    "items: key 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\u2026' kh\u00f4ng ph\u1ea3i slug"
+   ]
+  },
+  "confirmed-du": {
+   "doc": {
+    "_doc": "Ma tr\u1eadn b\u00e1o gi\u00e1 B2B qu\u00e0 T\u1ebft (v8.2 KD-A3, WP11) \u2014 B\u1ea2N DEV SO\u1ea0N, GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t. Gi\u00e1 g\u1ed1c = golden prices[base.channel][base.kind] (combo = t\u1ed5ng gi\u00e1 g\u1ed1c th\u00e0nh ph\u1ea7n \u00d7 s\u1ed1 l\u01b0\u1ee3ng); b\u1eadc chi\u1ebft kh\u1ea5u theo s\u1ed1 l\u01b0\u1ee3ng t\u1eebng d\u00f2ng; \u0111\u01a1n gi\u00e1 = l\u00e0m tr\u00f2n XU\u1ed0NG b\u1ed9i rounding_vnd c\u1ee7a gi\u00e1 g\u1ed1c \u00d7 (100 \u2212 CK) / 100; bi\u00ean = (t\u1ed5ng \u2212 gi\u00e1 v\u1ed1n \u0110\u00c3 DUY\u1ec6T v9.1) \u00d7 100 / t\u1ed5ng. finance_confirmed/sales_confirmed = null \u2192 M\u1eccI b\u00e1o gi\u00e1 \u0111i per_item (G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t t\u1eebng m\u1ee5c); ch\u1ec9 NG\u01af\u1edcI th\u1eadt \u0111i\u1ec1n {\"by\": t\u00ean, \"at\": YYYY-MM-DD} \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 \u0111i\u1ec1n. packaging_cost_vnd (ch\u1ec9 combo) null = ch\u01b0a bi\u1ebft chi ph\u00ed h\u1ed9p/thi\u1ec7p (external-dep). KH\u00d4NG BAO GI\u1edc th\u00eam SKU/combo r\u01b0\u1ee3u (validate_matrix ch\u1eb7n). Ki\u1ec3m: python -m agents.kd_quote --check-matrix",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 b\u00e1n h\u00e0ng + t\u00e0i ch\u00ednh ch\u1ed1t chi\u1ebft kh\u1ea5u, ng\u01b0\u1ee1ng bi\u00ean, VAT, chi ph\u00ed bao b\u00ec",
+    "version": 1,
+    "finance_confirmed": {
+     "by": "A",
+     "at": "2026-10-01"
+    },
+    "sales_confirmed": {
+     "by": "B",
+     "at": "2026-10-02"
+    },
+    "base": {
+     "channel": "shopee",
+     "kind": "list"
+    },
+    "min_margin_pct": 30,
+    "rounding_vnd": 1000,
+    "quote_valid_days": 14,
+    "tiers": [
+     {
+      "min_qty": 10,
+      "max_qty": 49,
+      "discount_pct": 5
+     },
+     {
+      "min_qty": 50,
+      "max_qty": 199,
+      "discount_pct": 8
+     },
+     {
+      "min_qty": 200,
+      "max_qty": 1000,
+      "discount_pct": 12
+     }
+    ],
+    "items": {
+     "mat-ong-sam-120ml-1hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-120ml-2hu": {
+      "max_discount_pct": 12
+     },
+     "mat-ong-sam-300ml": {
+      "max_discount_pct": 12
+     },
+     "saphraton-20v": {
+      "max_discount_pct": 12
+     },
+     "saphraton-80v": {
+      "max_discount_pct": 12
+     },
+     "hop-qua-tet-sam-sam-mau": {
+      "max_discount_pct": 12,
+      "packaging_cost_vnd": null
+     }
+    }
+   },
+   "errs": []
+  }
+ }
+}

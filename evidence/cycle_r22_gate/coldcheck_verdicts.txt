@@ -1,0 +1,202 @@
+===== Cold-check vòng 1 (workflow wf_a8863a18-309, reviewer ngữ cảnh mới, prompt cố định, ứng viên f4d5e45) — nguyên văn =====
+VERDICT: UNVERIFIED
+
+I found no BLOCKER and nothing to fix in the code. Every gate I could re-run passed. Two things stop a PASS. First, I did not re-run the full gates that M5 claims (pytest 7151 tests and the full vitest run). Another session (D:\code\crawl, guarded E2E full, mem_guard holding its quiet window from 04:47) is about to run a heavy gate on this machine. AGENTS.md forbids overlapping heavy gates, and that session's window can last up to 4h, so I set a wait deadline of 0 and did not wait. Second, the CI items that only run on Linux remain UNVERIFIED, which the board already declares.
+
+**Snapshot**
+- HEAD and base are both dbf5d2e. Base comes from the `Base:` line in DONE.md and matches CYCLE_LOOP.md.
+- The index is empty. 15 files are modified and 15 paths untracked. `git status --short` hash was bdba614b before and after the audit, so no repo file changed.
+- The gate candidate is f4d5e45: 757 files, parent dbf5d2e.
+- I hashed every file in it against the working tree. 755/757 match exactly. Only DONE.md and CYCLE_LOOP.md differ, and those are board updates. So the gate evidence applies to the content on disk.
+- 4acde94 differs from f4d5e45 only in `mkt-koc.test.ts`.
+
+**Claims confirmed with evidence**
+
+- **M1 (TS rewrite import)**
+  - There are exactly 717 untracked files.
+  - `git check-ignore` confirms node_modules, `.next` and `compose.env` are ignored.
+  - My own secret scan found only fake values (`u:p`, `s3cretPW`, `CHANGE_ME`, `pw`).
+  - `dpia_draft --check` reports DPIA/TIA in sync with the data flow map.
+  - The ai_worker test fix is correct: `_db_guard._sanitize_env` deliberately injects an empty DSN into child processes, and `_child_env` still filters correctly.
+  - `ai_worker/tests` passed in the probe below.
+- **M2 / A1 (backup picks a client matching the server's major version)**
+  - I read the diffs in `db_backup.py` and `backup.ts`; the TS version mirrors the Python.
+  - I re-ran the failure case myself: base dbf5d2e with PG17 first on PATH against a PG16 container gave **3 failed** with `unrecognized configuration parameter "transaction_timeout"`, the same error as the CI failure.
+  - On f4d5e45 under the same conditions, `test_db_backup` plus `test_dr_drill` gave **82 passed**.
+  - TS `dr-drill.docker` gave 3 passed, with the volume count unchanged at 159 before and after.
+- **M3 / A2 (svc_webhook garden grants plus guard trigger)**
+  - The column grants match the actual SQL in Python and TS: `_find_plot`, `garden.add_log`, `garden_media.record`, the voice-draft insert, and `garden-zalo.service.ts`.
+  - The trigger exempts owner/superuser through `p10_owner_login`.
+  - The staff-code limit of 32 characters matches `_load_staff`.
+  - I confirmed base `roles.sql` grants nothing on garden tables to svc_webhook.
+  - `test_r22_webhook_garden` passed 4/4 inside the probe.
+- **M4 / A3 (chain-alert duplicate check uses masked fp)**
+  - `red_alert._mask` calls the same `_mask_pii` as the fix.
+  - I measured that 2.03% of sha256 hex values get masked, out of 20,000 samples.
+  - `_mask_pii(FP_HEX)` equals FP_MASKED.
+  - The TS code uses the real `maskPii`.
+  - I re-checked the grep for `detail ->> 'post_id'`: it is an int, so it is never masked.
+- **M5 (gate evidence)**
+  - I read `full2`: shards sum to 7144 passed + 7 skipped = 7151, all 10 steps exit 0, and `test_r22_webhook_garden`, `test_db_backup` and `test_dr_drill` are all collected with no skips.
+  - `ts_vitest` shows 5948 passed + 9 skipped.
+  - The RED/GREEN and mutation evidence files for a1, a2, a3, m1fix and tsfix are consistent with the claims.
+
+**Gates I re-ran**
+
+| Gate | Result |
+|---|---|
+| `ci_repro.sh f4d5e45 probe sim` (10 test files: backup, dr_drill, bks_audit, red_alert, r22, zalo_garden, ci_workflow, data_flow_map, ai_worker, v14_p2) | All 10 steps exit 0. Includes `ruff .`, `apply_schema` x2, core/golden, **pytest 416 passed, 0 skipped**, `agent_eval --deterministic`, redteam 0/50. Cleanup result=0. |
+| Probe on base dbf5d2e with PG17 on PATH | 3 failed, as expected |
+| Probe on f4d5e45 with PG17 on PATH | 82 passed |
+| vitest: ops_scripts, bks_hdtv, garden_zalo, mkt-koc, pii | 568 passed, 3 skipped (the skipped file is `dr-drill.docker`, which needs an env flag) |
+| vitest `dr-drill.docker` with `TS_TEST_DR_DOCKER=1` | 3 passed |
+| `biome ci` | exit 0 (36 warnings) |
+| `npm run typecheck` | exit 0 |
+| ruff on the r22 files | clean |
+| `ruff check .` on the working tree | 115 errors, **all in untracked `.agents/`**, not in f4d5e45 |
+
+All containers, volumes and temp directories from my runs were removed.
+
+**UNVERIFIED and why**
+- The full pytest run (7151) and full vitest run (5957) were not re-run by me, because of the other session's heavy gate. I relied on the evidence files I read. The garden-related tests outside my probe, about 20 files including `test_docx_p0_rollout_gate`, `test_garden*` and `test_qr_trace`, are covered only by `full2`.
+- The PGDG install step and `--add-host host-gateway` on a real Linux runner, plus the whole `ts` job on Linux, cannot be checked locally. The board already declares this UNVERIFIED until push.
+
+**Findings**
+- **MINOR (process):** the working tree mixes in another workstream and unrelated files that are not in the r22 contract:
+  - Docker-cleanup workstream: the AGENTS.md hunk at lines 102 and 112–125 (plus line 461), `scripts/ci_repro.sh`, `tests/test_docker_test_cleanup.py`, `tests/test_safety_s01_rotation.py`, `evidence/docker_volume_cleanup_fix_20261029/`.
+  - Unrelated: `.agents/` (the source of the ruff errors), `founder/`, `lv2-market-top.png`.
+
+  These are correctly excluded from f4d5e45. The closing commit must stage exactly the f4d5e45 file list plus DONE.md, CYCLE_LOOP.md and `evidence/cycle_r22_gate`, never `add -A`.
+- **NIT:** `docs/schema.sql:6914` says a compromised webhook cannot write logs under a person's name. The trigger at :6930 only checks `^zalo:\S` and length ≤ 37, so `author='zalo:Nguyễn Văn A'` still gets through. The `zalo:` prefix does mark the source; the comment overstates the protection.
+- **NIT:** `.github/workflows/ci.yml:69` and `:118` hard-code `postgresql-client-16/17` and the matching `/usr/lib/postgresql/<M>` paths, separately from the service image majors at :37 and :83. `tests/test_ci_workflow.py` has no drift guard for this, so bumping the image without updating these lines brings back the r21 error (only a `[warn]` from `resolve_tool`).
+- **NIT:** `ts/apps/api/src/modules/mkt_koc_ugc_seo/mkt-koc.test.ts:97` now checks the sha against TS's own `sha256(text)`, so it no longer compares against the Python golden. Risk is low because both sides decode utf-8-sig without newline normalization (`scripts/contract_check.py:156` and `shared.ts` `readContractFile`).
+- **NIT:** `ts/CONVENTIONS.md:28,227` hard-code a session-specific scratchpad path (`…/eb2cb09e-…/scratchpad/ts_secret/db.env`) into a file that will be committed. No secret is exposed, but the path won't work on another machine or session.
+- **NIT:** the M5 gate runner `scripts/ci_repro.sh` is not tracked and not in f4d5e45; the committed AGENTS.md:455 has referenced it since r21. If the Docker workstream is never committed, the r22 gate cannot be reproduced from the repo.
+
+To reach PASS: once the machine is free, run `bash scripts/ci_repro.sh <SP-new> <OUT-new> f4d5e45 shards sim` and the full vitest run sequentially. The Linux-only items are checked on the first push.
+
+Not checked: I did not review the 717 TS files line by line; I covered only the parts tied to A1–A3 and M1. I did not independently mutate the A2 trigger (I relied on `a2/green.txt`). Run outputs are in C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\eb2cb09e-84ff-4778-82f3-a13c04b3511d\scratchpad\ (`aud_r22_out1`, `aud_r22_out2`, `aud_r22_out3`, `aud_r22_vitest.txt`, `aud_r22_vitest_dr.txt`).
+
+
+===== Cold-check vòng 2 — workflow wf_418f5211-3d2, reviewer ngữ cảnh mới, prompt cố định, ứng viên 2b44c8a (31/10/2026) =====
+
+VERDICT: FIX
+
+Một BLOCKER: chạy lại toàn bộ vitest trên nội dung ứng viên thì có 5948 passed, 9 skipped nhưng `npm test` thoát mã 1, vì một test TS có điều kiện tranh chấp ném lỗi không bắt. Đây đúng là bước `npm test` của job CI `ts` mà r22 thêm vào. Python, ruff, biome và typecheck đều đã chạy lại và xanh. Không tìm thấy lỗi ở mã sản phẩm của A1, A2, A3.
+
+**Ảnh chụp trạng thái khi audit**
+- HEAD là dbf5d2e. Base cũng là dbf5d2e, lấy từ `DONE.md:28` và khớp `CYCLE_LOOP.md`. Index rỗng.
+- Version đang OPEN là r22 M1–M5. Ứng viên là 2b44c8a: cha dbf5d2e, 757 tệp đổi so với base. Nó khác f4d5e45 đúng 2 chỗ chỉ là chú thích/tài liệu: `docs/schema.sql:6911-6918` và `ts/CONVENTIONS.md:28,227`.
+- So hash từng tệp giữa ứng viên và cây làm việc: 755/757 trùng. Chỉ khác `DONE.md` và `CYCLE_LOOP.md` (cập nhật board).
+- Fingerprint cây làm việc là `cd83aaf2…` ở đầu gate, cuối gate và sau các gate TS, nên mã không đổi trong lúc audit.
+- `git status --short` vẫn đúng 30 dòng như lúc bắt đầu (hash sau audit là `58b248ab72e2f160`). Audit không đổi tệp nào trong repo.
+- Phần không thuộc ứng viên (luồng dọn Docker, `.agents/`, `founder/`, `lv2-market-top.png`, một hunk của `AGENTS.md`) đã được loại đúng khỏi 2b44c8a.
+
+**Gate đã chạy lại, tuần tự, sau khi kiểm không có gate nặng nào của session khác**
+- **Gate Python** `bash scripts/ci_repro.sh /d/tmp/a22c2sp <scratchpad>/aud2_full 2b44c8a shards sim`, hạn chót đặt 08:00:
+  - Chạy từ 05:04 đến 06:32. Cả 10 bước thoát mã 0.
+  - Pytest 12 lượt: 7144 passed + 7 skipped = 7151, khớp collect-only. Không có lỗi 0xC0000142.
+  - `test_r22_webhook_garden`, `test_db_backup`, `test_dr_drill`, `test_bks_audit` và `ai_worker` đều được collect, không skip.
+  - `agent_eval --deterministic` PASS. Redteam lọt 0/50.
+  - Bước PGDG bỏ qua sạch vì không có `apt-get`. Cây sạch sau pytest. Cleanup báo result=0.
+- **TS, chạy trên cây làm việc (thư mục `ts/` trùng ứng viên):**
+  - `biome ci`: thoát 0, 36 cảnh báo.
+  - `npm run typecheck`: thoát 0.
+  - `npm run db:template`: thoát 0. Lệnh này dựng lại DB mẫu `samsam_ts_tpl` trong container `samsam-ts-db` từ cùng nội dung — đó là thứ duy nhất audit ghi ra ngoài repo.
+  - **`npm test`: thoát 1.** 5948 passed, 9 skipped, kèm "Errors 1 error".
+- **Kiểm nhẹ:**
+  - `dpia_draft.py --check` báo khớp map 2026-10-30.
+  - Ruff trên các tệp Python của r22: sạch.
+  - Quét bí mật trên 757 tệp và `evidence/cycle_r22_gate`: chỉ có placeholder hoặc giá trị giả trong test (`u:p`, `s3cretPW`, `CHANGE_ME`, `postgres:postgres` của CI).
+  - `git check-ignore`: `ts/**/node_modules/` (kể cả `.vite`) và `deploy/compose/compose.env` đều bị ignore. Đúng 717 tệp chưa theo dõi thuộc M1.
+
+**Claim đã xác nhận bằng cách đọc diff thật**
+- **M2 / A1:**
+  - `scripts/db_backup.py:206-312` và `ts/.../ops_scripts/backup.ts:147-246` giống nhau về logic.
+  - `PG_BIN` luôn thắng. Các ứng viên còn lại sinh lười và chọn ứng viên đầu tiên cùng major server. Lỗi `--version` thì bỏ qua ứng viên đó. `--add-host` đứng trước tên image.
+  - Caller `db_restore_drill.py:190` và các chỗ test dùng `find_tool` để skip vẫn đúng ngữ nghĩa.
+  - Bằng chứng RED/GREEN trong `a1/` khớp lỗi CI `transaction_timeout`.
+- **M3 / A2:**
+  - Grant theo cột ở `docs/roles.sql:356-378` khớp đúng các câu SQL webhook chạy: `zalo_garden.py:246`, `:540-545`, `garden.add_log`, `scripts/garden_media.py:296-302`. Không có UPDATE/DELETE.
+  - Trigger `docs/schema.sql:6919-6946` chạy sau `plot_logs_chain_ins` (thứ tự tên). Khi từ chối, chỉ đốt một id sequence; chuỗi hash không bị ảnh hưởng.
+  - Login TS dùng riêng `svc_webhook_login`. `schema_ts.sql` đã bỏ khối vườn.
+- **M4 / A3:**
+  - `agents/bks_audit.py:565-568` và `bks-audit.ts:673-681` dùng đúng `_mask_pii`/`maskPii` mà `red_alert._mask` dùng.
+  - Rà lại grep `detail ->> '…'`: `ra_kenh` `post_id` là `channel_posts.id` kiểu int, nên không bị che.
+- **M1:** sửa test `ai_worker` là đúng (`_child_env` vẫn lọc biến DSN). Bằng chứng đột biến có trong `m1fix/`.
+
+**UNVERIFIED** (board đã khai sẵn, không kiểm được ở máy local): bước PGDG và `--add-host host-gateway` trên runner Linux, cùng toàn bộ job `ts` trên Linux, chỉ kiểm được khi push.
+
+**Findings**
+- **BLOCKER** — `ts/apps/api/src/modules/zalo/zalo.reply.test.ts:769-776`, test "zalo_seen.db đang bị tiến trình khác (messenger) giữ khóa ghi":
+  - **Lỗi:** kết nối SQLite trong Worker giữ `BEGIN IMMEDIATE` mà không đặt `busy_timeout`. Nếu `COMMIT` (dòng 776) chạy đúng lúc `SeenDb` của luồng chính đang thử lại và tạm giữ khóa SHARED, nó ném ngay `database is locked` (errcode 5).
+  - **Hậu quả:** lỗi đó thành Uncaught Exception trong Worker. Vitest báo "1 unhandled error" nên `npm test` thoát 1 dù mọi test đều pass — job CI `ts` mới sẽ đỏ ngẫu nhiên.
+  - **Tần suất:** gặp 1/1 lần chạy full của tôi. Bằng chứng M5 thì 0 lỗi, chạy riêng test đó 0/12 lỗi — nên đây là lỗi chập chờn khi máy tải nặng.
+  - **Cơ chế đã tái hiện tất định:** `node aud2/sqlite_commit_busy.mjs` ra `COMMIT lỗi: database is locked (errcode 5)`.
+  - **Cách vá:** trong mã eval của Worker, thêm `db.exec('PRAGMA busy_timeout = 5000')` trước `BEGIN IMMEDIATE`. Không tạo deadlock, vì luồng chính nhả SHARED trong lúc chờ. Sau đó chạy lại full `npm test` và kiểm mã thoát 0. Trong `ts/` chỉ có đúng một chỗ dùng mẫu này.
+- **MINOR (môi trường, không phải mã r22)** — `tests/test_safety_s01_rotation.py` bản trong ứng viên (= base) để lại 2 volume Docker ẩn danh không gắn container nào: `903067a19ab0…` và `e12b33a8e890…`, tạo lúc 06:09 trong lượt 8 của gate này. Số volume tăng từ 159 lên 161. Đây là MINOR đã biết từ r21; bản vá nằm ở luồng dọn Docker chưa commit. Tôi không xóa — user tự `docker volume rm` hai ID trên.
+- **NIT (còn từ vòng 1, chưa xử lý):**
+  - `.github/workflows/ci.yml:69,118` ghim cứng `postgresql-client-16/17`, tách khỏi major của image service và chưa có drift-guard → nên ghi someday.
+  - Bước gate `scripts/ci_repro.sh` vẫn chưa được theo dõi và không có trong ứng viên.
+
+Kết quả chạy nằm trong `C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\eb2cb09e-84ff-4778-82f3-a13c04b3511d\scratchpad\`:
+- `aud2_full\ci_repro_2b44c8a_shards_sim.txt` (cùng thư mục: `shard_01..12.txt`)
+- `aud2\vitest_full.txt`
+- `aud2\flake.txt`
+- `aud2\sqlite_commit_busy.mjs`
+
+Không đọc từng dòng 717 tệp TS — chỉ kiểm phần gắn với A1–A3/M1 và lỗi vitest. `db:template` đã ghi vào DB mẫu dùng chung của container test.
+
+
+===== Cold-check vòng 3 — workflow wf_c5a415e5-9d6, reviewer ngữ cảnh mới, prompt cố định, ứng viên ab90b20 (31/10/2026) =====
+
+VERDICT: PASS (r22, trong phạm vi M1–M5 + FIX1; vòng 3 trên ứng viên `ab90b20`)
+
+Định danh:
+- Version OPEN duy nhất là `r22-phan-a-con-lai` (DONE.md:26).
+- Base `dbf5d2e` lấy từ dòng `Base:` (DONE.md:28) và khớp ledger CYCLE_LOOP.md lượt 2/5. HEAD cũng là `dbf5d2e`.
+- Index: 0 tệp staged.
+- Ứng viên `ab90b20` (tree `9eec0edc…`, cha `dbf5d2e`) trùng byte với cây làm việc ở 18163/18163 tệp, trừ 4 tệp:
+  - DONE.md và CYCLE_LOOP.md: thêm mục FIX1 và dòng ledger sau khi dựng ứng viên.
+  - AGENTS.md và `tests/test_safety_s01_rotation.py`: thuộc luồng dọn Docker, chưa commit, ứng viên đã loại đúng.
+- 108 tệp chỉ có ở cây làm việc: `.agents/`, `founder/`, `lv2-market-top.png`, `scripts/ci_repro.sh`, `tests/test_docker_test_cleanup.py`, `evidence/**`. Đều ngoài r22.
+- Từ `ab90b20` tới `2b44c8a` chỉ khác đúng 1 tệp: `zalo.reply.test.ts` (+3 dòng `PRAGMA busy_timeout = 5000`).
+
+**Claim xác nhận bằng lệnh tôi tự chạy (tuần tự, sau khi gate E2E của session crawl xong lúc 07:35 rc=0; hạn chờ đặt trước là 09:00):**
+- **A1 RED** trên base `dbf5d2e`, chạy `ci_repro.sh dbf5d2e probe sim` với pg_restore 17.6 đầu PATH, server là container PG16: `test_db_backup` 3 failed `unrecognized configuration parameter "transaction_timeout"`, 47 passed.
+- **A1 GREEN** trên ứng viên, cùng PATH, chạy `ci_repro.sh ab90b20 probe sim` gồm 8 nhóm test (test_db_backup, dr_drill, bks_audit, red_alert, r22_webhook_garden, zalo_garden, ci_workflow, ai_worker/tests): 287 passed, 0 skipped, 10 bước exit 0.
+- **Python đầy đủ:** `ci_repro.sh ab90b20 shards sim` → EXIT 0.
+  - ruff, `apply_schema --roles` ×2, core_store, golden_store đều exit 0. Bước PGDG exit 0 vì máy không có `apt-get` nên bỏ qua.
+  - pytest 12 lượt: 7144 passed + 7 skipped = 7151 ca đã collect, 0×0xC0000142.
+  - 7 ca skipped đều do thiếu gói/model tùy chọn: psycopg2 ×2, convlog, paddleocr, fitz, av ×2.
+  - `agent_eval --deterministic` xanh; redteam 0/50 lọt.
+  - Cây kiểm thử sạch sau pytest; dấu vân tay mã đầu = mã cuối = `81e1a168…`.
+- **TS** (`ts/` của cây làm việc = ứng viên, đã kiểm 0 tệp lệch):
+  - `biome ci .` exit 0 (36 warning có sẵn); `npm run typecheck` exit 0; `npm run db:template` exit 0.
+  - `npm test`: 5948 passed + 9 skipped (194 tệp passed, 1 tệp skipped), không có dòng `Errors`/unhandled, exit 0. BLOCKER vòng 2 đã hết.
+  - Tệp bị skip là `dr-drill.docker` (cần `TS_TEST_DR_DOCKER=1`); chạy riêng: 3 passed.
+- **Đọc diff thật:**
+  - A1: `scripts/db_backup.py` (`tool_candidates`, `resolve_tool`, `--add-host`) và `backup.ts` tương đương nhau; caller `db_restore_drill` vẫn dùng `resolve_tool`.
+  - A2: `docs/roles.sql` cấp quyền theo cột khớp đúng câu SQL webhook (Python `zalo_garden`/`garden.add_log`/`garden_media.record` và TS `garden-zalo`/`garden.ts`). Trigger `webhook_garden_guard` dùng `session_user` + `p10_owner_login` (có tính cả superuser). Giới hạn 32/37 ký tự khớp luật mã NV của `_load_staff`.
+  - A3: `bks_audit.py:567`, TS `bks-audit.ts:679` so cả `fp` lẫn `_mask_pii(fp)` — đúng hàm mà `raise_alert._mask` dùng.
+  - M1: `ai_worker` test chỉ nới đúng ở biến rỗng do `_db_guard` chèn; `.gitignore` đã kiểm bằng `git check-ignore`.
+- **Quét bí mật** trên các thư mục r22 của ứng viên: DSN chỉ có giá trị giả (`u:p`, `s3cretPW`, `CHANGE_ME`, `postgres:postgres` của service CI); không có `sk-or`, khóa riêng hay AKIA.
+- `ruff` trên các tệp Python r22 sạch.
+
+**UNVERIFIED (build tự khai, cần push mới kiểm được):** bước PGDG `postgresql-client-16/17`, `--add-host host-gateway` trên docker Linux, job `ts` trên runner Linux (runner r21 là ubuntu-26.04; PGDG có hỗ trợ bản này hay không chưa kiểm). Không có claim nào nói các phần này đã pass. Ngoài ra không chạy `npm ci`: dùng `node_modules` đang có trên máy.
+
+**Findings:**
+- `tests/test_safety_s01_rotation.py:96` — `docker rm -f` thiếu `-v`, mỗi lượt full để lại 2 volume ẩn danh. Lượt của tôi tạo `a0632bf9…` và `db88147f…` lúc 09:05 (lượt 8). Tệp này không đổi trong r22, bản vá nằm ở luồng dọn Docker chưa commit. Tôi không xóa; user tự `docker volume rm`. — MINOR (môi trường, ngoài phạm vi)
+- Cây làm việc lẫn việc của luồng khác (AGENTS.md hunk Docker, `test_safety_s01_rotation.py`, `scripts/ci_repro.sh`, `.agents/`, `founder/`, `lv2-market-top.png`). Commit đóng phải stage theo danh sách như ứng viên `ab90b20` (cộng DONE/CYCLE_LOOP/evidence). — MINOR
+- `.github/workflows/ci.yml:69` và `:118` — major client 16/17 ghim tách khỏi image service (`postgres:16`, `pgvector…pg17`), chưa có drift-guard. Job `ts` có `timeout-minutes: 30` (`ci.yml:80`) trong khi vitest local mất 693 s với 1 worker, chưa đo trên runner. — NIT, nên ghi someday
+- `ts/apps/api/src/modules/mkt_koc_ugc_seo/mkt-koc.test.ts:97` — sha so với `sha256(text)` của chính TS, không còn so golden Python; build đã chấp nhận. — NIT
+
+**Trạng thái và tác dụng phụ:**
+- `git status --short` trước và sau audit giống hệt nhau (30 dòng); không sửa tệp repo nào.
+- Gate có tác dụng phụ ngoài repo:
+  - `db:template` dựng lại DB mẫu `samsam_ts_tpl` trong container `samsam-ts-db` từ schema của ứng viên.
+  - 2 volume Docker ở trên.
+  - Thư mục SP `C:/Users/hahuy/AppData/Local/Temp/c3r22*` đã được runner tự xóa; 3 container `samsam-ci-repro-*` đã dọn (result=0).
+- Evidence giữ ở `C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\eb2cb09e-84ff-4778-82f3-a13c04b3511d\scratchpad\c3_out_base_probe`, `C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\eb2cb09e-84ff-4778-82f3-a13c04b3511d\scratchpad\c3_out_cand_probe`, `C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\eb2cb09e-84ff-4778-82f3-a13c04b3511d\scratchpad\c3_out_cand_full`, `C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\eb2cb09e-84ff-4778-82f3-a13c04b3511d\scratchpad\c3_ts`.
+
+Phần không kiểm: không đọc từng dòng 717 tệp TS nhập vào; với phần này chỉ dựa vào gate + quét bí mật + rà cổng compose (bind `WG_BIND_IP`) + `ai_policy` (features rỗng). Rủi ro còn lại là các bước Linux-only của CI chỉ biết kết quả sau lần push đầu.

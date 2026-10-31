@@ -1,0 +1,748 @@
+{
+ "parse_period": [
+  {
+   "in": "2026-09",
+   "out": {
+    "ok": {
+     "label": "2026-09",
+     "kind": "month",
+     "months": [
+      {
+       "__date__": "2026-09-01"
+      }
+     ],
+     "start": {
+      "__dt__": "2026-09-01T00:00:00+07:00"
+     },
+     "end": {
+      "__dt__": "2026-10-01T00:00:00+07:00"
+     }
+    }
+   }
+  },
+  {
+   "in": "2026-Q3",
+   "out": {
+    "ok": {
+     "label": "2026-Q3",
+     "kind": "quarter",
+     "months": [
+      {
+       "__date__": "2026-07-01"
+      },
+      {
+       "__date__": "2026-08-01"
+      },
+      {
+       "__date__": "2026-09-01"
+      }
+     ],
+     "start": {
+      "__dt__": "2026-07-01T00:00:00+07:00"
+     },
+     "end": {
+      "__dt__": "2026-10-01T00:00:00+07:00"
+     }
+    }
+   }
+  },
+  {
+   "in": "2026-10",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 2026-10 ch\u01b0a \u0111\u00f3ng (h\u1ebft 2026-10-31 gi\u1edd VN)"
+   }
+  },
+  {
+   "in": "2026-Q4",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 2026-Q4 ch\u01b0a \u0111\u00f3ng (h\u1ebft 2026-12-31 gi\u1edd VN)"
+   }
+  },
+  {
+   "in": "2026-13",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  },
+  {
+   "in": "2026-Q0",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  },
+  {
+   "in": "2026-Q5",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  },
+  {
+   "in": "2026-9",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  },
+  {
+   "in": "26-09",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  },
+  {
+   "in": "2026-W41",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  },
+  {
+   "in": null,
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  },
+  {
+   "in": "2026-01",
+   "out": {
+    "ok": {
+     "label": "2026-01",
+     "kind": "month",
+     "months": [
+      {
+       "__date__": "2026-01-01"
+      }
+     ],
+     "start": {
+      "__dt__": "2026-01-01T00:00:00+07:00"
+     },
+     "end": {
+      "__dt__": "2026-02-01T00:00:00+07:00"
+     }
+    }
+   }
+  },
+  {
+   "in": "2025-Q4",
+   "out": {
+    "ok": {
+     "label": "2025-Q4",
+     "kind": "quarter",
+     "months": [
+      {
+       "__date__": "2025-10-01"
+      },
+      {
+       "__date__": "2025-11-01"
+      },
+      {
+       "__date__": "2025-12-01"
+      }
+     ],
+     "start": {
+      "__dt__": "2025-10-01T00:00:00+07:00"
+     },
+     "end": {
+      "__dt__": "2026-01-01T00:00:00+07:00"
+     }
+    }
+   }
+  },
+  {
+   "in": "0000-01",
+   "out": {
+    "error": "ValueError",
+    "msg": "year 0 is out of range"
+   }
+  },
+  {
+   "in": "2026-09 ",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  },
+  {
+   "in": "\uff12\uff10\uff12\uff16-09",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  },
+  {
+   "in": "2026-q3",
+   "out": {
+    "error": "ValueError",
+    "msg": "k\u1ef3 ph\u1ea3i d\u1ea1ng YYYY-MM ho\u1eb7c YYYY-Qn (n = 1..4)"
+   }
+  }
+ ],
+ "quarter_value": [
+  {
+   "agg": null,
+   "vals": [
+    "1",
+    "2",
+    "3"
+   ],
+   "out": [
+    null,
+    "\u2014"
+   ]
+  },
+  {
+   "agg": "sum",
+   "vals": [
+    "1",
+    null,
+    "3"
+   ],
+   "out": [
+    null,
+    "[ch\u01b0a \u0111\u1ee7 d\u1eef li\u1ec7u]"
+   ]
+  },
+  {
+   "agg": "sum",
+   "vals": [
+    "1",
+    "1",
+    "1"
+   ],
+   "out": [
+    "3",
+    null
+   ]
+  },
+  {
+   "agg": "last",
+   "vals": [
+    null,
+    null,
+    "5"
+   ],
+   "out": [
+    "5",
+    null
+   ]
+  },
+  {
+   "agg": "last",
+   "vals": [
+    "5",
+    "5",
+    null
+   ],
+   "out": [
+    null,
+    "[ch\u01b0a \u0111\u1ee7 d\u1eef li\u1ec7u]"
+   ]
+  },
+  {
+   "agg": "sum",
+   "vals": [
+    "1.5",
+    "2.25",
+    "-1"
+   ],
+   "out": [
+    "2.75",
+    null
+   ]
+  },
+  {
+   "agg": "sum",
+   "vals": [
+    "1"
+   ],
+   "out": [
+    "1",
+    null
+   ]
+  },
+  {
+   "agg": "last",
+   "vals": [
+    "7.10"
+   ],
+   "out": [
+    "7.10",
+    null
+   ]
+  }
+ ],
+ "num_tokens": [
+  {
+   "in": "Sinh l\u00fac 14/10/2026 09:00 gi\u1edd VN \u00b7 k\u1ef3 2026-09 \u00b7 2026-Q3 \u00b7 #123",
+   "out": []
+  },
+  {
+   "in": "T\u1ed5ng 1.234.567\u0111, 12,5% v\u00e0 3 l\u1ea7n.",
+   "out": [
+    "1.234.567",
+    "12,5",
+    "3"
+   ]
+  },
+  {
+   "in": "x12:30 12:30y a2026-09 2026-09-01 \u0663\u0664 \u0661\u0662:\u0663\u0660 2026-Q3b",
+   "out": [
+    "09",
+    "12",
+    "2026",
+    "3",
+    "30",
+    "\u0663\u0664"
+   ]
+  },
+  {
+   "in": "0.5. 10,, 7.",
+   "out": [
+    "0.5",
+    "10",
+    "7"
+   ]
+  },
+  {
+   "in": "| 2026-07 | 3.007.000 \u0111 | 1.209 ng\u01b0\u1eddi |",
+   "out": [
+    "1.209",
+    "3.007.000"
+   ]
+  },
+  {
+   "in": "abc",
+   "out": []
+  },
+  {
+   "in": "m\u00e3 b\u0103m ab12ab12ab12 (audit_runs #5)",
+   "out": [
+    "12"
+   ]
+  },
+  {
+   "in": "Ng\u00e0y 01/02/2026 v\u00e0 1/2/2026 v\u00e0 2026-1-1",
+   "out": [
+    "1",
+    "2",
+    "2026"
+   ]
+  }
+ ],
+ "check_grounded": [
+  {
+   "text": "Sinh l\u00fac 14/10/2026 09:00 gi\u1edd VN \u00b7 k\u1ef3 2026-09 \u00b7 2026-Q3 \u00b7 #123",
+   "facts": [
+    {
+     "text": "1.234.567\u0111",
+     "source": "x"
+    },
+    {
+     "text": "3",
+     "source": " "
+    },
+    {
+     "text": "12,5%",
+     "source": "y"
+    },
+    {
+     "text": "1.209 ng\u01b0\u1eddi",
+     "source": "z"
+    }
+   ],
+   "out": []
+  },
+  {
+   "text": "T\u1ed5ng 1.234.567\u0111, 12,5% v\u00e0 3 l\u1ea7n.",
+   "facts": [
+    {
+     "text": "1.234.567\u0111",
+     "source": "x"
+    },
+    {
+     "text": "3",
+     "source": " "
+    },
+    {
+     "text": "12,5%",
+     "source": "y"
+    },
+    {
+     "text": "1.209 ng\u01b0\u1eddi",
+     "source": "z"
+    }
+   ],
+   "out": [
+    "3"
+   ]
+  },
+  {
+   "text": "x12:30 12:30y a2026-09 2026-09-01 \u0663\u0664 \u0661\u0662:\u0663\u0660 2026-Q3b",
+   "facts": [
+    {
+     "text": "1.234.567\u0111",
+     "source": "x"
+    },
+    {
+     "text": "3",
+     "source": " "
+    },
+    {
+     "text": "12,5%",
+     "source": "y"
+    },
+    {
+     "text": "1.209 ng\u01b0\u1eddi",
+     "source": "z"
+    }
+   ],
+   "out": [
+    "09",
+    "12",
+    "2026",
+    "3",
+    "30",
+    "\u0663\u0664"
+   ]
+  },
+  {
+   "text": "0.5. 10,, 7.",
+   "facts": [
+    {
+     "text": "1.234.567\u0111",
+     "source": "x"
+    },
+    {
+     "text": "3",
+     "source": " "
+    },
+    {
+     "text": "12,5%",
+     "source": "y"
+    },
+    {
+     "text": "1.209 ng\u01b0\u1eddi",
+     "source": "z"
+    }
+   ],
+   "out": [
+    "0.5",
+    "10",
+    "7"
+   ]
+  },
+  {
+   "text": "| 2026-07 | 3.007.000 \u0111 | 1.209 ng\u01b0\u1eddi |",
+   "facts": [
+    {
+     "text": "1.234.567\u0111",
+     "source": "x"
+    },
+    {
+     "text": "3",
+     "source": " "
+    },
+    {
+     "text": "12,5%",
+     "source": "y"
+    },
+    {
+     "text": "1.209 ng\u01b0\u1eddi",
+     "source": "z"
+    }
+   ],
+   "out": [
+    "3.007.000"
+   ]
+  },
+  {
+   "text": "abc",
+   "facts": [
+    {
+     "text": "1.234.567\u0111",
+     "source": "x"
+    },
+    {
+     "text": "3",
+     "source": " "
+    },
+    {
+     "text": "12,5%",
+     "source": "y"
+    },
+    {
+     "text": "1.209 ng\u01b0\u1eddi",
+     "source": "z"
+    }
+   ],
+   "out": []
+  },
+  {
+   "text": "m\u00e3 b\u0103m ab12ab12ab12 (audit_runs #5)",
+   "facts": [
+    {
+     "text": "1.234.567\u0111",
+     "source": "x"
+    },
+    {
+     "text": "3",
+     "source": " "
+    },
+    {
+     "text": "12,5%",
+     "source": "y"
+    },
+    {
+     "text": "1.209 ng\u01b0\u1eddi",
+     "source": "z"
+    }
+   ],
+   "out": [
+    "12"
+   ]
+  },
+  {
+   "text": "Ng\u00e0y 01/02/2026 v\u00e0 1/2/2026 v\u00e0 2026-1-1",
+   "facts": [
+    {
+     "text": "1.234.567\u0111",
+     "source": "x"
+    },
+    {
+     "text": "3",
+     "source": " "
+    },
+    {
+     "text": "12,5%",
+     "source": "y"
+    },
+    {
+     "text": "1.209 ng\u01b0\u1eddi",
+     "source": "z"
+    }
+   ],
+   "out": [
+    "1",
+    "2",
+    "2026"
+   ]
+  }
+ ],
+ "render": [
+  {
+   "kind": "month",
+   "sections": [
+    [
+     "## A",
+     "",
+     "- 5 vi\u1ec7c"
+    ]
+   ],
+   "facts": [
+    {
+     "text": "5",
+     "source": "s"
+    }
+   ],
+   "sample": false,
+   "viol": [],
+   "out": {
+    "ok": "# G\u00f3i b\u00e1o c\u00e1o H\u0110TV \u2014 th\u00e1ng 2026-09\n\n**K\u1ef3:** 01/09/2026 \u2192 30/09/2026 (gi\u1edd VN) \u00b7 **Sinh l\u00fac:** 14/10/2026 09:00 gi\u1edd VN\n\nM\u1ecdi con s\u1ed1 do code \u0111i\u1ec1n t\u1eeb DB/c\u1ea5u h\u00ecnh v\u00e0 c\u00f3 ngu\u1ed3n (danh s\u00e1ch fact \u0111i k\u00e8m b\u1ea3n d\u1ef1ng); thi\u1ebfu s\u1ed1 hi\u1ec7n `[ch\u01b0a c\u00f3 d\u1eef li\u1ec7u]`, kh\u00f4ng hi\u1ec7n s\u1ed1 kh\u00f4ng. D\u00f2ng *(M\u1eaaU)* l\u00e0 s\u1ed1 li\u1ec7u m\u1eabu, kh\u00f4ng ph\u1ea3i s\u1ed1 v\u1eadn h\u00e0nh th\u1eadt.\n\n## A\n\n- 5 vi\u1ec7c\n\n---\n*B\u1ea2N NH\u00c1P \u2014 ch\u1edd TG\u0110 duy\u1ec7t r\u1ed3i tr\u00ecnh H\u0110TV; ch\u1eef k\u00fd H\u0110TV/BKS l\u00e0 external-dep. H\u1ec7 th\u1ed1ng KH\u00d4NG t\u1ef1 duy\u1ec7t, KH\u00d4NG t\u1ef1 g\u1eedi. Sinh b\u1edfi `python -m agents.hdtv_report`.*\n"
+   }
+  },
+  {
+   "kind": "quarter",
+   "sections": [
+    [
+     "## A",
+     "",
+     "- 5 vi\u1ec7c",
+     "| 2026-07 | 7 |"
+    ]
+   ],
+   "facts": [
+    {
+     "text": "5",
+     "source": "s"
+    }
+   ],
+   "sample": true,
+   "viol": [
+    "banned_word",
+    "x"
+   ],
+   "out": {
+    "error": "UngroundedNumber",
+    "msg": "s\u1ed1 kh\u00f4ng c\u00f3 ngu\u1ed3n tr\u00ean trang: 7"
+   }
+  },
+  {
+   "kind": "month",
+   "sections": [
+    [
+     "## A",
+     "",
+     "- 987654 \u0111i\u1ec3m"
+    ]
+   ],
+   "facts": [],
+   "sample": false,
+   "viol": [],
+   "out": {
+    "error": "UngroundedNumber",
+    "msg": "s\u1ed1 kh\u00f4ng c\u00f3 ngu\u1ed3n tr\u00ean trang: 987654"
+   }
+  },
+  {
+   "kind": "month",
+   "sections": [
+    [
+     "## A",
+     "- 1 2 3 4 5 6 7 8 9 10 11 12"
+    ]
+   ],
+   "facts": [],
+   "sample": false,
+   "viol": [],
+   "out": {
+    "error": "UngroundedNumber",
+    "msg": "s\u1ed1 kh\u00f4ng c\u00f3 ngu\u1ed3n tr\u00ean trang: 1, 10, 11, 12, 2, 3, 4, 5, 6, 7"
+   }
+  }
+ ],
+ "lines": [
+  {
+   "in": [
+    "- 5 vi\u1ec7c",
+    "kh\u00f4ng s\u1ed1",
+    "## Ti\u00eau \u0111\u1ec1",
+    "k\u1ef3 2026-09",
+    "14/10/2026",
+    "#12 m\u1ee5c",
+    "a1"
+   ],
+   "out": [
+    "- 5 vi\u1ec7c",
+    "kh\u00f4ng s\u1ed1",
+    "## Ti\u00eau \u0111\u1ec1",
+    "k\u1ef3 2026-09",
+    "14/10/2026",
+    "#12 m\u1ee5c",
+    "a1"
+   ],
+   "facts": [
+    {
+     "text": "- 5 vi\u1ec7c",
+     "source": "src"
+    },
+    {
+     "text": "a1",
+     "source": "src"
+    }
+   ]
+  }
+ ],
+ "load_config": {
+  "ok": {
+   "body": "{\"quarter_agg\": {\"sales.gmv_vnd\": \"sum\", \"x.y\": \"last\"}}",
+   "out": {
+    "ok": {
+     "quarter_agg": {
+      "sales.gmv_vnd": "sum",
+      "x.y": "last"
+     }
+    }
+   }
+  },
+  "avg": {
+   "body": "{\"quarter_agg\": {\"sales.gmv_vnd\": \"avg\"}}",
+   "out": {
+    "error": "ConfigError",
+    "msg": "hdtv_report.json: quarter_agg m\u1ee5c sai ('sales.gmv_vnd' ph\u1ea3i sum|last)"
+   }
+  },
+  "nodict": {
+   "body": "{\"quarter_agg\": []}",
+   "out": {
+    "error": "ConfigError",
+    "msg": "hdtv_report.json: thi\u1ebfu object quarter_agg"
+   }
+  },
+  "top_list": {
+   "body": "[1]",
+   "out": {
+    "error": "ConfigError",
+    "msg": "hdtv_report.json: thi\u1ebfu object quarter_agg"
+   }
+  },
+  "bad_key": {
+   "body": "{\"quarter_agg\": {\"Sales\": \"sum\"}}",
+   "out": {
+    "error": "ConfigError",
+    "msg": "hdtv_report.json: quarter_agg m\u1ee5c sai ('Sales' ph\u1ea3i sum|last)"
+   }
+  },
+  "bad_json": {
+   "body": "{",
+   "out": {
+    "error": "ConfigError",
+    "msg": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c hdtv_report.json: JSONDecodeError"
+   }
+  },
+  "bom": {
+   "body": "\ufeff{\"quarter_agg\": {}}",
+   "out": {
+    "error": "ConfigError",
+    "msg": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c hdtv_report.json: JSONDecodeError"
+   }
+  },
+  "empty_agg": {
+   "body": "{\"quarter_agg\": {}}",
+   "out": {
+    "ok": {
+     "quarter_agg": {}
+    }
+   }
+  },
+  "true_val": {
+   "body": "{\"quarter_agg\": {\"a.b\": true}}",
+   "out": {
+    "error": "ConfigError",
+    "msg": "hdtv_report.json: quarter_agg m\u1ee5c sai ('a.b' ph\u1ea3i sum|last)"
+   }
+  },
+  "long_key": {
+   "body": "{\"quarter_agg\": {\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\": \"sum\"}}",
+   "out": {
+    "error": "ConfigError",
+    "msg": "hdtv_report.json: quarter_agg m\u1ee5c sai ('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u2026' ph\u1ea3i sum|last)"
+   }
+  },
+  "missing": {
+   "body": null,
+   "out": {
+    "error": "ConfigError",
+    "msg": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c khong_co.json: FileNotFoundError"
+   }
+  }
+ },
+ "constants": {
+  "SECTION_HEADS": [
+   "## Ch\u1ec9 s\u1ed1 cockpit",
+   "## Ti\u1ebfn \u0111\u1ed9 & S\u1ed5 quy\u1ebft \u0111\u1ecbnh",
+   "## R\u1ee7i ro ph\u00e1p l\u00fd m\u1edf",
+   "## Chi so ng\u00e2n s\u00e1ch v\u1eadn h\u00e0nh",
+   "## P&L t\u00f3m t\u1eaft",
+   "## \u00c9p tr\u00ecnh QA (override_qa)",
+   "## Ki\u1ec3m so\u00e1t BKS"
+  ],
+  "RUNS_SQL": "select distinct on (kind) kind, id, created_at, findings, report_sha256, period_label from audit_runs where kind = any(%s) and created_at >= %s order by kind, id desc"
+ }
+}

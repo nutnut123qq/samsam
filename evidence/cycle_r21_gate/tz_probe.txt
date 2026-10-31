@@ -1,0 +1,26 @@
+# Python Windows đổi giờ địa phương theo biến TZ (CRT) — để giả lập runner UTC
+$ python -c "...datetime(2026,1,1,9).astimezone(), datetime.now()"
+2026-01-01 09:00:00+07:00 SE Asia Standard Time
+$ TZ=UTC0 python -c "..."
+2026-01-01 09:00:00+00:00 0:00:00
+
+# mã ứng dụng: lời gọi giờ địa phương naive
+$ grep -rnE "datetime\.now\(\)|date\.today\(\)|\.astimezone\(\)|time\.localtime|time\.mktime" agents pipelines ingest connectors scripts api crawler | wc -l
+0
+# test: datetime(...) naive (không tzinfo)
+tests/test_dr_drill.py:62:        dd.rpo_seconds(m, datetime(2026, 10, 12))  # noqa: DTZ001
+tests/test_freeze.py:70:        freeze.is_frozen(datetime(2026, 12, 25, 10, 0))  # noqa: DTZ001
+tests/test_freeze.py:104:        freeze.check("hotfix", datetime(2027, 1, 5, 10, 0), windows=[])  # noqa: DTZ001
+tests/test_garden.py:86:    naive = datetime(2026, 10, 9)  # noqa: DTZ001
+tests/test_garden_director.py:561:        gd._default_until(datetime(2026, 10, 12, 9, 0))  # noqa: DTZ001
+tests/test_kd_care.py:197:        kc.gui_luc(datetime(2026, 10, 14, 10, 0), w)  # noqa: DTZ001
+tests/test_mkt_calendar.py:229:        mc.to_workday(datetime(2026, 11, 12, 10), LEAD, NONE)  # noqa: DTZ001
+tests/test_mkt_director.py:112:                          datetime(2026, 10, 26), 14)  # noqa: DTZ001
+tests/test_mkt_metrics.py:62:    naive = datetime(2026, 10, 4, 12, 0)  # noqa: DTZ001 — cố ý naive
+tests/test_period.py:64:    naive = datetime(2026, 10, 1, 12, 0)  # noqa: DTZ001 — cố ý naive
+tests/test_period.py:136:    naive = datetime(2026, 10, 12, 8, 0)  # noqa: DTZ001 — cố ý naive
+tests/test_report.py:53:    naive = datetime(2026, 10, 11, 5, 30)  # noqa: DTZ001
+tests/test_rollout.py:464:        ro.business_days(datetime(2026, 10, 12),  # noqa: DTZ001 — naive
+tests/test_sales_director.py:170:                     datetime(2026, 10, 13, 9))  # noqa: DTZ001 — cố ý naive
+# schema: cột timestamp không múi giờ
+0

@@ -1,7 +1,7 @@
 # TIA — Đánh giá tác động chuyển dữ liệu cá nhân ra nước ngoài (NHÁP)
 
 > **BẢN NHÁP — chưa có giá trị pháp lý; chờ Chuyên viên Pháp chế ký, luật sư rà — agent không kết luận tuân thủ.**
-> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-14). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
+> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-30). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
 > Căn cứ: Luật BVDLCN 91/2025/QH15 (chuyển dữ liệu xuyên biên giới phải có hồ sơ đánh giá tác động) + NĐ 356/2025; khung mục theo cấu trúc NĐ 13/2023 Điều 25 — CẦN LUẬT SƯ XÁC NHẬN.
 
 ## 1. Bên chuyển dữ liệu
@@ -244,6 +244,19 @@
 | Thời hạn lưu (theo map) | Theo nháp ảnh (content_drafts/image_assets) — GAP như luồng nội dung |
 | Rủi ro tồn dư | Chưa chọn vendor/model, chưa có DPA/điều khoản bản quyền ảnh sinh (external-dep); Chỉ kiểm bằng transport giả theo schema tài liệu — chưa gọi API thật |
 | Căn cứ | Lợi ích hợp pháp (không dữ liệu cá nhân) — điều khoản bản quyền ảnh sinh CẦN Pháp chế xác nhận — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
+### DF-49 — AI Gateway bản viết lại TS — Ollama nội bộ (mặc định), Claude/Anthropic CHỈ khi data/ai_policy.json cho phép
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | Ollama nội bộ (qwen3:8b + bge-m3, mạng ai_private) — MẶC ĐỊNH; ai_worker nội bộ (OCR/STT); Anthropic api.anthropic.com (Mỹ) CHỈ khi data/ai_policy.json cho phép đúng tính năng (người phê duyệt + hạn + lớp dữ liệu) — không tự fallback từ local lên cloud |
+| Dữ liệu gửi đi (sau biện pháp) | Prompt + đầu vào embedding của từng tính năng AI (cùng dữ liệu các luồng Python DF-06/07/08/09/16/17/21/23/24/36/39) SAU `maskPii`/`maskIdentity` ở gateway; ảnh scan/ghi âm vườn gửi ai_worker nội bộ (OCR/STT, nháp STT đã che PII) |
+| Lớp | Vàng |
+| Mục đích | Sinh câu trả lời/nháp/tóm tắt + embedding BGE-M3 1024 chiều cho các tính năng AI; OCR/STT tài liệu và ghi âm |
+| Biện pháp kỹ thuật | `feature=` bắt buộc; kill switch agent/tính năng, trần chi phí, cổng rollout `tat` → GatewayBlocked (fail-closed); `maskPii` + `maskIdentity` mọi message và input embedding trước khi gửi nhà cung cấp; Cloud chỉ theo data/ai_policy.json (repo hiện: chưa tính năng nào được cloud); thiếu điều kiện → chặn, không fallback local → cloud; Ollama/ai_worker trong mạng internal, 1 request song song; drift-guard ts/apps/api/src/data-flow-map.test.ts bắt egress TS chưa khai |
+| Thời hạn lưu (theo map) | Theo luồng nguồn của từng tính năng; Ollama `OLLAMA_NO_CLOUD=1`, không lưu hội thoại; phía Anthropic (khi được phép) — điều khoản lưu CHƯA rà |
+| Rủi ro tồn dư | Chưa có DPA/điều khoản lưu với Anthropic (external-dep, chỉ cần khi bật cloud); Chất lượng tiếng Việt Qwen3 8B chưa đo trên server đích (KE_HOACH mục 5); Server đích (RTX 5060 Ti) chưa xác nhận là server vật lý của Sâm Sâm theo HĐ |
+| Căn cứ | Như luồng nguồn của từng tính năng; chuyển ra nước ngoài (Anthropic) CHƯA bật — cần đồng ý + TIA trước khi ai_policy cho phép: GAP — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
 ## 3. Luồng không thuộc TIA
 

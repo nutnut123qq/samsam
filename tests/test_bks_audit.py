@@ -784,6 +784,47 @@ def test_chain_alert_clean_tampered_dup_and_svc_job(db):
             "chuoi_bi_sua"]
 
 
+# r22 A3: fp hex có dãy giống SĐT (84 + ≥8 số) → `raise_alert` che khi lưu.
+FP_FOUND = {"code": "chuoi_bi_sua", "table": "agent_action_log", "id": 18,
+            "problem": "row_hash lệch"}
+FP_HEX = "4d5775af4d885d729cb5638f43f38b85828d0397554326314dc04ffa15f91e43"
+FP_MASKED = "4d5775af4d885d729cb5638f43f38b85828d***dc04ffa15f91e43"
+
+
+def _fixed_finding(monkeypatch):
+    monkeypatch.setattr(ba, "latest_heads", lambda conn: None)
+    monkeypatch.setattr(ba, "check_chains",
+                        lambda conn, prev: ({}, [dict(FP_FOUND)]))
+
+
+def _n_chain(db):
+    return db.execute("select count(*) from red_alerts where source_agent"
+                      " = %s", (ba.CHAIN_AGENT,)).fetchone()[0]
+
+
+def test_chain_alert_dup_when_stored_fp_masked(db, monkeypatch):
+    """fp bị che khi lưu vẫn khớp khóa chống lặp: 3 lần chạy cùng phát hiện
+    → đúng 1 cảnh báo đỏ (trước vá: mỗi lần chạy 1 cảnh báo mới)."""
+    _fixed_finding(monkeypatch)
+    c = TxConn(db)
+    rs = [ba.chain_alert(c, routing={}) for _ in range(3)]
+    stored = db.execute("select detail ->> 'fp' from red_alerts where id ="
+                        " %s", (rs[0]["alert_id"],)).fetchone()[0]
+    assert stored == FP_MASKED != FP_HEX      # tiền đề: fp bị che khi lưu
+    assert [r["dup"] for r in rs] == [False, True, True]
+    assert _n_chain(db) == 1
+
+
+def test_chain_alert_dup_against_old_masked_row(db, monkeypatch):
+    """Dòng CŨ (trước vá) đã lưu fp bị che → không mở thêm cảnh báo."""
+    _fixed_finding(monkeypatch)
+    db.execute("insert into red_alerts (source_agent, title, detail) values"
+               " (%s, 'cũ', %s)", (ba.CHAIN_AGENT, Jsonb({"fp": FP_MASKED})))
+    r = ba.chain_alert(TxConn(db), routing={})
+    assert r["dup"] and r["alert_id"] is None
+    assert _n_chain(db) == 1
+
+
 def test_chain_alert_cli_flags_exclusive():
     with pytest.raises(SystemExit) as e:
         ba.main(["--chain-alert", "--report"])

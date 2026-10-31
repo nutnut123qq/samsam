@@ -41,7 +41,7 @@ import json
 import re
 import sys
 from contextlib import suppress
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import psycopg
 
@@ -122,8 +122,11 @@ def load_kocs(path: Path | None = None) -> list[dict]:
                 k["niche"].strip()) <= 60:
             raise KocConfigError(f"kocs[{i}].niche phải 1..60 ký tự")
         cf = k["contract_file"]
-        if (not isinstance(cf, str) or not cf.strip() or Path(cf).is_absolute()
-                or ".." in Path(cf).parts):
+        # r20: luật Windows cho mọi OS — trên Linux `Path("C:/a.md")` không
+        # absolute; ổ đĩa/UNC/gốc `/`·`\` hay `..` (cả hai dấu tách) đều từ chối
+        w = PureWindowsPath(cf) if isinstance(cf, str) else None
+        if (w is None or not cf.strip() or w.drive or w.root
+                or ".." in w.parts):
             raise KocConfigError(f"kocs[{i}].contract_file phải đường dẫn "
                                  "tương đối trong repo")
         if k["contract_status"] != "NHAP_MAU":
@@ -423,6 +426,10 @@ def main(argv=None) -> int:
         channel = a.channel or koc["platform"]
         if channel != koc["platform"]:
             ap.error(f"--channel phải trùng nền tảng KOC ({koc['platform']})")
+        from pipelines import rollout
+        # r19 (r12 RB): tắt → không dựng kit/đẩy mục, cả --dry-run.
+        if why := rollout.blocked(None, "kit KOC", fid="marketing-04.1"):
+            return rollout.say_blocked(why)
     try:
         dcfg = director.load_config("marketing")
     except director.DirectorConfigError as e:

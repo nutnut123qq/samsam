@@ -28,13 +28,19 @@ env tiến trình thắng `.env`):
   `[warn]`). Khác thiết bị KHÔNG chứng minh khác máy — Bên B xác nhận.
 - `PG_BIN` (tùy chọn) — thư mục chứa `pg_dump`/`pg_restore`.
 
-Chọn công cụ Postgres (ghi vào manifest `tool`), theo thứ tự:
-(1) `PG_BIN`; (2) `pg_dump` trên PATH; (3) `C:/Program Files/PostgreSQL/
-<major>/bin` với major = major của server; (4) docker image
-`postgres:<major>-alpine` nếu đã có sẵn (KHÔNG tự `docker pull`; host
-localhost → `host.docker.internal`). Không có → exit 1. Major công cụ phải
-≥ major server. Mật khẩu/DSN KHÔNG vào argv — truyền qua env `PG*`; mọi
-subprocess có timeout + `PGCONNECT_TIMEOUT`.
+Chọn công cụ Postgres (ghi vào manifest `tool`), major = major của server:
+(1) `PG_BIN` — người vận hành chỉ định, dùng luôn (major khác server chỉ
+`[warn]`, thấp hơn server → lỗi); không có thì xét ứng viên theo thứ tự
+(2) `/usr/lib/postgresql/<major>/bin` (Debian/Ubuntu: server on-prem, runner
+CI); (3) `C:/Program Files/PostgreSQL/<major>/bin`; (4) PATH; (5) docker
+image `postgres:<major>-alpine` rồi `postgres:<major>` nếu ĐÃ có sẵn (KHÔNG
+tự `docker pull`; host localhost → `host.docker.internal` + `--add-host
+...:host-gateway` cho docker Linux). Lấy ứng viên ĐẦU TIÊN cùng major
+server; không có thì ứng viên đầu tiên major lớn hơn kèm `[warn]` (r22: CI
+r21 — pg_restore 18 trên PATH sinh `SET transaction_timeout`, server 16 từ
+chối → diễn tập fail; bản mới hơn không bảo đảm khôi phục được vào server
+cũ). Không có ứng viên ≥ server → exit 1. Mật khẩu/DSN KHÔNG vào argv —
+truyền qua env `PG*`; mọi subprocess có timeout + `PGCONNECT_TIMEOUT`.
 
 Nhất quán: mở tx `repeatable read, read only` → `pg_export_snapshot()` →
 đếm `count(*)` mọi bảng public trong CÙNG snapshot → `pg_dump -Fc
@@ -91,6 +97,7 @@ DUMP_TIMEOUT_S = 3600
 CIPHER = "openssl-aes-256-cbc-pbkdf2"
 OPENSSL_ENC = ["enc", "-aes-256-cbc", "-salt", "-pbkdf2", "-iter", "200000"]
 MAGIC = b"PGDMP"
+PG_DEB_BASE = "/usr/lib/postgresql"  # bố cục Debian/Ubuntu (apt/PGDG)
 PG_WIN_BASE = "C:/Program Files/PostgreSQL"  # bộ cài Windows chuẩn
 NAME_RE = re.compile(r"^[A-Za-z0-9_-]+_\d{8}_\d{6}_vn\.dump(\.enc)?$")
 MANIFEST_SUFFIX = ".manifest.json"
@@ -199,24 +206,35 @@ def _docker_has_image(image: str) -> bool:
     return r.returncode == 0
 
 
-def find_tool(name: str, major: int) -> tuple[str, str] | None:
-    """('native', path) | ('docker', image) | None — thứ tự xem docstring."""
+def _pg_bin_tool(name: str) -> tuple[str, str] | None:
     pg_bin = os.environ.get("PG_BIN")
     if pg_bin:
         p = Path(pg_bin) / _exe(name)
         if p.exists():
             return ("native", p.as_posix())
         print(f"[warn] PG_BIN không có {_exe(name)} — thử cách khác")
+    return None
+
+
+def tool_candidates(name: str, major: int):
+    """Ứng viên (2)–(5) theo docstring, sinh LƯỜI: docker chỉ kiểm image
+    khi các ứng viên trước không đúng major."""
+    for base in (PG_DEB_BASE, PG_WIN_BASE):
+        p = Path(base) / str(major) / "bin" / _exe(name)
+        if p.exists():
+            yield ("native", p.as_posix())
     w = shutil.which(name)
     if w:
-        return ("native", Path(w).as_posix())
-    p = Path(PG_WIN_BASE) / str(major) / "bin" / _exe(name)
-    if p.exists():
-        return ("native", p.as_posix())
-    image = f"postgres:{major}-alpine"
-    if _docker_has_image(image):
-        return ("docker", image)
-    return None
+        yield ("native", Path(w).as_posix())
+    for image in (f"postgres:{major}-alpine", f"postgres:{major}"):
+        if _docker_has_image(image):
+            yield ("docker", image)
+
+
+def find_tool(name: str, major: int) -> tuple[str, str] | None:
+    """('native', path) | ('docker', image) | None — ứng viên có sẵn ĐẦU
+    TIÊN (chưa kiểm major; test dùng để skip). Chọn thật: resolve_tool."""
+    return _pg_bin_tool(name) or next(tool_candidates(name, major), None)
 
 
 def tool_label(tool: tuple[str, str]) -> str:
@@ -228,7 +246,8 @@ def tool_argv(tool: tuple[str, str], name: str, args: list[str],
     """argv chạy công cụ; dữ liệu đi qua stdin/stdout (cả native lẫn docker).
 
     Docker: biến PG* chuyển vào container bằng `-e NAME` (không kèm giá trị
-    → mật khẩu không nằm trong argv); host local → host.docker.internal."""
+    → mật khẩu không nằm trong argv); host local → host.docker.internal
+    (docker engine Linux không tự có tên này → `--add-host` host-gateway)."""
     kind, where = tool
     if kind == "native":
         return [where, *args]
@@ -237,7 +256,8 @@ def tool_argv(tool: tuple[str, str], name: str, args: list[str],
         if var not in env:
             continue
         if var == "PGHOST" and env[var] in _LOCAL_HOSTS:
-            argv += ["-e", "PGHOST=host.docker.internal"]
+            argv += ["-e", "PGHOST=host.docker.internal",
+                     "--add-host=host.docker.internal:host-gateway"]
         else:
             argv += ["-e", var]
     return argv + [where, name, *args]
@@ -254,16 +274,41 @@ def tool_major(tool: tuple[str, str], name: str, env: dict) -> tuple[int, str]:
 
 
 def resolve_tool(name: str, server_major: int, env: dict):
-    """(tool, version_text) đã kiểm major ≥ server; lỗi → RuntimeError."""
-    tool = find_tool(name, server_major)
-    if tool is None:
+    """(tool, version_text): PG_BIN thắng; không thì ứng viên đầu tiên CÙNG
+    major server, rồi mới tới bản mới hơn + `[warn]`; lỗi → RuntimeError."""
+    tool = _pg_bin_tool(name)
+    if tool:
+        major, text = tool_major(tool, name, env)
+        if major < server_major:
+            raise RuntimeError(f"{name} major {major} < server {server_major}")
+        if major != server_major:
+            print(f"[warn] PG_BIN {name} major {major} ≠ server "
+                  f"{server_major} — dùng theo PG_BIN")
+        return tool, text
+    newer = older = None
+    for tool in tool_candidates(name, server_major):
+        try:
+            major, text = tool_major(tool, name, env)
+        except (RuntimeError, OSError, subprocess.TimeoutExpired):
+            print(f"[warn] {tool_label(tool)}: {name} --version lỗi — bỏ qua")
+            continue
+        if major == server_major:
+            return tool, text
+        if major > server_major:
+            newer = newer or (tool, text, major)
+        else:
+            older = older or major
+    if newer is None:
+        if older is not None:
+            raise RuntimeError(f"{name} major {older} < server {server_major}")
         raise RuntimeError(
-            f"không tìm thấy {name} (PG_BIN / PATH / C:/Program Files/"
-            f"PostgreSQL/{server_major}/bin / docker postgres:"
-            f"{server_major}-alpine)")
-    major, text = tool_major(tool, name, env)
-    if major < server_major:
-        raise RuntimeError(f"{name} major {major} < server {server_major}")
+            f"không tìm thấy {name} (PG_BIN / {PG_DEB_BASE}/{server_major}/bin"
+            f" / {PG_WIN_BASE}/{server_major}/bin / PATH / docker postgres:"
+            f"{server_major}-alpine|postgres:{server_major})")
+    tool, text, major = newer
+    print(f"[warn] không có {name} major {server_major} — dùng "
+          f"{tool_label(tool)} (major {major}); bản mới hơn server có thể sinh "
+          f"lệnh server không hiểu (vd SET transaction_timeout)")
     return tool, text
 
 

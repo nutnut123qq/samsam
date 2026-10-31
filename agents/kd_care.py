@@ -548,6 +548,11 @@ def main(argv=None, now: datetime | None = None) -> int:
             ap.error(str(e))
     elif args.by:
         ap.error("--by chỉ đi với --record")
+    from pipelines import rollout
+    # r19 (r12 RB): tắt → không đọc nguồn/in kế hoạch/đẩy nháp, cả --dry-run.
+    if (args.run or args.plan) and (why := rollout.blocked(
+            None, "nháp chăm sóc sau bán", fid="sales-07.2")):
+        return rollout.say_blocked(why)
     try:
         rules = load_rules()
         cfg = director.load_config(BLOCK)

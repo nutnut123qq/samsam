@@ -1,0 +1,3025 @@
+{
+ "config": [
+  {
+   "name": "repo",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   }
+  },
+  {
+   "name": "region_digit",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "X\u00e3 5, Qu\u1ea3ng Nam",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng \u0111\u01b0\u1ee3c c\u00f3 ch\u1eef s\u1ed1/k\u00fd t\u1ef1 \u0111i\u1ec1u khi\u1ec3n (ch\u1eb7n t\u1ecda \u0111\u1ed9, s\u1ed1 nh\u00e0)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_coord",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Tr\u00e0 My 15.0123",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng \u0111\u01b0\u1ee3c c\u00f3 ch\u1eef s\u1ed1/k\u00fd t\u1ef1 \u0111i\u1ec1u khi\u1ec3n (ch\u1eb7n t\u1ecda \u0111\u1ed9, s\u1ed1 nh\u00e0)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_nl",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "V\u00f9ng Ng\u1ecdc Linh",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng d\u00f9ng 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_nl_ascii",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "vung NGOC   linh",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng d\u00f9ng 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_nl_nfd",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "NGO\u0323C\u00a0LINH",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng \u0111\u01b0\u1ee3c c\u00f3 ch\u1eef s\u1ed1/k\u00fd t\u1ef1 \u0111i\u1ec1u khi\u1ec3n (ch\u1eb7n t\u1ecda \u0111\u1ed9, s\u1ed1 nh\u00e0)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_nl_dd",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "V\u00f9ng ng\u1ecdc linh x\u00e3 \u0110\u0103k",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng d\u00f9ng 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_empty",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "  ",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' 1..120 k\u00fd t\u1ef1",
+   "type": "QrError"
+  },
+  {
+   "name": "region_long",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' 1..120 k\u00fd t\u1ef1",
+   "type": "QrError"
+  },
+  {
+   "name": "region_120",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   }
+  },
+  {
+   "name": "region_120_pad",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  ",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   }
+  },
+  {
+   "name": "region_ctrl",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng\u200bNam",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng \u0111\u01b0\u1ee3c c\u00f3 ch\u1eef s\u1ed1/k\u00fd t\u1ef1 \u0111i\u1ec1u khi\u1ec3n (ch\u1eb7n t\u1ecda \u0111\u1ed9, s\u1ed1 nh\u00e0)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_tab",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng\tNam",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng \u0111\u01b0\u1ee3c c\u00f3 ch\u1eef s\u1ed1/k\u00fd t\u1ef1 \u0111i\u1ec1u khi\u1ec3n (ch\u1eb7n t\u1ecda \u0111\u1ed9, s\u1ed1 nh\u00e0)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_super",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam\u00b2",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng \u0111\u01b0\u1ee3c c\u00f3 ch\u1eef s\u1ed1/k\u00fd t\u1ef1 \u0111i\u1ec1u khi\u1ec3n (ch\u1eb7n t\u1ecda \u0111\u1ed9, s\u1ed1 nh\u00e0)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_arabic_digit",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u0663",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng \u0111\u01b0\u1ee3c c\u00f3 ch\u1eef s\u1ed1/k\u00fd t\u1ef1 \u0111i\u1ec1u khi\u1ec3n (ch\u1eb7n t\u1ecda \u0111\u1ed9, s\u1ed1 nh\u00e0)",
+   "type": "QrError"
+  },
+  {
+   "name": "region_guardrail",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam ch\u1eefa b\u1ec7nh",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' kh\u00f4ng qua guardrail",
+   "type": "QrError"
+  },
+  {
+   "name": "region_not_str",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": 5,
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'region_text' 1..120 k\u00fd t\u1ef1",
+   "type": "QrError"
+  },
+  {
+   "name": "region_ok_trim",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "  Qu\u1ea3ng Nam  ",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   }
+  },
+  {
+   "name": "pilot_alcohol",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "ruou-sam-chai-thuy-tinh-500ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: ruou-sam-chai-thuy-tinh-500ml l\u00e0 r\u01b0\u1ee3u \u2014 kh\u00f4ng th\u00ed \u0111i\u1ec3m QR",
+   "type": "QrError"
+  },
+  {
+   "name": "pilot_unknown",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "khong-co"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: SKU khong-co kh\u00f4ng c\u00f3 trong golden",
+   "type": "QrError"
+  },
+  {
+   "name": "pilot_unknown_ctrl",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "khong\ncoxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: SKU khong?coxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx kh\u00f4ng c\u00f3 trong golden",
+   "type": "QrError"
+  },
+  {
+   "name": "pilot_dup",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-1hu"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'pilot_skus' b\u1ecb tr\u00f9ng",
+   "type": "QrError"
+  },
+  {
+   "name": "pilot_empty",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'pilot_skus' ph\u1ea3i l\u00e0 list chu\u1ed7i kh\u00f4ng r\u1ed7ng",
+   "type": "QrError"
+  },
+  {
+   "name": "pilot_not_list",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": "mat-ong-sam-120ml-1hu",
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'pilot_skus' ph\u1ea3i l\u00e0 list chu\u1ed7i kh\u00f4ng r\u1ed7ng",
+   "type": "QrError"
+  },
+  {
+   "name": "pilot_int",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     5
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'pilot_skus' ph\u1ea3i l\u00e0 list chu\u1ed7i kh\u00f4ng r\u1ed7ng",
+   "type": "QrError"
+  },
+  {
+   "name": "pilot_tpbvsk",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "savina-12v"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "savina-12v"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   }
+  },
+  {
+   "name": "bad_deadline",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "27/11/2026",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'plan_b_deadline' ph\u1ea3i l\u00e0 YYYY-MM-DD",
+   "type": "QrError"
+  },
+  {
+   "name": "deadline_compact",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "20261127",
+    "public_base_url": ""
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   }
+  },
+  {
+   "name": "deadline_week",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-W48-5",
+    "public_base_url": ""
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   }
+  },
+  {
+   "name": "deadline_int",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": 20261127,
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'plan_b_deadline' ph\u1ea3i l\u00e0 YYYY-MM-DD",
+   "type": "QrError"
+  },
+  {
+   "name": "deadline_none",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": null,
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'plan_b_deadline' ph\u1ea3i l\u00e0 YYYY-MM-DD",
+   "type": "QrError"
+  },
+  {
+   "name": "deadline_feb30",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-02-30",
+    "public_base_url": ""
+   },
+   "error": "qr_config: 'plan_b_deadline' ph\u1ea3i l\u00e0 YYYY-MM-DD",
+   "type": "QrError"
+  },
+  {
+   "name": "url_http",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "http://x.vn"
+   },
+   "error": "qr_config: 'public_base_url' r\u1ed7ng ho\u1eb7c https://... kh\u00f4ng query",
+   "type": "QrError"
+  },
+  {
+   "name": "url_query",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "https://x.vn/?a=1"
+   },
+   "error": "qr_config: 'public_base_url' r\u1ed7ng ho\u1eb7c https://... kh\u00f4ng query",
+   "type": "QrError"
+  },
+  {
+   "name": "url_none",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": null
+   },
+   "error": "qr_config: 'public_base_url' ph\u1ea3i l\u00e0 chu\u1ed7i",
+   "type": "QrError"
+  },
+  {
+   "name": "url_ok_slash",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "https://qr.samsam.vn/"
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "https://qr.samsam.vn"
+   }
+  },
+  {
+   "name": "url_ok_pad",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "  https://qr.samsam.vn//  "
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "https://qr.samsam.vn"
+   }
+  },
+  {
+   "name": "url_short",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "https://"
+   },
+   "error": "qr_config: 'public_base_url' r\u1ed7ng ho\u1eb7c https://... kh\u00f4ng query",
+   "type": "QrError"
+  },
+  {
+   "name": "url_space",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "https://a b.vn"
+   },
+   "error": "qr_config: 'public_base_url' r\u1ed7ng ho\u1eb7c https://... kh\u00f4ng query",
+   "type": "QrError"
+  },
+  {
+   "name": "url_hash",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "https://a.vn#x"
+   },
+   "error": "qr_config: 'public_base_url' r\u1ed7ng ho\u1eb7c https://... kh\u00f4ng query",
+   "type": "QrError"
+  },
+  {
+   "name": "url_quote",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "https://a.vn/'x"
+   },
+   "error": "qr_config: 'public_base_url' r\u1ed7ng ho\u1eb7c https://... kh\u00f4ng query",
+   "type": "QrError"
+  },
+  {
+   "name": "url_ctrl",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "https://a.vn/\u200b"
+   },
+   "error": "qr_config: 'public_base_url' r\u1ed7ng ho\u1eb7c https://... kh\u00f4ng query",
+   "type": "QrError"
+  },
+  {
+   "name": "url_blank",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": "   "
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   }
+  },
+  {
+   "name": "status_blank",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "  ",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: thi\u1ebfu 'status'",
+   "type": "QrError"
+  },
+  {
+   "name": "status_int",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": 1,
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: thi\u1ebfu 'status'",
+   "type": "QrError"
+  },
+  {
+   "name": "status_pad",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "status": "  GI\u1ea2 \u0110\u1ecaNH  ",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "out": {
+    "status": "GI\u1ea2 \u0110\u1ecaNH",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   }
+  },
+  {
+   "name": "no_status",
+   "doc": {
+    "_doc": "v9.4 L\u00f4 + QR truy xu\u1ea5t (WP13 VT). pilot_skus: SKU th\u00ed \u0111i\u1ec3m (golden, KH\u00d4NG r\u01b0\u1ee3u). region_text: v\u00f9ng nguy\u00ean li\u1ec7u hi\u1ec3n th\u1ecb tr\u00ean trang c\u00f4ng khai \u2014 m\u1ee9c t\u1ec9nh/x\u00e3 chung, KH\u00d4NG ch\u1eef s\u1ed1/t\u1ecda \u0111\u1ed9/t\u00ean kho\u1ea3nh, KH\u00d4NG 'Ng\u1ecdc Linh' (ch\u01b0a SKU n\u00e0o c\u00f3 quy\u1ebft \u0111\u1ecbnh ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd). plan_b_deadline: m\u1ed1c ph\u01b0\u01a1ng \u00e1n B (ch\u01b0a \u0111\u1ee7 3 ch\u1eef k\u00fd \u2192 \u0111\u1ec1 xu\u1ea5t tem kh\u00f4ng QR, G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft). public_base_url: r\u1ed7ng = ch\u01b0a c\u00f3 domain c\u00f4ng khai (external-dep), ho\u1eb7c https://... kh\u00f4ng query. D\u00f9ng: python -m pipelines.qr_trace --help",
+    "pilot_skus": [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu",
+     "mat-ong-sam-300ml"
+    ],
+    "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+    "plan_b_deadline": "2026-11-27",
+    "public_base_url": ""
+   },
+   "error": "qr_config: thi\u1ebfu 'status'",
+   "type": "QrError"
+  }
+ ],
+ "signers": [
+  {
+   "name": "ok",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      "Tr\u1ea7n S\u1ea3n Xu\u1ea5t"
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "out": {
+    "gd_san_xuat": [
+     "tr\u1ea7n s\u1ea3n xu\u1ea5t"
+    ],
+    "gd_vung_trong": [
+     "l\u00ea v\u00f9ng tr\u1ed3ng"
+    ],
+    "phap_che_qa": [
+     "ph\u1ea1m ph\u00e1p ch\u1ebf"
+    ]
+   }
+  },
+  {
+   "name": "repo",
+   "doc": {
+    "_doc": "v9.4 danh s\u00e1ch ng\u01b0\u1eddi \u0111\u01b0\u1ee3c k\u00fd tem QR theo vai (G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA). T\u00ean so kh\u1edbp v\u1edbi --by sau chu\u1ea9n h\u00f3a NFC + g\u1ed9p kho\u1ea3ng tr\u1eafng + kh\u00f4ng ph\u00e2n bi\u1ec7t hoa/th\u01b0\u1eddng; 1 ng\u01b0\u1eddi kh\u00f4ng \u0111\u01b0\u1ee3c n\u1eb1m \u1edf 2 vai. Ship R\u1ed6NG: danh t\u00ednh SSO th\u1eadt ch\u01b0a c\u1ea5p (external-dep) \u2014 vai r\u1ed7ng th\u00ec l\u1ec7nh sign t\u1eeb ch\u1ed1i.",
+    "status": "external-dep \u2014 danh t\u00ednh SSO th\u1eadt ch\u01b0a c\u1ea5p",
+    "roles": {
+     "gd_san_xuat": [],
+     "gd_vung_trong": [],
+     "phap_che_qa": []
+    }
+   },
+   "out": {
+    "gd_san_xuat": [],
+    "gd_vung_trong": [],
+    "phap_che_qa": []
+   }
+  },
+  {
+   "name": "same_person_two_roles",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      "Tr\u1ea7n S\u1ea3n Xu\u1ea5t"
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf",
+      "  tra\u0302\u0300n  SA\u0309N xua\u0302\u0301t "
+     ]
+    }
+   },
+   "error": "qr_signers: 1 ng\u01b0\u1eddi kh\u00f4ng \u0111\u01b0\u1ee3c n\u1eb1m \u1edf 2 vai (gd_san_xuat v\u00e0 phap_che_qa)",
+   "type": "QrError"
+  },
+  {
+   "name": "missing_role",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      "Tr\u1ea7n S\u1ea3n Xu\u1ea5t"
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ]
+    }
+   },
+   "error": "qr_signers: 'roles' ph\u1ea3i c\u00f3 \u0111\u00fang 3 vai gd_san_xuat, gd_vung_trong, phap_che_qa",
+   "type": "QrError"
+  },
+  {
+   "name": "extra_role",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      "Tr\u1ea7n S\u1ea3n Xu\u1ea5t"
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ],
+     "tgd": []
+    }
+   },
+   "error": "qr_signers: 'roles' ph\u1ea3i c\u00f3 \u0111\u00fang 3 vai gd_san_xuat, gd_vung_trong, phap_che_qa",
+   "type": "QrError"
+  },
+  {
+   "name": "not_list",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": "Tr\u1ea7n S\u1ea3n Xu\u1ea5t",
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "error": "qr_signers: gd_san_xuat ph\u1ea3i l\u00e0 list",
+   "type": "QrError"
+  },
+  {
+   "name": "blank_name",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      "  "
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "error": "qr_signers: gd_san_xuat c\u00f3 t\u00ean kh\u00f4ng h\u1ee3p l\u1ec7",
+   "type": "QrError"
+  },
+  {
+   "name": "no_status",
+   "doc": {
+    "roles": {
+     "gd_san_xuat": [
+      "Tr\u1ea7n S\u1ea3n Xu\u1ea5t"
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "error": "qr_signers: thi\u1ebfu 'status'",
+   "type": "QrError"
+  },
+  {
+   "name": "long_name",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "error": "qr_signers: gd_san_xuat c\u00f3 t\u00ean kh\u00f4ng h\u1ee3p l\u1ec7",
+   "type": "QrError"
+  },
+  {
+   "name": "ctrl_name",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      "Tr\u1ea7n\nS\u1ea3n"
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "error": "qr_signers: gd_san_xuat c\u00f3 t\u00ean kh\u00f4ng h\u1ee3p l\u1ec7",
+   "type": "QrError"
+  },
+  {
+   "name": "int_name",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      5
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "error": "qr_signers: gd_san_xuat c\u00f3 t\u00ean kh\u00f4ng h\u1ee3p l\u1ec7",
+   "type": "QrError"
+  },
+  {
+   "name": "dup_same_role",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      "Tr\u1ea7n S\u1ea3n Xu\u1ea5t",
+      "  tra\u0302\u0300n  SA\u0309N xua\u0302\u0301t "
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "out": {
+    "gd_san_xuat": [
+     "tr\u1ea7n s\u1ea3n xu\u1ea5t"
+    ],
+    "gd_vung_trong": [
+     "l\u00ea v\u00f9ng tr\u1ed3ng"
+    ],
+    "phap_che_qa": [
+     "ph\u1ea1m ph\u00e1p ch\u1ebf"
+    ]
+   }
+  },
+  {
+   "name": "nfd_multi",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      "Tr\u1ea7n S\u1ea3n Xu\u1ea5t"
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng",
+      "\u0110\u1ed6  V\u0103n\u3000A"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "error": "qr_signers: gd_vung_trong c\u00f3 t\u00ean kh\u00f4ng h\u1ee3p l\u1ec7",
+   "type": "QrError"
+  },
+  {
+   "name": "roles_list",
+   "doc": {
+    "status": "fixture",
+    "roles": [
+     1,
+     2,
+     3
+    ]
+   },
+   "error": "qr_signers: 'roles' ph\u1ea3i c\u00f3 \u0111\u00fang 3 vai gd_san_xuat, gd_vung_trong, phap_che_qa",
+   "type": "QrError"
+  },
+  {
+   "name": "max_len",
+   "doc": {
+    "status": "fixture",
+    "roles": {
+     "gd_san_xuat": [
+      " xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx "
+     ],
+     "gd_vung_trong": [
+      "L\u00ea V\u00f9ng Tr\u1ed3ng"
+     ],
+     "phap_che_qa": [
+      "Ph\u1ea1m Ph\u00e1p Ch\u1ebf"
+     ]
+    }
+   },
+   "out": {
+    "gd_san_xuat": [
+     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    ],
+    "gd_vung_trong": [
+     "l\u00ea v\u00f9ng tr\u1ed3ng"
+    ],
+    "phap_che_qa": [
+     "ph\u1ea1m ph\u00e1p ch\u1ebf"
+    ]
+   }
+  }
+ ],
+ "norm_name": [
+  [
+   "  TR\u1ea6N   s\u1ea3n xu\u1ea5t ",
+   "tr\u1ea7n s\u1ea3n xu\u1ea5t"
+  ],
+  [
+   "Tra\u0302\u0300n Sa\u0309n Xua\u0302\u0301t",
+   "tr\u1ea7n s\u1ea3n xu\u1ea5t"
+  ],
+  [
+   "\u1e9etra\u00dfe",
+   "sstrasse"
+  ],
+  [
+   "\u01c4emal",
+   "\u01c6emal"
+  ],
+  [
+   "A\u00a0B\u2003C",
+   "a b c"
+  ],
+  [
+   "\u0130stanbul",
+   "i\u0307stanbul"
+  ],
+  [
+   "\ufb01",
+   "fi"
+  ],
+  [
+   "\u03a3\u0391\u03a3",
+   "\u03c3\u03b1\u03c3"
+  ],
+  [
+   "",
+   ""
+  ]
+ ],
+ "page": [
+  {
+   "lot": {
+    "lot_code": "LOT-MO-001",
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "mfg_date": "2026-09-15",
+    "exp_date": "2036-03-15",
+    "intake_status": "passed",
+    "source": "manual"
+   },
+   "origins": [
+    {
+     "plot_log_id": 7,
+     "harvest": "2026-09-01",
+     "media": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    },
+    {
+     "plot_log_id": 9,
+     "harvest": "2026-08-20",
+     "media": []
+    }
+   ],
+   "page": "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\n",
+   "stamp": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n",
+   "sha": "bd0874131ad2576e549bfb158e6de09b07194235c789766014430f6b421430c6",
+   "check": [],
+   "check_stamp": [],
+   "html": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</h1>\n<h2>M\u1eadt ong s\u00e2m 120ml (1 h\u0169)</h2>\n<p>L\u00f4: LOT-MO-001</p>\n<p>Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026</p>\n<p>H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036</p>\n<p>V\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)</p>\n<p>Thu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026</p>\n<p>\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh</p>\n<img src=\"../media/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg\" alt=\"\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn\">\n</body></html>\n"
+  },
+  {
+   "lot": {
+    "lot_code": "LOT-MO-001",
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "mfg_date": "2026-09-15",
+    "exp_date": "2036-03-15",
+    "intake_status": "passed",
+    "source": "sample"
+   },
+   "origins": [
+    {
+     "plot_log_id": 7,
+     "harvest": "2026-09-01",
+     "media": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    },
+    {
+     "plot_log_id": 9,
+     "harvest": "2026-08-20",
+     "media": []
+    }
+   ],
+   "page": "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\n[M\u1eaaU] d\u1eef li\u1ec7u m\u1eabu \u2014 kh\u00f4ng d\u00f9ng in tem\n",
+   "stamp": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n[M\u1eaaU] d\u1eef li\u1ec7u m\u1eabu \u2014 kh\u00f4ng d\u00f9ng in tem\n",
+   "sha": "d6793e746e169dbf0209773ce4bd146c4f050475b5ee82527212f3aa5ca71011",
+   "check": [],
+   "check_stamp": [],
+   "html": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</h1>\n<h2>M\u1eadt ong s\u00e2m 120ml (1 h\u0169)</h2>\n<p>L\u00f4: LOT-MO-001</p>\n<p>Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026</p>\n<p>H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036</p>\n<p>V\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)</p>\n<p>Thu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026</p>\n<p>\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh</p>\n<p>[M\u1eaaU] d\u1eef li\u1ec7u m\u1eabu \u2014 kh\u00f4ng d\u00f9ng in tem</p>\n<img src=\"../media/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg\" alt=\"\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn\">\n</body></html>\n"
+  },
+  {
+   "lot": {
+    "lot_code": "LOT-MO-001",
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "mfg_date": "2026-09-15",
+    "exp_date": "2036-03-15",
+    "intake_status": "passed",
+    "source": "manual"
+   },
+   "origins": [],
+   "page": "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\n",
+   "stamp": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n",
+   "sha": "2ee698c4267ad35e83b7f22e8ef831f8d69dee5c27c1a4a2102a02c641c29990",
+   "check": [],
+   "check_stamp": [],
+   "html": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</h1>\n<h2>M\u1eadt ong s\u00e2m 120ml (1 h\u0169)</h2>\n<p>L\u00f4: LOT-MO-001</p>\n<p>Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026</p>\n<p>H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036</p>\n<p>V\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)</p>\n<img src=\"../media/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg\" alt=\"\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn\">\n</body></html>\n"
+  },
+  {
+   "lot": {
+    "lot_code": "LOT-SV-1",
+    "sku_key": "savina-12v",
+    "mfg_date": "2026-09-15",
+    "exp_date": "2036-03-15",
+    "intake_status": "passed",
+    "source": "manual"
+   },
+   "origins": [
+    {
+     "plot_log_id": 7,
+     "harvest": "2026-09-01",
+     "media": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    },
+    {
+     "plot_log_id": 9,
+     "harvest": "2026-08-20",
+     "media": []
+    }
+   ],
+   "page": "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nSavina tu\u00fdp 12 vi\u00ean ng\u1eadm\nL\u00f4: LOT-SV-1\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nTh\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\n",
+   "stamp": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm\nL\u00f4: LOT-SV-1\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nTh\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\n",
+   "sha": "ca05f6acd8543d87291495a1db954b72597dd233c85ae384f400463001391ad8",
+   "check": [],
+   "check_stamp": [],
+   "html": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</h1>\n<h2>Savina tu\u00fdp 12 vi\u00ean ng\u1eadm</h2>\n<p>L\u00f4: LOT-SV-1</p>\n<p>Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026</p>\n<p>H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036</p>\n<p>V\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)</p>\n<p>Thu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026</p>\n<p>\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh</p>\n<p>Th\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.</p>\n<img src=\"../media/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg\" alt=\"\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn\">\n</body></html>\n"
+  },
+  {
+   "lot": {
+    "lot_code": "LOT-MO-001",
+    "sku_key": "savina-12v",
+    "mfg_date": "2026-09-15",
+    "exp_date": "2036-03-15",
+    "intake_status": "passed",
+    "source": "sample"
+   },
+   "origins": [
+    {
+     "plot_log_id": 1,
+     "harvest": "2025-12-31",
+     "media": [
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+     ]
+    },
+    {
+     "plot_log_id": 2,
+     "harvest": "2026-01-01",
+     "media": [
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+     ]
+    },
+    {
+     "plot_log_id": 3,
+     "harvest": "2025-12-01",
+     "media": []
+    }
+   ],
+   "page": "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nSavina tu\u00fdp 12 vi\u00ean ng\u1eadm\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 12/2025, th\u00e1ng 01/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 3 \u1ea3nh\n[M\u1eaaU] d\u1eef li\u1ec7u m\u1eabu \u2014 kh\u00f4ng d\u00f9ng in tem\nTh\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\n",
+   "stamp": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n[M\u1eaaU] d\u1eef li\u1ec7u m\u1eabu \u2014 kh\u00f4ng d\u00f9ng in tem\nTh\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\n",
+   "sha": "bfd619d232b62c51804966527e7fad65a008c8ef047d7810646530b763f20227",
+   "check": [],
+   "check_stamp": [],
+   "html": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</h1>\n<h2>Savina tu\u00fdp 12 vi\u00ean ng\u1eadm</h2>\n<p>L\u00f4: LOT-MO-001</p>\n<p>Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026</p>\n<p>H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036</p>\n<p>V\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)</p>\n<p>Thu ho\u1ea1ch: th\u00e1ng 12/2025, th\u00e1ng 01/2026</p>\n<p>\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 3 \u1ea3nh</p>\n<p>[M\u1eaaU] d\u1eef li\u1ec7u m\u1eabu \u2014 kh\u00f4ng d\u00f9ng in tem</p>\n<p>Th\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.</p>\n<img src=\"../media/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg\" alt=\"\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn\">\n</body></html>\n"
+  },
+  {
+   "lot": {
+    "lot_code": "LOT-MO-001",
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "mfg_date": "2026-01-05",
+    "exp_date": "2027-12-09",
+    "intake_status": "passed",
+    "source": "manual"
+   },
+   "origins": [
+    {
+     "plot_log_id": 1,
+     "harvest": "2025-12-31",
+     "media": [
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+     ]
+    },
+    {
+     "plot_log_id": 2,
+     "harvest": "2026-01-01",
+     "media": [
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+     ]
+    },
+    {
+     "plot_log_id": 3,
+     "harvest": "2025-12-01",
+     "media": []
+    }
+   ],
+   "page": "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 05/01/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 09/12/2027\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 12/2025, th\u00e1ng 01/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 3 \u1ea3nh\n",
+   "stamp": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 05/01/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 09/12/2027\n",
+   "sha": "c04f5808db9156e55d5f7a945d3d6ee59fed9af6f7f572060ee73e5fcee9e864",
+   "check": [],
+   "check_stamp": [],
+   "html": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</h1>\n<h2>M\u1eadt ong s\u00e2m 120ml (1 h\u0169)</h2>\n<p>L\u00f4: LOT-MO-001</p>\n<p>Ng\u00e0y s\u1ea3n xu\u1ea5t: 05/01/2026</p>\n<p>H\u1ea1n s\u1eed d\u1ee5ng: 09/12/2027</p>\n<p>V\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)</p>\n<p>Thu ho\u1ea1ch: th\u00e1ng 12/2025, th\u00e1ng 01/2026</p>\n<p>\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 3 \u1ea3nh</p>\n<img src=\"../media/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg\" alt=\"\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn\">\n</body></html>\n"
+  }
+ ],
+ "page_cfg": {
+  "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t",
+  "pilot_skus": [
+   "mat-ong-sam-120ml-1hu",
+   "savina-12v"
+  ],
+  "region_text": "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)",
+  "plan_b_deadline": "2026-11-27",
+  "public_base_url": ""
+ },
+ "check_page": [
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nGi\u00fap ch\u1eefa b\u1ec7nh\n",
+   "mat-ong-sam-120ml-1hu",
+   [
+    "claim_ngoai_cong_bo",
+    "claim_suc_khoe_tp_thuong",
+    "thieu_khuyen_cao",
+    "tu_cam"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nGi\u00fap ch\u1eefa b\u1ec7nh\n",
+   "savina-12v",
+   [
+    "claim_ngoai_cong_bo",
+    "claim_suc_khoe_tp_thuong",
+    "sku_chua_xnqc",
+    "thieu_khuyen_cao",
+    "tu_cam"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\ng\u1ecdi 0905123456\n",
+   "mat-ong-sam-120ml-1hu",
+   [
+    "pii_ca_nhan",
+    "pii"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\ng\u1ecdi 0905123456\n",
+   "savina-12v",
+   [
+    "pii_ca_nhan",
+    "thieu_khuyen_cao",
+    "pii"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nli\u00ean h\u1ec7 a@b.vn\n",
+   "mat-ong-sam-120ml-1hu",
+   [
+    "pii_ca_nhan",
+    "pii"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nli\u00ean h\u1ec7 a@b.vn\n",
+   "savina-12v",
+   [
+    "pii_ca_nhan",
+    "thieu_khuyen_cao",
+    "pii"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\n15.0123, 107.9876\n",
+   "mat-ong-sam-120ml-1hu",
+   [
+    "toa_do"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\n15.0123, 107.9876\n",
+   "savina-12v",
+   [
+    "thieu_khuyen_cao",
+    "toa_do"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\ns\u00e2m Ng\u1ecdc Linh\n",
+   "mat-ong-sam-120ml-1hu",
+   [
+    "ngoc_linh_chua_xac_nhan"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\ns\u00e2m Ng\u1ecdc Linh\n",
+   "savina-12v",
+   [
+    "ngoc_linh_chua_xac_nhan",
+    "thieu_khuyen_cao"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\ngi\u00e1 1.500.000\u0111\n",
+   "mat-ong-sam-120ml-1hu",
+   []
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\ngi\u00e1 1.500.000\u0111\n",
+   "savina-12v",
+   [
+    "thieu_khuyen_cao"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nto\u1ea1 \u0111\u1ed9 15,01234\n",
+   "mat-ong-sam-120ml-1hu",
+   [
+    "toa_do"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nto\u1ea1 \u0111\u1ed9 15,01234\n",
+   "savina-12v",
+   [
+    "thieu_khuyen_cao",
+    "toa_do"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\n\u0111i\u1ec1u tr\u1ecb\n",
+   "mat-ong-sam-120ml-1hu",
+   [
+    "tu_cam"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\n\u0111i\u1ec1u tr\u1ecb\n",
+   "savina-12v",
+   [
+    "thieu_khuyen_cao",
+    "tu_cam"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\n\n",
+   "mat-ong-sam-120ml-1hu",
+   []
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\n\n",
+   "savina-12v",
+   [
+    "thieu_khuyen_cao"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nSavina\n",
+   "mat-ong-sam-120ml-1hu",
+   [
+    "thieu_khuyen_cao"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nSavina\n",
+   "savina-12v",
+   [
+    "thieu_khuyen_cao"
+   ]
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nmua t\u1ea1i shopee\n",
+   "mat-ong-sam-120ml-1hu",
+   []
+  ],
+  [
+   "Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m\nM\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nL\u00f4: LOT-MO-001\nNg\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\nH\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\nV\u00f9ng nguy\u00ean li\u1ec7u: Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng (m\u1ee9c t\u1ec9nh)\nThu ho\u1ea1ch: th\u00e1ng 08/2026, th\u00e1ng 09/2026\n\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn: 1 \u1ea3nh\nmua t\u1ea1i shopee\n",
+   "savina-12v",
+   [
+    "thieu_khuyen_cao"
+   ]
+  ],
+  [
+   "",
+   "mat-ong-sam-120ml-1hu",
+   []
+  ]
+ ],
+ "html": [
+  {
+   "text": "Ti\u00eau \u0111\u1ec1\nSP <script>alert(1)</script>\nL\u00f4: X & Y\n",
+   "media": [
+    [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+     "jpg"
+    ],
+    [
+     "../x",
+     "jpg"
+    ],
+    [
+     "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+     "exe"
+    ],
+    [
+     "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+     "png"
+    ],
+    [
+     "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+     "png"
+    ]
+   ],
+   "html": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Ti\u00eau \u0111\u1ec1</h1>\n<h2>SP &lt;script&gt;alert(1)&lt;/script&gt;</h2>\n<p>L\u00f4: X &amp; Y</p>\n<img src=\"../media/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.jpg\" alt=\"\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn\">\n<img src=\"../media/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.png\" alt=\"\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn\">\n</body></html>\n"
+  },
+  {
+   "text": "A\nB\n",
+   "media": [],
+   "html": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>A</h1>\n<h2>B</h2>\n</body></html>\n"
+  },
+  {
+   "text": "M\u1ed9t\nHai\nBa \"q\" 'x'\n\nN\u0103m\n",
+   "media": [
+    [
+     "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+     "png"
+    ]
+   ],
+   "html": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>M\u1ed9t</h1>\n<h2>Hai</h2>\n<p>Ba &quot;q&quot; &#x27;x&#x27;</p>\n<p></p>\n<p>N\u0103m</p>\n<img src=\"../media/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.png\" alt=\"\u1ea2nh t\u01b0 li\u1ec7u v\u01b0\u1eddn\">\n</body></html>\n"
+  }
+ ],
+ "revoked": [
+  [
+   "2026-12-01",
+   "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</h1>\n<p>M\u00e3 truy xu\u1ea5t n\u00e0y \u0111\u00e3 thu h\u1ed3i.</p>\n<p>Ng\u00e0y thu h\u1ed3i: 01/12/2026</p>\n</body></html>\n"
+  ],
+  [
+   "2027-01-09",
+   "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</h1>\n<p>M\u00e3 truy xu\u1ea5t n\u00e0y \u0111\u00e3 thu h\u1ed3i.</p>\n<p>Ng\u00e0y thu h\u1ed3i: 09/01/2027</p>\n</body></html>\n"
+  ]
+ ],
+ "paused": "<!doctype html>\n<html lang=\"vi\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\"><title>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</title><style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1rem;line-height:1.5;color:#222;background:#fff}h1{font-size:1.3rem}h2{font-size:1.1rem}img{max-width:100%;height:auto;margin:.5rem 0}</style></head><body>\n<h1>Truy xu\u1ea5t ngu\u1ed3n g\u1ed1c s\u1ea3n ph\u1ea9m</h1>\n<p>Trang truy xu\u1ea5t c\u1ee7a m\u00e3 n\u00e0y \u0111ang t\u1ea1m ng\u01b0ng.</p>\n</body></html>\n",
+ "has_metadata": [
+  {
+   "name": "jpg_clean",
+   "b64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAgABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDz+iiivx8/l8KKKKAP/9k=",
+   "ext": "jpg",
+   "out": false
+  },
+  {
+   "name": "jpg_raw",
+   "b64": "/9j/4QC7aHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIj48cmRmOlJERj48cmRmOkRlc2NyaXB0aW9uIHhtbG5zOmV4aWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vZXhpZi8xLjAvIiBleGlmOkdQU0xhdGl0dWRlPSIxNSw0LjYyTiIvPjwvcmRmOlJERj48L3g6eG1wbWV0YT7/4AAQSkZJRgABAQAAAQABAAD/4QDqRXhpZgAATU0AKgAAAAgABQEPAAIAAAAGAAAASgEQAAIAAAAGAAAAUAESAAMAAAABAAYAAIdpAAQAAAABAAAAVoglAAQAAAABAAAAfAAAAABDYW5vbgBFT1MtUgAAAZADAAIAAAAUAAAAaAAAAAAyMDI2OjEwOjAxIDA4OjAwOjAwAAAEAAEAAgAAAAJOAAAAAAIABQAAAAMAAACyAAMAAgAAAAJFAAAAAAQABQAAAAMAAADKAAAAAAAAAA8AAAABAAAABAAAAAEAAA6RAAAAZAAAAGwAAAABAAAAAQAAAAEAABdZAAAAZP/bAEMACAYGBwYFCAcHBwkJCAoMFA0MCwsMGRITDxQdGh8eHRocHCAkLicgIiwjHBwoNyksMDE0NDQfJzk9ODI8LjM0Mv/bAEMBCQkJDAsMGA0NGDIhHCEyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMv/AABEIABAAIAMBIgACEQEDEQH/xAAfAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgv/xAC1EAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+fr/xAAfAQADAQEBAQEBAQEBAAAAAAAAAQIDBAUGBwgJCgv/xAC1EQACAQIEBAMEBwUEBAABAncAAQIDEQQFITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2gAMAwEAAhEDEQA/AMeiiivnz4oKKKKAP//Z",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "png_clean",
+   "b64": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFUlEQVR4nGNkZGKuYMADmPBJDh8FAIlKAI4FI6M3AAAAAElFTkSuQmCC",
+   "ext": "png",
+   "out": false
+  },
+  {
+   "name": "png_raw",
+   "b64": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGnRFWHRDb21tZW50AEdQUyAxNS4wNzcgMTA4LjAzM/mN8wgAAACyaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIj48cmRmOlJERj48cmRmOkRlc2NyaXB0aW9uIHhtbG5zOmV4aWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vZXhpZi8xLjAvIiBleGlmOkdQU0xhdGl0dWRlPSIxNSw0LjYyTiIvPjwvcmRmOlJERj48L3g6eG1wbWV0YT6Yg6dGAAAA4mVYSWZNTQAqAAAACAAFAQ8AAgAAAAYAAABKARAAAgAAAAYAAABQARIAAwAAAAEABgAAh2kABAAAAAEAAABWiCUABAAAAAEAAAB8AAAAAENhbm9uAEVPUy1SAAABkAMAAgAAABQAAABoAAAAADIwMjY6MTA6MDEgMDg6MDA6MDAAAAQAAQACAAAAAk4AAAAAAgAFAAAAAwAAALIAAwACAAAAAkUAAAAABAAFAAAAAwAAAMoAAAAAAAAADwAAAAEAAAAEAAAAAQAADpEAAABkAAAAbAAAAAEAAAABAAAAAQAAF1kAAABkpMQFvgAAABVJREFUeJxjZGRirmDAA5jwSQ4fBQCJSgCOBSOjNwAAAABJRU5ErkJggg==",
+   "ext": "png",
+   "out": true
+  },
+  {
+   "name": "junk",
+   "b64": "bm90IGFuIGltYWdl",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "gif_ext",
+   "b64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAgABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDz+iiivx8/l8KKKKAP/9k=",
+   "ext": "gif",
+   "out": true
+  },
+  {
+   "name": "jpg_com",
+   "b64": "/9j//gAFYWJj/+AAEEpGSUYAAQEAAAEAAQAA/9sAQwADAgIDAgIDAwMDBAMDBAUIBQUEBAUKBwcGCAwKDAwLCgsLDQ4SEA0OEQ4LCxAWEBETFBUVFQwPFxgWFBgSFBUU/9sAQwEDBAQFBAUJBQUJFA0LDRQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU/8AAEQgAIAAQAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8A8/ooor8fP5fCiiigD//Z",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "jpg_app1_before_eoi",
+   "b64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAgABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDz+iiivx8/l8KKKKAP/+EA6kV4aWYAAE1NACoAAAAIAAUBDwACAAAABgAAAEoBEAACAAAABgAAAFABEgADAAAAAQAGAACHaQAEAAAAAQAAAFaIJQAEAAAAAQAAAHwAAAAAQ2Fub24ARU9TLVIAAAGQAwACAAAAFAAAAGgAAAAAMjAyNjoxMDowMSAwODowMDowMAAABAABAAIAAAACTgAAAAACAAUAAAADAAAAsgADAAIAAAACRQAAAAAEAAUAAAADAAAAygAAAAAAAAAPAAAAAQAAAAQAAAABAAAOkQAAAGQAAABsAAAAAQAAAAEAAAABAAAXWQAAAGT/2Q==",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "jpg_app1_after_eoi",
+   "b64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAgABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDz+iiivx8/l8KKKKAP/9n/4QDqRXhpZgAATU0AKgAAAAgABQEPAAIAAAAGAAAASgEQAAIAAAAGAAAAUAESAAMAAAABAAYAAIdpAAQAAAABAAAAVoglAAQAAAABAAAAfAAAAABDYW5vbgBFT1MtUgAAAZADAAIAAAAUAAAAaAAAAAAyMDI2OjEwOjAxIDA4OjAwOjAwAAAEAAEAAgAAAAJOAAAAAAIABQAAAAMAAACyAAMAAgAAAAJFAAAAAAQABQAAAAMAAADKAAAAAAAAAA8AAAABAAAABAAAAAEAAA6RAAAAZAAAAGwAAAABAAAAAQAAAAEAABdZAAAAZA==",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "jpg_xmp_before_eoi",
+   "b64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAgABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDz+iiivx8/l8KKKKAP/+EAFG5zLmFkb2JlLmNvbS94YXAvMS4w/9k=",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "jpg_trailing",
+   "b64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAgABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDz+iiivx8/l8KKKKAP/9kAAAAAAAAAAA==",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "png_app1",
+   "b64": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFUlEQVR4nGNkZGKuYMADmPBJDh8FAIlKAI4FI6M3AAAAAElFTkSuQmCC/+EA6kV4aWYAAE1NACoAAAAIAAUBDwACAAAABgAAAEoBEAACAAAABgAAAFABEgADAAAAAQAGAACHaQAEAAAAAQAAAFaIJQAEAAAAAQAAAHwAAAAAQ2Fub24ARU9TLVIAAAGQAwACAAAAFAAAAGgAAAAAMjAyNjoxMDowMSAwODowMDowMAAABAABAAIAAAACTgAAAAACAAUAAAADAAAAsgADAAIAAAACRQAAAAAEAAUAAAADAAAAygAAAAAAAAAPAAAAAQAAAAQAAAABAAAOkQAAAGQAAABsAAAAAQAAAAEAAAABAAAXWQAAAGQ=",
+   "ext": "png",
+   "out": true
+  },
+  {
+   "name": "png_trailing",
+   "b64": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFUlEQVR4nGNkZGKuYMADmPBJDh8FAIlKAI4FI6M3AAAAAElFTkSuQmCCAAAAAAAAAAA=",
+   "ext": "png",
+   "out": true
+  },
+  {
+   "name": "empty",
+   "b64": "",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "empty_png",
+   "b64": "",
+   "ext": "png",
+   "out": true
+  },
+  {
+   "name": "soi_only",
+   "b64": "/9g=",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "soi_eoi",
+   "b64": "/9j/2Q==",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "soi_rst",
+   "b64": "/9j/0P/Z",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "soi_app0_short",
+   "b64": "/9j/4AAQSkZJRg==",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "soi_app2",
+   "b64": "/9j/4gAEYWL/2Q==",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "soi_app1",
+   "b64": "/9j/4QAEYWL/2Q==",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "soi_bad_marker",
+   "b64": "/9gA4AAEYWL/2Q==",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "soi_tem",
+   "b64": "/9j/Af/Z",
+   "ext": "jpg",
+   "out": true
+  },
+  {
+   "name": "png_sig_only",
+   "b64": "iVBORw0KGgo=",
+   "ext": "png",
+   "out": true
+  },
+  {
+   "name": "png_iend",
+   "b64": "iVBORw0KGgoAAAAASUVORK5CYII=",
+   "ext": "png",
+   "out": false
+  },
+  {
+   "name": "png_iend_extra",
+   "b64": "iVBORw0KGgoAAAAASUVORK5CYIIA",
+   "ext": "png",
+   "out": true
+  },
+  {
+   "name": "png_text",
+   "b64": "iVBORw0KGgoAAAABdEVYdGEAAAAAAAAAAElFTkSuQmCC",
+   "ext": "png",
+   "out": true
+  },
+  {
+   "name": "png_big_len",
+   "b64": "iVBORw0KGgr/////SUhEUg==",
+   "ext": "png",
+   "out": true
+  },
+  {
+   "name": "jpg_clean2",
+   "b64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAyADIDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDz+iiivx8/l8KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//2Q==",
+   "ext": "jpg",
+   "out": false
+  }
+ ],
+ "planb": [
+  {
+   "lots": [
+    {
+     "lot_code": "MAU-MO-A",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "pending",
+     "source": "sample",
+     "n_origins": 0,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-B",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-C",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": true
+    },
+    {
+     "lot_code": "LOT-MO-0",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "failed",
+     "source": "manual",
+     "n_origins": 2,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-SV-1",
+     "sku_key": "savina-12v",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-XX-1",
+     "sku_key": "khong-co-golden",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 0,
+     "issued": false
+    }
+   ],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-11-26",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 26/11/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\nM\u1ed1c ph\u01b0\u01a1ng \u00e1n B 27/11/2026: c\u00f2n 1 ng\u00e0y \u2014 ch\u01b0a \u0111\u1ec1 xu\u1ea5t\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- l\u00f4 LOT-MO-C (mat-ong-sam-120ml-1hu)\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- l\u00f4 LOT-MO-0 \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 LOT-MO-B \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ch\u1eef k\u00fd vai G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 LOT-SV-1 \u2014 Savina tu\u00fdp 12 vi\u00ean ng\u1eadm: c\u00f2n thi\u1ebfu kh\u00f4ng (ch\u1edd ph\u00e1t h\u00e0nh)\n- l\u00f4 LOT-XX-1 \u2014 khong-co-golden: c\u00f2n thi\u1ebfu ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 MAU-MO-A [M\u1eaaU] \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n"
+  },
+  {
+   "lots": [
+    {
+     "lot_code": "MAU-MO-A",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "pending",
+     "source": "sample",
+     "n_origins": 0,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-B",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-0",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "failed",
+     "source": "manual",
+     "n_origins": 2,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-SV-1",
+     "sku_key": "savina-12v",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-XX-1",
+     "sku_key": "khong-co-golden",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 0,
+     "issued": false
+    }
+   ],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-11-26",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 26/11/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\nM\u1ed1c ph\u01b0\u01a1ng \u00e1n B 27/11/2026: c\u00f2n 1 ng\u00e0y \u2014 ch\u01b0a \u0111\u1ec1 xu\u1ea5t\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- kh\u00f4ng c\u00f3\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- l\u00f4 LOT-MO-0 \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 LOT-MO-B \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ch\u1eef k\u00fd vai G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 LOT-SV-1 \u2014 Savina tu\u00fdp 12 vi\u00ean ng\u1eadm: c\u00f2n thi\u1ebfu kh\u00f4ng (ch\u1edd ph\u00e1t h\u00e0nh)\n- l\u00f4 LOT-XX-1 \u2014 khong-co-golden: c\u00f2n thi\u1ebfu ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 MAU-MO-A [M\u1eaaU] \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n"
+  },
+  {
+   "lots": [],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-11-26",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 26/11/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\nM\u1ed1c ph\u01b0\u01a1ng \u00e1n B 27/11/2026: c\u00f2n 1 ng\u00e0y \u2014 ch\u01b0a \u0111\u1ec1 xu\u1ea5t\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- kh\u00f4ng c\u00f3\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- kh\u00f4ng c\u00f3\n"
+  },
+  {
+   "lots": [
+    {
+     "lot_code": "MAU-MO-A",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "pending",
+     "source": "sample",
+     "n_origins": 0,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-B",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-C",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": true
+    },
+    {
+     "lot_code": "LOT-MO-0",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "failed",
+     "source": "manual",
+     "n_origins": 2,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-SV-1",
+     "sku_key": "savina-12v",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-XX-1",
+     "sku_key": "khong-co-golden",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 0,
+     "issued": false
+    }
+   ],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-11-27",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 27/11/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\n\u0110\u1ec0 XU\u1ea4T ph\u01b0\u01a1ng \u00e1n B (m\u1ed1c 27/11/2026) \u2014 G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft, b\u00e1o Sales + H\u1ea1 t\u1ea7ng; agent KH\u00d4NG t\u1ef1 \u0111\u1ed5i tem\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- l\u00f4 LOT-MO-C (mat-ong-sam-120ml-1hu)\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- l\u00f4 LOT-MO-0 \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n in tem\n- l\u00f4 LOT-MO-B \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ch\u1eef k\u00fd vai G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: OK):\n      M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\n      L\u00f4: LOT-MO-B\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n- l\u00f4 LOT-SV-1 \u2014 Savina tu\u00fdp 12 vi\u00ean ng\u1eadm: c\u00f2n thi\u1ebfu kh\u00f4ng (ch\u1edd ph\u00e1t h\u00e0nh)\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: OK):\n      Savina tu\u00fdp 12 vi\u00ean ng\u1eadm\n      L\u00f4: LOT-SV-1\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n      Th\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\n- l\u00f4 LOT-XX-1 \u2014 khong-co-golden: c\u00f2n thi\u1ebfu ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: FAIL config):\n      khong-co-golden\n      L\u00f4: LOT-XX-1\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n- l\u00f4 MAU-MO-A [M\u1eaaU] \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n in tem\n"
+  },
+  {
+   "lots": [
+    {
+     "lot_code": "MAU-MO-A",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "pending",
+     "source": "sample",
+     "n_origins": 0,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-B",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-0",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "failed",
+     "source": "manual",
+     "n_origins": 2,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-SV-1",
+     "sku_key": "savina-12v",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-XX-1",
+     "sku_key": "khong-co-golden",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 0,
+     "issued": false
+    }
+   ],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-11-27",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 27/11/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\n\u0110\u1ec0 XU\u1ea4T ph\u01b0\u01a1ng \u00e1n B (m\u1ed1c 27/11/2026) \u2014 G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft, b\u00e1o Sales + H\u1ea1 t\u1ea7ng; agent KH\u00d4NG t\u1ef1 \u0111\u1ed5i tem\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- kh\u00f4ng c\u00f3\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- l\u00f4 LOT-MO-0 \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n in tem\n- l\u00f4 LOT-MO-B \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ch\u1eef k\u00fd vai G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: OK):\n      M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\n      L\u00f4: LOT-MO-B\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n- l\u00f4 LOT-SV-1 \u2014 Savina tu\u00fdp 12 vi\u00ean ng\u1eadm: c\u00f2n thi\u1ebfu kh\u00f4ng (ch\u1edd ph\u00e1t h\u00e0nh)\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: OK):\n      Savina tu\u00fdp 12 vi\u00ean ng\u1eadm\n      L\u00f4: LOT-SV-1\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n      Th\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\n- l\u00f4 LOT-XX-1 \u2014 khong-co-golden: c\u00f2n thi\u1ebfu ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: FAIL config):\n      khong-co-golden\n      L\u00f4: LOT-XX-1\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n- l\u00f4 MAU-MO-A [M\u1eaaU] \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n in tem\n"
+  },
+  {
+   "lots": [],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-11-27",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 27/11/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\n\u0110\u1ec0 XU\u1ea4T ph\u01b0\u01a1ng \u00e1n B (m\u1ed1c 27/11/2026) \u2014 G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft, b\u00e1o Sales + H\u1ea1 t\u1ea7ng; agent KH\u00d4NG t\u1ef1 \u0111\u1ed5i tem\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- kh\u00f4ng c\u00f3\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- kh\u00f4ng c\u00f3\n"
+  },
+  {
+   "lots": [
+    {
+     "lot_code": "MAU-MO-A",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "pending",
+     "source": "sample",
+     "n_origins": 0,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-B",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-C",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": true
+    },
+    {
+     "lot_code": "LOT-MO-0",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "failed",
+     "source": "manual",
+     "n_origins": 2,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-SV-1",
+     "sku_key": "savina-12v",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-XX-1",
+     "sku_key": "khong-co-golden",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 0,
+     "issued": false
+    }
+   ],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-11-28",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 28/11/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\n\u0110\u1ec0 XU\u1ea4T ph\u01b0\u01a1ng \u00e1n B (m\u1ed1c 27/11/2026) \u2014 G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft, b\u00e1o Sales + H\u1ea1 t\u1ea7ng; agent KH\u00d4NG t\u1ef1 \u0111\u1ed5i tem\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- l\u00f4 LOT-MO-C (mat-ong-sam-120ml-1hu)\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- l\u00f4 LOT-MO-0 \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n in tem\n- l\u00f4 LOT-MO-B \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ch\u1eef k\u00fd vai G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: OK):\n      M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\n      L\u00f4: LOT-MO-B\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n- l\u00f4 LOT-SV-1 \u2014 Savina tu\u00fdp 12 vi\u00ean ng\u1eadm: c\u00f2n thi\u1ebfu kh\u00f4ng (ch\u1edd ph\u00e1t h\u00e0nh)\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: OK):\n      Savina tu\u00fdp 12 vi\u00ean ng\u1eadm\n      L\u00f4: LOT-SV-1\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n      Th\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\n- l\u00f4 LOT-XX-1 \u2014 khong-co-golden: c\u00f2n thi\u1ebfu ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: FAIL config):\n      khong-co-golden\n      L\u00f4: LOT-XX-1\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n- l\u00f4 MAU-MO-A [M\u1eaaU] \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n in tem\n"
+  },
+  {
+   "lots": [
+    {
+     "lot_code": "MAU-MO-A",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "pending",
+     "source": "sample",
+     "n_origins": 0,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-B",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-0",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "failed",
+     "source": "manual",
+     "n_origins": 2,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-SV-1",
+     "sku_key": "savina-12v",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-XX-1",
+     "sku_key": "khong-co-golden",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 0,
+     "issued": false
+    }
+   ],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-11-28",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 28/11/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\n\u0110\u1ec0 XU\u1ea4T ph\u01b0\u01a1ng \u00e1n B (m\u1ed1c 27/11/2026) \u2014 G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft, b\u00e1o Sales + H\u1ea1 t\u1ea7ng; agent KH\u00d4NG t\u1ef1 \u0111\u1ed5i tem\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- kh\u00f4ng c\u00f3\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- l\u00f4 LOT-MO-0 \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n in tem\n- l\u00f4 LOT-MO-B \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ch\u1eef k\u00fd vai G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: OK):\n      M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\n      L\u00f4: LOT-MO-B\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n- l\u00f4 LOT-SV-1 \u2014 Savina tu\u00fdp 12 vi\u00ean ng\u1eadm: c\u00f2n thi\u1ebfu kh\u00f4ng (ch\u1edd ph\u00e1t h\u00e0nh)\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: OK):\n      Savina tu\u00fdp 12 vi\u00ean ng\u1eadm\n      L\u00f4: LOT-SV-1\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n      Th\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\n- l\u00f4 LOT-XX-1 \u2014 khong-co-golden: c\u00f2n thi\u1ebfu ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    L\u1eddi v\u0103n tem KH\u00d4NG QR (guardrail: FAIL config):\n      khong-co-golden\n      L\u00f4: LOT-XX-1\n      Ng\u00e0y s\u1ea3n xu\u1ea5t: 15/09/2026\n      H\u1ea1n s\u1eed d\u1ee5ng: 15/03/2036\n- l\u00f4 MAU-MO-A [M\u1eaaU] \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n    ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n in tem\n"
+  },
+  {
+   "lots": [],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-11-28",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 28/11/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\n\u0110\u1ec0 XU\u1ea4T ph\u01b0\u01a1ng \u00e1n B (m\u1ed1c 27/11/2026) \u2014 G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft, b\u00e1o Sales + H\u1ea1 t\u1ea7ng; agent KH\u00d4NG t\u1ef1 \u0111\u1ed5i tem\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- kh\u00f4ng c\u00f3\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- kh\u00f4ng c\u00f3\n"
+  },
+  {
+   "lots": [
+    {
+     "lot_code": "MAU-MO-A",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "pending",
+     "source": "sample",
+     "n_origins": 0,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-B",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-C",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": true
+    },
+    {
+     "lot_code": "LOT-MO-0",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "failed",
+     "source": "manual",
+     "n_origins": 2,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-SV-1",
+     "sku_key": "savina-12v",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-XX-1",
+     "sku_key": "khong-co-golden",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 0,
+     "issued": false
+    }
+   ],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-01-01",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 01/01/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\nM\u1ed1c ph\u01b0\u01a1ng \u00e1n B 27/11/2026: c\u00f2n 330 ng\u00e0y \u2014 ch\u01b0a \u0111\u1ec1 xu\u1ea5t\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- l\u00f4 LOT-MO-C (mat-ong-sam-120ml-1hu)\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- l\u00f4 LOT-MO-0 \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 LOT-MO-B \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ch\u1eef k\u00fd vai G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 LOT-SV-1 \u2014 Savina tu\u00fdp 12 vi\u00ean ng\u1eadm: c\u00f2n thi\u1ebfu kh\u00f4ng (ch\u1edd ph\u00e1t h\u00e0nh)\n- l\u00f4 LOT-XX-1 \u2014 khong-co-golden: c\u00f2n thi\u1ebfu ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 MAU-MO-A [M\u1eaaU] \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n"
+  },
+  {
+   "lots": [
+    {
+     "lot_code": "MAU-MO-A",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "pending",
+     "source": "sample",
+     "n_origins": 0,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-B",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-MO-0",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "failed",
+     "source": "manual",
+     "n_origins": 2,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-SV-1",
+     "sku_key": "savina-12v",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 1,
+     "issued": false
+    },
+    {
+     "lot_code": "LOT-XX-1",
+     "sku_key": "khong-co-golden",
+     "mfg_date": "2026-09-15",
+     "exp_date": "2036-03-15",
+     "intake_status": "passed",
+     "source": "manual",
+     "n_origins": 0,
+     "issued": false
+    }
+   ],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-01-01",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 01/01/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\nM\u1ed1c ph\u01b0\u01a1ng \u00e1n B 27/11/2026: c\u00f2n 330 ng\u00e0y \u2014 ch\u01b0a \u0111\u1ec1 xu\u1ea5t\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- kh\u00f4ng c\u00f3\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- l\u00f4 LOT-MO-0 \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 LOT-MO-B \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ch\u1eef k\u00fd vai G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 LOT-SV-1 \u2014 Savina tu\u00fdp 12 vi\u00ean ng\u1eadm: c\u00f2n thi\u1ebfu kh\u00f4ng (ch\u1edd ph\u00e1t h\u00e0nh)\n- l\u00f4 LOT-XX-1 \u2014 khong-co-golden: c\u00f2n thi\u1ebfu ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n- l\u00f4 MAU-MO-A [M\u1eaaU] \u2014 M\u1eadt ong s\u00e2m 120ml (1 h\u0169): c\u00f2n thi\u1ebfu ki\u1ec3m nh\u1eadp passed; ngu\u1ed3n v\u00f9ng tr\u1ed3ng \u0111\u00e3 chain; ch\u1eef k\u00fd vai G\u0110 S\u1ea3n xu\u1ea5t, G\u0110 v\u00f9ng tr\u1ed3ng, Ph\u00e1p ch\u1ebf/QA\n"
+  },
+  {
+   "lots": [],
+   "signed": {
+    "LOT-MO-B": [
+     "gd_san_xuat"
+    ],
+    "LOT-MO-C": [
+     "gd_san_xuat",
+     "gd_vung_trong",
+     "phap_che_qa"
+    ],
+    "LOT-SV-1": [
+     "phap_che_qa",
+     "gd_vung_trong",
+     "gd_san_xuat"
+    ]
+   },
+   "today": "2026-01-01",
+   "out": "B\u1ea3n tin ph\u01b0\u01a1ng \u00e1n B \u2014 tem QR th\u00ed \u0111i\u1ec3m (ng\u00e0y 01/01/2026)\nC\u1ea5u h\u00ecnh: GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf ch\u1ed1t\nM\u1ed1c ph\u01b0\u01a1ng \u00e1n B 27/11/2026: c\u00f2n 330 ng\u00e0y \u2014 ch\u01b0a \u0111\u1ec1 xu\u1ea5t\n\u0110\u00e3 ph\u00e1t h\u00e0nh m\u00e3 QR:\n- kh\u00f4ng c\u00f3\nCh\u01b0a ph\u00e1t h\u00e0nh:\n- kh\u00f4ng c\u00f3\n"
+  }
+ ],
+ "fromisoformat": [
+  [
+   "2026-11-27",
+   "2026-11-27"
+  ],
+  [
+   "20261127",
+   "2026-11-27"
+  ],
+  [
+   "2026-W48-5",
+   "2026-11-27"
+  ],
+  [
+   "2026W485",
+   "2026-11-27"
+  ],
+  [
+   "2026-W48",
+   "2026-11-23"
+  ],
+  [
+   "2026W48",
+   "2026-11-23"
+  ],
+  [
+   "2026-331",
+   null
+  ],
+  [
+   "2026-11-27T00",
+   null
+  ],
+  [
+   "2026-1-27",
+   null
+  ],
+  [
+   " 2026-11-27",
+   null
+  ],
+  [
+   "2026-11-27\n",
+   null
+  ],
+  [
+   "2026-02-30",
+   null
+  ],
+  [
+   "0000-01-01",
+   null
+  ],
+  [
+   "0001-01-01",
+   "0001-01-01"
+  ],
+  [
+   "2026-W53-1",
+   "2026-12-28"
+  ],
+  [
+   "2020-W53-7",
+   "2021-01-03"
+  ],
+  [
+   "2026-W00-1",
+   null
+  ],
+  [
+   "2026-W48-0",
+   null
+  ],
+  [
+   "2026-W48-8",
+   null
+  ],
+  [
+   "\uff12\uff10\uff12\uff16-11-27",
+   null
+  ],
+  [
+   "20261127xx",
+   "2026-11-27"
+  ],
+  [
+   "2026W485xx",
+   "2026-11-27"
+  ],
+  [
+   "2026-11-2x",
+   null
+  ],
+  [
+   "2026-1127",
+   null
+  ],
+  [
+   "202611-27",
+   null
+  ],
+  [
+   "2026-W485",
+   null
+  ],
+  [
+   "2026W48-5",
+   null
+  ],
+  [
+   "9999-W52-6",
+   null
+  ],
+  [
+   "2021-W53-1",
+   null
+  ],
+  [
+   "2026-W53-7",
+   "2027-01-03"
+  ],
+  [
+   "2026-11-2\u00e9",
+   null
+  ],
+  [
+   "2024-02-29",
+   "2024-02-29"
+  ],
+  [
+   "2023-02-29",
+   null
+  ],
+  [
+   "2026-13-01",
+   null
+  ],
+  [
+   "2026-00-10",
+   null
+  ],
+  [
+   "9999-12-31",
+   "9999-12-31"
+  ],
+  [
+   "2004-W53-6",
+   "2005-01-01"
+  ],
+  [
+   "2009-W53-7",
+   "2010-01-03"
+  ],
+  [
+   "2015-W53-1",
+   "2015-12-28"
+  ],
+  [
+   "2016-W53-1",
+   null
+  ],
+  [
+   "",
+   null
+  ],
+  [
+   "2026-11-27 ",
+   null
+  ],
+  [
+   "+026-11-27",
+   null
+  ]
+ ],
+ "clean": [
+  [
+   "abc",
+   80,
+   "abc"
+  ],
+  [
+   "a\nb\tc\u200bd",
+   80,
+   "a?b?c?d"
+  ],
+  [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   60,
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  [
+   "\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1",
+   60,
+   "\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1\u1ea1"
+  ],
+  [
+   "\ud83d\ude00\ud83d\ude00\ud83d\ude00",
+   2,
+   "\ud83d\ude00\ud83d\ude00"
+  ],
+  [
+   "a\u00a0b c",
+   80,
+   "a?b c"
+  ]
+ ],
+ "args": {
+  "by": [
+   [
+    "A",
+    "A",
+    null
+   ],
+   [
+    "  Ng\u01b0\u1eddi ph\u00e1t h\u00e0nh  ",
+    "Ng\u01b0\u1eddi ph\u00e1t h\u00e0nh",
+    null
+   ],
+   [
+    "",
+    null,
+    "t\u00ean ng\u01b0\u1eddi kh\u00f4ng r\u1ed7ng, t\u1ed1i \u0111a 100 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   ],
+   [
+    "   ",
+    null,
+    "t\u00ean ng\u01b0\u1eddi kh\u00f4ng r\u1ed7ng, t\u1ed1i \u0111a 100 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   ],
+   [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    null
+   ],
+   [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    null,
+    "t\u00ean ng\u01b0\u1eddi kh\u00f4ng r\u1ed7ng, t\u1ed1i \u0111a 100 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   ],
+   [
+    " xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ",
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    null
+   ],
+   [
+    "a\nb",
+    null,
+    "t\u00ean ng\u01b0\u1eddi kh\u00f4ng r\u1ed7ng, t\u1ed1i \u0111a 100 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   ],
+   [
+    "a\u200bb",
+    null,
+    "t\u00ean ng\u01b0\u1eddi kh\u00f4ng r\u1ed7ng, t\u1ed1i \u0111a 100 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   ],
+   [
+    "Tr\u1ea7n\u00a0S\u1ea3n",
+    null,
+    "t\u00ean ng\u01b0\u1eddi kh\u00f4ng r\u1ed7ng, t\u1ed1i \u0111a 100 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   ],
+   [
+    "\u3000A\u3000",
+    "A",
+    null
+   ]
+  ],
+  "lot": [
+   [
+    "LOT-MO-001",
+    "LOT-MO-001",
+    null
+   ],
+   [
+    "lot-mo",
+    null,
+    "m\u00e3 l\u00f4 ph\u1ea3i kh\u1edbp ^[A-Z0-9][A-Z0-9-]{2,31}$"
+   ],
+   [
+    "AB",
+    null,
+    "m\u00e3 l\u00f4 ph\u1ea3i kh\u1edbp ^[A-Z0-9][A-Z0-9-]{2,31}$"
+   ],
+   [
+    "ABC",
+    "ABC",
+    null
+   ],
+   [
+    "-AB",
+    null,
+    "m\u00e3 l\u00f4 ph\u1ea3i kh\u1edbp ^[A-Z0-9][A-Z0-9-]{2,31}$"
+   ],
+   [
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    null
+   ],
+   [
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    null,
+    "m\u00e3 l\u00f4 ph\u1ea3i kh\u1edbp ^[A-Z0-9][A-Z0-9-]{2,31}$"
+   ],
+   [
+    "MAU-MO120-260915",
+    "MAU-MO120-260915",
+    null
+   ],
+   [
+    "L\u00d4-1",
+    null,
+    "m\u00e3 l\u00f4 ph\u1ea3i kh\u1edbp ^[A-Z0-9][A-Z0-9-]{2,31}$"
+   ]
+  ],
+  "note": [
+   [
+    "th\u1eed",
+    "th\u1eed",
+    null
+   ],
+   [
+    "  ",
+    "",
+    null
+   ],
+   [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    null
+   ],
+   [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    null,
+    "note t\u1ed1i \u0111a 500 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   ],
+   [
+    "a\nb",
+    null,
+    "note t\u1ed1i \u0111a 500 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   ],
+   [
+    " ok ",
+    "ok",
+    null
+   ]
+  ],
+  "date": [
+   [
+    "2026-11-27",
+    "2026-11-27",
+    null
+   ],
+   [
+    "27/11/2026",
+    null,
+    "ng\u00e0y YYYY-MM-DD trong 2000-01-01..2100-12-31"
+   ],
+   [
+    "1999-12-31",
+    null,
+    "ng\u00e0y YYYY-MM-DD trong 2000-01-01..2100-12-31"
+   ],
+   [
+    "2000-01-01",
+    "2000-01-01",
+    null
+   ],
+   [
+    "2100-12-31",
+    "2100-12-31",
+    null
+   ],
+   [
+    "2101-01-01",
+    null,
+    "ng\u00e0y YYYY-MM-DD trong 2000-01-01..2100-12-31"
+   ],
+   [
+    "20261127",
+    null,
+    "ng\u00e0y YYYY-MM-DD trong 2000-01-01..2100-12-31"
+   ],
+   [
+    "2026-02-30",
+    null,
+    "ng\u00e0y YYYY-MM-DD trong 2000-01-01..2100-12-31"
+   ],
+   [
+    "2026-W48-5",
+    null,
+    "ng\u00e0y YYYY-MM-DD trong 2000-01-01..2100-12-31"
+   ]
+  ],
+  "log": [
+   [
+    "1",
+    "1",
+    null
+   ],
+   [
+    "0",
+    null,
+    "id nh\u1eadt k\u00fd > 0"
+   ],
+   [
+    "-1",
+    null,
+    "id nh\u1eadt k\u00fd > 0"
+   ],
+   [
+    " 12 ",
+    "12",
+    null
+   ],
+   [
+    "+5",
+    "5",
+    null
+   ],
+   [
+    "1_000",
+    "1000",
+    null
+   ],
+   [
+    "abc",
+    null,
+    "id nh\u1eadt k\u00fd l\u00e0 s\u1ed1 nguy\u00ean"
+   ],
+   [
+    "9223372036854775807",
+    "9223372036854775807",
+    null
+   ],
+   [
+    "9223372036854775808",
+    null,
+    "id nh\u1eadt k\u00fd > 0"
+   ],
+   [
+    "1.5",
+    null,
+    "id nh\u1eadt k\u00fd l\u00e0 s\u1ed1 nguy\u00ean"
+   ],
+   [
+    "",
+    null,
+    "id nh\u1eadt k\u00fd l\u00e0 s\u1ed1 nguy\u00ean"
+   ]
+  ],
+  "sha": [
+   [
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    null
+   ],
+   [
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    null,
+    "sha256 \u1ea3nh = 64 k\u00fd t\u1ef1 hex th\u01b0\u1eddng"
+   ],
+   [
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    null,
+    "sha256 \u1ea3nh = 64 k\u00fd t\u1ef1 hex th\u01b0\u1eddng"
+   ],
+   [
+    "xyz",
+    null,
+    "sha256 \u1ea3nh = 64 k\u00fd t\u1ef1 hex th\u01b0\u1eddng"
+   ],
+   [
+    "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+    null,
+    "sha256 \u1ea3nh = 64 k\u00fd t\u1ef1 hex th\u01b0\u1eddng"
+   ]
+  ],
+  "code": [
+   [
+    "AAAAAAAAAAAAAAAAAAAAAA",
+    "AAAAAAAAAAAAAAAAAAAAAA",
+    null
+   ],
+   [
+    "ngan",
+    null,
+    "m\u00e3 QR: 22..64 k\u00fd t\u1ef1 A-Za-z0-9_-"
+   ],
+   [
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    null
+   ],
+   [
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    null,
+    "m\u00e3 QR: 22..64 k\u00fd t\u1ef1 A-Za-z0-9_-"
+   ],
+   [
+    "a-b_ca-b_ca-b_ca-b_ca-b_c",
+    "a-b_ca-b_ca-b_ca-b_ca-b_c",
+    null
+   ],
+   [
+    "a ba ba ba ba ba ba ba ba ba b",
+    null,
+    "m\u00e3 QR: 22..64 k\u00fd t\u1ef1 A-Za-z0-9_-"
+   ],
+   [
+    "----------------------",
+    "----------------------",
+    null
+   ]
+  ]
+ }
+}

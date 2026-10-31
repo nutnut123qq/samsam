@@ -1,0 +1,4464 @@
+{
+ "to_int": [
+  [
+   "159000",
+   1000000000000000,
+   159000
+  ],
+  [
+   "482.900",
+   1000000000000000,
+   482900
+  ],
+  [
+   "1,490,000",
+   1000000000000000,
+   1490000
+  ],
+  [
+   "745.000 \u20ab",
+   1000000000000000,
+   745000
+  ],
+  [
+   "745,000",
+   1000000000000000,
+   745000
+  ],
+  [
+   "12,5",
+   1000000000000000,
+   null
+  ],
+  [
+   "1.234,50",
+   1000000000000000,
+   null
+  ],
+  [
+   "1.23.456",
+   1000000000000000,
+   null
+  ],
+  [
+   "abc",
+   1000000000000000,
+   null
+  ],
+  [
+   "-5",
+   1000000000000000,
+   null
+  ],
+  [
+   "99999999999999999999",
+   1000000000000000,
+   null
+  ],
+  [
+   "999999999999999999999999999999",
+   1000000000000000,
+   null
+  ],
+  [
+   "\u0661\u0662\u0663",
+   1000000000000000,
+   null
+  ],
+  [
+   "100 VND",
+   1000000000000000,
+   100
+  ],
+  [
+   "100VN\u0110",
+   1000000000000000,
+   100
+  ],
+  [
+   "100\u0111",
+   1000000000000000,
+   100
+  ],
+  [
+   "100\u0110",
+   1000000000000000,
+   100
+  ],
+  [
+   "100 vnd\n",
+   1000000000000000,
+   100
+  ],
+  [
+   "1\u00a0000",
+   1000000000000000,
+   1000
+  ],
+  [
+   "1.000.000",
+   999999,
+   null
+  ],
+  [
+   "2000000000",
+   2000000000,
+   2000000000
+  ],
+  [
+   "2000000001",
+   2000000000,
+   null
+  ],
+  [
+   "",
+   1000000000000000,
+   null
+  ],
+  [
+   "0",
+   1000000000000000,
+   0
+  ],
+  [
+   "00012",
+   1000000000000000,
+   12
+  ],
+  [
+   "1.000,000",
+   1000000000000000,
+   null
+  ],
+  [
+   "VND100",
+   1000000000000000,
+   null
+  ],
+  [
+   "100VND\u0111",
+   1000000000000000,
+   null
+  ],
+  [
+   "1 2 3",
+   1000000000000000,
+   123
+  ],
+  [
+   "1.2",
+   1000000000000000,
+   null
+  ],
+  [
+   "1234.567",
+   1000000000000000,
+   null
+  ],
+  [
+   "\u2003100\u2003",
+   1000000000000000,
+   100
+  ]
+ ],
+ "cell": [
+  [
+   "  x ",
+   "x"
+  ],
+  [
+   "",
+   null
+  ],
+  [
+   "   ",
+   null
+  ],
+  [
+   "\u00a0a\u3000",
+   "a"
+  ],
+  [
+   482900.0,
+   "482900"
+  ],
+  [
+   12.345,
+   "12.345000"
+  ],
+  [
+   1.0,
+   "1"
+  ],
+  [
+   0.5,
+   "0.500000"
+  ],
+  [
+   250.125,
+   "250.125000"
+  ],
+  [
+   482.9,
+   "482.900000"
+  ],
+  [
+   7,
+   "7"
+  ],
+  [
+   0,
+   "0"
+  ],
+  [
+   true,
+   "True"
+  ],
+  [
+   false,
+   "False"
+  ],
+  [
+   1e+20,
+   "100000000000000000000"
+  ],
+  [
+   -3.5,
+   "-3.500000"
+  ],
+  [
+   null,
+   null
+  ],
+  [
+   "__date__",
+   "2026-10-01 08:05:03"
+  ]
+ ],
+ "clean": [
+  [
+   "abc",
+   120,
+   "abc"
+  ],
+  [
+   "a\u001b[31mb",
+   120,
+   "a?[31mb"
+  ],
+  [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   120,
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  [
+   "d\u00f2ng\nm\u1edbi\ttab",
+   120,
+   "d\u00f2ng?m\u1edbi?tab"
+  ],
+  [
+   null,
+   120,
+   "None"
+  ],
+  [
+   "a\u200bb\u2028c",
+   10,
+   "a?b?c"
+  ],
+  [
+   "\u0110\u00e3 \u1ea9n",
+   3,
+   "\u0110\u00e3 "
+  ],
+  [
+   12345,
+   120,
+   "12345"
+  ],
+  [
+   "\ud83d\ude00xyz",
+   2,
+   "\ud83d\ude00x"
+  ]
+ ],
+ "safe": [
+  [
+   "Li\u00ean h\u1ec7 0900000000",
+   "Li\u00ean h\u1ec7 ***"
+  ],
+  [
+   "Email a@b.c",
+   "Email ***"
+  ],
+  [
+   "\u001b[31mX",
+   "?[31mX"
+  ],
+  [
+   "C\u1ed9t b\u00ecnh th\u01b0\u1eddng",
+   "C\u1ed9t b\u00ecnh th\u01b0\u1eddng"
+  ],
+  [
+   "S\u0110T +84 900 000 000 xS\u0110T +84 900 000 000 xS\u0110T +84 900 000 000 x",
+   "S\u0110T *** xS\u0110T *** xS\u0110T *** x"
+  ]
+ ],
+ "read_export": [
+  {
+   "name": "fixture_shopee_listing.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkNCjI3MzU3ODgzNTA0LFNhdmluYSB0dcO9cCAxMiB2acOqbiBuZ+G6rW0gKEZJWFRVUkUpLCwxNTkwMDAsNTAsxJBhbmcgaG/huqF0IMSR4buZbmcNCjI0MzI1OTg3OTI2LFNhdmlnb3V0IDMwIHZpw6puIChGSVhUVVJFKSwsNDgyLjkwMCwyMCzEkGFuZyBob+G6oXQgxJHhu5luZw0KMjczMjUwNDg2MTQsUsaw4bujdSBzw6JtIGNoYWkgdGjhu6d5IHRpbmggNTAwbWwgKEZJWFRVUkUpLCw3NDUuMDAwIOKCqyw1LMSQYW5nIGhv4bqhdCDEkeG7mW5nDQo5OTkwMDAwMDAwMSxT4bqjbiBwaOG6qW0gbOG6oSBraMO0bmcgY8OzIHRyb25nIGdvbGRlbiAoRklYVFVSRSksLDEwMDAwMCwxLMSQYW5nIGhv4bqhdCDEkeG7mW5nDQo1NDkxNjM5NDc5MCxN4bqtdCBvbmcgc8OibSAxMjBtbCAxIGjFqSAoRklYVFVSRSksbWF0LW9uZy1zYW0tMTIwbWwtMWh1LCI3NDUsMDAwIiwxMCzEkGFuZyBob+G6oXQgxJHhu5luZw0K",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27357883504",
+     "seller_sku": null,
+     "title": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm (FIXTURE)",
+     "price": 159000,
+     "stock": 50,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": "24325987926",
+     "seller_sku": null,
+     "title": "Savigout 30 vi\u00ean (FIXTURE)",
+     "price": 482900,
+     "stock": 20,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml (FIXTURE)",
+     "price": 745000,
+     "stock": 5,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 5,
+     "item_id": "99900000001",
+     "seller_sku": null,
+     "title": "S\u1ea3n ph\u1ea9m l\u1ea1 kh\u00f4ng c\u00f3 trong golden (FIXTURE)",
+     "price": 100000,
+     "stock": 1,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 6,
+     "item_id": "54916394790",
+     "seller_sku": "mat-ong-sam-120ml-1hu",
+     "title": "M\u1eadt ong s\u00e2m 120ml 1 h\u0169 (FIXTURE)",
+     "price": 745000,
+     "stock": 10,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "697c4ea7f099075b23a61517640e50a0cdc04f16cf6ec369db3bf362ef2c4063"
+  },
+  {
+   "name": "fixture_shopee_listing_fixed.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkNCjI3MzU3ODgzNTA0LFNhdmluYSB0dcO9cCAxMiB2acOqbiBuZ+G6rW0gKEZJWFRVUkUpLCwxNTkwMDAsNTAsxJBhbmcgaG/huqF0IMSR4buZbmcNCjI0MzI1OTg3OTI2LFNhdmlnb3V0IDMwIHZpw6puIChGSVhUVVJFKSwsNDM5MDAwLDIwLMSQYW5nIGhv4bqhdCDEkeG7mW5nDQoyNzMyNTA0ODYxNCxSxrDhu6N1IHPDom0gY2hhaSB0aOG7p3kgdGluaCA1MDBtbCAoRklYVFVSRSksLDc0NTAwMCw1LMSQw6Mg4bqpbg0KOTk5MDAwMDAwMDEsU+G6o24gcGjhuqltIGzhuqEga2jDtG5nIGPDsyB0cm9uZyBnb2xkZW4gKEZJWFRVUkUpLCwxMDAwMDAsMSzEkGFuZyBob+G6oXQgxJHhu5luZw0KNTQ5MTYzOTQ3OTAsTeG6rXQgb25nIHPDom0gMTIwbWwgMSBoxakgKEZJWFRVUkUpLG1hdC1vbmctc2FtLTEyMG1sLTFodSw3NDUwMDAsMTAsxJBhbmcgaG/huqF0IMSR4buZbmcNCg==",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27357883504",
+     "seller_sku": null,
+     "title": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm (FIXTURE)",
+     "price": 159000,
+     "stock": 50,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": "24325987926",
+     "seller_sku": null,
+     "title": "Savigout 30 vi\u00ean (FIXTURE)",
+     "price": 439000,
+     "stock": 20,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml (FIXTURE)",
+     "price": 745000,
+     "stock": 5,
+     "status": "\u0110\u00e3 \u1ea9n",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 5,
+     "item_id": "99900000001",
+     "seller_sku": null,
+     "title": "S\u1ea3n ph\u1ea9m l\u1ea1 kh\u00f4ng c\u00f3 trong golden (FIXTURE)",
+     "price": 100000,
+     "stock": 1,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 6,
+     "item_id": "54916394790",
+     "seller_sku": "mat-ong-sam-120ml-1hu",
+     "title": "M\u1eadt ong s\u00e2m 120ml 1 h\u0169 (FIXTURE)",
+     "price": 745000,
+     "stock": 10,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "e93dd8a720ec62d8b48d97249be7bdb0b3631abc76e89585ac7fc439ecfb41f8"
+  },
+  {
+   "name": "fixture_shopee_ads.csv",
+   "channel": "shopee",
+   "kind": "ads",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHF14bqjbmcgY8OhbyxUcuG6oW5nIHRow6FpLENoaSBwaMOtLEzGsOG7o3QgeGVtLEzGsOG7o3QgY2xpY2sNCjI0ODI1ODg1ODk0LFFDIFNhcGhyYXRvbiAyMCB2acOqbiAoRklYVFVSRSksxJBhbmcgY2jhuqF5LDI1MC4wMDAsMTAwMCwzMA0KMjczNTc4ODM1MDQsUUMgU2F2aW5hIChGSVhUVVJFKSxU4bqhbSBk4burbmcsMCwwLDANCjI5MDA3OTQ3MDg4LFFDIE3huq10IG9uZyBzw6JtIDMwMG1sIChGSVhUVVJFKSzEkGFuZyBjaOG6oXksMTIwMDAwLDgwMCwxMg0K",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "24825885894",
+     "seller_sku": null,
+     "title": "QC Saphraton 20 vi\u00ean (FIXTURE)",
+     "price": null,
+     "stock": null,
+     "status": "\u0110ang ch\u1ea1y",
+     "ads_spend": 250000,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": "27357883504",
+     "seller_sku": null,
+     "title": "QC Savina (FIXTURE)",
+     "price": null,
+     "stock": null,
+     "status": "T\u1ea1m d\u1eebng",
+     "ads_spend": 0,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": "29007947088",
+     "seller_sku": null,
+     "title": "QC M\u1eadt ong s\u00e2m 300ml (FIXTURE)",
+     "price": null,
+     "stock": null,
+     "status": "\u0110ang ch\u1ea1y",
+     "ads_spend": 120000,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "c1a4ea1d5ebe3479087f3d9e37b9edea20cac31fc5d014fb5f660b4d3e39d370"
+  },
+  {
+   "name": "fixture_shopee_order.csv",
+   "channel": "shopee",
+   "kind": "order",
+   "data": "TcOjIMSRxqFuIGjDoG5nLFRy4bqhbmcgdGjDoWkgxJHGoW4gaMOgbmcsVMOqbiBz4bqjbiBwaOG6qW0sU0tVIHBow6JuIGxv4bqhaSBow6BuZyxT4buRIGzGsOG7o25nLEdpw6EgxrB1IMSRw6NpLE5nxrDhu51pIG11YSxUw6puIG5nxrDhu51pIG5o4bqtbixT4buRIMSRaeG7h24gdGhv4bqhaSzEkOG7i2EgY2jhu4kgbmjhuq1uIGjDoG5nLEdoaSBjaMO6DQpGQUtFT1JERVIwMDAxLEhvw6BuIHRow6BuaCxTYXZpbmEgdHXDvXAgMTIgdmnDqm4gKEZJWFRVUkUpLHNhdmluYS0xMnYsMiwxNTkwMDAsbmd1b2ltdWFnaWEwMSxOR1VPSSBNVUEgR0lBLDA5MDAwMDAwMDAsU08gMSBEVU9ORyBHSUEgTEFQIFBIVU9ORyBHSUEsR0hJIENIVSBHSUENCkZBS0VPUkRFUjAwMDEsSG/DoG4gdGjDoG5oLFNhcGhyYXRvbiAyMCB2acOqbiAoRklYVFVSRSksc2FwaHJhdG9uLTIwdiwxLDI5OTAwMCxuZ3VvaW11YWdpYTAxLE5HVU9JIE1VQSBHSUEsMDkwMDAwMDAwMCxTTyAxIERVT05HIEdJQSBMQVAgUEhVT05HIEdJQSxHSEkgQ0hVIEdJQQ0KRkFLRU9SREVSMDAwMizEkMOjIGjhu6d5LFNhdmlnb3V0IDMwIHZpw6puIChGSVhUVVJFKSxzYXZpZ291dC0zMHYsMSw0MzkwMDAsbmd1b2ltdWFnaWEwMixOR1VPSSBOSEFOIEdJQSBIQUksMDkwMDAwMDAwMSxTTyAyIERVT05HIEdJQSBMQVAgUEhVT05HIEdJQSwNCkZBS0VPUkRFUjAwMDMsxJBhbmcgZ2lhbyxN4bqtdCBvbmcgc8OibSAzMDBtbCAoRklYVFVSRSksbWF0LW9uZy1zYW0tMzAwbWwsMSwyOTgwMDAwLG5ndW9pbXVhZ2lhMDMsTkdVT0kgTkhBTiBHSUEgQkEsMDkwMDAwMDAwMixTTyAzIERVT05HIEdJQSBMQVAgUEhVT05HIEdJQSwNCg==",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": null,
+     "seller_sku": "savina-12v",
+     "title": "Savina tu\u00fdp 12 vi\u00ean (FIXTURE)",
+     "price": 159000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 2,
+     "order_id_hash": "35feb55e2d5d59a6",
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": null,
+     "seller_sku": "saphraton-20v",
+     "title": "Saphraton 20 vi\u00ean (FIXTURE)",
+     "price": 299000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "35feb55e2d5d59a6",
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": null,
+     "seller_sku": "savigout-30v",
+     "title": "Savigout 30 vi\u00ean (FIXTURE)",
+     "price": 439000,
+     "stock": null,
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "199dd6e0f1b8d947",
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 5,
+     "item_id": null,
+     "seller_sku": "mat-ong-sam-300ml",
+     "title": "M\u1eadt ong s\u00e2m 300ml (FIXTURE)",
+     "price": 2980000,
+     "stock": null,
+     "status": "\u0110ang giao",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "85816dd08d34cde1",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "51da5591dede0431f2615dcec45dff3c0240ceabad07ad32eb1d16d1c5ae9a6b"
+  },
+  {
+   "name": "fixture_shopee_listing_missing_col.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEtobyBow6BuZyxUcuG6oW5nIHRow6FpDQoyNzM1Nzg4MzUwNCxTYXZpbmEgdHXDvXAgMTIgdmnDqm4gbmfhuq1tIChGSVhUVVJFKSwsNTAsxJBhbmcgaG/huqF0IMSR4buZbmcNCg==",
+   "rows": [],
+   "errs": [
+    "thi\u1ebfu c\u1ed9t b\u1eaft bu\u1ed9c: 'Gi\u00e1'"
+   ],
+   "sha": "5e49cd451f7bf5d38e5d3566df9082fc954e2fc891f9d35050c59541acfb1deb"
+  },
+  {
+   "name": "fixture_shopee_listing_km.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsR2nDoSBraHV54bq/biBtw6NpLEtobyBow6BuZyxUcuG6oW5nIHRow6FpDQoyNzM1Nzg4MzUwNCxTYXZpbmEgdHXDvXAgMTIgdmnDqm4gbmfhuq1tIChGSVhUVVJFKSwsMTU5MDAwLDEyMC4wMDAsNTAsxJBhbmcgaG/huqF0IMSR4buZbmcNCjI5MDA3OTQ3MDg4LE3huq10IG9uZyBzw6JtIDMwMG1sIChGSVhUVVJFKSwsMi45ODAuMDAwLDEuMjkwLjAwMCw1LMSQYW5nIGhv4bqhdCDEkeG7mW5nDQoyNDMyNTk4NzkyNixTYXZpZ291dCAzMCB2acOqbiAoRklYVFVSRSksLDQzOTAwMCwsMjAsxJBhbmcgaG/huqF0IMSR4buZbmcNCg==",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27357883504",
+     "seller_sku": null,
+     "title": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm (FIXTURE)",
+     "price": 159000,
+     "stock": 50,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": 120000,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": "29007947088",
+     "seller_sku": null,
+     "title": "M\u1eadt ong s\u00e2m 300ml (FIXTURE)",
+     "price": 2980000,
+     "stock": 5,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": 1290000,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": "24325987926",
+     "seller_sku": null,
+     "title": "Savigout 30 vi\u00ean (FIXTURE)",
+     "price": 439000,
+     "stock": 20,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "40c0802f3d53cef992e9ce1105b79b8fe6a79f7371a402e42251efe02b61fe64"
+  },
+  {
+   "name": "empty.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "",
+   "rows": [],
+   "errs": [
+    "file r\u1ed7ng"
+   ],
+   "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "name": "ws.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "ICANCgo=",
+   "rows": [],
+   "errs": [
+    "file r\u1ed7ng"
+   ],
+   "sha": "880a9308401f37fd1022202304472eb33ea442e99e0c0b4d7dc1a9a3a441ec14"
+  },
+  {
+   "name": "hdr_only.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkK",
+   "rows": [],
+   "errs": [
+    "file ch\u1ec9 c\u00f3 header, kh\u00f4ng c\u00f3 d\u00f2ng d\u1eef li\u1ec7u"
+   ],
+   "sha": "6efbdf5d1410b857a680176d1ab9b09988cd5c8a890ee2b1486d70e02c21bb22"
+  },
+  {
+   "name": "bad_utf8.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKMSxhLCwxLDEs//4K",
+   "rows": [],
+   "errs": [
+    "file CSV kh\u00f4ng ph\u1ea3i UTF-8 (byte 90)"
+   ],
+   "sha": "3295e774eb9bdc27d6e1100ca772ea825f7e28eca7c1c2c3e25bc5f9e5c1eb60"
+  },
+  {
+   "name": "bom_crlf.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "77u/TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkNCjEsYSwsMTAwLDEsWA0KDQo=",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "1",
+     "seller_sku": null,
+     "title": "a",
+     "price": 100,
+     "stock": 1,
+     "status": "X",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "139297a1be41a6517335f8a1ea657feaff4072191f9112962f8a9dceb5977af1"
+  },
+  {
+   "name": "unknown_col.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWksRW1haWwgbmfGsOG7nWkgbXVhCjEsYSwsMTAwLDEsWCxhQGIuYwo=",
+   "rows": [],
+   "errs": [
+    "c\u1ed9t l\u1ea1 'Email ng\u01b0\u1eddi mua' (kh\u00f4ng thu\u1ed9c required/optional/drop \u2014 th\u00eam v\u00e0o mapping sau khi x\u00e1c minh)"
+   ],
+   "sha": "a2e4b4e85fec08460770c044c1a55520af1652edf732b12d7e1abd024b29d1bc"
+  },
+  {
+   "name": "dup_col.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWksR2nDoQoxLGEsLDEwMCwxLFgsMTAwCg==",
+   "rows": [],
+   "errs": [
+    "header tr\u00f9ng: 'Gi\u00e1'"
+   ],
+   "sha": "0f1a65b57c489fb1500de0906956af17edfc505a1aac6e25031fd2aeb50122b1"
+  },
+  {
+   "name": "pii_hdr.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWksTGnDqm4gaOG7hyAwOTAwMDAwMDAwLBtbMzFtWAoxLGEsLDEsMSxYLCwK",
+   "rows": [],
+   "errs": [
+    "c\u1ed9t l\u1ea1 'Li\u00ean h\u1ec7 ***' (kh\u00f4ng thu\u1ed9c required/optional/drop \u2014 th\u00eam v\u00e0o mapping sau khi x\u00e1c minh)",
+    "c\u1ed9t l\u1ea1 '?[31mX' (kh\u00f4ng thu\u1ed9c required/optional/drop \u2014 th\u00eam v\u00e0o mapping sau khi x\u00e1c minh)"
+   ],
+   "sha": "601b59928f707ec67dbe93d5e9d68a14dc55c1ee2654e4cb8bf07063ebc02d8a"
+  },
+  {
+   "name": "no_item.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKLGEsLDEwMCwxLFgK",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: thi\u1ebfu c\u1ea3 item_id l\u1eabn seller_sku"
+   ],
+   "sha": "32d6d247ed5a4f9b91518f22119f82dab93e30c88ea31f3e0c9452ab949285a9"
+  },
+  {
+   "name": "bad_num.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKMSxhLCwxMDAsMSxYCjIsYiwsIjEuMjM0LDUwIiwxLFgKMyxjLCwtNSwxLFgK",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7",
+    "d\u00f2ng 4: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   ],
+   "sha": "bee7bdf96747b69e49983f56c4d3624b87b04b6f2b3ccf139526b861c4de45a6"
+  },
+  {
+   "name": "extra_cells.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKMSxhLCwxMDAsMSxYLGV4dHJhCg==",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: th\u1eeba \u00f4 ngo\u00e0i header"
+   ],
+   "sha": "f1de67a0df632d018025c9bbf5df54b662b02c22838844abf09cd90a243846c3"
+  },
+  {
+   "name": "trailing_empty.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKMSxhLCwxMDAsMSxYLCwsCg==",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "1",
+     "seller_sku": null,
+     "title": "a",
+     "price": 100,
+     "stock": 1,
+     "status": "X",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "f2b2870660b2cded434baf7e71b18741649898474633a9ed0b6b546df44c1c2b"
+  },
+  {
+   "name": "empty_hdr.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSwsR2nDoSxLaG8gaMOgbmcsVHLhuqFuZyB0aMOhaQoxLGEsLDEwMCwxLFgK",
+   "rows": [],
+   "errs": [
+    "header c\u1ed9t 3 tr\u1ed1ng"
+   ],
+   "sha": "18c14b8b24fe996276b6ecfec79a2ad6558364a84153531ecf5f287abd147b6c"
+  },
+  {
+   "name": "nfd_hdr.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxHacOhLFRy4bqhbmcgdGjDoWkKMSxhLDEwMCzEkMOjIOG6qW4K",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "1",
+     "seller_sku": null,
+     "title": "a",
+     "price": 100,
+     "stock": null,
+     "status": "\u0110\u00e3 \u1ea9n",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "95a8fdbc42f0709ac568a578f2956b43432036eec8e9c096be5c3577d6cfe62a"
+  },
+  {
+   "name": "quoted_nl.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKMSwiVMOqbgpoYWkgZMOybmciLCwxMDAsMSwixJBhbmcsIGhv4bqhdCDEkeG7mW5nIgo=",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "1",
+     "seller_sku": null,
+     "title": "T\u00ean\nhai d\u00f2ng",
+     "price": 100,
+     "stock": 1,
+     "status": "\u0110ang, ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "2b7c9f4312a14ebaebc1e64047e42e74cf7e349b2a2ff3f24866d07be46ad1d4"
+  },
+  {
+   "name": "no_header.csv",
+   "channel": "shopee",
+   "kind": "order",
+   "data": "RkFLRU9SREVSMDAwMSxIb8OgbiB0aMOgbmgsU2F2aW5hIHR1w71wIDEyIHZpw6puIChGSVhUVVJFKSxzYXZpbmEtMTJ2LDIsMTU5MDAwLG5ndW9pbXVhZ2lhMDEsTkdVT0kgTVVBIEdJQSwwOTAwMDAwMDAwLFNPIDEgRFVPTkcgR0lBIExBUCBQSFVPTkcgR0lBLEdISSBDSFUgR0lBCkZBS0VPUkRFUjAwMDEsSG/DoG4gdGjDoG5oLFNhcGhyYXRvbiAyMCB2acOqbiAoRklYVFVSRSksc2FwaHJhdG9uLTIwdiwxLDI5OTAwMCxuZ3VvaW11YWdpYTAxLE5HVU9JIE1VQSBHSUEsMDkwMDAwMDAwMCxTTyAxIERVT05HIEdJQSBMQVAgUEhVT05HIEdJQSxHSEkgQ0hVIEdJQQpGQUtFT1JERVIwMDAyLMSQw6MgaOG7p3ksU2F2aWdvdXQgMzAgdmnDqm4gKEZJWFRVUkUpLHNhdmlnb3V0LTMwdiwxLDQzOTAwMCxuZ3VvaW11YWdpYTAyLE5HVU9JIE5IQU4gR0lBIEhBSSwwOTAwMDAwMDAxLFNPIDIgRFVPTkcgR0lBIExBUCBQSFVPTkcgR0lBLApGQUtFT1JERVIwMDAzLMSQYW5nIGdpYW8sTeG6rXQgb25nIHPDom0gMzAwbWwgKEZJWFRVUkUpLG1hdC1vbmctc2FtLTMwMG1sLDEsMjk4MDAwMCxuZ3VvaW11YWdpYTAzLE5HVU9JIE5IQU4gR0lBIEJBLDA5MDAwMDAwMDIsU08gMyBEVU9ORyBHSUEgTEFQIFBIVU9ORyBHSUEsCg==",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 1 kh\u00f4ng kh\u1edbp header shopee/order n\u00e0o (11 c\u1ed9t, 0/5 c\u1ed9t b\u1eaft bu\u1ed9c) \u2014 sai k\u00eanh/lo\u1ea1i export ho\u1eb7c file thi\u1ebfu d\u00f2ng header"
+   ],
+   "sha": "e9ca9d2926be37409d82fd11543150f574285e2d3df0933fa1c10cd51011db15"
+  },
+  {
+   "name": "voucher.csv",
+   "channel": "shopee",
+   "kind": "order",
+   "data": "TcOjIMSRxqFuIGjDoG5nLFRy4bqhbmcgdGjDoWkgxJHGoW4gaMOgbmcsVMOqbiBz4bqjbiBwaOG6qW0sU0tVIHBow6JuIGxv4bqhaSBow6BuZyxT4buRIGzGsOG7o25nLEdpw6EgxrB1IMSRw6NpLE3DoyBnaeG6o20gZ2nDoSBj4bunYSBTaG9wCk8xLEhvw6BuIHRow6BuaCxBLHNhdmluYS0xMnYsMSwxMDAsIFNTQUJDREVGR0gyMyAKTzIsSG/DoG4gdGjDoG5oLEIsc2F2aW5hLTEydiwxLDEwMCwK",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": null,
+     "seller_sku": "savina-12v",
+     "title": "A",
+     "price": 100,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "b680fc3a039509bf",
+     "sale_price": null,
+     "voucher_code": "SSABCDEFGH23"
+    },
+    {
+     "row_no": 3,
+     "item_id": null,
+     "seller_sku": "savina-12v",
+     "title": "B",
+     "price": 100,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "d0f8594fc394a13e",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "92c342a2bc11cb8b4acf63b7d53fa9b9afc79762bd41e5113af88c5d0c56e976"
+  },
+  {
+   "name": "voucher_long.csv",
+   "channel": "shopee",
+   "kind": "order",
+   "data": "TcOjIMSRxqFuIGjDoG5nLFRy4bqhbmcgdGjDoWkgxJHGoW4gaMOgbmcsVMOqbiBz4bqjbiBwaOG6qW0sU0tVIHBow6JuIGxv4bqhaSBow6BuZyxT4buRIGzGsOG7o25nLEdpw6EgxrB1IMSRw6NpLE3DoyBnaeG6o20gZ2nDoSBj4bunYSBTaG9wCk8xLEhvw6BuIHRow6BuaCxBLHNhdmluYS0xMnYsMSwxMDAsVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlEK",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: field 'voucher_code' d\u00e0i qu\u00e1 64 k\u00fd t\u1ef1"
+   ],
+   "sha": "60e010958252328685d199f035e460258b84e16e8afa535d24d94d237cea5448"
+  },
+  {
+   "name": "order_no_id.csv",
+   "channel": "shopee",
+   "kind": "order",
+   "data": "TcOjIMSRxqFuIGjDoG5nLFRy4bqhbmcgdGjDoWkgxJHGoW4gaMOgbmcsVMOqbiBz4bqjbiBwaOG6qW0sU0tVIHBow6JuIGxv4bqhaSBow6BuZyxT4buRIGzGsOG7o25nLEdpw6EgxrB1IMSRw6NpLE3DoyBnaeG6o20gZ2nDoSBj4bunYSBTaG9wCixIb8OgbiB0aMOgbmgsQSxzYXZpbmEtMTJ2LDEsMTAwLAo=",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: thi\u1ebfu m\u00e3 \u0111\u01a1n"
+   ],
+   "sha": "cdd33c59c19494ffc9e1e54a6b433546c36ea83b8f3ab58dbfd14c546c7b664d"
+  },
+  {
+   "name": "unicode_price.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKMSxhLCzZodmi2aMsMSxYCg==",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   ],
+   "sha": "78651850c10b6aceb1ae47ec0cbbaa983c51c6f93117f529e4828c6bc51856aa"
+  },
+  {
+   "name": "spaces.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKIDEgLMKgVMOqbuOAgCwgICwgMTAwIMSRICwgMiAsICDEkMOjIOG6qW4gIAo=",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "1",
+     "seller_sku": null,
+     "title": "T\u00ean",
+     "price": 100,
+     "stock": 2,
+     "status": "\u0110\u00e3 \u1ea9n",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "87156d71420dd232ee7bb3502483dcf6be215254f2cd39bf0e6d9b3c59a61770"
+  },
+  {
+   "name": "only_blank_rows.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKCgo=",
+   "rows": [],
+   "errs": [
+    "file ch\u1ec9 c\u00f3 header, kh\u00f4ng c\u00f3 d\u00f2ng d\u1eef li\u1ec7u"
+   ],
+   "sha": "57085246d7d3d01f0edebc5d7c976624d64dc110cfe40118c8bd609daf123a76"
+  },
+  {
+   "name": "unterminated_quote.csv",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKMSwiYWJjLCwxMDAsMSxYCg==",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   ],
+   "sha": "25cba46a22f6cc05b0cbd85dbbafdef1bbdbdcccef3561b73fe017ab3ed209f2"
+  },
+  {
+   "name": "tt_listing.csv",
+   "channel": "tiktok",
+   "kind": "listing",
+   "data": "UHJvZHVjdCBJRCxQcm9kdWN0IE5hbWUsUHJpY2UsU3RhdHVzLFNlbGxlciBTS1UKMTcyOSxTYXZpbmEsMTU5MDAwLExpdmUsc2F2aW5hLTEydgo=",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "1729",
+     "seller_sku": "savina-12v",
+     "title": "Savina",
+     "price": 159000,
+     "stock": null,
+     "status": "Live",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": [],
+   "sha": "883434f2c1547b8dc7ba0b8208ea1810bfc7b8052277a178180da2dd6d53be38"
+  },
+  {
+   "name": "tt_wrong_kind.csv",
+   "channel": "tiktok",
+   "kind": "ads",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkNCjI3MzU3ODgzNTA0LFNhdmluYSB0dcO9cCAxMiB2acOqbiBuZ+G6rW0gKEZJWFRVUkUpLCwxNTkwMDAsNTAsxJBhbmcgaG/huqF0IMSR4buZbmcNCjI0MzI1OTg3OTI2LFNhdmlnb3V0IDMwIHZpw6puIChGSVhUVVJFKSwsNDgyLjkwMCwyMCzEkGFuZyBob+G6oXQgxJHhu5luZw0KMjczMjUwNDg2MTQsUsaw4bujdSBzw6JtIGNoYWkgdGjhu6d5IHRpbmggNTAwbWwgKEZJWFRVUkUpLCw3NDUuMDAwIOKCqyw1LMSQYW5nIGhv4bqhdCDEkeG7mW5nDQo5OTkwMDAwMDAwMSxT4bqjbiBwaOG6qW0gbOG6oSBraMO0bmcgY8OzIHRyb25nIGdvbGRlbiAoRklYVFVSRSksLDEwMDAwMCwxLMSQYW5nIGhv4bqhdCDEkeG7mW5nDQo1NDkxNjM5NDc5MCxN4bqtdCBvbmcgc8OibSAxMjBtbCAxIGjFqSAoRklYVFVSRSksbWF0LW9uZy1zYW0tMTIwbWwtMWh1LCI3NDUsMDAwIiwxMCzEkGFuZyBob+G6oXQgxJHhu5luZw0K",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 1 kh\u00f4ng kh\u1edbp header tiktok/ads n\u00e0o (6 c\u1ed9t, 0/3 c\u1ed9t b\u1eaft bu\u1ed9c) \u2014 sai k\u00eanh/lo\u1ea1i export ho\u1eb7c file thi\u1ebfu d\u00f2ng header"
+   ],
+   "sha": "697c4ea7f099075b23a61517640e50a0cdc04f16cf6ec369db3bf362ef2c4063"
+  },
+  {
+   "name": "x.txt",
+   "channel": "shopee",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKMSxhLCwxLDEsYgo=",
+   "rows": [],
+   "errs": [
+    "\u0111u\u00f4i '.txt' kh\u00f4ng h\u1ed7 tr\u1ee3 \u2014 ch\u1ec9 .csv / .xlsx"
+   ],
+   "sha": null
+  },
+  {
+   "name": "nomap.csv",
+   "channel": "lazada",
+   "kind": "listing",
+   "data": "TcOjIHPhuqNuIHBo4bqpbSxUw6puIHPhuqNuIHBo4bqpbSxTS1UgcGjDom4gbG/huqFpLEdpw6EsS2hvIGjDoG5nLFRy4bqhbmcgdGjDoWkKMSxhLCwxLDEsYgo=",
+   "rows": [],
+   "errs": [
+    "mapping thi\u1ebfu lazada/listing"
+   ],
+   "sha": null
+  }
+ ],
+ "read_export_xlsx": [
+  {
+   "name": "listing_types.xlsx",
+   "kind": "listing",
+   "data": "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",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "24325987926",
+     "seller_sku": null,
+     "title": "a",
+     "price": 482900,
+     "stock": 1,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": "2",
+     "seller_sku": "sku-x",
+     "title": "b",
+     "price": 482900,
+     "stock": 5,
+     "status": "X",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": "3",
+     "seller_sku": null,
+     "title": "c",
+     "price": 745000,
+     "stock": null,
+     "status": "\u0110\u00e3 \u1ea9n",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": []
+  },
+  {
+   "name": "listing_float.xlsx",
+   "kind": "listing",
+   "data": "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",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   ]
+  },
+  {
+   "name": "listing_bool_date.xlsx",
+   "kind": "listing",
+   "data": "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",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "1",
+     "seller_sku": "True",
+     "title": "2026-10-01 08:05:03",
+     "price": 100,
+     "stock": 1,
+     "status": "False",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": []
+  },
+  {
+   "name": "ads.xlsx",
+   "kind": "ads",
+   "data": "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",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: field 'ads_spend' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   ]
+  },
+  {
+   "name": "order.xlsx",
+   "kind": "order",
+   "data": "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",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": null,
+     "seller_sku": "savina-12v",
+     "title": "X",
+     "price": 159000,
+     "stock": null,
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "ads_spend": null,
+     "qty": 2,
+     "order_id_hash": "f2d3d7ca86829f61",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": []
+  },
+  {
+   "name": "gap.xlsx",
+   "kind": "listing",
+   "data": "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",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "1",
+     "seller_sku": null,
+     "title": "a",
+     "price": 100,
+     "stock": 1,
+     "status": "X",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 5,
+     "item_id": "2",
+     "seller_sku": null,
+     "title": "b",
+     "price": 200,
+     "stock": 2,
+     "status": "Y",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "errs": []
+  },
+  {
+   "name": "far_100005_1.xlsx",
+   "kind": "listing",
+   "data": "UEsDBBQAAAAIAFmWXV1Gx01IlQAAAM0AAAAQAAAAZG9jUHJvcHMvYXBwLnhtbE3PTQvCMAwG4L9SdreZih6kDkQ9ip68zy51hbYpbYT67+0EP255ecgboi6JIia2mEXxLuRtMzLHDUDWI/o+y8qhiqHke64x3YGMsRoPpB8eA8OibdeAhTEMOMzit7Dp1C5GZ3XPlkJ3sjpRJsPiWDQ6sScfq9wcChDneiU+ixNLOZcrBf+LU8sVU57mym/8ZAW/B7oXUEsDBBQAAAAIAFmWXV088E8N7gAAACsCAAARAAAAZG9jUHJvcHMvY29yZS54bWzNksFqwzAMhl9l+J7ITmlhJvVlY6cNBits7GZktTWLE2NrJH37JVmbMrYH2NHS70+fQDVGjV2i59RFSuwp3wyhabPGuBVH5qgBMh4p2FyOiXZs7rsULI/PdIBo8cMeCCopNxCIrbNsYQIWcSEKUzvUmMhyl854hws+fqZmhjkEaihQyxlUqUCYaWI8DU0NV8AEY0ohfxfILcS5+id27oA4J4fsl1Tf92W/mnPjDgrenh5f5nUL32a2LdL4K3vNp0hbcZn8urq73z0IU8lqUyhZVLc7pfRa6rV6n1x/+F2FQ+f83v9j44ugqeHXXZgvUEsDBBQAAAAIAFmWXV2ZXJwjEAYAAJwnAAATAAAAeGwvdGhlbWUvdGhlbWUxLnhtbO1aW3PaOBR+76/QeGf2bQvGNoG2tBNzaXbbtJmE7U4fhRFYjWx5ZJGEf79HNhDLlg3tkk26mzwELOn7zkVH5+g4efPuLmLohoiU8nhg2S/b1ru3L97gVzIkEUEwGaev8MAKpUxetVppAMM4fckTEsPcgosIS3gUy9Zc4FsaLyPW6rTb3VaEaWyhGEdkYH1eLGhA0FRRWm9fILTlHzP4FctUjWWjARNXQSa5iLTy+WzF/NrePmXP6TodMoFuMBtYIH/Ob6fkTlqI4VTCxMBqZz9Wa8fR0kiAgsl9lAW6Sfaj0xUIMg07Op1YznZ89sTtn4zK2nQ0bRrg4/F4OLbL0otwHATgUbuewp30bL+kQQm0o2nQZNj22q6RpqqNU0/T933f65tonAqNW0/Ta3fd046Jxq3QeA2+8U+Hw66JxqvQdOtpJif9rmuk6RZoQkbj63oSFbXlQNMgAFhwdtbM0gOWXin6dZQa2R273UFc8FjuOYkR/sbFBNZp0hmWNEZynZAFDgA3xNFMUHyvQbaK4MKS0lyQ1s8ptVAaCJrIgfVHgiHF3K/99Ze7yaQzep19Os5rlH9pqwGn7bubz5P8c+jkn6eT101CznC8LAnx+yNbYYcnbjsTcjocZ0J8z/b2kaUlMs/v+QrrTjxnH1aWsF3Pz+SejHIju932WH32T0duI9epwLMi15RGJEWfyC265BE4tUkNMhM/CJ2GmGpQHAKkCTGWoYb4tMasEeATfbe+CMjfjYj3q2+aPVehWEnahPgQRhrinHPmc9Fs+welRtH2Vbzco5dYFQGXGN80qjUsxdZ4lcDxrZw8HRMSzZQLBkGGlyQmEqk5fk1IE/4rpdr+nNNA8JQvJPpKkY9psyOndCbN6DMawUavG3WHaNI8ev4F+Zw1ChyRGx0CZxuzRiGEabvwHq8kjpqtwhErQj5iGTYacrUWgbZxqYRgWhLG0XhO0rQR/FmsNZM+YMjszZF1ztaRDhGSXjdCPmLOi5ARvx6GOEqa7aJxWAT9nl7DScHogstm/bh+htUzbCyO90fUF0rkDyanP+kyNAejmlkJvYRWap+qhzQ+qB4yCgXxuR4+5Xp4CjeWxrxQroJ7Af/R2jfCq/iCwDl/Ln3Ppe+59D2h0rc3I31nwdOLW95GblvE+64x2tc0LihjV3LNyMdUr5Mp2DmfwOz9aD6e8e362SSEr5pZLSMWkEuBs0EkuPyLyvAqxAnoZFslCctU02U3ihKeQhtu6VP1SpXX5a+5KLg8W+Tpr6F0PizP+Txf57TNCzNDt3JL6raUvrUmOEr0scxwTh7LDDtnPJIdtnegHTX79l125COlMFOXQ7gaQr4Dbbqd3Do4npiRuQrTUpBvw/npxXga4jnZBLl9mFdt59jR0fvnwVGwo+88lh3HiPKiIe6hhpjPw0OHeXtfmGeVxlA0FG1srCQsRrdguNfxLBTgZGAtoAeDr1EC8lJVYDFbxgMrkKJ8TIxF6HDnl1xf49GS49umZbVuryl3GW0iUjnCaZgTZ6vK3mWxwVUdz1Vb8rC+aj20FU7P/lmtyJ8MEU4WCxJIY5QXpkqi8xlTvucrScRVOL9FM7YSlxi84+bHcU5TuBJ2tg8CMrm7Oal6ZTFnpvLfLQwJLFuIWRLiTV3t1eebnK56Inb6l3fBYPL9cMlHD+U751/0XUOufvbd4/pukztITJx5xREBdEUCI5UcBhYXMuRQ7pKQBhMBzZTJRPACgmSmHICY+gu98gy5KRXOrT45f0Usg4ZOXtIlEhSKsAwFIRdy4+/vk2p3jNf6LIFthFQyZNUXykOJwT0zckPYVCXzrtomC4Xb4lTNuxq+JmBLw3punS0n/9te1D20Fz1G86OZ4B6zh3OberjCRaz/WNYe+TLfOXDbOt4DXuYTLEOkfsF9ioqAEativrqvT/klnDu0e/GBIJv81tuk9t3gDHzUq1qlZCsRP0sHfB+SBmOMW/Q0X48UYq2msa3G2jEMeYBY8wyhZjjfh0WaGjPVi6w5jQpvQdVA5T/b1A1o9g00HJEFXjGZtjaj5E4KPNz+7w2wwsSO4e2LvwFQSwMEFAAAAAgAWZZdXSVTa97TAQAAbgQAABgAAAB4bC93b3Jrc2hlZXRzL3NoZWV0MS54bWyNlG1v2yAQx78KcqW+LLb7kK5+kNa02aaqUtSs296S+GyjYvCAxO2330EcL53san7jO+D/uzvgSDulX0wNYMlrI6TJgtra9oZSs6mhYeZMtSBxplS6YRZdXVHTamCFFzWCxmF4RRvGZZCnfmyp81RtreASlpqYbdMw/XYLQnVZEAWHgSde1dYN0DxtWQUrsM/tUqNHB0rBG5CGK0k0lFnwObpZRCF+l07kV/3g0Jkjm7hy1kq9OOdbkQWhywoEbKzDMPztYA5COBrm8rsHB0NcJzy2D/SF3wAsaM0MzJX4yQtbZ8F1QAoo2VbYJ9V9hb6ovwneMcvyVKuOaFdsnm6c4WLjOi7dJq2sxnGOgWz+eHoSx7OEmNOT2fXFeSJJW3vzU9Kk1GJibh3d9JzbKc535JxfoPw/QfMp0Orh2Svj+AoZQnlGlPARxt0U4wt3+stkRHM/pXmoFfFhsYhqRLiYrFz3KcqK2Hof+J9sKR7HcCbxcCaxJ7prvMujlO6O9zmeiMbG9uEdKAzfo+4/CLOYCvPrgwL6jhhu1t4d57yOcejRRXWd+Mh0xaUhAkqEhGczpOn9xd47VrW+k9fKWtV4s8YHAbRbgPOlUvbguL4anpj8D1BLAwQUAAAACABZll1dfPOj3FECAAD2CQAADQAAAHhsL3N0eWxlcy54bWzdVtuK2zAQ/RXhD6iTmDVxSfJQQ2ChLQu7D31VYjkR6OLK8pL06zsjOXazq1kofatN8MwcnbkbZ9P7qxLPZyE8u2hl+m129r77nOf98Sw07z/ZThhAWus096C6U953TvCmR5JW+WqxKHPNpcl2GzPovfY9O9rB+G22yPLdprVmtiyzaICjXAv2ytU2q7mSByfDWa6lukbzCg1Hq6xjHlIRSAZL/yvCy6hhlqMfLY11aMxjhPDowalUakpglUXDbtNx74Uze1ACJxjfQWyUX64dZHBy/LpcPWQzITwgyMG6Rri7OqNpt1Gi9UBw8nTGp7ddjqD3VoPQSH6yhoccboxRALdHodQzjuhHe+f70rLY68cG28yw1JsICY1idBMV9P+nt+j7n92yTr5a/2WAakzQfw7WiycnWnkJ+qW9jz+FDoncRZ+sDJdjm33HnVOzC3YYpPLSjNpZNo0w72oD954fYKnv/MP5RrR8UP5lArfZLH8TjRx0NZ16wrLGU7P8FWe4LKfNhFjSNOIimnpU3ekQRAYCRB0vJLxF9uFKIxQnYmkEMSoOlQHFiSwqzv9Uz5qsJ2JUbusksiY5a5ITWSmkDjcVJ82p4EpXWlVFUZZUR+s6mUFN9a0s8Zf2RuWGDCoORvq7XtPTpjfk4z2gZvrRhlCV0ptIVUr3GpF035BRVelpU3GQQU2B2h2Mn46DO5XmFAVOlcqNeoNppKooBHcxvaNlSXSnxDs9H+otKYqqSiOIpTMoCgrBt5FGqAwwBwopivAdfPM9ym/fqXz+p7f7DVBLAwQUAAAACABZll1dl4q7HMAAAAATAgAACwAAAF9yZWxzLy5yZWxznZK5bsMwDEB/xdCeMAfQIYgzZfEWBPkBVqIP2BIFikWdv6/apXGQCxl5PTwS3B5pQO04pLaLqRj9EFJpWtW4AUi2JY9pzpFCrtQsHjWH0kBE22NDsFosPkAuGWa3vWQWp3OkV4hc152lPdsvT0FvgK86THFCaUhLMw7wzdJ/MvfzDDVF5UojlVsaeNPl/nbgSdGhIlgWmkXJ06IdpX8dx/aQ0+mvYyK0elvo+XFoVAqO3GMljHFitP41gskP7H4AUEsDBBQAAAAIAFmWXV00UMaGMAEAACICAAAPAAAAeGwvd29ya2Jvb2sueG1sjVHRSsNAEPyVcB9gUtGCpemLRS2IFit9vySbZundbdjbtNqvd5MQLPji097OLMPM3PJMfCyIjsmXdyHmphFpF2kaywa8jTfUQlCmJvZWdOVDGlsGW8UGQLxLb7NsnnqLwayWk9aW0+uFBEpBCgr2wB7hHH/5fk1OGLFAh/Kdm+HtwCQeA3q8QJWbzCSxofMLMV4oiHW7ksm53MxGYg8sWP6Bd73JT1vEARFbfFg1kpt5poI1cpThYtC36vEEejxundATOgFeW4Fnpq7FcOhlNEV6FWPoYZpjiQv+T41U11jCmsrOQ5CxRwbXGwyxwTaaJFgPuRks9nl0bKoxm6ipq6Z4gUrwphrtTZ4qqDFA9aYyUXHtp9xy0o9B5/bufvagPXTOPSr2Hl7JVlPE6XtWP1BLAwQUAAAACABZll1dJB6boq0AAAD4AQAAGgAAAHhsL19yZWxzL3dvcmtib29rLnhtbC5yZWxztZE9DoMwDIWvEuUANVCpQwVMXVgrLhAF8yMSEsWuCrcvhQGQOnRhsp4tf+/JTp9oFHduoLbzJEZrBspky+zvAKRbtIouzuMwT2oXrOJZhga80r1qEJIoukHYM2Se7pminDz+Q3R13Wl8OP2yOPAPMLxd6KlFZClKFRrkTMJotjbBUuLLTJaiqDIZiiqWcFog4skgbWlWfbBPTrTneRc390WuzeMJrt8McHh0/gFQSwMEFAAAAAgAWZZdXWWQeZIZAQAAzwMAABMAAABbQ29udGVudF9UeXBlc10ueG1srZNNTsMwEIWvEmVbJS4sWKCmG2ALXXABY08aq/6TZ1rS2zNO2kqgEhWFTax43rzPnpes3o8RsOid9diUHVF8FAJVB05iHSJ4rrQhOUn8mrYiSrWTWxD3y+WDUMETeKooe5Tr1TO0cm+peOl5G03wTZnAYlk8jcLMakoZozVKEtfFwesflOpEqLlz0GBnIi5YUIqrhFz5HXDqeztASkZDsZGJXqVjleitQDpawHra4soZQ9saBTqoveOWGmMCqbEDIGfr0XQxTSaeMIzPu9n8wWYKyMpNChE5sQR/x50jyd1VZCNIZKaveCGy9ez7QU5bg76RzeP9DGk35IFiWObP+HvGF/8bzvERwu6/P7G81k4af+aL4T9efwFQSwECFAAUAAAACABZll1dRsdNSJUAAADNAAAAEAAAAAAAAAAAAAAAgAEAAAAAZG9jUHJvcHMvYXBwLnhtbFBLAQIUABQAAAAIAFmWXV088E8N7gAAACsCAAARAAAAAAAAAAAAAACAAcMAAABkb2NQcm9wcy9jb3JlLnhtbFBLAQIUABQAAAAIAFmWXV2ZXJwjEAYAAJwnAAATAAAAAAAAAAAAAACAAeABAAB4bC90aGVtZS90aGVtZTEueG1sUEsBAhQAFAAAAAgAWZZdXSVTa97TAQAAbgQAABgAAAAAAAAAAAAAALaBIQgAAHhsL3dvcmtzaGVldHMvc2hlZXQxLnhtbFBLAQIUABQAAAAIAFmWXV1886PcUQIAAPYJAAANAAAAAAAAAAAAAACAASoKAAB4bC9zdHlsZXMueG1sUEsBAhQAFAAAAAgAWZZdXZeKuxzAAAAAEwIAAAsAAAAAAAAAAAAAAIABpgwAAF9yZWxzLy5yZWxzUEsBAhQAFAAAAAgAWZZdXTRQxoYwAQAAIgIAAA8AAAAAAAAAAAAAAIABjw0AAHhsL3dvcmtib29rLnhtbFBLAQIUABQAAAAIAFmWXV0kHpuirQAAAPgBAAAaAAAAAAAAAAAAAACAAewOAAB4bC9fcmVscy93b3JrYm9vay54bWwucmVsc1BLAQIUABQAAAAIAFmWXV1lkHmSGQEAAM8DAAATAAAAAAAAAAAAAACAAdEPAABbQ29udGVudF9UeXBlc10ueG1sUEsFBgAAAAAJAAkAPgIAABsRAAAAAA==",
+   "rows": [],
+   "errs": [
+    "v\u00f9ng d\u1eef li\u1ec7u sheet 100005 d\u00f2ng \u00d7 6 c\u1ed9t v\u01b0\u1ee3t tr\u1ea7n 100000 \u00d7 200 \u2014 x\u00f3a d\u00f2ng/c\u1ed9t th\u1eeba (\u00f4 \u0111\u1ecbnh d\u1ea1ng xa ph\u00eda d\u01b0\u1edbi/b\u00ean ph\u1ea3i) ho\u1eb7c xu\u1ea5t CSV"
+   ]
+  },
+  {
+   "name": "far_3_250.xlsx",
+   "kind": "listing",
+   "data": "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",
+   "rows": [],
+   "errs": [
+    "v\u00f9ng d\u1eef li\u1ec7u sheet 3 d\u00f2ng \u00d7 250 c\u1ed9t v\u01b0\u1ee3t tr\u1ea7n 100000 \u00d7 200 \u2014 x\u00f3a d\u00f2ng/c\u1ed9t th\u1eeba (\u00f4 \u0111\u1ecbnh d\u1ea1ng xa ph\u00eda d\u01b0\u1edbi/b\u00ean ph\u1ea3i) ho\u1eb7c xu\u1ea5t CSV"
+   ]
+  }
+ ],
+ "skus": {
+  "savina-12v": {
+   "category": "tpbvsk",
+   "xnqc_status": "none",
+   "shopee_item_id": "27357883504"
+  },
+  "saphraton-20v": {
+   "category": "tpbvsk",
+   "xnqc_status": "none",
+   "shopee_item_id": "24825885894"
+  },
+  "savigout-30v": {
+   "category": "tpbvsk",
+   "xnqc_status": "approved",
+   "shopee_item_id": "24325987926"
+  },
+  "mat-ong-sam-120ml-1hu": {
+   "category": "food",
+   "xnqc_status": "none",
+   "shopee_item_id": "54916394790"
+  },
+  "mat-ong-sam-120ml-2hu": {
+   "category": "food",
+   "xnqc_status": "none",
+   "shopee_item_id": "54916394790"
+  },
+  "ruou-x": {
+   "category": "alcohol",
+   "xnqc_status": "none",
+   "shopee_item_id": "27325048614"
+  }
+ },
+ "prices": {
+  "savigout-30v": [
+   439000,
+   7,
+   null
+  ],
+  "savina-12v": [
+   159000,
+   8,
+   "G\u0110 b\u00e1n h\u00e0ng"
+  ],
+  "ruou-x": [
+   745000,
+   9,
+   ""
+  ]
+ },
+ "map_sku": [
+  [
+   {
+    "seller_sku": "savina-12v",
+    "item_id": "x"
+   },
+   "shopee",
+   [
+    "savina-12v",
+    []
+   ]
+  ],
+  [
+   {
+    "item_id": "27357883504"
+   },
+   "shopee",
+   [
+    "savina-12v",
+    []
+   ]
+  ],
+  [
+   {
+    "item_id": "54916394790"
+   },
+   "shopee",
+   [
+    null,
+    [
+     "mat-ong-sam-120ml-1hu",
+     "mat-ong-sam-120ml-2hu"
+    ]
+   ]
+  ],
+  [
+   {
+    "item_id": "27357883504"
+   },
+   "tiktok",
+   [
+    null,
+    []
+   ]
+  ],
+  [
+   {
+    "item_id": "999"
+   },
+   "shopee",
+   [
+    null,
+    []
+   ]
+  ],
+  [
+   {
+    "seller_sku": "khong-co",
+    "item_id": "27325048614"
+   },
+   "shopee",
+   [
+    "ruou-x",
+    []
+   ]
+  ],
+  [
+   {
+    "seller_sku": "",
+    "item_id": ""
+   },
+   "shopee",
+   [
+    null,
+    []
+   ]
+  ],
+  [
+   {},
+   "shopee",
+   [
+    null,
+    []
+   ]
+  ]
+ ],
+ "find_alerts": [
+  {
+   "name": "fixture_shopee_listing.csv",
+   "kind": "listing",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27357883504",
+     "seller_sku": null,
+     "title": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm (FIXTURE)",
+     "price": 159000,
+     "stock": 50,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": "24325987926",
+     "seller_sku": null,
+     "title": "Savigout 30 vi\u00ean (FIXTURE)",
+     "price": 482900,
+     "stock": 20,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml (FIXTURE)",
+     "price": 745000,
+     "stock": 5,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 5,
+     "item_id": "99900000001",
+     "seller_sku": null,
+     "title": "S\u1ea3n ph\u1ea9m l\u1ea1 kh\u00f4ng c\u00f3 trong golden (FIXTURE)",
+     "price": 100000,
+     "stock": 1,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 6,
+     "item_id": "54916394790",
+     "seller_sku": "mat-ong-sam-120ml-1hu",
+     "title": "M\u1eadt ong s\u00e2m 120ml 1 h\u0169 (FIXTURE)",
+     "price": 745000,
+     "stock": 10,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": [
+    [
+     "price_mismatch",
+     "24325987926",
+     "",
+     "savigout-30v",
+     {
+      "sku_key": "savigout-30v",
+      "price_san": 482900,
+      "price_golden": 439000,
+      "price_id": 7,
+      "golden_approved": false,
+      "approved_by": null,
+      "golden_note": "gi\u00e1 golden CH\u01afA duy\u1ec7t",
+      "row_no": 3
+     }
+    ],
+    [
+     "alcohol_listed",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "status_san": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+      "price_san": 745000,
+      "title": "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml (FIXTURE)",
+      "row_no": 4
+     }
+    ],
+    [
+     "item_unmapped",
+     "99900000001",
+     "",
+     null,
+     {
+      "item_id": "99900000001",
+      "seller_sku": null,
+      "title": "S\u1ea3n ph\u1ea9m l\u1ea1 kh\u00f4ng c\u00f3 trong golden (FIXTURE)",
+      "candidates": [],
+      "row_no": 5
+     }
+    ]
+   ]
+  },
+  {
+   "name": "fixture_shopee_listing_fixed.csv",
+   "kind": "listing",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27357883504",
+     "seller_sku": null,
+     "title": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm (FIXTURE)",
+     "price": 159000,
+     "stock": 50,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": "24325987926",
+     "seller_sku": null,
+     "title": "Savigout 30 vi\u00ean (FIXTURE)",
+     "price": 439000,
+     "stock": 20,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml (FIXTURE)",
+     "price": 745000,
+     "stock": 5,
+     "status": "\u0110\u00e3 \u1ea9n",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 5,
+     "item_id": "99900000001",
+     "seller_sku": null,
+     "title": "S\u1ea3n ph\u1ea9m l\u1ea1 kh\u00f4ng c\u00f3 trong golden (FIXTURE)",
+     "price": 100000,
+     "stock": 1,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 6,
+     "item_id": "54916394790",
+     "seller_sku": "mat-ong-sam-120ml-1hu",
+     "title": "M\u1eadt ong s\u00e2m 120ml 1 h\u0169 (FIXTURE)",
+     "price": 745000,
+     "stock": 10,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": [
+    [
+     "item_unmapped",
+     "99900000001",
+     "",
+     null,
+     {
+      "item_id": "99900000001",
+      "seller_sku": null,
+      "title": "S\u1ea3n ph\u1ea9m l\u1ea1 kh\u00f4ng c\u00f3 trong golden (FIXTURE)",
+      "candidates": [],
+      "row_no": 5
+     }
+    ]
+   ]
+  },
+  {
+   "name": "fixture_shopee_ads.csv",
+   "kind": "ads",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "24825885894",
+     "seller_sku": null,
+     "title": "QC Saphraton 20 vi\u00ean (FIXTURE)",
+     "price": null,
+     "stock": null,
+     "status": "\u0110ang ch\u1ea1y",
+     "ads_spend": 250000,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": "27357883504",
+     "seller_sku": null,
+     "title": "QC Savina (FIXTURE)",
+     "price": null,
+     "stock": null,
+     "status": "T\u1ea1m d\u1eebng",
+     "ads_spend": 0,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": "29007947088",
+     "seller_sku": null,
+     "title": "QC M\u1eadt ong s\u00e2m 300ml (FIXTURE)",
+     "price": null,
+     "stock": null,
+     "status": "\u0110ang ch\u1ea1y",
+     "ads_spend": 120000,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": [
+    [
+     "tpbvsk_ads_no_xnqc",
+     "24825885894",
+     "",
+     "saphraton-20v",
+     {
+      "sku_key": "saphraton-20v",
+      "ads_spend_vnd": 250000,
+      "xnqc_status": "none"
+     }
+    ],
+    [
+     "item_unmapped",
+     "29007947088",
+     "",
+     null,
+     {
+      "item_id": "29007947088",
+      "seller_sku": null,
+      "title": "QC M\u1eadt ong s\u00e2m 300ml (FIXTURE)",
+      "candidates": [],
+      "row_no": 4
+     }
+    ]
+   ]
+  },
+  {
+   "name": "fixture_shopee_order.csv",
+   "kind": "order",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": null,
+     "seller_sku": "savina-12v",
+     "title": "Savina tu\u00fdp 12 vi\u00ean (FIXTURE)",
+     "price": 159000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 2,
+     "order_id_hash": "35feb55e2d5d59a6",
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 3,
+     "item_id": null,
+     "seller_sku": "saphraton-20v",
+     "title": "Saphraton 20 vi\u00ean (FIXTURE)",
+     "price": 299000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "35feb55e2d5d59a6",
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 4,
+     "item_id": null,
+     "seller_sku": "savigout-30v",
+     "title": "Savigout 30 vi\u00ean (FIXTURE)",
+     "price": 439000,
+     "stock": null,
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "199dd6e0f1b8d947",
+     "sale_price": null,
+     "voucher_code": null
+    },
+    {
+     "row_no": 5,
+     "item_id": null,
+     "seller_sku": "mat-ong-sam-300ml",
+     "title": "M\u1eadt ong s\u00e2m 300ml (FIXTURE)",
+     "price": 2980000,
+     "stock": null,
+     "status": "\u0110ang giao",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "85816dd08d34cde1",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": []
+  },
+  {
+   "name": "alcohol:None",
+   "kind": "listing",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "r",
+     "price": 1,
+     "status": null
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": [
+    [
+     "alcohol_listed",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "status_san": null,
+      "price_san": 1,
+      "title": "r",
+      "row_no": 2
+     }
+    ],
+    [
+     "price_mismatch",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "price_san": 1,
+      "price_golden": 745000,
+      "price_id": 9,
+      "golden_approved": true,
+      "approved_by": "",
+      "golden_note": "gi\u00e1 golden CH\u01afA duy\u1ec7t",
+      "row_no": 2
+     }
+    ]
+   ]
+  },
+  {
+   "name": "alcohol:'\u0110ang ho\u1ea1t \u0111\u1ed9ng'",
+   "kind": "listing",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "r",
+     "price": 1,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng"
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": [
+    [
+     "alcohol_listed",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "status_san": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+      "price_san": 1,
+      "title": "r",
+      "row_no": 2
+     }
+    ],
+    [
+     "price_mismatch",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "price_san": 1,
+      "price_golden": 745000,
+      "price_id": 9,
+      "golden_approved": true,
+      "approved_by": "",
+      "golden_note": "gi\u00e1 golden CH\u01afA duy\u1ec7t",
+      "row_no": 2
+     }
+    ]
+   ]
+  },
+  {
+   "name": "alcohol:'l\u1ea1'",
+   "kind": "listing",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "r",
+     "price": 1,
+     "status": "l\u1ea1"
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": [
+    [
+     "alcohol_listed",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "status_san": "l\u1ea1",
+      "price_san": 1,
+      "title": "r",
+      "row_no": 2
+     }
+    ],
+    [
+     "price_mismatch",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "price_san": 1,
+      "price_golden": 745000,
+      "price_id": 9,
+      "golden_approved": true,
+      "approved_by": "",
+      "golden_note": "gi\u00e1 golden CH\u01afA duy\u1ec7t",
+      "row_no": 2
+     }
+    ]
+   ]
+  },
+  {
+   "name": "alcohol:'\u0110\u00e3 \u1ea9n'",
+   "kind": "listing",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "r",
+     "price": 1,
+     "status": "\u0110\u00e3 \u1ea9n"
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": [
+    [
+     "price_mismatch",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "price_san": 1,
+      "price_golden": 745000,
+      "price_id": 9,
+      "golden_approved": true,
+      "approved_by": "",
+      "golden_note": "gi\u00e1 golden CH\u01afA duy\u1ec7t",
+      "row_no": 2
+     }
+    ]
+   ]
+  },
+  {
+   "name": "alcohol:'\u0110a\u0303 \u00e2\u0309n'",
+   "kind": "listing",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "r",
+     "price": 1,
+     "status": "\u0110a\u0303 \u00e2\u0309n"
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": [
+    [
+     "price_mismatch",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "price_san": 1,
+      "price_golden": 745000,
+      "price_id": 9,
+      "golden_approved": true,
+      "approved_by": "",
+      "golden_note": "gi\u00e1 golden CH\u01afA duy\u1ec7t",
+      "row_no": 2
+     }
+    ]
+   ]
+  },
+  {
+   "name": "ads_dup",
+   "kind": "ads",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "24825885894",
+     "seller_sku": null,
+     "title": "a",
+     "ads_spend": 100,
+     "status": null
+    },
+    {
+     "row_no": 3,
+     "item_id": "24825885894",
+     "seller_sku": null,
+     "title": "b",
+     "ads_spend": 250,
+     "status": null
+    },
+    {
+     "row_no": 4,
+     "item_id": "24825885894",
+     "seller_sku": null,
+     "title": "c",
+     "ads_spend": 0,
+     "status": null
+    },
+    {
+     "row_no": 5,
+     "item_id": "24325987926",
+     "seller_sku": null,
+     "title": "d",
+     "ads_spend": 9,
+     "status": null
+    },
+    {
+     "row_no": 6,
+     "item_id": "54916394790",
+     "seller_sku": null,
+     "title": "e",
+     "ads_spend": 9,
+     "status": null
+    }
+   ],
+   "inactive": [],
+   "out": [
+    [
+     "tpbvsk_ads_no_xnqc",
+     "24825885894",
+     "",
+     "saphraton-20v",
+     {
+      "sku_key": "saphraton-20v",
+      "ads_spend_vnd": 350,
+      "xnqc_status": "none"
+     }
+    ],
+    [
+     "item_unmapped",
+     "54916394790",
+     "",
+     null,
+     {
+      "item_id": "54916394790",
+      "seller_sku": null,
+      "title": "e",
+      "candidates": [
+       "mat-ong-sam-120ml-1hu",
+       "mat-ong-sam-120ml-2hu"
+      ],
+      "row_no": 6
+     }
+    ]
+   ]
+  },
+  {
+   "name": "price",
+   "kind": "listing",
+   "rows": [
+    {
+     "row_no": 2,
+     "item_id": "x",
+     "seller_sku": "savina-12v",
+     "title": "s",
+     "price": 159000,
+     "status": "X"
+    },
+    {
+     "row_no": 3,
+     "item_id": "y",
+     "seller_sku": "savina-12v",
+     "title": "s",
+     "price": 160000,
+     "status": "X"
+    },
+    {
+     "row_no": 4,
+     "item_id": "27325048614",
+     "seller_sku": null,
+     "title": "r",
+     "price": null,
+     "status": "\u0110\u00e3 \u1ea9n"
+    }
+   ],
+   "inactive": [
+    "\u0110\u00e3 \u1ea9n"
+   ],
+   "out": [
+    [
+     "price_mismatch",
+     "y",
+     "savina-12v",
+     "savina-12v",
+     {
+      "sku_key": "savina-12v",
+      "price_san": 160000,
+      "price_golden": 159000,
+      "price_id": 8,
+      "golden_approved": true,
+      "approved_by": "G\u0110 b\u00e1n h\u00e0ng",
+      "golden_note": "gi\u00e1 golden \u0111\u00e3 duy\u1ec7t",
+      "row_no": 3
+     }
+    ],
+    [
+     "price_mismatch",
+     "27325048614",
+     "",
+     "ruou-x",
+     {
+      "sku_key": "ruou-x",
+      "price_san": null,
+      "price_golden": 745000,
+      "price_id": 9,
+      "golden_approved": true,
+      "approved_by": "",
+      "golden_note": "gi\u00e1 golden CH\u01afA duy\u1ec7t",
+      "row_no": 4
+     }
+    ]
+   ]
+  }
+ ],
+ "sign_shopee": [
+  [
+   "key123",
+   "1000001",
+   "/api/v2/shop/get_shop_info",
+   1700000000,
+   "tok",
+   "2000002",
+   "529995c06f7440212e711afa19219781cda0cf51aa4eca058c056bfb2167a291"
+  ],
+  [
+   "kh\u00f3a",
+   "1",
+   "/p",
+   0,
+   "",
+   "",
+   "ad07b5a76e4eb2a5dc4ba6db10fc022a2a8b0811cfc6f99b0e7888be14892dad"
+  ]
+ ],
+ "sign_tiktok": [
+  [
+   "sec",
+   "/order/202309/orders/search",
+   {
+    "timestamp": "1700000000",
+    "app_key": "ak",
+    "shop_cipher": "c1",
+    "sign": "IGNORED",
+    "access_token": "IGNORED",
+    "page_size": "10",
+    "Zeta": "z",
+    "\u00e9": "1"
+   },
+   "{\"a\":1}",
+   "024cfbec2425a29a6c67aa46a5a95873fd9b35120fe1aa5a0d449563087dd7f2"
+  ]
+ ],
+ "num": [
+  [
+   236000.0,
+   "price",
+   {
+    "ok": 236000
+   }
+  ],
+  [
+   236000.0,
+   "stock",
+   {
+    "ok": 236000
+   }
+  ],
+  [
+   236000,
+   "price",
+   {
+    "ok": 236000
+   }
+  ],
+  [
+   236000,
+   "stock",
+   {
+    "ok": 236000
+   }
+  ],
+  [
+   "236000",
+   "price",
+   {
+    "ok": 236000
+   }
+  ],
+  [
+   "236000",
+   "stock",
+   {
+    "ok": 236000
+   }
+  ],
+  [
+   "236000.00",
+   "price",
+   {
+    "ok": 236000
+   }
+  ],
+  [
+   "236000.00",
+   "stock",
+   {
+    "ok": 236000
+   }
+  ],
+  [
+   236000.5,
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean"
+   }
+  ],
+  [
+   236000.5,
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean"
+   }
+  ],
+  [
+   "236000.5",
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "236000.5",
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   -1,
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   -1,
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "236.000",
+   "price",
+   {
+    "ok": 236
+   }
+  ],
+  [
+   "236.000",
+   "stock",
+   {
+    "ok": 236
+   }
+  ],
+  [
+   "1.234.567",
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "1.234.567",
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "1,5",
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "1,5",
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   true,
+   "price",
+   {
+    "err": "w: field 'price' thi\u1ebfu/sai ki\u1ec3u"
+   }
+  ],
+  [
+   true,
+   "stock",
+   {
+    "err": "w: field 'stock' thi\u1ebfu/sai ki\u1ec3u"
+   }
+  ],
+  [
+   null,
+   "price",
+   {
+    "err": "w: field 'price' thi\u1ebfu/sai ki\u1ec3u"
+   }
+  ],
+  [
+   null,
+   "stock",
+   {
+    "err": "w: field 'stock' thi\u1ebfu/sai ki\u1ec3u"
+   }
+  ],
+  [
+   10000000000000000,
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   10000000000000000,
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   1e+16,
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   1e+16,
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   " 42 ",
+   "price",
+   {
+    "ok": 42
+   }
+  ],
+  [
+   " 42 ",
+   "stock",
+   {
+    "ok": 42
+   }
+  ],
+  [
+   "0",
+   "price",
+   {
+    "ok": 0
+   }
+  ],
+  [
+   "0",
+   "stock",
+   {
+    "ok": 0
+   }
+  ],
+  [
+   0,
+   "price",
+   {
+    "ok": 0
+   }
+  ],
+  [
+   0,
+   "stock",
+   {
+    "ok": 0
+   }
+  ],
+  [
+   "444444444444444444444",
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "444444444444444444444",
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "1.0000000",
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "1.0000000",
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   {
+    "a": 1
+   },
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   {
+    "a": 1
+   },
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   [
+    1
+   ],
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   [
+    1
+   ],
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   2000000000,
+   "price",
+   {
+    "ok": 2000000000
+   }
+  ],
+  [
+   2000000000,
+   "stock",
+   {
+    "ok": 2000000000
+   }
+  ],
+  [
+   2000000001,
+   "price",
+   {
+    "ok": 2000000001
+   }
+  ],
+  [
+   2000000001,
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "\u0661",
+   "price",
+   {
+    "err": "w: field 'price' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "\u0661",
+   "stock",
+   {
+    "err": "w: field 'stock' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean \u2265 0 h\u1ee3p l\u1ec7"
+   }
+  ]
+ ],
+ "id": [
+  [
+   24325987926,
+   {
+    "ok": "24325987926"
+   }
+  ],
+  [
+   "  abc ",
+   {
+    "ok": "abc"
+   }
+  ],
+  [
+   "",
+   {
+    "err": "w: field 'item_id' kh\u00f4ng h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "   ",
+   {
+    "err": "w: field 'item_id' kh\u00f4ng h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   {
+    "ok": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+   }
+  ],
+  [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   {
+    "err": "w: field 'item_id' kh\u00f4ng h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "a\u0000b",
+   {
+    "err": "w: field 'item_id' kh\u00f4ng h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   true,
+   {
+    "err": "w: field 'item_id' thi\u1ebfu/sai ki\u1ec3u"
+   }
+  ],
+  [
+   1.0,
+   {
+    "err": "w: field 'item_id' thi\u1ebfu/sai ki\u1ec3u"
+   }
+  ],
+  [
+   null,
+   {
+    "err": "w: field 'item_id' thi\u1ebfu/sai ki\u1ec3u"
+   }
+  ],
+  [
+   [
+    1
+   ],
+   {
+    "err": "w: field 'item_id' thi\u1ebfu/sai ki\u1ec3u"
+   }
+  ],
+  [
+   "\u0110\u01a1n-1",
+   {
+    "ok": "\u0110\u01a1n-1"
+   }
+  ],
+  [
+   1152921504606846976,
+   {
+    "ok": "1152921504606846976"
+   }
+  ],
+  [
+   "\u200b",
+   {
+    "err": "w: field 'item_id' kh\u00f4ng h\u1ee3p l\u1ec7"
+   }
+  ]
+ ],
+ "str": [
+  [
+   null,
+   {
+    "ok": null
+   },
+   {
+    "ok": null
+   }
+  ],
+  [
+   "",
+   {
+    "ok": null
+   },
+   {
+    "ok": null
+   }
+  ],
+  [
+   "  x  ",
+   {
+    "ok": "x"
+   },
+   {
+    "ok": "x"
+   }
+  ],
+  [
+   "   ",
+   {
+    "ok": null
+   },
+   {
+    "ok": null
+   }
+  ],
+  [
+   5,
+   {
+    "err": "w: field 'title' sai ki\u1ec3u"
+   },
+   {
+    "err": "w: field 'title' sai ki\u1ec3u"
+   }
+  ],
+  [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   {
+    "ok": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+   },
+   {
+    "ok": "aaa"
+   }
+  ],
+  [
+   "\u00a0b\u3000",
+   {
+    "ok": "b"
+   },
+   {
+    "ok": "b"
+   }
+  ],
+  [
+   [
+    "x"
+   ],
+   {
+    "err": "w: field 'title' sai ki\u1ec3u"
+   },
+   {
+    "err": "w: field 'title' sai ki\u1ec3u"
+   }
+  ]
+ ],
+ "fetch": [
+  {
+   "name": "sp_listing",
+   "channel": "shopee",
+   "kind": "listing",
+   "days": 7,
+   "calls": [
+    [
+     "GET",
+     "/api/v2/product/get_item_list",
+     {
+      "offset": 0,
+      "page_size": 100,
+      "item_status": [
+       "NORMAL",
+       "UNLIST",
+       "BANNED",
+       "REVIEWING"
+      ]
+     },
+     null,
+     {
+      "error": "",
+      "message": "",
+      "response": {
+       "item": [
+        {
+         "item_id": 555
+        },
+        {
+         "item_id": 777
+        }
+       ],
+       "has_next_page": true,
+       "next_offset": 2
+      }
+     }
+    ],
+    [
+     "GET",
+     "/api/v2/product/get_item_list",
+     {
+      "offset": 2,
+      "page_size": 100,
+      "item_status": [
+       "NORMAL",
+       "UNLIST",
+       "BANNED",
+       "REVIEWING"
+      ]
+     },
+     null,
+     {
+      "error": "",
+      "message": "",
+      "response": {
+       "item": [
+        {
+         "item_id": "888"
+        }
+       ],
+       "has_next_page": false,
+       "next_offset": 3
+      }
+     }
+    ],
+    [
+     "GET",
+     "/api/v2/product/get_item_base_info",
+     {
+      "item_id_list": "555,777,888"
+     },
+     null,
+     {
+      "error": "",
+      "message": "",
+      "response": {
+       "item_list": [
+        {
+         "item_id": 555,
+         "item_name": " Saphraton ",
+         "item_sku": "",
+         "item_status": "NORMAL",
+         "has_model": true
+        },
+        {
+         "item_id": 777,
+         "item_name": "L\u1ebb",
+         "item_sku": "le-1",
+         "item_status": "UNLIST",
+         "has_model": false,
+         "price_info": [
+          {
+           "original_price": 100000.0
+          }
+         ],
+         "stock_info_v2": {
+          "summary_info": {
+           "total_available_stock": 5
+          }
+         }
+        },
+        {
+         "item_id": "888",
+         "item_name": "",
+         "item_sku": null,
+         "item_status": "L\u1ea0",
+         "has_model": 0,
+         "price_info": [
+          {
+           "original_price": "236.000"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ],
+    [
+     "GET",
+     "/api/v2/product/get_model_list",
+     {
+      "item_id": "555"
+     },
+     null,
+     {
+      "error": "",
+      "message": "",
+      "response": {
+       "model": [
+        {
+         "model_sku": "saphraton-20v",
+         "price_info": [
+          {
+           "original_price": 299000
+          }
+         ],
+         "stock_info_v2": {
+          "summary_info": {
+           "total_available_stock": 3
+          }
+         }
+        },
+        {
+         "model_sku": "saphraton-40v",
+         "price_info": [
+          {
+           "original_price": "560000"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   ],
+   "rows": [
+    {
+     "item_id": "555",
+     "seller_sku": "saphraton-20v",
+     "title": "Saphraton",
+     "price": 299000,
+     "stock": 3,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null,
+     "row_no": 1
+    },
+    {
+     "item_id": "555",
+     "seller_sku": "saphraton-40v",
+     "title": "Saphraton",
+     "price": 560000,
+     "stock": null,
+     "status": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null,
+     "row_no": 2
+    },
+    {
+     "item_id": "777",
+     "seller_sku": "le-1",
+     "title": "L\u1ebb",
+     "price": 100000,
+     "stock": 5,
+     "status": "\u0110\u00e3 \u1ea9n",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null,
+     "row_no": 3
+    },
+    {
+     "item_id": "888",
+     "seller_sku": null,
+     "title": null,
+     "price": 236,
+     "stock": null,
+     "status": "L\u1ea0",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null,
+     "row_no": 4
+    }
+   ],
+   "sha": "25b65f241c928c5f8d1b64e7e62dffff1968badad44a64d1a6feb69443d9e48b"
+  },
+  {
+   "name": "sp_order",
+   "channel": "shopee",
+   "kind": "order",
+   "days": 3,
+   "calls": [
+    [
+     "GET",
+     "/api/v2/order/get_order_list",
+     {
+      "time_range_field": "create_time",
+      "time_from": 1699740800,
+      "time_to": 1700000000,
+      "page_size": 100
+     },
+     null,
+     {
+      "error": "",
+      "message": "",
+      "response": {
+       "order_list": [
+        {
+         "order_sn": "FAKEORDER1"
+        }
+       ],
+       "more": true,
+       "next_cursor": "c2"
+      }
+     }
+    ],
+    [
+     "GET",
+     "/api/v2/order/get_order_list",
+     {
+      "time_range_field": "create_time",
+      "time_from": 1699740800,
+      "time_to": 1700000000,
+      "page_size": 100,
+      "cursor": "c2"
+     },
+     null,
+     {
+      "error": "",
+      "message": "",
+      "response": {
+       "order_list": [
+        {
+         "order_sn": "FAKEORDER2"
+        }
+       ],
+       "more": false,
+       "next_cursor": ""
+      }
+     }
+    ],
+    [
+     "GET",
+     "/api/v2/order/get_order_detail",
+     {
+      "order_sn_list": "FAKEORDER1,FAKEORDER2",
+      "response_optional_fields": "item_list"
+     },
+     null,
+     {
+      "error": "",
+      "message": "",
+      "response": {
+       "order_list": [
+        {
+         "order_sn": "FAKEORDER1",
+         "order_status": "CANCELLED",
+         "buyer_username": "nguoimuagia",
+         "recipient_address": {
+          "name": "NGUOI MUA GIA",
+          "phone": "0900000000"
+         },
+         "item_list": [
+          {
+           "item_id": 24325987926,
+           "item_name": "Savigout",
+           "item_sku": "savigout-30v",
+           "model_sku": "",
+           "model_quantity_purchased": 2,
+           "model_discounted_price": 439000.0
+          }
+         ]
+        },
+        {
+         "order_sn": "FAKEORDER2",
+         "order_status": "COMPLETED",
+         "item_list": [
+          {
+           "item_id": 1,
+           "item_name": "A",
+           "model_sku": "m-1",
+           "item_sku": "i-1",
+           "model_quantity_purchased": 1,
+           "model_discounted_price": "100000"
+          },
+          {
+           "item_id": 2,
+           "item_name": null,
+           "model_quantity_purchased": 3,
+           "model_discounted_price": 5
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   ],
+   "rows": [
+    {
+     "item_id": "24325987926",
+     "seller_sku": "savigout-30v",
+     "title": "Savigout",
+     "price": 439000,
+     "stock": null,
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "ads_spend": null,
+     "qty": 2,
+     "sale_price": null,
+     "voucher_code": null,
+     "order_id_hash": "f2d3d7ca86829f61",
+     "row_no": 1
+    },
+    {
+     "item_id": "1",
+     "seller_sku": "m-1",
+     "title": "A",
+     "price": 100000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "sale_price": null,
+     "voucher_code": null,
+     "order_id_hash": "fa0707ca1879e882",
+     "row_no": 2
+    },
+    {
+     "item_id": "2",
+     "seller_sku": null,
+     "title": null,
+     "price": 5,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 3,
+     "sale_price": null,
+     "voucher_code": null,
+     "order_id_hash": "fa0707ca1879e882",
+     "row_no": 3
+    }
+   ],
+   "sha": "41df0629d27929438c69f5f809d003de3e7a2d8febcc58658b92872a7b9ebab7"
+  },
+  {
+   "name": "tt_listing_bad",
+   "channel": "tiktok",
+   "kind": "listing",
+   "days": 7,
+   "calls": [
+    [
+     "POST",
+     "/product/202309/products/search",
+     {
+      "page_size": 100
+     },
+     {},
+     {
+      "code": 0,
+      "message": "Success",
+      "data": {
+       "products": [
+        {
+         "id": "1730",
+         "title": "Savina",
+         "status": "SELLER_DEACTIVATED",
+         "skus": [
+          {
+           "seller_sku": "savina-12v",
+           "price": {
+            "tax_exclusive_price": "159000"
+           },
+           "inventory": [
+            {
+             "quantity": 3
+            },
+            {
+             "quantity": 4
+            }
+           ]
+          },
+          {
+           "seller_sku": null,
+           "price": {
+            "tax_exclusive_price": 1.0
+           }
+          }
+         ]
+        }
+       ],
+       "next_page_token": "t2"
+      }
+     }
+    ],
+    [
+     "POST",
+     "/product/202309/products/search",
+     {
+      "page_size": 100,
+      "page_token": "t2"
+     },
+     {},
+     {
+      "code": 0,
+      "message": "Success",
+      "data": {
+       "products": [
+        {
+         "id": 1731,
+         "title": "X",
+         "status": "ACTIVATE",
+         "skus": [
+          {
+           "seller_sku": "x",
+           "price": "bad",
+           "inventory": []
+          }
+         ]
+        }
+       ],
+       "next_page_token": ""
+      }
+     }
+    ]
+   ],
+   "err": "tiktok listing: field 'price' thi\u1ebfu/sai ki\u1ec3u"
+  },
+  {
+   "name": "tt_listing",
+   "channel": "tiktok",
+   "kind": "listing",
+   "days": 7,
+   "calls": [
+    [
+     "POST",
+     "/product/202309/products/search",
+     {
+      "page_size": 100
+     },
+     {},
+     {
+      "code": 0,
+      "message": "Success",
+      "data": {
+       "products": [
+        {
+         "id": "1730",
+         "title": "Savina",
+         "status": "SELLER_DEACTIVATED",
+         "skus": [
+          {
+           "seller_sku": "savina-12v",
+           "price": {
+            "tax_exclusive_price": "159000"
+           },
+           "inventory": [
+            {
+             "quantity": 3
+            },
+            {
+             "quantity": 4
+            }
+           ]
+          }
+         ]
+        }
+       ],
+       "next_page_token": ""
+      }
+     }
+    ]
+   ],
+   "rows": [
+    {
+     "item_id": "1730",
+     "seller_sku": "savina-12v",
+     "title": "Savina",
+     "price": 159000,
+     "stock": 7,
+     "status": "Deactivated",
+     "ads_spend": null,
+     "qty": null,
+     "sale_price": null,
+     "voucher_code": null,
+     "row_no": 1
+    }
+   ],
+   "sha": "0468cd96083fac1e6d2e9f4da12f9debb44677334881c4200e006b91d0f9c732"
+  },
+  {
+   "name": "tt_order",
+   "channel": "tiktok",
+   "kind": "order",
+   "days": 15,
+   "calls": [
+    [
+     "POST",
+     "/order/202309/orders/search",
+     {
+      "page_size": 100
+     },
+     {
+      "create_time_ge": 1698704000,
+      "create_time_lt": 1700000000
+     },
+     {
+      "code": 0,
+      "message": "Success",
+      "data": {
+       "orders": [
+        {
+         "id": "FAKEORDER789",
+         "status": "CANCELLED",
+         "buyer_email": "buyer@gia.example",
+         "line_items": [
+          {
+           "product_id": "17300001",
+           "product_name": "Savina",
+           "seller_sku": "savina-12v",
+           "original_price": "159000"
+          },
+          {
+           "product_id": 17300002,
+           "product_name": "B",
+           "original_price": 2000
+          }
+         ]
+        }
+       ],
+       "next_page_token": null
+      }
+     }
+    ]
+   ],
+   "rows": [
+    {
+     "item_id": "17300001",
+     "seller_sku": "savina-12v",
+     "title": "Savina",
+     "price": 159000,
+     "stock": null,
+     "status": "Cancelled",
+     "ads_spend": null,
+     "qty": 1,
+     "sale_price": null,
+     "voucher_code": null,
+     "order_id_hash": "3c2efcbd033a96a8",
+     "row_no": 1
+    },
+    {
+     "item_id": "17300002",
+     "seller_sku": null,
+     "title": "B",
+     "price": 2000,
+     "stock": null,
+     "status": "Cancelled",
+     "ads_spend": null,
+     "qty": 1,
+     "sale_price": null,
+     "voucher_code": null,
+     "order_id_hash": "3c2efcbd033a96a8",
+     "row_no": 2
+    }
+   ],
+   "sha": "b6d7b3e68c14e441f345efba228c95c7315dbffb1d245d0b08a47174594d3818"
+  }
+ ],
+ "err_code": [
+  [
+   "error_auth",
+   {
+    "K": "SPKEY_SECRET_R14"
+   },
+   [],
+   "error_auth"
+  ],
+  [
+   36004004,
+   {},
+   [],
+   "36004004"
+  ],
+  [
+   true,
+   {},
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   "Error Auth",
+   {},
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   "error_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   {},
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   "error_spkey_secret_r14",
+   {
+    "K": "spkey_secret_r14"
+   },
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   "income_not_found",
+   {},
+   [],
+   "income_not_found"
+  ],
+  [
+   "c09222e3fc40ffb25fc947f738b1abf1",
+   {},
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   "abc_12",
+   {},
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   1000000000,
+   {},
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   -999999999,
+   {},
+   [],
+   "-999999999"
+  ],
+  [
+   1.0,
+   {},
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   null,
+   {},
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   {
+    "t": "x"
+   },
+   {},
+   [],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   "error_param",
+   {},
+   [
+    "error_param_x"
+   ],
+   "error_param"
+  ],
+  [
+   "error_param",
+   {},
+   [
+    "error_param"
+   ],
+   "(kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+  ],
+  [
+   "ab_cd",
+   {
+    "K": "short"
+   },
+   [
+    "ab_cd"
+   ],
+   "ab_cd"
+  ]
+ ],
+ "api_base": [
+  [
+   null,
+   {
+    "ok": "https://partner.shopeemobile.com"
+   }
+  ],
+  [
+   "",
+   {
+    "ok": "https://partner.shopeemobile.com"
+   }
+  ],
+  [
+   "http://evil.example",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "ftp://127.0.0.1",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "http://127.0.0.1.evil.example",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "https://user:pw@partner.shopeemobile.com",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "https://h/api",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "https://",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "http://localhost:99999",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "https://h?x=1",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "http://localhost:8123/",
+   {
+    "ok": "http://localhost:8123"
+   }
+  ],
+  [
+   "HTTPS://Partner.Shopee.COM",
+   {
+    "ok": "https://Partner.Shopee.COM"
+   }
+  ],
+  [
+   "https://h#f",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "http://LOCALHOST:5",
+   {
+    "ok": "http://LOCALHOST:5"
+   }
+  ],
+  [
+   "https://@h",
+   {
+    "ok": "https://@h"
+   }
+  ],
+  [
+   "https://h:abc",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "https://[::1",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+   }
+  ],
+  [
+   "  https://x.vn  ",
+   {
+    "ok": "https://x.vn"
+   }
+  ],
+  [
+   "https://h:",
+   {
+    "ok": "https://h:"
+   }
+  ],
+  [
+   "http://[::1]:80",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "partner.shopeemobile.com",
+   {
+    "err": "SHOPEE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+   }
+  ],
+  [
+   "https://h/",
+   {
+    "ok": "https://h"
+   }
+  ]
+ ],
+ "creds": {
+  "SHOPEE_PARTNER_ID": "1000001",
+  "SHOPEE_PARTNER_KEY": "SPKEY_SECRET_XYZ",
+  "SHOPEE_SHOP_ID": "2000002",
+  "SHOPEE_ACCESS_TOKEN": "SPTOKEN_SECRET_ABC",
+  "TIKTOK_APP_KEY": "ttappkey01",
+  "TIKTOK_APP_SECRET": "TTSECRET_SECRET_QQ",
+  "TIKTOK_SHOP_CIPHER": "ROW_cipher01",
+  "TIKTOK_ACCESS_TOKEN": "TTTOKEN_SECRET_WW"
+ },
+ "request": [
+  {
+   "args": [
+    "shopee",
+    "GET",
+    "/api/v2/product/get_item_list",
+    {
+     "offset": 0,
+     "page_size": 100,
+     "item_status": [
+      "NORMAL",
+      "UNLIST",
+      "BANNED",
+      "REVIEWING"
+     ]
+    }
+   ],
+   "kw": {},
+   "doc": {
+    "error": "",
+    "response": {}
+   },
+   "out": {
+    "ok": {
+     "error": "",
+     "response": {}
+    }
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/api/v2/product/get_item_list?offset=0&page_size=100&item_status=NORMAL&item_status=UNLIST&item_status=BANNED&item_status=REVIEWING&partner_id=1000001&timestamp=1700000000&access_token=SPTOKEN_SECRET_ABC&shop_id=2000002&sign=84be1365a178753848e402694bb17bd6d73536f566baa978f56ffc59a7a8e2bb",
+    "headers": {
+     "accept": "application/json"
+    },
+    "data": null,
+    "where": "shopee /api/v2/product/get_item_list",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "shopee",
+    "GET",
+    "/api/v2/product/get_item_base_info",
+    {
+     "item_id_list": "1,2,3",
+     "x y": "a b&c=d/\u00e9~"
+    }
+   ],
+   "kw": {},
+   "doc": {
+    "error": "",
+    "response": {}
+   },
+   "out": {
+    "ok": {
+     "error": "",
+     "response": {}
+    }
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/api/v2/product/get_item_base_info?item_id_list=1%2C2%2C3&x+y=a+b%26c%3Dd%2F%C3%A9~&partner_id=1000001&timestamp=1700000000&access_token=SPTOKEN_SECRET_ABC&shop_id=2000002&sign=2e5d28d96a5f53d36a560d3ec8dd750c4e84d010004bd0fbb96428c3c22c3de1",
+    "headers": {
+     "accept": "application/json"
+    },
+    "data": null,
+    "where": "shopee /api/v2/product/get_item_base_info",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "shopee",
+    "GET",
+    "/api/v2/product/get_item_list",
+    {}
+   ],
+   "kw": {},
+   "doc": {
+    "error": "error_auth",
+    "message": "BODY"
+   },
+   "out": {
+    "err": "ApiError: shopee /api/v2/product/get_item_list: m\u00e3 l\u1ed7i error_auth"
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/api/v2/product/get_item_list?partner_id=1000001&timestamp=1700000000&access_token=SPTOKEN_SECRET_ABC&shop_id=2000002&sign=84be1365a178753848e402694bb17bd6d73536f566baa978f56ffc59a7a8e2bb",
+    "headers": {
+     "accept": "application/json"
+    },
+    "data": null,
+    "where": "shopee /api/v2/product/get_item_list",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "shopee",
+    "GET",
+    "/api/v2/product/get_item_list",
+    {}
+   ],
+   "kw": {},
+   "doc": {
+    "error": 0
+   },
+   "out": {
+    "ok": {
+     "error": 0
+    }
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/api/v2/product/get_item_list?partner_id=1000001&timestamp=1700000000&access_token=SPTOKEN_SECRET_ABC&shop_id=2000002&sign=84be1365a178753848e402694bb17bd6d73536f566baa978f56ffc59a7a8e2bb",
+    "headers": {
+     "accept": "application/json"
+    },
+    "data": null,
+    "where": "shopee /api/v2/product/get_item_list",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "shopee",
+    "GET",
+    "/api/v2/product/get_item_list",
+    {}
+   ],
+   "kw": {},
+   "doc": {
+    "error": [],
+    "response": {}
+   },
+   "out": {
+    "ok": {
+     "error": [],
+     "response": {}
+    }
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/api/v2/product/get_item_list?partner_id=1000001&timestamp=1700000000&access_token=SPTOKEN_SECRET_ABC&shop_id=2000002&sign=84be1365a178753848e402694bb17bd6d73536f566baa978f56ffc59a7a8e2bb",
+    "headers": {
+     "accept": "application/json"
+    },
+    "data": null,
+    "where": "shopee /api/v2/product/get_item_list",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "tiktok",
+    "POST",
+    "/product/202309/products/search",
+    {
+     "page_size": 5,
+     "page_token": "tok/2"
+    },
+    {
+     "z": 1,
+     "a": "Vi\u1ec7t",
+     "m": [
+      1,
+      2
+     ]
+    }
+   ],
+   "kw": {},
+   "doc": {
+    "code": 0,
+    "data": {}
+   },
+   "out": {
+    "ok": {
+     "code": 0,
+     "data": {}
+    }
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/product/202309/products/search?page_size=5&page_token=tok%2F2&app_key=ttappkey01&timestamp=1700000000&shop_cipher=ROW_cipher01&sign=135d4d48d386bb15e63a38c06f34e0570dd2005161f2d4d57de9237ac5fa2482",
+    "headers": {
+     "accept": "application/json",
+     "x-tts-access-token": "TTTOKEN_SECRET_WW",
+     "content-type": "application/json"
+    },
+    "data": "{\"a\":\"Vi\u1ec7t\",\"m\":[1,2],\"z\":1}",
+    "where": "tiktok /product/202309/products/search",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "tiktok",
+    "POST",
+    "/order/202309/orders/search",
+    {},
+    {}
+   ],
+   "kw": {},
+   "doc": {
+    "code": 105001,
+    "message": "BODY"
+   },
+   "out": {
+    "err": "ApiError: tiktok /order/202309/orders/search: m\u00e3 l\u1ed7i 105001"
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/order/202309/orders/search?app_key=ttappkey01&timestamp=1700000000&shop_cipher=ROW_cipher01&sign=72efb5e23bb02b47776d96cf19bd9d76fd431b8e60d9306c54b53f204dbdc5eb",
+    "headers": {
+     "accept": "application/json",
+     "x-tts-access-token": "TTTOKEN_SECRET_WW",
+     "content-type": "application/json"
+    },
+    "data": "{}",
+    "where": "tiktok /order/202309/orders/search",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "tiktok",
+    "POST",
+    "/order/202309/orders/search",
+    {},
+    null
+   ],
+   "kw": {},
+   "doc": {
+    "code": 0.0
+   },
+   "out": {
+    "ok": {
+     "code": 0.0
+    }
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/order/202309/orders/search?app_key=ttappkey01&timestamp=1700000000&shop_cipher=ROW_cipher01&sign=72efb5e23bb02b47776d96cf19bd9d76fd431b8e60d9306c54b53f204dbdc5eb",
+    "headers": {
+     "accept": "application/json",
+     "x-tts-access-token": "TTTOKEN_SECRET_WW",
+     "content-type": "application/json"
+    },
+    "data": "{}",
+    "where": "tiktok /order/202309/orders/search",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "tiktok",
+    "POST",
+    "/order/202309/orders/search",
+    {},
+    null
+   ],
+   "kw": {},
+   "doc": {
+    "code": false
+   },
+   "out": {
+    "ok": {
+     "code": false
+    }
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/order/202309/orders/search?app_key=ttappkey01&timestamp=1700000000&shop_cipher=ROW_cipher01&sign=72efb5e23bb02b47776d96cf19bd9d76fd431b8e60d9306c54b53f204dbdc5eb",
+    "headers": {
+     "accept": "application/json",
+     "x-tts-access-token": "TTTOKEN_SECRET_WW",
+     "content-type": "application/json"
+    },
+    "data": "{}",
+    "where": "tiktok /order/202309/orders/search",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "tiktok",
+    "POST",
+    "/order/202309/orders/search",
+    {},
+    null
+   ],
+   "kw": {},
+   "doc": {
+    "message": "no code"
+   },
+   "out": {
+    "err": "ApiError: tiktok /order/202309/orders/search: m\u00e3 l\u1ed7i (kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/order/202309/orders/search?app_key=ttappkey01&timestamp=1700000000&shop_cipher=ROW_cipher01&sign=72efb5e23bb02b47776d96cf19bd9d76fd431b8e60d9306c54b53f204dbdc5eb",
+    "headers": {
+     "accept": "application/json",
+     "x-tts-access-token": "TTTOKEN_SECRET_WW",
+     "content-type": "application/json"
+    },
+    "data": "{}",
+    "where": "tiktok /order/202309/orders/search",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "tiktok",
+    "GET",
+    "/finance/202309/statements",
+    {
+     "page_size": 100
+    }
+   ],
+   "kw": {},
+   "doc": {
+    "code": 0
+   },
+   "out": {
+    "ok": {
+     "code": 0
+    }
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/finance/202309/statements?page_size=100&app_key=ttappkey01&timestamp=1700000000&shop_cipher=ROW_cipher01&sign=d60e279f91a43b644a12bd50f255ed0dac2d6c6b4df01c8b9744a3036aea0c77",
+    "headers": {
+     "accept": "application/json",
+     "x-tts-access-token": "TTTOKEN_SECRET_WW",
+     "content-type": "application/json"
+    },
+    "data": null,
+    "where": "tiktok /finance/202309/statements",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "tiktok",
+    "GET",
+    "/finance/202501/statements/{statement_id}/statement_transactions",
+    {
+     "page_size": 100
+    }
+   ],
+   "kw": {
+    "path_params": {
+     "statement_id": "7001"
+    }
+   },
+   "doc": {
+    "code": 0
+   },
+   "out": {
+    "ok": {
+     "code": 0
+    }
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/finance/202501/statements/7001/statement_transactions?page_size=100&app_key=ttappkey01&timestamp=1700000000&shop_cipher=ROW_cipher01&sign=3ec75af1737c6c2fdf36590247b636a9a3e5f8f64f8a5747ba7632c0bd53ca18",
+    "headers": {
+     "accept": "application/json",
+     "x-tts-access-token": "TTTOKEN_SECRET_WW",
+     "content-type": "application/json"
+    },
+    "data": null,
+    "where": "tiktok /finance/202501/statements/7001/statement_transactions",
+    "retries": 3
+   }
+  },
+  {
+   "args": [
+    "tiktok",
+    "GET",
+    "/finance/202501/statements/{statement_id}/statement_transactions",
+    {}
+   ],
+   "kw": {
+    "path_params": {
+     "statement_id": "70/../x"
+    }
+   },
+   "doc": {
+    "code": 0
+   },
+   "out": {
+    "err": "DataError: tiktok /finance/202501/statements/{statement_id}/statement_transactions: tham s\u1ed1 path 'statement_id' sai d\u1ea1ng"
+   },
+   "sent": null
+  },
+  {
+   "args": [
+    "tiktok",
+    "GET",
+    "/finance/202501/statements/{statement_id}/statement_transactions",
+    {}
+   ],
+   "kw": {},
+   "doc": {
+    "code": 0
+   },
+   "out": {
+    "err": "ScopeError: /finance/202501/statements/{statement_id}/statement_transactions: thi\u1ebfu tham s\u1ed1 path"
+   },
+   "sent": null
+  },
+  {
+   "args": [
+    "shopee",
+    "POST",
+    "/api/v2/product/update_price",
+    {
+     "price": 1
+    }
+   ],
+   "kw": {},
+   "doc": {},
+   "out": {
+    "err": "ScopeError: shopee POST /api/v2/product/update_price: ngo\u00e0i allowlist ch\u1ec9 \u0111\u1ecdc \u2014 t\u1eeb ch\u1ed1i, kh\u00f4ng g\u1eedi request"
+   },
+   "sent": null
+  },
+  {
+   "args": [
+    "lazada",
+    "GET",
+    "/api/v2/product/get_item_list",
+    {}
+   ],
+   "kw": {},
+   "doc": {},
+   "out": {
+    "err": "ScopeError: lazada GET /api/v2/product/get_item_list: ngo\u00e0i allowlist ch\u1ec9 \u0111\u1ecdc \u2014 t\u1eeb ch\u1ed1i, kh\u00f4ng g\u1eedi request"
+   },
+   "sent": null
+  },
+  {
+   "args": [
+    "shopee",
+    "GET",
+    "/api/v2/x\u001b[31m",
+    {}
+   ],
+   "kw": {},
+   "doc": {},
+   "out": {
+    "err": "ScopeError: shopee GET /api/v2/x?[31m: ngo\u00e0i allowlist ch\u1ec9 \u0111\u1ecdc \u2014 t\u1eeb ch\u1ed1i, kh\u00f4ng g\u1eedi request"
+   },
+   "sent": null
+  }
+ ],
+ "refresh": [
+  {
+   "channel": "shopee",
+   "creds": {
+    "SHOPEE_PARTNER_ID": "1000001",
+    "SHOPEE_PARTNER_KEY": "SPKEY_SECRET_R14",
+    "SHOPEE_SHOP_ID": "2000002"
+   },
+   "refresh": "R1_SECRET_OLD_TOKEN",
+   "doc": {
+    "error": "",
+    "access_token": "A2_SECRET_ACCESS_TOKEN",
+    "refresh_token": "R2_SECRET_NEW_TOKEN",
+    "expire_in": 14400
+   },
+   "out": {
+    "ok": {
+     "access_token": "A2_SECRET_ACCESS_TOKEN",
+     "refresh_token": "R2_SECRET_NEW_TOKEN",
+     "expire_at": 1700014400
+    }
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/api/v2/auth/access_token/get?partner_id=1000001&timestamp=1700000000&sign=8784b36cc9bbb2f5ffb810b99324513c798d9a28f3bb18d091d8e10ca72f686a",
+    "headers": {
+     "content-type": "application/json",
+     "accept": "application/json"
+    },
+    "data": "{\"refresh_token\": \"R1_SECRET_OLD_TOKEN\", \"partner_id\": 1000001, \"shop_id\": 2000002}",
+    "where": "shopee refresh token",
+    "retries": 0
+   }
+  },
+  {
+   "channel": "shopee",
+   "creds": {
+    "SHOPEE_PARTNER_ID": "1000001",
+    "SHOPEE_PARTNER_KEY": "K",
+    "SHOPEE_SHOP_ID": "2000002"
+   },
+   "refresh": "R1_SECRET_OLD_TOKEN",
+   "doc": {
+    "error": "",
+    "access_token": "A2_SECRET",
+    "expire_in": 14400
+   },
+   "out": {
+    "err": "DataError: shopee refresh token: thi\u1ebfu/sai refresh_token"
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/api/v2/auth/access_token/get?partner_id=1000001&timestamp=1700000000&sign=8bbc31667d9a675078df60e69aa11e452cc0e01277b98ca3d471f5bc9bee5c9b",
+    "headers": {
+     "content-type": "application/json",
+     "accept": "application/json"
+    },
+    "data": "{\"refresh_token\": \"R1_SECRET_OLD_TOKEN\", \"partner_id\": 1000001, \"shop_id\": 2000002}",
+    "where": "shopee refresh token",
+    "retries": 0
+   }
+  },
+  {
+   "channel": "shopee",
+   "creds": {
+    "SHOPEE_PARTNER_ID": "1000001",
+    "SHOPEE_PARTNER_KEY": "K",
+    "SHOPEE_SHOP_ID": "2000002"
+   },
+   "refresh": "R1_SECRET_OLD_TOKEN",
+   "doc": {
+    "error": "",
+    "access_token": "A2_SECRET_X",
+    "refresh_token": "R2_SECRET_Y",
+    "expire_in": 0
+   },
+   "out": {
+    "err": "DataError: shopee refresh token: thi\u1ebfu/sai expire_in"
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/api/v2/auth/access_token/get?partner_id=1000001&timestamp=1700000000&sign=8bbc31667d9a675078df60e69aa11e452cc0e01277b98ca3d471f5bc9bee5c9b",
+    "headers": {
+     "content-type": "application/json",
+     "accept": "application/json"
+    },
+    "data": "{\"refresh_token\": \"R1_SECRET_OLD_TOKEN\", \"partner_id\": 1000001, \"shop_id\": 2000002}",
+    "where": "shopee refresh token",
+    "retries": 0
+   }
+  },
+  {
+   "channel": "shopee",
+   "creds": {
+    "SHOPEE_PARTNER_ID": "1000001",
+    "SHOPEE_PARTNER_KEY": "K",
+    "SHOPEE_SHOP_ID": "2000002"
+   },
+   "refresh": "R1_SECRET_OLD_TOKEN",
+   "doc": {
+    "error": "R1_SECRET_OLD_TOKEN"
+   },
+   "out": {
+    "err": "ApiError: shopee refresh token: m\u00e3 l\u1ed7i (kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/api/v2/auth/access_token/get?partner_id=1000001&timestamp=1700000000&sign=8bbc31667d9a675078df60e69aa11e452cc0e01277b98ca3d471f5bc9bee5c9b",
+    "headers": {
+     "content-type": "application/json",
+     "accept": "application/json"
+    },
+    "data": "{\"refresh_token\": \"R1_SECRET_OLD_TOKEN\", \"partner_id\": 1000001, \"shop_id\": 2000002}",
+    "where": "shopee refresh token",
+    "retries": 0
+   }
+  },
+  {
+   "channel": "shopee",
+   "creds": {
+    "SHOPEE_PARTNER_ID": "abc",
+    "SHOPEE_PARTNER_KEY": "K",
+    "SHOPEE_SHOP_ID": "2000002"
+   },
+   "refresh": "R1_SECRET_OLD_TOKEN",
+   "doc": {},
+   "out": {
+    "err": "ConfigError: SHOPEE_PARTNER_ID/SHOPEE_SHOP_ID ph\u1ea3i l\u00e0 s\u1ed1"
+   },
+   "sent": null
+  },
+  {
+   "channel": "shopee",
+   "creds": {
+    "SHOPEE_PARTNER_ID": "1000001",
+    "SHOPEE_PARTNER_KEY": "K",
+    "SHOPEE_SHOP_ID": "2000002"
+   },
+   "refresh": "R1_SECRET_OLD_TOKEN",
+   "doc": {
+    "error": "",
+    "access_token": "sh0rt",
+    "refresh_token": "R2_SECRET_Y",
+    "expire_in": 60
+   },
+   "out": {
+    "err": "DataError: shopee refresh token: thi\u1ebfu/sai access_token"
+   },
+   "sent": {
+    "method": "POST",
+    "url": "http://127.0.0.1:9/api/v2/auth/access_token/get?partner_id=1000001&timestamp=1700000000&sign=8bbc31667d9a675078df60e69aa11e452cc0e01277b98ca3d471f5bc9bee5c9b",
+    "headers": {
+     "content-type": "application/json",
+     "accept": "application/json"
+    },
+    "data": "{\"refresh_token\": \"R1_SECRET_OLD_TOKEN\", \"partner_id\": 1000001, \"shop_id\": 2000002}",
+    "where": "shopee refresh token",
+    "retries": 0
+   }
+  },
+  {
+   "channel": "tiktok",
+   "creds": {
+    "TIKTOK_APP_KEY": "ak01",
+    "TIKTOK_APP_SECRET": "TTSEC_R14"
+   },
+   "refresh": "R1 SECRET/OLD",
+   "doc": {
+    "code": 0,
+    "data": {
+     "access_token": "A2_SECRET_ACCESS_TOKEN",
+     "refresh_token": "R2_SECRET_NEW_TOKEN",
+     "access_token_expire_in": 1800000000
+    }
+   },
+   "out": {
+    "ok": {
+     "access_token": "A2_SECRET_ACCESS_TOKEN",
+     "refresh_token": "R2_SECRET_NEW_TOKEN",
+     "expire_at": 1800000000
+    }
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/api/v2/token/refresh?app_key=ak01&app_secret=TTSEC_R14&refresh_token=R1+SECRET%2FOLD&grant_type=refresh_token",
+    "headers": {
+     "accept": "application/json"
+    },
+    "data": null,
+    "where": "tiktok refresh token",
+    "retries": 0
+   }
+  },
+  {
+   "channel": "tiktok",
+   "creds": {
+    "TIKTOK_APP_KEY": "ak01",
+    "TIKTOK_APP_SECRET": "TTSEC_R14"
+   },
+   "refresh": "R1_SECRET_OLD_TOKEN",
+   "doc": {
+    "code": [
+     "TTSEC_R14"
+    ]
+   },
+   "out": {
+    "err": "ApiError: tiktok refresh token: m\u00e3 l\u1ed7i (kh\u00f4ng \u0111\u00fang d\u1ea1ng m\u00e3 l\u1ed7i \u2014 \u0111\u00e3 \u1ea9n)"
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/api/v2/token/refresh?app_key=ak01&app_secret=TTSEC_R14&refresh_token=R1_SECRET_OLD_TOKEN&grant_type=refresh_token",
+    "headers": {
+     "accept": "application/json"
+    },
+    "data": null,
+    "where": "tiktok refresh token",
+    "retries": 0
+   }
+  },
+  {
+   "channel": "tiktok",
+   "creds": {
+    "TIKTOK_APP_KEY": "ak01",
+    "TIKTOK_APP_SECRET": "TTSEC_R14"
+   },
+   "refresh": "R1_SECRET_OLD_TOKEN",
+   "doc": {
+    "code": 0,
+    "data": {
+     "access_token": "A2_SECRET_ACCESS_TOKEN",
+     "refresh_token": "R2_SECRET_NEW_TOKEN",
+     "access_token_expire_in": 1700000000
+    }
+   },
+   "out": {
+    "err": "DataError: tiktok refresh token: thi\u1ebfu/sai access_token_expire_in"
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/api/v2/token/refresh?app_key=ak01&app_secret=TTSEC_R14&refresh_token=R1_SECRET_OLD_TOKEN&grant_type=refresh_token",
+    "headers": {
+     "accept": "application/json"
+    },
+    "data": null,
+    "where": "tiktok refresh token",
+    "retries": 0
+   }
+  },
+  {
+   "channel": "tiktok",
+   "creds": {
+    "TIKTOK_APP_KEY": "ak01",
+    "TIKTOK_APP_SECRET": "TTSEC_R14"
+   },
+   "refresh": "R1_SECRET_OLD_TOKEN",
+   "doc": {
+    "code": 0,
+    "data": []
+   },
+   "out": {
+    "err": "DataError: tiktok refresh token: thi\u1ebfu data"
+   },
+   "sent": {
+    "method": "GET",
+    "url": "http://127.0.0.1:9/api/v2/token/refresh?app_key=ak01&app_secret=TTSEC_R14&refresh_token=R1_SECRET_OLD_TOKEN&grant_type=refresh_token",
+    "headers": {
+     "accept": "application/json"
+    },
+    "data": null,
+    "where": "tiktok refresh token",
+    "retries": 0
+   }
+  }
+ ],
+ "status_map_ok": {
+  "shopee": {
+   "listing": {
+    "NORMAL": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+    "UNLIST": "\u0110\u00e3 \u1ea9n",
+    "BANNED": "B\u1ecb kh\u00f3a",
+    "SELLER_DELETE": "\u0110\u00e3 x\u00f3a",
+    "SHOPEE_DELETE": "Vi ph\u1ea1m",
+    "REVIEWING": "\u0110ang duy\u1ec7t"
+   },
+   "order": {
+    "UNPAID": "Ch\u1edd thanh to\u00e1n",
+    "READY_TO_SHIP": "Ch\u1edd l\u1ea5y h\u00e0ng",
+    "PROCESSED": "\u0110\u00e3 x\u1eed l\u00fd",
+    "SHIPPED": "\u0110ang giao",
+    "TO_CONFIRM_RECEIVE": "\u0110\u00e3 giao",
+    "COMPLETED": "Ho\u00e0n th\u00e0nh",
+    "IN_CANCEL": "\u0110ang h\u1ee7y",
+    "CANCELLED": "\u0110\u00e3 h\u1ee7y",
+    "TO_RETURN": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n"
+   }
+  },
+  "tiktok": {
+   "listing": {
+    "ACTIVATE": "Live",
+    "SELLER_DEACTIVATED": "Deactivated",
+    "PLATFORM_DEACTIVATED": "Suspended",
+    "DRAFT": "Draft",
+    "DELETED": "Deleted",
+    "FREEZE": "Frozen",
+    "PENDING": "Pending",
+    "FAILED": "Failed"
+   },
+   "order": {
+    "UNPAID": "Unpaid",
+    "ON_HOLD": "On hold",
+    "AWAITING_SHIPMENT": "Awaiting shipment",
+    "AWAITING_COLLECTION": "Awaiting collection",
+    "IN_TRANSIT": "In transit",
+    "DELIVERED": "Delivered",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled"
+   }
+  }
+ },
+ "status_map_err": [
+  {
+   "name": "missing",
+   "data": null,
+   "err": "sm_missing.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (FileNotFoundError)"
+  },
+  {
+   "name": "bad_json",
+   "data": "ew==",
+   "err": "sm_bad_json.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (JSONDecodeError)"
+  },
+  {
+   "name": "bom",
+   "data": "77u/e30=",
+   "err": "sm_bom.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (JSONDecodeError)"
+  },
+  {
+   "name": "list_root",
+   "data": "W10=",
+   "err": "sm_list_root.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (TypeError)"
+  },
+  {
+   "name": "no_key",
+   "data": "e30=",
+   "err": "sm_no_key.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (KeyError)"
+  },
+  {
+   "name": "str_sm",
+   "data": "eyJzdGF0dXNfbWFwIjogIngifQ==",
+   "err": "sm_str_sm.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (TypeError)"
+  },
+  {
+   "name": "no_channel",
+   "data": "eyJzdGF0dXNfbWFwIjogeyJzaG9wZWUiOiB7fX19",
+   "err": "sm_no_channel.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (KeyError)"
+  },
+  {
+   "name": "list_kind",
+   "data": "eyJzdGF0dXNfbWFwIjogeyJzaG9wZWUiOiB7Imxpc3RpbmciOiB7Ik5PUk1BTCI6ICJcdTAxMTBhbmcgaG9cdTFlYTF0IFx1MDExMVx1MWVkOW5nIiwgIlVOTElTVCI6ICJcdTAxMTBcdTAwZTMgXHUxZWE5biIsICJCQU5ORUQiOiAiQlx1MWVjYiBraFx1MDBmM2EiLCAiU0VMTEVSX0RFTEVURSI6ICJcdTAxMTBcdTAwZTMgeFx1MDBmM2EiLCAiU0hPUEVFX0RFTEVURSI6ICJWaSBwaFx1MWVhMW0iLCAiUkVWSUVXSU5HIjogIlx1MDExMGFuZyBkdXlcdTFlYzd0In0sICJvcmRlciI6IHsiVU5QQUlEIjogIkNoXHUxZWRkIHRoYW5oIHRvXHUwMGUxbiIsICJSRUFEWV9UT19TSElQIjogIkNoXHUxZWRkIGxcdTFlYTV5IGhcdTAwZTBuZyIsICJQUk9DRVNTRUQiOiAiXHUwMTEwXHUwMGUzIHhcdTFlZWQgbFx1MDBmZCIsICJTSElQUEVEIjogIlx1MDExMGFuZyBnaWFvIiwgIlRPX0NPTkZJUk1fUkVDRUlWRSI6ICJcdTAxMTBcdTAwZTMgZ2lhbyIsICJDT01QTEVURUQiOiAiSG9cdTAwZTBuIHRoXHUwMGUwbmgiLCAiSU5fQ0FOQ0VMIjogIlx1MDExMGFuZyBoXHUxZWU3eSIsICJDQU5DRUxMRUQiOiAiXHUwMTEwXHUwMGUzIGhcdTFlZTd5IiwgIlRPX1JFVFVSTiI6ICJUclx1MWVhMyBoXHUwMGUwbmcvSG9cdTAwZTBuIHRpXHUxZWMxbiJ9fSwgInRpa3RvayI6IHsibGlzdGluZyI6IFtdLCAib3JkZXIiOiB7fX19fQ==",
+   "err": "sm_list_kind.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (AttributeError)"
+  },
+  {
+   "name": "non_str",
+   "data": "eyJzdGF0dXNfbWFwIjogeyJzaG9wZWUiOiB7Imxpc3RpbmciOiB7IkEiOiAxfSwgIm9yZGVyIjoge319LCAidGlrdG9rIjogeyJsaXN0aW5nIjogeyJBQ1RJVkFURSI6ICJMaXZlIiwgIlNFTExFUl9ERUFDVElWQVRFRCI6ICJEZWFjdGl2YXRlZCIsICJQTEFURk9STV9ERUFDVElWQVRFRCI6ICJTdXNwZW5kZWQiLCAiRFJBRlQiOiAiRHJhZnQiLCAiREVMRVRFRCI6ICJEZWxldGVkIiwgIkZSRUVaRSI6ICJGcm96ZW4iLCAiUEVORElORyI6ICJQZW5kaW5nIiwgIkZBSUxFRCI6ICJGYWlsZWQifSwgIm9yZGVyIjogeyJVTlBBSUQiOiAiVW5wYWlkIiwgIk9OX0hPTEQiOiAiT24gaG9sZCIsICJBV0FJVElOR19TSElQTUVOVCI6ICJBd2FpdGluZyBzaGlwbWVudCIsICJBV0FJVElOR19DT0xMRUNUSU9OIjogIkF3YWl0aW5nIGNvbGxlY3Rpb24iLCAiSU5fVFJBTlNJVCI6ICJJbiB0cmFuc2l0IiwgIkRFTElWRVJFRCI6ICJEZWxpdmVyZWQiLCAiQ09NUExFVEVEIjogIkNvbXBsZXRlZCIsICJDQU5DRUxMRUQiOiAiQ2FuY2VsbGVkIn19fX0=",
+   "err": "sm_non_str.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (ValueError)"
+  },
+  {
+   "name": "bad_utf8",
+   "data": "eyJzdGF0dXNfbWFwIjogIv8ifQ==",
+   "err": "sm_bad_utf8.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (UnicodeDecodeError)"
+  }
+ ],
+ "tokens_err": [
+  {
+   "name": "missing",
+   "data": null,
+   "res": {
+    "ok": {}
+   }
+  },
+  {
+   "name": "bad_json",
+   "data": "ew==",
+   "res": {
+    "err": "MARKET_TOKEN_FILE: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (JSONDecodeError)"
+   }
+  },
+  {
+   "name": "bom",
+   "data": "77u/e30=",
+   "res": {
+    "err": "MARKET_TOKEN_FILE: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (JSONDecodeError)"
+   }
+  },
+  {
+   "name": "list_root",
+   "data": "W10=",
+   "res": {
+    "err": "MARKET_TOKEN_FILE: kh\u00f4ng ph\u1ea3i object"
+   }
+  },
+  {
+   "name": "no_key",
+   "data": "e30=",
+   "res": {
+    "ok": {}
+   }
+  },
+  {
+   "name": "str_sm",
+   "data": "eyJzdGF0dXNfbWFwIjogIngifQ==",
+   "res": {
+    "ok": {
+     "status_map": "x"
+    }
+   }
+  },
+  {
+   "name": "no_channel",
+   "data": "eyJzdGF0dXNfbWFwIjogeyJzaG9wZWUiOiB7fX19",
+   "res": {
+    "ok": {
+     "status_map": {
+      "shopee": {}
+     }
+    }
+   }
+  },
+  {
+   "name": "list_kind",
+   "data": "eyJzdGF0dXNfbWFwIjogeyJzaG9wZWUiOiB7Imxpc3RpbmciOiB7Ik5PUk1BTCI6ICJcdTAxMTBhbmcgaG9cdTFlYTF0IFx1MDExMVx1MWVkOW5nIiwgIlVOTElTVCI6ICJcdTAxMTBcdTAwZTMgXHUxZWE5biIsICJCQU5ORUQiOiAiQlx1MWVjYiBraFx1MDBmM2EiLCAiU0VMTEVSX0RFTEVURSI6ICJcdTAxMTBcdTAwZTMgeFx1MDBmM2EiLCAiU0hPUEVFX0RFTEVURSI6ICJWaSBwaFx1MWVhMW0iLCAiUkVWSUVXSU5HIjogIlx1MDExMGFuZyBkdXlcdTFlYzd0In0sICJvcmRlciI6IHsiVU5QQUlEIjogIkNoXHUxZWRkIHRoYW5oIHRvXHUwMGUxbiIsICJSRUFEWV9UT19TSElQIjogIkNoXHUxZWRkIGxcdTFlYTV5IGhcdTAwZTBuZyIsICJQUk9DRVNTRUQiOiAiXHUwMTEwXHUwMGUzIHhcdTFlZWQgbFx1MDBmZCIsICJTSElQUEVEIjogIlx1MDExMGFuZyBnaWFvIiwgIlRPX0NPTkZJUk1fUkVDRUlWRSI6ICJcdTAxMTBcdTAwZTMgZ2lhbyIsICJDT01QTEVURUQiOiAiSG9cdTAwZTBuIHRoXHUwMGUwbmgiLCAiSU5fQ0FOQ0VMIjogIlx1MDExMGFuZyBoXHUxZWU3eSIsICJDQU5DRUxMRUQiOiAiXHUwMTEwXHUwMGUzIGhcdTFlZTd5IiwgIlRPX1JFVFVSTiI6ICJUclx1MWVhMyBoXHUwMGUwbmcvSG9cdTAwZTBuIHRpXHUxZWMxbiJ9fSwgInRpa3RvayI6IHsibGlzdGluZyI6IFtdLCAib3JkZXIiOiB7fX19fQ==",
+   "res": {
+    "ok": {
+     "status_map": {
+      "shopee": {
+       "listing": {
+        "NORMAL": "\u0110ang ho\u1ea1t \u0111\u1ed9ng",
+        "UNLIST": "\u0110\u00e3 \u1ea9n",
+        "BANNED": "B\u1ecb kh\u00f3a",
+        "SELLER_DELETE": "\u0110\u00e3 x\u00f3a",
+        "SHOPEE_DELETE": "Vi ph\u1ea1m",
+        "REVIEWING": "\u0110ang duy\u1ec7t"
+       },
+       "order": {
+        "UNPAID": "Ch\u1edd thanh to\u00e1n",
+        "READY_TO_SHIP": "Ch\u1edd l\u1ea5y h\u00e0ng",
+        "PROCESSED": "\u0110\u00e3 x\u1eed l\u00fd",
+        "SHIPPED": "\u0110ang giao",
+        "TO_CONFIRM_RECEIVE": "\u0110\u00e3 giao",
+        "COMPLETED": "Ho\u00e0n th\u00e0nh",
+        "IN_CANCEL": "\u0110ang h\u1ee7y",
+        "CANCELLED": "\u0110\u00e3 h\u1ee7y",
+        "TO_RETURN": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n"
+       }
+      },
+      "tiktok": {
+       "listing": [],
+       "order": {}
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "non_str",
+   "data": "eyJzdGF0dXNfbWFwIjogeyJzaG9wZWUiOiB7Imxpc3RpbmciOiB7IkEiOiAxfSwgIm9yZGVyIjoge319LCAidGlrdG9rIjogeyJsaXN0aW5nIjogeyJBQ1RJVkFURSI6ICJMaXZlIiwgIlNFTExFUl9ERUFDVElWQVRFRCI6ICJEZWFjdGl2YXRlZCIsICJQTEFURk9STV9ERUFDVElWQVRFRCI6ICJTdXNwZW5kZWQiLCAiRFJBRlQiOiAiRHJhZnQiLCAiREVMRVRFRCI6ICJEZWxldGVkIiwgIkZSRUVaRSI6ICJGcm96ZW4iLCAiUEVORElORyI6ICJQZW5kaW5nIiwgIkZBSUxFRCI6ICJGYWlsZWQifSwgIm9yZGVyIjogeyJVTlBBSUQiOiAiVW5wYWlkIiwgIk9OX0hPTEQiOiAiT24gaG9sZCIsICJBV0FJVElOR19TSElQTUVOVCI6ICJBd2FpdGluZyBzaGlwbWVudCIsICJBV0FJVElOR19DT0xMRUNUSU9OIjogIkF3YWl0aW5nIGNvbGxlY3Rpb24iLCAiSU5fVFJBTlNJVCI6ICJJbiB0cmFuc2l0IiwgIkRFTElWRVJFRCI6ICJEZWxpdmVyZWQiLCAiQ09NUExFVEVEIjogIkNvbXBsZXRlZCIsICJDQU5DRUxMRUQiOiAiQ2FuY2VsbGVkIn19fX0=",
+   "res": {
+    "ok": {
+     "status_map": {
+      "shopee": {
+       "listing": {
+        "A": 1
+       },
+       "order": {}
+      },
+      "tiktok": {
+       "listing": {
+        "ACTIVATE": "Live",
+        "SELLER_DEACTIVATED": "Deactivated",
+        "PLATFORM_DEACTIVATED": "Suspended",
+        "DRAFT": "Draft",
+        "DELETED": "Deleted",
+        "FREEZE": "Frozen",
+        "PENDING": "Pending",
+        "FAILED": "Failed"
+       },
+       "order": {
+        "UNPAID": "Unpaid",
+        "ON_HOLD": "On hold",
+        "AWAITING_SHIPMENT": "Awaiting shipment",
+        "AWAITING_COLLECTION": "Awaiting collection",
+        "IN_TRANSIT": "In transit",
+        "DELIVERED": "Delivered",
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled"
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "bad_utf8",
+   "data": "eyJzdGF0dXNfbWFwIjogIv8ifQ==",
+   "res": {
+    "err": "MARKET_TOKEN_FILE: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (UnicodeDecodeError)"
+   }
+  }
+ ],
+ "parse_window": [
+  [
+   "2026-10-01",
+   "2026-10-31",
+   [
+    "2026-10-01",
+    "2026-10-31"
+   ]
+  ],
+  [
+   "2026-10-01",
+   "2026-11-01",
+   "--to \u2265 --from v\u00e0 t\u1ed1i \u0111a 31 ng\u00e0y"
+  ],
+  [
+   "2026-10-05",
+   "2026-10-04",
+   "--to \u2265 --from v\u00e0 t\u1ed1i \u0111a 31 ng\u00e0y"
+  ],
+  [
+   "2026/10/01",
+   "2026-10-02",
+   "--from/--to ph\u1ea3i l\u00e0 YYYY-MM-DD"
+  ],
+  [
+   "20261001",
+   "20261002",
+   [
+    "2026-10-01",
+    "2026-10-02"
+   ]
+  ],
+  [
+   "2026-02-30",
+   "2026-03-01",
+   "--from/--to ph\u1ea3i l\u00e0 YYYY-MM-DD"
+  ],
+  [
+   "2026-10-01",
+   "2026-10-01",
+   [
+    "2026-10-01",
+    "2026-10-01"
+   ]
+  ]
+ ],
+ "save_tokens": {
+  "doc": {
+   "tiktok": {
+    "x": 1
+   },
+   "shopee": {
+    "access_token": "A\u00c9",
+    "refresh_token": "R\u007f",
+    "expire_at": 5
+   }
+  },
+  "bytes": "eyJzaG9wZWUiOiB7ImFjY2Vzc190b2tlbiI6ICJBXHUwMGM5IiwgImV4cGlyZV9hdCI6IDUsICJyZWZyZXNoX3Rva2VuIjogIlJcdTAwN2YifSwgInRpa3RvayI6IHsieCI6IDF9fQ=="
+ }
+}

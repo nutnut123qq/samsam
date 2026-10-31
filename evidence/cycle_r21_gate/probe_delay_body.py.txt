@@ -1,0 +1,18 @@
+"""Probe r21 M2 (KHÔNG commit vào test): ép đúng cửa sổ race của test_b2b_form —
+http.client gửi header và body bằng 2 lần send(); chèn 0,3 s giữa hai lần để
+server đọc xong header, từ chối sớm (415/429/404) và đóng TRƯỚC khi body tới."""
+import http.client
+import time
+
+_orig = http.client.HTTPConnection.send
+
+
+def send(self, data):
+    n = getattr(self, "_probe_sends", 0)
+    self._probe_sends = n + 1
+    if n == 1:          # lần send thứ hai = body
+        time.sleep(0.3)
+    return _orig(self, data)
+
+
+http.client.HTTPConnection.send = send

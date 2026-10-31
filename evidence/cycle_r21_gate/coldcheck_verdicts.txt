@@ -1,0 +1,100 @@
+===== Cold-check vòng 1 (workflow wf_c5255d6a-f47, reviewer ngữ cảnh mới, prompt cố định) — nguyên văn =====
+VERDICT: UNVERIFIED (r21, 3 test chập chờn thành tất định). Không thấy BLOCKER. Tôi chưa chạy lại được các gate cần DB và lượt full vì môi trường hỏng giữa chừng.
+
+**Cảnh báo môi trường, không do r21 gây ra:**
+- Postgres 17 trên máy (`D:\PostgreSQL\17\data`) sập lúc 16:20:52 với lỗi `could not reattach to shared memory … error code 1455` (máy chạm trần bộ nhớ cam kết). Từ 16:24:27 nó ở chế độ phục hồi, chạy fsync hơn 45 phút; lúc 17:05 vẫn còn `rejecting connections`.
+- Cùng thời điểm, backend Docker Desktop chết (`dockerDesktopLinuxEngine` pipe không còn), nên container `samsam-ts-db` gần như chắc chắn cũng ngừng.
+- Lúc đó session của repo `crawl` đang chạy e2e Playwright (`guarded_step.sh v256_r3`, dừng 16:43 với `CHAIN rc=1`). Lệnh của tôi lúc 16:20 chỉ là vòng chờ.
+- Tôi không khởi động lại Docker hay Postgres.
+
+**Định danh audit:**
+- Version: r21, board `DONE.md:26`, OPEN. Base `43263c5` lấy từ `DONE.md:28`, khớp với dòng ledger trong `CYCLE_LOOP.md`. HEAD cũng là `43263c5`, index trống.
+- Cây làm việc có 12 tệp tracked đổi và 721 tệp chưa theo dõi (không tính `evidence/`, `.agents/`, `founder/`, `lv2-market-top.png`). Dấu vân tay cả cây hiện tại là `c95eaeca…`.
+- sha256 của `git diff 43263c5 --binary` trên đúng 3 tệp test r21 là `0b6e8446504b0d20…`, trùng fp đầu và cuối đã ghi ở M4. Tức là nội dung r21 trên đĩa giống từng byte với bản đã chạy gate.
+- Phần đổi còn lại có mtime từ 29/10 08:41 trở đi, tức là sau gate (gate kết thúc 29/10 01:03).
+- `git status --short` trước và sau audit trùng nhau. Mọi lệnh pytest tôi đều chạy trong bản clone ở scratchpad, không chạy trong repo.
+
+**Đã xác nhận:**
+- **M1** (`tests/test_ceo_decisions.py:303-304`): logic đúng.
+  - `decided_at := now()` do trigger DB gán (`docs/schema.sql:952`), chạy trong cùng một transaction với `select now()`, vì `TxConn.commit` không làm gì (`tests/test_ceo_audit.py:76`). Vậy `now == decided_at` chính xác.
+  - `_PROPOSE_SQL` dùng `decided_at <= %s` (`agents/ceo_decisions.py:91-92`), và `parse_now` giữ micro giây (`agents/ra_kenh.py:141`).
+  - Tôi đọc `m1_midnight_probe.txt`: base fail ở vòng 3–6, đúng phút 23:59 giờ VN, còn bản sửa pass 9/9.
+  - Không chạy lại được RED thật vì cần đồng hồ ở mốc 00:00 giờ VN.
+- **M2** (`tests/test_b2b_form.py:188-194`, `:271-282`):
+  - Server trả 404/415/429 trước khi đọc body (`connectors/b2b_form.py:413-428`).
+  - Tôi tự chạy probe chèn 0,3 s giữa lần gửi header và body: base 2 failed `[WinError 10053]`, r21 2 passed. Không probe: cả hai bên 2 passed.
+  - Chạy cả tệp ở chế độ không DB: 50 passed, 5 skipped (các ca cần DB).
+- **M3** (`tests/test_docx_p0_rollout_gate.py:56-59`):
+  - `lead_store.connect` đọc `CONNECT_TIMEOUT_S` lúc gọi (`ingest/lead_store.py:275`), và rollout import đúng hàm này (`pipelines/rollout.py:118`).
+  - Tôi chạy LAUNCHER thật với `pipelines.rollout --status` trỏ tới host không định tuyến được: base bỏ cuộc sau 4,1 s, r21 sau 31,2 s. Cả hai exit 2 `[FAIL] DB không kết nối được`. Timeout subprocess 180 s, vẫn đủ.
+- **M4:**
+  - `ruff check .` có thêm `--extend-exclude .agents --extend-exclude founder` (đúng như lệnh trong `ruff.txt`) và bản `--isolated`: đều EXIT 0. Cả 3 tệp r21 cũng EXIT 0.
+  - Số ca collect của 3 tệp là 121, khớp claim.
+  - Evidence full: tổng 12 lượt shard đúng bằng 7113 ca (7106 passed, 7 skipped), 9 bước exit 0.
+  - Quét secret lại trên `evidence/cycle_r21_gate/` và các dòng thêm của r21: rỗng.
+
+**UNVERIFIED:**
+- 121 ca của 3 tệp trên DB test và các RED/GREEN cần DB (M1 lúc nửa đêm, M3 qua proxy chậm).
+- Full tái hiện job `test` (7113 ca) cùng các bước `agent_eval` và `redteam`.
+- Lý do: tôi tự đặt hạn chờ tới 16:55 để không chạy chồng với gate e2e của session kia. Gate đó dừng lúc 16:43, nhưng sau đó Postgres local đang phục hồi, tôi chờ thêm khoảng 8 phút có hạn, hết hạn vẫn chưa lên. Docker cũng không có engine. Tổng thời gian chờ khoảng 70 phút.
+
+**Findings:**
+- **MINOR — cây làm việc lẫn việc dở của 2 luồng khác, không có trên board r21** (`DONE.md:66` ghi "chỉ 3 tệp test; 0 … `ci.yml`", điều này chỉ đúng với snapshot đã chạy gate):
+  - Luồng viết lại TS: `.github/workflows/ci.yml:70` (thêm job `ts`), `.gitignore`, `data/data_flow_map.json:16` (map khai 33 module `ts/…` chưa theo dõi), `docs/legal/DPIA-nhap.md`, `docs/legal/TIA-nhap.md`, cùng `ts/`, `ai_worker/` và các tệp liên quan chưa theo dõi.
+  - Luồng dọn Docker 29/10: `AGENTS.md` (trỏ tới `scripts/ci_repro.sh` chưa theo dõi), `tests/test_safety_s01_rotation.py`, `tests/test_docker_test_cleanup.py`.
+  - Đã chứng minh bằng chạy thật: lấy HEAD cộng toàn bộ phần tracked đổi, không kèm `ts/`, thì `tests/test_data_flow_map.py` fail 4 ca (`MapError: DF-01.modules: không tồn tại ts/apps/api/src/modules/zalo/zalo.sender.ts`, nguồn ở `scripts/dpia_draft.py:124-125`). `tests/test_ci_workflow.py` vẫn pass.
+  - Hệ quả: nếu đóng r21 bằng `git commit -a` hoặc `git add -u`, CI sẽ đỏ.
+  - Cần làm khi đóng: chỉ stage tường minh 3 tệp test, `DONE.md`, `CYCLE_LOOP.md` và `evidence/cycle_r21_gate/`.
+
+**Chưa kiểm:**
+- Không chạy lại được các gate cần DB và lượt full; lý do nêu ở mục UNVERIFIED.
+- Không review nội dung thư mục `ts/` và `ai_worker/` vì nằm ngoài hợp đồng r21.
+- Lệnh `rm` dọn các bản clone ở scratchpad có thể chưa xong do máy rất chậm. Thư mục còn sót (nếu có) là `C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\eb2cb09e-84ff-4778-82f3-a13c04b3511d\scratchpad\coldaudit_r21_155542`, chỉ chứa dữ liệu scratch.
+
+===== Cold-check vòng 2 (workflow wf_ad9e27c2-b7f, reviewer ngữ cảnh mới, prompt cố định) — nguyên văn =====
+VERDICT: PASS (r21, trong phạm vi M1–M4)
+
+Version, base và snapshot
+- Version đang OPEN: r21, "3 test chập chờn thành tất định" (DONE.md:26). `Base: 43263c5` (DONE.md:28) khớp sổ CYCLE_LOOP và đúng bằng HEAD.
+- Index rỗng (0 tệp staged). Phần thuộc r21 chỉ gồm 3 tệp test: tests/test_ceo_decisions.py (sha256 c105918c…), tests/test_b2b_form.py (b166be93…), tests/test_docx_p0_rollout_gate.py (103a7ee0…). `git diff 43263c5 -- <3 tệp>` có sha256 0b6e8446…, đúng fp ghi ở M4. Bản trên đĩa trùng byte với bản đã được kiểm.
+- Cây làm việc còn việc chưa commit của 2 luồng khác (bản viết lại TS: ts/, ai_worker/, deploy/compose/, ci.yml job `ts`, data_flow_map.json, docs/legal; luồng dọn Docker 29/10: scripts/ci_repro.sh, tests/test_docker_test_cleanup.py, test_safety_s01_rotation.py, các hunk trong AGENTS.md). Phần này không thuộc r21 và không có claim nào của r21 dựa vào nó. Tôi chỉ quét bí mật: chỉ thấy placeholder, dữ liệu giả của test, và tài khoản service CI `postgres:postgres` của job `ts`.
+- `git status --short` trước và sau audit giống hệt nhau. Repo không bị sửa.
+
+Claim xác nhận bằng diff thật và lệnh tự chạy
+- **M1** (tests/test_ceo_decisions.py:303-304)
+  - Trigger `new.decided_at := now()` (docs/schema.sql:952) chạy trong cùng transaction với `select now()` của fixture (`ceo_db` không autocommit). Vì vậy `now == decided_at` chính xác, nên `today == decided_on`.
+  - `parse_now` (agents/ra_kenh.py:141) giữ micro giây. Điều kiện `_PROPOSE_SQL` `decided_at <= now` vẫn thỏa.
+  - Chạy lại thật quanh 00:00 VN đêm 30→31/10: base fail 6/16 vòng (16:59:02–16:59:59 UTC, lỗi "date(2026,10,30) != date(2026,10,31)"), cây r21 pass 16/16 vòng.
+  - Grep cùng kiểu lỗi trong 13 tệp test có `select now()`: không còn chỗ nào khác.
+- **M2** (tests/test_b2b_form.py:188-194, 271, 275, 282)
+  - Server từ chối 404/415/429 trước khi đọc body (connectors/b2b_form.py:413-428).
+  - Chạy lại plugin chèn trễ 0,3 s: base 2 failed `ConnectionAbortedError [WinError 10053]`, cây r21 2 passed; không dùng plugin thì cả hai đều pass.
+  - Helper mới còn bắt được hồi quy server đọc body trước khi từ chối: khi đó test sẽ timeout thay vì pass.
+- **M3** (tests/test_docx_p0_rollout_gate.py:56-59)
+  - `lead_store.connect` đọc biến toàn cục `CONNECT_TIMEOUT_S` lúc gọi (ingest/lead_store.py:275). `rollout` import đúng hàm đó (pipelines/rollout.py:118). `auth._side_conn` thừa hưởng `connect_timeout` của kết nối (pipelines/auth.py:553).
+  - Chạy lại qua proxy chậm 4 s mỗi kết nối: base 1 failed "[FAIL] DB không kết nối được", `assert 2 == 0`; cây r21 1 passed.
+- **M4 — các cổng kiểm**
+  - ruff 0.16.10: `check .` và `--isolated` (cùng các exclude như claim) đều EXIT 0.
+  - 3 tệp đích chạy trên DB container riêng (`scripts/ci_repro.sh … probe sim`): 121 passed. Chạy lại với `TZ=UTC0`: vẫn 121 passed.
+  - Toàn bộ suite: `scripts/ci_repro.sh … work shards sim` trên clone chỉ gồm HEAD + đúng diff r21 (script xác nhận patch sha 0b6e8446, cây sạch tree 20e1a944). Thu được 7113 ca / 190 tệp, số ca từng tệp trùng `per_file.txt` của evidence. Kết quả 12 lượt: 7106 passed / 7 skipped / 0 failed, cùng bộ 7 skip như evidence (psycopg2×2, convlog, paddleocr, fitz, av×2), 0xC0000142×0.
+  - Cả 9 bước exit 0, gồm `agent_eval --deterministic` và `redteam` (0/50 lọt).
+  - Hạn chót đặt trước là 4 giờ; lượt chạy xong sau 1 giờ 49 phút.
+- **Evidence đã đọc**: m1/m2/m3 probe cùng script, ruff.txt, secret_scan(.sh), full/ci_repro_work_shards_sim.txt (tổng các lượt = 7106 + 7), ci_log_failed_excerpt.txt, tz_probe.txt. Tất cả khớp claim.
+- **Tải máy**: trước mỗi lượt chạy nặng đã kiểm, không có pytest hay vitest của session khác. Container samsam-ts-db của luồng TS đang chạy nhàn rỗi và không bị đụng tới. RAM trống trong lúc chạy từ 533 đến 4355 MB.
+
+UNVERIFIED (không chặn đóng version)
+- Chưa chứng minh được 3 test r21 xanh trên runner Linux của GitHub: chưa push và chưa có lượt chạy nào. Run 40715909367 chạy trên base, đỏ vì 3 ca diễn tập `test_db_backup` (pg_dump của runner mới hơn server PG16), đã ghi `[!]` và hẹn r22. Lượt giả lập local chạy trên Windows. Run CI có 13 skipped, local chỉ 7; 6 skip chênh lệch chưa giải thích được.
+- Lượt probe đầu tiên của tôi đặt thư mục scratch dài dưới %TEMP%: bước 8 `agent_eval` fail "working tree bẩn". Khi chạy toàn bộ suite với đường dẫn ngắn thì bước 8 pass. Gần như chắc là do giới hạn độ dài đường dẫn của git, cụ thể là cây tạm trong scripts/ci_repro.sh (tệp untracked của luồng Docker) không đặt `core.longpaths`. Không liên quan r21, chưa chứng minh nguyên nhân chính xác.
+
+Findings
+- **MINOR (có sẵn từ base, không phải mã r21)**: tests/test_safety_s01_rotation.py:96 @43263c5 gọi `docker rm -f n` mà thiếu `-v`, nên mỗi lượt chạy toàn bộ suite bỏ lại 2 Docker volume ẩn danh.
+  - Lượt của tôi tạo 2 volume lúc 16:01:56Z và 16:02:04Z (lượt 8); tôi đã xóa đúng 2 ID đó, tổng số volume trở lại 155.
+  - Một volume `dffddfe19e9a…` tạo 2026-10-28T17:42:24Z, trong khung giờ lượt chạy của bản build r21, vẫn còn. Có thể cùng lỗi này; chưa xác minh, tôi không xóa.
+  - Dòng "Container … ĐÃ DỌN" ở DONE.md:64 đúng với container nhưng không đúng với volume.
+  - Bản vá `rm -f -v` đang nằm ở cây làm việc chưa commit của luồng Docker, nên commit ở version đó.
+- **NIT**: DONE.md:71 ghi commit đóng version sẽ stage "(+ hunk retro của r21 trong AGENTS.md)", nhưng hiện AGENTS.md chưa có hunk retro r21. Toàn bộ diff AGENTS.md (dòng 102, 109–121, 461) thuộc luồng Docker và trỏ tới scripts/ci_repro.sh chưa được theo dõi. Khi đóng r21 phải stage từng hunk (`git add -p`); không add nguyên tệp.
+
+Dọn dẹp và phần tôi chưa kiểm
+- Đã dọn: 3 container có nhãn sở hữu (2 lượt ci_repro, 1 lượt kiểm nửa đêm) đã xóa kèm `-v`, không còn container nào mang nhãn `vn.samsam.test-run`; tiến trình proxy đã dừng; clone tạm và các cây base đã xóa. Log audit giữ ở C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\eb2cb09e-84ff-4778-82f3-a13c04b3511d\scratchpad\coldaudit_r21v2_2134\.
+- Rủi ro trong scratchpad dùng chung: có thể tôi đã ghi đè một tệp `scratchpad\status_before.txt` có sẵn từ trước. Tôi cũng đã giải nén HEAD vào `scratchpad\base_tree\`; thư mục này có thể đã tồn tại từ trước.
+- Không review nội dung khoảng 700 tệp ts/ và các luồng ngoài r21, chỉ quét bí mật.

@@ -1,0 +1,101 @@
+# RED A1 — mã GỐC (trước khi sửa scripts/db_backup.py), 2026-10-31T00:14:58+07:00
+# server: container postgres:16-alpine (nhãn vn.samsam.test-run=r22-a1), DB r22_a1 dựng apply_schema --roles x2 + core_store + golden_store
+# client trên PATH đứng đầu: pg_restore (PostgreSQL) 17.6
+# git: dbf5d2e; sha256 scripts/db_backup.py = b8b832d7aee55ffe
+$ PATH="/c/Program Files/PostgreSQL/17/bin:$PATH" python -m pytest -q -rA tests/test_db_backup.py::test_encrypted_backup_and_drill tests/test_db_backup.py::test_drill_ok_and_dropped tests/test_db_backup.py::test_drill_mismatch_still_drops
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+_______________________ test_encrypted_backup_and_drill _______________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-4054/test_encrypted_backup_and_dril0/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001F8443D8C80>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-4054/test_encrypted_backup_and_dril0')
+live = 'postgresql://postgres:***@127.0.0.1:50841/r22_a1'
+
+    def test_encrypted_backup_and_drill(env, monkeypatch, tmp_path, live):
+        openssl = bk.find_openssl()
+        assert openssl, "máy gate phải có openssl"
+        pf = tmp_path / "pass.txt"
+        pf.write_text("dung-passphrase-test\n", encoding="utf-8")
+        monkeypatch.setenv("BACKUP_PASSPHRASE_FILE", str(pf))
+        assert bk.main() == 0
+        files = list(env.iterdir())
+        assert not [p for p in files if p.name.endswith("_vn.dump")]
+        for p in files:
+            if p.is_file():
+                assert p.read_bytes()[:5] != b"PGDMP", p.name
+        (enc,) = [p for p in files if p.name.endswith(".dump.enc")]
+        m = json.loads((env / (enc.name + bk.MANIFEST_SUFFIX))
+                       .read_text(encoding="utf-8"))
+        assert m["encrypted"] is True and m["cipher"] == bk.CIPHER
+        assert bk.sha256_file(enc) == m["sha256"]
+        out = tmp_path / "plain.dump"
+        r = subprocess.run([openssl, *bk.OPENSSL_ENC, "-d", "-pass",
+                            f"file:{pf}", "-in", str(enc), "-out", str(out)],
+                           capture_output=True, timeout=60, check=False)
+        assert r.returncode == 0 and out.read_bytes()[:5] == b"PGDMP"
+        out.unlink()
+        # Drill với đúng passphrase → ok, DB tạm bị drop.
+        t1 = DRILL_PREFIX + "enc_ok"
+        try:
+>           assert dr.main(["--target-db", t1]) == 0
+E           AssertionError: assert 1 == 0
+E            +  where 1 = <function private_umask.<locals>.wrapper at 0x000001F8449A9BC0>(['--target-db', 'samsam_drill_test_788013_enc_ok'])
+E            +    where <function private_umask.<locals>.wrapper at 0x000001F8449A9BC0> = dr.main
+
+tests\test_db_backup.py:506: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[done] r22_a1_20261031_001702_vn.dump.enc — 635760 bytes, sha256 3262c6bb84d3bb2e…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.EXE, 100 bảng
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+[evidence] đã ghi bằng chứng đầu ra vào DB (file_output_evidence)
+[err] diễn tập lỗi: pg_restore exit 1: pg_restore: error: could not execute query: ERROR: unrecognized configuration parameter "transaction_timeout" Command was: SET transaction_timeout = 0;
+__________________________ test_drill_ok_and_dropped __________________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-4054/test_drill_ok_and_dropped0/bk')
+live = 'postgresql://postgres:***@127.0.0.1:50841/r22_a1'
+capsys = <_pytest.capture.CaptureFixture object at 0x000001F8449D9760>
+
+    def test_drill_ok_and_dropped(env, live, capsys):
+        assert bk.main() == 0
+        capsys.readouterr()
+>       assert dr.main([]) == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001F8449A9BC0>([])
+E        +    where <function private_umask.<locals>.wrapper at 0x000001F8449A9BC0> = dr.main
+
+tests\test_db_backup.py:538: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] diễn tập lỗi: pg_restore exit 1: pg_restore: error: could not execute query: ERROR: unrecognized configuration parameter "transaction_timeout" Command was: SET transaction_timeout = 0;
+_______________________ test_drill_mismatch_still_drops _______________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-4054/test_drill_mismatch_still_drop0/bk')
+live = 'postgresql://postgres:***@127.0.0.1:50841/r22_a1'
+
+    def test_drill_mismatch_still_drops(env, live):
+        assert bk.main() == 0
+        (mp,) = list(env.glob("*" + bk.MANIFEST_SUFFIX))
+        m = json.loads(mp.read_text(encoding="utf-8"))
+        m["row_counts"]["products"] += 1
+        mp.write_text(json.dumps(m), encoding="utf-8")
+        name = DRILL_PREFIX + "mismatch"
+        assert dr.main(["--target-db", name]) == 1
+        rec = _last(env / "drill_runs.jsonl")
+>       assert rec["status"] == "mismatch" and rec["dropped"] is True
+E       AssertionError: assert ('fail' == 'mismatch'
+E         
+E         - mismatch
+E         + fail)
+
+tests\test_db_backup.py:612: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[done] r22_a1_20261031_001707_vn.dump — 636124 bytes, sha256 30fd582da38d537e…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.EXE, 100 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+[evidence] đã ghi bằng chứng đầu ra vào DB (file_output_evidence)
+[err] diễn tập lỗi: pg_restore exit 1: pg_restore: error: could not execute query: ERROR: unrecognized configuration parameter "transaction_timeout" Command was: SET transaction_timeout = 0;
+=========================== short test summary info ===========================
+FAILED tests/test_db_backup.py::test_encrypted_backup_and_drill - AssertionEr...
+FAILED tests/test_db_backup.py::test_drill_ok_and_dropped - assert 1 == 0
+FAILED tests/test_db_backup.py::test_drill_mismatch_still_drops - AssertionEr...
+3 failed in 6.59s
+# exit=1

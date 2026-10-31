@@ -1,0 +1,1476 @@
+{
+ "source_kind": [
+  [
+   "shopee",
+   "https://partner%2Eshopeemobile.com",
+   "khong_ro"
+  ],
+  [
+   "shopee",
+   "https://partner.shopeemobile.com\\",
+   "khong_ro"
+  ],
+  [
+   "tiktok",
+   "https://open-api.tiktokglobalshop.com\\",
+   "khong_ro"
+  ],
+  [
+   "shopee",
+   "https://PARTNER.ShopeeMobile.com",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://partner.shopeemobile.com:443",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://partner.shopeemobile.com:abc",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://partner.shopeemobile.com/",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://partner.shopeemobile.com.",
+   "khong_ro"
+  ],
+  [
+   "shopee",
+   "https://partner.shopeemobile.com#x",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://partner.shopeemobile.com?x=1",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://u:p@partner.shopeemobile.com",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://partner.shopeemobile.com@evil.example",
+   "khong_ro"
+  ],
+  [
+   "shopee",
+   "https://evil.example@partner.shopeemobile.com",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://partner.shopee\tmobile.com",
+   "api_live"
+  ],
+  [
+   "shopee",
+   " https://partner.shopeemobile.com",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "\u0000https://partner.shopeemobile.com",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://partner.shopeemobile.com ",
+   "khong_ro"
+  ],
+  [
+   "shopee",
+   "https://[partner.shopeemobile.com]",
+   null
+  ],
+  [
+   "shopee",
+   "https://[::1]:8080",
+   "khong_ro"
+  ],
+  [
+   "shopee",
+   "https://[127.0.0.1]",
+   null
+  ],
+  [
+   "shopee",
+   "https://[::1]@partner.shopeemobile.com",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "https://a[b]@partner.shopeemobile.com",
+   null
+  ],
+  [
+   "shopee",
+   "https://[partner.shopeemobile.com",
+   null
+  ],
+  [
+   "shopee",
+   "http://127.0.0.1:8080",
+   "api_local"
+  ],
+  [
+   "shopee",
+   "http://LocalHost",
+   "api_local"
+  ],
+  [
+   "shopee",
+   "https://openplatform.sandbox.test-stable.shopee.sg",
+   "api_sandbox"
+  ],
+  [
+   "shopee",
+   "https://open-api.tiktokglobalshop.com",
+   "khong_ro"
+  ],
+  [
+   "shopee",
+   "partner.shopeemobile.com",
+   "khong_ro"
+  ],
+  [
+   "shopee",
+   "//partner.shopeemobile.com",
+   "api_live"
+  ],
+  [
+   "shopee",
+   "",
+   "khong_ro"
+  ],
+  [
+   "tiktok",
+   "https://open-api.tiktokglobalshop.com\\",
+   "khong_ro",
+   "live"
+  ],
+  [
+   "tiktok",
+   "https://OPEN-API.tiktokglobalshop.com:443",
+   "api_live",
+   "live"
+  ],
+  [
+   "tiktok",
+   "https://open-api%2Etiktokglobalshop.com",
+   "khong_ro",
+   "live"
+  ]
+ ],
+ "load_fees": [
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 1e400, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/shopee.fixed_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": -1e400, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/shopee.fixed_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 1e-400, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": true,
+   "why": null
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 1e400, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/shopee.payment_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": -1e400, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/shopee.payment_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 1e-400, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": true,
+   "why": null
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 1e400, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/shopee.service_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": -1e400, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/shopee.service_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 1e-400, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": true,
+   "why": null
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 1e400}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/shopee.tolerance_vnd: ph\u1ea3i int 0..100000"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": -1e400}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/shopee.tolerance_vnd: ph\u1ea3i int 0..100000"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 1e-400}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/shopee.tolerance_vnd: ph\u1ea3i int 0..100000"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 1e400, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/tiktok.fixed_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": -1e400, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/tiktok.fixed_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 1e-400, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": true,
+   "why": null
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 1e400, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/tiktok.payment_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": -1e400, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/tiktok.payment_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 1e-400, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 100}}",
+   "ok": true,
+   "why": null
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 1e400, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/tiktok.service_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": -1e400, \"tolerance_vnd\": 100}}",
+   "ok": false,
+   "why": "settlement_fees.json/tiktok.service_fee_pct: ngo\u00e0i 0..0.5"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 1e-400, \"tolerance_vnd\": 100}}",
+   "ok": true,
+   "why": null
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 1e400}}",
+   "ok": false,
+   "why": "settlement_fees.json/tiktok.tolerance_vnd: ph\u1ea3i int 0..100000"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": -1e400}}",
+   "ok": false,
+   "why": "settlement_fees.json/tiktok.tolerance_vnd: ph\u1ea3i int 0..100000"
+  },
+  {
+   "text": "{\"_doc\": \"v9.0 ACC-Recon \u2014 BI\u1ec2U PH\u00cd GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd bi\u1ec3u ph\u00ed th\u1eadt theo ng\u00e0y hi\u1ec7u l\u1ef1c + k\u1ebf to\u00e1n x\u00e1c nh\u1eadn (external-dep). M\u1ed7i k\u00eanh: fixed_fee_pct / payment_fee_pct / service_fee_pct (t\u1ef7 l\u1ec7 tr\u00ean gi\u00e1 tr\u1ecb \u0111\u01a1n tr\u00ean file, 0..0.5) \u0111\u1ec3 ph\u00e1t hi\u1ec7n s\u00e0n thu sai; tolerance_vnd (0..100000) = sai s\u1ed1 l\u00e0m tr\u00f2n ch\u1ea5p nh\u1eadn \u0111\u01b0\u1ee3c cho c\u1ea3 th\u1ef1c nh\u1eadn l\u1eabn t\u1eebng ph\u00ed. Ph\u00ed t\u00ednh b\u1eb1ng Decimal, l\u00e0m tr\u00f2n ROUND_HALF_UP v\u1ec1 \u0111\u1ed3ng. Bi\u1ec3u ph\u00ed th\u1eadt thay \u0111\u1ed5i theo ng\u00e0nh h\u00e0ng/ch\u01b0\u01a1ng tr\u00ecnh/ng\u00e0y \u2014 b\u1ea3n n\u00e0y 1 m\u1ee9c/k\u00eanh, ch\u1ec9 \u0111\u1ec3 ch\u1ea1y lu\u1ed3ng.\", \"shopee\": {\"fixed_fee_pct\": 0.04, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.03, \"tolerance_vnd\": 100}, \"tiktok\": {\"fixed_fee_pct\": 0.05, \"payment_fee_pct\": 0.05, \"service_fee_pct\": 0.02, \"tolerance_vnd\": 1e-400}}",
+   "ok": false,
+   "why": "settlement_fees.json/tiktok.tolerance_vnd: ph\u1ea3i int 0..100000"
+  }
+ ],
+ "rev_share_config": [
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": 1e400, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "ty_le_phi_van_hanh: ngo\u00e0i 0..1"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": -1e400, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "ty_le_phi_van_hanh: ngo\u00e0i 0..1"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": 1e-400, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "ok": true
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": 1e400}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "muc_thuong[0].ty_le: ngo\u00e0i 0..1"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": -1e400}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "muc_thuong[0].ty_le: ngo\u00e0i 0..1"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": 1e-400}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "ok": true
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": 1e400}]}",
+   "err": "muc_thuong[2].ty_le: ngo\u00e0i 0..1"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": -1e400}]}",
+   "err": "muc_thuong[2].ty_le: ngo\u00e0i 0..1"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": 1e-400}]}",
+   "ok": true
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": 1e400, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "muc_thuong[1].tu_vnd: null ho\u1eb7c s\u1ed1 \u2265 0"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": -1e400, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "muc_thuong[1].tu_vnd: null ho\u1eb7c s\u1ed1 \u2265 0"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": 1e-400, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "muc_thuong[1].tu_vnd: null ho\u1eb7c s\u1ed1 \u2265 0"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1e400, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "muc_thuong[0]: thi\u1ebfu muc (1..99)"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": -1e400, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "muc_thuong[0]: thi\u1ebfu muc (1..99)"
+  },
+  {
+   "text": "{\"_doc\": \"v12.5 B5 \u2014 c\u1ea5u h\u00ecnh \u0111\u1ed1i so\u00e1t doanh thu thu\u1ea7n tr\u1ef1c tuy\u1ebfn (agents.rev_share). GI\u1ea2 \u0110\u1ecaNH / B\u1ea2N DEV SO\u1ea0N, ch\u1edd \u0111\u1ea1i di\u1ec7n B\u00ean A + B\u00ean B ch\u1ed1t b\u1eb1ng v\u0103n b\u1ea3n: null = ch\u01b0a ch\u1ed1t (bi\u00ean b\u1ea3n in 'ch\u01b0a ch\u1ed1t', KH\u00d4NG t\u00ednh ph\u00ed/th\u01b0\u1edfng). ngay_ky_hop_dong (YYYY-MM-DD) = ng\u00e0y k\u00fd H\u1ee3p \u0111\u1ed3ng h\u1ee3p t\u00e1c TH\u1ef0C T\u1ebe \u2014 m\u1ed1c th\u1eddi h\u1ea1n/n\u0103m h\u1ee3p t\u00e1c (H\u0110 \u0110i\u1ec1u 3.1) d\u00f9ng cho --year v\u00e0 th\u01b0\u1edfng n\u0103m (PL02 m\u1ee5c 4); KH\u00d4NG \u0111i\u1ec1n ng\u00e0y d\u1ef1 ki\u1ebfn trong l\u1ecbch PL01. ngay_bat_dau_van_hanh (YYYY-MM-DD) = ng\u00e0y b\u1eaft \u0111\u1ea7u v\u1eadn h\u00e0nh th\u01b0\u01a1ng m\u1ea1i ghi trong bi\u00ean b\u1ea3n nghi\u1ec7m thu P1 (H\u0110 h\u1ee3p t\u00e1c \u0110i\u1ec1u 8.1) \u2014 CH\u1ec8 l\u00e0 m\u1ed1c t\u00ednh ph\u00ed v\u1eadn h\u00e0nh qu\u00fd (\u0110i\u1ec1u 9.3), kh\u00f4ng ph\u1ea3i m\u1ed1c n\u0103m h\u1ee3p t\u00e1c; kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y k\u00fd. ty_le_phi_van_hanh (s\u1ed1 0..1, vd 0.05 = 5%) = H\u0110 \u0110i\u1ec1u 9.3 / PL02 m\u1ee5c 5a. kenh_truc_tuyen = k\u00eanh tr\u1ef1c tuy\u1ebfn do D\u1ef1 \u00e1n v\u1eadn h\u00e0nh C\u00d3 ngu\u1ed3n quy\u1ebft to\u00e1n (settlement_rows); k\u00eanh li\u1ec7t k\u00ea m\u00e0 k\u1ef3 kh\u00f4ng c\u00f3 d\u00f2ng n\u00e0o \u2192 'ch\u01b0a c\u00f3 d\u1eef li\u1ec7u' (website b\u00e1n h\u00e0ng l\u00e0m ri\u00eang sau \u2014 ch\u01b0a c\u00f3 ngu\u1ed3n). phi_san_cot = c\u1ed9t kh\u1ea5u tr\u1eeb c\u1ee7a settlement_rows t\u00ednh l\u00e0 'ph\u00ed s\u00e0n' (GI\u1ea2 \u0110\u1ecaNH: m\u1ecdi kho\u1ea3n s\u00e0n tr\u1eeb tr\u1eeb ho\u00e0n \u2014 g\u1ed3m c\u1ea3 voucher ng\u01b0\u1eddi b\u00e1n, ph\u00ed v\u1eadn chuy\u1ec3n, affiliate; 2 b\u00ean ch\u1ed1t c\u1ed9t n\u00e0o t\u00ednh). muc_thuong = PL02 m\u1ee5c 4: tu_vnd (ng\u01b0\u1ee1ng doanh thu thu\u1ea7n/n\u0103m h\u1ee3p t\u00e1c), ty_le (0..1 tr\u00ean ph\u1ea7n v\u01b0\u1ee3t ng\u01b0\u1ee1ng); c\u00e1ch c\u1ed9ng d\u1ed3n gi\u1eefa c\u00e1c m\u1ee9c ch\u01b0a x\u00e1c \u0111\u1ecbnh.\", \"ngay_ky_hop_dong\": null, \"ngay_bat_dau_van_hanh\": null, \"ty_le_phi_van_hanh\": null, \"kenh_truc_tuyen\": [\"shopee\", \"tiktok\"], \"phi_san_cot\": [\"fixed_fee\", \"payment_fee\", \"service_fee\", \"shipping_fee\", \"voucher_seller\", \"affiliate\"], \"muc_thuong\": [{\"muc\": 1e-400, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 2, \"tu_vnd\": null, \"ty_le\": null}, {\"muc\": 3, \"tu_vnd\": null, \"ty_le\": null}]}",
+   "err": "muc_thuong[0]: thi\u1ebfu muc (1..99)"
+  }
+ ],
+ "frac": [
+  [
+   "1e400",
+   "x: ngo\u00e0i 0..1"
+  ],
+  [
+   "-1e400",
+   "x: ngo\u00e0i 0..1"
+  ]
+ ],
+ "base_exc": [
+  [
+   "08ZZZ",
+   "OperationalError"
+  ],
+  [
+   "0AZZZ",
+   "NotSupportedError"
+  ],
+  [
+   "22ZZZ",
+   "DataError"
+  ],
+  [
+   "23ZZZ",
+   "IntegrityError"
+  ],
+  [
+   "25ZZZ",
+   "InternalError"
+  ],
+  [
+   "28ZZZ",
+   "OperationalError"
+  ],
+  [
+   "2FZZZ",
+   "OperationalError"
+  ],
+  [
+   "3DZZZ",
+   "ProgrammingError"
+  ],
+  [
+   "40ZZZ",
+   "OperationalError"
+  ],
+  [
+   "42ZZZ",
+   "ProgrammingError"
+  ],
+  [
+   "53ZZZ",
+   "OperationalError"
+  ],
+  [
+   "57ZZZ",
+   "OperationalError"
+  ],
+  [
+   "F0ZZZ",
+   "OperationalError"
+  ],
+  [
+   "HVZZZ",
+   "OperationalError"
+  ],
+  [
+   "P0ZZZ",
+   "ProgrammingError"
+  ],
+  [
+   "XXZZZ",
+   "InternalError"
+  ],
+  [
+   "99ZZZ",
+   "DatabaseError"
+  ]
+ ],
+ "e2e": [
+  {
+   "name": "sp_dry_repo_map",
+   "channel": "shopee",
+   "dry_run": true,
+   "routes": {
+    "/api/v2/payment/get_escrow_list#1": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": true,
+      "escrow_list": [
+       {
+        "order_sn": "E2E1FAKE",
+        "payout_amount": 180000,
+        "escrow_release_time": 1759460000
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_list#2": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": false,
+      "escrow_list": [
+       {
+        "order_sn": "E2E2FAKE",
+        "payout_amount": 190000,
+        "escrow_release_time": 1759546400
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E1FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E1FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 180000,
+       "order_original_price": 200000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 215000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ]
+      }
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E2FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E2FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 190000,
+       "order_original_price": 210000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 225000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ],
+       "new_fee": 5
+      }
+     }
+    }
+   },
+   "map": "repo",
+   "rc": 2,
+   "out": "[dry-run] shopee: 2 giao d\u1ecbch \u2192 2 d\u00f2ng quy\u1ebft to\u00e1n (ngu\u1ed3n api_local) \u2014 KH\u00d4NG ghi s\u1ed5, kh\u00f4ng k\u1ebft n\u1ed1i DB.\n  b\u1ea3ng \u00e1nh x\u1ea1: CH\u01afA CH\u1ed0T \u2014 trang_thai = chua_chot (K\u1ebf to\u00e1n ch\u01b0a ch\u1ed1t b\u1ea3ng \u00e1nh x\u1ea1); thi\u1ebfu duyet_boi (ng\u01b0\u1eddi ch\u1ed1t \u2014 kh\u00f4ng ph\u1ea3i agent/system); thi\u1ebfu can_cu (v\u0103n b\u1ea3n/bi\u00ean b\u1ea3n ch\u1ed1t); thi\u1ebfu/sai ngay_chot (YYYY-MM-DD); 96 quy\u1ebft \u0111\u1ecbnh c\u00f2n tr\u1ed1ng (null); ch\u01b0a c\u00f3 th\u00e0nh ph\u1ea7n n\u00e0o ghi v\u00e0o c\u1ed9t order_amount; ch\u01b0a c\u00f3 th\u00e0nh ph\u1ea7n n\u00e0o ghi v\u00e0o c\u1ed9t payout\n  th\u00e0nh ph\u1ea7n/lo\u1ea1i c\u00f3 trong d\u1eef li\u1ec7u (9):\n    - (\u0111\u01a1n v\u1ecb ti\u1ec1n): pri_currency=VND, aff_currency=VND\n    - actual_shipping_fee: CH\u01afA CH\u1ed0T\n    - buyer_paid_shipping_fee: CH\u01afA CH\u1ed0T\n    - buyer_total_amount: CH\u01afA CH\u1ed0T\n    - commission_fee: CH\u01afA CH\u1ed0T\n    - escrow_amount: CH\u01afA CH\u1ed0T\n    - items[]: CH\u01afA CH\u1ed0T\n    - new_fee: L\u1ea0 \u2014 ch\u01b0a c\u00f3 trong \u00e1nh x\u1ea1\n    - order_original_price: CH\u01afA CH\u1ed0T\n[blocked] th\u00e0nh ph\u1ea7n 'actual_shipping_fee' ch\u01b0a ch\u1ed1t\n[blocked] th\u00e0nh ph\u1ea7n 'buyer_paid_shipping_fee' ch\u01b0a ch\u1ed1t\n[blocked] th\u00e0nh ph\u1ea7n 'buyer_total_amount' ch\u01b0a ch\u1ed1t\n[blocked] th\u00e0nh ph\u1ea7n 'commission_fee' ch\u01b0a ch\u1ed1t\n[blocked] th\u00e0nh ph\u1ea7n 'escrow_amount' ch\u01b0a ch\u1ed1t\n[blocked] th\u00e0nh ph\u1ea7n 'items[]' ch\u01b0a ch\u1ed1t\n[blocked] th\u00e0nh ph\u1ea7n 'new_fee' L\u1ea0\n[blocked] th\u00e0nh ph\u1ea7n 'order_original_price' ch\u01b0a ch\u1ed1t\n[blocked] c\u1ea7n quy\u1ebft \u0111\u1ecbnh c\u1ee7a K\u1ebf to\u00e1n trong b\u1ea3ng \u00e1nh x\u1ea1 \u2014 0 d\u00f2ng.\n",
+   "requests": 4
+  },
+  {
+   "name": "tt_dry_repo_map",
+   "channel": "tiktok",
+   "dry_run": true,
+   "routes": {
+    "/finance/202309/statements#": {
+     "code": 0,
+     "message": "Success",
+     "data": {
+      "statements": [
+       {
+        "id": "7001",
+        "statement_time": 1759460000,
+        "currency": "VND"
+       }
+      ]
+     }
+    },
+    "/finance/202501/statements/{statement_id}/statement_transactions#7001#": {
+     "code": 0,
+     "message": "Success",
+     "data": {
+      "currency": "VND",
+      "transactions": [
+       {
+        "id": "1",
+        "type": "ORDER",
+        "order_id": "T1",
+        "settlement_amount": "90000",
+        "order_create_time": 1,
+        "revenue_breakdown": {
+         "subtotal_before_discount_amount": "100000"
+        },
+        "fee_tax_breakdown": {
+         "fee": {
+          "platform_commission_amount": "-10000"
+         }
+        }
+       },
+       {
+        "id": "2",
+        "type": "PLATFORM_PENALTY",
+        "order_id": null,
+        "settlement_amount": "90000",
+        "order_create_time": 1,
+        "revenue_breakdown": {
+         "subtotal_before_discount_amount": "100000"
+        },
+        "fee_tax_breakdown": {
+         "fee": {
+          "platform_commission_amount": "-10000"
+         }
+        },
+        "adjustment_order_id": "T1"
+       }
+      ]
+     }
+    }
+   },
+   "map": "repo",
+   "rc": 2,
+   "out": "[dry-run] tiktok: 2 giao d\u1ecbch \u2192 0 d\u00f2ng quy\u1ebft to\u00e1n (ngu\u1ed3n api_local) \u2014 KH\u00d4NG ghi s\u1ed5, kh\u00f4ng k\u1ebft n\u1ed1i DB.\n  b\u1ea3ng \u00e1nh x\u1ea1: CH\u01afA CH\u1ed0T \u2014 trang_thai = chua_chot (K\u1ebf to\u00e1n ch\u01b0a ch\u1ed1t b\u1ea3ng \u00e1nh x\u1ea1); thi\u1ebfu duyet_boi (ng\u01b0\u1eddi ch\u1ed1t \u2014 kh\u00f4ng ph\u1ea3i agent/system); thi\u1ebfu can_cu (v\u0103n b\u1ea3n/bi\u00ean b\u1ea3n ch\u1ed1t); thi\u1ebfu/sai ngay_chot (YYYY-MM-DD); 168 quy\u1ebft \u0111\u1ecbnh c\u00f2n tr\u1ed1ng (null); ch\u01b0a c\u00f3 th\u00e0nh ph\u1ea7n n\u00e0o ghi v\u00e0o c\u1ed9t order_amount; ch\u01b0a c\u00f3 th\u00e0nh ph\u1ea7n n\u00e0o ghi v\u00e0o c\u1ed9t payout; ch\u01b0a c\u00f3 lo\u1ea1i giao d\u1ecbch n\u00e0o \u0111\u01b0\u1ee3c ghi (loai_giao_dich)\n  th\u00e0nh ph\u1ea7n/lo\u1ea1i c\u00f3 trong d\u1eef li\u1ec7u (2):\n    - lo\u1ea1i ORDER: CH\u01afA CH\u1ed0T\n    - lo\u1ea1i PLATFORM_PENALTY: CH\u01afA CH\u1ed0T\n[blocked] lo\u1ea1i giao d\u1ecbch 'ORDER' ch\u01b0a ch\u1ed1t\n[blocked] lo\u1ea1i giao d\u1ecbch 'PLATFORM_PENALTY' ch\u01b0a ch\u1ed1t\n[blocked] c\u1ea7n quy\u1ebft \u0111\u1ecbnh c\u1ee7a K\u1ebf to\u00e1n trong b\u1ea3ng \u00e1nh x\u1ea1 \u2014 0 d\u00f2ng.\n",
+   "requests": 2
+  },
+  {
+   "name": "sp_live_repo_map_blocked",
+   "channel": "shopee",
+   "dry_run": false,
+   "routes": {
+    "/api/v2/payment/get_escrow_list#1": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": true,
+      "escrow_list": [
+       {
+        "order_sn": "E2E1FAKE",
+        "payout_amount": 180000,
+        "escrow_release_time": 1759460000
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_list#2": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": false,
+      "escrow_list": [
+       {
+        "order_sn": "E2E2FAKE",
+        "payout_amount": 190000,
+        "escrow_release_time": 1759546400
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E1FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E1FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 180000,
+       "order_original_price": 200000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 215000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ]
+      }
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E2FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E2FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 190000,
+       "order_original_price": 210000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 225000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ],
+       "new_fee": 5
+      }
+     }
+    }
+   },
+   "map": "repo",
+   "rc": 2,
+   "out": "[blocked] shopee: b\u1ea3ng \u00e1nh x\u1ea1 quy\u1ebft to\u00e1n CH\u01afA d\u00f9ng \u0111\u01b0\u1ee3c \u0111\u1ec3 ghi s\u1ed5 \u2014 trang_thai = chua_chot (K\u1ebf to\u00e1n ch\u01b0a ch\u1ed1t b\u1ea3ng \u00e1nh x\u1ea1); thi\u1ebfu duyet_boi (ng\u01b0\u1eddi ch\u1ed1t \u2014 kh\u00f4ng ph\u1ea3i agent/system); thi\u1ebfu can_cu (v\u0103n b\u1ea3n/bi\u00ean b\u1ea3n ch\u1ed1t); thi\u1ebfu/sai ngay_chot (YYYY-MM-DD); 96 quy\u1ebft \u0111\u1ecbnh c\u00f2n tr\u1ed1ng (null); ch\u01b0a c\u00f3 th\u00e0nh ph\u1ea7n n\u00e0o ghi v\u00e0o c\u1ed9t order_amount; ch\u01b0a c\u00f3 th\u00e0nh ph\u1ea7n n\u00e0o ghi v\u00e0o c\u1ed9t payout (settlement_api_map.json, K\u1ebf to\u00e1n ch\u1ed1t). 0 request, 0 d\u00f2ng. Xem d\u1eef li\u1ec7u: th\u00eam --dry-run.\n",
+   "requests": 0
+  },
+  {
+   "name": "sp_dry_approved",
+   "channel": "shopee",
+   "dry_run": true,
+   "routes": {
+    "/api/v2/payment/get_escrow_list#1": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": true,
+      "escrow_list": [
+       {
+        "order_sn": "E2E1FAKE",
+        "payout_amount": 180000,
+        "escrow_release_time": 1759460000
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_list#2": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": false,
+      "escrow_list": [
+       {
+        "order_sn": "E2E2FAKE",
+        "payout_amount": 190000,
+        "escrow_release_time": 1759546400
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E1FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E1FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 180000,
+       "order_original_price": 200000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 215000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ]
+      }
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E2FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E2FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 190000,
+       "order_original_price": 210000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 225000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ],
+       "new_fee": 5
+      }
+     }
+    }
+   },
+   "map": {
+    "doc": {
+     "shopee": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "tien_te_shop": "VND",
+      "thanh_phan": {
+       "escrow_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "order_original_price": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "commission_fee": {
+        "cot": "fixed_fee",
+        "dau": 1
+       },
+       "buyer_paid_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": -1
+       },
+       "actual_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": 1
+       },
+       "buyer_total_amount": {
+        "bo_qua": true
+       },
+       "items[]": {
+        "bo_qua": true
+       }
+      }
+     },
+     "tiktok": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "thanh_phan": {
+       "settlement_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "revenue_breakdown.subtotal_before_discount_amount": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "fee_tax_breakdown.fee.platform_commission_amount": {
+        "cot": "fixed_fee",
+        "dau": -1
+       }
+      },
+      "loai_giao_dich": {
+       "ORDER": {
+        "ma_don": "order_id",
+        "txn_type": null
+       },
+       "PLATFORM_PENALTY": {
+        "ma_don": "adjustment_order_id",
+        "txn_type": null
+       },
+       "SHIPPING_FEE_ADJUSTMENT": {
+        "bo_qua": true
+       }
+      }
+     }
+    }
+   },
+   "rc": 2,
+   "out": "[dry-run] shopee: 2 giao d\u1ecbch \u2192 2 d\u00f2ng quy\u1ebft to\u00e1n (ngu\u1ed3n api_local) \u2014 KH\u00d4NG ghi s\u1ed5, kh\u00f4ng k\u1ebft n\u1ed1i DB.\n  b\u1ea3ng \u00e1nh x\u1ea1: \u0111\u00e3 ch\u1ed1t\n  th\u00e0nh ph\u1ea7n/lo\u1ea1i c\u00f3 trong d\u1eef li\u1ec7u (9):\n    - (\u0111\u01a1n v\u1ecb ti\u1ec1n): pri_currency=VND, aff_currency=VND\n    - actual_shipping_fee: c\u1ed9t shipping_fee (+)\n    - buyer_paid_shipping_fee: c\u1ed9t shipping_fee (\u2212)\n    - buyer_total_amount: b\u1ecf qua\n    - commission_fee: c\u1ed9t fixed_fee (+)\n    - escrow_amount: c\u1ed9t payout (+)\n    - items[]: b\u1ecf qua\n    - new_fee: L\u1ea0 \u2014 ch\u01b0a c\u00f3 trong \u00e1nh x\u1ea1\n    - order_original_price: c\u1ed9t order_amount (+)\n[blocked] th\u00e0nh ph\u1ea7n 'new_fee' L\u1ea0\n[blocked] c\u1ea7n quy\u1ebft \u0111\u1ecbnh c\u1ee7a K\u1ebf to\u00e1n trong b\u1ea3ng \u00e1nh x\u1ea1 \u2014 0 d\u00f2ng.\n",
+   "requests": 4
+  },
+  {
+   "name": "sp_dry_approved_clean",
+   "channel": "shopee",
+   "dry_run": true,
+   "routes": {
+    "/api/v2/payment/get_escrow_list#1": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": true,
+      "escrow_list": [
+       {
+        "order_sn": "E2E1FAKE",
+        "payout_amount": 180000,
+        "escrow_release_time": 1759460000
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_list#2": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": false,
+      "escrow_list": [
+       {
+        "order_sn": "E2E2FAKE",
+        "payout_amount": 190000,
+        "escrow_release_time": 1759546400
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E1FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E1FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 180000,
+       "order_original_price": 200000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 215000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ]
+      }
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E2FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E2FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 190000,
+       "order_original_price": 210000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 225000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ]
+      }
+     }
+    }
+   },
+   "map": {
+    "doc": {
+     "shopee": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "tien_te_shop": "VND",
+      "thanh_phan": {
+       "escrow_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "order_original_price": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "commission_fee": {
+        "cot": "fixed_fee",
+        "dau": 1
+       },
+       "buyer_paid_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": -1
+       },
+       "actual_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": 1
+       },
+       "buyer_total_amount": {
+        "bo_qua": true
+       },
+       "items[]": {
+        "bo_qua": true
+       }
+      }
+     },
+     "tiktok": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "thanh_phan": {
+       "settlement_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "revenue_breakdown.subtotal_before_discount_amount": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "fee_tax_breakdown.fee.platform_commission_amount": {
+        "cot": "fixed_fee",
+        "dau": -1
+       }
+      },
+      "loai_giao_dich": {
+       "ORDER": {
+        "ma_don": "order_id",
+        "txn_type": null
+       },
+       "PLATFORM_PENALTY": {
+        "ma_don": "adjustment_order_id",
+        "txn_type": null
+       },
+       "SHIPPING_FEE_ADJUSTMENT": {
+        "bo_qua": true
+       }
+      }
+     }
+    }
+   },
+   "rc": 0,
+   "out": "[dry-run] shopee: 2 giao d\u1ecbch \u2192 2 d\u00f2ng quy\u1ebft to\u00e1n (ngu\u1ed3n api_local) \u2014 KH\u00d4NG ghi s\u1ed5, kh\u00f4ng k\u1ebft n\u1ed1i DB.\n  b\u1ea3ng \u00e1nh x\u1ea1: \u0111\u00e3 ch\u1ed1t\n  th\u00e0nh ph\u1ea7n/lo\u1ea1i c\u00f3 trong d\u1eef li\u1ec7u (8):\n    - (\u0111\u01a1n v\u1ecb ti\u1ec1n): pri_currency=VND, aff_currency=VND\n    - actual_shipping_fee: c\u1ed9t shipping_fee (+)\n    - buyer_paid_shipping_fee: c\u1ed9t shipping_fee (\u2212)\n    - buyer_total_amount: b\u1ecf qua\n    - commission_fee: c\u1ed9t fixed_fee (+)\n    - escrow_amount: c\u1ed9t payout (+)\n    - items[]: b\u1ecf qua\n    - order_original_price: c\u1ed9t order_amount (+)\n",
+   "requests": 4
+  },
+  {
+   "name": "tt_dry_approved",
+   "channel": "tiktok",
+   "dry_run": true,
+   "routes": {
+    "/finance/202309/statements#": {
+     "code": 0,
+     "message": "Success",
+     "data": {
+      "statements": [
+       {
+        "id": "7001",
+        "statement_time": 1759460000,
+        "currency": "VND"
+       }
+      ]
+     }
+    },
+    "/finance/202501/statements/{statement_id}/statement_transactions#7001#": {
+     "code": 0,
+     "message": "Success",
+     "data": {
+      "currency": "VND",
+      "transactions": [
+       {
+        "id": "1",
+        "type": "ORDER",
+        "order_id": "T1",
+        "settlement_amount": "90000",
+        "order_create_time": 1,
+        "revenue_breakdown": {
+         "subtotal_before_discount_amount": "100000"
+        },
+        "fee_tax_breakdown": {
+         "fee": {
+          "platform_commission_amount": "-10000"
+         }
+        }
+       },
+       {
+        "id": "2",
+        "type": "PLATFORM_PENALTY",
+        "order_id": null,
+        "settlement_amount": "90000",
+        "order_create_time": 1,
+        "revenue_breakdown": {
+         "subtotal_before_discount_amount": "100000"
+        },
+        "fee_tax_breakdown": {
+         "fee": {
+          "platform_commission_amount": "-10000"
+         }
+        },
+        "adjustment_order_id": "T1"
+       }
+      ]
+     }
+    }
+   },
+   "map": {
+    "doc": {
+     "shopee": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "tien_te_shop": "VND",
+      "thanh_phan": {
+       "escrow_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "order_original_price": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "commission_fee": {
+        "cot": "fixed_fee",
+        "dau": 1
+       },
+       "buyer_paid_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": -1
+       },
+       "actual_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": 1
+       },
+       "buyer_total_amount": {
+        "bo_qua": true
+       },
+       "items[]": {
+        "bo_qua": true
+       }
+      }
+     },
+     "tiktok": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "thanh_phan": {
+       "settlement_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "revenue_breakdown.subtotal_before_discount_amount": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "fee_tax_breakdown.fee.platform_commission_amount": {
+        "cot": "fixed_fee",
+        "dau": -1
+       }
+      },
+      "loai_giao_dich": {
+       "ORDER": {
+        "ma_don": "order_id",
+        "txn_type": null
+       },
+       "PLATFORM_PENALTY": {
+        "ma_don": "adjustment_order_id",
+        "txn_type": null
+       },
+       "SHIPPING_FEE_ADJUSTMENT": {
+        "bo_qua": true
+       }
+      }
+     }
+    }
+   },
+   "rc": 2,
+   "out": "[dry-run] tiktok: 2 giao d\u1ecbch \u2192 1 d\u00f2ng quy\u1ebft to\u00e1n (ngu\u1ed3n api_local) \u2014 KH\u00d4NG ghi s\u1ed5, kh\u00f4ng k\u1ebft n\u1ed1i DB.\n  b\u1ea3ng \u00e1nh x\u1ea1: \u0111\u00e3 ch\u1ed1t\n  th\u00e0nh ph\u1ea7n/lo\u1ea1i c\u00f3 trong d\u1eef li\u1ec7u (5):\n    - fee_tax_breakdown.fee.platform_commission_amount: c\u1ed9t fixed_fee (\u2212)\n    - lo\u1ea1i ORDER: ghi d\u00f2ng, m\u00e3 \u0111\u01a1n t\u1eeb order_id\n    - lo\u1ea1i PLATFORM_PENALTY: ghi d\u00f2ng, m\u00e3 \u0111\u01a1n t\u1eeb adjustment_order_id\n    - revenue_breakdown.subtotal_before_discount_amount: c\u1ed9t order_amount (+)\n    - settlement_amount: c\u1ed9t payout (+)\n[blocked] \u22652 giao d\u1ecbch c\u00f9ng \u0111\u01a1n + c\u00f9ng txn_type trong 1 l\u01b0\u1ee3t \u2014 c\u1ea7n nh\u00e3n txn_type ri\u00eang theo lo\u1ea1i (K\u1ebf to\u00e1n)\n[blocked] c\u1ea7n quy\u1ebft \u0111\u1ecbnh c\u1ee7a K\u1ebf to\u00e1n trong b\u1ea3ng \u00e1nh x\u1ea1 \u2014 0 d\u00f2ng.\n",
+   "requests": 2
+  },
+  {
+   "name": "sp_live_approved_local_blocked",
+   "channel": "shopee",
+   "dry_run": false,
+   "routes": {
+    "/api/v2/payment/get_escrow_list#1": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": true,
+      "escrow_list": [
+       {
+        "order_sn": "E2E1FAKE",
+        "payout_amount": 180000,
+        "escrow_release_time": 1759460000
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_list#2": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": false,
+      "escrow_list": [
+       {
+        "order_sn": "E2E2FAKE",
+        "payout_amount": 190000,
+        "escrow_release_time": 1759546400
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E1FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E1FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 180000,
+       "order_original_price": 200000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 215000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ]
+      }
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E2FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E2FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 190000,
+       "order_original_price": 210000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 225000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ],
+       "new_fee": 5
+      }
+     }
+    }
+   },
+   "map": {
+    "doc": {
+     "shopee": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "tien_te_shop": "VND",
+      "thanh_phan": {
+       "escrow_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "order_original_price": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "commission_fee": {
+        "cot": "fixed_fee",
+        "dau": 1
+       },
+       "buyer_paid_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": -1
+       },
+       "actual_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": 1
+       },
+       "buyer_total_amount": {
+        "bo_qua": true
+       },
+       "items[]": {
+        "bo_qua": true
+       }
+      }
+     },
+     "tiktok": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "thanh_phan": {
+       "settlement_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "revenue_breakdown.subtotal_before_discount_amount": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "fee_tax_breakdown.fee.platform_commission_amount": {
+        "cot": "fixed_fee",
+        "dau": -1
+       }
+      },
+      "loai_giao_dich": {
+       "ORDER": {
+        "ma_don": "order_id",
+        "txn_type": null
+       },
+       "PLATFORM_PENALTY": {
+        "ma_don": "adjustment_order_id",
+        "txn_type": null
+       },
+       "SHIPPING_FEE_ADJUSTMENT": {
+        "bo_qua": true
+       }
+      }
+     }
+    }
+   },
+   "rc": 2,
+   "out": "[blocked] shopee: ngu\u1ed3n api_local \u2014 ch\u1ec9 API TH\u1eacT \u0111\u01b0\u1ee3c ghi s\u1ed5 quy\u1ebft to\u00e1n; sandbox/server gi\u1ea3 ch\u1ea1y --dry-run. 0 request.\n",
+   "requests": 0
+  },
+  {
+   "name": "sp_dry_api_error",
+   "channel": "shopee",
+   "dry_run": true,
+   "routes": {
+    "/api/v2/payment/get_escrow_list#1": {
+     "error": "error_auth",
+     "message": "token sai",
+     "response": {}
+    }
+   },
+   "map": {
+    "doc": {
+     "shopee": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "tien_te_shop": "VND",
+      "thanh_phan": {
+       "escrow_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "order_original_price": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "commission_fee": {
+        "cot": "fixed_fee",
+        "dau": 1
+       },
+       "buyer_paid_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": -1
+       },
+       "actual_shipping_fee": {
+        "cot": "shipping_fee",
+        "dau": 1
+       },
+       "buyer_total_amount": {
+        "bo_qua": true
+       },
+       "items[]": {
+        "bo_qua": true
+       }
+      }
+     },
+     "tiktok": {
+      "trang_thai": "da_chot",
+      "duyet_boi": "K\u1ebf to\u00e1n tr\u01b0\u1edfng (GI\u1ea2 \u2014 test)",
+      "can_cu": "FIXTURE test \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3ng th\u1eadt",
+      "ngay_chot": "2026-10-25",
+      "thanh_phan": {
+       "settlement_amount": {
+        "cot": "payout",
+        "dau": 1
+       },
+       "revenue_breakdown.subtotal_before_discount_amount": {
+        "cot": "order_amount",
+        "dau": 1
+       },
+       "fee_tax_breakdown.fee.platform_commission_amount": {
+        "cot": "fixed_fee",
+        "dau": -1
+       }
+      },
+      "loai_giao_dich": {
+       "ORDER": {
+        "ma_don": "order_id",
+        "txn_type": null
+       },
+       "PLATFORM_PENALTY": {
+        "ma_don": "adjustment_order_id",
+        "txn_type": null
+       },
+       "SHIPPING_FEE_ADJUSTMENT": {
+        "bo_qua": true
+       }
+      }
+     }
+    }
+   },
+   "rc": 1,
+   "out": "[err] shopee /api/v2/payment/get_escrow_list: m\u00e3 l\u1ed7i error_auth \u2014 kh\u00f4ng connect, kh\u00f4ng n\u1ea1p g\u00ec.\n",
+   "requests": 1
+  },
+  {
+   "name": "sp_map_corrupt",
+   "channel": "shopee",
+   "dry_run": true,
+   "routes": {
+    "/api/v2/payment/get_escrow_list#1": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": true,
+      "escrow_list": [
+       {
+        "order_sn": "E2E1FAKE",
+        "payout_amount": 180000,
+        "escrow_release_time": 1759460000
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_list#2": {
+     "error": "",
+     "message": "",
+     "response": {
+      "more": false,
+      "escrow_list": [
+       {
+        "order_sn": "E2E2FAKE",
+        "payout_amount": 190000,
+        "escrow_release_time": 1759546400
+       }
+      ]
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E1FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E1FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 180000,
+       "order_original_price": 200000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 215000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ]
+      }
+     }
+    },
+    "/api/v2/payment/get_escrow_detail#E2E2FAKE": {
+     "error": "",
+     "message": "",
+     "response": {
+      "order_sn": "E2E2FAKE",
+      "buyer_user_name": "nguoimuagia",
+      "order_income": {
+       "escrow_amount": 190000,
+       "order_original_price": 210000,
+       "commission_fee": 10000,
+       "buyer_paid_shipping_fee": 15000,
+       "actual_shipping_fee": 25000,
+       "buyer_total_amount": 225000,
+       "pri_currency": "VND",
+       "aff_currency": "VND",
+       "items": [
+        {
+         "item_id": 1,
+         "item_name": "SP GIA"
+        }
+       ],
+       "new_fee": 5
+      }
+     }
+    }
+   },
+   "map": {
+    "text": "{h\u1ecfng"
+   },
+   "rc": 1,
+   "out": "[err] b\u1ea3ng \u00e1nh x\u1ea1 quy\u1ebft to\u00e1n: settlement_api_map.json: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (JSONDecodeError) \u2014 0 request.\n",
+   "requests": 0
+  }
+ ],
+ "e2e_creds": {
+  "SHOPEE_PARTNER_ID": "1000001",
+  "SHOPEE_PARTNER_KEY": "SPKEY_SECRET_XYZ",
+  "SHOPEE_SHOP_ID": "2000002",
+  "SHOPEE_ACCESS_TOKEN": "SPTOKEN_SECRET_XYZ",
+  "TIKTOK_APP_KEY": "TTAPPKEY",
+  "TIKTOK_APP_SECRET": "TTSECRET_XYZ",
+  "TIKTOK_SHOP_CIPHER": "TTCIPHER",
+  "TIKTOK_ACCESS_TOKEN": "TTTOKEN_SECRET_XYZ"
+ }
+}

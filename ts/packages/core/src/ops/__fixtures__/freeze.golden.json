@@ -1,0 +1,1789 @@
+{
+ "calendar": {
+  "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+  "windows": [
+   {
+    "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+    "start": "2026-12-21",
+    "end": "2027-02-10"
+   }
+  ],
+  "allowed_in_freeze": [
+   "hotfix",
+   "disable",
+   "restore"
+  ],
+  "known_kinds": [
+   "hotfix",
+   "disable",
+   "restore",
+   "feature",
+   "promote",
+   "config",
+   "migration"
+  ],
+  "break_glass_max_hours": 4,
+  "break_glass_holders": []
+ },
+ "calendars": [
+  {
+   "cal": null,
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "l\u1ecbch kh\u00f4ng ph\u1ea3i object JSON"
+   }
+  },
+  {
+   "cal": [],
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "l\u1ecbch kh\u00f4ng ph\u1ea3i object JSON"
+   }
+  },
+  {
+   "cal": {
+    "windows": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "'windows' thi\u1ebfu ho\u1eb7c r\u1ed7ng"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "windows[0] thi\u1ebfu name"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "x",
+      "start": "2026-12-21",
+      "end": "2026-12-20"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "windows[0] start > end"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "x",
+      "start": "2026-12-1",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "windows[0].start ph\u1ea3i d\u1ea1ng YYYY-MM-DD"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "x",
+      "start": "2026-02-30",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "windows[0].start kh\u00f4ng ph\u1ea3i ng\u00e0y h\u1ee3p l\u1ec7"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "'known_kinds' ph\u1ea3i l\u00e0 list chu\u1ed7i kh\u00f4ng r\u1ed7ng"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "a",
+     " "
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "'known_kinds' ph\u1ea3i l\u00e0 list chu\u1ed7i kh\u00f4ng r\u1ed7ng"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "nope"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "allowed_in_freeze c\u00f3 kind l\u1ea1: ['nope']"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": "x"
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "'break_glass_holders' ph\u1ea3i l\u00e0 list chu\u1ed7i"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "ok": {
+     "windows": [
+      {
+       "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+       "start": "2026-12-21",
+       "end": "2027-02-10"
+      }
+     ],
+     "known_kinds": [
+      "hotfix",
+      "disable",
+      "restore",
+      "feature",
+      "promote",
+      "config",
+      "migration"
+     ],
+     "allowed_in_freeze": [
+      "hotfix",
+      "disable",
+      "restore"
+     ],
+     "break_glass_max_hours": 4,
+     "break_glass_holders": []
+    }
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 0,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "break_glass_max_hours ph\u1ea3i trong (0, 24]"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 25,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "break_glass_max_hours ph\u1ea3i trong (0, 24]"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": true,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "break_glass_max_hours ph\u1ea3i trong (0, 24]"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 24,
+    "break_glass_holders": []
+   },
+   "out": {
+    "ok": {
+     "windows": [
+      {
+       "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+       "start": "2026-12-21",
+       "end": "2027-02-10"
+      }
+     ],
+     "known_kinds": [
+      "hotfix",
+      "disable",
+      "restore",
+      "feature",
+      "promote",
+      "config",
+      "migration"
+     ],
+     "allowed_in_freeze": [
+      "hotfix",
+      "disable",
+      "restore"
+     ],
+     "break_glass_max_hours": 24,
+     "break_glass_holders": []
+    }
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 0.5,
+    "break_glass_holders": []
+   },
+   "out": {
+    "ok": {
+     "windows": [
+      {
+       "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+       "start": "2026-12-21",
+       "end": "2027-02-10"
+      }
+     ],
+     "known_kinds": [
+      "hotfix",
+      "disable",
+      "restore",
+      "feature",
+      "promote",
+      "config",
+      "migration"
+     ],
+     "allowed_in_freeze": [
+      "hotfix",
+      "disable",
+      "restore"
+     ],
+     "break_glass_max_hours": 0.5,
+     "break_glass_holders": []
+    }
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": "4",
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "break_glass_max_hours ph\u1ea3i trong (0, 24]"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "'break_glass_holders' ph\u1ea3i l\u00e0 list chu\u1ed7i"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": 5,
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "error": "FreezeConfigError",
+    "msg": "windows[0] thi\u1ebfu name"
+   }
+  },
+  {
+   "cal": {
+    "_doc": "L\u1ecbch \u0111\u00f3ng b\u0103ng m\u00f9a cao \u0111i\u1ec3m (v3.10) \u2014 ngu\u1ed3n: flows_infra.md \u00a75 'Lu\u1eadt \u0111\u00f3ng b\u0103ng chung', \u00e1p cho F17.1 (deploy) v\u00e0 F17.5 (b\u1eadt l\u1ea1i agent). Ng\u00e0y theo gi\u1edd Asia/Saigon (+07:00), G\u1ed2M C\u1ea2 2 \u0110\u1ea6U. B\u1ea3n dev so\u1ea1n, CH\u01afA \u0111\u01b0\u1ee3c c\u00f4ng ty duy\u1ec7t (external-dep). \u0110\u00e2y l\u00e0 ngu\u1ed3n l\u1ecbch DUY NH\u1ea4T: t\u1eeb v4.0 scripts/deploy_gate.py \u0111\u1ecdc file n\u00e0y qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json \u0111\u00e3 b\u1ecf). Trong \u0111\u00f3ng b\u0103ng ch\u1ec9 cho: hotfix (t\u1ea7ng 2), disable (t\u1eaft/h\u1ea1 c\u1ea5p agent), restore (kh\u00f4i ph\u1ee5c \u0110\u00daNG tr\u1ea1ng th\u00e1i tr\u01b0\u1edbc kill, c\u00f3 RCA). break_glass_holders r\u1ed7ng = c\u00f4ng ty ch\u01b0a c\u1ea5p danh s\u00e1ch ng\u01b0\u1eddi gi\u1eef quy\u1ec1n (external-dep) \u2014 scripts/break_glass.py v\u1eabn m\u1edf nh\u01b0ng ghi holder_verified=false.",
+    "windows": [
+     {
+      "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+      "start": "2026-12-21",
+      "end": "2027-02-10"
+     }
+    ],
+    "allowed_in_freeze": [
+     "hotfix",
+     "disable",
+     "restore"
+    ],
+    "known_kinds": [
+     "hotfix",
+     "disable",
+     "restore",
+     "feature",
+     "promote",
+     "config",
+     "migration"
+    ],
+    "break_glass_max_hours": 4,
+    "break_glass_holders": []
+   },
+   "out": {
+    "ok": {
+     "windows": [
+      {
+       "name": "T\u1ebft \u0110inh M\u00f9i 2027",
+       "start": "2026-12-21",
+       "end": "2027-02-10"
+      }
+     ],
+     "known_kinds": [
+      "hotfix",
+      "disable",
+      "restore",
+      "feature",
+      "promote",
+      "config",
+      "migration"
+     ],
+     "allowed_in_freeze": [
+      "hotfix",
+      "disable",
+      "restore"
+     ],
+     "break_glass_max_hours": 4,
+     "break_glass_holders": []
+    }
+   }
+  }
+ ],
+ "bg_lines_b64": "eyJhY3Rpb24iOiAib3BlbiIsICJvcGVuZWRfYXQiOiAiMjAyNi0xMi0yNVQxNDowMDowMCswNzowMCIsICJleHBpcmVzX2F0IjogIjIwMjYtMTItMjVUMTg6MDA6MDArMDc6MDAiLCAiYnkiOiAiTmd1eeG7hW4gQSIsICJyZWFzb24iOiAic+G7sSBj4buRIiwgImhvbGRlcl92ZXJpZmllZCI6IHRydWV9CnsiYWN0aW9uIjogIm9wZW4iLCAib3BlbmVkX2F0IjogIjIwMjYtMTItMjZUMDk6MDA6MDArMDc6MDAiLCAiZXhwaXJlc19hdCI6ICIyMDI2LTEyLTI4VDA5OjAwOjAwKzA3OjAwIiwgImJ5IjogIlRy4bqnbiBCIiwgInJlYXNvbiI6ICI0OGggc+G7rWEgdGF5In0KeyJhY3Rpb24iOiAiY2xvc2UiLCAidHMiOiAiMjAyNi0xMi0yNlQxMDowMDowMCswNzowMCIsICJieSI6ICJUcuG6p24gQiJ9CnsiYWN0aW9uIjogIm9wZW4iLCAib3BlbmVkX2F0IjogIjIwMjctMDEtMDVUMDg6MDA6MDArMDc6MDAiLCAiZXhwaXJlc19hdCI6ICIyMDI3LTAxLTA1VDA5OjMwOjAwKzA3OjAwIiwgImJ5IjogIkzDqiBDIiwgImhvbGRlcl92ZXJpZmllZCI6ICJ5ZXMifQoKICAgCntiYWQganNvbgp7ImFjdGlvbiI6ICJvcGVuIn0KeyJhY3Rpb24iOiAib3BlbiIsICJvcGVuZWRfYXQiOiAiMjAyNi0xMi0yNVQxNDowMDowMCIsICJleHBpcmVzX2F0IjogIjIwMjYtMTItMjVUMTg6MDA6MDArMDc6MDAiLCAiYnkiOiAieCJ9CnsiYWN0aW9uIjogIm9wZW4iLCAib3BlbmVkX2F0IjogIjIwMjYtMTItMjVUMTQ6MDA6MDArMDc6MDAiLCAiZXhwaXJlc19hdCI6ICIyMDI2LTEyLTI1VDE4OjAwOjAwKzA3OjAwIiwgImJ5IjogInhcdTAwMWJbMzFtIn0KeyJhY3Rpb24iOiAib3BlbiIsICJvcGVuZWRfYXQiOiAiMjAyNi0xMi0yNVQxNDowMDowMFoiLCAiZXhwaXJlc19hdCI6ICIyMDI2LTEyLTI1IDE4OjAwKzA3OjAwIiwgImJ5IjogIlBoXHUxZWExbSBEIn0KeyJhY3Rpb24iOiAiY2xvc2UiLCAidHMiOiA1LCAiYnkiOiAieCJ9CnsiYWN0aW9uIjogImtpbGwiLCAiYnkiOiAieCJ9Clsib3BlbiJdCv/+Cg==",
+ "records": [
+  {
+   "action": "open",
+   "opened_at": "2026-12-25T14:00:00+07:00",
+   "expires_at": "2026-12-25T18:00:00+07:00",
+   "by": "Nguy\u1ec5n A",
+   "reason": "s\u1ef1 c\u1ed1",
+   "holder_verified": true
+  },
+  {
+   "action": "open",
+   "opened_at": "2026-12-26T09:00:00+07:00",
+   "expires_at": "2026-12-28T09:00:00+07:00",
+   "by": "Tr\u1ea7n B",
+   "reason": "48h s\u1eeda tay",
+   "holder_verified": false
+  },
+  {
+   "action": "close",
+   "ts": "2026-12-26T10:00:00+07:00",
+   "by": "Tr\u1ea7n B",
+   "reason": null
+  },
+  {
+   "action": "open",
+   "opened_at": "2027-01-05T08:00:00+07:00",
+   "expires_at": "2027-01-05T09:30:00+07:00",
+   "by": "L\u00ea C",
+   "reason": null,
+   "holder_verified": false
+  },
+  {
+   "action": "open",
+   "opened_at": "2026-12-25T14:00:00+00:00",
+   "expires_at": "2026-12-25T18:00:00+07:00",
+   "by": "Ph\u1ea1m D",
+   "reason": null,
+   "holder_verified": false
+  }
+ ],
+ "bad_lines": [
+  7,
+  8,
+  9,
+  10,
+  12,
+  13,
+  14,
+  15
+ ],
+ "checks": [
+  {
+   "kind": "feature",
+   "now": "2026-12-20T23:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "ngo\u00e0i khung \u0111\u00f3ng b\u0103ng"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-20T23:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "ngo\u00e0i khung \u0111\u00f3ng b\u0103ng"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-20T23:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "ngo\u00e0i khung \u0111\u00f3ng b\u0103ng"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-20T23:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "ngo\u00e0i khung \u0111\u00f3ng b\u0103ng"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-20T23:59:59+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-21T00:00:00+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'feature' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-21T00:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-21T00:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-21T00:00:00+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'config' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-21T00:00:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-20T17:00:00+00:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'feature' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-20T17:00:00+00:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-20T17:00:00+00:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-20T17:00:00+00:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'config' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-20T17:00:00+00:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-25T13:59:59+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'feature' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-25T13:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-25T13:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-25T13:59:59+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'config' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-25T13:59:59+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-25T14:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi Nguy\u1ec5n A t\u1edbi 18:00 25/12/2026"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-25T14:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-25T14:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-25T14:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi Nguy\u1ec5n A t\u1edbi 18:00 25/12/2026"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-25T14:00:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-25T15:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi Nguy\u1ec5n A t\u1edbi 18:00 25/12/2026"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-25T15:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-25T15:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-25T15:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi Nguy\u1ec5n A t\u1edbi 18:00 25/12/2026"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-25T15:00:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-25T17:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi Nguy\u1ec5n A t\u1edbi 18:00 25/12/2026"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-25T17:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-25T17:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-25T17:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi Nguy\u1ec5n A t\u1edbi 18:00 25/12/2026"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-25T17:59:59+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-25T18:00:00+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'feature' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-25T18:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-25T18:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-25T18:00:00+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'config' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-25T18:00:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-26T09:30:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi Tr\u1ea7n B (ng\u01b0\u1eddi CH\u01afA x\u00e1c minh) t\u1edbi 13:00 26/12/2026"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-26T09:30:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-26T09:30:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-26T09:30:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi Tr\u1ea7n B (ng\u01b0\u1eddi CH\u01afA x\u00e1c minh) t\u1edbi 13:00 26/12/2026"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-26T09:30:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-26T12:00:00+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'feature' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-26T12:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2026-12-26T12:00:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2026-12-26T12:00:00+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'config' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-26T12:00:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2027-01-05T08:30:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi L\u00ea C (ng\u01b0\u1eddi CH\u01afA x\u00e1c minh) t\u1edbi 09:30 05/01/2027"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2027-01-05T08:30:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2027-01-05T08:30:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2027-01-05T08:30:00+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi L\u00ea C (ng\u01b0\u1eddi CH\u01afA x\u00e1c minh) t\u1edbi 09:30 05/01/2027"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2027-01-05T08:30:00+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2027-02-10T23:59:59+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'feature' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2027-02-10T23:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2027-02-10T23:59:59+07:00",
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'restore' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2027-02-10T23:59:59+07:00",
+   "out": {
+    "ok": [
+     false,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027): ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c \u2014 'config' b\u1ecb ch\u1eb7n"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2027-02-10T23:59:59+07:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2027-02-10T17:00:00+00:00",
+   "out": {
+    "ok": [
+     true,
+     "ngo\u00e0i khung \u0111\u00f3ng b\u0103ng"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2027-02-10T17:00:00+00:00",
+   "out": {
+    "ok": [
+     true,
+     "ngo\u00e0i khung \u0111\u00f3ng b\u0103ng"
+    ]
+   }
+  },
+  {
+   "kind": "restore",
+   "now": "2027-02-10T17:00:00+00:00",
+   "out": {
+    "ok": [
+     true,
+     "ngo\u00e0i khung \u0111\u00f3ng b\u0103ng"
+    ]
+   }
+  },
+  {
+   "kind": "config",
+   "now": "2027-02-10T17:00:00+00:00",
+   "out": {
+    "ok": [
+     true,
+     "ngo\u00e0i khung \u0111\u00f3ng b\u0103ng"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2027-02-10T17:00:00+00:00",
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-25T15:00:00+07:00",
+   "cal": null,
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 BREAK-GLASS m\u1edf b\u1edfi Nguy\u1ec5n A t\u1edbi 18:00 25/12/2026"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-25T15:00:00+07:00",
+   "cal": null,
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'hotfix' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "disable",
+   "now": "2026-12-25T15:00:00+07:00",
+   "cal": null,
+   "out": {
+    "ok": [
+     true,
+     "\u0111ang \u0111\u00f3ng b\u0103ng 21/12/2026\u201310/02/2027 (T\u1ebft \u0110inh M\u00f9i 2027) \u2014 'disable' \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-25T15:00:00+07:00",
+   "cal": null,
+   "out": {
+    "error": "ValueError",
+    "msg": "lo\u1ea1i thay \u0111\u1ed5i l\u1ea1 'nope' \u2014 d\u00f9ng m\u1ed9t trong ['hotfix', 'disable', 'restore', 'feature', 'promote', 'config', 'migration']"
+   }
+  },
+  {
+   "kind": "feature",
+   "now": "2026-12-25T15:00:00+07:00",
+   "cal": {
+    "windows": []
+   },
+   "out": {
+    "ok": [
+     false,
+     "l\u1ecbch \u0111\u00f3ng b\u0103ng l\u1ed7i ('windows' thi\u1ebfu ho\u1eb7c r\u1ed7ng) \u2014 fail-closed, coi nh\u01b0 \u0111ang \u0111\u00f3ng b\u0103ng: ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c"
+    ]
+   }
+  },
+  {
+   "kind": "hotfix",
+   "now": "2026-12-25T15:00:00+07:00",
+   "cal": {
+    "windows": []
+   },
+   "out": {
+    "ok": [
+     true,
+     "l\u1ecbch \u0111\u00f3ng b\u0103ng l\u1ed7i ('windows' thi\u1ebfu ho\u1eb7c r\u1ed7ng) \u2014 fail-closed, 'hotfix' v\u1eabn \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "disable",
+   "now": "2026-12-25T15:00:00+07:00",
+   "cal": {
+    "windows": []
+   },
+   "out": {
+    "ok": [
+     true,
+     "l\u1ecbch \u0111\u00f3ng b\u0103ng l\u1ed7i ('windows' thi\u1ebfu ho\u1eb7c r\u1ed7ng) \u2014 fail-closed, 'disable' v\u1eabn \u0111\u01b0\u1ee3c ph\u00e9p"
+    ]
+   }
+  },
+  {
+   "kind": "nope",
+   "now": "2026-12-25T15:00:00+07:00",
+   "cal": {
+    "windows": []
+   },
+   "out": {
+    "ok": [
+     false,
+     "l\u1ecbch \u0111\u00f3ng b\u0103ng l\u1ed7i ('windows' thi\u1ebfu ho\u1eb7c r\u1ed7ng) \u2014 fail-closed, coi nh\u01b0 \u0111ang \u0111\u00f3ng b\u0103ng: ch\u1ec9 hotfix/t\u1eaft agent/kh\u00f4i ph\u1ee5c"
+    ]
+   }
+  }
+ ],
+ "frozen": [
+  {
+   "when": {
+    "d": "2026-12-20"
+   },
+   "out": {
+    "ok": false
+   }
+  },
+  {
+   "when": {
+    "d": "2026-12-21"
+   },
+   "out": {
+    "ok": true
+   }
+  },
+  {
+   "when": {
+    "d": "2027-02-10"
+   },
+   "out": {
+    "ok": true
+   }
+  },
+  {
+   "when": {
+    "d": "2027-02-11"
+   },
+   "out": {
+    "ok": false
+   }
+  },
+  {
+   "when": {
+    "t": "2026-12-20T17:00:00+00:00"
+   },
+   "out": {
+    "ok": true
+   }
+  },
+  {
+   "when": {
+    "t": "2027-02-10T17:00:00+00:00"
+   },
+   "out": {
+    "ok": false
+   }
+  },
+  {
+   "when": "2026-12-25",
+   "out": {
+    "error": "TypeError",
+    "msg": "when ph\u1ea3i l\u00e0 date ho\u1eb7c datetime c\u00f3 m\u00fai gi\u1edd"
+   }
+  }
+ ],
+ "active": [
+  {
+   "now": "2026-12-20T23:59:59+07:00",
+   "max": 4,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-20T23:59:59+07:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-21T00:00:00+07:00",
+   "max": 4,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-21T00:00:00+07:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-20T17:00:00+00:00",
+   "max": 4,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-20T17:00:00+00:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-25T13:59:59+07:00",
+   "max": 4,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-25T13:59:59+07:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-25T14:00:00+07:00",
+   "max": 4,
+   "out": {
+    "ok": [
+     {
+      "action": "open",
+      "opened_at": "2026-12-25T14:00:00+07:00",
+      "expires_at": "2026-12-25T18:00:00+07:00",
+      "by": "Nguy\u1ec5n A",
+      "reason": "s\u1ef1 c\u1ed1",
+      "holder_verified": true
+     }
+    ]
+   }
+  },
+  {
+   "now": "2026-12-25T14:00:00+07:00",
+   "max": 1,
+   "out": {
+    "ok": [
+     {
+      "action": "open",
+      "opened_at": "2026-12-25T14:00:00+07:00",
+      "expires_at": "2026-12-25T15:00:00+07:00",
+      "by": "Nguy\u1ec5n A",
+      "reason": "s\u1ef1 c\u1ed1",
+      "holder_verified": true
+     }
+    ]
+   }
+  },
+  {
+   "now": "2026-12-25T15:00:00+07:00",
+   "max": 4,
+   "out": {
+    "ok": [
+     {
+      "action": "open",
+      "opened_at": "2026-12-25T14:00:00+07:00",
+      "expires_at": "2026-12-25T18:00:00+07:00",
+      "by": "Nguy\u1ec5n A",
+      "reason": "s\u1ef1 c\u1ed1",
+      "holder_verified": true
+     }
+    ]
+   }
+  },
+  {
+   "now": "2026-12-25T15:00:00+07:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-25T17:59:59+07:00",
+   "max": 4,
+   "out": {
+    "ok": [
+     {
+      "action": "open",
+      "opened_at": "2026-12-25T14:00:00+07:00",
+      "expires_at": "2026-12-25T18:00:00+07:00",
+      "by": "Nguy\u1ec5n A",
+      "reason": "s\u1ef1 c\u1ed1",
+      "holder_verified": true
+     }
+    ]
+   }
+  },
+  {
+   "now": "2026-12-25T17:59:59+07:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-25T18:00:00+07:00",
+   "max": 4,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-25T18:00:00+07:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-26T09:30:00+07:00",
+   "max": 4,
+   "out": {
+    "ok": [
+     {
+      "action": "open",
+      "opened_at": "2026-12-26T09:00:00+07:00",
+      "expires_at": "2026-12-26T13:00:00+07:00",
+      "by": "Tr\u1ea7n B",
+      "reason": "48h s\u1eeda tay",
+      "holder_verified": false
+     }
+    ]
+   }
+  },
+  {
+   "now": "2026-12-26T09:30:00+07:00",
+   "max": 1,
+   "out": {
+    "ok": [
+     {
+      "action": "open",
+      "opened_at": "2026-12-26T09:00:00+07:00",
+      "expires_at": "2026-12-26T10:00:00+07:00",
+      "by": "Tr\u1ea7n B",
+      "reason": "48h s\u1eeda tay",
+      "holder_verified": false
+     }
+    ]
+   }
+  },
+  {
+   "now": "2026-12-26T12:00:00+07:00",
+   "max": 4,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2026-12-26T12:00:00+07:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2027-01-05T08:30:00+07:00",
+   "max": 4,
+   "out": {
+    "ok": [
+     {
+      "action": "open",
+      "opened_at": "2027-01-05T08:00:00+07:00",
+      "expires_at": "2027-01-05T09:30:00+07:00",
+      "by": "L\u00ea C",
+      "reason": null,
+      "holder_verified": false
+     }
+    ]
+   }
+  },
+  {
+   "now": "2027-01-05T08:30:00+07:00",
+   "max": 1,
+   "out": {
+    "ok": [
+     {
+      "action": "open",
+      "opened_at": "2027-01-05T08:00:00+07:00",
+      "expires_at": "2027-01-05T09:00:00+07:00",
+      "by": "L\u00ea C",
+      "reason": null,
+      "holder_verified": false
+     }
+    ]
+   }
+  },
+  {
+   "now": "2027-02-10T23:59:59+07:00",
+   "max": 4,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2027-02-10T23:59:59+07:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2027-02-10T17:00:00+00:00",
+   "max": 4,
+   "out": {
+    "ok": []
+   }
+  },
+  {
+   "now": "2027-02-10T17:00:00+00:00",
+   "max": 1,
+   "out": {
+    "ok": []
+   }
+  }
+ ]
+}

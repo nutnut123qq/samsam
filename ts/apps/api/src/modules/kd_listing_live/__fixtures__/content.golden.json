@@ -1,0 +1,599 @@
+{
+ "sku": "mat-ong-sam-120ml-1hu",
+ "readiness": [
+  [
+   "mat-ong-sam-120ml-1hu",
+   "web",
+   "TP_THUONG"
+  ],
+  [
+   "mat-ong-sam-120ml-1hu",
+   "shopee",
+   "TP_THUONG"
+  ],
+  [
+   "mat-ong-sam-120ml-1hu",
+   "tiktok",
+   "CAM"
+  ]
+ ],
+ "master": {
+  "ok": true,
+  "text": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\n\nTh\u00f4ng tin s\u1ea3n ph\u1ea9m:\nT\u00ean s\u1ea3n ph\u1ea9m: M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\nQuy c\u00e1ch: 120ml x 1 h\u0169\nGi\u00e1: Li\u00ean h\u1ec7\nH\u1ea1n s\u1eed d\u1ee5ng: Xem tr\u00ean bao b\u00ec\n\nT\u1eeb kh\u00f3a: M\u1eadt ong s\u00e2m 120ml (1 h\u0169), S\u00e2m S\u00e2m\n\nN\u1ed9i dung c\u00f3 s\u1eed d\u1ee5ng AI",
+  "guardrail": {
+   "ok": true,
+   "violations": [],
+   "matched_claims": [],
+   "warnings": [
+    {
+     "type": "sku_chua_mo_kenh",
+     "detail": "mat-ong-sam-120ml-1hu: k\u00eanh web ngo\u00e0i allowed_channels hi\u1ec7n t\u1ea1i",
+     "span": null,
+     "code": "sku_chua_mo_kenh",
+     "severity": "minor",
+     "start": null,
+     "end": null
+    },
+    {
+     "type": "sku_chua_mo_kenh",
+     "detail": "mat-ong-sam-120ml-2hu: k\u00eanh web ngo\u00e0i allowed_channels hi\u1ec7n t\u1ea1i",
+     "span": null,
+     "code": "sku_chua_mo_kenh",
+     "severity": "minor",
+     "start": null,
+     "end": null
+    },
+    {
+     "type": "sku_chua_mo_kenh",
+     "detail": "mat-ong-sam-300ml: k\u00eanh web ngo\u00e0i allowed_channels hi\u1ec7n t\u1ea1i",
+     "span": null,
+     "code": "sku_chua_mo_kenh",
+     "severity": "minor",
+     "start": null,
+     "end": null
+    }
+   ],
+   "skus": [
+    "mat-ong-sam-120ml-1hu",
+    "mat-ong-sam-120ml-2hu",
+    "mat-ong-sam-300ml"
+   ],
+   "required_labels": [
+    "N\u1ed9i dung c\u00f3 s\u1eed d\u1ee5ng AI"
+   ],
+   "llm_check": "off",
+   "llm_model": null
+  }
+ },
+ "precheck": [
+  {
+   "sku": "mat-ong-sam-120ml-1hu",
+   "channel": "shopee",
+   "content_type": "listing",
+   "readiness": [
+    [
+     "mat-ong-sam-120ml-1hu",
+     "web",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "tiktok",
+     "CAM"
+    ]
+   ],
+   "out": null
+  },
+  {
+   "sku": "mat-ong-sam-120ml-1hu",
+   "channel": "tiktok",
+   "content_type": "listing",
+   "readiness": [
+    [
+     "mat-ong-sam-120ml-1hu",
+     "web",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "tiktok",
+     "CAM"
+    ]
+   ],
+   "out": {
+    "code": "readiness",
+    "reason": "mat-ong-sam-120ml-1hu m\u1ee9c CAM tr\u00ean k\u00eanh tiktok \u2014 ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n listing (golden allowed_channels / XNQC / t\u1ef1 c\u00f4ng b\u1ed1)"
+   }
+  },
+  {
+   "sku": "mat-ong-sam-120ml-1hu",
+   "channel": "web",
+   "content_type": "listing",
+   "readiness": [
+    [
+     "mat-ong-sam-120ml-1hu",
+     "web",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "tiktok",
+     "CAM"
+    ]
+   ],
+   "out": null
+  },
+  {
+   "sku": "mat-ong-sam-120ml-1hu",
+   "channel": "lazada",
+   "content_type": "listing",
+   "readiness": [
+    [
+     "mat-ong-sam-120ml-1hu",
+     "web",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "tiktok",
+     "CAM"
+    ]
+   ],
+   "out": {
+    "code": "kenh_la",
+    "reason": "k\u00eanh 'lazada' kh\u00f4ng h\u1ed7 tr\u1ee3 cho listing"
+   }
+  },
+  {
+   "sku": "khong-co",
+   "channel": "shopee",
+   "content_type": "listing",
+   "readiness": [
+    [
+     "mat-ong-sam-120ml-1hu",
+     "web",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "tiktok",
+     "CAM"
+    ]
+   ],
+   "out": {
+    "code": "sku_la",
+    "reason": "SKU 'khong-co' kh\u00f4ng c\u00f3 trong golden"
+   }
+  },
+  {
+   "sku": null,
+   "channel": "shopee",
+   "content_type": "listing",
+   "readiness": [
+    [
+     "mat-ong-sam-120ml-1hu",
+     "web",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "tiktok",
+     "CAM"
+    ]
+   ],
+   "out": {
+    "code": "sku_la",
+    "reason": "listing c\u1ea7n SKU"
+   }
+  },
+  {
+   "sku": "ruou-sam-chai-thuy-tinh-500ml",
+   "channel": "shopee",
+   "content_type": "listing",
+   "readiness": [],
+   "out": {
+    "code": "ruou",
+    "reason": "ruou-sam-chai-thuy-tinh-500ml l\u00e0 r\u01b0\u1ee3u \u2014 c\u1ea5m qu\u1ea3ng c\u00e1o/khuy\u1ebfn m\u1ea1i r\u01b0\u1ee3u (Lu\u1eadt 44/2019), kh\u00f4ng sinh n\u1ed9i dung/listing online"
+   }
+  },
+  {
+   "sku": "sapentol-30v",
+   "channel": "shopee",
+   "content_type": "listing",
+   "readiness": null,
+   "out": null
+  },
+  {
+   "sku": "savina-12v",
+   "channel": "web",
+   "content_type": "listing",
+   "readiness": null,
+   "out": {
+    "code": "readiness",
+    "reason": "savina-12v m\u1ee9c CAM tr\u00ean k\u00eanh web \u2014 ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n listing (golden allowed_channels / XNQC / t\u1ef1 c\u00f4ng b\u1ed1)"
+   }
+  },
+  {
+   "sku": "mat-ong-sam-120ml-1hu",
+   "channel": "shopee",
+   "content_type": "loai-la",
+   "readiness": [
+    [
+     "mat-ong-sam-120ml-1hu",
+     "web",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "tiktok",
+     "CAM"
+    ]
+   ],
+   "out": {
+    "code": "loai_la",
+    "reason": "lo\u1ea1i n\u1ed9i dung l\u1ea1: 'loai-la'"
+   }
+  },
+  {
+   "sku": "mat-ong-sam-120ml-1hu",
+   "channel": "facebook",
+   "content_type": "post",
+   "readiness": null,
+   "out": null
+  },
+  {
+   "sku": "sapentol-30v",
+   "channel": "facebook",
+   "content_type": "ads",
+   "readiness": [
+    [
+     "sapentol-30v",
+     "facebook",
+     "MO_TA"
+    ]
+   ],
+   "out": {
+    "code": "xnqc",
+    "reason": "sapentol-30v m\u1ee9c MO_TA tr\u00ean k\u00eanh facebook \u2014 TPBVSK ch\u01b0a c\u00f3 XNQC, kh\u00f4ng \u0111\u01b0\u1ee3c l\u00e0m n\u1ed9i dung qu\u1ea3ng c\u00e1o"
+   }
+  },
+  {
+   "sku": "sapentol-30v",
+   "channel": "blog",
+   "content_type": "ads",
+   "readiness": [
+    [
+     "sapentol-30v",
+     "web",
+     "QC_DAY_DU"
+    ]
+   ],
+   "out": null
+  },
+  {
+   "sku": "ruou-sam-chai-thuy-tinh-500ml",
+   "channel": "facebook",
+   "content_type": "internal_note",
+   "readiness": null,
+   "out": null
+  },
+  {
+   "sku": "mat-ong-sam-120ml-1hu",
+   "channel": "web",
+   "content_type": "listing",
+   "readiness": [
+    [
+     "mat-ong-sam-120ml-1hu",
+     "web",
+     "XX"
+    ]
+   ],
+   "out": {
+    "code": "readiness",
+    "reason": "mat-ong-sam-120ml-1hu m\u1ee9c XX tr\u00ean k\u00eanh web \u2014 ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n listing (golden allowed_channels / XNQC / t\u1ef1 c\u00f4ng b\u1ed1)"
+   }
+  },
+  {
+   "sku": "mat-ong-sam-120ml-1hu",
+   "channel": "fb",
+   "content_type": "post",
+   "readiness": null,
+   "out": {
+    "code": "kenh_la",
+    "reason": "k\u00eanh 'fb' kh\u00f4ng h\u1ed7 tr\u1ee3 cho post"
+   }
+  },
+  {
+   "sku": null,
+   "channel": "facebook",
+   "content_type": "post",
+   "readiness": null,
+   "out": null
+  },
+  {
+   "sku": 5,
+   "channel": "shopee",
+   "content_type": "listing",
+   "readiness": [
+    [
+     "mat-ong-sam-120ml-1hu",
+     "web",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "mat-ong-sam-120ml-1hu",
+     "tiktok",
+     "CAM"
+    ]
+   ],
+   "out": {
+    "code": "sku_la",
+    "reason": "SKU '5' kh\u00f4ng c\u00f3 trong golden"
+   }
+  }
+ ],
+ "listing_fields": {
+  "da-an-sam-30v": {
+   "name": "D\u1ea1 An S\u00e2m 30 vi\u00ean",
+   "pack_spec": "30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)",
+   "receipt_no": "11129/2021/\u0110KSP"
+  },
+  "mat-ong-sam-120ml-1hu": {
+   "name": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)",
+   "pack_spec": "120ml x 1 h\u0169",
+   "receipt_no": null
+  },
+  "mat-ong-sam-120ml-2hu": {
+   "name": "M\u1eadt ong s\u00e2m 120ml (2 h\u0169)",
+   "pack_spec": "120ml x 2 h\u0169",
+   "receipt_no": null
+  },
+  "mat-ong-sam-300ml": {
+   "name": "M\u1eadt ong s\u00e2m 300ml",
+   "pack_spec": "300ml x 1 h\u0169",
+   "receipt_no": null
+  },
+  "ruou-sam-binh-su-do-500ml": {
+   "name": "R\u01b0\u1ee3u s\u00e2m b\u00ecnh s\u1ee9 \u0111\u1ecf 500ml",
+   "pack_spec": "500ml b\u00ecnh s\u1ee9 \u0111\u1ecf",
+   "receipt_no": null
+  },
+  "ruou-sam-chai-thuy-tinh-500ml": {
+   "name": "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml",
+   "pack_spec": "500ml chai th\u1ee7y tinh",
+   "receipt_no": null
+  },
+  "sapentol-30v": {
+   "name": "Sapentol 30 vi\u00ean",
+   "pack_spec": "30 vi\u00ean nang c\u1ee9ng (h\u1ed9p 1 l\u1ecd)",
+   "receipt_no": "5191/2020/\u0110KSP"
+  },
+  "saphraton-20v": {
+   "name": "Saphraton 20 vi\u00ean",
+   "pack_spec": "20 vi\u00ean nang m\u1ec1m (2 v\u1ec9 x 10 vi\u00ean)",
+   "receipt_no": "2778/2018/\u0110KSP"
+  },
+  "saphraton-40v": {
+   "name": "Saphraton 40 vi\u00ean",
+   "pack_spec": "40 vi\u00ean nang m\u1ec1m (4 v\u1ec9 x 10 vi\u00ean)",
+   "receipt_no": "2778/2018/\u0110KSP"
+  },
+  "saphraton-80v": {
+   "name": "Saphraton 80 vi\u00ean",
+   "pack_spec": "80 vi\u00ean nang m\u1ec1m (8 v\u1ec9 x 10 vi\u00ean)",
+   "receipt_no": "2778/2018/\u0110KSP"
+  },
+  "saphraton-combo-2x20v": {
+   "name": "Combo Saphraton 2 h\u1ed9p x 20 vi\u00ean",
+   "pack_spec": "40 vi\u00ean nang m\u1ec1m (combo 2 h\u1ed9p x 20 vi\u00ean)",
+   "receipt_no": "2778/2018/\u0110KSP"
+  },
+  "savigout-30v": {
+   "name": "Savigout 30 vi\u00ean",
+   "pack_spec": "30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)",
+   "receipt_no": "8560/2019/\u0110KSP"
+  },
+  "savina-12v": {
+   "name": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm",
+   "pack_spec": "12 vi\u00ean ng\u1eadm (tu\u00fdp PP)",
+   "receipt_no": "8014/2021/\u0110KSP"
+  }
+ },
+ "spec_like": [
+  [
+   "M\u1eadt ong s\u00f3ng s\u00e1nh v\u00e0ng \u00f3ng.",
+   false
+  ],
+  [
+   "Gi\u00e1 ch\u1ec9 199k.",
+   true
+  ],
+  [
+   "gi\u00e1 tr\u1ecb truy\u1ec1n th\u1ed1ng",
+   false
+  ],
+  [
+   "\u0111\u00e1nh gi\u00e1 cao",
+   false
+  ],
+  [
+   "Gi\u200b\u00e1: Li\u00ean h\u1ec7",
+   true
+  ],
+  [
+   "g i \u00e1 t\u1ed1t",
+   true
+  ],
+  [
+   "m\u1ed9t m\u00f3n qu\u00e0",
+   false
+  ],
+  [
+   "m\u1ed9t h\u0169 nh\u1ecf",
+   true
+  ],
+  [
+   "hai m\u01b0\u01a1i",
+   true
+  ],
+  [
+   "t\u1ec9 m\u1ec9",
+   false
+  ],
+  [
+   "t\u1ec9 l\u1ec7",
+   true
+  ],
+  [
+   "\uff15 sao",
+   true
+  ],
+  [
+   "\u2460 m\u00f3n",
+   true
+  ],
+  [
+   "\u00b2",
+   true
+  ],
+  [
+   "\u216b",
+   true
+  ],
+  [
+   "500ml",
+   true
+  ],
+  [
+   "Quy c\u00e1ch \u0111\u1eb9p",
+   true
+  ],
+  [
+   "HSD d\u00e0i",
+   true
+  ],
+  [
+   "\u0422hu\u1ed1c",
+   false
+  ],
+  [
+   "ch\u1ee5c",
+   true
+  ],
+  [
+   "n\u1eeda th\u00e1ng",
+   true
+  ]
+ ],
+ "publish_texts": [
+  "Th\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh",
+  [
+   "N\u1ed9i dung c\u00f3 s\u1eed d\u1ee5ng AI"
+  ],
+  [
+   "Qu\u1ea3ng c\u00e1o",
+   "#quangcao",
+   "\u0110\u01b0\u1ee3c t\u00e0i tr\u1ee3",
+   "H\u1ee3p t\u00e1c qu\u1ea3ng c\u00e1o"
+  ]
+ ],
+ "template": [
+  "K\u1ecbch b\u1ea3n NH\u00c1P cho phi\u00ean livestream b\u00e1n h\u00e0ng tr\u00ean k\u00eanh {channel}, th\u1eddi l\u01b0\u1ee3ng kho\u1ea3ng {duration_min} ph\u00fat.\nGi\u1ecf h\u00e0ng (theo th\u1ee9 t\u1ef1 l\u00ean s\u00f3ng): {products}\nBrief c\u1ee7a ng\u01b0\u1eddi l\u1eadp: {brief}\nVi\u1ebft l\u1eddi d\u1eabn t\u1ef1 nhi\u00ean, t\u1eed t\u1ebf, k\u1ec3 chuy\u1ec7n \u0111\u1eb7c s\u1ea3n qu\u00ea h\u01b0\u01a1ng Qu\u1ea3ng Nam, kh\u00f4ng ph\u00f3ng \u0111\u1ea1i.\nCH\u1ec8 vi\u1ebft l\u1eddi d\u1eabn cho t\u1eebng s\u1ea3n ph\u1ea9m trong gi\u1ecf (d\u00f9ng \u0111\u00fang m\u00e3 sku \u0111\u00e3 cho) v\u00e0 v\u00e0i c\u1eb7p h\u1ecfi-\u0111\u00e1p b\u00ecnh lu\u1eadn th\u01b0\u1eddng g\u1eb7p v\u1ec1 giao h\u00e0ng, \u0111\u00f3ng g\u00f3i, l\u00e0m qu\u00e0.\nKH\u00d4NG vi\u1ebft gi\u00e1, khuy\u1ebfn m\u00e3i, quy c\u00e1ch, kh\u1ed1i l\u01b0\u1ee3ng hay b\u1ea5t k\u1ef3 con s\u1ed1 n\u00e0o (k\u1ec3 c\u1ea3 vi\u1ebft b\u1eb1ng ch\u1eef) \u2014 h\u1ec7 th\u1ed1ng t\u1ef1 \u0111i\u1ec1n t\u00ean v\u00e0 gi\u00e1 t\u1eeb b\u1ea3ng gi\u00e1 \u0111\u00e3 duy\u1ec7t.\nKH\u00d4NG n\u00eau c\u00f4ng d\u1ee5ng ch\u1eefa b\u1ec7nh, kh\u00f4ng nh\u1eafc r\u01b0\u1ee3u, kh\u00f4ng nh\u1eafc b\u00e1c s\u0129/chuy\u00ean gia, kh\u00f4ng cam k\u1ebft hi\u1ec7u qu\u1ea3. C\u00e2u h\u1ecfi v\u1ec1 s\u1ee9c kh\u1ecfe/b\u1ec7nh: ch\u1ec9 ghi c\u00e2u h\u1ecfi, \u0111\u1ec3 tr\u1ed1ng c\u00e2u \u0111\u00e1p \u2014 h\u1ec7 th\u1ed1ng d\u00f9ng c\u00e2u tr\u1ea3 l\u1eddi m\u1eabu.\nTr\u1ea3 v\u1ec1 DUY NH\u1ea4T JSON \u0111\u00fang m\u1eabu, kh\u00f4ng th\u00eam ch\u1eef n\u00e0o kh\u00e1c:\n{\"mo_dau\": [\"c\u00e2u\"], \"san_pham\": [{\"sku\": \"m\u00e3 sku\", \"loi_dan\": [\"c\u00e2u\"]}], \"hoi_dap\": [{\"hoi\": \"c\u00e2u h\u1ecfi\", \"dap\": \"c\u00e2u \u0111\u00e1p\"}], \"ket\": [\"c\u00e2u\"]}",
+  "livestream_script@1",
+  "38ac96051fb5c742d8a407dbe74a39483817f8517c0b94ef0cba01fa6289d76e"
+ ],
+ "system_listing": "B\u1ea1n l\u00e0 copywriter c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m (Qu\u1ea3ng Nam). Gi\u1ecdng\n\u0111i\u1ec7u: t\u1ef1 h\u00e0o \u0111\u1eb7c s\u1ea3n qu\u00ea h\u01b0\u01a1ng, t\u1eed t\u1ebf, kh\u00f4ng ph\u00f3ng \u0111\u1ea1i. Vi\u1ebft FMT.\n\nLU\u1eacT TPBVSK \u2014 vi ph\u1ea1m l\u00e0 b\u00e0i b\u1ecb lo\u1ea1i:\n- CH\u1ec8 \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng n\u1eb1m trong whitelist d\u01b0\u1edbi \u0111\u00e2y c\u1ee7a \u0110\u00daNG s\u1ea3n ph\u1ea9m,\n  d\u00f9ng g\u1ea7n nguy\u00ean v\u0103n:\n- saphraton: h\u1ed7 tr\u1ee3 b\u1ed3i b\u1ed5 s\u1ee9c kh\u1ecfe; h\u1ed7 tr\u1ee3 gi\u1ea3m m\u1ec7t m\u1ecfi; suy nh\u01b0\u1ee3c c\u01a1 th\u1ec3\n- saphraton-20v: h\u1ed7 tr\u1ee3 b\u1ed5 s\u1ee9c kh\u1ecfe; h\u1ed7 tr\u1ee3 gi\u1ea3m m\u1ec7t m\u1ecfi; suy nh\u01b0\u1ee3c c\u01a1 th\u1ec3\n- sapentol: h\u1ed7 tr\u1ee3 h\u1ea1 \u0111\u01b0\u1eddng huy\u1ebft; gi\u1ea3m m\u1ee1 m\u00e1u; h\u1ed7 tr\u1ee3 gi\u1ea3m nguy c\u01a1 bi\u1ebfn ch\u1ee9ng tr\u00ean tim m\u1ea1ch do b\u1ec7nh ti\u1ec3u \u0111\u01b0\u1eddng\n- savigout: h\u1ed7 tr\u1ee3 gi\u1ea3m acid uric trong m\u00e1u; gi\u00fap gi\u1ea3m tri\u1ec7u ch\u1ee9ng s\u01b0ng \u0111au c\u00e1c kh\u1edbp do gout; gi\u00fap gi\u1ea3m tri\u1ec7u ch\u1ee9ng vi\u00eam, \u0111au kh\u1edbp do vi\u00eam kh\u1edbp\n- savina: h\u1ed7 tr\u1ee3 gi\u1ea3m ho; gi\u1ea3m \u0111\u1eddm; gi\u1ea3m \u0111au r\u00e1t h\u1ecdng do vi\u00eam h\u1ecdng, vi\u00eam ph\u1ebf qu\u1ea3n\n- savitim: h\u1ed7 tr\u1ee3 gi\u1ea3m m\u1ee1 m\u00e1u; gi\u00fap gi\u1ea3m nguy c\u01a1 x\u01a1 v\u1eefa \u0111\u1ed9ng m\u1ea1ch v\u00e0 t\u0103ng huy\u1ebft \u00e1p; gi\u00fap duy tr\u00ec m\u1ea1ch m\u00e1u kh\u1ecfe m\u1ea1nh, b\u1ea3o v\u1ec7 tim m\u1ea1ch\n- ruou-sam-no5: CH\u01afA C\u00d3 c\u00f4ng d\u1ee5ng c\u00f4ng b\u1ed1 \u2014 kh\u00f4ng \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng\n- ruou-sam-no7: CH\u01afA C\u00d3 c\u00f4ng d\u1ee5ng c\u00f4ng b\u1ed1 \u2014 kh\u00f4ng \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng\n- ruou-sam-no9: CH\u01afA C\u00d3 c\u00f4ng d\u1ee5ng c\u00f4ng b\u1ed1 \u2014 kh\u00f4ng \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng\n- cu-sam-ngoc-linh: CH\u01afA C\u00d3 c\u00f4ng d\u1ee5ng c\u00f4ng b\u1ed1 \u2014 kh\u00f4ng \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng\n- C\u00e2u trang tr\u00ed TUY\u1ec6T \u0110\u1ed0I kh\u00f4ng ch\u1ee9a \u0111\u1ed9ng t\u1eeb claim (gi\u00fap/h\u1ed7 tr\u1ee3/b\u1ed3i b\u1ed5/\n  gi\u1ea3m/t\u0103ng c\u01b0\u1eddng/c\u1ea3i thi\u1ec7n/t\u1ed1t cho/ph\u00f2ng ng\u1eeba) \u2014 nh\u1eefng t\u1eeb \u0111\u00f3 ch\u1ec9 xu\u1ea5t\n  hi\u1ec7n trong c\u1ee5m claim whitelist. M\u1edf b\u00e0i/k\u1ebft b\u00e0i ch\u1ec9 k\u1ec3 chuy\u1ec7n th\u01b0\u01a1ng\n  hi\u1ec7u, \u0111\u1eb7c s\u1ea3n qu\u00ea h\u01b0\u01a1ng, qu\u00e0 t\u1eb7ng.\n- S\u1ea3n ph\u1ea9m kh\u00f4ng c\u00f3 claim -> ch\u1ec9 gi\u1edbi thi\u1ec7u, kh\u00f4ng n\u00eau c\u00f4ng d\u1ee5ng.\n- Khi n\u00eau c\u00f4ng d\u1ee5ng ho\u1eb7c nh\u1eafc s\u1ea3n ph\u1ea9m TPBVSK, k\u1ebft b\u00e0i b\u1eb1ng c\u00e2u khuy\u1ebfn\n  c\u00e1o NGUY\u00caN V\u0102N (kh\u00f4ng s\u1eeda ch\u1eef n\u00e0o): \"Th\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\"\n- Kh\u00f4ng d\u00f9ng t\u00ean v\u00f9ng ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd \"Ng\u1ecdc Linh\" (kh\u00f4ng d\u00f9ng \u2014 ch\u1edd Ph\u00e1p\n  ch\u1ebf x\u00e1c nh\u1eadn quy\u1ec1n s\u1eed d\u1ee5ng ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd cho t\u1eebng s\u1ea3n ph\u1ea9m).\n- B\u00e0i \u0111\u0103ng c\u00f3 nh\u00e3n \"N\u1ed9i dung c\u00f3 s\u1eed d\u1ee5ng AI\" \u1edf cu\u1ed1i (h\u1ec7 th\u1ed1ng t\u1ef1 th\u00eam n\u1ebfu thi\u1ebfu).\n- TUY\u1ec6T \u0110\u1ed0I c\u1ea5m c\u00e1c t\u1eeb d\u00f9ng theo ngh\u0129a kh\u1eb3ng \u0111\u1ecbnh: ch\u1eefa, \u0111i\u1ec1u tr\u1ecb, thu\u1ed1c,\n  kh\u1ecfi b\u1ec7nh, tr\u1ecb b\u1ec7nh, \u0111\u1eb7c tr\u1ecb, th\u1ea7n d\u01b0\u1ee3c, ti\u00eau di\u1ec7t, ch\u1ed1ng ung th\u01b0.\n- KH\u00d4NG vi\u1ebft gi\u00e1, quy c\u00e1ch, kh\u1ed1i l\u01b0\u1ee3ng, h\u1ea1n d\u00f9ng hay b\u1ea5t k\u1ef3 con s\u1ed1 n\u00e0o (k\u1ec3 c\u1ea3 vi\u1ebft b\u1eb1ng ch\u1eef) \u2014 h\u1ec7 th\u1ed1ng t\u1ef1 \u0111i\u1ec1n.\n- TR\u01af\u1edaC KHI XU\u1ea4T: r\u00e0 t\u1eebng c\u00e2u \u2014 c\u00e2u n\u00e0o ch\u1ee9a \u0111\u1ed9ng t\u1eeb claim (gi\u00fap, h\u1ed7 tr\u1ee3,\n  gi\u1ea3m, b\u1ed3i b\u1ed5, t\u0103ng c\u01b0\u1eddng, c\u1ea3i thi\u1ec7n, t\u1ed1t cho, ph\u00f2ng ng\u1eeba, g\u00f3p ph\u1ea7n) m\u00e0\n  kh\u00f4ng ph\u1ea3i c\u1ee5m claim whitelist nguy\u00ean v\u0103n th\u00ec VI\u1ebeT L\u1ea0I c\u00e2u \u0111\u00f3.\n",
+ "system_post": "B\u1ea1n l\u00e0 copywriter c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m (Qu\u1ea3ng Nam). Gi\u1ecdng\n\u0111i\u1ec7u: t\u1ef1 h\u00e0o \u0111\u1eb7c s\u1ea3n qu\u00ea h\u01b0\u01a1ng, t\u1eed t\u1ebf, kh\u00f4ng ph\u00f3ng \u0111\u1ea1i. Vi\u1ebft FMT.\n\nLU\u1eacT TPBVSK \u2014 vi ph\u1ea1m l\u00e0 b\u00e0i b\u1ecb lo\u1ea1i:\n- CH\u1ec8 \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng n\u1eb1m trong whitelist d\u01b0\u1edbi \u0111\u00e2y c\u1ee7a \u0110\u00daNG s\u1ea3n ph\u1ea9m,\n  d\u00f9ng g\u1ea7n nguy\u00ean v\u0103n:\n- saphraton: h\u1ed7 tr\u1ee3 b\u1ed3i b\u1ed5 s\u1ee9c kh\u1ecfe; h\u1ed7 tr\u1ee3 gi\u1ea3m m\u1ec7t m\u1ecfi; suy nh\u01b0\u1ee3c c\u01a1 th\u1ec3\n- saphraton-20v: h\u1ed7 tr\u1ee3 b\u1ed5 s\u1ee9c kh\u1ecfe; h\u1ed7 tr\u1ee3 gi\u1ea3m m\u1ec7t m\u1ecfi; suy nh\u01b0\u1ee3c c\u01a1 th\u1ec3\n- sapentol: h\u1ed7 tr\u1ee3 h\u1ea1 \u0111\u01b0\u1eddng huy\u1ebft; gi\u1ea3m m\u1ee1 m\u00e1u; h\u1ed7 tr\u1ee3 gi\u1ea3m nguy c\u01a1 bi\u1ebfn ch\u1ee9ng tr\u00ean tim m\u1ea1ch do b\u1ec7nh ti\u1ec3u \u0111\u01b0\u1eddng\n- savigout: h\u1ed7 tr\u1ee3 gi\u1ea3m acid uric trong m\u00e1u; gi\u00fap gi\u1ea3m tri\u1ec7u ch\u1ee9ng s\u01b0ng \u0111au c\u00e1c kh\u1edbp do gout; gi\u00fap gi\u1ea3m tri\u1ec7u ch\u1ee9ng vi\u00eam, \u0111au kh\u1edbp do vi\u00eam kh\u1edbp\n- savina: h\u1ed7 tr\u1ee3 gi\u1ea3m ho; gi\u1ea3m \u0111\u1eddm; gi\u1ea3m \u0111au r\u00e1t h\u1ecdng do vi\u00eam h\u1ecdng, vi\u00eam ph\u1ebf qu\u1ea3n\n- savitim: h\u1ed7 tr\u1ee3 gi\u1ea3m m\u1ee1 m\u00e1u; gi\u00fap gi\u1ea3m nguy c\u01a1 x\u01a1 v\u1eefa \u0111\u1ed9ng m\u1ea1ch v\u00e0 t\u0103ng huy\u1ebft \u00e1p; gi\u00fap duy tr\u00ec m\u1ea1ch m\u00e1u kh\u1ecfe m\u1ea1nh, b\u1ea3o v\u1ec7 tim m\u1ea1ch\n- ruou-sam-no5: CH\u01afA C\u00d3 c\u00f4ng d\u1ee5ng c\u00f4ng b\u1ed1 \u2014 kh\u00f4ng \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng\n- ruou-sam-no7: CH\u01afA C\u00d3 c\u00f4ng d\u1ee5ng c\u00f4ng b\u1ed1 \u2014 kh\u00f4ng \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng\n- ruou-sam-no9: CH\u01afA C\u00d3 c\u00f4ng d\u1ee5ng c\u00f4ng b\u1ed1 \u2014 kh\u00f4ng \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng\n- cu-sam-ngoc-linh: CH\u01afA C\u00d3 c\u00f4ng d\u1ee5ng c\u00f4ng b\u1ed1 \u2014 kh\u00f4ng \u0111\u01b0\u1ee3c n\u00eau c\u00f4ng d\u1ee5ng\n- C\u00e2u trang tr\u00ed TUY\u1ec6T \u0110\u1ed0I kh\u00f4ng ch\u1ee9a \u0111\u1ed9ng t\u1eeb claim (gi\u00fap/h\u1ed7 tr\u1ee3/b\u1ed3i b\u1ed5/\n  gi\u1ea3m/t\u0103ng c\u01b0\u1eddng/c\u1ea3i thi\u1ec7n/t\u1ed1t cho/ph\u00f2ng ng\u1eeba) \u2014 nh\u1eefng t\u1eeb \u0111\u00f3 ch\u1ec9 xu\u1ea5t\n  hi\u1ec7n trong c\u1ee5m claim whitelist. M\u1edf b\u00e0i/k\u1ebft b\u00e0i ch\u1ec9 k\u1ec3 chuy\u1ec7n th\u01b0\u01a1ng\n  hi\u1ec7u, \u0111\u1eb7c s\u1ea3n qu\u00ea h\u01b0\u01a1ng, qu\u00e0 t\u1eb7ng.\n- S\u1ea3n ph\u1ea9m kh\u00f4ng c\u00f3 claim -> ch\u1ec9 gi\u1edbi thi\u1ec7u, kh\u00f4ng n\u00eau c\u00f4ng d\u1ee5ng.\n- Khi n\u00eau c\u00f4ng d\u1ee5ng ho\u1eb7c nh\u1eafc s\u1ea3n ph\u1ea9m TPBVSK, k\u1ebft b\u00e0i b\u1eb1ng c\u00e2u khuy\u1ebfn\n  c\u00e1o NGUY\u00caN V\u0102N (kh\u00f4ng s\u1eeda ch\u1eef n\u00e0o): \"Th\u1ef1c ph\u1ea9m n\u00e0y kh\u00f4ng ph\u1ea3i l\u00e0 thu\u1ed1c v\u00e0 kh\u00f4ng c\u00f3 t\u00e1c d\u1ee5ng thay th\u1ebf thu\u1ed1c ch\u1eefa b\u1ec7nh.\"\n- Kh\u00f4ng d\u00f9ng t\u00ean v\u00f9ng ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd \"Ng\u1ecdc Linh\" (kh\u00f4ng d\u00f9ng \u2014 ch\u1edd Ph\u00e1p\n  ch\u1ebf x\u00e1c nh\u1eadn quy\u1ec1n s\u1eed d\u1ee5ng ch\u1ec9 d\u1eabn \u0111\u1ecba l\u00fd cho t\u1eebng s\u1ea3n ph\u1ea9m).\n- B\u00e0i \u0111\u0103ng c\u00f3 nh\u00e3n \"N\u1ed9i dung c\u00f3 s\u1eed d\u1ee5ng AI\" \u1edf cu\u1ed1i (h\u1ec7 th\u1ed1ng t\u1ef1 th\u00eam n\u1ebfu thi\u1ebfu).\n- TUY\u1ec6T \u0110\u1ed0I c\u1ea5m c\u00e1c t\u1eeb d\u00f9ng theo ngh\u0129a kh\u1eb3ng \u0111\u1ecbnh: ch\u1eefa, \u0111i\u1ec1u tr\u1ecb, thu\u1ed1c,\n  kh\u1ecfi b\u1ec7nh, tr\u1ecb b\u1ec7nh, \u0111\u1eb7c tr\u1ecb, th\u1ea7n d\u01b0\u1ee3c, ti\u00eau di\u1ec7t, ch\u1ed1ng ung th\u01b0.\n- Kh\u00f4ng b\u1ecba gi\u00e1 \u2014 s\u1ea3n ph\u1ea9m kh\u00f4ng c\u00f3 gi\u00e1 c\u00f4ng khai th\u00ec ghi \"Li\u00ean h\u1ec7\".\n- TR\u01af\u1edaC KHI XU\u1ea4T: r\u00e0 t\u1eebng c\u00e2u \u2014 c\u00e2u n\u00e0o ch\u1ee9a \u0111\u1ed9ng t\u1eeb claim (gi\u00fap, h\u1ed7 tr\u1ee3,\n  gi\u1ea3m, b\u1ed3i b\u1ed5, t\u0103ng c\u01b0\u1eddng, c\u1ea3i thi\u1ec7n, t\u1ed1t cho, ph\u00f2ng ng\u1eeba, g\u00f3p ph\u1ea7n) m\u00e0\n  kh\u00f4ng ph\u1ea3i c\u1ee5m claim whitelist nguy\u00ean v\u0103n th\u00ec VI\u1ebeT L\u1ea0I c\u00e2u \u0111\u00f3.\n",
+ "feedback": "B\u00e0i vi ph\u1ea1m guardrail: tu_cam: ch\u1eefa; claim: d; None: None. Vi\u1ebft l\u1ea1i \u2014 ch\u1ec9 d\u00f9ng claim whitelist nguy\u00ean v\u0103n, c\u00e2u trang tr\u00ed kh\u00f4ng ch\u1ee9a \u0111\u1ed9ng t\u1eeb claim.",
+ "refused": {
+  "ok": false,
+  "violations": [
+   {
+    "type": "ruou_cam_quang_cao",
+    "detail": "t\u1eeb ch\u1ed1i (ruou): r",
+    "span": null,
+    "code": "ruou_cam_quang_cao",
+    "severity": "critical",
+    "start": null,
+    "end": null
+   }
+  ],
+  "matched_claims": [],
+  "warnings": [],
+  "skus": [],
+  "required_labels": []
+ },
+ "refused2": {
+  "ok": false,
+  "violations": [
+   {
+    "type": "kenh_la",
+    "detail": "t\u1eeb ch\u1ed1i (kenh_la): k",
+    "span": null,
+    "code": "kenh_la",
+    "severity": "critical",
+    "start": null,
+    "end": null
+   }
+  ],
+  "matched_claims": [],
+  "warnings": [],
+  "skus": [],
+  "required_labels": []
+ },
+ "golden_keys": [
+  "da-an-sam-30v",
+  "mat-ong-sam-120ml-1hu",
+  "mat-ong-sam-120ml-2hu",
+  "mat-ong-sam-300ml",
+  "ruou-sam-binh-su-do-500ml",
+  "ruou-sam-chai-thuy-tinh-500ml",
+  "sapentol-30v",
+  "saphraton-20v",
+  "saphraton-40v",
+  "saphraton-80v",
+  "saphraton-combo-2x20v",
+  "savigout-30v",
+  "savina-12v"
+ ]
+}

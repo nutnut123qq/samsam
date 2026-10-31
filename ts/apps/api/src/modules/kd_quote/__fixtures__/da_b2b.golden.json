@@ -1,0 +1,726 @@
+{
+ "csv": {
+  "header-sai": {
+   "body": "org_name,loai,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 1: header ph\u1ea3i \u0111\u00fang org_name,org_type,region,website,source_url,fit_reason"
+   ]
+  },
+  "org-type-la": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,ca_nhan_bi_mat,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t org_type: ph\u1ea3i thu\u1ed9c doanh_nghiep|khach_san|su_kien_hoi_nghi|hiep_hoi|co_quan|khac"
+   ]
+  },
+  "tinh-khong-nhan-ra": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,X\u1ee9 Th\u1ea7n Ti\u00ean,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t region: kh\u00f4ng nh\u1eadn ra t\u1ec9nh/th\u00e0nh (ho\u1eb7c m\u01a1 h\u1ed3)"
+   ]
+  },
+  "tinh-mo-ho": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng v\u00e0 H\u00e0 N\u1ed9i,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t region: kh\u00f4ng nh\u1eadn ra t\u1ec9nh/th\u00e0nh (ho\u1eb7c m\u01a1 h\u1ed3)"
+   ]
+  },
+  "website-facebook": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://facebook.com/xbi,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t website: ngu\u1ed3n t\u1ea7ng C (MXH/s\u00e0n/trang c\u1ea7n \u0111\u0103ng nh\u1eadp) \u2014 kh\u00f4ng d\u00f9ng"
+   ]
+  },
+  "source-zalo": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://zalo.me/9999bimat,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: ngu\u1ed3n t\u1ea7ng C (MXH/s\u00e0n/trang c\u1ea7n \u0111\u0103ng nh\u1eadp) \u2014 kh\u00f4ng d\u00f9ng"
+   ]
+  },
+  "source-ftp": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,ftp://x.example.com/bimat,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: ph\u1ea3i l\u00e0 URL http(s) c\u00f3 host"
+   ]
+  },
+  "source-thieu": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: b\u1eaft bu\u1ed9c (ngu\u1ed3n c\u00f4ng khai)"
+   ]
+  },
+  "sdt": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft g\u1ecdi 0905 123 456\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t fit_reason: ch\u1ee9a S\u0110T/email \u2014 ch\u1ec9 nh\u1eadp th\u00f4ng tin t\u1ed5 ch\u1ee9c"
+   ]
+  },
+  "email": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft abc@gmail.com\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t fit_reason: ch\u1ee9a S\u0110T/email \u2014 ch\u1ec9 nh\u1eadp th\u00f4ng tin t\u1ed5 ch\u1ee9c"
+   ]
+  },
+  "sdt-o-ten": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty 0905123456,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t org_name: ch\u1ee9a S\u0110T/email \u2014 ch\u1ec9 nh\u1eadp th\u00f4ng tin t\u1ed5 ch\u1ee9c"
+   ]
+  },
+  "ruou": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 r\u01b0\u1ee3u s\u00e2m bi\u1ebfu s\u1ebfp\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t fit_reason: kh\u00f4ng g\u1ee3i \u00fd r\u01b0\u1ee3u"
+   ]
+  },
+  "trung-khac-hoa-dau": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\ncong ty  mau-x,doanh_nghiep,da nang,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3 c\u1ed9t org_name: tr\u00f9ng t\u1ed5 ch\u1ee9c \u1edf d\u00f2ng 2 (c\u00f9ng t\u00ean chu\u1ea9n h\u00f3a + t\u1ec9nh)"
+   ]
+  },
+  "thieu-cot": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: c\u1ea7n 6 c\u1ed9t, c\u00f3 3"
+   ]
+  },
+  "ten-1-ky-tu": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nQ,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t org_name: c\u1ea7n 2..200 k\u00fd t\u1ef1"
+   ]
+  },
+  "fit-qua-dai": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t fit_reason: qu\u00e1 300 k\u00fd t\u1ef1"
+   ]
+  },
+  "tu-cam-ten-sua-chua": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty S\u1eeda ch\u1eefa \u00f4 t\u00f4 M\u1eaaU,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t org_name: ch\u1ee9a t\u1eeb/c\u1ee5m guardrail ch\u1eb7n (tu_cam; xem data/banned_words.txt) \u2014 ghi kh\u00e1c"
+   ]
+  },
+  "tu-cam-nha-thuoc": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nNh\u00e0 thu\u1ed1c M\u1eaaU,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t org_name: ch\u1ee9a t\u1eeb/c\u1ee5m guardrail ch\u1eb7n (tu_cam; xem data/banned_words.txt) \u2014 ghi kh\u00e1c"
+   ]
+  },
+  "tu-cam-ung-thu": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nB\u1ec7nh vi\u1ec7n Ung th\u01b0 M\u1eaaU,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t org_name: ch\u1ee9a t\u1eeb/c\u1ee5m guardrail ch\u1eb7n (tu_cam; xem data/banned_words.txt) \u2014 ghi kh\u00e1c"
+   ]
+  },
+  "tu-cam-fit": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 h\u1ed7 tr\u1ee3 \u0111i\u1ec1u tr\u1ecb cho \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t fit_reason: ch\u1ee9a t\u1eeb/c\u1ee5m guardrail ch\u1eb7n (claim_ngoai_cong_bo, tu_cam; xem data/banned_words.txt) \u2014 ghi kh\u00e1c"
+   ]
+  },
+  "tu-cam-url": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/thuoc,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: ch\u1ee9a t\u1eeb/c\u1ee5m guardrail ch\u1eb7n (tu_cam; xem data/banned_words.txt) \u2014 ghi kh\u00e1c"
+   ]
+  },
+  "ruou-ten": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty R\u01b0\u1ee3u M\u1eaaU,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t org_name: ch\u1ee9a t\u1eeb/c\u1ee5m guardrail ch\u1eb7n (ruou_cam_quang_cao; xem data/banned_words.txt) \u2014 ghi kh\u00e1c"
+   ]
+  },
+  "linkedin-tang-c": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://www.linkedin.com/in/nguyen-van-a,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: ngu\u1ed3n t\u1ea7ng C (MXH/s\u00e0n/trang c\u1ea7n \u0111\u0103ng nh\u1eadp) \u2014 kh\u00f4ng d\u00f9ng"
+   ]
+  },
+  "guardrail-dong-3": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\nNh\u00e0 thu\u1ed1c M\u1eaaU,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3 c\u1ed9t org_name: ch\u1ee9a t\u1eeb/c\u1ee5m guardrail ch\u1eb7n (tu_cam; xem data/banned_words.txt) \u2014 ghi kh\u00e1c"
+   ]
+  },
+  "mot-dong-sai": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\nC\u00f4ng ty M\u1eaaU Y,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft 0905 123 456\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3 c\u1ed9t fit_reason: ch\u1ee9a S\u0110T/email \u2014 ch\u1ec9 nh\u1eadp th\u00f4ng tin t\u1ed5 ch\u1ee9c"
+   ]
+  },
+  "chi-header": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\n",
+   "rows": [],
+   "errs": [
+    "x.csv: 0 d\u00f2ng d\u1eef li\u1ec7u"
+   ]
+  },
+  "ok": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU X",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://x.example.com/",
+     "source_url": "https://x.example.com/gt",
+     "fit_reason": "M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c",
+     "dedup_key": "b2b:da5ffb392e1271379b45ad9d6c8b58e79ea4fb1a7dd2fe1d5b7a0575a7e1934c"
+    }
+   ],
+   "errs": []
+  },
+  "ok-crlf-quote-xuong-dong": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\r\n\"C\u00f4ng ty, \"\"M\u1eaaU\"\" Z\",doanh_nghiep,\u0110\u00e0 N\u1eb5ng,,https://z.example.com/,\"d\u00f2ng 1\r\nd\u00f2ng 2\"\r\n\r\n , , , , , \r\nC\u00f4ng ty M\u1eaaU W,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [
+    {
+     "org_name": "C\u00f4ng ty, \"M\u1eaaU\" Z",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": null,
+     "source_url": "https://z.example.com/",
+     "fit_reason": "d\u00f2ng 1\r\nd\u00f2ng 2",
+     "dedup_key": "b2b:8af8b9ac9b4ea1a0b95686c224294f5ecfb4ed67ba63970d00428f1da24c9a1c"
+    },
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU W",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://x.example.com/",
+     "source_url": "https://x.example.com/gt",
+     "fit_reason": "M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c",
+     "dedup_key": "b2b:46e70514358e28b9cd8f4a1c0b08ee70284cb5692d4ed24f389a164d83ef7141"
+    }
+   ],
+   "errs": []
+  },
+  "header-khoang-trang": {
+   "body": " org_name , org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU X",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://x.example.com/",
+     "source_url": "https://x.example.com/gt",
+     "fit_reason": "M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c",
+     "dedup_key": "b2b:da5ffb392e1271379b45ad9d6c8b58e79ea4fb1a7dd2fe1d5b7a0575a7e1934c"
+    }
+   ],
+   "errs": []
+  },
+  "url-khoang-trang": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/a b,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: URL qu\u00e1 d\u00e0i ho\u1eb7c c\u00f3 kho\u1ea3ng tr\u1eafng"
+   ]
+  },
+  "url-qua-dai": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: URL qu\u00e1 d\u00e0i ho\u1eb7c c\u00f3 kho\u1ea3ng tr\u1eafng"
+   ]
+  },
+  "url-ipv6-hong": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://[::1/x,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: URL h\u1ecfng"
+   ]
+  },
+  "url-khong-host": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https:///x,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: ph\u1ea3i l\u00e0 URL http(s) c\u00f3 host"
+   ]
+  },
+  "url-shopee-sub": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://m.shopee.vn/x,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: ngu\u1ed3n t\u1ea7ng C (MXH/s\u00e0n/trang c\u1ea7n \u0111\u0103ng nh\u1eadp) \u2014 kh\u00f4ng d\u00f9ng"
+   ]
+  },
+  "url-notshopee": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://notshopee.vn/x,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU X",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://x.example.com/",
+     "source_url": "https://notshopee.vn/x",
+     "fit_reason": "M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c",
+     "dedup_key": "b2b:da5ffb392e1271379b45ad9d6c8b58e79ea4fb1a7dd2fe1d5b7a0575a7e1934c"
+    }
+   ],
+   "errs": []
+  },
+  "url-user-port": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://u:p@X.Example.COM:8443/x,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t source_url: ch\u1ee9a S\u0110T/email \u2014 ch\u1ec9 nh\u1eadp th\u00f4ng tin t\u1ed5 ch\u1ee9c"
+   ]
+  },
+  "quote-eof": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\n\"C\u00f4ng ty M\u1eaaU X,doanh_nghiep",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: c\u1ea7n 6 c\u1ed9t, c\u00f3 1"
+   ]
+  },
+  "truong-qua-lon": {
+   "body": null,
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: CSV h\u1ecfng (Error)"
+   ]
+  },
+  "quote-giua": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nC\u00f4ng ty \"M\u1eaaU\" X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\n",
+   "rows": [
+    {
+     "org_name": "C\u00f4ng ty \"M\u1eaaU\" X",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://x.example.com/",
+     "source_url": "https://x.example.com/gt",
+     "fit_reason": "M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c",
+     "dedup_key": "b2b:da5ffb392e1271379b45ad9d6c8b58e79ea4fb1a7dd2fe1d5b7a0575a7e1934c"
+    }
+   ],
+   "errs": []
+  },
+  "nhieu-loi-mot-dong": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\nQ,la,X\u1ee9 L\u1ea1,ftp://a,,r\u01b0\u1ee3u\n",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t org_name: c\u1ea7n 2..200 k\u00fd t\u1ef1",
+    "d\u00f2ng 2 c\u1ed9t org_type: ph\u1ea3i thu\u1ed9c doanh_nghiep|khach_san|su_kien_hoi_nghi|hiep_hoi|co_quan|khac",
+    "d\u00f2ng 2 c\u1ed9t region: kh\u00f4ng nh\u1eadn ra t\u1ec9nh/th\u00e0nh (ho\u1eb7c m\u01a1 h\u1ed3)",
+    "d\u00f2ng 2 c\u1ed9t website: ph\u1ea3i l\u00e0 URL http(s) c\u00f3 host",
+    "d\u00f2ng 2 c\u1ed9t source_url: b\u1eaft bu\u1ed9c (ngu\u1ed3n c\u00f4ng khai)",
+    "d\u00f2ng 2 c\u1ed9t fit_reason: kh\u00f4ng g\u1ee3i \u00fd r\u01b0\u1ee3u"
+   ]
+  },
+  "cr-don": {
+   "body": "org_name,org_type,region,website,source_url,fit_reason\rC\u00f4ng ty M\u1eaaU X,doanh_nghiep,\u0110\u00e0 N\u1eb5ng,https://x.example.com/,https://x.example.com/gt,M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c\r",
+   "rows": [
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU X",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://x.example.com/",
+     "source_url": "https://x.example.com/gt",
+     "fit_reason": "M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c",
+     "dedup_key": "b2b:da5ffb392e1271379b45ad9d6c8b58e79ea4fb1a7dd2fe1d5b7a0575a7e1934c"
+    }
+   ],
+   "errs": []
+  }
+ },
+ "csv_bytes": {
+  "bad-byte": [
+   [],
+   [
+    "d\u00f2ng 3: byte kh\u00f4ng ph\u1ea3i UTF-8 \u2014 l\u01b0u l\u1ea1i file d\u1ea1ng CSV UTF-8"
+   ]
+  ],
+  "bom": [
+   [
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU X",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://x.example.com/",
+     "source_url": "https://x.example.com/gt",
+     "fit_reason": "M\u1eaaU \u2014 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c",
+     "dedup_key": "b2b:da5ffb392e1271379b45ad9d6c8b58e79ea4fb1a7dd2fe1d5b7a0575a7e1934c"
+    }
+   ],
+   []
+  ],
+  "mau": [
+   [
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU 01 Ph\u1ea7n m\u1ec1m",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://mau-01.example.com/",
+     "source_url": "https://mau-01.example.com/gioi-thieu",
+     "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p c\u00f3 th\u00f4ng l\u1ec7 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c (tin c\u00f4ng khai)",
+     "dedup_key": "b2b:1bf0fcb01a0667079984172c014bd84b5acd7d18084212bc9fafa956b9f6a9bd"
+    },
+    {
+     "org_name": "Kh\u00e1ch s\u1ea1n M\u1eaaU 02",
+     "org_type": "khach_san",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://mau-02.example.com/",
+     "source_url": "https://mau-02.example.com/tin-tuc",
+     "fit_reason": "M\u1eaaU \u2014 kh\u00e1ch s\u1ea1n c\u00f3 qu\u1ea7y qu\u00e0 l\u01b0u ni\u1ec7m \u0111\u1eb7c s\u1ea3n \u0111\u1ecba ph\u01b0\u01a1ng",
+     "dedup_key": "b2b:cb397224bf15ae05644f68ba22cc939940912807b03d91b021ad31182571f5f7"
+    },
+    {
+     "org_name": "Hi\u1ec7p h\u1ed9i M\u1eaaU 03 Doanh nghi\u1ec7p tr\u1ebb",
+     "org_type": "hiep_hoi",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": null,
+     "source_url": "https://mau-03.example.org/hoat-dong",
+     "fit_reason": "M\u1eaaU \u2014 hi\u1ec7p h\u1ed9i t\u1ed5 ch\u1ee9c t\u1eb7ng qu\u00e0 h\u1ed9i vi\u00ean d\u1ecbp cu\u1ed1i n\u0103m",
+     "dedup_key": "b2b:8a89818231d191805b386b0b5a714b81a40b431e418c600e651202dd0a535211"
+    },
+    {
+     "org_name": "Trung t\u00e2m H\u1ed9i ngh\u1ecb M\u1eaaU 04",
+     "org_type": "su_kien_hoi_nghi",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://mau-04.example.com/",
+     "source_url": "https://mau-04.example.com/su-kien",
+     "fit_reason": "M\u1eaaU \u2014 \u0111\u01a1n v\u1ecb t\u1ed5 ch\u1ee9c s\u1ef1 ki\u1ec7n cu\u1ed1i n\u0103m c\u1ea7n qu\u00e0 t\u1eb7ng kh\u00e1ch m\u1eddi",
+     "dedup_key": "b2b:26a92034969fc81f248df64dfdf63f93a9687db6a1212ad3c46f584563757856"
+    },
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU 05 Logistics",
+     "org_type": "doanh_nghiep",
+     "region": "Hu\u1ebf",
+     "website": "https://mau-05.example.com/",
+     "source_url": "https://mau-05.example.com/",
+     "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p quy m\u00f4 v\u1eeba t\u1eb7ng qu\u00e0 T\u1ebft nh\u00e2n vi\u00ean",
+     "dedup_key": "b2b:35b98c79b589b304a76c9ffcc0176cea007499c29f975bf85646ff792e6d38bc"
+    },
+    {
+     "org_name": "Kh\u00e1ch s\u1ea1n M\u1eaaU 06 Bi\u1ec3n",
+     "org_type": "khach_san",
+     "region": "Kh\u00e1nh H\u00f2a",
+     "website": "https://mau-06.example.com/",
+     "source_url": "https://mau-06.example.com/dich-vu",
+     "fit_reason": "M\u1eaaU \u2014 kh\u00e1ch s\u1ea1n ngh\u1ec9 d\u01b0\u1ee1ng c\u00f3 set qu\u00e0 T\u1ebft cho kh\u00e1ch l\u01b0u tr\u00fa",
+     "dedup_key": "b2b:1ab232c193270b4da2a3036e822144ab86571e2834fe65741ca7686c4fee954f"
+    },
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU 07 X\u00e2y d\u1ef1ng",
+     "org_type": "doanh_nghiep",
+     "region": "H\u00e0 N\u1ed9i",
+     "website": "https://mau-07.example.com/",
+     "source_url": "https://mau-07.example.com/ve-chung-toi",
+     "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p t\u1eb7ng qu\u00e0 \u0111\u1ed1i t\u00e1c d\u1ecbp T\u1ebft",
+     "dedup_key": "b2b:1f02c7f586f63402f123ddfb0e3839a84dbfdfd69a428a01f1899095b7350e01"
+    },
+    {
+     "org_name": "Hi\u1ec7p h\u1ed9i M\u1eaaU 08 Du l\u1ecbch",
+     "org_type": "hiep_hoi",
+     "region": "Qu\u1ea3ng Ng\u00e3i",
+     "website": null,
+     "source_url": "https://mau-08.example.org/",
+     "fit_reason": "M\u1eaaU \u2014 hi\u1ec7p h\u1ed9i ng\u00e0nh du l\u1ecbch gi\u1edbi thi\u1ec7u \u0111\u1eb7c s\u1ea3n \u0111\u1ecba ph\u01b0\u01a1ng",
+     "dedup_key": "b2b:5a9766c8f790dba67cc88545f8aedb8ec7d484edcab824c540e3270c6570c6ac"
+    },
+    {
+     "org_name": "C\u01a1 quan M\u1eaaU 09 X\u00fac ti\u1ebfn",
+     "org_type": "co_quan",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://mau-09.example.gov/",
+     "source_url": "https://mau-09.example.gov/tin",
+     "fit_reason": "M\u1eaaU \u2014 \u0111\u01a1n v\u1ecb x\u00fac ti\u1ebfn gi\u1edbi thi\u1ec7u s\u1ea3n ph\u1ea9m \u0111\u1ecba ph\u01b0\u01a1ng",
+     "dedup_key": "b2b:9b08784a5a26dbb8799849334626248177259059a9826d16477a242d616cbaaa"
+    },
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU 10 D\u01b0\u1ee3c li\u1ec7u",
+     "org_type": "doanh_nghiep",
+     "region": "L\u00e2m \u0110\u1ed3ng",
+     "website": "https://mau-10.example.com/",
+     "source_url": "https://mau-10.example.com/",
+     "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p c\u00f9ng ng\u00e0nh c\u00f3 k\u00eanh qu\u00e0 bi\u1ebfu",
+     "dedup_key": "b2b:ccfc8919d93a0bb6be2708c4a7259d1b416eaa1a53af04f375b6d69716580f4c"
+    },
+    {
+     "org_name": "Trung t\u00e2m S\u1ef1 ki\u1ec7n M\u1eaaU 11",
+     "org_type": "su_kien_hoi_nghi",
+     "region": "TP. H\u1ed3 Ch\u00ed Minh",
+     "website": "https://mau-11.example.com/",
+     "source_url": "https://mau-11.example.com/hoi-nghi",
+     "fit_reason": "M\u1eaaU \u2014 h\u1ed9i ngh\u1ecb kh\u00e1ch h\u00e0ng cu\u1ed1i n\u0103m",
+     "dedup_key": "b2b:a91ead3be68178a7be0f02ebcfbf6c4f0b0dfa7783cc51565829907d3513cc2a"
+    },
+    {
+     "org_name": "Kh\u00e1ch s\u1ea1n M\u1eaaU 12 Ph\u1ed1 c\u1ed5",
+     "org_type": "khach_san",
+     "region": "Qu\u1ea3ng Ng\u00e3i",
+     "website": "https://mau-12.example.com/",
+     "source_url": "https://mau-12.example.com/",
+     "fit_reason": "M\u1eaaU \u2014 kh\u00e1ch s\u1ea1n c\u00f3 c\u1eeda h\u00e0ng qu\u00e0 t\u1eb7ng",
+     "dedup_key": "b2b:a004b3122c56008626641b99404cc08cede1e301b2f969030850e9e86aa45e8d"
+    },
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU 13 Ng\u00e2n h\u00e0ng s\u1ed1",
+     "org_type": "doanh_nghiep",
+     "region": "H\u00e0 N\u1ed9i",
+     "website": "https://mau-13.example.com/",
+     "source_url": "https://mau-13.example.com/bao-chi",
+     "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p \u0111\u1eb7t qu\u00e0 T\u1ebft s\u1ed1 l\u01b0\u1ee3ng l\u1edbn theo tin b\u00e1o",
+     "dedup_key": "b2b:592f72a3151aed8ccce5e71c2f4f73c7797f0a3f83d9651325a228f2f35c7ac5"
+    },
+    {
+     "org_name": "T\u1ed5 ch\u1ee9c M\u1eaaU 14 Phi l\u1ee3i nhu\u1eadn",
+     "org_type": "khac",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": null,
+     "source_url": "https://mau-14.example.org/",
+     "fit_reason": "M\u1eaaU \u2014 t\u1ed5 ch\u1ee9c t\u1eb7ng qu\u00e0 t\u00ecnh nguy\u1ec7n vi\u00ean cu\u1ed1i n\u0103m",
+     "dedup_key": "b2b:f807e59d67ae1345daccd550cb37a40c2c51d64ea1b182d08859c7d5586b6f67"
+    },
+    {
+     "org_name": "C\u00f4ng ty M\u1eaaU 15 Du l\u1ecbch l\u1eef h\u00e0nh",
+     "org_type": "doanh_nghiep",
+     "region": "\u0110\u00e0 N\u1eb5ng",
+     "website": "https://mau-15.example.com/",
+     "source_url": "https://mau-15.example.com/tour",
+     "fit_reason": "M\u1eaaU \u2014 c\u00f4ng ty l\u1eef h\u00e0nh t\u1eb7ng qu\u00e0 \u0111\u1eb7c s\u1ea3n cho \u0111o\u00e0n kh\u00e1ch",
+     "dedup_key": "b2b:5982fcc72ce4c2a286f4c11568e2f6fb2a60ad15d9107ef66891f8b2177c65c0"
+    },
+    {
+     "org_name": "Hi\u1ec7p h\u1ed9i M\u1eaaU 16 \u1ea8m th\u1ef1c",
+     "org_type": "hiep_hoi",
+     "region": "C\u1ea7n Th\u01a1",
+     "website": null,
+     "source_url": "https://mau-16.example.org/",
+     "fit_reason": "M\u1eaaU \u2014 hi\u1ec7p h\u1ed9i \u1ea9m th\u1ef1c gi\u1edbi thi\u1ec7u s\u1ea3n ph\u1ea9m m\u1eadt ong",
+     "dedup_key": "b2b:41df5bd5c34d1096c9797977fe2c453a717f3c935e018b42eb4c4a21be15b479"
+    }
+   ],
+   []
+  ],
+  "loi": [
+   [],
+   [
+    "d\u00f2ng 2 c\u1ed9t org_type: ph\u1ea3i thu\u1ed9c doanh_nghiep|khach_san|su_kien_hoi_nghi|hiep_hoi|co_quan|khac",
+    "d\u00f2ng 3 c\u1ed9t region: kh\u00f4ng nh\u1eadn ra t\u1ec9nh/th\u00e0nh (ho\u1eb7c m\u01a1 h\u1ed3)",
+    "d\u00f2ng 4 c\u1ed9t website: ngu\u1ed3n t\u1ea7ng C (MXH/s\u00e0n/trang c\u1ea7n \u0111\u0103ng nh\u1eadp) \u2014 kh\u00f4ng d\u00f9ng",
+    "d\u00f2ng 5 c\u1ed9t source_url: ngu\u1ed3n t\u1ea7ng C (MXH/s\u00e0n/trang c\u1ea7n \u0111\u0103ng nh\u1eadp) \u2014 kh\u00f4ng d\u00f9ng",
+    "d\u00f2ng 6 c\u1ed9t fit_reason: ch\u1ee9a S\u0110T/email \u2014 ch\u1ec9 nh\u1eadp th\u00f4ng tin t\u1ed5 ch\u1ee9c",
+    "d\u00f2ng 7 c\u1ed9t fit_reason: ch\u1ee9a S\u0110T/email \u2014 ch\u1ec9 nh\u1eadp th\u00f4ng tin t\u1ed5 ch\u1ee9c",
+    "d\u00f2ng 8 c\u1ed9t fit_reason: kh\u00f4ng g\u1ee3i \u00fd r\u01b0\u1ee3u"
+   ]
+  ],
+  "missing": [
+   [],
+   [
+    "khong-co.csv: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (FileNotFoundError)"
+   ]
+  ]
+ },
+ "dedup": {
+  "Kh\u00e1ch s\u1ea1n M\u1eaaU A|\u0110\u00e0 N\u1eb5ng": "b2b:5f677a74099476290058131de7d98edf42138f6b9792cb9c28cd278e888d52dd",
+  "khach  san mau-a|\u0110\u00e0 N\u1eb5ng": "b2b:5f677a74099476290058131de7d98edf42138f6b9792cb9c28cd278e888d52dd",
+  "KH\u00c1CH S\u1ea0N M\u1eaaU  A!|\u0111\u00e0 n\u1eb5ng": "b2b:5f677a74099476290058131de7d98edf42138f6b9792cb9c28cd278e888d52dd",
+  "Kh\u00e1ch s\u1ea1n M\u1eaaU B|\u0110\u00e0 N\u1eb5ng": "b2b:6d88078661160f6bb7b207a978aacd0b5cdd50c666cbc8537db77d556ed4a586",
+  "Kh\u00e1ch s\u1ea1n M\u1eaaU A|H\u00e0 N\u1ed9i": "b2b:053002e2eb04f6d724859ca9a721b0b33cbabe2f8aa653191369fb6add4d57ff",
+  "|": "b2b:cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7",
+  "a_b|x": "b2b:e9ad1bc29a7d808a4d3548f27d9dffaa2e876876e19bd3cf0cdb7e2b8cfa3109",
+  "\uff26\uff55\uff4c\uff4c \uff57\uff49\uff44\uff54\uff48|Hu\u1ebf": "b2b:7044c5bc3e6696cca40cdb852e2f7afe9f18890f09e0d097de36a789368794aa",
+  "\u0110\u1eb7ng Th\u1ecb \u1ea8n \u00bd|Qu\u1ea3ng Ng\u00e3i": "b2b:1f54ff64661014a564bc65e0fc2f7f59dd0d343bf0a58d2ff4265a760b0945cd"
+ },
+ "norm": {
+  "\u0110\u00e0 N\u1eb5ng!!": "da nang",
+  "  a__b  ": "a b",
+  "\ufb01 ligature": "fi ligature",
+  "\u01c4 x": "dz x",
+  "\u00df": "ss",
+  "\u0130stanbul": "istanbul",
+  "\u0661\u0662\u0663 x": "\u0661\u0662\u0663 x"
+ },
+ "render_batch": "# L\u00f4 t\u1ed5 ch\u1ee9c ti\u1ec1m n\u0103ng mua qu\u00e0 T\u1ebft \u2014 16 t\u1ed5 ch\u1ee9c\n\nNgu\u1ed3n: th\u00f4ng tin T\u1ed4 CH\u1ee8C c\u00f4ng khai do ng\u01b0\u1eddi nh\u1eadp tay \u2014 kh\u00f4ng c\u00f3 th\u00f4ng tin c\u00e1 nh\u00e2n. Duy\u1ec7t = \u0111\u1ed3ng \u00fd chuy\u1ec3n danh s\u00e1ch cho G\u0110 b\u00e1n h\u00e0ng/\u0111\u1ea1i l\u00fd.\n\n| # | T\u1ed5 ch\u1ee9c | Lo\u1ea1i | T\u1ec9nh/th\u00e0nh | Website | Ngu\u1ed3n c\u00f4ng khai | L\u00fd do ph\u00f9 h\u1ee3p | M\u00e3 |\n|---|---|---|---|---|---|---|---|\n| 1 | C\u00f4ng ty M\u1eaaU 01 Ph\u1ea7n m\u1ec1m | doanh_nghiep | \u0110\u00e0 N\u1eb5ng | https://mau-01.example.com/ | https://mau-01.example.com/gioi-thieu | M\u1eaaU \u2014 doanh nghi\u1ec7p c\u00f3 th\u00f4ng l\u1ec7 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c (tin c\u00f4ng khai) | 1bf0fcb01a06 |\n| 2 | Kh\u00e1ch s\u1ea1n M\u1eaaU 02 | khach_san | \u0110\u00e0 N\u1eb5ng | https://mau-02.example.com/ | https://mau-02.example.com/tin-tuc | M\u1eaaU \u2014 kh\u00e1ch s\u1ea1n c\u00f3 qu\u1ea7y qu\u00e0 l\u01b0u ni\u1ec7m \u0111\u1eb7c s\u1ea3n \u0111\u1ecba ph\u01b0\u01a1ng | cb397224bf15 |\n| 3 | Hi\u1ec7p h\u1ed9i M\u1eaaU 03 Doanh nghi\u1ec7p tr\u1ebb | hiep_hoi | \u0110\u00e0 N\u1eb5ng | \u2014 | https://mau-03.example.org/hoat-dong | M\u1eaaU \u2014 hi\u1ec7p h\u1ed9i t\u1ed5 ch\u1ee9c t\u1eb7ng qu\u00e0 h\u1ed9i vi\u00ean d\u1ecbp cu\u1ed1i n\u0103m | 8a89818231d1 |\n| 4 | Trung t\u00e2m H\u1ed9i ngh\u1ecb M\u1eaaU 04 | su_kien_hoi_nghi | \u0110\u00e0 N\u1eb5ng | https://mau-04.example.com/ | https://mau-04.example.com/su-kien | M\u1eaaU \u2014 \u0111\u01a1n v\u1ecb t\u1ed5 ch\u1ee9c s\u1ef1 ki\u1ec7n cu\u1ed1i n\u0103m c\u1ea7n qu\u00e0 t\u1eb7ng kh\u00e1ch m\u1eddi | 26a92034969f |\n| 5 | C\u00f4ng ty M\u1eaaU 05 Logistics | doanh_nghiep | Hu\u1ebf | https://mau-05.example.com/ | https://mau-05.example.com/ | M\u1eaaU \u2014 doanh nghi\u1ec7p quy m\u00f4 v\u1eeba t\u1eb7ng qu\u00e0 T\u1ebft nh\u00e2n vi\u00ean | 35b98c79b589 |\n| 6 | Kh\u00e1ch s\u1ea1n M\u1eaaU 06 Bi\u1ec3n | khach_san | Kh\u00e1nh H\u00f2a | https://mau-06.example.com/ | https://mau-06.example.com/dich-vu | M\u1eaaU \u2014 kh\u00e1ch s\u1ea1n ngh\u1ec9 d\u01b0\u1ee1ng c\u00f3 set qu\u00e0 T\u1ebft cho kh\u00e1ch l\u01b0u tr\u00fa | 1ab232c19327 |\n| 7 | C\u00f4ng ty M\u1eaaU 07 X\u00e2y d\u1ef1ng | doanh_nghiep | H\u00e0 N\u1ed9i | https://mau-07.example.com/ | https://mau-07.example.com/ve-chung-toi | M\u1eaaU \u2014 doanh nghi\u1ec7p t\u1eb7ng qu\u00e0 \u0111\u1ed1i t\u00e1c d\u1ecbp T\u1ebft | 1f02c7f586f6 |\n| 8 | Hi\u1ec7p h\u1ed9i M\u1eaaU 08 Du l\u1ecbch | hiep_hoi | Qu\u1ea3ng Ng\u00e3i | \u2014 | https://mau-08.example.org/ | M\u1eaaU \u2014 hi\u1ec7p h\u1ed9i ng\u00e0nh du l\u1ecbch gi\u1edbi thi\u1ec7u \u0111\u1eb7c s\u1ea3n \u0111\u1ecba ph\u01b0\u01a1ng | 5a9766c8f790 |\n| 9 | C\u01a1 quan M\u1eaaU 09 X\u00fac ti\u1ebfn | co_quan | \u0110\u00e0 N\u1eb5ng | https://mau-09.example.gov/ | https://mau-09.example.gov/tin | M\u1eaaU \u2014 \u0111\u01a1n v\u1ecb x\u00fac ti\u1ebfn gi\u1edbi thi\u1ec7u s\u1ea3n ph\u1ea9m \u0111\u1ecba ph\u01b0\u01a1ng | 9b08784a5a26 |\n| 10 | C\u00f4ng ty M\u1eaaU 10 D\u01b0\u1ee3c li\u1ec7u | doanh_nghiep | L\u00e2m \u0110\u1ed3ng | https://mau-10.example.com/ | https://mau-10.example.com/ | M\u1eaaU \u2014 doanh nghi\u1ec7p c\u00f9ng ng\u00e0nh c\u00f3 k\u00eanh qu\u00e0 bi\u1ebfu | ccfc8919d93a |\n| 11 | Trung t\u00e2m S\u1ef1 ki\u1ec7n M\u1eaaU 11 | su_kien_hoi_nghi | TP. H\u1ed3 Ch\u00ed Minh | https://mau-11.example.com/ | https://mau-11.example.com/hoi-nghi | M\u1eaaU \u2014 h\u1ed9i ngh\u1ecb kh\u00e1ch h\u00e0ng cu\u1ed1i n\u0103m | a91ead3be681 |\n| 12 | Kh\u00e1ch s\u1ea1n M\u1eaaU 12 Ph\u1ed1 c\u1ed5 | khach_san | Qu\u1ea3ng Ng\u00e3i | https://mau-12.example.com/ | https://mau-12.example.com/ | M\u1eaaU \u2014 kh\u00e1ch s\u1ea1n c\u00f3 c\u1eeda h\u00e0ng qu\u00e0 t\u1eb7ng | a004b3122c56 |\n| 13 | C\u00f4ng ty M\u1eaaU 13 Ng\u00e2n h\u00e0ng s\u1ed1 | doanh_nghiep | H\u00e0 N\u1ed9i | https://mau-13.example.com/ | https://mau-13.example.com/bao-chi | M\u1eaaU \u2014 doanh nghi\u1ec7p \u0111\u1eb7t qu\u00e0 T\u1ebft s\u1ed1 l\u01b0\u1ee3ng l\u1edbn theo tin b\u00e1o | 592f72a3151a |\n| 14 | T\u1ed5 ch\u1ee9c M\u1eaaU 14 Phi l\u1ee3i nhu\u1eadn | khac | \u0110\u00e0 N\u1eb5ng | \u2014 | https://mau-14.example.org/ | M\u1eaaU \u2014 t\u1ed5 ch\u1ee9c t\u1eb7ng qu\u00e0 t\u00ecnh nguy\u1ec7n vi\u00ean cu\u1ed1i n\u0103m | f807e59d67ae |\n| 15 | C\u00f4ng ty M\u1eaaU 15 Du l\u1ecbch l\u1eef h\u00e0nh | doanh_nghiep | \u0110\u00e0 N\u1eb5ng | https://mau-15.example.com/ | https://mau-15.example.com/tour | M\u1eaaU \u2014 c\u00f4ng ty l\u1eef h\u00e0nh t\u1eb7ng qu\u00e0 \u0111\u1eb7c s\u1ea3n cho \u0111o\u00e0n kh\u00e1ch | 5982fcc72ce4 |\n| 16 | Hi\u1ec7p h\u1ed9i M\u1eaaU 16 \u1ea8m th\u1ef1c | hiep_hoi | C\u1ea7n Th\u01a1 | \u2014 | https://mau-16.example.org/ | M\u1eaaU \u2014 hi\u1ec7p h\u1ed9i \u1ea9m th\u1ef1c gi\u1edbi thi\u1ec7u s\u1ea3n ph\u1ea9m m\u1eadt ong | 41df5bd5c34d |\n\nH\u1ec7 th\u1ed1ng KH\u00d4NG t\u1ef1 li\u00ean h\u1ec7 \u2014 G\u0110 b\u00e1n h\u00e0ng/\u0111\u1ea1i l\u00fd li\u00ean h\u1ec7 sau khi duy\u1ec7t.\n",
+ "render_batch_escape": "# L\u00f4 t\u1ed5 ch\u1ee9c ti\u1ec1m n\u0103ng mua qu\u00e0 T\u1ebft \u2014 1 t\u1ed5 ch\u1ee9c\n\nNgu\u1ed3n: th\u00f4ng tin T\u1ed4 CH\u1ee8C c\u00f4ng khai do ng\u01b0\u1eddi nh\u1eadp tay \u2014 kh\u00f4ng c\u00f3 th\u00f4ng tin c\u00e1 nh\u00e2n. Duy\u1ec7t = \u0111\u1ed3ng \u00fd chuy\u1ec3n danh s\u00e1ch cho G\u0110 b\u00e1n h\u00e0ng/\u0111\u1ea1i l\u00fd.\n\n| # | T\u1ed5 ch\u1ee9c | Lo\u1ea1i | T\u1ec9nh/th\u00e0nh | Website | Ngu\u1ed3n c\u00f4ng khai | L\u00fd do ph\u00f9 h\u1ee3p | M\u00e3 |\n|---|---|---|---|---|---|---|---|\n| 1 | T\u1ed5 ch\u1ee9c A\\|B | khac | \u0110\u00e0 N\u1eb5ng | \u2014 | https://a.example.org/ | \u2014 | aaaaaaaaaaaa |\n\nH\u1ec7 th\u1ed1ng KH\u00d4NG t\u1ef1 li\u00ean h\u1ec7 \u2014 G\u0110 b\u00e1n h\u00e0ng/\u0111\u1ea1i l\u00fd li\u00ean h\u1ec7 sau khi duy\u1ec7t.\n",
+ "rows_mau": [
+  {
+   "org_name": "C\u00f4ng ty M\u1eaaU 01 Ph\u1ea7n m\u1ec1m",
+   "org_type": "doanh_nghiep",
+   "region": "\u0110\u00e0 N\u1eb5ng",
+   "website": "https://mau-01.example.com/",
+   "source_url": "https://mau-01.example.com/gioi-thieu",
+   "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p c\u00f3 th\u00f4ng l\u1ec7 t\u1eb7ng qu\u00e0 T\u1ebft \u0111\u1ed1i t\u00e1c (tin c\u00f4ng khai)",
+   "dedup_key": "b2b:1bf0fcb01a0667079984172c014bd84b5acd7d18084212bc9fafa956b9f6a9bd",
+   "id": 1
+  },
+  {
+   "org_name": "Kh\u00e1ch s\u1ea1n M\u1eaaU 02",
+   "org_type": "khach_san",
+   "region": "\u0110\u00e0 N\u1eb5ng",
+   "website": "https://mau-02.example.com/",
+   "source_url": "https://mau-02.example.com/tin-tuc",
+   "fit_reason": "M\u1eaaU \u2014 kh\u00e1ch s\u1ea1n c\u00f3 qu\u1ea7y qu\u00e0 l\u01b0u ni\u1ec7m \u0111\u1eb7c s\u1ea3n \u0111\u1ecba ph\u01b0\u01a1ng",
+   "dedup_key": "b2b:cb397224bf15ae05644f68ba22cc939940912807b03d91b021ad31182571f5f7",
+   "id": 2
+  },
+  {
+   "org_name": "Hi\u1ec7p h\u1ed9i M\u1eaaU 03 Doanh nghi\u1ec7p tr\u1ebb",
+   "org_type": "hiep_hoi",
+   "region": "\u0110\u00e0 N\u1eb5ng",
+   "website": null,
+   "source_url": "https://mau-03.example.org/hoat-dong",
+   "fit_reason": "M\u1eaaU \u2014 hi\u1ec7p h\u1ed9i t\u1ed5 ch\u1ee9c t\u1eb7ng qu\u00e0 h\u1ed9i vi\u00ean d\u1ecbp cu\u1ed1i n\u0103m",
+   "dedup_key": "b2b:8a89818231d191805b386b0b5a714b81a40b431e418c600e651202dd0a535211",
+   "id": 3
+  },
+  {
+   "org_name": "Trung t\u00e2m H\u1ed9i ngh\u1ecb M\u1eaaU 04",
+   "org_type": "su_kien_hoi_nghi",
+   "region": "\u0110\u00e0 N\u1eb5ng",
+   "website": "https://mau-04.example.com/",
+   "source_url": "https://mau-04.example.com/su-kien",
+   "fit_reason": "M\u1eaaU \u2014 \u0111\u01a1n v\u1ecb t\u1ed5 ch\u1ee9c s\u1ef1 ki\u1ec7n cu\u1ed1i n\u0103m c\u1ea7n qu\u00e0 t\u1eb7ng kh\u00e1ch m\u1eddi",
+   "dedup_key": "b2b:26a92034969fc81f248df64dfdf63f93a9687db6a1212ad3c46f584563757856",
+   "id": 4
+  },
+  {
+   "org_name": "C\u00f4ng ty M\u1eaaU 05 Logistics",
+   "org_type": "doanh_nghiep",
+   "region": "Hu\u1ebf",
+   "website": "https://mau-05.example.com/",
+   "source_url": "https://mau-05.example.com/",
+   "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p quy m\u00f4 v\u1eeba t\u1eb7ng qu\u00e0 T\u1ebft nh\u00e2n vi\u00ean",
+   "dedup_key": "b2b:35b98c79b589b304a76c9ffcc0176cea007499c29f975bf85646ff792e6d38bc",
+   "id": 5
+  },
+  {
+   "org_name": "Kh\u00e1ch s\u1ea1n M\u1eaaU 06 Bi\u1ec3n",
+   "org_type": "khach_san",
+   "region": "Kh\u00e1nh H\u00f2a",
+   "website": "https://mau-06.example.com/",
+   "source_url": "https://mau-06.example.com/dich-vu",
+   "fit_reason": "M\u1eaaU \u2014 kh\u00e1ch s\u1ea1n ngh\u1ec9 d\u01b0\u1ee1ng c\u00f3 set qu\u00e0 T\u1ebft cho kh\u00e1ch l\u01b0u tr\u00fa",
+   "dedup_key": "b2b:1ab232c193270b4da2a3036e822144ab86571e2834fe65741ca7686c4fee954f",
+   "id": 6
+  },
+  {
+   "org_name": "C\u00f4ng ty M\u1eaaU 07 X\u00e2y d\u1ef1ng",
+   "org_type": "doanh_nghiep",
+   "region": "H\u00e0 N\u1ed9i",
+   "website": "https://mau-07.example.com/",
+   "source_url": "https://mau-07.example.com/ve-chung-toi",
+   "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p t\u1eb7ng qu\u00e0 \u0111\u1ed1i t\u00e1c d\u1ecbp T\u1ebft",
+   "dedup_key": "b2b:1f02c7f586f63402f123ddfb0e3839a84dbfdfd69a428a01f1899095b7350e01",
+   "id": 7
+  },
+  {
+   "org_name": "Hi\u1ec7p h\u1ed9i M\u1eaaU 08 Du l\u1ecbch",
+   "org_type": "hiep_hoi",
+   "region": "Qu\u1ea3ng Ng\u00e3i",
+   "website": null,
+   "source_url": "https://mau-08.example.org/",
+   "fit_reason": "M\u1eaaU \u2014 hi\u1ec7p h\u1ed9i ng\u00e0nh du l\u1ecbch gi\u1edbi thi\u1ec7u \u0111\u1eb7c s\u1ea3n \u0111\u1ecba ph\u01b0\u01a1ng",
+   "dedup_key": "b2b:5a9766c8f790dba67cc88545f8aedb8ec7d484edcab824c540e3270c6570c6ac",
+   "id": 8
+  },
+  {
+   "org_name": "C\u01a1 quan M\u1eaaU 09 X\u00fac ti\u1ebfn",
+   "org_type": "co_quan",
+   "region": "\u0110\u00e0 N\u1eb5ng",
+   "website": "https://mau-09.example.gov/",
+   "source_url": "https://mau-09.example.gov/tin",
+   "fit_reason": "M\u1eaaU \u2014 \u0111\u01a1n v\u1ecb x\u00fac ti\u1ebfn gi\u1edbi thi\u1ec7u s\u1ea3n ph\u1ea9m \u0111\u1ecba ph\u01b0\u01a1ng",
+   "dedup_key": "b2b:9b08784a5a26dbb8799849334626248177259059a9826d16477a242d616cbaaa",
+   "id": 9
+  },
+  {
+   "org_name": "C\u00f4ng ty M\u1eaaU 10 D\u01b0\u1ee3c li\u1ec7u",
+   "org_type": "doanh_nghiep",
+   "region": "L\u00e2m \u0110\u1ed3ng",
+   "website": "https://mau-10.example.com/",
+   "source_url": "https://mau-10.example.com/",
+   "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p c\u00f9ng ng\u00e0nh c\u00f3 k\u00eanh qu\u00e0 bi\u1ebfu",
+   "dedup_key": "b2b:ccfc8919d93a0bb6be2708c4a7259d1b416eaa1a53af04f375b6d69716580f4c",
+   "id": 10
+  },
+  {
+   "org_name": "Trung t\u00e2m S\u1ef1 ki\u1ec7n M\u1eaaU 11",
+   "org_type": "su_kien_hoi_nghi",
+   "region": "TP. H\u1ed3 Ch\u00ed Minh",
+   "website": "https://mau-11.example.com/",
+   "source_url": "https://mau-11.example.com/hoi-nghi",
+   "fit_reason": "M\u1eaaU \u2014 h\u1ed9i ngh\u1ecb kh\u00e1ch h\u00e0ng cu\u1ed1i n\u0103m",
+   "dedup_key": "b2b:a91ead3be68178a7be0f02ebcfbf6c4f0b0dfa7783cc51565829907d3513cc2a",
+   "id": 11
+  },
+  {
+   "org_name": "Kh\u00e1ch s\u1ea1n M\u1eaaU 12 Ph\u1ed1 c\u1ed5",
+   "org_type": "khach_san",
+   "region": "Qu\u1ea3ng Ng\u00e3i",
+   "website": "https://mau-12.example.com/",
+   "source_url": "https://mau-12.example.com/",
+   "fit_reason": "M\u1eaaU \u2014 kh\u00e1ch s\u1ea1n c\u00f3 c\u1eeda h\u00e0ng qu\u00e0 t\u1eb7ng",
+   "dedup_key": "b2b:a004b3122c56008626641b99404cc08cede1e301b2f969030850e9e86aa45e8d",
+   "id": 12
+  },
+  {
+   "org_name": "C\u00f4ng ty M\u1eaaU 13 Ng\u00e2n h\u00e0ng s\u1ed1",
+   "org_type": "doanh_nghiep",
+   "region": "H\u00e0 N\u1ed9i",
+   "website": "https://mau-13.example.com/",
+   "source_url": "https://mau-13.example.com/bao-chi",
+   "fit_reason": "M\u1eaaU \u2014 doanh nghi\u1ec7p \u0111\u1eb7t qu\u00e0 T\u1ebft s\u1ed1 l\u01b0\u1ee3ng l\u1edbn theo tin b\u00e1o",
+   "dedup_key": "b2b:592f72a3151aed8ccce5e71c2f4f73c7797f0a3f83d9651325a228f2f35c7ac5",
+   "id": 13
+  },
+  {
+   "org_name": "T\u1ed5 ch\u1ee9c M\u1eaaU 14 Phi l\u1ee3i nhu\u1eadn",
+   "org_type": "khac",
+   "region": "\u0110\u00e0 N\u1eb5ng",
+   "website": null,
+   "source_url": "https://mau-14.example.org/",
+   "fit_reason": "M\u1eaaU \u2014 t\u1ed5 ch\u1ee9c t\u1eb7ng qu\u00e0 t\u00ecnh nguy\u1ec7n vi\u00ean cu\u1ed1i n\u0103m",
+   "dedup_key": "b2b:f807e59d67ae1345daccd550cb37a40c2c51d64ea1b182d08859c7d5586b6f67",
+   "id": 14
+  },
+  {
+   "org_name": "C\u00f4ng ty M\u1eaaU 15 Du l\u1ecbch l\u1eef h\u00e0nh",
+   "org_type": "doanh_nghiep",
+   "region": "\u0110\u00e0 N\u1eb5ng",
+   "website": "https://mau-15.example.com/",
+   "source_url": "https://mau-15.example.com/tour",
+   "fit_reason": "M\u1eaaU \u2014 c\u00f4ng ty l\u1eef h\u00e0nh t\u1eb7ng qu\u00e0 \u0111\u1eb7c s\u1ea3n cho \u0111o\u00e0n kh\u00e1ch",
+   "dedup_key": "b2b:5982fcc72ce4c2a286f4c11568e2f6fb2a60ad15d9107ef66891f8b2177c65c0",
+   "id": 15
+  },
+  {
+   "org_name": "Hi\u1ec7p h\u1ed9i M\u1eaaU 16 \u1ea8m th\u1ef1c",
+   "org_type": "hiep_hoi",
+   "region": "C\u1ea7n Th\u01a1",
+   "website": null,
+   "source_url": "https://mau-16.example.org/",
+   "fit_reason": "M\u1eaaU \u2014 hi\u1ec7p h\u1ed9i \u1ea9m th\u1ef1c gi\u1edbi thi\u1ec7u s\u1ea3n ph\u1ea9m m\u1eadt ong",
+   "dedup_key": "b2b:41df5bd5c34d1096c9797977fe2c453a717f3c935e018b42eb4c4a21be15b479",
+   "id": 16
+  }
+ ]
+}

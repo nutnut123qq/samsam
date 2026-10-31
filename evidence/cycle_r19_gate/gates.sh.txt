@@ -1,0 +1,26 @@
+#!/bin/bash
+# Cổng nhẹ r19: agent_eval/dpia/redteam (không DB) + secret scan (không tự đọc tệp kết quả).
+SP="$1"
+E=/d/code/samsam/evidence/cycle_r19_gate
+cd /d/code/samsam
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY CONV_SAMPLE
+export PYTHONIOENCODING=utf-8 OPENROUTER_API_KEY=""
+for c in "scripts/agent_eval.py --deterministic --no-record:eval" "scripts/dpia_draft.py --check:dpia" "scripts/redteam.py:redteam"; do
+  cmd="${c%%:*}"; out="${c##*:}"
+  { echo "## python $cmd"; python $cmd 2>&1; echo "EXIT $?"; } > "$E/$out.txt"
+  echo "$out: $(tail -1 "$E/$out.txt")"
+done
+PW=$(sed -E "s/.*password=([^' ]+).*/\1/" "$SP/secret/admin.sh")
+[ ${#PW} -ge 20 ] || { echo "không đọc được mật khẩu container"; exit 2; }
+{ echo "## secret scan evidence/cycle_r19_gate + tests/test_r19_ngay_cong_som.py + diff từ Base 62b665b (dòng thêm) — $(date -Iseconds)"
+  T="/d/code/samsam/evidence/cycle_r19_gate tests/test_r19_ngay_cong_som.py"
+  echo "### grep -rEn 'postgres(ql)?://[^ ]*:[^*@]+@' → (rỗng = đạt)"
+  grep -rEn 'postgres(ql)?://[^ ]*:[^*@]+@' $T; git diff 62b665b -- . 2>/dev/null | grep '^+' | grep -En 'postgres(ql)?://[^ ]*:[^*@]+@'
+  echo "### grep -rn 'sk-[o]r' (tiền tố khóa OpenRouter) → (rỗng = đạt)"
+  grep -rn 'sk-[o]r' $T; git diff 62b665b -- . 2>/dev/null | grep '^+' | grep -n 'sk-[o]r'
+  echo "### mật khẩu container samsam-cycle-r19 (sinh ở scratchpad) trong tệp theo dõi + chưa theo dõi (trừ .agents/, founder/) → (rỗng = đạt)"
+  { git ls-files; git ls-files --others --exclude-standard | grep -vE '^(\.agents/|founder/)'; } | tr '\n' '\0' | xargs -0 grep -lF -- "$PW" 2>/dev/null
+  echo "EXIT 0"; } > "$SP/secret_scan.tmp"
+mv "$SP/secret_scan.tmp" "$E/secret_scan.txt"
+cat "$E/secret_scan.txt"

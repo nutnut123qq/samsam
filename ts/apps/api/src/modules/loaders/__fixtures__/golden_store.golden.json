@@ -1,0 +1,1059 @@
+{
+ "read_golden": {
+  "empty": {
+   "b64": "",
+   "doc_none": true,
+   "why": "<DIR>/empty.json r\u1ed7ng"
+  },
+  "blank": {
+   "b64": "ICAK",
+   "doc_none": true,
+   "why": "<DIR>/blank.json r\u1ed7ng"
+  },
+  "broken": {
+   "b64": "eyJza3VzIjogWw==",
+   "doc_none": true,
+   "why": "<DIR>/broken.json JSON h\u1ecfng: Expecting value: line 1 column 11 (char 10)"
+  },
+  "obj": {
+   "b64": "e30=",
+   "doc_none": true,
+   "why": "<DIR>/obj.json kh\u00f4ng c\u00f3 SKU n\u00e0o (0 record) \u2014 kh\u00f4ng n\u1ea1p"
+  },
+  "doc_only": {
+   "b64": "eyJfZG9jIjogImNo4buJIGNvbW1lbnQifQ==",
+   "doc_none": true,
+   "why": "<DIR>/doc_only.json kh\u00f4ng c\u00f3 SKU n\u00e0o (0 record) \u2014 kh\u00f4ng n\u1ea1p"
+  },
+  "skus_empty": {
+   "b64": "eyJfZG9jIjogIngiLCAic2t1cyI6IFtdfQ==",
+   "doc_none": true,
+   "why": "<DIR>/skus_empty.json kh\u00f4ng c\u00f3 SKU n\u00e0o (0 record) \u2014 kh\u00f4ng n\u1ea1p"
+  },
+  "skus_zero": {
+   "b64": "eyJza3VzIjogMH0=",
+   "doc_none": true,
+   "why": "<DIR>/skus_zero.json kh\u00f4ng c\u00f3 SKU n\u00e0o (0 record) \u2014 kh\u00f4ng n\u1ea1p"
+  },
+  "skus_null": {
+   "b64": "eyJza3VzIjogbnVsbH0=",
+   "doc_none": true,
+   "why": "<DIR>/skus_null.json kh\u00f4ng c\u00f3 SKU n\u00e0o (0 record) \u2014 kh\u00f4ng n\u1ea1p"
+  },
+  "skus_str": {
+   "b64": "eyJza3VzIjogImFiYyJ9",
+   "doc_none": false,
+   "why": null
+  },
+  "skus_obj_empty": {
+   "b64": "eyJza3VzIjoge319",
+   "doc_none": true,
+   "why": "<DIR>/skus_obj_empty.json kh\u00f4ng c\u00f3 SKU n\u00e0o (0 record) \u2014 kh\u00f4ng n\u1ea1p"
+  },
+  "root_list": {
+   "b64": "W3sic2t1cyI6IFsxXX1d",
+   "doc_none": true,
+   "why": "<DIR>/root_list.json kh\u00f4ng c\u00f3 SKU n\u00e0o (0 record) \u2014 kh\u00f4ng n\u1ea1p"
+  },
+  "root_str": {
+   "b64": "Ingi",
+   "doc_none": true,
+   "why": "<DIR>/root_str.json kh\u00f4ng c\u00f3 SKU n\u00e0o (0 record) \u2014 kh\u00f4ng n\u1ea1p"
+  },
+  "latin": {
+   "b64": "eyJza3VzIjogWyL/Il19",
+   "doc_none": true,
+   "why": "<DIR>/latin.json kh\u00f4ng ph\u1ea3i UTF-8: 'utf-8' codec can't decode byte 0xff in position 11: invalid start byte"
+  },
+  "bom_ok": {
+   "b64": "77u/eyJza3VzIjogW3sic2t1X2tleSI6ICJhIn1dfQ==",
+   "doc_none": false,
+   "why": null
+  },
+  "ok": {
+   "b64": "eyJza3VzIjogW3sic2t1X2tleSI6ICJhIn1dfQ==",
+   "doc_none": false,
+   "why": null
+  },
+  "nbsp_only": {
+   "b64": "wqDjgIA=",
+   "doc_none": true,
+   "why": "<DIR>/nbsp_only.json r\u1ed7ng"
+  },
+  "nan": {
+   "b64": "eyJza3VzIjogW05hTl19",
+   "doc_none": false,
+   "why": null
+  },
+  "missing": {
+   "b64": null,
+   "doc_none": true,
+   "why": "thi\u1ebfu file <DIR>/missing.json"
+  },
+  "is_dir": {
+   "b64": null,
+   "doc_none": true,
+   "why": "thi\u1ebfu file <DIR>/adir.json"
+  }
+ },
+ "validate": {
+  "real": {
+   "doc": "{\"_doc\": \"v3.2 golden master \u2014 ngu\u1ed3n s\u1ef1 th\u1eadt DUY NH\u1ea4T cho listing/gi\u00e1/tr\u1ea1ng th\u00e1i ph\u00e1p l\u00fd SKU \u0111ang b\u00e1n. N\u1ea1p: python -m ingest.golden_store (upsert theo sku_key, kh\u00f4ng x\u00f3a SKU v\u1eafng kh\u1ecfi file). Field m\u1ed7i SKU: sku_key (slug ascii), name, category (tpbvsk|food|alcohol), pack_spec (quy c\u00e1ch \u2014 s\u1ed1 \u0111\u1ea7u ti\u00ean + \u0111\u01a1n v\u1ecb vi\u00ean|ml l\u00e0 T\u1ed4NG), receipt_no/receipt_date (gi\u1ea5y ti\u1ebfp nh\u1eadn \u0110KSP, ISO date), xnqc_status (none|pending|approved), self_declaration_ok (true|false|null \u2014 null = ch\u01b0a x\u00e1c minh), allowed_channels (hi\u1ec7n tr\u1ea1ng listing, CH\u01afA ph\u1ea3i quy\u1ebft \u0111\u1ecbnh G\u0110), shopee_item_id, product_ids (\u0110\u1ec0 XU\u1ea4T map t\u1edbi products.id crawl \u2014 ch\u1edd S\u1ea3n xu\u1ea5t duy\u1ec7t), prices {k\u00eanh: {floor, list, promo}} VND nguy\u00ean (thi\u1ebfu key = ch\u01b0a c\u00f3 gi\u00e1, KH\u00d4NG \u0111o\u00e1n; m\u1ecdi gi\u00e1 n\u1ea1p \u1edf tr\u1ea1ng th\u00e1i ch\u1edd G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t), note. Kh\u00f4ng ch\u1ee9a c\u00f4ng d\u1ee5ng/li\u1ec1u d\u00f9ng. Ngu\u1ed3n s\u1ed1 li\u1ec7u: b\u1ea3ng gi\u00e1 Shopee + gi\u1ea5y ti\u1ebfp nh\u1eadn do c\u00f4ng ty cung c\u1ea5p (2026-10).\", \"skus\": [{\"sku_key\": \"savina-12v\", \"name\": \"Savina tu\u00fdp 12 vi\u00ean ng\u1eadm\", \"category\": \"tpbvsk\", \"pack_spec\": \"12 vi\u00ean ng\u1eadm (tu\u00fdp PP)\", \"receipt_no\": \"8014/2021/\u0110KSP\", \"receipt_date\": \"2021-09-07\", \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"27357883504\", \"product_ids\": [\"wc-2298\", \"wc-349\", \"nv-savina-tuyp-12-vien-bk\"], \"prices\": {\"shopee\": {\"floor\": 128000, \"list\": 159000, \"promo\": 132000}}, \"note\": null}, {\"sku_key\": \"saphraton-20v\", \"name\": \"Saphraton 20 vi\u00ean\", \"category\": \"tpbvsk\", \"pack_spec\": \"20 vi\u00ean nang m\u1ec1m (2 v\u1ec9 x 10 vi\u00ean)\", \"receipt_no\": \"2778/2018/\u0110KSP\", \"receipt_date\": \"2018-05-22\", \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"24825885894\", \"product_ids\": [\"wc-2300\", \"wc-344\", \"nv-saphraton-51\"], \"prices\": {\"shopee\": {\"floor\": 236000, \"list\": 299000, \"promo\": 250000}}, \"note\": null}, {\"sku_key\": \"saphraton-combo-2x20v\", \"name\": \"Combo Saphraton 2 h\u1ed9p x 20 vi\u00ean\", \"category\": \"tpbvsk\", \"pack_spec\": \"40 vi\u00ean nang m\u1ec1m (combo 2 h\u1ed9p x 20 vi\u00ean)\", \"receipt_no\": \"2778/2018/\u0110KSP\", \"receipt_date\": \"2018-05-22\", \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"28003783932\", \"product_ids\": [], \"prices\": {\"shopee\": {\"floor\": 469000, \"list\": 698000, \"promo\": 480000}}, \"note\": \"Ch\u1edd KD x\u00e1c nh\u1eadn combo 2x20 c\u00f3 tr\u00f9ng SKU Saphraton 40 vi\u00ean kh\u00f4ng \u2014 gi\u1eef 2 sku_key ri\u00eang, kh\u00f4ng t\u1ef1 g\u1ed9p.\"}, {\"sku_key\": \"saphraton-40v\", \"name\": \"Saphraton 40 vi\u00ean\", \"category\": \"tpbvsk\", \"pack_spec\": \"40 vi\u00ean nang m\u1ec1m (4 v\u1ec9 x 10 vi\u00ean)\", \"receipt_no\": \"2778/2018/\u0110KSP\", \"receipt_date\": \"2018-05-22\", \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [], \"shopee_item_id\": null, \"product_ids\": [], \"prices\": {\"shopee\": {\"floor\": 450000}}, \"note\": \"M\u1edbi c\u00f3 gi\u00e1 s\u00e0n; gi\u00e1 th\u01b0\u1eddng/KM ch\u1edd G\u0110 b\u00e1n h\u00e0ng. Ch\u1edd KD x\u00e1c nh\u1eadn c\u00f3 tr\u00f9ng combo 2x20 kh\u00f4ng.\"}, {\"sku_key\": \"saphraton-80v\", \"name\": \"Saphraton 80 vi\u00ean\", \"category\": \"tpbvsk\", \"pack_spec\": \"80 vi\u00ean nang m\u1ec1m (8 v\u1ec9 x 10 vi\u00ean)\", \"receipt_no\": \"2778/2018/\u0110KSP\", \"receipt_date\": \"2018-05-22\", \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"29368491427\", \"product_ids\": [\"wc-2307\", \"wc-331\", \"nv-saphraton-48\"], \"prices\": {\"shopee\": {\"floor\": 1000000, \"list\": 1490000, \"promo\": 1100000}}, \"note\": \"Map trang web 'Saphraton' (kh\u00f4ng ghi quy c\u00e1ch) sang 80 vi\u00ean ch\u1ec9 suy t\u1eeb gi\u00e1 web = gi\u00e1 s\u00e0n 80 vi\u00ean \u2014 ch\u1edd S\u1ea3n xu\u1ea5t x\u00e1c nh\u1eadn.\"}, {\"sku_key\": \"savigout-30v\", \"name\": \"Savigout 30 vi\u00ean\", \"category\": \"tpbvsk\", \"pack_spec\": \"30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)\", \"receipt_no\": \"8560/2019/\u0110KSP\", \"receipt_date\": \"2019-07-02\", \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"24325987926\", \"product_ids\": [\"wc-2304\", \"wc-336\", \"nv-savigout-bk\"], \"prices\": {\"shopee\": {\"floor\": 295000, \"list\": 439000, \"promo\": 350000}}, \"note\": \"File t\u1ed5ng h\u1ee3p TPBVSK 22.01.2026 ghi Savigout s\u1ed1 5191/2020/\u0110KSP (tr\u00f9ng s\u1ed1 c\u1ee7a Sapentol) \u2014 l\u1ec7ch v\u1edbi s\u1ed1 8560/2019/\u0110KSP \u0111ang d\u00f9ng \u1edf \u0111\u00e2y, ch\u1edd Ph\u00e1p ch\u1ebf x\u00e1c nh\u1eadn.\"}, {\"sku_key\": \"sapentol-30v\", \"name\": \"Sapentol 30 vi\u00ean\", \"category\": \"tpbvsk\", \"pack_spec\": \"30 vi\u00ean nang c\u1ee9ng (h\u1ed9p 1 l\u1ecd)\", \"receipt_no\": \"5191/2020/\u0110KSP\", \"receipt_date\": \"2020-06-10\", \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"27257950771\", \"product_ids\": [\"wc-2309\", \"wc-324\", \"nv-sapentol\"], \"prices\": {\"shopee\": {\"floor\": 280000, \"list\": 417000, \"promo\": 330000}}, \"note\": null}, {\"sku_key\": \"da-an-sam-30v\", \"name\": \"D\u1ea1 An S\u00e2m 30 vi\u00ean\", \"category\": \"tpbvsk\", \"pack_spec\": \"30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)\", \"receipt_no\": \"11129/2021/\u0110KSP\", \"receipt_date\": \"2021-12-29\", \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"26857946153\", \"product_ids\": [], \"prices\": {\"shopee\": {\"floor\": 340000, \"list\": 506000, \"promo\": 399000}}, \"note\": null}, {\"sku_key\": \"mat-ong-sam-120ml-1hu\", \"name\": \"M\u1eadt ong s\u00e2m 120ml (1 h\u0169)\", \"category\": \"food\", \"pack_spec\": \"120ml x 1 h\u0169\", \"receipt_no\": null, \"receipt_date\": null, \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"54916394790\", \"product_ids\": [], \"prices\": {\"shopee\": {\"floor\": 500000, \"list\": 745000, \"promo\": 550000}}, \"note\": \"H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh. Chung item Shopee v\u1edbi bi\u1ebfn th\u1ec3 2 h\u0169.\"}, {\"sku_key\": \"mat-ong-sam-120ml-2hu\", \"name\": \"M\u1eadt ong s\u00e2m 120ml (2 h\u0169)\", \"category\": \"food\", \"pack_spec\": \"120ml x 2 h\u0169\", \"receipt_no\": null, \"receipt_date\": null, \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"54916394790\", \"product_ids\": [], \"prices\": {\"shopee\": {\"floor\": 900000, \"list\": 1340000, \"promo\": 950000}}, \"note\": \"H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh. Chung item Shopee v\u1edbi bi\u1ebfn th\u1ec3 1 h\u0169.\"}, {\"sku_key\": \"mat-ong-sam-300ml\", \"name\": \"M\u1eadt ong s\u00e2m 300ml\", \"category\": \"food\", \"pack_spec\": \"300ml x 1 h\u0169\", \"receipt_no\": null, \"receipt_date\": null, \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"29007947088\", \"product_ids\": [], \"prices\": {\"shopee\": {\"floor\": 2000000, \"list\": 2980000, \"promo\": 2100000}}, \"note\": \"H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh.\"}, {\"sku_key\": \"ruou-sam-chai-thuy-tinh-500ml\", \"name\": \"R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml\", \"category\": \"alcohol\", \"pack_spec\": \"500ml chai th\u1ee7y tinh\", \"receipt_no\": null, \"receipt_date\": null, \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"27325048614\", \"product_ids\": [], \"prices\": {\"shopee\": {\"floor\": 500000, \"list\": 745000, \"promo\": 550000}}, \"note\": \"N\u1ed3ng \u0111\u1ed9 ghi 27,5% CH\u01afA x\u00e1c minh. \u0110ang c\u00f3 listing Shopee \u2014 r\u01b0\u1ee3u kh\u00f4ng \u0111\u01b0\u1ee3c qu\u1ea3ng b\u00e1/b\u00e1n online, ch\u1edd Ph\u00e1p ch\u1ebf.\"}, {\"sku_key\": \"ruou-sam-binh-su-do-500ml\", \"name\": \"R\u01b0\u1ee3u s\u00e2m b\u00ecnh s\u1ee9 \u0111\u1ecf 500ml\", \"category\": \"alcohol\", \"pack_spec\": \"500ml b\u00ecnh s\u1ee9 \u0111\u1ecf\", \"receipt_no\": null, \"receipt_date\": null, \"xnqc_status\": \"none\", \"self_declaration_ok\": null, \"allowed_channels\": [\"shopee\"], \"shopee_item_id\": \"26975028961\", \"product_ids\": [], \"prices\": {}, \"note\": \"Ch\u01b0a c\u00f3 gi\u00e1 trong b\u1ea3ng gi\u00e1. N\u1ed3ng \u0111\u1ed9 CH\u01afA x\u00e1c minh. \u0110ang c\u00f3 listing Shopee \u2014 ch\u1edd Ph\u00e1p ch\u1ebf.\"}]}",
+   "errs": []
+  },
+  "planted3": {
+   "doc": "{\"skus\": [{\"sku_key\": \"r1-x\", \"name\": \"r1-x\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"floor\": 100000, \"list\": 150000}}}, {\"sku_key\": \"r2-x\", \"name\": \"r2-x\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": 200000, \"promo\": 100000}}}, {\"sku_key\": \"r3-x\", \"name\": \"r3-x\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"floor\": 100000, \"list\": 120000, \"promo\": 90000}}}, {\"sku_key\": \"only-floor\", \"name\": \"only-floor\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"floor\": 450000}}}, {\"sku_key\": \"no-price\", \"name\": \"x\", \"category\": \"alcohol\", \"prices\": {}}]}",
+   "errs": [
+    "r1-x/shopee R1: gi\u00e1 th\u01b0\u1eddng 150000 > 149% gi\u00e1 s\u00e0n 100000",
+    "r2-x/shopee R2: KM 100000 gi\u1ea3m > 49% t\u1eeb gi\u00e1 th\u01b0\u1eddng 200000",
+    "r3-x/shopee R3: ph\u1ea3i s\u00e0n 100000 <= KM 90000 <= th\u01b0\u1eddng 120000"
+   ]
+  },
+  "bound_ok": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"floor\": 500000, \"list\": 745000}}}, {\"sku_key\": \"b\", \"name\": \"b\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": 745000, \"promo\": 379950}}}]}",
+   "errs": []
+  },
+  "r1_over": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"floor\": 500000, \"list\": 745001}}}]}",
+   "errs": [
+    "a/shopee R1: gi\u00e1 th\u01b0\u1eddng 745001 > 149% gi\u00e1 s\u00e0n 500000"
+   ]
+  },
+  "r2_over": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": 745000, \"promo\": 379949}}}]}",
+   "errs": [
+    "a/shopee R2: KM 379949 gi\u1ea3m > 49% t\u1eeb gi\u00e1 th\u01b0\u1eddng 745000"
+   ]
+  },
+  "r3": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": 100000, \"promo\": 100001}}}]}",
+   "errs": [
+    "a/shopee R3: ph\u1ea3i s\u00e0n None <= KM 100001 <= th\u01b0\u1eddng 100000"
+   ]
+  },
+  "r3_floor_gt_list": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"floor\": 200, \"list\": 100}}}]}",
+   "errs": [
+    "a/shopee R3: ph\u1ea3i s\u00e0n 200 <= KM None <= th\u01b0\u1eddng 100"
+   ]
+  },
+  "r3_promo_lt_floor": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"floor\": 200, \"promo\": 100}}}]}",
+   "errs": [
+    "a/shopee R3: ph\u1ea3i s\u00e0n 200 <= KM 100 <= th\u01b0\u1eddng None"
+   ]
+  },
+  "root_list": {
+   "doc": "[]",
+   "errs": [
+    "root ph\u1ea3i l\u00e0 object {\"_doc\", \"skus\"}"
+   ]
+  },
+  "root_obj": {
+   "doc": "{}",
+   "errs": [
+    "skus ph\u1ea3i l\u00e0 list kh\u00f4ng r\u1ed7ng"
+   ]
+  },
+  "skus_empty": {
+   "doc": "{\"skus\": []}",
+   "errs": [
+    "skus ph\u1ea3i l\u00e0 list kh\u00f4ng r\u1ed7ng"
+   ]
+  },
+  "skus_str": {
+   "doc": "{\"skus\": \"abc\"}",
+   "errs": [
+    "skus ph\u1ea3i l\u00e0 list kh\u00f4ng r\u1ed7ng"
+   ]
+  },
+  "bad_key": {
+   "doc": "{\"skus\": [{\"sku_key\": \"Bad Key\", \"name\": \"Bad Key\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}}]}",
+   "errs": [
+    "skus[0] sku_key 'Bad Key' kh\u00f4ng ph\u1ea3i slug ascii"
+   ]
+  },
+  "key_trailing_nl": {
+   "doc": "{\"skus\": [{\"sku_key\": \"abc\\n\", \"name\": \"abc\\n\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}}]}",
+   "errs": []
+  },
+  "key_num": {
+   "doc": "{\"skus\": [{\"sku_key\": 5, \"name\": \"x\", \"category\": \"food\"}]}",
+   "errs": [
+    "skus[0] sku_key 5 kh\u00f4ng ph\u1ea3i slug ascii"
+   ]
+  },
+  "key_none": {
+   "doc": "{\"skus\": [{\"name\": \"x\", \"category\": \"food\"}]}",
+   "errs": [
+    "skus[0] sku_key None kh\u00f4ng ph\u1ea3i slug ascii"
+   ]
+  },
+  "dup": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}}, {\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}}]}",
+   "errs": [
+    "a: sku_key tr\u00f9ng"
+   ]
+  },
+  "pid_dup": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"product_ids\": [\"p1\"]}, {\"sku_key\": \"b\", \"name\": \"b\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"product_ids\": [\"p1\"]}]}",
+   "errs": [
+    "b: product_id p1 \u0111\u00e3 map cho a"
+   ]
+  },
+  "pid_dup_same_sku": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"product_ids\": [\"p1\", \"p1\"]}]}",
+   "errs": [
+    "a: product_id p1 \u0111\u00e3 map cho a"
+   ]
+  },
+  "pid_bad": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"product_ids\": [\"p1\", \"\"]}]}",
+   "errs": [
+    "a: product_ids ph\u1ea3i l\u00e0 list chu\u1ed7i"
+   ]
+  },
+  "pid_not_list": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"product_ids\": \"p1\"}]}",
+   "errs": [
+    "a: product_ids ph\u1ea3i l\u00e0 list chu\u1ed7i"
+   ]
+  },
+  "category": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"drug\", \"prices\": {\"shopee\": {}}}]}",
+   "errs": [
+    "a: category 'drug' kh\u00f4ng h\u1ee3p l\u1ec7"
+   ]
+  },
+  "category_missing": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"x\"}]}",
+   "errs": [
+    "a: category None kh\u00f4ng h\u1ee3p l\u1ec7"
+   ]
+  },
+  "xnqc": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"xnqc_status\": \"yes\"}]}",
+   "errs": [
+    "a: xnqc_status 'yes' kh\u00f4ng h\u1ee3p l\u1ec7"
+   ]
+  },
+  "xnqc_null": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"xnqc_status\": null}]}",
+   "errs": [
+    "a: xnqc_status None kh\u00f4ng h\u1ee3p l\u1ec7"
+   ]
+  },
+  "selfdecl": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"self_declaration_ok\": \"yes\"}]}",
+   "errs": [
+    "a: self_declaration_ok ph\u1ea3i true/false/null"
+   ]
+  },
+  "selfdecl_1": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"self_declaration_ok\": 1}]}",
+   "errs": []
+  },
+  "selfdecl_0": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"self_declaration_ok\": 0}]}",
+   "errs": []
+  },
+  "selfdecl_2": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"self_declaration_ok\": 2}]}",
+   "errs": [
+    "a: self_declaration_ok ph\u1ea3i true/false/null"
+   ]
+  },
+  "selfdecl_1f": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"food\", \"self_declaration_ok\": 1.0}]}",
+   "errs": []
+  },
+  "str_fields": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"pack_spec\": 5, \"receipt_no\": [], \"shopee_item_id\": 1, \"note\": true}]}",
+   "errs": [
+    "a: pack_spec ph\u1ea3i l\u00e0 chu\u1ed7i ho\u1eb7c null",
+    "a: receipt_no ph\u1ea3i l\u00e0 chu\u1ed7i ho\u1eb7c null",
+    "a: shopee_item_id ph\u1ea3i l\u00e0 chu\u1ed7i ho\u1eb7c null",
+    "a: note ph\u1ea3i l\u00e0 chu\u1ed7i ho\u1eb7c null"
+   ]
+  },
+  "date_dmy": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"receipt_date\": \"22/05/2018\"}]}",
+   "errs": [
+    "a: receipt_date '22/05/2018' kh\u00f4ng ph\u1ea3i ISO"
+   ]
+  },
+  "date_basic": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"receipt_date\": \"20180522\"}]}",
+   "errs": []
+  },
+  "date_week": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"receipt_date\": \"2018-W21-2\"}]}",
+   "errs": []
+  },
+  "date_num": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"receipt_date\": 20180522}]}",
+   "errs": [
+    "a: receipt_date 20180522 kh\u00f4ng ph\u1ea3i ISO"
+   ]
+  },
+  "date_bad_day": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"receipt_date\": \"2018-02-30\"}]}",
+   "errs": [
+    "a: receipt_date '2018-02-30' kh\u00f4ng ph\u1ea3i ISO"
+   ]
+  },
+  "date_short": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"receipt_date\": \"2018-5-22\"}]}",
+   "errs": [
+    "a: receipt_date '2018-5-22' kh\u00f4ng ph\u1ea3i ISO"
+   ]
+  },
+  "chans_bad": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"allowed_channels\": [\"lazada\"]}]}",
+   "errs": [
+    "a: allowed_channels ph\u1ea3i \u2282 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot')"
+   ]
+  },
+  "chans_not_list": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"allowed_channels\": \"shopee\"}]}",
+   "errs": [
+    "a: allowed_channels ph\u1ea3i \u2282 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot')"
+   ]
+  },
+  "chans_null": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}, \"allowed_channels\": null}]}",
+   "errs": [
+    "a: allowed_channels ph\u1ea3i \u2282 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot')"
+   ]
+  },
+  "price_float": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"food\", \"prices\": {\"shopee\": {\"list\": 1.0}}}]}",
+   "errs": [
+    "a/shopee: gi\u00e1 list=1.0 ph\u1ea3i nguy\u00ean d\u01b0\u01a1ng"
+   ]
+  },
+  "price_1_5": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": 1.5}}}]}",
+   "errs": [
+    "a/shopee: gi\u00e1 list=1.5 ph\u1ea3i nguy\u00ean d\u01b0\u01a1ng"
+   ]
+  },
+  "price_bool": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": true}}}]}",
+   "errs": [
+    "a/shopee: gi\u00e1 list=True ph\u1ea3i nguy\u00ean d\u01b0\u01a1ng"
+   ]
+  },
+  "price_neg": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": -1}}}]}",
+   "errs": [
+    "a/shopee: gi\u00e1 list=-1 ph\u1ea3i nguy\u00ean d\u01b0\u01a1ng"
+   ]
+  },
+  "price_zero": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": 0}}}]}",
+   "errs": [
+    "a/shopee: gi\u00e1 list=0 ph\u1ea3i nguy\u00ean d\u01b0\u01a1ng"
+   ]
+  },
+  "price_str": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": \"100\"}}}]}",
+   "errs": [
+    "a/shopee: gi\u00e1 list='100' ph\u1ea3i nguy\u00ean d\u01b0\u01a1ng"
+   ]
+  },
+  "price_null": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"list\": null}}}]}",
+   "errs": [
+    "a/shopee: gi\u00e1 list=None ph\u1ea3i nguy\u00ean d\u01b0\u01a1ng"
+   ]
+  },
+  "kind_bad": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"msrp\": 1}}}]}",
+   "errs": [
+    "a/shopee: lo\u1ea1i gi\u00e1 'msrp' kh\u00f4ng h\u1ee3p l\u1ec7"
+   ]
+  },
+  "kind_bad_plus_rule": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"msrp\": 1, \"floor\": 100, \"list\": 200}}}]}",
+   "errs": [
+    "a/shopee: lo\u1ea1i gi\u00e1 'msrp' kh\u00f4ng h\u1ee3p l\u1ec7"
+   ]
+  },
+  "chan_bad": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"lazada\": {\"list\": 1}}}]}",
+   "errs": [
+    "a: k\u00eanh gi\u00e1 'lazada' kh\u00f4ng h\u1ee3p l\u1ec7"
+   ]
+  },
+  "chan_price_not_obj": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": 5}}]}",
+   "errs": [
+    "a/shopee: gi\u00e1 ph\u1ea3i l\u00e0 object"
+   ]
+  },
+  "prices_null": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": null}]}",
+   "errs": [
+    "a: prices ph\u1ea3i l\u00e0 object"
+   ]
+  },
+  "prices_list": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": []}]}",
+   "errs": [
+    "a: prices ph\u1ea3i l\u00e0 object"
+   ]
+  },
+  "no_name": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"category\": \"food\"}]}",
+   "errs": [
+    "a: thi\u1ebfu name"
+   ]
+  },
+  "blank_name": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"\u3000 \", \"category\": \"food\"}]}",
+   "errs": [
+    "a: thi\u1ebfu name"
+   ]
+  },
+  "sku_not_obj": {
+   "doc": "{\"skus\": [5, \"x\", null, {\"sku_key\": \"ok\", \"name\": \"ok\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}}]}",
+   "errs": [
+    "skus[0] kh\u00f4ng ph\u1ea3i object",
+    "skus[1] kh\u00f4ng ph\u1ea3i object",
+    "skus[2] kh\u00f4ng ph\u1ea3i object"
+   ]
+  },
+  "multi_channels": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"floor\": 100, \"list\": 150}, \"web\": {\"list\": 200, \"promo\": 90}, \"tiktok\": {\"floor\": 100, \"list\": 149, \"promo\": 100}}}]}",
+   "errs": [
+    "a/shopee R1: gi\u00e1 th\u01b0\u1eddng 150 > 149% gi\u00e1 s\u00e0n 100",
+    "a/web R2: KM 90 gi\u1ea3m > 49% t\u1eeb gi\u00e1 th\u01b0\u1eddng 200"
+   ]
+  },
+  "repr_unicode": {
+   "doc": "{\"skus\": [{\"sku_key\": \"S\u00e2m-\u00ea\", \"name\": \"S\u00e2m-\u00ea\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}}]}",
+   "errs": [
+    "skus[0] sku_key 'S\u00e2m-\u00ea' kh\u00f4ng ph\u1ea3i slug ascii"
+   ]
+  },
+  "repr_quote": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a'b\", \"name\": \"a'b\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}}]}",
+   "errs": [
+    "skus[0] sku_key \"a'b\" kh\u00f4ng ph\u1ea3i slug ascii"
+   ]
+  },
+  "repr_both_quotes": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a'b\\\"c\", \"name\": \"a'b\\\"c\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {}}}]}",
+   "errs": [
+    "skus[0] sku_key 'a\\'b\"c' kh\u00f4ng ph\u1ea3i slug ascii"
+   ]
+  },
+  "big_int_price": {
+   "doc": "{\"skus\": [{\"sku_key\": \"a\", \"name\": \"a\", \"category\": \"tpbvsk\", \"prices\": {\"shopee\": {\"floor\": 1000000000000000000, \"list\": 1000000000000000000}}}]}",
+   "errs": []
+  }
+ },
+ "spec_of": [
+  [
+   "SAVINA TU\u00ddP 12 VI\u00caN",
+   "12 vi\u00ean"
+  ],
+  [
+   "Saphraton 20V",
+   "20 vi\u00ean"
+  ],
+  [
+   "Saphraton",
+   null
+  ],
+  [
+   "SAVINA TUBE OF 12 TABLETS",
+   null
+  ],
+  [
+   "120ml x 2 h\u0169",
+   "120 ml"
+  ],
+  [
+   "30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)",
+   "30 vi\u00ean"
+  ],
+  [
+   "H\u1ed9p 3 v\u1ec9",
+   null
+  ],
+  [
+   null,
+   null
+  ],
+  [
+   "",
+   null
+  ],
+  [
+   "12vi\u00ean",
+   "12 vi\u00ean"
+  ],
+  [
+   "12 vi\u00eanx",
+   null
+  ],
+  [
+   "12 v\u00ea",
+   null
+  ],
+  [
+   "12 v.",
+   "12 vi\u00ean"
+  ],
+  [
+   "12 v",
+   "12 vi\u00ean"
+  ],
+  [
+   "0012 ml",
+   "12 ml"
+  ],
+  [
+   "12 ML",
+   "12 ml"
+  ],
+  [
+   "12\u00a0vi\u00ean",
+   "12 vi\u00ean"
+  ],
+  [
+   "12\u3000ml",
+   "12 ml"
+  ],
+  [
+   "\u0661\u0662 vi\u00ean",
+   "12 vi\u00ean"
+  ],
+  [
+   "\uff11\uff12 ml",
+   "12 ml"
+  ],
+  [
+   "12 v\u0301",
+   "12 vi\u00ean"
+  ],
+  [
+   "12 v\u1ec9",
+   null
+  ],
+  [
+   "abc 7 V 9 ml",
+   "7 vi\u00ean"
+  ],
+  [
+   "12 Vi\u00ean",
+   "12 vi\u00ean"
+  ],
+  [
+   "12 mL;",
+   "12 ml"
+  ],
+  [
+   "12 mlx 5 ml",
+   "5 ml"
+  ],
+  [
+   "12_ml",
+   null
+  ],
+  [
+   "99999999999999999999 vi\u00ean",
+   "99999999999999999999 vi\u00ean"
+  ],
+  [
+   "12 vi\u00e9n",
+   null
+  ],
+  [
+   "12 v_",
+   null
+  ],
+  [
+   "12 v1",
+   null
+  ],
+  [
+   "12 v\u00b2",
+   null
+  ],
+  [
+   "12 vi\u00ean\u0300",
+   "12 vi\u00ean"
+  ],
+  [
+   "x12 ml",
+   "12 ml"
+  ],
+  [
+   "1.5 ml",
+   "5 ml"
+  ],
+  [
+   "12\t\nml",
+   "12 ml"
+  ],
+  [
+   "12 m l",
+   null
+  ],
+  [
+   "\ud835\udfcf\ud835\udfd0 ml",
+   "12 ml"
+  ],
+  [
+   "12 VI\u00caN",
+   "12 vi\u00ean"
+  ],
+  [
+   "12 v\u0130\u00ean",
+   "12 vi\u00ean"
+  ],
+  [
+   "12 \u0085ml",
+   "12 ml"
+  ],
+  [
+   "12 \u200bml",
+   null
+  ]
+ ],
+ "build_discrepancies": [
+  {
+   "skus": [
+    {
+     "sku_key": "a",
+     "name": "A",
+     "category": "tpbvsk",
+     "pack_spec": "20 vi\u00ean",
+     "shopee_item_id": "1",
+     "allowed_channels": [
+      "shopee"
+     ]
+    },
+    {
+     "sku_key": "w",
+     "name": "W",
+     "category": "alcohol",
+     "pack_spec": "500ml",
+     "shopee_item_id": "9",
+     "allowed_channels": [
+      "shopee"
+     ]
+    }
+   ],
+   "prices": {
+    "a": {
+     "shopee": {
+      "floor": 100,
+      "list": 140,
+      "promo": 120
+     }
+    }
+   },
+   "maps": {
+    "p1": "a"
+   },
+   "products": [
+    {
+     "id": "p1",
+     "name": "A 30V",
+     "price_vnd": 100
+    },
+    {
+     "id": "p2",
+     "name": "C\u1ee7 s\u00e2m",
+     "price_vnd": null
+    }
+   ],
+   "out": [
+    {
+     "kind": "price_mismatch",
+     "sku_key": "a",
+     "product_id": "p1",
+     "detail": {
+      "web": {
+       "product_id": "p1",
+       "name": "A 30V",
+       "price_vnd": 100
+      },
+      "golden": {
+       "shopee": {
+        "floor": 100,
+        "list": 140,
+        "promo": 120
+       }
+      }
+     }
+    },
+    {
+     "kind": "spec_mismatch",
+     "sku_key": "a",
+     "product_id": "p1",
+     "detail": {
+      "web": {
+       "name": "A 30V",
+       "spec": "30 vi\u00ean"
+      },
+      "golden": {
+       "pack_spec": "20 vi\u00ean",
+       "spec": "20 vi\u00ean"
+      }
+     }
+    },
+    {
+     "kind": "product_unmapped",
+     "sku_key": null,
+     "product_id": "p2",
+     "detail": {
+      "web": {
+       "name": "C\u1ee7 s\u00e2m",
+       "price_vnd": null
+      }
+     }
+    },
+    {
+     "kind": "sku_no_product",
+     "sku_key": "w",
+     "product_id": null,
+     "detail": {
+      "golden": {
+       "name": "W"
+      },
+      "mapped_product_ids": []
+     }
+    },
+    {
+     "kind": "missing_price",
+     "sku_key": "w",
+     "product_id": null,
+     "detail": {
+      "golden": {
+       "shopee": {}
+      },
+      "missing": [
+       "floor",
+       "list",
+       "promo"
+      ]
+     }
+    },
+    {
+     "kind": "alcohol_online_listing",
+     "sku_key": "w",
+     "product_id": null,
+     "detail": {
+      "golden": {
+       "shopee_item_id": "9",
+       "allowed_channels": [
+        "shopee"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "skus": [
+    {
+     "sku_key": "a",
+     "name": "A",
+     "category": "tpbvsk",
+     "pack_spec": "20 vi\u00ean",
+     "shopee_item_id": "1",
+     "allowed_channels": [
+      "shopee"
+     ]
+    },
+    {
+     "sku_key": "w",
+     "name": "W",
+     "category": "alcohol",
+     "pack_spec": "500ml",
+     "shopee_item_id": "9",
+     "allowed_channels": [
+      "shopee"
+     ]
+    }
+   ],
+   "prices": {
+    "a": {
+     "shopee": {
+      "floor": 100,
+      "list": 140,
+      "promo": 120
+     }
+    }
+   },
+   "maps": {
+    "p1": "a"
+   },
+   "products": [
+    {
+     "id": "p1",
+     "name": "A",
+     "price_vnd": 140
+    }
+   ],
+   "out": [
+    {
+     "kind": "sku_no_product",
+     "sku_key": "w",
+     "product_id": null,
+     "detail": {
+      "golden": {
+       "name": "W"
+      },
+      "mapped_product_ids": []
+     }
+    },
+    {
+     "kind": "missing_price",
+     "sku_key": "w",
+     "product_id": null,
+     "detail": {
+      "golden": {
+       "shopee": {}
+      },
+      "missing": [
+       "floor",
+       "list",
+       "promo"
+      ]
+     }
+    },
+    {
+     "kind": "alcohol_online_listing",
+     "sku_key": "w",
+     "product_id": null,
+     "detail": {
+      "golden": {
+       "shopee_item_id": "9",
+       "allowed_channels": [
+        "shopee"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "skus": [
+    {
+     "sku_key": "b",
+     "name": "B",
+     "category": "food",
+     "pack_spec": null,
+     "shopee_item_id": null,
+     "allowed_channels": []
+    },
+    {
+     "sku_key": "c",
+     "name": "C",
+     "category": "alcohol",
+     "pack_spec": "500 ml",
+     "shopee_item_id": "",
+     "allowed_channels": [
+      "web"
+     ]
+    },
+    {
+     "sku_key": "d",
+     "name": "D",
+     "category": "tpbvsk",
+     "pack_spec": "30 vi\u00ean",
+     "shopee_item_id": "5",
+     "allowed_channels": [
+      "shopee",
+      "tiktok"
+     ]
+    }
+   ],
+   "prices": {
+    "b": {
+     "web": {
+      "list": 5
+     },
+     "shopee": {
+      "floor": 1,
+      "promo": 2
+     }
+    },
+    "d": {
+     "shopee": {
+      "floor": 1,
+      "list": 2,
+      "promo": 2
+     },
+     "tiktok": {
+      "list": 7
+     }
+    }
+   },
+   "maps": {
+    "x1": "b",
+    "x2": "zz",
+    "x3": "d",
+    "x4": "d",
+    "gone": "c"
+   },
+   "products": [
+    {
+     "id": "x1",
+     "name": "B 12 vi\u00ean",
+     "price_vnd": 6
+    },
+    {
+     "id": "x2",
+     "name": "L\u1ea1",
+     "price_vnd": 1
+    },
+    {
+     "id": "x3",
+     "name": "D 30v",
+     "price_vnd": 7
+    },
+    {
+     "id": "x4",
+     "name": "D h\u1ed9p 60 VI\u00caN",
+     "price_vnd": null
+    },
+    {
+     "id": "x5",
+     "name": "Kh\u00f4ng map",
+     "price_vnd": 0
+    }
+   ],
+   "out": [
+    {
+     "kind": "price_mismatch",
+     "sku_key": "b",
+     "product_id": "x1",
+     "detail": {
+      "web": {
+       "product_id": "x1",
+       "name": "B 12 vi\u00ean",
+       "price_vnd": 6
+      },
+      "golden": {
+       "web": {
+        "list": 5
+       },
+       "shopee": {
+        "floor": 1,
+        "promo": 2
+       }
+      }
+     }
+    },
+    {
+     "kind": "product_unmapped",
+     "sku_key": null,
+     "product_id": "x2",
+     "detail": {
+      "web": {
+       "name": "L\u1ea1",
+       "price_vnd": 1
+      }
+     }
+    },
+    {
+     "kind": "spec_mismatch",
+     "sku_key": "d",
+     "product_id": "x4",
+     "detail": {
+      "web": {
+       "name": "D h\u1ed9p 60 VI\u00caN",
+       "spec": "60 vi\u00ean"
+      },
+      "golden": {
+       "pack_spec": "30 vi\u00ean",
+       "spec": "30 vi\u00ean"
+      }
+     }
+    },
+    {
+     "kind": "product_unmapped",
+     "sku_key": null,
+     "product_id": "x5",
+     "detail": {
+      "web": {
+       "name": "Kh\u00f4ng map",
+       "price_vnd": 0
+      }
+     }
+    },
+    {
+     "kind": "missing_price",
+     "sku_key": "b",
+     "product_id": null,
+     "detail": {
+      "golden": {
+       "shopee": {
+        "floor": 1,
+        "promo": 2
+       }
+      },
+      "missing": [
+       "list"
+      ]
+     }
+    },
+    {
+     "kind": "sku_no_product",
+     "sku_key": "c",
+     "product_id": null,
+     "detail": {
+      "golden": {
+       "name": "C"
+      },
+      "mapped_product_ids": [
+       "gone"
+      ]
+     }
+    },
+    {
+     "kind": "missing_price",
+     "sku_key": "c",
+     "product_id": null,
+     "detail": {
+      "golden": {
+       "shopee": {}
+      },
+      "missing": [
+       "floor",
+       "list",
+       "promo"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "skus": [],
+   "prices": {},
+   "maps": {},
+   "products": [],
+   "out": []
+  }
+ ],
+ "CHANNELS": [
+  "shopee",
+  "tiktok",
+  "web",
+  "facebook",
+  "zalo",
+  "chatbot"
+ ],
+ "KINDS": [
+  "floor",
+  "list",
+  "promo"
+ ]
+}

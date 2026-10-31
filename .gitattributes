@@ -9,3 +9,11 @@ evidence/itacc_r14_code_gaps/** -text
 evidence/itacc_r14_fix_2/** -text
 evidence/itacc_r15_remaining/** -text
 evidence/itacc_r15_fix_1/** -text
+
+# Golden TS (sinh từ hàm Python trên checkout Windows CRLF) ghim sha256 BYTE của các tệp dưới → checkout Linux (CI,
+# on-prem) phải ra đúng byte như Windows. Blob trong repo vẫn LF; chỉ đổi cách checkout.
+tests/fixtures/intel_import/** text=auto eol=crlf
+tests/fixtures/social_vendor/** text=auto eol=crlf
+tests/fixtures/finance/** text=auto eol=crlf
+data/harvest_assumptions.json text=auto eol=crlf
+data/b2b_form.html text=auto eol=crlf

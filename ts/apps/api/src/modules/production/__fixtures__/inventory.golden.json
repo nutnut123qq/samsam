@@ -1,0 +1,861 @@
+{
+ "golden": {
+  "_doc": "v3.2 golden master \u2014 ngu\u1ed3n s\u1ef1 th\u1eadt DUY NH\u1ea4T cho listing/gi\u00e1/tr\u1ea1ng th\u00e1i ph\u00e1p l\u00fd SKU \u0111ang b\u00e1n. N\u1ea1p: python -m ingest.golden_store (upsert theo sku_key, kh\u00f4ng x\u00f3a SKU v\u1eafng kh\u1ecfi file). Field m\u1ed7i SKU: sku_key (slug ascii), name, category (tpbvsk|food|alcohol), pack_spec (quy c\u00e1ch \u2014 s\u1ed1 \u0111\u1ea7u ti\u00ean + \u0111\u01a1n v\u1ecb vi\u00ean|ml l\u00e0 T\u1ed4NG), receipt_no/receipt_date (gi\u1ea5y ti\u1ebfp nh\u1eadn \u0110KSP, ISO date), xnqc_status (none|pending|approved), self_declaration_ok (true|false|null \u2014 null = ch\u01b0a x\u00e1c minh), allowed_channels (hi\u1ec7n tr\u1ea1ng listing, CH\u01afA ph\u1ea3i quy\u1ebft \u0111\u1ecbnh G\u0110), shopee_item_id, product_ids (\u0110\u1ec0 XU\u1ea4T map t\u1edbi products.id crawl \u2014 ch\u1edd S\u1ea3n xu\u1ea5t duy\u1ec7t), prices {k\u00eanh: {floor, list, promo}} VND nguy\u00ean (thi\u1ebfu key = ch\u01b0a c\u00f3 gi\u00e1, KH\u00d4NG \u0111o\u00e1n; m\u1ecdi gi\u00e1 n\u1ea1p \u1edf tr\u1ea1ng th\u00e1i ch\u1edd G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t), note. Kh\u00f4ng ch\u1ee9a c\u00f4ng d\u1ee5ng/li\u1ec1u d\u00f9ng. Ngu\u1ed3n s\u1ed1 li\u1ec7u: b\u1ea3ng gi\u00e1 Shopee + gi\u1ea5y ti\u1ebfp nh\u1eadn do c\u00f4ng ty cung c\u1ea5p (2026-10).",
+  "skus": [
+   {
+    "sku_key": "savina-12v",
+    "name": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm",
+    "category": "tpbvsk",
+    "pack_spec": "12 vi\u00ean ng\u1eadm (tu\u00fdp PP)",
+    "receipt_no": "8014/2021/\u0110KSP",
+    "receipt_date": "2021-09-07",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "27357883504",
+    "product_ids": [
+     "wc-2298",
+     "wc-349",
+     "nv-savina-tuyp-12-vien-bk"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 128000,
+      "list": 159000,
+      "promo": 132000
+     }
+    },
+    "note": null
+   },
+   {
+    "sku_key": "saphraton-20v",
+    "name": "Saphraton 20 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "20 vi\u00ean nang m\u1ec1m (2 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "2778/2018/\u0110KSP",
+    "receipt_date": "2018-05-22",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "24825885894",
+    "product_ids": [
+     "wc-2300",
+     "wc-344",
+     "nv-saphraton-51"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 236000,
+      "list": 299000,
+      "promo": 250000
+     }
+    },
+    "note": null
+   },
+   {
+    "sku_key": "saphraton-combo-2x20v",
+    "name": "Combo Saphraton 2 h\u1ed9p x 20 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "40 vi\u00ean nang m\u1ec1m (combo 2 h\u1ed9p x 20 vi\u00ean)",
+    "receipt_no": "2778/2018/\u0110KSP",
+    "receipt_date": "2018-05-22",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "28003783932",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 469000,
+      "list": 698000,
+      "promo": 480000
+     }
+    },
+    "note": "Ch\u1edd KD x\u00e1c nh\u1eadn combo 2x20 c\u00f3 tr\u00f9ng SKU Saphraton 40 vi\u00ean kh\u00f4ng \u2014 gi\u1eef 2 sku_key ri\u00eang, kh\u00f4ng t\u1ef1 g\u1ed9p."
+   },
+   {
+    "sku_key": "saphraton-40v",
+    "name": "Saphraton 40 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "40 vi\u00ean nang m\u1ec1m (4 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "2778/2018/\u0110KSP",
+    "receipt_date": "2018-05-22",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [],
+    "shopee_item_id": null,
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 450000
+     }
+    },
+    "note": "M\u1edbi c\u00f3 gi\u00e1 s\u00e0n; gi\u00e1 th\u01b0\u1eddng/KM ch\u1edd G\u0110 b\u00e1n h\u00e0ng. Ch\u1edd KD x\u00e1c nh\u1eadn c\u00f3 tr\u00f9ng combo 2x20 kh\u00f4ng."
+   },
+   {
+    "sku_key": "saphraton-80v",
+    "name": "Saphraton 80 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "80 vi\u00ean nang m\u1ec1m (8 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "2778/2018/\u0110KSP",
+    "receipt_date": "2018-05-22",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "29368491427",
+    "product_ids": [
+     "wc-2307",
+     "wc-331",
+     "nv-saphraton-48"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 1000000,
+      "list": 1490000,
+      "promo": 1100000
+     }
+    },
+    "note": "Map trang web 'Saphraton' (kh\u00f4ng ghi quy c\u00e1ch) sang 80 vi\u00ean ch\u1ec9 suy t\u1eeb gi\u00e1 web = gi\u00e1 s\u00e0n 80 vi\u00ean \u2014 ch\u1edd S\u1ea3n xu\u1ea5t x\u00e1c nh\u1eadn."
+   },
+   {
+    "sku_key": "savigout-30v",
+    "name": "Savigout 30 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "8560/2019/\u0110KSP",
+    "receipt_date": "2019-07-02",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "24325987926",
+    "product_ids": [
+     "wc-2304",
+     "wc-336",
+     "nv-savigout-bk"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 295000,
+      "list": 439000,
+      "promo": 350000
+     }
+    },
+    "note": "File t\u1ed5ng h\u1ee3p TPBVSK 22.01.2026 ghi Savigout s\u1ed1 5191/2020/\u0110KSP (tr\u00f9ng s\u1ed1 c\u1ee7a Sapentol) \u2014 l\u1ec7ch v\u1edbi s\u1ed1 8560/2019/\u0110KSP \u0111ang d\u00f9ng \u1edf \u0111\u00e2y, ch\u1edd Ph\u00e1p ch\u1ebf x\u00e1c nh\u1eadn."
+   },
+   {
+    "sku_key": "sapentol-30v",
+    "name": "Sapentol 30 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "30 vi\u00ean nang c\u1ee9ng (h\u1ed9p 1 l\u1ecd)",
+    "receipt_no": "5191/2020/\u0110KSP",
+    "receipt_date": "2020-06-10",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "27257950771",
+    "product_ids": [
+     "wc-2309",
+     "wc-324",
+     "nv-sapentol"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 280000,
+      "list": 417000,
+      "promo": 330000
+     }
+    },
+    "note": null
+   },
+   {
+    "sku_key": "da-an-sam-30v",
+    "name": "D\u1ea1 An S\u00e2m 30 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "11129/2021/\u0110KSP",
+    "receipt_date": "2021-12-29",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "26857946153",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 340000,
+      "list": 506000,
+      "promo": 399000
+     }
+    },
+    "note": null
+   },
+   {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "name": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)",
+    "category": "food",
+    "pack_spec": "120ml x 1 h\u0169",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "54916394790",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 500000,
+      "list": 745000,
+      "promo": 550000
+     }
+    },
+    "note": "H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh. Chung item Shopee v\u1edbi bi\u1ebfn th\u1ec3 2 h\u0169."
+   },
+   {
+    "sku_key": "mat-ong-sam-120ml-2hu",
+    "name": "M\u1eadt ong s\u00e2m 120ml (2 h\u0169)",
+    "category": "food",
+    "pack_spec": "120ml x 2 h\u0169",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "54916394790",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 900000,
+      "list": 1340000,
+      "promo": 950000
+     }
+    },
+    "note": "H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh. Chung item Shopee v\u1edbi bi\u1ebfn th\u1ec3 1 h\u0169."
+   },
+   {
+    "sku_key": "mat-ong-sam-300ml",
+    "name": "M\u1eadt ong s\u00e2m 300ml",
+    "category": "food",
+    "pack_spec": "300ml x 1 h\u0169",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "29007947088",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 2000000,
+      "list": 2980000,
+      "promo": 2100000
+     }
+    },
+    "note": "H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh."
+   },
+   {
+    "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+    "name": "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml",
+    "category": "alcohol",
+    "pack_spec": "500ml chai th\u1ee7y tinh",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "27325048614",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 500000,
+      "list": 745000,
+      "promo": 550000
+     }
+    },
+    "note": "N\u1ed3ng \u0111\u1ed9 ghi 27,5% CH\u01afA x\u00e1c minh. \u0110ang c\u00f3 listing Shopee \u2014 r\u01b0\u1ee3u kh\u00f4ng \u0111\u01b0\u1ee3c qu\u1ea3ng b\u00e1/b\u00e1n online, ch\u1edd Ph\u00e1p ch\u1ebf."
+   },
+   {
+    "sku_key": "ruou-sam-binh-su-do-500ml",
+    "name": "R\u01b0\u1ee3u s\u00e2m b\u00ecnh s\u1ee9 \u0111\u1ecf 500ml",
+    "category": "alcohol",
+    "pack_spec": "500ml b\u00ecnh s\u1ee9 \u0111\u1ecf",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "26975028961",
+    "product_ids": [],
+    "prices": {},
+    "note": "Ch\u01b0a c\u00f3 gi\u00e1 trong b\u1ea3ng gi\u00e1. N\u1ed3ng \u0111\u1ed9 CH\u01afA x\u00e1c minh. \u0110ang c\u00f3 listing Shopee \u2014 ch\u1edd Ph\u00e1p ch\u1ebf."
+   }
+  ]
+ },
+ "today": "2026-10-12",
+ "cases": {
+  "ok": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390a736170687261746f6e2d3430762c6b686f2d612c312e3030302c323032362d31302d30310a",
+   "rows": [
+    {
+     "row_no": 2,
+     "sku_key": "savina-12v",
+     "kho": "kho-mau-da-nang",
+     "qty": 10,
+     "captured_at": "2026-10-09"
+    },
+    {
+     "row_no": 3,
+     "sku_key": "saphraton-40v",
+     "kho": "kho-a",
+     "qty": 1000,
+     "captured_at": "2026-10-01"
+    }
+   ],
+   "errs": [],
+   "sha": "726af7f1b243558ba711ffc93177654e26e4068e247841323e2164d2b1a47950"
+  },
+  "ok_upper_hdr": {
+   "name": "x.CSV",
+   "hex": "efbbbf534b555f4b45592c204b686f202c5154592c63617074757265645f61740a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390a",
+   "rows": [
+    {
+     "row_no": 2,
+     "sku_key": "savina-12v",
+     "kho": "kho-mau-da-nang",
+     "qty": 10,
+     "captured_at": "2026-10-09"
+    }
+   ],
+   "errs": [],
+   "sha": "bd60cc9410bbcd8101c860211bb8904e81d9258b223dcd0a4dc62ab5612fd641"
+  },
+  "reorder": {
+   "name": "x.csv",
+   "hex": "6b686f2c7174792c63617074757265645f61742c736b755f6b65790a6b686f2d612c352c323032362d31302d30392c736176696e612d3132760a",
+   "rows": [
+    {
+     "row_no": 2,
+     "sku_key": "savina-12v",
+     "kho": "kho-a",
+     "qty": 5,
+     "captured_at": "2026-10-09"
+    }
+   ],
+   "errs": [],
+   "sha": "6a7c262d5205f15d6db5371a9b589c19e145e29d4719e2059402af516e5c05d1"
+  },
+  "empty": {
+   "name": "x.csv",
+   "hex": "",
+   "rows": [],
+   "errs": [
+    "file r\u1ed7ng"
+   ],
+   "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "spaces": {
+   "name": "x.csv",
+   "hex": "200a09",
+   "rows": [],
+   "errs": [
+    "file r\u1ed7ng"
+   ],
+   "sha": "9b8318187072010f3081af0de6d1c356f4695d1b5a5e1778629153663acad751"
+  },
+  "header_only": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a",
+   "rows": [],
+   "errs": [
+    "file ch\u1ec9 c\u00f3 header \u2014 0 d\u00f2ng t\u1ed3n"
+   ],
+   "sha": "60f11df79aae7c437c31b859a50f475d509f41547afdebfc3638269e201b9476"
+  },
+  "blank_rows": {
+   "name": "x.csv",
+   "hex": "0a0a736b755f6b65792c6b686f2c7174792c63617074757265645f61740a0a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390a2c2c2c0a",
+   "rows": [
+    {
+     "row_no": 5,
+     "sku_key": "savina-12v",
+     "kho": "kho-mau-da-nang",
+     "qty": 10,
+     "captured_at": "2026-10-09"
+    }
+   ],
+   "errs": [],
+   "sha": "7f89c5b802c0ba03240cb9adcb43b62b444ccd3b9feea622dcb25d4295266270"
+  },
+  "unknown_col": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61742c6768695f6368750a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30392c6162630a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 1: c\u1ed9t th\u1ee9 5 kh\u00f4ng thu\u1ed9c t\u1eadp sku_key, kho, qty, captured_at"
+   ],
+   "sha": "1198474a3793d6f90410bab64f6ad448e8aa929acf0adedd72315ea651af8ef8"
+  },
+  "blank_col": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c2c6b686f2c7174792c63617074757265645f61740a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 1: header c\u1ed9t th\u1ee9 2 tr\u1ed1ng"
+   ],
+   "sha": "841d7569a08b4717b6407183982c3d7c34d253bdc771619d003208f6f74d3a28"
+  },
+  "missing_qty": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c63617074757265645f61740a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 1: thi\u1ebfu c\u1ed9t qty"
+   ],
+   "sha": "af74beff38aa61abdc5f7271cdf623108698fab25ad7272dc42acc1a9a694d72"
+  },
+  "dup_header": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c7174792c63617074757265645f61740a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 1: header tr\u00f9ng qty"
+   ],
+   "sha": "07a9446f82f1cabc045f86341f159364b08d0c07b02763c7c3faea0ca40e0336"
+  },
+  "sku_unknown": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a6b686f6e672d636f2d736b752c6b686f2d6d61752d64612d6e616e672c312c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: sku_key (kh\u00f4ng c\u00f3 trong golden)"
+   ],
+   "sha": "cd45768bdaf0bcfc22bf55a547f22fdf9722a71e7098da1717b766aa8a806768"
+  },
+  "kho_pii": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c4b686f20416e68204e616d20303930353132333435362c312c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: kho (ph\u1ea3i l\u00e0 slug ascii a-z0-9-)"
+   ],
+   "sha": "51b2acc471858ebedfc9d77754030d5f412100fc3a762515063a804436a8dbf2"
+  },
+  "kho_long": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b2c312c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: kho (ph\u1ea3i l\u00e0 slug ascii a-z0-9-)"
+   ],
+   "sha": "20624feeddebfbea245bc36c20fed2513d1cae8510da1ece259da8ef9f23f32d"
+  },
+  "kho_64": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b2c312c323032362d31302d30390a",
+   "rows": [
+    {
+     "row_no": 2,
+     "sku_key": "savina-12v",
+     "kho": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk",
+     "qty": 1,
+     "captured_at": "2026-10-09"
+    }
+   ],
+   "errs": [],
+   "sha": "a16276a111c06b2121bcfb7d98038da1ae9c771245f56f3b225b296f2b5519d4"
+  },
+  "qty_neg": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c2d332c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: qty (s\u1ed1 nguy\u00ean 0..2000000000)"
+   ],
+   "sha": "082fc808b20a8e3ecdc184c7d9630696114b0e4345647023b4c0d584181749de"
+  },
+  "qty_float": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c312e352c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: qty (s\u1ed1 nguy\u00ean 0..2000000000)"
+   ],
+   "sha": "5ee7baf007a5bafa572f20e17c58aea2af72e4871a3d47196147b3b4e0981b14"
+  },
+  "qty_abc": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c6162632c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: qty (s\u1ed1 nguy\u00ean 0..2000000000)"
+   ],
+   "sha": "06c76371c8dcdc229fd627a162788159c51b8f38bf6f61534cad8caa659067d4"
+  },
+  "qty_blank": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c2c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: qty (s\u1ed1 nguy\u00ean 0..2000000000)"
+   ],
+   "sha": "b9db7256beb2aa1be93c662e1d7cc56fb3055a09690cacf5a82e09f33df08b26"
+  },
+  "qty_huge": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c323030303030303030312c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: qty (s\u1ed1 nguy\u00ean 0..2000000000)"
+   ],
+   "sha": "ab16206272fc7eb4f8ea5f5e82488250804c12fefcbc6c1ccc6ac76c88e2eaf1"
+  },
+  "qty_max": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c322e3030302e3030302e3030302c323032362d31302d30390a",
+   "rows": [
+    {
+     "row_no": 2,
+     "sku_key": "savina-12v",
+     "kho": "kho-a",
+     "qty": 2000000000,
+     "captured_at": "2026-10-09"
+    }
+   ],
+   "errs": [],
+   "sha": "e9871bb131345b0d524786212b9675581cc2eee9578d00b8803ead8cc547df8f"
+  },
+  "future": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c312c323032362d31302d31330a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: captured_at (trong 2000-01-01..h\u00f4m nay)"
+   ],
+   "sha": "cfa47a596757fbfb241c49f176a49f423676e6892302b74a574ee79404f90600"
+  },
+  "today": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c312c323032362d31302d31320a",
+   "rows": [
+    {
+     "row_no": 2,
+     "sku_key": "savina-12v",
+     "kho": "kho-a",
+     "qty": 1,
+     "captured_at": "2026-10-12"
+    }
+   ],
+   "errs": [],
+   "sha": "dda4cfa0a3fb2d541f03dc1a6d4e3ade41deab2daccd00f84331ba2e8b41b2c3"
+  },
+  "old": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c312c313939392d31322d33310a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: captured_at (trong 2000-01-01..h\u00f4m nay)"
+   ],
+   "sha": "234a767d965acec23d957ad81823e0c88835ad64a0589dd26591e2add9e12728"
+  },
+  "date_compact": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c312c32303236313030390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: captured_at (YYYY-MM-DD)"
+   ],
+   "sha": "9aa77ee534f3c1e9db142324f45e5d5ce5743cb0e2e8dc8eb881cdc75191ea27"
+  },
+  "date_midnight": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c312c323032362d31302d30392030303a30303a30300a",
+   "rows": [
+    {
+     "row_no": 2,
+     "sku_key": "savina-12v",
+     "kho": "kho-a",
+     "qty": 1,
+     "captured_at": "2026-10-09"
+    }
+   ],
+   "errs": [],
+   "sha": "6a9d6d5d157a5eabd8d4118701b8b6d5df250c72e49b670203b597f92ce792a7"
+  },
+  "date_bad": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d612c312c323032362d30322d33300a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: captured_at (YYYY-MM-DD)"
+   ],
+   "sha": "d261bd7219adf7d432852aa1467f86dd9aaa77cf566b4ea89258959c5d62dee3"
+  },
+  "dup_key": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3: tr\u00f9ng (sku_key, kho, captured_at) v\u1edbi d\u00f2ng tr\u01b0\u1edbc"
+   ],
+   "sha": "74bbf1f666b1642cada7e20e25c2303ad394b327eabf7afb2d3202ba74375614"
+  },
+  "too_many_cells": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30392c780a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: c\u00f3 \u00f4 ngo\u00e0i 4 c\u1ed9t"
+   ],
+   "sha": "3d58b9d623763f28db18ef393c226a34dcfa2c7e069b39256993948f8b006d67"
+  },
+  "short_row": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d610a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: qty (s\u1ed1 nguy\u00ean 0..2000000000); captured_at (YYYY-MM-DD)"
+   ],
+   "sha": "a348c722cad84da373f463edd838fa2ea9c99856190c2eb14f95b4d22e5ca1bd"
+  },
+  "all_bad": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a2c2c2c0a782c592c7a2c770a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3: sku_key (kh\u00f4ng c\u00f3 trong golden); kho (ph\u1ea3i l\u00e0 slug ascii a-z0-9-); qty (s\u1ed1 nguy\u00ean 0..2000000000); captured_at (YYYY-MM-DD)"
+   ],
+   "sha": "09f071ba3d6d77da63e2d8cb6bf177792686aa156c08a93a39622abc640c8bea"
+  },
+  "mixed": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390a736176696e612d3132762c6b686f2d622c782c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3: qty (s\u1ed1 nguy\u00ean 0..2000000000)"
+   ],
+   "sha": "6f39617f35fc299fdd256fc4f98aab9fd0c0ed992256c10015388c1826650f2f"
+  },
+  "txt": {
+   "name": "x.txt",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "\u0111u\u00f4i '.txt' kh\u00f4ng h\u1ed7 tr\u1ee3 \u2014 ch\u1ec9 .csv / .xlsx"
+   ],
+   "sha": null
+  },
+  "noext": {
+   "name": "x",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "\u0111u\u00f4i '' kh\u00f4ng h\u1ed7 tr\u1ee3 \u2014 ch\u1ec9 .csv / .xlsx"
+   ],
+   "sha": null
+  },
+  "quoted": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a22736176696e612d313276222c22206b686f2d6120222c22312c303030222c323032362d31302d30390a",
+   "rows": [
+    {
+     "row_no": 2,
+     "sku_key": "savina-12v",
+     "kho": "kho-a",
+     "qty": 1000,
+     "captured_at": "2026-10-09"
+    }
+   ],
+   "errs": [],
+   "sha": "4aac9abefb678b113b26744c4e1bf029d277a7795f354432a135945605a24398"
+  },
+  "crlf": {
+   "name": "x.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740d0a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c31302c323032362d31302d30390d0a",
+   "rows": [
+    {
+     "row_no": 2,
+     "sku_key": "savina-12v",
+     "kho": "kho-mau-da-nang",
+     "qty": 10,
+     "captured_at": "2026-10-09"
+    }
+   ],
+   "errs": [],
+   "sha": "fa6756aac58454217aa35b66016041ef4de246b4183d4787b19ecf6eafefa9ca"
+  },
+  "not_utf8": {
+   "name": "c.csv",
+   "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740a736176696e612d3132762c6b686f2de02c312c323032362d31302d30390a",
+   "rows": [],
+   "errs": [
+    "file CSV kh\u00f4ng ph\u1ea3i UTF-8 (byte 43)"
+   ],
+   "sha": "79dbbebae502b96495d254e2b46a97fcbee35ba120edc06f754bc37f68c436d6"
+  }
+ },
+ "missing": {
+  "rows": [],
+  "errs": [
+   "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c file: FileNotFoundError"
+  ],
+  "sha": null
+ },
+ "iso": {
+  "2026-10-09": "2026-10-09",
+  "2026-10-09 00:00:00": "2026-10-09",
+  "2026-10-09 00:00:01": null,
+  "20261009": null,
+  "2026-02-29": null,
+  "2024-02-29": "2024-02-29",
+  "0000-01-01": null,
+  "0001-01-01": "0001-01-01",
+  " 2026-10-09": null,
+  "2026-10-09\n": null,
+  "2026-1-09": null,
+  "\u0662026-10-09": null,
+  "2026-W41": null,
+  "": null
+ },
+ "sample": {
+  "rows": [
+   {
+    "row_no": 2,
+    "sku_key": "savina-12v",
+    "kho": "kho-mau-da-nang",
+    "qty": 40,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 3,
+    "sku_key": "savina-12v",
+    "kho": "kho-mau-quang-nam",
+    "qty": 20,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 4,
+    "sku_key": "saphraton-20v",
+    "kho": "kho-mau-da-nang",
+    "qty": 50,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 5,
+    "sku_key": "saphraton-20v",
+    "kho": "kho-mau-quang-nam",
+    "qty": 20,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 6,
+    "sku_key": "saphraton-combo-2x20v",
+    "kho": "kho-mau-da-nang",
+    "qty": 30,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 7,
+    "sku_key": "saphraton-40v",
+    "kho": "kho-mau-quang-nam",
+    "qty": 25,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 8,
+    "sku_key": "saphraton-80v",
+    "kho": "kho-mau-da-nang",
+    "qty": 15,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 9,
+    "sku_key": "saphraton-80v",
+    "kho": "kho-mau-quang-nam",
+    "qty": 10,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 10,
+    "sku_key": "savigout-30v",
+    "kho": "kho-mau-da-nang",
+    "qty": 45,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 11,
+    "sku_key": "sapentol-30v",
+    "kho": "kho-mau-da-nang",
+    "qty": 35,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 12,
+    "sku_key": "da-an-sam-30v",
+    "kho": "kho-mau-da-nang",
+    "qty": 40,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 13,
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "kho": "kho-mau-da-nang",
+    "qty": 90,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 14,
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "kho": "kho-mau-quang-nam",
+    "qty": 60,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 15,
+    "sku_key": "mat-ong-sam-120ml-2hu",
+    "kho": "kho-mau-da-nang",
+    "qty": 70,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 16,
+    "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+    "kho": "kho-mau-quang-nam",
+    "qty": 40,
+    "captured_at": "2026-10-09"
+   },
+   {
+    "row_no": 17,
+    "sku_key": "ruou-sam-binh-su-do-500ml",
+    "kho": "kho-mau-quang-nam",
+    "qty": 12,
+    "captured_at": "2026-10-09"
+   }
+  ],
+  "errs": [],
+  "sha": "7cfec07355163922ddd3e6989fd3a3b2538c156ea35b5cb4fbc1b3cc27f3c1ac",
+  "hex": "736b755f6b65792c6b686f2c7174792c63617074757265645f61740d0a736176696e612d3132762c6b686f2d6d61752d64612d6e616e672c34302c323032362d31302d30390d0a736176696e612d3132762c6b686f2d6d61752d7175616e672d6e616d2c32302c323032362d31302d30390d0a736170687261746f6e2d3230762c6b686f2d6d61752d64612d6e616e672c35302c323032362d31302d30390d0a736170687261746f6e2d3230762c6b686f2d6d61752d7175616e672d6e616d2c32302c323032362d31302d30390d0a736170687261746f6e2d636f6d626f2d32783230762c6b686f2d6d61752d64612d6e616e672c33302c323032362d31302d30390d0a736170687261746f6e2d3430762c6b686f2d6d61752d7175616e672d6e616d2c32352c323032362d31302d30390d0a736170687261746f6e2d3830762c6b686f2d6d61752d64612d6e616e672c31352c323032362d31302d30390d0a736170687261746f6e2d3830762c6b686f2d6d61752d7175616e672d6e616d2c31302c323032362d31302d30390d0a73617669676f75742d3330762c6b686f2d6d61752d64612d6e616e672c34352c323032362d31302d30390d0a736170656e746f6c2d3330762c6b686f2d6d61752d64612d6e616e672c33352c323032362d31302d30390d0a64612d616e2d73616d2d3330762c6b686f2d6d61752d64612d6e616e672c34302c323032362d31302d30390d0a6d61742d6f6e672d73616d2d3132306d6c2d3168752c6b686f2d6d61752d64612d6e616e672c39302c323032362d31302d30390d0a6d61742d6f6e672d73616d2d3132306d6c2d3168752c6b686f2d6d61752d7175616e672d6e616d2c36302c323032362d31302d30390d0a6d61742d6f6e672d73616d2d3132306d6c2d3268752c6b686f2d6d61752d64612d6e616e672c37302c323032362d31302d30390d0a72756f752d73616d2d636861692d746875792d74696e682d3530306d6c2c6b686f2d6d61752d7175616e672d6e616d2c34302c323032362d31302d30390d0a72756f752d73616d2d62696e682d73752d646f2d3530306d6c2c6b686f2d6d61752d7175616e672d6e616d2c31322c323032362d31302d30390d0a"
+ }
+}

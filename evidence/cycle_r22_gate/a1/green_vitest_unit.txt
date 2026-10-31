@@ -1,0 +1,18 @@
+# GREEN A1 TS — vitest đơn vị (không nạp db.env → test DB tự skip), 2026-10-31T00:25:31+07:00
+$ node_modules/.bin/biome check apps/api/src/modules/ops_scripts
+Checked 20 files in 76ms. No fixes applied.
+$ node_modules/.bin/tsc -p apps/api  → exit 0 (chạy riêng trước)
+$ node_modules/.bin/vitest run apps/api/src/modules/ops_scripts/backup.test.ts apps/api/src/modules/ops_scripts/dr-drill.test.ts apps/api/src/modules/ops_scripts/onprem-preflight.test.ts apps/api/src/modules/ops_scripts/ops-scripts.golden.test.ts
+
+ RUN  v5.0.5 D:/code/samsam/ts
+
+
+ Test Files  4 passed (4)
+      Tests  94 passed | 2 skipped (96)
+   Start at  00:25:32
+   Duration  2.57s (tests 57%, import 25%, transform 16%, worker 1%)
+
+    Isolate  4 workers spawned · ~139ms startup each (spawn + environment, per file)
+             at least ~416ms faster with isolate: false — reuses workers across files instead of one per file
+
+# exit=0

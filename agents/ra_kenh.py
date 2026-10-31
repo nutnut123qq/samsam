@@ -631,10 +631,23 @@ def ingest(conn, rows: list[dict], cfg: dict, *, by: str,
 #     `FANPAGE_PAGE_ID`/`FANPAGE_READ_TOKEN` → ghi chú, vẫn `--file` CSV; lỗi
 #     nguồn → ghi chú + exit 1 (web/listing vẫn nạp); tính năng TẮT → 0
 #     request, exit 2. Không rõ ngày đăng → `posted_on` None (coi như bài mới).
+#   - r18: bài/dòng web + Fanpage có ký tự không lưu được (NUL, surrogate lẻ)
+#     hoặc permalink có khoảng trắng/điều khiển → bỏ + ghi chú (bài khác vẫn
+#     nạp); tính năng TẮT → `[rollout]` exit 2 cả `--dry-run` (không in kế hoạch).
 AUTO_BY = AGENT
 FEATURE = "legal_hr-04"
 WEB_FILES = ("articles", "news", "products")
 WEB_MAX_AGE_DAYS = 7
+
+
+def _storable(s: str) -> bool:
+    """r18: Postgres `text` không nhận NUL; surrogate lẻ (JSON `\\ud800`)
+    không mã hóa UTF-8 được — nguồn tự thu gặp thì bỏ bài, không hỏng lượt."""
+    try:
+        s.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return "\x00" not in s
 
 
 def web_rows(now: datetime, data_dir=None) -> tuple[list[dict], list[str]]:
@@ -651,12 +664,13 @@ def web_rows(now: datetime, data_dir=None) -> tuple[list[dict], list[str]]:
                          f"(> {WEB_MAX_AGE_DAYS}) — KHÔNG quét, chạy "
                          "crawler.collect")
             continue
+        bad = 0
         for n, ln in enumerate(f.read_bytes().split(b"\n"), 1):
             if not ln.strip():
                 continue
             try:
                 o = json.loads(ln.decode("utf-8", errors="replace"))
-            except ValueError:
+            except (ValueError, RecursionError):   # r19: JSON lồng quá sâu
                 notes.append(f"web/{name}: dòng {n} hỏng — bỏ")
                 continue
             if not isinstance(o, dict):
@@ -664,6 +678,9 @@ def web_rows(now: datetime, data_dir=None) -> tuple[list[dict], list[str]]:
             url = str(o.get("url") or "")
             text = " ".join(str(o.get(k) or "") for k in
                             ("title", "name", "body", "description")).strip()
+            if not (_storable(url) and _storable(text)):
+                bad += 1
+                continue
             if (not url.startswith(("http://", "https://")) or not text
                     or len(url.encode()) > MAX_URL):
                 continue
@@ -671,12 +688,25 @@ def web_rows(now: datetime, data_dir=None) -> tuple[list[dict], list[str]]:
             text = text[:MAX_TEXT]
             rows.append({"line": n, "url": url, "channel": "web",
                          "content_type": "post",
-                         "posted_on": (date.fromisoformat(pub)
-                                       if _DATE_RE.fullmatch(pub) else None),
+                         "posted_on": _web_date(pub),
                          "is_ai": False, "is_sponsored": False, "sku": None,
                          "draft_id": None, "text": text,
                          "sha": store.content_sha256(text)})
+        if bad:
+            notes.append(f"web/{name}: bỏ {bad} dòng có ký tự không lưu được"
+                         " (NUL/surrogate) ở url/chữ")
     return rows, notes
+
+
+def _web_date(s: str) -> date | None:
+    """r19: ngày crawl đúng dạng mà không có thật (`2026-13-45`) → None như
+    `_fb_date` (không rõ ngày đăng → coi như bài mới), không hỏng cả lượt."""
+    if not _DATE_RE.fullmatch(s):
+        return None
+    try:
+        return date.fromisoformat(s)
+    except ValueError:
+        return None
 
 
 def _fb_date(v) -> date | None:
@@ -721,7 +751,8 @@ def fanpage_rows(conn) -> tuple[list[dict], list[str], int | None]:
         # bỏ (CSV cũng từ chối dòng đó).
         text = text.replace("\r\n", "\n") if isinstance(text, str) else None
         if (url is None or len(url.encode()) > MAX_URL or text is None
-                or not text.strip() or len(text) > MAX_TEXT):
+                or not text.strip() or len(text) > MAX_TEXT
+                or not _storable(text)):
             bad += 1
             continue
         if url in seen:
@@ -735,7 +766,8 @@ def fanpage_rows(conn) -> tuple[list[dict], list[str], int | None]:
                      "sha": store.content_sha256(text)})
     if bad:
         notes.append(f"fanpage: bỏ {bad} bài không có chữ, dài quá {MAX_TEXT}"
-                     " ký tự hoặc permalink không hợp lệ")
+                     " ký tự, chữ có ký tự không lưu được (NUL/surrogate)"
+                     " hoặc permalink không hợp lệ")
     return rows, notes, None
 
 
@@ -1323,7 +1355,7 @@ def ingest_partner(conn, rows: list[dict], *, by: str, now: datetime,
 
 
 def _partner_main(a) -> int:
-    from pipelines.rollout import RolloutBlocked
+    from pipelines import rollout
     try:
         rows = read_partner_export(a.partner_file)
     except ExportError as e:
@@ -1335,8 +1367,12 @@ def _partner_main(a) -> int:
         print(f"[err] cấu hình guardrail: {e}")
         return 2
     if a.dry_run:
-        print(f"[dry-run] {len(rows)} bài đối tác — KHÔNG connect DB; chưa"
-              " đối chiếu sổ đối tác/bộ tài liệu đã duyệt — cần DB")
+        if why := rollout.blocked(None, "rà bài đối tác (dry-run)",
+                                  PARTNER_FEATURE):
+            return rollout.say_blocked(why)
+        print(f"[dry-run] {len(rows)} bài đối tác — KHÔNG ghi DB (chỉ đọc sổ"
+              " triển khai); chưa đối chiếu sổ đối tác/bộ tài liệu đã duyệt"
+              " — cần lượt thật")
         for r in rows:
             v = partner_scan(r, None)
             codes = [c for c in v["codes"] if c != THIEU_KIT]
@@ -1350,7 +1386,7 @@ def _partner_main(a) -> int:
         return 2
     try:
         st = ingest_partner(conn, rows, by=a.by, now=_now())
-    except RolloutBlocked as e:
+    except rollout.RolloutBlocked as e:
         conn.rollback()
         print(f"[rollout] {e}")
         return 2
@@ -1410,6 +1446,9 @@ def _scan_auto_main(dry_run: bool) -> int:
         print("[err] DB không truy cập được")
         return 2
     try:
+        # r18: TẮT → chặn cả --dry-run (in kế hoạch cũng là đầu ra), 0 request.
+        if why := rollout.blocked(conn, "rà kênh tự thu", FEATURE):
+            return rollout.say_blocked(why)
         # Fanpage TRƯỚC câu SELECT đầu: cổng rollout tự commit → conn không
         # giữ transaction mở trong lúc chờ mạng.
         fb, fb_notes, fb_rc = fanpage_rows(conn)
@@ -1423,7 +1462,8 @@ def _scan_auto_main(dry_run: bool) -> int:
             scans = [scan_row(r, cfg) for r in rows]
             print(f"[dry-run] {len(rows)} bài web/Fanpage (listing cần DB) —"
                   " KHÔNG ghi")
-            print("[note] dry-run không DB: không kế thừa snapshot người, không"
+            print("[note] dry-run không ghi DB, chỉ đọc sổ triển khai: không"
+                  " kế thừa snapshot người, không"
                   " kiểm bản duyệt — mức S2 thieu_ban_duyet dưới đây có thể"
                   " khác lượt thật")
             _print_plan(rows, scans)
@@ -1471,7 +1511,8 @@ def main(argv=None) -> int:
                     " (+07:00); mặc định bây giờ")
     ap.add_argument("--days", type=int, default=7, help="kỳ báo cáo 1..366")
     ap.add_argument("--dry-run", action="store_true",
-                    help="chỉ đọc file + rà, KHÔNG connect DB")
+                    help="chỉ đọc file + rà, KHÔNG ghi DB (chỉ đọc sổ triển"
+                         " khai: tính năng TẮT → exit 2)")
     a = ap.parse_args(argv)
     n_ops = sum([a.file is not None, a.mark_removed is not None, a.report,
                  a.partner_file is not None, a.scan_auto])
@@ -1525,8 +1566,10 @@ def main(argv=None) -> int:
             print("[err] guardrail cấu hình hỏng — không rà (fail-closed)")
             return 2
         if a.dry_run:
-            print(f"[dry-run] {len(rows)} bài — KHÔNG connect DB; chưa kiểm"
-                  " lệch bản duyệt — cần DB")
+            if why := rollout.blocked(None, "rà kênh (dry-run)", FEATURE):
+                return rollout.say_blocked(why)
+            print(f"[dry-run] {len(rows)} bài — KHÔNG ghi DB (chỉ đọc sổ triển"
+                  " khai); chưa kiểm lệch bản duyệt — cần lượt thật")
             _print_plan(rows, scans)
             return 0
     conn = connect()

@@ -1,0 +1,4572 @@
+{
+ "verify": [
+  {
+   "name": "ok",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=e720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd0",
+   "secret": "s3cret-test",
+   "ok": true
+  },
+  {
+   "name": "ok_header_spaces",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "  sha256=e720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd0\t",
+   "secret": "s3cret-test",
+   "ok": true
+  },
+  {
+   "name": "ok_header_nbsp",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=e720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd0\u00a0",
+   "secret": "s3cret-test",
+   "ok": true
+  },
+  {
+   "name": "ok_secret_strip",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=e720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd0",
+   "secret": "  s3cret-test\n",
+   "ok": true
+  },
+  {
+   "name": "none_header",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": null,
+   "secret": "s3cret-test",
+   "ok": false
+  },
+  {
+   "name": "empty_header",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "",
+   "secret": "s3cret-test",
+   "ok": false
+  },
+  {
+   "name": "no_secret",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=f117fbb4e9c49c36968d7e5c1ff0c517e23b08385791fe533b642dbc519df4d9",
+   "secret": "",
+   "ok": false
+  },
+  {
+   "name": "secret_spaces_only",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=f117fbb4e9c49c36968d7e5c1ff0c517e23b08385791fe533b642dbc519df4d9",
+   "secret": "   ",
+   "ok": false
+  },
+  {
+   "name": "upper_hex",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=E720C79C594681B5787433DDD40C51A14B2CC3EB53C2CBE3BC3AE68F44C6BFD0",
+   "secret": "s3cret-test",
+   "ok": false
+  },
+  {
+   "name": "prefix_upper",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "SHA256=e720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd0",
+   "secret": "s3cret-test",
+   "ok": false
+  },
+  {
+   "name": "latin1_char",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=\u00e9720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd0",
+   "secret": "s3cret-test",
+   "ok": false
+  },
+  {
+   "name": "non_latin1_char",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=\u0130720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd0",
+   "secret": "s3cret-test",
+   "ok": false
+  },
+  {
+   "name": "truncated",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=e720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd",
+   "secret": "s3cret-test",
+   "ok": false
+  },
+  {
+   "name": "extra",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=e720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd00",
+   "secret": "s3cret-test",
+   "ok": false
+  },
+  {
+   "name": "body_changed",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d20",
+   "header": "sha256=e720c79c594681b5787433ddd40c51a14b2cc3eb53c2cbe3bc3ae68f44c6bfd0",
+   "secret": "s3cret-test",
+   "ok": false
+  },
+  {
+   "name": "unicode_secret",
+   "raw_hex": "7b226f626a656374223a2270616765222c22656e747279223a5b5d7d",
+   "header": "sha256=7540f98e830fc78d4a3c026a5bd1b1a7200303c45ea419b3a98ce85a77da0fa4",
+   "secret": "b\u00ed m\u1eadt",
+   "ok": true
+  },
+  {
+   "name": "empty_body",
+   "raw_hex": "",
+   "header": "sha256=03b8fc52bebd460ddf927a580058bbfaceb7b0aa67e485fa5c15488361c68fee",
+   "secret": "s3cret-test",
+   "ok": true
+  }
+ ],
+ "startup": [
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": null
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": null
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": null
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": null
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": null
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "DEPLOY": null
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": ""
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": ""
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": ""
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": ""
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": ""
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "DEPLOY": ""
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "1"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "1"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "1"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_PAGE_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "1"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_VERIFY_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": "1"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "DEPLOY": "1"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET, MESSENGER_PAGE_TOKEN, MESSENGER_VERIFY_TOKEN, CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "true"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "true"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "true"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_PAGE_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "true"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_VERIFY_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": "true"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "DEPLOY": "true"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET, MESSENGER_PAGE_TOKEN, MESSENGER_VERIFY_TOKEN, CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "yes"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_PAGE_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_VERIFY_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": "yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "DEPLOY": "yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET, MESSENGER_PAGE_TOKEN, MESSENGER_VERIFY_TOKEN, CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": " TRUE "
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": " TRUE "
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": " TRUE "
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_PAGE_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": " TRUE "
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_VERIFY_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": " TRUE "
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "DEPLOY": " TRUE "
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET, MESSENGER_PAGE_TOKEN, MESSENGER_VERIFY_TOKEN, CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "Yes"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "Yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "Yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_PAGE_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "Yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_VERIFY_TOKEN \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": "Yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "DEPLOY": "Yes"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu MESSENGER_APP_SECRET, MESSENGER_PAGE_TOKEN, MESSENGER_VERIFY_TOKEN, CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "on"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "on"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "on"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "on"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": "on"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "DEPLOY": "on"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "0"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "0"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "0"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "0"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": "0"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "DEPLOY": "0"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "false"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "  ",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "false"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "  ",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "false"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "  ",
+    "CHANNEL_HASH_SALT": "test-salt-0123456789abcdef",
+    "DEPLOY": "false"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "  ",
+    "DEPLOY": "false"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "DEPLOY": "false"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "ngan",
+    "DEPLOY": "1"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "xxxxxxxxxxxxxxx",
+    "DEPLOY": "1"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "xxxxxxxxxxxxxxxx",
+    "DEPLOY": "1"
+   },
+   "err": null
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": " xxxxxxxxxxxxxxx ",
+    "DEPLOY": "1"
+   },
+   "err": "[fatal] messenger: DEPLOY b\u1eadt nh\u01b0ng thi\u1ebfu CHANNEL_HASH_SALT (\u226516 k\u00fd t\u1ef1) \u2014 t\u1eeb ch\u1ed1i serve"
+  },
+  {
+   "env": {
+    "MESSENGER_APP_SECRET": "s",
+    "MESSENGER_PAGE_TOKEN": "t",
+    "MESSENGER_VERIFY_TOKEN": "v",
+    "CHANNEL_HASH_SALT": "\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7",
+    "DEPLOY": "1"
+   },
+   "err": null
+  }
+ ],
+ "dispatch": [
+  {
+   "name": "none",
+   "ev": null,
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "list",
+   "ev": [],
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "str",
+   "ev": "page",
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "obj_user",
+   "ev": {
+    "object": "user"
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "obj_missing",
+   "ev": {
+    "entry": []
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "entry_none",
+   "ev": {
+    "object": "page",
+    "entry": null
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "entry_str",
+   "ev": {
+    "object": "page",
+    "entry": "abc"
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "entry_int",
+   "ev": {
+    "object": "page",
+    "entry": 5
+   },
+   "n": null,
+   "error": "TypeError",
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "entry_true",
+   "ev": {
+    "object": "page",
+    "entry": true
+   },
+   "n": null,
+   "error": "TypeError",
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "entry_dict",
+   "ev": {
+    "object": "page",
+    "entry": {
+     "a": 1
+    }
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "entry_items_bad",
+   "ev": {
+    "object": "page",
+    "entry": [
+     "x",
+     1,
+     null,
+     [],
+     {
+      "messaging": null
+     }
+    ]
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "messaging_int",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.before",
+         "text": "hi"
+        }
+       }
+      ]
+     },
+     {
+      "messaging": 3
+     },
+     {
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.after",
+         "text": "hi"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": null,
+   "error": "TypeError",
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "hi",
+      "m.before"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    }
+   ],
+   "dedup": [
+    "msgr:m.before"
+   ]
+  },
+  {
+   "name": "simple",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "mid.1",
+         "text": "hi"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 1,
+   "error": null,
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "hi",
+      "mid.1"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    }
+   ],
+   "dedup": [
+    "msgr:mid.1"
+   ]
+  },
+  {
+   "name": "strip_text",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.s",
+         "text": "  Saphraton gi\u00e1? \u3000\n"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 1,
+   "error": null,
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "Saphraton gi\u00e1?",
+      "m.s"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    }
+   ],
+   "dedup": [
+    "msgr:m.s"
+   ]
+  },
+  {
+   "name": "blank_text_nontext",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.b",
+         "text": " \t "
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 1,
+   "error": null,
+   "calls": [
+    {
+     "target": "_non_text",
+     "args": [
+      "messenger:1234567890123456"
+     ],
+     "channel": null,
+     "send_is_live": null
+    }
+   ],
+   "dedup": [
+    "msgr:m.b"
+   ]
+  },
+  {
+   "name": "no_text_nontext",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.img",
+         "attachments": [
+          {
+           "type": "image"
+          }
+         ]
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 1,
+   "error": null,
+   "calls": [
+    {
+     "target": "_non_text",
+     "args": [
+      "messenger:1234567890123456"
+     ],
+     "channel": null,
+     "send_is_live": null
+    }
+   ],
+   "dedup": [
+    "msgr:m.img"
+   ]
+  },
+  {
+   "name": "text_int_nontext",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.i",
+         "text": 5
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 1,
+   "error": null,
+   "calls": [
+    {
+     "target": "_non_text",
+     "args": [
+      "messenger:1234567890123456"
+     ],
+     "channel": null,
+     "send_is_live": null
+    }
+   ],
+   "dedup": [
+    "msgr:m.i"
+   ]
+  },
+  {
+   "name": "echo",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.e",
+         "is_echo": true,
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.ne",
+         "is_echo": 0,
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.ne2",
+         "is_echo": "",
+         "text": "hi"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 2,
+   "error": null,
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "hi",
+      "m.ne"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    },
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "hi",
+      "m.ne2"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    }
+   ],
+   "dedup": [
+    "msgr:m.ne",
+    "msgr:m.ne2"
+   ]
+  },
+  {
+   "name": "echo_str_truthy",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.e2",
+         "is_echo": "no",
+         "text": "hi"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "dup_mid",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.d",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.d",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "999"
+        },
+        "message": {
+         "mid": "m.d",
+         "text": "hi"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 1,
+   "error": null,
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "hi",
+      "m.d"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    }
+   ],
+   "dedup": [
+    "msgr:m.d",
+    "msgr:m.d",
+    "msgr:m.d"
+   ]
+  },
+  {
+   "name": "psid_bad",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "abc"
+        },
+        "message": {
+         "mid": "m.p1",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": ""
+        },
+        "message": {
+         "mid": "m.p2",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "111111111111111111111111111111111"
+        },
+        "message": {
+         "mid": "m.p3",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "11111111111111111111111111111111"
+        },
+        "message": {
+         "mid": "m.p4",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "\u0661\u0662\u0663"
+        },
+        "message": {
+         "mid": "m.p5",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "12 3"
+        },
+        "message": {
+         "mid": "m.p6",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "123\n"
+        },
+        "message": {
+         "mid": "m.p7",
+         "text": "hi"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 2,
+   "error": null,
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:11111111111111111111111111111111",
+      "hi",
+      "m.p4"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    },
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:\u0661\u0662\u0663",
+      "hi",
+      "m.p5"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    }
+   ],
+   "dedup": [
+    "msgr:m.p4",
+    "msgr:m.p5"
+   ]
+  },
+  {
+   "name": "psid_int",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": 123
+        },
+        "message": {
+         "mid": "m.pi",
+         "text": "x"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "mid_bad",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": null,
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": 5,
+         "text": "hi"
+        }
+       },
+       {
+        "sender": {
+         "id": "1"
+        },
+        "message": {
+         "text": "x"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "mid_long",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7\u1ec7",
+         "text": "hi"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 1,
+   "error": null,
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "hi",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    }
+   ],
+   "dedup": [
+    "msgr:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ]
+  },
+  {
+   "name": "mid_unicode",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00",
+         "text": "hi"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 1,
+   "error": null,
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "hi",
+      "\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    }
+   ],
+   "dedup": [
+    "msgr:\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00"
+   ]
+  },
+  {
+   "name": "postback",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "123"
+        },
+        "postback": {
+         "title": "x"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "message_str",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "123"
+        },
+        "message": "hello"
+       }
+      ]
+     }
+    ]
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "sender_none",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": null,
+        "message": {
+         "mid": "m.sn",
+         "text": "x"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "sender_str_raises",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.ok1",
+         "text": "hi"
+        }
+       },
+       {
+        "sender": "x",
+        "message": {
+         "mid": "m.ss",
+         "text": "x"
+        }
+       },
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.after2",
+         "text": "hi"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": null,
+   "error": "AttributeError",
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "hi",
+      "m.ok1"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    }
+   ],
+   "dedup": [
+    "msgr:m.ok1"
+   ]
+  },
+  {
+   "name": "sender_list_raises",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": [
+         1
+        ],
+        "message": {
+         "mid": "m.sl",
+         "text": "x"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": null,
+   "error": "AttributeError",
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "sender_empty_list",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "id": "p",
+      "messaging": [
+       {
+        "sender": [],
+        "message": {
+         "mid": "m.sel",
+         "text": "x"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 0,
+   "error": null,
+   "calls": [],
+   "dedup": []
+  },
+  {
+   "name": "multi_entry",
+   "ev": {
+    "object": "page",
+    "entry": [
+     {
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.a1",
+         "text": "hi"
+        }
+       }
+      ]
+     },
+     {
+      "messaging": [
+       {
+        "sender": {
+         "id": "1234567890123456"
+        },
+        "message": {
+         "mid": "m.a2"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "n": 2,
+   "error": null,
+   "calls": [
+    {
+     "target": "handle_text",
+     "args": [
+      "messenger:1234567890123456",
+      "hi",
+      "m.a1"
+     ],
+     "channel": "messenger",
+     "send_is_live": true
+    },
+    {
+     "target": "_non_text",
+     "args": [
+      "messenger:1234567890123456"
+     ],
+     "channel": null,
+     "send_is_live": null
+    }
+   ],
+   "dedup": [
+    "msgr:m.a1",
+    "msgr:m.a2"
+   ]
+  }
+ ],
+ "get_verify": [
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=1158201444",
+   "status": 200,
+   "ctype": "text/plain",
+   "body": "1158201444"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=sai&hub.challenge=1",
+   "status": 403,
+   "ctype": "application/json",
+   "body": "{\"error\": \"forbidden\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=%3Cscript%3E",
+   "status": 400,
+   "ctype": "application/json",
+   "body": "{\"error\": \"bad challenge\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=unsubscribe&hub.verify_token=verify-test&hub.challenge=1",
+   "status": 403,
+   "ctype": "application/json",
+   "body": "{\"error\": \"forbidden\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test",
+   "status": 400,
+   "ctype": "application/json",
+   "body": "{\"error\": \"bad challenge\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=",
+   "status": 400,
+   "ctype": "application/json",
+   "body": "{\"error\": \"bad challenge\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=11111111111111111111111111111111111111111111111111111111111111111",
+   "status": 400,
+   "ctype": "application/json",
+   "body": "{\"error\": \"bad challenge\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=1111111111111111111111111111111111111111111111111111111111111111",
+   "status": 200,
+   "ctype": "text/plain",
+   "body": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=&hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=7",
+   "status": 200,
+   "ctype": "text/plain",
+   "body": "7"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.mode=x&hub.verify_token=verify-test&hub.challenge=7",
+   "status": 200,
+   "ctype": "text/plain",
+   "body": "7"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify%2Dtest&hub.challenge=7",
+   "status": 200,
+   "ctype": "text/plain",
+   "body": "7"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test+&hub.challenge=7",
+   "status": 403,
+   "ctype": "application/json",
+   "body": "{\"error\": \"forbidden\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=12%0A",
+   "status": 400,
+   "ctype": "application/json",
+   "body": "{\"error\": \"bad challenge\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=-1",
+   "status": 400,
+   "ctype": "application/json",
+   "body": "{\"error\": \"bad challenge\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=+7",
+   "status": 400,
+   "ctype": "application/json",
+   "body": "{\"error\": \"bad challenge\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode&hub.verify_token=verify-test&hub.challenge=7",
+   "status": 403,
+   "ctype": "application/json",
+   "body": "{\"error\": \"forbidden\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe;hub.verify_token=verify-test&hub.challenge=7",
+   "status": 403,
+   "ctype": "application/json",
+   "body": "{\"error\": \"forbidden\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub%2Emode=subscribe&hub.verify_token=verify-test&hub.challenge=7",
+   "status": 200,
+   "ctype": "text/plain",
+   "body": "7"
+  },
+  {
+   "path": "/messenger-webhook",
+   "status": 403,
+   "ctype": "application/json",
+   "body": "{\"error\": \"forbidden\"}"
+  },
+  {
+   "path": "/healthz",
+   "status": 200,
+   "ctype": "application/json",
+   "body": "{\"status\": \"up\"}"
+  },
+  {
+   "path": "/healthz?x=1",
+   "status": 200,
+   "ctype": "application/json",
+   "body": "{\"status\": \"up\"}"
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=&hub.challenge=1",
+   "status": 403,
+   "ctype": "application/json",
+   "body": "{\"error\": \"forbidden\"}",
+   "env_token": "   "
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=%20%20%20&hub.challenge=1",
+   "status": 403,
+   "ctype": "application/json",
+   "body": "{\"error\": \"forbidden\"}",
+   "env_token": "   "
+  },
+  {
+   "path": "/messenger-webhook?hub.mode=subscribe&hub.verify_token=verify-test&hub.challenge=9",
+   "status": 200,
+   "ctype": "text/plain",
+   "body": "9",
+   "env_token": " verify-test "
+  }
+ ],
+ "post_url": [
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    49,
+    47,
+    112,
+    111,
+    115,
+    116,
+    115,
+    47,
+    50
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    109,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    72,
+    84,
+    84,
+    80,
+    83,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    87,
+    87,
+    87,
+    46,
+    70,
+    65,
+    67,
+    69,
+    66,
+    79,
+    79,
+    75,
+    46,
+    67,
+    79,
+    77,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    101,
+    118,
+    105,
+    108,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    46,
+    101,
+    118,
+    105,
+    108,
+    46,
+    101,
+    120,
+    97,
+    109,
+    112,
+    108,
+    101,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    106,
+    97,
+    118,
+    97,
+    115,
+    99,
+    114,
+    105,
+    112,
+    116,
+    58,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "v": null,
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    117,
+    58,
+    112,
+    64,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    117,
+    64,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    64,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    58,
+    64,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    58,
+    112,
+    64,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "v": 5,
+   "ok": false
+  },
+  {
+   "v": true,
+   "ok": false
+  },
+  {
+   "v": [],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    58,
+    52,
+    52,
+    51,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    58,
+    97,
+    98,
+    99,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    46,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120,
+    32,
+    121
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120,
+    9,
+    121
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120,
+    160
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120,
+    8203
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    0
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    55296
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    133
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    12288
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    65279
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    233
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    91,
+    58,
+    58,
+    49,
+    93,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    91,
+    118,
+    49,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    93,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    91,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    93,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    8490,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    65312,
+    101,
+    118,
+    105,
+    108,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    101,
+    118,
+    105,
+    108,
+    46,
+    99,
+    111,
+    109,
+    65283,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    63,
+    120,
+    61,
+    49
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    35,
+    102,
+    114,
+    97,
+    103
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    120,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    64,
+    101,
+    118,
+    105,
+    108,
+    46,
+    99,
+    111,
+    109,
+    47
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    101,
+    118,
+    105,
+    108,
+    46,
+    99,
+    111,
+    109,
+    64,
+    120,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    101,
+    118,
+    105,
+    108,
+    46,
+    99,
+    111,
+    109,
+    37,
+    52,
+    48,
+    120,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    49,
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    43,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    92,
+    64,
+    101,
+    118,
+    105,
+    108,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    97,
+    46,
+    98,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    58,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    304,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    37,
+    50,
+    102,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    233,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": false
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    119,
+    119,
+    119,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    63,
+    113,
+    61,
+    97,
+    35,
+    98
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    120,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    58,
+    57,
+    57,
+    57,
+    57,
+    57,
+    47,
+    120
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    87,
+    87,
+    87,
+    46,
+    70,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    67,
+    79,
+    77
+   ],
+   "ok": true
+  },
+  {
+   "cps": [
+    104,
+    116,
+    116,
+    112,
+    115,
+    58,
+    47,
+    47,
+    233,
+    46,
+    102,
+    97,
+    99,
+    101,
+    98,
+    111,
+    111,
+    107,
+    46,
+    99,
+    111,
+    109,
+    47,
+    120
+   ],
+   "ok": true
+  }
+ ],
+ "api_base": [
+  {
+   "base": null,
+   "ok": "https://graph.facebook.com",
+   "err": null
+  },
+  {
+   "base": "",
+   "ok": "https://graph.facebook.com",
+   "err": null
+  },
+  {
+   "base": "   ",
+   "ok": "https://graph.facebook.com",
+   "err": null
+  },
+  {
+   "base": "https://graph.facebook.com",
+   "ok": "https://graph.facebook.com",
+   "err": null
+  },
+  {
+   "base": "https://graph.facebook.com/",
+   "ok": "https://graph.facebook.com",
+   "err": null
+  },
+  {
+   "base": "HTTPS://Graph.Facebook.com",
+   "ok": "https://Graph.Facebook.com",
+   "err": null
+  },
+  {
+   "base": "http://127.0.0.1:8080",
+   "ok": "http://127.0.0.1:8080",
+   "err": null
+  },
+  {
+   "base": "http://localhost:1",
+   "ok": "http://localhost:1",
+   "err": null
+  },
+  {
+   "base": "http://LOCALHOST:1",
+   "ok": "http://LOCALHOST:1",
+   "err": null
+  },
+  {
+   "base": "http://127.0.0.1",
+   "ok": "http://127.0.0.1",
+   "err": null
+  },
+  {
+   "base": "http://evil.example",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://evil.example",
+   "ok": "https://evil.example",
+   "err": null
+  },
+  {
+   "base": "https://x.example:443",
+   "ok": "https://x.example:443",
+   "err": null
+  },
+  {
+   "base": "https://x.example:",
+   "ok": "https://x.example:",
+   "err": null
+  },
+  {
+   "base": "https://x.example:99999",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+  },
+  {
+   "base": "https://x.example:abc",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+  },
+  {
+   "base": "https://x.example:-1",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+  },
+  {
+   "base": "https://u@x.example",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://u:p@x.example",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://@x.example",
+   "ok": "https://@x.example",
+   "err": null
+  },
+  {
+   "base": "https://x.example?",
+   "ok": "https://x.example",
+   "err": null
+  },
+  {
+   "base": "https://x.example?a=1",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://x.example#",
+   "ok": "https://x.example",
+   "err": null
+  },
+  {
+   "base": "https://x.example#f",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://x.example/v1",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://x.example//",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "ftp://x.example",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "x.example",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://[::1]",
+   "ok": "https://[::1]",
+   "err": null
+  },
+  {
+   "base": "http://[::1]:80",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://[bad",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+  },
+  {
+   "base": " https://x.example ",
+   "ok": "https://x.example",
+   "err": null
+  },
+  {
+   "base": "http://127.0.0.2",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://x.example:\u0661",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+  },
+  {
+   "base": "https://x.ex ample",
+   "ok": "https://x.ex ample",
+   "err": null
+  },
+  {
+   "base": "http://0x7f.0.0.1",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ch\u1ec9 https://<host> ho\u1eb7c http://127.0.0.1|localhost (server gi\u1ea3)"
+  },
+  {
+   "base": "https://x.example:0",
+   "ok": "https://x.example:0",
+   "err": null
+  },
+  {
+   "base": "https://x.example:65535",
+   "ok": "https://x.example:65535",
+   "err": null
+  },
+  {
+   "base": "https://x.example:65536",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+  },
+  {
+   "base": "https://x.example:+80",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+  },
+  {
+   "base": "https://x.example: 80",
+   "ok": null,
+   "err": "FANPAGE_API_BASE kh\u00f4ng h\u1ee3p l\u1ec7"
+  },
+  {
+   "base": "https://x.\u00e9xample",
+   "ok": "https://x.\u00e9xample",
+   "err": null
+  },
+  {
+   "base": "https://x.example\\y",
+   "ok": "https://x.example\\y",
+   "err": null
+  }
+ ],
+ "config": [
+  {
+   "page": null,
+   "token": null,
+   "cfg": null,
+   "err": null
+  },
+  {
+   "page": "",
+   "token": "",
+   "cfg": null,
+   "err": null
+  },
+  {
+   "page": "  ",
+   "token": " ",
+   "cfg": null,
+   "err": null
+  },
+  {
+   "page": "123",
+   "token": null,
+   "cfg": null,
+   "err": "FANPAGE_READ_TOKEN thi\u1ebfu/sai d\u1ea1ng"
+  },
+  {
+   "page": null,
+   "token": "TOKEN_ABCDEFGH",
+   "cfg": null,
+   "err": "FANPAGE_PAGE_ID thi\u1ebfu/sai d\u1ea1ng (ch\u1ec9 ch\u1eef s\u1ed1)"
+  },
+  {
+   "page": "me",
+   "token": "TOKEN_ABCDEFGH",
+   "cfg": null,
+   "err": "FANPAGE_PAGE_ID thi\u1ebfu/sai d\u1ea1ng (ch\u1ec9 ch\u1eef s\u1ed1)"
+  },
+  {
+   "page": "123",
+   "token": "short",
+   "cfg": null,
+   "err": "FANPAGE_READ_TOKEN thi\u1ebfu/sai d\u1ea1ng"
+  },
+  {
+   "page": "123",
+   "token": "TOKEN_ABCDEFGH",
+   "cfg": {
+    "page_id": "123",
+    "token": "TOKEN_ABCDEFGH",
+    "base": "https://graph.facebook.com"
+   },
+   "err": null
+  },
+  {
+   "page": " 123 ",
+   "token": " TOKEN_ABCDEFGH\n",
+   "cfg": {
+    "page_id": "123",
+    "token": "TOKEN_ABCDEFGH",
+    "base": "https://graph.facebook.com"
+   },
+   "err": null
+  },
+  {
+   "page": "111111111111111111111111111111",
+   "token": "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+   "cfg": {
+    "page_id": "111111111111111111111111111111",
+    "token": "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "base": "https://graph.facebook.com"
+   },
+   "err": null
+  },
+  {
+   "page": "1111111111111111111111111111111",
+   "token": "TTTTTTTT",
+   "cfg": null,
+   "err": "FANPAGE_PAGE_ID thi\u1ebfu/sai d\u1ea1ng (ch\u1ec9 ch\u1eef s\u1ed1)"
+  },
+  {
+   "page": "123",
+   "token": "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+   "cfg": null,
+   "err": "FANPAGE_READ_TOKEN thi\u1ebfu/sai d\u1ea1ng"
+  },
+  {
+   "page": "123",
+   "token": "TOKEN ABCDEFGH",
+   "cfg": null,
+   "err": "FANPAGE_READ_TOKEN thi\u1ebfu/sai d\u1ea1ng"
+  },
+  {
+   "page": "123",
+   "token": "TOKEN_\u00e9BCDEFGH",
+   "cfg": null,
+   "err": "FANPAGE_READ_TOKEN thi\u1ebfu/sai d\u1ea1ng"
+  },
+  {
+   "page": "\u0661\u0662",
+   "token": "TOKEN_ABCDEFGH",
+   "cfg": null,
+   "err": "FANPAGE_PAGE_ID thi\u1ebfu/sai d\u1ea1ng (ch\u1ec9 ch\u1eef s\u1ed1)"
+  },
+  {
+   "page": "123",
+   "token": "!!!!!!!!~",
+   "cfg": {
+    "page_id": "123",
+    "token": "!!!!!!!!~",
+    "base": "https://graph.facebook.com"
+   },
+   "err": null
+  },
+  {
+   "page": "12a",
+   "token": "TOKEN_ABCDEFGH",
+   "cfg": null,
+   "err": "FANPAGE_PAGE_ID thi\u1ebfu/sai d\u1ea1ng (ch\u1ec9 ch\u1eef s\u1ed1)"
+  },
+  {
+   "page": "-1",
+   "token": "TOKEN_ABCDEFGH",
+   "cfg": null,
+   "err": "FANPAGE_PAGE_ID thi\u1ebfu/sai d\u1ea1ng (ch\u1ec9 ch\u1eef s\u1ed1)"
+  }
+ ],
+ "graph_error": [
+  {
+   "hex": "",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "78",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "6e756c6c",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "5b5d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "227322",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "35",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a206e756c6c7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a202278227d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b7d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a203139307d7d",
+   "out": [
+    190,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a203139302c20226572726f725f737562636f6465223a203436337d7d",
+   "out": [
+    190,
+    463
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a20342e307d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a203165327d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a202d317d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a202d307d7d",
+   "out": [
+    0,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a20307d7d",
+   "out": [
+    0,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a20393939393939397d7d",
+   "out": [
+    9999999,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a2031303030303030307d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a20747275657d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a2022313930227d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a2039393939393939393939393939393939393939397d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a2031372c20226572726f725f737562636f6465223a2066616c73657d7d",
+   "out": [
+    17,
+    null
+   ]
+  },
+  {
+   "hex": "efbbbf7b226572726f72223a207b22636f6465223a20327d7d",
+   "out": [
+    2,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a20327d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a20312c2022636f6465223a203334317d7d",
+   "out": [
+    341,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a204e614e7d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "ff7b226572726f72223a7b7d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a203336382c20226572726f725f737562636f6465223a203436372e357d7d",
+   "out": [
+    368,
+    null
+   ]
+  },
+  {
+   "hex": "7b226572726f72223a207b22636f6465223a203445307d7d",
+   "out": [
+    null,
+    null
+   ]
+  },
+  {
+   "hex": "20207b226572726f72223a207b22636f6465223a20347d7d0a",
+   "out": [
+    4,
+    null
+   ]
+  }
+ ],
+ "explain": [
+  {
+   "status": 400,
+   "code": null,
+   "sub": null,
+   "out": "HTTP 400"
+  },
+  {
+   "status": 400,
+   "code": 190,
+   "sub": null,
+   "out": "HTTP 400 m\u00e3 190 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 400,
+   "code": 102,
+   "sub": null,
+   "out": "HTTP 400 m\u00e3 102 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 400,
+   "code": 100,
+   "sub": 463,
+   "out": "HTTP 400 m\u00e3 100/463 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 400,
+   "code": 100,
+   "sub": 467,
+   "out": "HTTP 400 m\u00e3 100/467 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 400,
+   "code": null,
+   "sub": 463,
+   "out": "HTTP 400/463 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 400,
+   "code": 10,
+   "sub": null,
+   "out": "HTTP 400 m\u00e3 10 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 400,
+   "code": 200,
+   "sub": null,
+   "out": "HTTP 400 m\u00e3 200 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 400,
+   "code": 299,
+   "sub": null,
+   "out": "HTTP 400 m\u00e3 299 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 400,
+   "code": 300,
+   "sub": null,
+   "out": "HTTP 400 m\u00e3 300"
+  },
+  {
+   "status": 400,
+   "code": 4,
+   "sub": null,
+   "out": "HTTP 400 m\u00e3 4"
+  },
+  {
+   "status": 400,
+   "code": 1,
+   "sub": 2,
+   "out": "HTTP 400 m\u00e3 1/2"
+  },
+  {
+   "status": 400,
+   "code": 0,
+   "sub": 0,
+   "out": "HTTP 400 m\u00e3 0/0"
+  },
+  {
+   "status": 403,
+   "code": null,
+   "sub": null,
+   "out": "HTTP 403"
+  },
+  {
+   "status": 403,
+   "code": 190,
+   "sub": null,
+   "out": "HTTP 403 m\u00e3 190 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 403,
+   "code": 102,
+   "sub": null,
+   "out": "HTTP 403 m\u00e3 102 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 403,
+   "code": 100,
+   "sub": 463,
+   "out": "HTTP 403 m\u00e3 100/463 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 403,
+   "code": 100,
+   "sub": 467,
+   "out": "HTTP 403 m\u00e3 100/467 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 403,
+   "code": null,
+   "sub": 463,
+   "out": "HTTP 403/463 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 403,
+   "code": 10,
+   "sub": null,
+   "out": "HTTP 403 m\u00e3 10 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 403,
+   "code": 200,
+   "sub": null,
+   "out": "HTTP 403 m\u00e3 200 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 403,
+   "code": 299,
+   "sub": null,
+   "out": "HTTP 403 m\u00e3 299 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 403,
+   "code": 300,
+   "sub": null,
+   "out": "HTTP 403 m\u00e3 300"
+  },
+  {
+   "status": 403,
+   "code": 4,
+   "sub": null,
+   "out": "HTTP 403 m\u00e3 4"
+  },
+  {
+   "status": 403,
+   "code": 1,
+   "sub": 2,
+   "out": "HTTP 403 m\u00e3 1/2"
+  },
+  {
+   "status": 403,
+   "code": 0,
+   "sub": 0,
+   "out": "HTTP 403 m\u00e3 0/0"
+  },
+  {
+   "status": 500,
+   "code": null,
+   "sub": null,
+   "out": "HTTP 500"
+  },
+  {
+   "status": 500,
+   "code": 190,
+   "sub": null,
+   "out": "HTTP 500 m\u00e3 190 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 500,
+   "code": 102,
+   "sub": null,
+   "out": "HTTP 500 m\u00e3 102 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 500,
+   "code": 100,
+   "sub": 463,
+   "out": "HTTP 500 m\u00e3 100/463 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 500,
+   "code": 100,
+   "sub": 467,
+   "out": "HTTP 500 m\u00e3 100/467 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 500,
+   "code": null,
+   "sub": 463,
+   "out": "HTTP 500/463 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 500,
+   "code": 10,
+   "sub": null,
+   "out": "HTTP 500 m\u00e3 10 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 500,
+   "code": 200,
+   "sub": null,
+   "out": "HTTP 500 m\u00e3 200 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 500,
+   "code": 299,
+   "sub": null,
+   "out": "HTTP 500 m\u00e3 299 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 500,
+   "code": 300,
+   "sub": null,
+   "out": "HTTP 500 m\u00e3 300"
+  },
+  {
+   "status": 500,
+   "code": 4,
+   "sub": null,
+   "out": "HTTP 500 m\u00e3 4"
+  },
+  {
+   "status": 500,
+   "code": 1,
+   "sub": 2,
+   "out": "HTTP 500 m\u00e3 1/2"
+  },
+  {
+   "status": 500,
+   "code": 0,
+   "sub": 0,
+   "out": "HTTP 500 m\u00e3 0/0"
+  },
+  {
+   "status": 302,
+   "code": null,
+   "sub": null,
+   "out": "HTTP 302"
+  },
+  {
+   "status": 302,
+   "code": 190,
+   "sub": null,
+   "out": "HTTP 302 m\u00e3 190 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 302,
+   "code": 102,
+   "sub": null,
+   "out": "HTTP 302 m\u00e3 102 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 302,
+   "code": 100,
+   "sub": 463,
+   "out": "HTTP 302 m\u00e3 100/463 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 302,
+   "code": 100,
+   "sub": 467,
+   "out": "HTTP 302 m\u00e3 100/467 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 302,
+   "code": null,
+   "sub": 463,
+   "out": "HTTP 302/463 \u2014 token h\u1ebft h\u1ea1n/thu h\u1ed3i/kh\u00f4ng h\u1ee3p l\u1ec7: B\u00ean B c\u1ea5p l\u1ea1i"
+  },
+  {
+   "status": 302,
+   "code": 10,
+   "sub": null,
+   "out": "HTTP 302 m\u00e3 10 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 302,
+   "code": 200,
+   "sub": null,
+   "out": "HTTP 302 m\u00e3 200 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 302,
+   "code": 299,
+   "sub": null,
+   "out": "HTTP 302 m\u00e3 299 \u2014 thi\u1ebfu quy\u1ec1n \u0111\u1ecdc b\u00e0i Page (pages_read_engagement)"
+  },
+  {
+   "status": 302,
+   "code": 300,
+   "sub": null,
+   "out": "HTTP 302 m\u00e3 300"
+  },
+  {
+   "status": 302,
+   "code": 4,
+   "sub": null,
+   "out": "HTTP 302 m\u00e3 4"
+  },
+  {
+   "status": 302,
+   "code": 1,
+   "sub": 2,
+   "out": "HTTP 302 m\u00e3 1/2"
+  },
+  {
+   "status": 302,
+   "code": 0,
+   "sub": 0,
+   "out": "HTTP 302 m\u00e3 0/0"
+  }
+ ]
+}

@@ -1,0 +1,36 @@
+# 2026-10-28T12:14:17+07:00 · cây work (git archive HEAD + diff làm việc) · không .env · không DATABASE_URL
+# bao đóng requirements.txt (marker Linux x86_64): 66 gói đã cài
+# THIẾU local (CI có, không kiểm được; phụ thuộc cấp sau của chúng không biết): []
+# gói đã cài ngoài bao đóng: 207 · module top-level bị chặn: 280
+# plugin pytest11 trong bao đóng (nạp bằng -p): ['anyio'] · ngoài bao đóng (tắt): ['asyncio (pytest-asyncio)', 'langsmith_plugin (langsmith)']
+  fitz: CHẶN
+  yaml: cho
+PASSED tests/test_r13_batch_a.py::test_ocr_missing_models_refused_without_network
+PASSED tests/test_r13_batch_a.py::test_ocr_timeout
+PASSED tests/test_r13_batch_a.py::test_intake_records_ocr_engine_same_tx
+PASSED tests/test_r13_batch_a.py::test_stt_without_model_blocked_before_db
+PASSED tests/test_r13_batch_a.py::test_image_openrouter_success_contract
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[no_model]
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[no_key]
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[kill]
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[spend_unknown]
+PASSED tests/test_r13_batch_a.py::test_image_blocked_zero_requests[over_cap]
+PASSED tests/test_r13_batch_a.py::test_image_retry_once_then_fail
+PASSED tests/test_r13_batch_a.py::test_ocr_missing_cls_model_refused
+PASSED tests/test_r13_batch_a.py::test_intake_cli_ocr_empty_not_silent
+PASSED tests/test_ci_workflow.py::test_triggers_and_permissions
+PASSED tests/test_ci_workflow.py::test_jobs_have_timeout_and_pinned_actions
+PASSED tests/test_ci_workflow.py::test_test_job_postgres_and_commands
+PASSED tests/test_ci_workflow.py::test_ruff_pinned_exact
+PASSED tests/test_ci_workflow.py::test_test_job_db_setup_matches_preflight
+PASSED tests/test_ci_workflow.py::test_test_job_timeout_covers_full_suite
+PASSED tests/test_ci_workflow.py::test_deterministic_suites_are_rule_based
+PASSED tests/test_ci_workflow.py::test_test_job_has_no_secrets
+PASSED tests/test_ci_workflow.py::test_eval_job_dispatch_only_and_guarded
+PASSED tests/test_ci_workflow.py::test_referenced_scripts_exist
+SKIPPED [1] tests\test_r13_batch_a.py:58: chưa có paddleocr/model latin cục bộ — OCR thật CHƯA KIỂM
+SKIPPED [1] tests\test_r13_batch_a.py:93: could not import 'fitz': No module named 'fitz'
+SKIPPED [1] tests\test_r13_batch_a.py:198: could not import 'av': No module named 'av'
+SKIPPED [1] tests\test_r13_batch_a.py:210: could not import 'av': No module named 'av'
+23 passed, 4 skipped in 4.92s
+EXIT 0

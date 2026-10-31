@@ -1,0 +1,277 @@
+{
+ "normalize": [
+  [
+   "HTTPS://Bao.VN:443/a/?utm_source=x&b=2&a=1#c",
+   {
+    "ok": "https://bao.vn/a?a=1&b=2"
+   }
+  ],
+  [
+   "http://u:p@bao.vn:8080/?fbclid=1&gclid=2&zarsrc=3",
+   {
+    "ok": "http://bao.vn:8080/"
+   }
+  ],
+  [
+   "https://bao.vn",
+   {
+    "ok": "https://bao.vn/"
+   }
+  ],
+  [
+   "https://bao.vn/a/b///",
+   {
+    "ok": "https://bao.vn/a/b"
+   }
+  ],
+  [
+   "https://bao.vn/?q=a+b&r=%E1%BA%A1&s=%zz&UTM_X=1&k",
+   {
+    "ok": "https://bao.vn/?k=&q=a+b&r=%E1%BA%A1&s=%25zz"
+   }
+  ],
+  [
+   "https://bao.vn/?b=1&a=2&a=1&c=&d",
+   {
+    "ok": "https://bao.vn/?a=1&a=2&b=1&c=&d="
+   }
+  ],
+  [
+   "http://[::1]:80/x",
+   {
+    "ok": "http://[::1]/x"
+   }
+  ],
+  [
+   "http://[fe80::1%25eth0]/x",
+   {
+    "ok": "http://[fe80::1%25eth0]/x"
+   }
+  ],
+  [
+   "http://bao.vn:0/x",
+   {
+    "ok": "http://bao.vn/x"
+   }
+  ],
+  [
+   "http://bao.vn:99999/x",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "http://bao.vn:abc/x",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "http://[::1/x",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "http://a]b/x",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "http://[bad]/x",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "http://[v1.fe]/x",
+   {
+    "ok": "http://v1.fe/x"
+   }
+  ],
+  [
+   "http://[1.2.3.4]/x",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "  \thttps://bao.vn/x\n",
+   {
+    "ok": "https://bao.vn/x"
+   }
+  ],
+  [
+   "https://BAO.vn./x?\u1ea1=1",
+   {
+    "ok": "https://bao.vn/x?%E1%BA%A1=1"
+   }
+  ],
+  [
+   "mailto:a@b.vn",
+   {
+    "ok": "mailto:a@b.vn"
+   }
+  ],
+  [
+   "//bao.vn/x",
+   {
+    "ok": "//bao.vn/x"
+   }
+  ],
+  [
+   "https://bao.vn/a;p?x=1",
+   {
+    "ok": "https://bao.vn/a;p?x=1"
+   }
+  ],
+  [
+   "https://xn--bao-ula.vn/x",
+   {
+    "ok": "https://xn--bao-ula.vn/x"
+   }
+  ],
+  [
+   "https://bao.vn/x?q=%F0%9F%98%80&w=a b",
+   {
+    "ok": "https://bao.vn/x?q=%F0%9F%98%80&w=a+b"
+   }
+  ]
+ ],
+ "join": [
+  [
+   "https://bao.example.vn/rss",
+   "/bai/a",
+   {
+    "ok": "https://bao.example.vn/bai/a"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss",
+   "bai/a",
+   {
+    "ok": "https://bao.example.vn/bai/a"
+   }
+  ],
+  [
+   "https://bao.example.vn/a/b/rss",
+   "../c",
+   {
+    "ok": "https://bao.example.vn/a/c"
+   }
+  ],
+  [
+   "https://bao.example.vn/a/b/rss",
+   "../../../c",
+   {
+    "ok": "https://bao.example.vn/c"
+   }
+  ],
+  [
+   "https://bao.example.vn/a/b/",
+   "./",
+   {
+    "ok": "https://bao.example.vn/a/b/"
+   }
+  ],
+  [
+   "https://bao.example.vn/a/b/",
+   "..",
+   {
+    "ok": "https://bao.example.vn/a/"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss?x=1",
+   "?y=2",
+   {
+    "ok": "https://bao.example.vn/rss?y=2"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss",
+   "#f",
+   {
+    "ok": "https://bao.example.vn/rss#f"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss",
+   "",
+   {
+    "ok": "https://bao.example.vn/rss"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss",
+   "//khac.vn/z",
+   {
+    "ok": "https://khac.vn/z"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss",
+   "http://khac.vn/z",
+   {
+    "ok": "http://khac.vn/z"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss",
+   "javascript:alert(1)",
+   {
+    "ok": "javascript:alert(1)"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss",
+   "http://[::1",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss",
+   "http://[bad]/x",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "https://bao.example.vn/rss",
+   "//[x]/",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "http://127.0.0.1:5/r",
+   "http://a]b/x",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "http://127.0.0.1:5/r",
+   "http://[a/",
+   {
+    "err": "ValueError"
+   }
+  ],
+  [
+   "https://bao.example.vn/a;p/b",
+   "c;q",
+   {
+    "ok": "https://bao.example.vn/a;p/c;q"
+   }
+  ],
+  [
+   "https://bao.example.vn/a//b",
+   "c",
+   {
+    "ok": "https://bao.example.vn/a/c"
+   }
+  ]
+ ]
+}

@@ -1,0 +1,491 @@
+{
+ "flows": [
+  {
+   "name": "wp_pages",
+   "src": {
+    "name": "ngoclinh:products",
+    "type": "wp_api",
+    "kind": "wc_product",
+    "url": "https://samsamngoclinh.com/wp-json/wc/store/v1/products",
+    "output": "products.jsonl"
+   },
+   "routes": {
+    "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=1": [
+     [
+      200,
+      {
+       "X-WP-TotalPages": "2"
+      },
+      "[{\"id\": 1, \"name\": \"S\u00e2m c\u1ee7\", \"prices\": {\"price\": \"1500000\", \"currency_minor_unit\": 0}, \"short_description\": \"<p>Ng\u1eafn</p>\", \"permalink\": \"https://samsamngoclinh.com/p/1\", \"images\": [{\"src\": \"https://x/1.jpg\"}]}, {\"name\": \"kh\u00f4ng id\"}, {\"id\": 5, \"name\": \"\", \"prices\": {}}, {\"id\": 6, \"name\": \"Cao\", \"prices\": {\"price\": \"x\"}, \"description\": \"d\"}]"
+     ]
+    ],
+    "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=2": [
+     [
+      200,
+      {
+       "X-WP-TotalPages": "2"
+      },
+      "[{\"id\": 2, \"name\": \"R\u01b0\u1ee3u s\u00e2m\", \"prices\": {\"price\": \"0\"}}]"
+     ]
+    ]
+   },
+   "records": [
+    {
+     "id": "wc-1",
+     "name": "S\u00e2m c\u1ee7",
+     "price_vnd": 1500000,
+     "description": "Ng\u1eafn",
+     "url": "https://samsamngoclinh.com/p/1",
+     "images": [
+      "https://x/1.jpg"
+     ]
+    },
+    {
+     "id": "wc-6",
+     "name": "Cao",
+     "price_vnd": null,
+     "description": "d",
+     "url": "",
+     "images": []
+    },
+    {
+     "id": "wc-2",
+     "name": "R\u01b0\u1ee3u s\u00e2m",
+     "price_vnd": null,
+     "description": "",
+     "url": "",
+     "images": []
+    }
+   ],
+   "log": [
+    "[warn] ngoclinh:products item None: 'id'",
+    "[warn] ngoclinh:products item 5 r\u1ed7ng \u2014 b\u1ecf qua"
+   ],
+   "sleeps": [
+    1.0,
+    1.0
+   ],
+   "requests": [
+    "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=1",
+    "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=2"
+   ]
+  },
+  {
+   "name": "wp_one_page_no_header",
+   "src": {
+    "name": "ngoclinh:posts",
+    "type": "wp_api",
+    "kind": "wp_post",
+    "url": "https://samsamngoclinh.com/wp-json/wp/v2/posts",
+    "output": "articles.jsonl"
+   },
+   "routes": {
+    "https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1": [
+     [
+      200,
+      {},
+      "[{\"id\": 9, \"title\": {\"rendered\": \"B\u00e0i &#8211; 1\"}, \"content\": {\"rendered\": \"<p>Th\u00e2n</p>\"}, \"link\": \"https://samsamngoclinh.com/b/9\", \"date\": \"2026-10-12T08:00:00\"}, {\"id\": 10, \"title\": {\"rendered\": \"R\u1ed7ng\"}, \"content\": {\"rendered\": \"  \"}}]"
+     ]
+    ]
+   },
+   "records": [
+    {
+     "id": "wp-9",
+     "title": "B\u00e0i \u2013 1",
+     "body": "Th\u00e2n",
+     "url": "https://samsamngoclinh.com/b/9",
+     "published_at": "2026-10-12T08:00:00"
+    }
+   ],
+   "log": [
+    "[warn] ngoclinh:posts item 10 r\u1ed7ng \u2014 b\u1ecf qua"
+   ],
+   "sleeps": [
+    1.0
+   ],
+   "requests": [
+    "https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1"
+   ]
+  },
+  {
+   "name": "wp_not_json",
+   "src": {
+    "name": "ngoclinh:posts",
+    "type": "wp_api",
+    "kind": "wp_post",
+    "url": "https://samsamngoclinh.com/wp-json/wp/v2/posts",
+    "output": "articles.jsonl"
+   },
+   "routes": {
+    "https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1": [
+     [
+      200,
+      {},
+      "<html>b\u1ea3o tr\u00ec</html>"
+     ]
+    ]
+   },
+   "records": [],
+   "log": [
+    "[warn] https://samsamngoclinh.com/wp-json/wp/v2/posts page 1: response kh\u00f4ng ph\u1ea3i JSON"
+   ],
+   "sleeps": [
+    1.0
+   ],
+   "requests": [
+    "https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1"
+   ]
+  },
+  {
+   "name": "wp_404",
+   "src": {
+    "name": "ngoclinh:posts",
+    "type": "wp_api",
+    "kind": "wp_post",
+    "url": "https://samsamngoclinh.com/wp-json/wp/v2/posts",
+    "output": "articles.jsonl"
+   },
+   "routes": {},
+   "records": [],
+   "log": [
+    "[warn] GET https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1: Client error '404 Not Found' for url 'https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1'",
+    "For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"
+   ],
+   "sleeps": [
+    1.0
+   ],
+   "requests": [
+    "https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1"
+   ]
+  },
+  {
+   "name": "wp_500_page2",
+   "src": {
+    "name": "ngoclinh:products",
+    "type": "wp_api",
+    "kind": "wc_product",
+    "url": "https://samsamngoclinh.com/wp-json/wc/store/v1/products",
+    "output": "products.jsonl"
+   },
+   "routes": {
+    "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=1": [
+     [
+      200,
+      {
+       "X-WP-TotalPages": "3"
+      },
+      "[{\"id\": 2, \"name\": \"R\u01b0\u1ee3u s\u00e2m\", \"prices\": {\"price\": \"0\"}}]"
+     ]
+    ],
+    "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=2": [
+     [
+      500,
+      {},
+      "l\u1ed7i"
+     ]
+    ]
+   },
+   "records": [
+    {
+     "id": "wc-2",
+     "name": "R\u01b0\u1ee3u s\u00e2m",
+     "price_vnd": null,
+     "description": "",
+     "url": "",
+     "images": []
+    }
+   ],
+   "log": [
+    "[warn] GET https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=2: Server error '500 Internal Server Error' for url 'https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=2'",
+    "For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+   ],
+   "sleeps": [
+    1.0,
+    1.0
+   ],
+   "requests": [
+    "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=1",
+    "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=2"
+   ]
+  },
+  {
+   "name": "wp_redirect_no_follow_target",
+   "src": {
+    "name": "ngoclinh:posts",
+    "type": "wp_api",
+    "kind": "wp_post",
+    "url": "https://samsamngoclinh.com/wp-json/wp/v2/posts",
+    "output": "articles.jsonl"
+   },
+   "routes": {
+    "https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1": [
+     [
+      302,
+      {
+       "Location": "https://samsamngoclinh.com/khac"
+      },
+      ""
+     ]
+    ],
+    "https://samsamngoclinh.com/khac": [
+     [
+      503,
+      {},
+      ""
+     ]
+    ]
+   },
+   "records": [],
+   "log": [
+    "[warn] GET https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1: Server error '503 Service Unavailable' for url 'https://samsamngoclinh.com/khac'",
+    "For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503"
+   ],
+   "sleeps": [
+    1.0
+   ],
+   "requests": [
+    "https://samsamngoclinh.com/wp-json/wp/v2/posts?per_page=100&page=1",
+    "https://samsamngoclinh.com/khac"
+   ]
+  },
+  {
+   "name": "nv_retry",
+   "src": {
+    "name": "netvn:news",
+    "type": "html",
+    "kind": "nv_article",
+    "url": "http://samsam.net.vn/sitemap-vi.news.xml",
+    "output": "news.jsonl"
+   },
+   "routes": {
+    "http://samsam.net.vn/sitemap-vi.news.xml": [
+     [
+      200,
+      {},
+      "<urlset><url><loc>http://samsam.net.vn/vi/news/tin/a1.html</loc></url><url><loc>http://samsam.net.vn/vi/news/tin/a2.html</loc></url><url><loc>http://samsam.net.vn/vi/news/tin/a3.html</loc></url></urlset>"
+     ]
+    ],
+    "http://samsam.net.vn/vi/news/tin/a1.html": [
+     [
+      200,
+      {},
+      "<html><body><p>skeleton</p></body></html>"
+     ],
+     [
+      200,
+      {},
+      "<html><body><h1>Tin <b>s\u00e2m</b></h1><div class='hometext'>T\u00f3m t\u1eaft</div><div class='bodytext'><p>Th\u00e2n  b\u00e0i</p></div><span itemprop='datePublished' content='2026-10-01'>x</span></body></html>"
+     ]
+    ],
+    "http://samsam.net.vn/vi/news/tin/a2.html": [
+     [
+      200,
+      {},
+      "<html><body><p>skeleton</p></body></html>"
+     ]
+    ]
+   },
+   "records": [
+    {
+     "id": "nv-a1",
+     "title": "Tins\u00e2m",
+     "body": "T\u00f3m t\u1eaft Th\u00e2n b\u00e0i",
+     "url": "http://samsam.net.vn/vi/news/tin/a1.html",
+     "published_at": "2026-10-01"
+    }
+   ],
+   "log": [
+    "[warn] netvn:news http://samsam.net.vn/vi/news/tin/a1.html: trang r\u1ed7ng, retry 1",
+    "[warn] netvn:news http://samsam.net.vn/vi/news/tin/a2.html: trang r\u1ed7ng, retry 1",
+    "[warn] netvn:news http://samsam.net.vn/vi/news/tin/a2.html: trang r\u1ed7ng, retry 2",
+    "[warn] netvn:news http://samsam.net.vn/vi/news/tin/a2.html: trang r\u1ed7ng, retry 3",
+    "[warn] netvn:news http://samsam.net.vn/vi/news/tin/a2.html: kh\u00f4ng l\u1ea5y \u0111\u01b0\u1ee3c n\u1ed9i dung \u2014 b\u1ecf qua",
+    "[warn] GET http://samsam.net.vn/vi/news/tin/a3.html: Client error '404 Not Found' for url 'http://samsam.net.vn/vi/news/tin/a3.html'",
+    "For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+    "[warn] netvn:news http://samsam.net.vn/vi/news/tin/a3.html: kh\u00f4ng l\u1ea5y \u0111\u01b0\u1ee3c n\u1ed9i dung \u2014 b\u1ecf qua"
+   ],
+   "sleeps": [
+    1.0,
+    1.0,
+    8.0,
+    1.0,
+    1.0,
+    8.0,
+    1.0,
+    16.0,
+    1.0,
+    24.0,
+    1.0
+   ],
+   "requests": [
+    "http://samsam.net.vn/sitemap-vi.news.xml",
+    "http://samsam.net.vn/vi/news/tin/a1.html",
+    "http://samsam.net.vn/vi/news/tin/a1.html",
+    "http://samsam.net.vn/vi/news/tin/a2.html",
+    "http://samsam.net.vn/vi/news/tin/a2.html",
+    "http://samsam.net.vn/vi/news/tin/a2.html",
+    "http://samsam.net.vn/vi/news/tin/a3.html"
+   ]
+  },
+  {
+   "name": "nv_shop_parse_error",
+   "src": {
+    "name": "netvn:shops",
+    "type": "html",
+    "kind": "nv_shop",
+    "url": "http://samsam.net.vn/sitemap-vi.shops.xml",
+    "output": "products.jsonl"
+   },
+   "routes": {
+    "http://samsam.net.vn/sitemap-vi.shops.xml": [
+     [
+      200,
+      {},
+      "<loc>http://samsam.net.vn/vi/shops/sam/s1.html</loc><loc>http://samsam.net.vn/vi/shops/sam/s2.html</loc>"
+     ]
+    ],
+    "http://samsam.net.vn/vi/shops/sam/s1.html": [
+     [
+      200,
+      {},
+      "<html><body><h1>L\u1ed7i \u1ea3nh</h1><div id='detail'>x<img src='http://[bad/x'></div></body></html>"
+     ]
+    ],
+    "http://samsam.net.vn/vi/shops/sam/s2.html": [
+     [
+      200,
+      {
+       "Content-Type": "text/html; charset=utf-8"
+      },
+      "<html><body><h1>S\u00e2m 1 n\u0103m</h1><span itemprop='price'>1.200.000 \u0111</span><div id='detail'><p>M\u00f4 t\u1ea3</p><img src='/a.jpg'></div></body></html>"
+     ]
+    ]
+   },
+   "records": [
+    {
+     "id": "nv-s2",
+     "name": "S\u00e2m 1 n\u0103m",
+     "price_vnd": 1200000,
+     "description": "M\u00f4 t\u1ea3",
+     "url": "http://samsam.net.vn/vi/shops/sam/s2.html",
+     "images": [
+      "http://samsam.net.vn/a.jpg"
+     ]
+    }
+   ],
+   "log": [
+    "[warn] netvn:shops http://samsam.net.vn/vi/shops/sam/s1.html: Invalid IPv6 URL",
+    "[warn] netvn:shops http://samsam.net.vn/vi/shops/sam/s1.html: kh\u00f4ng l\u1ea5y \u0111\u01b0\u1ee3c n\u1ed9i dung \u2014 b\u1ecf qua"
+   ],
+   "sleeps": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "requests": [
+    "http://samsam.net.vn/sitemap-vi.shops.xml",
+    "http://samsam.net.vn/vi/shops/sam/s1.html",
+    "http://samsam.net.vn/vi/shops/sam/s2.html"
+   ]
+  },
+  {
+   "name": "sitemap_404",
+   "src": {
+    "name": "netvn:about",
+    "type": "html",
+    "kind": "nv_page",
+    "url": "http://samsam.net.vn/sitemap-vi.about.xml",
+    "output": "about.jsonl"
+   },
+   "routes": {},
+   "records": [],
+   "log": [
+    "[warn] GET http://samsam.net.vn/sitemap-vi.about.xml: Client error '404 Not Found' for url 'http://samsam.net.vn/sitemap-vi.about.xml'",
+    "For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"
+   ],
+   "sleeps": [
+    1.0
+   ],
+   "requests": [
+    "http://samsam.net.vn/sitemap-vi.about.xml"
+   ]
+  }
+ ],
+ "main": {
+  "sources": [
+   {
+    "name": "ngoclinh:products",
+    "type": "wp_api",
+    "kind": "wc_product",
+    "url": "https://samsamngoclinh.com/wp-json/wc/store/v1/products",
+    "output": "products.jsonl"
+   },
+   {
+    "name": "netvn:shops",
+    "type": "html",
+    "kind": "nv_shop",
+    "url": "http://samsam.net.vn/sitemap-vi.shops.xml",
+    "output": "products.jsonl"
+   },
+   {
+    "name": "netvn:about",
+    "type": "html",
+    "kind": "nv_page",
+    "url": "http://samsam.net.vn/sitemap-vi.about.xml",
+    "output": "about.jsonl"
+   }
+  ],
+  "routes": {
+   "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=1": [
+    [
+     200,
+     {},
+     "[{\"id\": 1, \"name\": \"S\u00e2m c\u1ee7\", \"prices\": {\"price\": \"1500000\", \"currency_minor_unit\": 0}, \"short_description\": \"<p>Ng\u1eafn</p>\", \"permalink\": \"https://samsamngoclinh.com/p/1\", \"images\": [{\"src\": \"https://x/1.jpg\"}]}, {\"id\": 2, \"name\": \"R\u01b0\u1ee3u s\u00e2m\", \"prices\": {\"price\": \"0\"}}]"
+    ]
+   ],
+   "http://samsam.net.vn/sitemap-vi.shops.xml": [
+    [
+     200,
+     {},
+     "<loc>http://samsam.net.vn/vi/shops/sam/s2.html</loc>"
+    ]
+   ],
+   "http://samsam.net.vn/vi/shops/sam/s2.html": [
+    [
+     200,
+     {},
+     "<html><body><h1>S\u00e2m 1 n\u0103m \u2028x</h1><span itemprop='price'>1.200.000 \u0111</span><div id='detail'><p>M\u00f4 t\u1ea3 \"q\"</p></div></body></html>"
+    ]
+   ]
+  },
+  "rc": 0,
+  "files": {
+   "about.jsonl": "",
+   "products.jsonl": "{\"id\": \"wc-1\", \"name\": \"S\u00e2m c\u1ee7\", \"price_vnd\": 1500000, \"description\": \"Ng\u1eafn\", \"url\": \"https://samsamngoclinh.com/p/1\", \"images\": [\"https://x/1.jpg\"]}\r\n{\"id\": \"wc-2\", \"name\": \"R\u01b0\u1ee3u s\u00e2m\", \"price_vnd\": null, \"description\": \"\", \"url\": \"\", \"images\": []}\r\n{\"id\": \"nv-s2\", \"name\": \"S\u00e2m 1 n\u0103m \u2028x\", \"price_vnd\": 1200000, \"description\": \"M\u00f4 t\u1ea3 \\\"q\\\"\", \"url\": \"http://samsam.net.vn/vi/shops/sam/s2.html\", \"images\": []}\r\n"
+  },
+  "log": [
+   "[src] ngoclinh:products -> products.jsonl",
+   "[src] ngoclinh:products: 2 records",
+   "[src] netvn:shops -> products.jsonl",
+   "[src] netvn:shops: 1 records",
+   "[src] netvn:about -> about.jsonl",
+   "[warn] GET http://samsam.net.vn/sitemap-vi.about.xml: Client error '404 Not Found' for url 'http://samsam.net.vn/sitemap-vi.about.xml'",
+   "For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+   "[src] netvn:about: 0 records",
+   "[done] products.jsonl: 3 records -> <DIR>/products.jsonl",
+   "[done] about.jsonl: 0 records -> <DIR>/about.jsonl"
+  ],
+  "sleeps": [
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "requests": [
+   "https://samsamngoclinh.com/wp-json/wc/store/v1/products?per_page=100&page=1",
+   "http://samsam.net.vn/sitemap-vi.shops.xml",
+   "http://samsam.net.vn/vi/shops/sam/s2.html",
+   "http://samsam.net.vn/sitemap-vi.about.xml"
+  ]
+ }
+}

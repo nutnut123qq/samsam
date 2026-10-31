@@ -1,0 +1,42 @@
+#!/bin/bash
+# /cycle 20 lượt 1 — full pytest r18 SAU VÁ cold-check vòng 1 (FIX1) CHIA LƯỢT: cùng số ca của `--collect-only`, cùng thứ tự file, mỗi lượt
+# một tiến trình pytest MỚI (tiến trình dài 47 phút ngày 26/10 phình RAM → tiến trình con 0xC0000142). DB test riêng
+# samsam_cycle_r18_full trên container samsam-cycle-r18b (127.0.0.1:55382), dựng bằng bản sao mkdb của harness r18.
+#   bash run_shards.sh.txt <SP> <per_file.txt> <target_per_shard>
+SP="$1"; PER="$2"; TARGET="${3:-600}"
+E=/d/code/samsam/evidence/cycle_r18_gate/fix1
+for k in $(env | grep -oE '^(PG[A-Z_]*|[A-Z_]*DATABASE_URL)=' | tr -d '='); do unset $k; done
+unset AUTH_MODE APPROVAL_ENFORCE DEPLOY LLM_KILL_FEATURES RED_ALERT_NOTIFY CONV_SAMPLE
+source "$SP/secret/env_full.sh"; export PYTHONIOENCODING=utf-8 OPENROUTER_API_KEY=""
+cd /d/code/samsam
+red() { sed -E -e 's#(postgres(ql)?://[^:/@[:space:]]+:)[^@[:space:]]+@#\1***@#g' -e 's/(password=)[^[:space:]'"'"'"]+/\1***/g'; }
+ram() { powershell -NoProfile -Command "[int]((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory/1024)" | tr -d '\r'; }
+fp() { { git diff HEAD --binary -- . ':(exclude)DONE.md' ':(exclude)CYCLE_LOOP.md'
+         git ls-files --others --exclude-standard | grep -vE '^(evidence/|\.agents/|founder/|lv2-market-top\.png)' | sort |
+           while read -r f; do echo "== $f"; cat "$f"; done; } | sha256sum | cut -c1-64; }
+# nhóm file liên tiếp tới khi ≥ TARGET ca
+awk -v t="$TARGET" '{ if (n >= t) { s++; n = 0 } print s+1, $1; n += $2 }' "$PER" > "$E/shards.txt"
+S=$(tail -1 "$E/shards.txt" | cut -d' ' -f1)
+{
+  echo "# full pytest chia lượt — $(date -Iseconds) · HEAD $(git rev-parse HEAD) · nhánh $(git rev-parse --abbrev-ref HEAD)"
+  echo "# fp mã đầu = $(fp)"
+  echo "# Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null || echo 'không chạy')"
+  echo "# collect-only: $(awk '{s+=$2} END {print s}' "$PER") ca / $(wc -l < "$PER") file → $S lượt (~$TARGET ca/lượt)"
+  python -I "$SP/preflight.py" || { echo "DỪNG: preflight lỗi"; exit 11; }
+} 2>&1 | red > "$E/full_shards.txt"
+[ "${PIPESTATUS[0]}" -ne 0 ] && exit 11
+ALL=0
+for i in $(seq 1 "$S"); do
+  files=$(awk -v i="$i" '$1 == i {print $2}' "$E/shards.txt")
+  nf=$(echo "$files" | wc -l)
+  r0=$(ram); t0=$(date +%s)
+  python -m pytest -q -ra -p no:cacheprovider $files 2>&1 | red > "$E/shard_$(printf %02d "$i").txt"
+  rc=${PIPESTATUS[0]}
+  t1=$(date +%s); r1=$(ram)
+  dll=$(grep -c "3221225794\|0xC0000142" "$E/shard_$(printf %02d "$i").txt")
+  echo "lượt $i/$S: $nf file · RAM trống $r0→$r1 MB · $((t1 - t0)) s · rc=$rc · 0xC0000142×$dll · $(tail -1 "$E/shard_$(printf %02d "$i").txt" | grep -oE '[0-9]+ (passed|failed|skipped|errors?)[^=]*' | head -1)" >> "$E/full_shards.txt"
+  [ "$rc" -ne 0 ] && ALL=1
+done
+echo "# fp mã cuối = $(fp)" >> "$E/full_shards.txt"
+echo "EXIT $ALL" >> "$E/full_shards.txt"
+exit $ALL

@@ -1,0 +1,143 @@
+"""r20 FIX1 — giả lập MÔI TRƯỜNG PYTHON của runner CI trên máy dev, KHÔNG tải/cài gì.
+
+CI chỉ có những gì `pip install -r requirements.txt` kéo về (bao đóng phụ thuộc bắc cầu, marker Linux). Máy dev có thêm
+~250 gói (PyMuPDF, paddleocr, plugin pytest...) → test import gói ngoài requirements xanh local mà đỏ trên CI (BLOCKER
+cold-check r20 vòng 1: `import fitz`). Script này:
+  1. tính bao đóng của requirements.txt từ metadata gói ĐÃ CÀI (marker đánh giá cho Linux x86_64 — như ubuntu-latest;
+     gói chỉ Windows mà bao đóng Windows cần, vd colorama, được để lại vì máy chạy là Windows — in ra để biết);
+  2. chặn = tên module top-level của MỌI gói đã cài ngoài bao đóng (trừ tên module của gói trong bao đóng, stdlib,
+     và tên ở gốc cây dự án);
+  3. ghi `<out>/blocked.json` + `<out>/sitecustomize.py` (bọc mọi finder đường dẫn: tên bị chặn → find_spec None →
+     `import` ra ModuleNotFoundError, `importlib.util.find_spec` ra None như gói vắng thật) + in danh sách plugin
+     pytest11 trong bao đóng (chạy pytest với PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 + `-p <tên>` cho đúng các plugin đó).
+Giới hạn (ghi rõ): gói THIẾU local mà CI có thì không kiểm được (in ra); `importlib.metadata` vẫn thấy gói bị chặn;
+module đã nạp bởi .pth trước sitecustomize không chặn được (in ra); tiến trình con `python -I` hoặc env không mang
+PYTHONPATH thì không bị chặn; bản gói local ≠ bản CI cài (mới nhất).
+  python -I ci_env_sim.py.txt <requirements.txt> <gốc cây dự án> <out_dir> [missing_requires.json]
+Gói THIẾU local có requires_dist trong missing_requires.json (lấy từ PyPI) được duyệt như nút ảo của bao đóng.
+"""
+import json
+import sys
+from importlib import metadata as md
+from pathlib import Path
+
+from packaging.markers import default_environment
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
+
+sys.stdout.reconfigure(encoding="utf-8")
+req_path, tree, out = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+virtual = {canonicalize_name(k): v for k, v in (json.loads(Path(sys.argv[4]).read_text(encoding="utf-8")).items()
+           if len(sys.argv) > 4 else ()) if not k.startswith("_")}
+out.mkdir(parents=True, exist_ok=True)
+
+dists = {}
+for d in md.distributions():
+    dists.setdefault(canonicalize_name(d.metadata["Name"]), d)
+
+
+def env_for(plat):
+    e = default_environment()
+    if plat == "linux":
+        e.update(sys_platform="linux", platform_system="Linux", os_name="posix", platform_machine="x86_64",
+                 platform_release="", platform_version="")
+    return e
+
+
+def top_reqs():
+    out_ = []
+    for line in req_path.read_text(encoding="utf-8").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line and not line.startswith("-"):
+            out_.append(Requirement(line))
+    return out_
+
+
+def closure(env):
+    seen, missing, queue = {}, set(), list(top_reqs())
+    while queue:
+        r = queue.pop()
+        name = canonicalize_name(r.name)
+        if name not in dists and name not in virtual:
+            missing.add(name)
+            continue
+        prev = seen.get(name)
+        if prev is not None and set(r.extras) <= prev:
+            continue
+        seen[name] = (prev or set()) | set(r.extras)
+        for s in (dists[name].requires or []) if name in dists else virtual[name]:
+            q = Requirement(s)
+            if q.marker is None or any(q.marker.evaluate({**env, "extra": x}) for x in {""} | seen[name]):
+                queue.append(q)
+    return set(seen), missing
+
+
+def tops(d):
+    names = set()
+    t = d.read_text("top_level.txt")
+    if t:
+        names |= {x.strip() for x in t.split()}
+    for f in d.files or []:
+        p = f.parts
+        if not p or p[0] in ("..", "__pycache__", "bin", "Scripts") or p[0].endswith((".dist-info", ".egg-info", ".data")):
+            continue
+        if len(p) > 1:
+            names.add(p[0])
+        elif p[0].endswith(".py"):
+            names.add(p[0][:-3])
+        elif p[0].endswith((".pyd", ".so")):
+            names.add(p[0].split(".")[0])
+    return {n for n in names if n.isidentifier()}
+
+
+lin, missing = closure(env_for("linux"))
+win, _ = closure(env_for("win"))
+win_only = win - lin
+allowed_d = lin | win_only
+allowed = set().union(*(tops(dists[n]) for n in allowed_d if n in dists))
+project = {p.stem if p.suffix == ".py" else p.name for p in tree.iterdir() if p.is_dir() or p.suffix == ".py"}
+blocked = set()
+for n, d in dists.items():
+    if n not in allowed_d:
+        blocked |= tops(d)
+blocked -= allowed | project | set(sys.stdlib_module_names)
+plugins = sorted(e.name for e in md.entry_points(group="pytest11")
+                 if e.dist and canonicalize_name(e.dist.metadata["Name"]) in lin)
+other_plugins = sorted(f"{e.name} ({e.dist.metadata['Name']})" for e in md.entry_points(group="pytest11")
+                       if e.dist and canonicalize_name(e.dist.metadata["Name"]) not in lin)
+(out / "blocked.json").write_text(json.dumps(sorted(blocked), ensure_ascii=False, indent=0), encoding="utf-8")
+(out / "plugins.txt").write_text(" ".join(f"-p {p}" for p in plugins), encoding="utf-8")
+(out / "sitecustomize.py").write_text('''"""ci-sim r20: chặn module ngoài bao đóng requirements.txt (xem ci_env_sim.py.txt)."""
+import json, os, sys
+from importlib.machinery import BuiltinImporter, FrozenImporter
+_B = frozenset(json.load(open(os.environ["CI_SIM_BLOCKED"], encoding="utf-8")))
+
+
+class _Filter:
+    def __init__(self, inner):
+        self._inner = inner
+
+    def find_spec(self, name, path=None, target=None):
+        if name.partition(".")[0] in _B:
+            return None
+        f = getattr(self._inner, "find_spec", None)
+        return f(name, path, target) if f else None
+
+    def __getattr__(self, a):
+        return getattr(self._inner, a)
+
+
+sys.meta_path[:] = [f if f in (BuiltinImporter, FrozenImporter) or isinstance(f, _Filter) else _Filter(f)
+                    for f in sys.meta_path]
+''', encoding="utf-8")
+print(f"# bao đóng requirements.txt (marker Linux x86_64): {len(lin)} gói đã cài")
+print("  " + " ".join(sorted(lin)))
+print(f"# chỉ bao đóng Windows cần (để lại vì máy chạy Windows; KHÔNG có trên CI): {sorted(win_only)}")
+print(f"# nút ảo (THIẾU local, phụ thuộc từ PyPI): {sorted(lin & set(virtual))}")
+print(f"# THIẾU local (CI có, không kiểm được; phụ thuộc cấp sau của chúng không biết): {sorted(missing)}")
+print(f"# gói đã cài ngoài bao đóng: {len(set(dists) - allowed_d)} · module top-level bị chặn: {len(blocked)}")
+print(f"# plugin pytest11 trong bao đóng (nạp bằng -p): {plugins} · ngoài bao đóng (tắt): {other_plugins}")
+pre = sorted(m for m in sys.modules if m.split('.')[0] not in sys.stdlib_module_names and m != "__main__")
+print(f"# module ngoài stdlib đã nạp trước sitecustomize (qua .pth — không chặn được): {pre}")
+for k in ("fitz", "yaml", "paddleocr", "psycopg2", "av", "pytest_asyncio", "langsmith", "PIL", "psycopg", "httpx"):
+    print(f"  {k}: {'CHẶN' if k in blocked else 'cho'}")

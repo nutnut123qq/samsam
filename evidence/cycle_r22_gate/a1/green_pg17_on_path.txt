@@ -1,0 +1,229 @@
+# GREEN A1 — sau khi sửa scripts/db_backup.py, 2026-10-31T00:16:41+07:00; cùng server/DB như RED
+# git: dbf5d2e + diff làm việc; sha256 scripts/db_backup.py = 2a9e0ea0d7726adb
+## lượt 1: PATH có C:/Program Files/PostgreSQL/17/bin đứng đầu (pg_restore (PostgreSQL) 17.6)
+$ PATH="/c/Program Files/PostgreSQL/17/bin:$PATH" python -c '<in nhãn resolve_tool>'
+# resolve_tool('pg_dump', 16) -> docker:postgres:16-alpine
+# resolve_tool('pg_restore', 16) -> docker:postgres:16-alpine
+$ PATH="/c/Program Files/PostgreSQL/17/bin:$PATH" python -m pytest -q -rA tests/test_db_backup.py::test_encrypted_backup_and_drill tests/test_db_backup.py::test_drill_ok_and_dropped tests/test_db_backup.py::test_drill_mismatch_still_drops
+...                                                                      [100%]
+=================================== PASSES ====================================
+_______________________ test_encrypted_backup_and_drill _______________________
+---------------------------- Captured stdout call -----------------------------
+[done] r22_a1_20261031_001849_vn.dump.enc — 629472 bytes, sha256 9730f4e5b4eaf65f…, tool docker:postgres:16-alpine, 100 bảng
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+[evidence] đã ghi bằng chứng đầu ra vào DB (file_output_evidence)
+  ad_test_plans          manifest=      0 thực tế=      0  khớp
+  affiliate_attributions manifest=      0 thực tế=      0  khớp
+  affiliate_codes        manifest=      0 thực tế=      0  khớp
+  agent_action_log       manifest=      0 thực tế=      0  khớp
+  allocation_proposals   manifest=      0 thực tế=      0  khớp
+  anchor_batches         manifest=      0 thực tế=      0  khớp
+  anchor_receipts        manifest=      0 thực tế=      0  khớp
+  approval_queue         manifest=      0 thực tế=      0  khớp
+  approvals              manifest=      0 thực tế=      0  khớp
+  assets                 manifest=    219 thực tế=    219  khớp
+  audit_runs             manifest=      0 thực tế=      0  khớp
+  auto_policies          manifest=      0 thực tế=      0  khớp
+  b2b_quote_events       manifest=      0 thực tế=      0  khớp
+  b2b_requests           manifest=      0 thực tế=      0  khớp
+  bom_combos             manifest=      0 thực tế=      0  khớp
+  bom_items              manifest=      0 thực tế=      0  khớp
+  care_purchases         manifest=      0 thực tế=      0  khớp
+  channel_posts          manifest=      0 thực tế=      0  khớp
+  channel_snapshots      manifest=      0 thực tế=      0  khớp
+  chat_consents          manifest=      0 thực tế=      0  khớp
+  chat_kpi_facts         manifest=      0 thực tế=      0  khớp
+  chat_kpi_live          manifest=      0 thực tế=      0  khớp
+  chunks                 manifest=      0 thực tế=      0  khớp
+  chunks_internal        manifest=      0 thực tế=      0  khớp
+  claims_approved        manifest=     22 thực tế=     22  khớp
+  cogs_versions          manifest=      0 thực tế=      0  khớp
+  competitor_observations manifest=      0 thực tế=      0  khớp
+  consents               manifest=      0 thực tế=      0  khớp
+  contacts               manifest=      0 thực tế=      0  khớp
+  content_drafts         manifest=      0 thực tế=      0  khớp
+  dealer_ar              manifest=      0 thực tế=      0  khớp
+  dealer_price_obs       manifest=      0 thực tế=      0  khớp
+  dealers                manifest=      0 thực tế=      0  khớp
+  decision_log           manifest=      0 thực tế=      0  khớp
+  decisions              manifest=      0 thực tế=      0  khớp
+  document_fields        manifest=      0 thực tế=      0  khớp
+  documents              manifest=      0 thực tế=      0  khớp
+  eval_runs              manifest=      0 thực tế=      0  khớp
+  feature_rollout        manifest=      0 thực tế=      0  khớp
+  feature_rollout_events manifest=      0 thực tế=      0  khớp
+  file_output_evidence   manifest=      3 thực tế=      3  khớp
+  garden_media           manifest=      0 thực tế=      0  khớp
+  garden_media_releases  manifest=      0 thực tế=      0  khớp
+  garden_reminders       manifest=      0 thực tế=      0  khớp
+  garden_voice_drafts    manifest=      0 thực tế=      0  khớp
+  golden_discrepancies   manifest=     39 thực tế=     39  khớp
+  human_login_checks     manifest=      0 thực tế=      0  khớp
+  human_logins           manifest=      0 thực tế=      0  khớp
+  human_qr_roles         manifest=      0 thực tế=      0  khớp
+  image_assets           manifest=      0 thực tế=      0  khớp
+  intel_imports          manifest=      0 thực tế=      0  khớp
+  intel_items            manifest=      0 thực tế=      0  khớp
+  inventory_snapshots    manifest=      0 thực tế=      0  khớp
+  invoice_lines          manifest=      0 thực tế=      0  khớp
+  job_runs               manifest=      0 thực tế=      0  khớp
+  leads                  manifest=      0 thực tế=      0  khớp
+  llm_usage              manifest=      0 thực tế=      0  khớp
+  lot_origins            manifest=      0 thực tế=      0  khớp
+  lot_test_certificates  manifest=      0 thực tế=      0  khớp
+  market_alerts          manifest=      0 thực tế=      0  khớp
+  market_rows            manifest=      0 thực tế=      0  khớp
+  market_snapshots       manifest=      0 thực tế=      0  khớp
+  opex_entries           manifest=      0 thực tế=      0  khớp
+  ops_incident_events    manifest=      0 thực tế=      0  khớp
+  ops_incidents          manifest=      0 thực tế=      0  khớp
+  order_history          manifest=      0 thực tế=      0  khớp
+  orders                 manifest=      5 thực tế=      5  khớp
+  org_prospects          manifest=      0 thực tế=      0  khớp
+  output_reviews         manifest=      0 thực tế=      0  khớp
+  partner_post_scans     manifest=      0 thực tế=      0  khớp
+  plot_logs              manifest=      6 thực tế=      6  khớp
+  plots                  manifest=      3 thực tế=      3  khớp
+  price_list             manifest=     34 thực tế=     34  khớp
+  product_sync_log       manifest=      0 thực tế=      0  khớp
+  production_lots        manifest=      0 thực tế=      0  khớp
+  production_plan_lots   manifest=      0 thực tế=      0  khớp
+  production_plans       manifest=      0 thực tế=      0  khớp
+  products               manifest=     27 thực tế=     27  khớp
+  project_milestones     manifest=      0 thực tế=      0  khớp
+  qr_codes               manifest=      0 thực tế=      0  khớp
+  qr_signatures          manifest=      0 thực tế=      0  khớp
+  recon_results          manifest=      0 thực tế=      0  khớp
+  red_alert_acks         manifest=      0 thực tế=      0  khớp
+  red_alert_deliveries   manifest=      0 thực tế=      0  khớp
+  red_alerts             manifest=      0 thực tế=      0  khớp
+  report_outputs         manifest=      0 thực tế=      0  khớp
+  revenue_quarters       manifest=      0 thực tế=      0  khớp
+  san_suggestion_uses    manifest=      0 thực tế=      0  khớp
+  san_suggestions        manifest=      0 thực tế=      0  khớp
+  settlement_rows        manifest=      0 thực tế=      0  khớp
+  sim_runs               manifest=      0 thực tế=      0  khớp
+  sku_map                manifest=     15 thực tế=     15  khớp
+  sku_master             manifest=     13 thực tế=     13  khớp
+  sla_escalations        manifest=      0 thực tế=      0  khớp
+  social_mentions        manifest=      0 thực tế=      0  khớp
+  social_mentions_vendor manifest=      0 thực tế=      0  khớp
+  trends_related         manifest=      0 thực tế=      0  khớp
+  trends_weekly          manifest=      0 thực tế=      0  khớp
+  video_assets           manifest=      0 thực tế=      0  khớp
+  xnqc_dossiers          manifest=      0 thực tế=      0  khớp
+[drill] r22_a1_20261031_001849_vn.dump.enc → samsam_drill_test_cc0f12_enc_ok: 100/100 bảng khớp, RTO 8.92s
+[err] diễn tập lỗi: giải mã lỗi (sai passphrase?)
+_______________________ test_drill_mismatch_still_drops _______________________
+---------------------------- Captured stdout call -----------------------------
+[done] r22_a1_20261031_001915_vn.dump — 629682 bytes, sha256 d9dbfb28a8cfa664…, tool docker:postgres:16-alpine, 100 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+[evidence] đã ghi bằng chứng đầu ra vào DB (file_output_evidence)
+  ad_test_plans          manifest=      0 thực tế=      0  khớp
+  affiliate_attributions manifest=      0 thực tế=      0  khớp
+  affiliate_codes        manifest=      0 thực tế=      0  khớp
+  agent_action_log       manifest=      0 thực tế=      0  khớp
+  allocation_proposals   manifest=      0 thực tế=      0  khớp
+  anchor_batches         manifest=      0 thực tế=      0  khớp
+  anchor_receipts        manifest=      0 thực tế=      0  khớp
+  approval_queue         manifest=      0 thực tế=      0  khớp
+  approvals              manifest=      0 thực tế=      0  khớp
+  assets                 manifest=    219 thực tế=    219  khớp
+  audit_runs             manifest=      0 thực tế=      0  khớp
+  auto_policies          manifest=      0 thực tế=      0  khớp
+  b2b_quote_events       manifest=      0 thực tế=      0  khớp
+  b2b_requests           manifest=      0 thực tế=      0  khớp
+  bom_combos             manifest=      0 thực tế=      0  khớp
+  bom_items              manifest=      0 thực tế=      0  khớp
+  care_purchases         manifest=      0 thực tế=      0  khớp
+  channel_posts          manifest=      0 thực tế=      0  khớp
+  channel_snapshots      manifest=      0 thực tế=      0  khớp
+  chat_consents          manifest=      0 thực tế=      0  khớp
+  chat_kpi_facts         manifest=      0 thực tế=      0  khớp
+  chat_kpi_live          manifest=      0 thực tế=      0  khớp
+  chunks                 manifest=      0 thực tế=      0  khớp
+  chunks_internal        manifest=      0 thực tế=      0  khớp
+  claims_approved        manifest=     22 thực tế=     22  khớp
+  cogs_versions          manifest=      0 thực tế=      0  khớp
+  competitor_observations manifest=      0 thực tế=      0  khớp
+  consents               manifest=      0 thực tế=      0  khớp
+  contacts               manifest=      0 thực tế=      0  khớp
+  content_drafts         manifest=      0 thực tế=      0  khớp
+  dealer_ar              manifest=      0 thực tế=      0  khớp
+  dealer_price_obs       manifest=      0 thực tế=      0  khớp
+  dealers                manifest=      0 thực tế=      0  khớp
+  decision_log           manifest=      0 thực tế=      0  khớp
+  decisions              manifest=      0 thực tế=      0  khớp
+  document_fields        manifest=      0 thực tế=      0  khớp
+  documents              manifest=      0 thực tế=      0  khớp
+  eval_runs              manifest=      0 thực tế=      0  khớp
+  feature_rollout        manifest=      0 thực tế=      0  khớp
+  feature_rollout_events manifest=      0 thực tế=      0  khớp
+  file_output_evidence   manifest=      5 thực tế=      5  khớp
+  garden_media           manifest=      0 thực tế=      0  khớp
+  garden_media_releases  manifest=      0 thực tế=      0  khớp
+  garden_reminders       manifest=      0 thực tế=      0  khớp
+  garden_voice_drafts    manifest=      0 thực tế=      0  khớp
+  golden_discrepancies   manifest=     39 thực tế=     39  khớp
+  human_login_checks     manifest=      0 thực tế=      0  khớp
+  human_logins           manifest=      0 thực tế=      0  khớp
+  human_qr_roles         manifest=      0 thực tế=      0  khớp
+  image_assets           manifest=      0 thực tế=      0  khớp
+  intel_imports          manifest=      0 thực tế=      0  khớp
+  intel_items            manifest=      0 thực tế=      0  khớp
+  inventory_snapshots    manifest=      0 thực tế=      0  khớp
+  invoice_lines          manifest=      0 thực tế=      0  khớp
+  job_runs               manifest=      0 thực tế=      0  khớp
+  leads                  manifest=      0 thực tế=      0  khớp
+  llm_usage              manifest=      0 thực tế=      0  khớp
+  lot_origins            manifest=      0 thực tế=      0  khớp
+  lot_test_certificates  manifest=      0 thực tế=      0  khớp
+  market_alerts          manifest=      0 thực tế=      0  khớp
+  market_rows            manifest=      0 thực tế=      0  khớp
+  market_snapshots       manifest=      0 thực tế=      0  khớp
+  opex_entries           manifest=      0 thực tế=      0  khớp
+  ops_incident_events    manifest=      0 thực tế=      0  khớp
+  ops_incidents          manifest=      0 thực tế=      0  khớp
+  order_history          manifest=      0 thực tế=      0  khớp
+  orders                 manifest=      5 thực tế=      5  khớp
+  org_prospects          manifest=      0 thực tế=      0  khớp
+  output_reviews         manifest=      0 thực tế=      0  khớp
+  partner_post_scans     manifest=      0 thực tế=      0  khớp
+  plot_logs              manifest=      6 thực tế=      6  khớp
+  plots                  manifest=      3 thực tế=      3  khớp
+  price_list             manifest=     34 thực tế=     34  khớp
+  product_sync_log       manifest=      0 thực tế=      0  khớp
+  production_lots        manifest=      0 thực tế=      0  khớp
+  production_plan_lots   manifest=      0 thực tế=      0  khớp
+  production_plans       manifest=      0 thực tế=      0  khớp
+  products               manifest=     28 thực tế=     27  LỆCH
+  project_milestones     manifest=      0 thực tế=      0  khớp
+  qr_codes               manifest=      0 thực tế=      0  khớp
+  qr_signatures          manifest=      0 thực tế=      0  khớp
+  recon_results          manifest=      0 thực tế=      0  khớp
+  red_alert_acks         manifest=      0 thực tế=      0  khớp
+  red_alert_deliveries   manifest=      0 thực tế=      0  khớp
+  red_alerts             manifest=      0 thực tế=      0  khớp
+  report_outputs         manifest=      0 thực tế=      0  khớp
+  revenue_quarters       manifest=      0 thực tế=      0  khớp
+  san_suggestion_uses    manifest=      0 thực tế=      0  khớp
+  san_suggestions        manifest=      0 thực tế=      0  khớp
+  settlement_rows        manifest=      0 thực tế=      0  khớp
+  sim_runs               manifest=      0 thực tế=      0  khớp
+  sku_map                manifest=     15 thực tế=     15  khớp
+  sku_master             manifest=     13 thực tế=     13  khớp
+  sla_escalations        manifest=      0 thực tế=      0  khớp
+  social_mentions        manifest=      0 thực tế=      0  khớp
+  social_mentions_vendor manifest=      0 thực tế=      0  khớp
+  trends_related         manifest=      0 thực tế=      0  khớp
+  trends_weekly          manifest=      0 thực tế=      0  khớp
+  video_assets           manifest=      0 thực tế=      0  khớp
+  xnqc_dossiers          manifest=      0 thực tế=      0  khớp
+[drill] r22_a1_20261031_001915_vn.dump → samsam_drill_test_cc0f12_mismatch: 99/100 bảng khớp, RTO 7.73s
+=========================== short test summary info ===========================
+PASSED tests/test_db_backup.py::test_encrypted_backup_and_drill
+PASSED tests/test_db_backup.py::test_drill_ok_and_dropped
+PASSED tests/test_db_backup.py::test_drill_mismatch_still_drops
+3 passed in 38.92s
+# exit=0

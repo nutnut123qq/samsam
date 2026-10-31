@@ -1,0 +1,64 @@
+{
+  "realm": "samsam",
+  "displayName": "Sâm Sâm",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "editUsernameAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "passwordPolicy": "length(12) and notUsername and notEmail",
+  "roles": {
+    "realm": [
+      { "name": "tgd", "description": "Tổng giám đốc" },
+      { "name": "phap_che", "description": "Pháp chế" },
+      { "name": "gd_ban_hang", "description": "Giám đốc bán hàng" },
+      { "name": "gd_marketing", "description": "Giám đốc marketing" },
+      { "name": "mxh", "description": "Quản lý mạng xã hội" },
+      { "name": "ha_tang", "description": "Hạ tầng / Quản lý AI" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "samsam-web",
+      "name": "Web nội bộ Sâm Sâm",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${SAMSAM_WEB_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": ["${SAMSAM_WEB_ORIGIN}/api/auth/callback"],
+      "webOrigins": ["${SAMSAM_WEB_ORIGIN}"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${SAMSAM_WEB_ORIGIN}/login"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-samsam-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "samsam-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ]
+}

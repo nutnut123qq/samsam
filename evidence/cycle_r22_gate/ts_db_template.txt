@@ -1,0 +1,19 @@
+
+> db:template
+> tsx packages/core/src/testing/setup-template.ts
+
+[0] python scripts/apply_schema.py --roles
+[done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_quote_events, b2b_requests, bom_combos, bom_items, care_purchases, channel_posts, channel_snapshots, chat_consents, chat_kpi_facts, chat_kpi_live, chunks, chunks_in
+[0] python scripts/apply_schema.py --roles
+[done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_quote_events, b2b_requests, bom_combos, bom_items, care_purchases, channel_posts, channel_snapshots, chat_consents, chat_kpi_facts, chat_kpi_live, chunks, chunks_in
+[0] python -m ingest.core_store
+[load] assets: 219 rows
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[0] python -m ingest.golden_store
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[0] python scripts/apply_schema.py --pgvector
+[done] schema applied — 100 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_quote_events, b2b_requests, bom_combos, bom_items, care_purchases, channel_posts, channel_snapshots, chat_consents, chat_kpi_facts, chat_kpi_live, chunks, chunks_in
+[done] docs/schema_ts.sql
+[done] DB mẫu samsam_ts_tpl sẵn sàng
+EXIT 0

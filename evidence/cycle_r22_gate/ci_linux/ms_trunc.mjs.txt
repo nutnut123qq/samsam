@@ -1,0 +1,16 @@
+// Cơ chế lỗi rollout.db trên runner Linux: dòng ghi và mốc now() trong CÙNG ms → Date JS cắt µs → mốc < created_at.
+// Ép "cùng thời điểm" tất định bằng 1 transaction (now() hằng trong tx). Chỉ dùng bảng TẠM.
+import { createRequire } from 'node:module';
+const pg = createRequire(process.env.PG_FROM)('pg');
+const c = new pg.Client({ connectionString: process.env.TS_TEST_ADMIN_URL });
+await c.connect();
+await c.query('begin');
+await c.query('create temp table w (created_at timestamptz default now())');
+await c.query('insert into w default values');
+const t = (await c.query('select now() as t')).rows[0].t;
+const cut = (await c.query('select count(*)::int n from w where created_at <= $1', [t])).rows[0].n;
+const fix = (await c.query('select count(*)::int n from w where created_at <= $1', [new Date(t.getTime() + 1)])).rows[0].n;
+const us = (await c.query("select extract(microseconds from now())::int % 1000 as r")).rows[0].r;
+await c.query('rollback');
+await c.end();
+console.log(`µs dư trong ms = ${us}; mốc cắt ms: đếm ${cut} dòng | mốc +1 ms: đếm ${fix} dòng`);
