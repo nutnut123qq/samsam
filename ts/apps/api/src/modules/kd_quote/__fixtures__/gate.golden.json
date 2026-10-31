@@ -1,0 +1,135 @@
+{
+ "names": [
+  "ruou-sam-chai-thuy-tinh-500ml",
+  "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml",
+  "ruou-sam-binh-su-do-500ml",
+  "R\u01b0\u1ee3u s\u00e2m b\u00ecnh s\u1ee9 \u0111\u1ecf 500ml"
+ ],
+ "alcohol_names_real": [
+  "ruou-sam-chai-thuy-tinh-500ml",
+  "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml",
+  "ruou-sam-binh-su-do-500ml",
+  "R\u01b0\u1ee3u s\u00e2m b\u00ecnh s\u1ee9 \u0111\u1ecf 500ml"
+ ],
+ "readiness_real": {
+  "savina-12v\u0000web": "CAM",
+  "saphraton-20v\u0000web": "CAM",
+  "saphraton-combo-2x20v\u0000web": "CAM",
+  "saphraton-40v\u0000web": "CAM",
+  "saphraton-80v\u0000web": "CAM",
+  "savigout-30v\u0000web": "CAM",
+  "sapentol-30v\u0000web": "CAM",
+  "da-an-sam-30v\u0000web": "CAM",
+  "mat-ong-sam-120ml-1hu\u0000web": "CAM",
+  "mat-ong-sam-120ml-2hu\u0000web": "CAM",
+  "mat-ong-sam-300ml\u0000web": "CAM",
+  "ruou-sam-chai-thuy-tinh-500ml\u0000web": "CAM",
+  "ruou-sam-binh-su-do-500ml\u0000web": "CAM"
+ },
+ "readiness_mau": {
+  "savina-12v\u0000web": "QC_DAY_DU",
+  "saphraton-20v\u0000web": "CAM",
+  "saphraton-combo-2x20v\u0000web": "CAM",
+  "saphraton-40v\u0000web": "CAM",
+  "saphraton-80v\u0000web": "CAM",
+  "savigout-30v\u0000web": "CAM",
+  "sapentol-30v\u0000web": "CAM",
+  "da-an-sam-30v\u0000web": "CAM",
+  "mat-ong-sam-120ml-1hu\u0000web": "CAM",
+  "mat-ong-sam-120ml-2hu\u0000web": "CAM",
+  "mat-ong-sam-300ml\u0000web": "CAM",
+  "ruou-sam-chai-thuy-tinh-500ml\u0000web": "CAM",
+  "ruou-sam-binh-su-do-500ml\u0000web": "CAM"
+ },
+ "cases": {
+  "ruou-ten": {
+   "payload": "# B\u00e1o gi\u00e1\n\nR\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml\n",
+   "ids": [],
+   "post": [
+    "guardrail:ruou_cam_quang_cao",
+    "ruou"
+   ],
+   "ads": [
+    "guardrail:ruou_cam_quang_cao",
+    "guardrail:thieu_nhan_quang_cao",
+    "ruou"
+   ]
+  },
+  "pii-sdt": {
+   "payload": "# B\u00e1o gi\u00e1\n\nG\u1ecdi 0905 123 456\n",
+   "ids": [],
+   "post": [
+    "guardrail:pii_ca_nhan",
+    "pii"
+   ],
+   "ads": [
+    "guardrail:pii_ca_nhan",
+    "guardrail:thieu_nhan_quang_cao",
+    "pii"
+   ]
+  },
+  "pii-ma-he-thong": {
+   "payload": "# B\u00e1o gi\u00e1 BG-20261012-84-01234567\n",
+   "ids": [],
+   "post": [
+    "guardrail:pii_ca_nhan",
+    "pii"
+   ],
+   "ads": [
+    "guardrail:pii_ca_nhan",
+    "guardrail:thieu_nhan_quang_cao",
+    "pii"
+   ]
+  },
+  "ma-he-thong-ids": {
+   "payload": "# B\u00e1o gi\u00e1 BG-20261012-84-01234567\n",
+   "ids": [
+    "BG-20261012-84-01234567"
+   ],
+   "post": [
+    "guardrail:pii_ca_nhan"
+   ],
+   "ads": [
+    "guardrail:pii_ca_nhan",
+    "guardrail:thieu_nhan_quang_cao"
+   ]
+  },
+  "ids-rong": {
+   "payload": "# B\u00e1o gi\u00e1 BG-20261012-84-01234567\n",
+   "ids": [
+    "",
+    null
+   ],
+   "post": [
+    "guardrail:pii_ca_nhan",
+    "pii"
+   ],
+   "ads": [
+    "guardrail:pii_ca_nhan",
+    "guardrail:thieu_nhan_quang_cao",
+    "pii"
+   ]
+  },
+  "sach": {
+   "payload": "# B\u00e1o gi\u00e1\n\nM\u1eadt ong s\u00e2m 120ml.\n",
+   "ids": [],
+   "post": [],
+   "ads": [
+    "guardrail:thieu_nhan_quang_cao"
+   ]
+  },
+  "email": {
+   "payload": "# B\u00e1o gi\u00e1\n\nG\u1eedi a.b@example.com\n",
+   "ids": [],
+   "post": [
+    "guardrail:pii_ca_nhan",
+    "pii"
+   ],
+   "ads": [
+    "guardrail:pii_ca_nhan",
+    "guardrail:thieu_nhan_quang_cao",
+    "pii"
+   ]
+  }
+ }
+}

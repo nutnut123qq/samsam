@@ -1,0 +1,5 @@
+        assert call(base + "/stt", WAV) == (200, {"ok": True, "text": "KV-A01 tưới"})
+>       assert path.endswith("audio.wav") and bad == []
+E       AssertionError: assert (True and ['DATABASE_URL', 'PGPASSWORD'] == []
+E         Left contains 2 more items, first extra item: 'DATABASE_URL'
+1 failed, 30 deselected in 1.96s

@@ -1,0 +1,71 @@
+
+ RUN  v5.0.5 D:/code/samsam/ts
+
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22952) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+error: unknown option '--khong-co'
+[err] error: unknown option '--khong-co'
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ apps/api/src/modules/mkt_koc_ugc_seo/mkt-koc.test.ts (74 tests | 1 failed) 777ms
+   ❯ mkt_koc — danh sách KOC MẪU + hợp đồng (golden Python) (36)
+     × load_contract: trong repo đọc được; ngoài repo / thiếu / sai đuôi → lỗi 18ms
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  apps/api/src/modules/mkt_koc_ugc_seo/mkt-koc.test.ts > mkt_koc — danh sách KOC MẪU + hợp đồng (golden Python) > load_contract: trong repo đọc được; ngoài repo / thiếu / sai đuôi → lỗi
+AssertionError: expected [ 'AGENTS.md', true, …(2) ] to deeply equal [ 'AGENTS.md', true, …(2) ]
+
+- Expected
++ Received
+
+  [
+    "AGENTS.md",
+    true,
+-   "2365e01e315d99874a556a008b5b4d7ec2dd782eacda6b1ed91ae0e3c329e1d6",
++   "ae35f49b88b4b78388ca4f27c87291678cad0f7f390ad210ba85007729dac172",
+    null,
+  ]
+
+ ❯ apps/api/src/modules/mkt_koc_ugc_seo/mkt-koc.test.ts:94:48
+     92|     for (const c of G.contracts) {
+     93|       const [text, sha, err] = mk.loadContract(c.rel);
+     94|       expect([c.rel, text !== null, sha, err]).toEqual([c.rel, c.has_t…
+       |                                                ^
+     95|     }
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 193 passed | 1 skipped (195)
+      Tests  1 failed | 5947 passed | 9 skipped (5957)
+   Start at  03:40:32
+   Duration  815.70s (tests 59%, import 39%, transform 2%)
+
+    Isolate  195 workers spawned · ~241ms startup each (spawn + environment, per file)
+             at least ~46.71s faster with isolate: false — reuses workers across files instead of one per file
+
+EXIT 1

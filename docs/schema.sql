@@ -6903,3 +6903,44 @@ begin
 end $$;
 revoke execute on function plot_log_add_human(text, timestamptz, text, text, text)
   from public;
+
+-- ===== r22 A2: login webhook ghi nhật ký vườn qua Zalo — chốt nguồn/tác giả =====
+-- roles.sql (khối svc_webhook) cấp INSERT theo cột plot_logs/garden_media/
+-- garden_voice_drafts cho tiến trình webhook (`connectors/zalo_garden.py`, TS
+-- `garden_zalo`). Grant cột không ràng buộc giá trị, còn `person_login_guard`
+-- chỉ xét login NGƯỜI → trigger này: login `in role svc_webhook` (không owner/
+-- superuser) CHỈ ghi được dòng của luồng Zalo vườn — source `zalo:garden` +
+-- author `zalo:<mã NV ≤32 ký tự>` (plot_logs, garden_media) / staff_code 1..32
+-- ký tự (garden_voice_drafts). Webhook bị chiếm vẫn ghi được tác giả `zalo:<chuỗi
+-- bất kỳ>` (trigger không biết danh sách mã NV), nhưng không ghi được nguồn
+-- `manual` hay tác giả thiếu tiền tố `zalo:` → dòng của nó luôn phân biệt được với
+-- nhật ký người ghi trong hash chain (QR truy xuất + neo). Sai → 42501, không ghi
+-- gì. SECURITY DEFINER vì gọi `p10_owner_login()` (đã revoke public).
+create or replace function webhook_garden_guard() returns trigger
+language plpgsql security definer set search_path from current as $$
+declare
+  j jsonb := to_jsonb(new);
+begin
+  if p10_owner_login() or not exists (select 1 from pg_roles r
+       where r.rolname = 'svc_webhook' and pg_has_role(session_user, r.oid, 'MEMBER')) then
+    return new;
+  end if;
+  -- CASE trong ngoặc: điều kiện IF của plpgsql dừng ở THEN đầu tiên cùng mức ngoặc.
+  if j->>'source' is distinct from 'zalo:garden'
+     or (case when tg_table_name = 'garden_voice_drafts'
+          then char_length(btrim(coalesce(j->>'staff_code', ''))) not between 1 and 32
+          else coalesce(j->>'author', '') !~ '^zalo:\S' or char_length(j->>'author') > 37
+        end) then
+    raise exception 'login webhook (svc_webhook) chỉ ghi % nguồn zalo:garden, tác giả zalo:<mã NV> — từ chối',
+      tg_table_name using errcode = '42501';
+  end if;
+  return new;
+end $$;
+revoke execute on function webhook_garden_guard() from public;
+
+create or replace trigger plot_logs_webhook_guard before insert on plot_logs
+  for each row execute function webhook_garden_guard();
+create or replace trigger garden_media_webhook_guard before insert on garden_media
+  for each row execute function webhook_garden_guard();
+create or replace trigger garden_voice_drafts_webhook_guard before insert on garden_voice_drafts
+  for each row execute function webhook_garden_guard();

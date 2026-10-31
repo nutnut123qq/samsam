@@ -1,0 +1,32 @@
+
+ RUN  v5.0.5 D:/code/samsam/ts
+
+ ❯ apps/api/src/modules/mkt_koc_ugc_seo/mkt-koc.test.ts (74 tests | 1 failed | 73 skipped) 18ms
+   ❯ mkt_koc — danh sách KOC MẪU + hợp đồng (golden Python) (36)
+     × load_contract: trong repo đọc được; ngoài repo / thiếu / sai đuôi → lỗi 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  apps/api/src/modules/mkt_koc_ugc_seo/mkt-koc.test.ts > mkt_koc — danh sách KOC MẪU + hợp đồng (golden Python) > load_contract: trong repo đọc được; ngoài repo / thiếu / sai đuôi → lỗi
+AssertionError: expected '04a99c9368d9250ecd92e1f080fc5c3d87df4…' to be '4598f2196c05bf611f9e59426089827ae12b6…' // Object.is equality
+
+Expected: "4598f2196c05bf611f9e59426089827ae12b670fcfa9939e34e42347e8081431"
+Received: "04a99c9368d9250ecd92e1f080fc5c3d87df4dd5816082e2b2d4c05ffec87bc5"
+
+ ❯ apps/api/src/modules/mkt_koc_ugc_seo/mkt-koc.test.ts:97:19
+     95|       expect([c.rel, text !== null, err]).toEqual([c.rel, c.has_text, …
+     96|       // sha = sha256 chữ (như Python) — đổi theo nội dung AGENTS.md v…
+     97|       expect(sha).toBe(text === null ? null : createHash('sha256').upd…
+       |                   ^
+     98|     }
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 73 skipped (74)
+   Start at  03:56:26
+   Duration  2.43s (import 88%, transform 11%, tests 1%)
+
+EXIT 1

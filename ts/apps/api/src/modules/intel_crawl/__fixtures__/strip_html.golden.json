@@ -1,0 +1,200 @@
+[
+ [
+  "<p>a<script>var x=1</script>b<style>.c{}</style><!--cm-->c<![CDATA[dd]]> &amp &ampx &nbsp;e&#99;&#x63;&#147;&#0;&#1114112;&dstrok;&notit;&notin; </p><template>tt</template>",
+  {
+   "ok": "a b c dd & &ampx ecc\u201c\u0000\ufffd\u0111&notit\u2209"
+  }
+ ],
+ [
+  "a < b > c",
+  {
+   "ok": "a < b > c"
+  }
+ ],
+ [
+  "<a href=\"x\">l</a>&#99",
+  {
+   "ok": "l &#99"
+  }
+ ],
+ [
+  "x<br/>y<b>z</b >w</ b>q",
+  {
+   "ok": "x y z w q"
+  }
+ ],
+ [
+  "<?php x ?>t<!DOCTYPE html>u",
+  {
+   "ok": "t u"
+  }
+ ],
+ [
+  "a&#;b<b>c</b>",
+  {
+   "ok": "a&#;b c"
+  }
+ ],
+ [
+  "&#;x&#;<b>y</b>",
+  {
+   "ok": "&#;x&#;<b>y</b>"
+  }
+ ],
+ [
+  "a &#b <i>x</i>",
+  {
+   "ok": "a &#b <i>x</i>"
+  }
+ ],
+ [
+  "Tin t\u1ee9c s\u00e2m: &#99;h\u1eefa b\u1ec7nh",
+  {
+   "ok": "Tin t\u1ee9c s\u00e2m: ch\u1eefa b\u1ec7nh"
+  }
+ ],
+ [
+  "Tin &amp; s\u00e2m <b>Ng\u1ecdc Linh</b>   gi\u1ea3",
+  {
+   "ok": "Tin & s\u00e2m Ng\u1ecdc Linh gi\u1ea3"
+  }
+ ],
+ [
+  "<div>a<![CDATA[b]]><script>c</script><template>t<![CDATA[u]]></template></div>",
+  {
+   "ok": "a b u"
+  }
+ ],
+ [
+  "<p class='x'>M\u1ed9t\n\n  hai\tba</p><p>b\u1ed1n</p>",
+  {
+   "ok": "M\u1ed9t hai ba b\u1ed1n"
+  }
+ ],
+ [
+  "<ruby>\u6f22<rt>kan</rt></ruby>",
+  {
+   "ok": "\u6f22"
+  }
+ ],
+ [
+  "<SCRIPT>bad</SCRIPT >ok</script>",
+  {
+   "ok": "ok"
+  }
+ ],
+ [
+  "<style>a</b></style>z",
+  {
+   "ok": "z"
+  }
+ ],
+ [
+  "<![if !supportLists]>x<![endif]>y",
+  {
+   "ok": "x y"
+  }
+ ],
+ [
+  "<div><p>a</div>b</p>c",
+  {
+   "ok": "a b c"
+  }
+ ],
+ [
+  "<img src=x alt='a&amp;b'><br>tail",
+  {
+   "ok": "tail"
+  }
+ ],
+ [
+  "&lt;p&gt;To\u00e0n v\u0103n&lt;/p&gt;",
+  {
+   "ok": "<p>To\u00e0n v\u0103n</p>"
+  }
+ ],
+ [
+  "x <a",
+  {
+   "ok": "x <a"
+  }
+ ],
+ [
+  "x </a",
+  {
+   "ok": "x </a"
+  }
+ ],
+ [
+  "<a b='c",
+  {
+   "ok": "<a b='c"
+  }
+ ],
+ [
+  "&amp",
+  {
+   "ok": "&amp"
+  }
+ ],
+ [
+  "&Aacute&aacute;&AMP;&eacute&#x1F600;&#128512;",
+  {
+   "ok": "\u00c1\u00e1&\u00e9\ud83d\ude00\ud83d\ude00"
+  }
+ ],
+ [
+  "<p>\u00a0a\u2028b\u3000c</p>",
+  {
+   "ok": "a b c"
+  }
+ ],
+ [
+  "<<b>>x",
+  {
+   "ok": "< >x"
+  }
+ ],
+ [
+  "<!-- unclosed",
+  {
+   "ok": "<!-- unclosed"
+  }
+ ],
+ [
+  "a<!--b--!>c-->d",
+  {
+   "ok": "a d"
+  }
+ ],
+ [
+  "<!ELEMENT x>y",
+  {
+   "ok": "y"
+  }
+ ],
+ [
+  "<!>z",
+  {
+   "ok": "z"
+  }
+ ],
+ [
+  "</>w",
+  {
+   "ok": "w"
+  }
+ ],
+ [
+  "<p/>v",
+  {
+   "ok": "v"
+  }
+ ],
+ [
+  "<input disabled>u</input>v",
+  {
+   "ok": "uv"
+  }
+ ]
+]

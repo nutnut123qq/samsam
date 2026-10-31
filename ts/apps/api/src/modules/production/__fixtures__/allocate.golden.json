@@ -1,0 +1,8112 @@
+{
+ "assumptions": {
+  "_doc": "Gi\u1ea3 \u0111\u1ecbnh k\u1ecbch b\u1ea3n m\u00f9a cho pipelines/scenario.py (v7.3, WP09). GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t: h\u1ec7 s\u1ed1 xu h\u01b0\u1edbng (trend), h\u1ec7 s\u1ed1 s\u1ef1 ki\u1ec7n 11.11 / 12.12 / T\u1ebft \u00c2m l\u1ecbch 2027 v\u00e0 3 m\u1ee9c th\u1ea5p/c\u01a1 s\u1edf/cao \u0111\u1ec1u l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai. baseline_units_per_week l\u00e0 FIXTURE (\u0111\u01a1n v\u1ecb b\u00e1n/tu\u1ea7n theo SKU \u00d7 k\u00eanh), KH\u00d4NG ph\u1ea3i s\u1ed1 b\u00e1n th\u1eadt \u2014 thay b\u1eb1ng s\u1ed1 G\u0110 b\u00e1n h\u00e0ng cung c\u1ea5p (external-dep). K\u00eanh 'offline' = \u0111\u1ea1i l\u00fd/c\u1eeda h\u00e0ng. R\u01b0\u1ee3u kh\u00f4ng c\u00f3 baseline k\u00eanh online (engine lu\u00f4n tr\u1ea3 0 k\u00eanh online cho r\u01b0\u1ee3u). window.offset t\u00ednh theo TU\u1ea6N (th\u1ee9 Hai) ch\u1ee9a ng\u00e0y s\u1ef1 ki\u1ec7n: 0 = tu\u1ea7n s\u1ef1 ki\u1ec7n, -1 = tu\u1ea7n tr\u01b0\u1edbc. M\u1ed7i d\u00f2ng window v\u00e0 trend ph\u1ea3i tho\u1ea3 low <= base <= high. S\u1ef1 ki\u1ec7n ch\u1ed3ng tu\u1ea7n l\u1ea5y MAX, kh\u00f4ng nh\u00e2n. events[].channels (tu\u1ef3 ch\u1ecdn) = k\u00eanh s\u1ef1 ki\u1ec7n \u00e1p d\u1ee5ng, thi\u1ebfu = m\u1ecdi k\u00eanh: 11.11/12.12 l\u00e0 ng\u00e0y sale s\u00e0n -> ch\u1ec9 k\u00eanh online, kh\u00f4ng nh\u00e2n c\u1ea7u \u0111\u1ea1i l\u00fd offline; T\u1ebft \u00e1p m\u1ecdi k\u00eanh.",
+  "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t",
+  "trend": {
+   "low": 0.85,
+   "base": 1.0,
+   "high": 1.15
+  },
+  "baseline_units_per_week": {
+   "savina-12v": {
+    "shopee": 6,
+    "offline": 4
+   },
+   "saphraton-20v": {
+    "shopee": 12,
+    "offline": 8
+   },
+   "saphraton-combo-2x20v": {
+    "shopee": 4,
+    "offline": 2
+   },
+   "saphraton-40v": {
+    "offline": 5
+   },
+   "saphraton-80v": {
+    "shopee": 3,
+    "offline": 3
+   },
+   "savigout-30v": {
+    "shopee": 5,
+    "offline": 3
+   },
+   "sapentol-30v": {
+    "shopee": 4,
+    "offline": 3
+   },
+   "da-an-sam-30v": {
+    "shopee": 5,
+    "offline": 2
+   },
+   "mat-ong-sam-120ml-1hu": {
+    "shopee": 15,
+    "offline": 10
+   },
+   "mat-ong-sam-120ml-2hu": {
+    "shopee": 6,
+    "offline": 4
+   },
+   "mat-ong-sam-300ml": {
+    "shopee": 8,
+    "offline": 6
+   },
+   "ruou-sam-chai-thuy-tinh-500ml": {
+    "offline": 6
+   },
+   "ruou-sam-binh-su-do-500ml": {
+    "offline": 3
+   }
+  },
+  "events": [
+   {
+    "id": "11.11",
+    "date": "2026-11-11",
+    "channels": [
+     "shopee",
+     "tiktok",
+     "web",
+     "facebook",
+     "zalo",
+     "chatbot"
+    ],
+    "window": [
+     {
+      "offset": -1,
+      "low": 1.0,
+      "base": 1.1,
+      "high": 1.25
+     },
+     {
+      "offset": 0,
+      "low": 1.3,
+      "base": 1.8,
+      "high": 2.5
+     }
+    ]
+   },
+   {
+    "id": "12.12",
+    "date": "2026-12-12",
+    "channels": [
+     "shopee",
+     "tiktok",
+     "web",
+     "facebook",
+     "zalo",
+     "chatbot"
+    ],
+    "window": [
+     {
+      "offset": 0,
+      "low": 1.2,
+      "base": 1.5,
+      "high": 2.0
+     }
+    ]
+   },
+   {
+    "id": "tet_2027",
+    "lunar_new_year": 2027,
+    "window": [
+     {
+      "offset": -6,
+      "low": 1.05,
+      "base": 1.2,
+      "high": 1.4
+     },
+     {
+      "offset": -5,
+      "low": 1.15,
+      "base": 1.4,
+      "high": 1.7
+     },
+     {
+      "offset": -4,
+      "low": 1.3,
+      "base": 1.7,
+      "high": 2.1
+     },
+     {
+      "offset": -3,
+      "low": 1.5,
+      "base": 2.0,
+      "high": 2.6
+     },
+     {
+      "offset": -2,
+      "low": 1.6,
+      "base": 2.2,
+      "high": 2.9
+     },
+     {
+      "offset": -1,
+      "low": 1.3,
+      "base": 1.8,
+      "high": 2.4
+     },
+     {
+      "offset": 0,
+      "low": 0.4,
+      "base": 0.6,
+      "high": 0.8
+     },
+     {
+      "offset": 1,
+      "low": 0.5,
+      "base": 0.7,
+      "high": 0.9
+     }
+    ]
+   }
+  ]
+ },
+ "golden": {
+  "_doc": "v3.2 golden master \u2014 ngu\u1ed3n s\u1ef1 th\u1eadt DUY NH\u1ea4T cho listing/gi\u00e1/tr\u1ea1ng th\u00e1i ph\u00e1p l\u00fd SKU \u0111ang b\u00e1n. N\u1ea1p: python -m ingest.golden_store (upsert theo sku_key, kh\u00f4ng x\u00f3a SKU v\u1eafng kh\u1ecfi file). Field m\u1ed7i SKU: sku_key (slug ascii), name, category (tpbvsk|food|alcohol), pack_spec (quy c\u00e1ch \u2014 s\u1ed1 \u0111\u1ea7u ti\u00ean + \u0111\u01a1n v\u1ecb vi\u00ean|ml l\u00e0 T\u1ed4NG), receipt_no/receipt_date (gi\u1ea5y ti\u1ebfp nh\u1eadn \u0110KSP, ISO date), xnqc_status (none|pending|approved), self_declaration_ok (true|false|null \u2014 null = ch\u01b0a x\u00e1c minh), allowed_channels (hi\u1ec7n tr\u1ea1ng listing, CH\u01afA ph\u1ea3i quy\u1ebft \u0111\u1ecbnh G\u0110), shopee_item_id, product_ids (\u0110\u1ec0 XU\u1ea4T map t\u1edbi products.id crawl \u2014 ch\u1edd S\u1ea3n xu\u1ea5t duy\u1ec7t), prices {k\u00eanh: {floor, list, promo}} VND nguy\u00ean (thi\u1ebfu key = ch\u01b0a c\u00f3 gi\u00e1, KH\u00d4NG \u0111o\u00e1n; m\u1ecdi gi\u00e1 n\u1ea1p \u1edf tr\u1ea1ng th\u00e1i ch\u1edd G\u0110 b\u00e1n h\u00e0ng duy\u1ec7t), note. Kh\u00f4ng ch\u1ee9a c\u00f4ng d\u1ee5ng/li\u1ec1u d\u00f9ng. Ngu\u1ed3n s\u1ed1 li\u1ec7u: b\u1ea3ng gi\u00e1 Shopee + gi\u1ea5y ti\u1ebfp nh\u1eadn do c\u00f4ng ty cung c\u1ea5p (2026-10).",
+  "skus": [
+   {
+    "sku_key": "savina-12v",
+    "name": "Savina tu\u00fdp 12 vi\u00ean ng\u1eadm",
+    "category": "tpbvsk",
+    "pack_spec": "12 vi\u00ean ng\u1eadm (tu\u00fdp PP)",
+    "receipt_no": "8014/2021/\u0110KSP",
+    "receipt_date": "2021-09-07",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "27357883504",
+    "product_ids": [
+     "wc-2298",
+     "wc-349",
+     "nv-savina-tuyp-12-vien-bk"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 128000,
+      "list": 159000,
+      "promo": 132000
+     }
+    },
+    "note": null
+   },
+   {
+    "sku_key": "saphraton-20v",
+    "name": "Saphraton 20 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "20 vi\u00ean nang m\u1ec1m (2 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "2778/2018/\u0110KSP",
+    "receipt_date": "2018-05-22",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "24825885894",
+    "product_ids": [
+     "wc-2300",
+     "wc-344",
+     "nv-saphraton-51"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 236000,
+      "list": 299000,
+      "promo": 250000
+     }
+    },
+    "note": null
+   },
+   {
+    "sku_key": "saphraton-combo-2x20v",
+    "name": "Combo Saphraton 2 h\u1ed9p x 20 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "40 vi\u00ean nang m\u1ec1m (combo 2 h\u1ed9p x 20 vi\u00ean)",
+    "receipt_no": "2778/2018/\u0110KSP",
+    "receipt_date": "2018-05-22",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "28003783932",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 469000,
+      "list": 698000,
+      "promo": 480000
+     }
+    },
+    "note": "Ch\u1edd KD x\u00e1c nh\u1eadn combo 2x20 c\u00f3 tr\u00f9ng SKU Saphraton 40 vi\u00ean kh\u00f4ng \u2014 gi\u1eef 2 sku_key ri\u00eang, kh\u00f4ng t\u1ef1 g\u1ed9p."
+   },
+   {
+    "sku_key": "saphraton-40v",
+    "name": "Saphraton 40 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "40 vi\u00ean nang m\u1ec1m (4 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "2778/2018/\u0110KSP",
+    "receipt_date": "2018-05-22",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [],
+    "shopee_item_id": null,
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 450000
+     }
+    },
+    "note": "M\u1edbi c\u00f3 gi\u00e1 s\u00e0n; gi\u00e1 th\u01b0\u1eddng/KM ch\u1edd G\u0110 b\u00e1n h\u00e0ng. Ch\u1edd KD x\u00e1c nh\u1eadn c\u00f3 tr\u00f9ng combo 2x20 kh\u00f4ng."
+   },
+   {
+    "sku_key": "saphraton-80v",
+    "name": "Saphraton 80 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "80 vi\u00ean nang m\u1ec1m (8 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "2778/2018/\u0110KSP",
+    "receipt_date": "2018-05-22",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "29368491427",
+    "product_ids": [
+     "wc-2307",
+     "wc-331",
+     "nv-saphraton-48"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 1000000,
+      "list": 1490000,
+      "promo": 1100000
+     }
+    },
+    "note": "Map trang web 'Saphraton' (kh\u00f4ng ghi quy c\u00e1ch) sang 80 vi\u00ean ch\u1ec9 suy t\u1eeb gi\u00e1 web = gi\u00e1 s\u00e0n 80 vi\u00ean \u2014 ch\u1edd S\u1ea3n xu\u1ea5t x\u00e1c nh\u1eadn."
+   },
+   {
+    "sku_key": "savigout-30v",
+    "name": "Savigout 30 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "8560/2019/\u0110KSP",
+    "receipt_date": "2019-07-02",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "24325987926",
+    "product_ids": [
+     "wc-2304",
+     "wc-336",
+     "nv-savigout-bk"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 295000,
+      "list": 439000,
+      "promo": 350000
+     }
+    },
+    "note": "File t\u1ed5ng h\u1ee3p TPBVSK 22.01.2026 ghi Savigout s\u1ed1 5191/2020/\u0110KSP (tr\u00f9ng s\u1ed1 c\u1ee7a Sapentol) \u2014 l\u1ec7ch v\u1edbi s\u1ed1 8560/2019/\u0110KSP \u0111ang d\u00f9ng \u1edf \u0111\u00e2y, ch\u1edd Ph\u00e1p ch\u1ebf x\u00e1c nh\u1eadn."
+   },
+   {
+    "sku_key": "sapentol-30v",
+    "name": "Sapentol 30 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "30 vi\u00ean nang c\u1ee9ng (h\u1ed9p 1 l\u1ecd)",
+    "receipt_no": "5191/2020/\u0110KSP",
+    "receipt_date": "2020-06-10",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "27257950771",
+    "product_ids": [
+     "wc-2309",
+     "wc-324",
+     "nv-sapentol"
+    ],
+    "prices": {
+     "shopee": {
+      "floor": 280000,
+      "list": 417000,
+      "promo": 330000
+     }
+    },
+    "note": null
+   },
+   {
+    "sku_key": "da-an-sam-30v",
+    "name": "D\u1ea1 An S\u00e2m 30 vi\u00ean",
+    "category": "tpbvsk",
+    "pack_spec": "30 vi\u00ean (h\u1ed9p 3 v\u1ec9 x 10 vi\u00ean)",
+    "receipt_no": "11129/2021/\u0110KSP",
+    "receipt_date": "2021-12-29",
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "26857946153",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 340000,
+      "list": 506000,
+      "promo": 399000
+     }
+    },
+    "note": null
+   },
+   {
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "name": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)",
+    "category": "food",
+    "pack_spec": "120ml x 1 h\u0169",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "54916394790",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 500000,
+      "list": 745000,
+      "promo": 550000
+     }
+    },
+    "note": "H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh. Chung item Shopee v\u1edbi bi\u1ebfn th\u1ec3 2 h\u0169."
+   },
+   {
+    "sku_key": "mat-ong-sam-120ml-2hu",
+    "name": "M\u1eadt ong s\u00e2m 120ml (2 h\u0169)",
+    "category": "food",
+    "pack_spec": "120ml x 2 h\u0169",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "54916394790",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 900000,
+      "list": 1340000,
+      "promo": 950000
+     }
+    },
+    "note": "H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh. Chung item Shopee v\u1edbi bi\u1ebfn th\u1ec3 1 h\u0169."
+   },
+   {
+    "sku_key": "mat-ong-sam-300ml",
+    "name": "M\u1eadt ong s\u00e2m 300ml",
+    "category": "food",
+    "pack_spec": "300ml x 1 h\u0169",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "29007947088",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 2000000,
+      "list": 2980000,
+      "promo": 2100000
+     }
+    },
+    "note": "H\u1ed3 s\u01a1 t\u1ef1 c\u00f4ng b\u1ed1 ch\u01b0a x\u00e1c minh."
+   },
+   {
+    "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+    "name": "R\u01b0\u1ee3u s\u00e2m chai th\u1ee7y tinh 500ml",
+    "category": "alcohol",
+    "pack_spec": "500ml chai th\u1ee7y tinh",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "27325048614",
+    "product_ids": [],
+    "prices": {
+     "shopee": {
+      "floor": 500000,
+      "list": 745000,
+      "promo": 550000
+     }
+    },
+    "note": "N\u1ed3ng \u0111\u1ed9 ghi 27,5% CH\u01afA x\u00e1c minh. \u0110ang c\u00f3 listing Shopee \u2014 r\u01b0\u1ee3u kh\u00f4ng \u0111\u01b0\u1ee3c qu\u1ea3ng b\u00e1/b\u00e1n online, ch\u1edd Ph\u00e1p ch\u1ebf."
+   },
+   {
+    "sku_key": "ruou-sam-binh-su-do-500ml",
+    "name": "R\u01b0\u1ee3u s\u00e2m b\u00ecnh s\u1ee9 \u0111\u1ecf 500ml",
+    "category": "alcohol",
+    "pack_spec": "500ml b\u00ecnh s\u1ee9 \u0111\u1ecf",
+    "receipt_no": null,
+    "receipt_date": null,
+    "xnqc_status": "none",
+    "self_declaration_ok": null,
+    "allowed_channels": [
+     "shopee"
+    ],
+    "shopee_item_id": "26975028961",
+    "product_ids": [],
+    "prices": {},
+    "note": "Ch\u01b0a c\u00f3 gi\u00e1 trong b\u1ea3ng gi\u00e1. N\u1ed3ng \u0111\u1ed9 CH\u01afA x\u00e1c minh. \u0110ang c\u00f3 listing Shopee \u2014 ch\u1edd Ph\u00e1p ch\u1ebf."
+   }
+  ]
+ },
+ "cases": [
+  {
+   "start": "2026-10-12",
+   "until": "2026-11-15",
+   "weeks": {
+    "ok": 5
+   },
+   "by_sku": {
+    "savina-12v": {
+     "ok": {
+      "shopee": {
+       "low": 26,
+       "base": 36,
+       "high": 48,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 15,
+       "base": 20,
+       "high": 25,
+       "note": null
+      }
+     }
+    },
+    "saphraton-20v": {
+     "ok": {
+      "shopee": {
+       "low": 53,
+       "base": 71,
+       "high": 95,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 30,
+       "base": 40,
+       "high": 50,
+       "note": null
+      }
+     }
+    },
+    "saphraton-combo-2x20v": {
+     "ok": {
+      "shopee": {
+       "low": 16,
+       "base": 23,
+       "high": 33,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 5,
+       "base": 10,
+       "high": 15,
+       "note": null
+      }
+     }
+    },
+    "saphraton-40v": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 20,
+       "base": 25,
+       "high": 30,
+       "note": null
+      }
+     }
+    },
+    "saphraton-80v": {
+     "ok": {
+      "shopee": {
+       "low": 11,
+       "base": 17,
+       "high": 26,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 10,
+       "base": 15,
+       "high": 20,
+       "note": null
+      }
+     }
+    },
+    "savigout-30v": {
+     "ok": {
+      "shopee": {
+       "low": 21,
+       "base": 30,
+       "high": 41,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 10,
+       "base": 15,
+       "high": 20,
+       "note": null
+      }
+     }
+    },
+    "sapentol-30v": {
+     "ok": {
+      "shopee": {
+       "low": 16,
+       "base": 23,
+       "high": 33,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 10,
+       "base": 15,
+       "high": 20,
+       "note": null
+      }
+     }
+    },
+    "da-an-sam-30v": {
+     "ok": {
+      "shopee": {
+       "low": 21,
+       "base": 30,
+       "high": 41,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 5,
+       "base": 10,
+       "high": 15,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-1hu": {
+     "ok": {
+      "shopee": {
+       "low": 64,
+       "base": 89,
+       "high": 120,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 40,
+       "base": 50,
+       "high": 60,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-2hu": {
+     "ok": {
+      "shopee": {
+       "low": 26,
+       "base": 36,
+       "high": 48,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 15,
+       "base": 20,
+       "high": 25,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-300ml": {
+     "ok": {
+      "shopee": {
+       "low": 32,
+       "base": 47,
+       "high": 65,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 25,
+       "base": 30,
+       "high": 35,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-chai-thuy-tinh-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 25,
+       "base": 30,
+       "high": 35,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-binh-su-do-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 10,
+       "base": 15,
+       "high": 20,
+       "note": null
+      }
+     }
+    }
+   }
+  },
+  {
+   "start": "2026-10-19",
+   "until": "2027-02-14",
+   "weeks": {
+    "ok": 17
+   },
+   "by_sku": {
+    "savina-12v": {
+     "ok": {
+      "shopee": {
+       "low": 88,
+       "base": 132,
+       "high": 189,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 53,
+       "base": 83,
+       "high": 117,
+       "note": null
+      }
+     }
+    },
+    "saphraton-20v": {
+     "ok": {
+      "shopee": {
+       "low": 182,
+       "base": 263,
+       "high": 374,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 109,
+       "base": 166,
+       "high": 230,
+       "note": null
+      }
+     }
+    },
+    "saphraton-combo-2x20v": {
+     "ok": {
+      "shopee": {
+       "low": 55,
+       "base": 88,
+       "high": 130,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 19,
+       "base": 40,
+       "high": 64,
+       "note": null
+      }
+     }
+    },
+    "saphraton-40v": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 69,
+       "base": 104,
+       "high": 143,
+       "note": null
+      }
+     }
+    },
+    "saphraton-80v": {
+     "ok": {
+      "shopee": {
+       "low": 39,
+       "base": 66,
+       "high": 100,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 37,
+       "base": 62,
+       "high": 91,
+       "note": null
+      }
+     }
+    },
+    "savigout-30v": {
+     "ok": {
+      "shopee": {
+       "low": 71,
+       "base": 112,
+       "high": 160,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 37,
+       "base": 62,
+       "high": 91,
+       "note": null
+      }
+     }
+    },
+    "sapentol-30v": {
+     "ok": {
+      "shopee": {
+       "low": 55,
+       "base": 88,
+       "high": 130,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 37,
+       "base": 62,
+       "high": 91,
+       "note": null
+      }
+     }
+    },
+    "da-an-sam-30v": {
+     "ok": {
+      "shopee": {
+       "low": 71,
+       "base": 112,
+       "high": 160,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 19,
+       "base": 40,
+       "high": 64,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-1hu": {
+     "ok": {
+      "shopee": {
+       "low": 224,
+       "base": 332,
+       "high": 469,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 143,
+       "base": 206,
+       "high": 283,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-2hu": {
+     "ok": {
+      "shopee": {
+       "low": 88,
+       "base": 132,
+       "high": 189,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 53,
+       "base": 83,
+       "high": 117,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-300ml": {
+     "ok": {
+      "shopee": {
+       "low": 113,
+       "base": 177,
+       "high": 254,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 86,
+       "base": 123,
+       "high": 169,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-chai-thuy-tinh-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 86,
+       "base": 123,
+       "high": 169,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-binh-su-do-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 37,
+       "base": 62,
+       "high": 91,
+       "note": null
+      }
+     }
+    }
+   }
+  },
+  {
+   "start": "2026-11-02",
+   "until": "2026-12-20",
+   "weeks": {
+    "ok": 7
+   },
+   "by_sku": {
+    "savina-12v": {
+     "ok": {
+      "shopee": {
+       "low": 37,
+       "base": 51,
+       "high": 69,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 21,
+       "base": 28,
+       "high": 35,
+       "note": null
+      }
+     }
+    },
+    "saphraton-20v": {
+     "ok": {
+      "shopee": {
+       "low": 75,
+       "base": 101,
+       "high": 137,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 42,
+       "base": 56,
+       "high": 70,
+       "note": null
+      }
+     }
+    },
+    "saphraton-combo-2x20v": {
+     "ok": {
+      "shopee": {
+       "low": 23,
+       "base": 33,
+       "high": 48,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 7,
+       "base": 14,
+       "high": 21,
+       "note": null
+      }
+     }
+    },
+    "saphraton-40v": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 28,
+       "base": 35,
+       "high": 42,
+       "note": null
+      }
+     }
+    },
+    "saphraton-80v": {
+     "ok": {
+      "shopee": {
+       "low": 16,
+       "base": 25,
+       "high": 37,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 14,
+       "base": 21,
+       "high": 28,
+       "note": null
+      }
+     }
+    },
+    "savigout-30v": {
+     "ok": {
+      "shopee": {
+       "low": 30,
+       "base": 43,
+       "high": 59,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 14,
+       "base": 21,
+       "high": 28,
+       "note": null
+      }
+     }
+    },
+    "sapentol-30v": {
+     "ok": {
+      "shopee": {
+       "low": 23,
+       "base": 33,
+       "high": 48,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 14,
+       "base": 21,
+       "high": 28,
+       "note": null
+      }
+     }
+    },
+    "da-an-sam-30v": {
+     "ok": {
+      "shopee": {
+       "low": 30,
+       "base": 43,
+       "high": 59,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 7,
+       "base": 14,
+       "high": 21,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-1hu": {
+     "ok": {
+      "shopee": {
+       "low": 91,
+       "base": 127,
+       "high": 173,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 56,
+       "base": 70,
+       "high": 84,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-2hu": {
+     "ok": {
+      "shopee": {
+       "low": 37,
+       "base": 51,
+       "high": 69,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 21,
+       "base": 28,
+       "high": 35,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-300ml": {
+     "ok": {
+      "shopee": {
+       "low": 46,
+       "base": 67,
+       "high": 94,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 35,
+       "base": 42,
+       "high": 49,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-chai-thuy-tinh-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 35,
+       "base": 42,
+       "high": 49,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-binh-su-do-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 14,
+       "base": 21,
+       "high": 28,
+       "note": null
+      }
+     }
+    }
+   }
+  },
+  {
+   "start": "2026-10-14",
+   "until": "2026-10-14",
+   "weeks": {
+    "ok": 1
+   },
+   "by_sku": {
+    "savina-12v": {
+     "ok": {
+      "shopee": {
+       "low": 5,
+       "base": 6,
+       "high": 7,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 3,
+       "base": 4,
+       "high": 5,
+       "note": null
+      }
+     }
+    },
+    "saphraton-20v": {
+     "ok": {
+      "shopee": {
+       "low": 10,
+       "base": 12,
+       "high": 14,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 6,
+       "base": 8,
+       "high": 10,
+       "note": null
+      }
+     }
+    },
+    "saphraton-combo-2x20v": {
+     "ok": {
+      "shopee": {
+       "low": 3,
+       "base": 4,
+       "high": 5,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 1,
+       "base": 2,
+       "high": 3,
+       "note": null
+      }
+     }
+    },
+    "saphraton-40v": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 4,
+       "base": 5,
+       "high": 6,
+       "note": null
+      }
+     }
+    },
+    "saphraton-80v": {
+     "ok": {
+      "shopee": {
+       "low": 2,
+       "base": 3,
+       "high": 4,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 2,
+       "base": 3,
+       "high": 4,
+       "note": null
+      }
+     }
+    },
+    "savigout-30v": {
+     "ok": {
+      "shopee": {
+       "low": 4,
+       "base": 5,
+       "high": 6,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 2,
+       "base": 3,
+       "high": 4,
+       "note": null
+      }
+     }
+    },
+    "sapentol-30v": {
+     "ok": {
+      "shopee": {
+       "low": 3,
+       "base": 4,
+       "high": 5,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 2,
+       "base": 3,
+       "high": 4,
+       "note": null
+      }
+     }
+    },
+    "da-an-sam-30v": {
+     "ok": {
+      "shopee": {
+       "low": 4,
+       "base": 5,
+       "high": 6,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 1,
+       "base": 2,
+       "high": 3,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-1hu": {
+     "ok": {
+      "shopee": {
+       "low": 12,
+       "base": 15,
+       "high": 18,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 8,
+       "base": 10,
+       "high": 12,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-2hu": {
+     "ok": {
+      "shopee": {
+       "low": 5,
+       "base": 6,
+       "high": 7,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 3,
+       "base": 4,
+       "high": 5,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-300ml": {
+     "ok": {
+      "shopee": {
+       "low": 6,
+       "base": 8,
+       "high": 10,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 5,
+       "base": 6,
+       "high": 7,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-chai-thuy-tinh-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 5,
+       "base": 6,
+       "high": 7,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-binh-su-do-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 2,
+       "base": 3,
+       "high": 4,
+       "note": null
+      }
+     }
+    }
+   }
+  },
+  {
+   "start": "2026-10-12",
+   "until": "2030-01-01",
+   "weeks": {
+    "err": "ProductionError",
+    "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+   },
+   "by_sku": {
+    "savina-12v": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "saphraton-20v": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "saphraton-combo-2x20v": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "saphraton-40v": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "saphraton-80v": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "savigout-30v": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "sapentol-30v": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "da-an-sam-30v": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "mat-ong-sam-120ml-1hu": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "mat-ong-sam-120ml-2hu": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "mat-ong-sam-300ml": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "ruou-sam-chai-thuy-tinh-500ml": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    },
+    "ruou-sam-binh-su-do-500ml": {
+     "err": "ProductionError",
+     "msg": "qu\u00e1 104 tu\u1ea7n t\u1eeb start t\u1edbi covers_until"
+    }
+   }
+  },
+  {
+   "start": "2026-10-12",
+   "until": "2026-09-01",
+   "weeks": {
+    "err": "ProductionError",
+    "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+   },
+   "by_sku": {
+    "savina-12v": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "saphraton-20v": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "saphraton-combo-2x20v": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "saphraton-40v": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "saphraton-80v": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "savigout-30v": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "sapentol-30v": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "da-an-sam-30v": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "mat-ong-sam-120ml-1hu": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "mat-ong-sam-120ml-2hu": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "mat-ong-sam-300ml": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "ruou-sam-chai-thuy-tinh-500ml": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    },
+    "ruou-sam-binh-su-do-500ml": {
+     "err": "ProductionError",
+     "msg": "start sau covers_until c\u1ee7a m\u1ed1c"
+    }
+   }
+  },
+  {
+   "start": "2026-12-01",
+   "until": "2027-03-01",
+   "weeks": {
+    "ok": 14
+   },
+   "by_sku": {
+    "savina-12v": {
+     "ok": {
+      "shopee": {
+       "low": 72,
+       "base": 108,
+       "high": 155,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 44,
+       "base": 71,
+       "high": 102,
+       "note": null
+      }
+     }
+    },
+    "saphraton-20v": {
+     "ok": {
+      "shopee": {
+       "low": 149,
+       "base": 216,
+       "high": 307,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 91,
+       "base": 142,
+       "high": 200,
+       "note": null
+      }
+     }
+    },
+    "saphraton-combo-2x20v": {
+     "ok": {
+      "shopee": {
+       "low": 45,
+       "base": 73,
+       "high": 107,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 16,
+       "base": 34,
+       "high": 55,
+       "note": null
+      }
+     }
+    },
+    "saphraton-40v": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 57,
+       "base": 89,
+       "high": 125,
+       "note": null
+      }
+     }
+    },
+    "saphraton-80v": {
+     "ok": {
+      "shopee": {
+       "low": 32,
+       "base": 55,
+       "high": 82,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 31,
+       "base": 53,
+       "high": 79,
+       "note": null
+      }
+     }
+    },
+    "savigout-30v": {
+     "ok": {
+      "shopee": {
+       "low": 58,
+       "base": 92,
+       "high": 131,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 31,
+       "base": 53,
+       "high": 79,
+       "note": null
+      }
+     }
+    },
+    "sapentol-30v": {
+     "ok": {
+      "shopee": {
+       "low": 45,
+       "base": 73,
+       "high": 107,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 31,
+       "base": 53,
+       "high": 79,
+       "note": null
+      }
+     }
+    },
+    "da-an-sam-30v": {
+     "ok": {
+      "shopee": {
+       "low": 58,
+       "base": 92,
+       "high": 131,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 16,
+       "base": 34,
+       "high": 55,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-1hu": {
+     "ok": {
+      "shopee": {
+       "low": 184,
+       "base": 273,
+       "high": 385,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 119,
+       "base": 176,
+       "high": 247,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-120ml-2hu": {
+     "ok": {
+      "shopee": {
+       "low": 72,
+       "base": 108,
+       "high": 155,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 44,
+       "base": 71,
+       "high": 102,
+       "note": null
+      }
+     }
+    },
+    "mat-ong-sam-300ml": {
+     "ok": {
+      "shopee": {
+       "low": 93,
+       "base": 146,
+       "high": 209,
+       "note": null
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+      },
+      "offline": {
+       "low": 71,
+       "base": 105,
+       "high": 148,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-chai-thuy-tinh-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 71,
+       "base": 105,
+       "high": 148,
+       "note": null
+      }
+     }
+    },
+    "ruou-sam-binh-su-do-500ml": {
+     "ok": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0,
+       "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+      },
+      "offline": {
+       "low": 31,
+       "base": 53,
+       "high": 79,
+       "note": null
+      }
+     }
+    }
+   }
+  }
+ ],
+ "allocate": [
+  {
+   "stock": 0,
+   "demand": {
+    "shopee": {
+     "low": 2,
+     "base": 4,
+     "high": 8,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 1,
+     "base": 2,
+     "high": 4,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 2,
+       "base": 4,
+       "high": 8
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 1,
+       "base": 2,
+       "high": 4
+      }
+     },
+     "proposed": {
+      "shopee": 0,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 0
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 0,
+     "sums": {
+      "low": 3,
+      "base": 6,
+      "high": 12
+     },
+     "flag_level": "low",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 6 so v\u1edbi c\u01a1 s\u1edf)"
+    }
+   }
+  },
+  {
+   "stock": 7,
+   "demand": {
+    "shopee": {
+     "low": 1,
+     "base": 3,
+     "high": 6,
+     "note": null
+    },
+    "tiktok": {
+     "low": 1,
+     "base": 3,
+     "high": 6,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 1,
+     "base": 3,
+     "high": 6,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 1,
+       "base": 3,
+       "high": 6
+      },
+      "tiktok": {
+       "low": 1,
+       "base": 3,
+       "high": 6
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 1,
+       "base": 3,
+       "high": 6
+      }
+     },
+     "proposed": {
+      "shopee": 3,
+      "tiktok": 2,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 2
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 0,
+     "sums": {
+      "low": 3,
+      "base": 9,
+      "high": 18
+     },
+     "flag_level": "base",
+     "flag": "THI\u1ebeU (c\u01a1 s\u1edf) 2"
+    }
+   }
+  },
+  {
+   "stock": 10,
+   "demand": {
+    "shopee": {
+     "low": 4,
+     "base": 9,
+     "high": 18,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 1,
+     "base": 3,
+     "high": 6,
+     "note": null
+    }
+   },
+   "category": "food",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 4,
+       "base": 9,
+       "high": 18
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 1,
+       "base": 3,
+       "high": 6
+      }
+     },
+     "proposed": {
+      "shopee": 8,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 2
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 0,
+     "sums": {
+      "low": 5,
+      "base": 12,
+      "high": 24
+     },
+     "flag_level": "base",
+     "flag": "THI\u1ebeU (c\u01a1 s\u1edf) 2"
+    }
+   }
+  },
+  {
+   "stock": 100,
+   "demand": {
+    "shopee": {
+     "low": 15,
+     "base": 30,
+     "high": 60,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 10,
+     "base": 20,
+     "high": 40,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 15,
+       "base": 30,
+       "high": 60
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 10,
+       "base": 20,
+       "high": 40
+      }
+     },
+     "proposed": {
+      "shopee": 30,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 20
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 50,
+     "sums": {
+      "low": 25,
+      "base": 50,
+      "high": 100
+     },
+     "flag_level": null,
+     "flag": null
+    }
+   }
+  },
+  {
+   "stock": null,
+   "demand": {
+    "shopee": {
+     "low": 15,
+     "base": 30,
+     "high": 60,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 15,
+       "base": 30,
+       "high": 60
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      }
+     },
+     "proposed": {
+      "shopee": 0,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 0
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": null,
+     "sums": {
+      "low": 15,
+      "base": 30,
+      "high": 60
+     },
+     "flag_level": null,
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu"
+    }
+   }
+  },
+  {
+   "stock": 100,
+   "demand": {
+    "shopee": {
+     "low": 5,
+     "base": 10,
+     "high": 20,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 2,
+     "base": 5,
+     "high": 10,
+     "note": null
+    }
+   },
+   "category": "alcohol",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 2,
+       "base": 5,
+       "high": 10
+      }
+     },
+     "proposed": {
+      "shopee": 0,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 5
+     },
+     "notes": {
+      "shopee": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "tiktok": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "web": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "facebook": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "zalo": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "chatbot": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "offline": null
+     },
+     "unallocated": 95,
+     "sums": {
+      "low": 2,
+      "base": 5,
+      "high": 10
+     },
+     "flag_level": null,
+     "flag": null
+    }
+   }
+  },
+  {
+   "stock": 3,
+   "demand": {
+    "shopee": {
+     "low": 5,
+     "base": 10,
+     "high": 20,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 2,
+     "base": 5,
+     "high": 10,
+     "note": null
+    }
+   },
+   "category": "alcohol",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 2,
+       "base": 5,
+       "high": 10
+      }
+     },
+     "proposed": {
+      "shopee": 0,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 3
+     },
+     "notes": {
+      "shopee": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "tiktok": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "web": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "facebook": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "zalo": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "chatbot": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+      "offline": null
+     },
+     "unallocated": 0,
+     "sums": {
+      "low": 2,
+      "base": 5,
+      "high": 10
+     },
+     "flag_level": "base",
+     "flag": "THI\u1ebeU (c\u01a1 s\u1edf) 2"
+    }
+   }
+  },
+  {
+   "stock": 5,
+   "demand": {
+    "shopee": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    }
+   },
+   "category": "food",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      }
+     },
+     "proposed": {
+      "shopee": 0,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 0
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 5,
+     "sums": {
+      "low": 0,
+      "base": 0,
+      "high": 0
+     },
+     "flag_level": null,
+     "flag": null
+    }
+   }
+  },
+  {
+   "stock": 1,
+   "demand": {
+    "shopee": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    },
+    "offline": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    }
+   },
+   "category": "food",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 0,
+       "base": 1,
+       "high": 2
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 1,
+       "high": 2
+      },
+      "web": {
+       "low": 0,
+       "base": 1,
+       "high": 2
+      },
+      "facebook": {
+       "low": 0,
+       "base": 1,
+       "high": 2
+      },
+      "zalo": {
+       "low": 0,
+       "base": 1,
+       "high": 2
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 1,
+       "high": 2
+      },
+      "offline": {
+       "low": 0,
+       "base": 1,
+       "high": 2
+      }
+     },
+     "proposed": {
+      "shopee": 1,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 0
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 0,
+     "sums": {
+      "low": 0,
+      "base": 7,
+      "high": 14
+     },
+     "flag_level": "base",
+     "flag": "THI\u1ebeU (c\u01a1 s\u1edf) 6"
+    }
+   }
+  },
+  {
+   "stock": 11,
+   "demand": {
+    "shopee": {
+     "low": 3,
+     "base": 7,
+     "high": 14,
+     "note": null
+    },
+    "tiktok": {
+     "low": 2,
+     "base": 5,
+     "high": 10,
+     "note": null
+    },
+    "web": {
+     "low": 1,
+     "base": 3,
+     "high": 6,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 1,
+     "base": 2,
+     "high": 4,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 6,
+     "base": 13,
+     "high": 26,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 3,
+       "base": 7,
+       "high": 14
+      },
+      "tiktok": {
+       "low": 2,
+       "base": 5,
+       "high": 10
+      },
+      "web": {
+       "low": 1,
+       "base": 3,
+       "high": 6
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 1,
+       "base": 2,
+       "high": 4
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 6,
+       "base": 13,
+       "high": 26
+      }
+     },
+     "proposed": {
+      "shopee": 2,
+      "tiktok": 2,
+      "web": 1,
+      "facebook": 0,
+      "zalo": 1,
+      "chatbot": 0,
+      "offline": 5
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 0,
+     "sums": {
+      "low": 13,
+      "base": 30,
+      "high": 60
+     },
+     "flag_level": "low",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 19 so v\u1edbi c\u01a1 s\u1edf)"
+    }
+   }
+  },
+  {
+   "stock": 2000000000,
+   "demand": {
+    "shopee": {
+     "low": 999999999,
+     "base": 1999999999,
+     "high": 3999999998,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 999999999,
+     "base": 1999999998,
+     "high": 3999999996,
+     "note": null
+    }
+   },
+   "category": "food",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 999999999,
+       "base": 1999999999,
+       "high": 3999999998
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 999999999,
+       "base": 1999999998,
+       "high": 3999999996
+      }
+     },
+     "proposed": {
+      "shopee": 1000000000,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 1000000000
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 0,
+     "sums": {
+      "low": 1999999998,
+      "base": 3999999997,
+      "high": 7999999994
+     },
+     "flag_level": "base",
+     "flag": "THI\u1ebeU (c\u01a1 s\u1edf) 1999999997"
+    }
+   }
+  },
+  {
+   "stock": 25,
+   "demand": {
+    "shopee": {
+     "low": 10,
+     "base": 20,
+     "high": 40,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 5,
+     "base": 10,
+     "high": 20,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 10,
+       "base": 20,
+       "high": 40
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 5,
+       "base": 10,
+       "high": 20
+      }
+     },
+     "proposed": {
+      "shopee": 17,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 8
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 0,
+     "sums": {
+      "low": 15,
+      "base": 30,
+      "high": 60
+     },
+     "flag_level": "base",
+     "flag": "THI\u1ebeU (c\u01a1 s\u1edf) 5"
+    }
+   }
+  },
+  {
+   "stock": 35,
+   "demand": {
+    "shopee": {
+     "low": 10,
+     "base": 20,
+     "high": 40,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 5,
+     "base": 10,
+     "high": 20,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 10,
+       "base": 20,
+       "high": 40
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 5,
+       "base": 10,
+       "high": 20
+      }
+     },
+     "proposed": {
+      "shopee": 20,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 10
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 5,
+     "sums": {
+      "low": 15,
+      "base": 30,
+      "high": 60
+     },
+     "flag_level": "high",
+     "flag": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 25 n\u1ebfu b\u00e1n theo m\u1ee9c cao"
+    }
+   }
+  },
+  {
+   "stock": 55,
+   "demand": {
+    "shopee": {
+     "low": 10,
+     "base": 20,
+     "high": 40,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 5,
+     "base": 10,
+     "high": 20,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 10,
+       "base": 20,
+       "high": 40
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 5,
+       "base": 10,
+       "high": 20
+      }
+     },
+     "proposed": {
+      "shopee": 20,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 10
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 25,
+     "sums": {
+      "low": 15,
+      "base": 30,
+      "high": 60
+     },
+     "flag_level": "high",
+     "flag": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 5 n\u1ebfu b\u00e1n theo m\u1ee9c cao"
+    }
+   }
+  },
+  {
+   "stock": 60,
+   "demand": {
+    "shopee": {
+     "low": 10,
+     "base": 20,
+     "high": 40,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 5,
+     "base": 10,
+     "high": 20,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 10,
+       "base": 20,
+       "high": 40
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 5,
+       "base": 10,
+       "high": 20
+      }
+     },
+     "proposed": {
+      "shopee": 20,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 10
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 30,
+     "sums": {
+      "low": 15,
+      "base": 30,
+      "high": 60
+     },
+     "flag_level": null,
+     "flag": null
+    }
+   }
+  },
+  {
+   "stock": -1,
+   "demand": {
+    "shopee": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "err": "ProductionError",
+    "msg": "stock ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0 ho\u1eb7c None"
+   }
+  },
+  {
+   "stock": true,
+   "demand": {
+    "shopee": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "err": "ProductionError",
+    "msg": "stock ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0 ho\u1eb7c None"
+   }
+  },
+  {
+   "stock": 1.5,
+   "demand": {
+    "shopee": {
+     "low": 0,
+     "base": 1,
+     "high": 2,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    },
+    "offline": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": null
+    }
+   },
+   "category": "tpbvsk",
+   "res": {
+    "err": "ProductionError",
+    "msg": "stock ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0 ho\u1eb7c None"
+   }
+  },
+  {
+   "stock": 5,
+   "demand": {
+    "shopee": {
+     "low": 1,
+     "base": -1,
+     "high": 2
+    }
+   },
+   "category": "food",
+   "res": {
+    "err": "ProductionError",
+    "msg": "demand shopee: ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0"
+   }
+  },
+  {
+   "stock": 5,
+   "demand": {
+    "shopee": {
+     "low": 1,
+     "base": 1.0,
+     "high": 2
+    }
+   },
+   "category": "food",
+   "res": {
+    "err": "ProductionError",
+    "msg": "demand shopee: ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0"
+   }
+  },
+  {
+   "stock": 5,
+   "demand": {
+    "shopee": {
+     "low": 1,
+     "base": true,
+     "high": 2
+    }
+   },
+   "category": "food",
+   "res": {
+    "err": "ProductionError",
+    "msg": "demand shopee: ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0"
+   }
+  },
+  {
+   "stock": 5,
+   "demand": {
+    "shopee": {
+     "base": 3
+    },
+    "offline": null
+   },
+   "category": "food",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 0,
+       "base": 3,
+       "high": 0
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      }
+     },
+     "proposed": {
+      "shopee": 3,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 0
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 2,
+     "sums": {
+      "low": 0,
+      "base": 3,
+      "high": 0
+     },
+     "flag_level": null,
+     "flag": null
+    }
+   }
+  },
+  {
+   "stock": 5,
+   "demand": {
+    "shopee": {
+     "low": 1,
+     "base": 3,
+     "high": 4,
+     "note": "ghi"
+    }
+   },
+   "category": "x",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 1,
+       "base": 3,
+       "high": 4
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      }
+     },
+     "proposed": {
+      "shopee": 3,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 0
+     },
+     "notes": {
+      "shopee": "ghi",
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 2,
+     "sums": {
+      "low": 1,
+      "base": 3,
+      "high": 4
+     },
+     "flag_level": null,
+     "flag": null
+    }
+   }
+  },
+  {
+   "stock": 5,
+   "demand": {},
+   "category": "food",
+   "res": {
+    "ok": {
+     "demand": {
+      "shopee": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "tiktok": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "web": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "facebook": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "zalo": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "chatbot": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      },
+      "offline": {
+       "low": 0,
+       "base": 0,
+       "high": 0
+      }
+     },
+     "proposed": {
+      "shopee": 0,
+      "tiktok": 0,
+      "web": 0,
+      "facebook": 0,
+      "zalo": 0,
+      "chatbot": 0,
+      "offline": 0
+     },
+     "notes": {
+      "shopee": null,
+      "tiktok": null,
+      "web": null,
+      "facebook": null,
+      "zalo": null,
+      "chatbot": null,
+      "offline": null
+     },
+     "unallocated": 5,
+     "sums": {
+      "low": 0,
+      "base": 0,
+      "high": 0
+     },
+     "flag_level": null,
+     "flag": null
+    }
+   }
+  }
+ ],
+ "shortage": [
+  {
+   "stock": 5,
+   "sums": {
+    "low": 10,
+    "base": 20,
+    "high": 30
+   },
+   "res": {
+    "ok": [
+     "low",
+     "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 15 so v\u1edbi c\u01a1 s\u1edf)"
+    ]
+   }
+  },
+  {
+   "stock": 15,
+   "sums": {
+    "low": 10,
+    "base": 20,
+    "high": 30
+   },
+   "res": {
+    "ok": [
+     "base",
+     "THI\u1ebeU (c\u01a1 s\u1edf) 5"
+    ]
+   }
+  },
+  {
+   "stock": 25,
+   "sums": {
+    "low": 10,
+    "base": 20,
+    "high": 30
+   },
+   "res": {
+    "ok": [
+     "high",
+     "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 5 n\u1ebfu b\u00e1n theo m\u1ee9c cao"
+    ]
+   }
+  },
+  {
+   "stock": 30,
+   "sums": {
+    "low": 10,
+    "base": 20,
+    "high": 30
+   },
+   "res": {
+    "ok": [
+     null,
+     null
+    ]
+   }
+  },
+  {
+   "stock": null,
+   "sums": {
+    "low": 10,
+    "base": 20,
+    "high": 30
+   },
+   "res": {
+    "ok": [
+     null,
+     null
+    ]
+   }
+  },
+  {
+   "stock": 0,
+   "sums": {
+    "low": 0,
+    "base": 0,
+    "high": 0
+   },
+   "res": {
+    "ok": [
+     null,
+     null
+    ]
+   }
+  },
+  {
+   "stock": 0,
+   "sums": {
+    "low": 0,
+    "base": 0,
+    "high": 1
+   },
+   "res": {
+    "ok": [
+     "high",
+     "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 1 n\u1ebfu b\u00e1n theo m\u1ee9c cao"
+    ]
+   }
+  },
+  {
+   "stock": 10,
+   "sums": {
+    "low": 10,
+    "base": 10,
+    "high": 10
+   },
+   "res": {
+    "ok": [
+     null,
+     null
+    ]
+   }
+  }
+ ],
+ "plan_rows": {
+  "stock": {
+   "savina-12v": {
+    "qty": 60,
+    "kho": {
+     "kho-a": {
+      "qty": 40,
+      "captured_at": "2026-10-09",
+      "stale": false
+     },
+     "kho-b": {
+      "qty": 20,
+      "captured_at": "2026-10-09",
+      "stale": false
+     }
+    },
+    "stale": [],
+    "sample": true
+   },
+   "saphraton-20v": {
+    "qty": 70,
+    "kho": {
+     "kho-a": {
+      "qty": 50,
+      "captured_at": "2026-10-01",
+      "stale": true
+     },
+     "kho-b": {
+      "qty": 20,
+      "captured_at": "2026-10-09",
+      "stale": false
+     }
+    },
+    "stale": [
+     "kho-a"
+    ],
+    "sample": false
+   },
+   "ruou-sam-chai-thuy-tinh-500ml": {
+    "qty": 40,
+    "kho": {
+     "kho-b": {
+      "qty": 40,
+      "captured_at": "2026-10-09",
+      "stale": false
+     }
+    },
+    "stale": [],
+    "sample": false
+   },
+   "mat-ong-sam-120ml-1hu": {
+    "qty": 0,
+    "kho": {
+     "kho-a": {
+      "qty": 0,
+      "captured_at": "2026-10-09",
+      "stale": true
+     }
+    },
+    "stale": [
+     "kho-a\u001b[2J",
+     "kho-z"
+    ],
+    "sample": false
+   },
+   "saphraton-40v": {
+    "qty": 1000,
+    "kho": {
+     "kho-a": {
+      "qty": 1000,
+      "captured_at": "2026-10-09",
+      "stale": false
+     }
+    },
+    "stale": [],
+    "sample": false
+   }
+  },
+  "demands": {
+   "savina-12v": {
+    "shopee": {
+     "low": 26,
+     "base": 36,
+     "high": 48,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 15,
+     "base": 20,
+     "high": 25,
+     "note": null
+    }
+   },
+   "saphraton-20v": {
+    "shopee": {
+     "low": 53,
+     "base": 71,
+     "high": 95,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 30,
+     "base": 40,
+     "high": 50,
+     "note": null
+    }
+   },
+   "saphraton-combo-2x20v": {
+    "shopee": {
+     "low": 16,
+     "base": 23,
+     "high": 33,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 5,
+     "base": 10,
+     "high": 15,
+     "note": null
+    }
+   },
+   "saphraton-40v": {
+    "shopee": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 20,
+     "base": 25,
+     "high": 30,
+     "note": null
+    }
+   },
+   "saphraton-80v": {
+    "shopee": {
+     "low": 11,
+     "base": 17,
+     "high": 26,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 10,
+     "base": 15,
+     "high": 20,
+     "note": null
+    }
+   },
+   "savigout-30v": {
+    "shopee": {
+     "low": 21,
+     "base": 30,
+     "high": 41,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 10,
+     "base": 15,
+     "high": 20,
+     "note": null
+    }
+   },
+   "sapentol-30v": {
+    "shopee": {
+     "low": 16,
+     "base": 23,
+     "high": 33,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 10,
+     "base": 15,
+     "high": 20,
+     "note": null
+    }
+   },
+   "da-an-sam-30v": {
+    "shopee": {
+     "low": 21,
+     "base": 30,
+     "high": 41,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 5,
+     "base": 10,
+     "high": 15,
+     "note": null
+    }
+   },
+   "mat-ong-sam-120ml-1hu": {
+    "shopee": {
+     "low": 64,
+     "base": 89,
+     "high": 120,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 40,
+     "base": 50,
+     "high": 60,
+     "note": null
+    }
+   },
+   "mat-ong-sam-120ml-2hu": {
+    "shopee": {
+     "low": 26,
+     "base": 36,
+     "high": 48,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 15,
+     "base": 20,
+     "high": 25,
+     "note": null
+    }
+   },
+   "mat-ong-sam-300ml": {
+    "shopee": {
+     "low": 32,
+     "base": 47,
+     "high": 65,
+     "note": null
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)"
+    },
+    "offline": {
+     "low": 25,
+     "base": 30,
+     "high": 35,
+     "note": null
+    }
+   },
+   "ruou-sam-chai-thuy-tinh-500ml": {
+    "shopee": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "offline": {
+     "low": 25,
+     "base": 30,
+     "high": 35,
+     "note": null
+    }
+   },
+   "ruou-sam-binh-su-do-500ml": {
+    "shopee": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "tiktok": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "web": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "facebook": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "zalo": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "chatbot": {
+     "low": 0,
+     "base": 0,
+     "high": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline"
+    },
+    "offline": {
+     "low": 10,
+     "base": 15,
+     "high": 20,
+     "note": null
+    }
+   }
+  },
+  "res": {
+   "ok": [
+    {
+     "sku_key": "da-an-sam-30v",
+     "channel": "shopee",
+     "stock_total": null,
+     "demand_low": 21,
+     "demand_base": 30,
+     "demand_high": 41,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "da-an-sam-30v",
+     "channel": "tiktok",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "da-an-sam-30v",
+     "channel": "web",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "da-an-sam-30v",
+     "channel": "facebook",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "da-an-sam-30v",
+     "channel": "zalo",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "da-an-sam-30v",
+     "channel": "chatbot",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "da-an-sam-30v",
+     "channel": "offline",
+     "stock_total": null,
+     "demand_low": 5,
+     "demand_base": 10,
+     "demand_high": 15,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "channel": "shopee",
+     "stock_total": 0,
+     "demand_low": 64,
+     "demand_base": 89,
+     "demand_high": 120,
+     "proposed_qty": 0,
+     "note": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a?[2J, kho-z)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a\u001b[2J",
+      "kho-z"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "channel": "tiktok",
+     "stock_total": 0,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a?[2J, kho-z)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a\u001b[2J",
+      "kho-z"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "channel": "web",
+     "stock_total": 0,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a?[2J, kho-z)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a\u001b[2J",
+      "kho-z"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "channel": "facebook",
+     "stock_total": 0,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a?[2J, kho-z)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a\u001b[2J",
+      "kho-z"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "channel": "zalo",
+     "stock_total": 0,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a?[2J, kho-z)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a\u001b[2J",
+      "kho-z"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "channel": "chatbot",
+     "stock_total": 0,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a?[2J, kho-z)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a\u001b[2J",
+      "kho-z"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "channel": "offline",
+     "stock_total": 0,
+     "demand_low": 40,
+     "demand_base": 50,
+     "demand_high": 60,
+     "proposed_qty": 0,
+     "note": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a?[2J, kho-z)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 139 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a\u001b[2J",
+      "kho-z"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-2hu",
+     "channel": "shopee",
+     "stock_total": null,
+     "demand_low": 26,
+     "demand_base": 36,
+     "demand_high": 48,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-2hu",
+     "channel": "tiktok",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-2hu",
+     "channel": "web",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-2hu",
+     "channel": "facebook",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-2hu",
+     "channel": "zalo",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-2hu",
+     "channel": "chatbot",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-120ml-2hu",
+     "channel": "offline",
+     "stock_total": null,
+     "demand_low": 15,
+     "demand_base": 20,
+     "demand_high": 25,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-300ml",
+     "channel": "shopee",
+     "stock_total": null,
+     "demand_low": 32,
+     "demand_base": 47,
+     "demand_high": 65,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-300ml",
+     "channel": "tiktok",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-300ml",
+     "channel": "web",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-300ml",
+     "channel": "facebook",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-300ml",
+     "channel": "zalo",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-300ml",
+     "channel": "chatbot",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "mat-ong-sam-300ml",
+     "channel": "offline",
+     "stock_total": null,
+     "demand_low": 25,
+     "demand_base": 30,
+     "demand_high": 35,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-binh-su-do-500ml",
+     "channel": "shopee",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0; ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-binh-su-do-500ml",
+     "channel": "tiktok",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0; ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-binh-su-do-500ml",
+     "channel": "web",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0; ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-binh-su-do-500ml",
+     "channel": "facebook",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0; ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-binh-su-do-500ml",
+     "channel": "zalo",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0; ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-binh-su-do-500ml",
+     "channel": "chatbot",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0; ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-binh-su-do-500ml",
+     "channel": "offline",
+     "stock_total": null,
+     "demand_low": 10,
+     "demand_base": 15,
+     "demand_high": 20,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "shopee",
+     "stock_total": 40,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "tiktok",
+     "stock_total": 40,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "web",
+     "stock_total": 40,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "facebook",
+     "stock_total": 40,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "zalo",
+     "stock_total": 40,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "chatbot",
+     "stock_total": 40,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "r\u01b0\u1ee3u: ch\u1ec9 k\u00eanh offline \u2014 \u0111\u1ec1 xu\u1ea5t 0",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "offline",
+     "stock_total": 40,
+     "demand_low": 25,
+     "demand_base": 30,
+     "demand_high": 35,
+     "proposed_qty": 30,
+     "note": "d\u1ef1 ph\u00f2ng ch\u01b0a ph\u00e2n b\u1ed5 10",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "sapentol-30v",
+     "channel": "shopee",
+     "stock_total": null,
+     "demand_low": 16,
+     "demand_base": 23,
+     "demand_high": 33,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "sapentol-30v",
+     "channel": "tiktok",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "sapentol-30v",
+     "channel": "web",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "sapentol-30v",
+     "channel": "facebook",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "sapentol-30v",
+     "channel": "zalo",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "sapentol-30v",
+     "channel": "chatbot",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "sapentol-30v",
+     "channel": "offline",
+     "stock_total": null,
+     "demand_low": 10,
+     "demand_base": 15,
+     "demand_high": 20,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-20v",
+     "channel": "shopee",
+     "stock_total": 70,
+     "demand_low": 53,
+     "demand_base": 71,
+     "demand_high": 95,
+     "proposed_qty": 45,
+     "note": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-20v",
+     "channel": "tiktok",
+     "stock_total": 70,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-20v",
+     "channel": "web",
+     "stock_total": 70,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-20v",
+     "channel": "facebook",
+     "stock_total": 70,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-20v",
+     "channel": "zalo",
+     "stock_total": 70,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-20v",
+     "channel": "chatbot",
+     "stock_total": 70,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-20v",
+     "channel": "offline",
+     "stock_total": 70,
+     "demand_low": 30,
+     "demand_base": 40,
+     "demand_high": 50,
+     "proposed_qty": 25,
+     "note": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf); s\u1ed1 t\u1ed3n c\u0169 h\u01a1n file kho m\u1edbi nh\u1ea5t \u2014 ki\u1ec3m l\u1ea1i (kho-a)",
+     "flag": "THI\u1ebeU C\u1ea2 K\u1ecaCH B\u1ea2N TH\u1ea4P (thi\u1ebfu 41 so v\u1edbi c\u01a1 s\u1edf)",
+     "flag_level": "low",
+     "stale": [
+      "kho-a"
+     ],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-40v",
+     "channel": "shopee",
+     "stock_total": 1000,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-40v",
+     "channel": "tiktok",
+     "stock_total": 1000,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-40v",
+     "channel": "web",
+     "stock_total": 1000,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-40v",
+     "channel": "facebook",
+     "stock_total": 1000,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-40v",
+     "channel": "zalo",
+     "stock_total": 1000,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-40v",
+     "channel": "chatbot",
+     "stock_total": 1000,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden)",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-40v",
+     "channel": "offline",
+     "stock_total": 1000,
+     "demand_low": 20,
+     "demand_base": 25,
+     "demand_high": 30,
+     "proposed_qty": 25,
+     "note": "d\u1ef1 ph\u00f2ng ch\u01b0a ph\u00e2n b\u1ed5 975",
+     "flag": null,
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-80v",
+     "channel": "shopee",
+     "stock_total": null,
+     "demand_low": 11,
+     "demand_base": 17,
+     "demand_high": 26,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-80v",
+     "channel": "tiktok",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-80v",
+     "channel": "web",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-80v",
+     "channel": "facebook",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-80v",
+     "channel": "zalo",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-80v",
+     "channel": "chatbot",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-80v",
+     "channel": "offline",
+     "stock_total": null,
+     "demand_low": 10,
+     "demand_base": 15,
+     "demand_high": 20,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-combo-2x20v",
+     "channel": "shopee",
+     "stock_total": null,
+     "demand_low": 16,
+     "demand_base": 23,
+     "demand_high": 33,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-combo-2x20v",
+     "channel": "tiktok",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-combo-2x20v",
+     "channel": "web",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-combo-2x20v",
+     "channel": "facebook",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-combo-2x20v",
+     "channel": "zalo",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-combo-2x20v",
+     "channel": "chatbot",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "saphraton-combo-2x20v",
+     "channel": "offline",
+     "stock_total": null,
+     "demand_low": 5,
+     "demand_base": 10,
+     "demand_high": 15,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "savigout-30v",
+     "channel": "shopee",
+     "stock_total": null,
+     "demand_low": 21,
+     "demand_base": 30,
+     "demand_high": 41,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "savigout-30v",
+     "channel": "tiktok",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "savigout-30v",
+     "channel": "web",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "savigout-30v",
+     "channel": "facebook",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "savigout-30v",
+     "channel": "zalo",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "savigout-30v",
+     "channel": "chatbot",
+     "stock_total": null,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "savigout-30v",
+     "channel": "offline",
+     "stock_total": null,
+     "demand_low": 10,
+     "demand_base": 15,
+     "demand_high": 20,
+     "proposed_qty": 0,
+     "note": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag": "ch\u01b0a c\u00f3 s\u1ed1 t\u1ed3n \u2014 kh\u00f4ng k\u1ebft lu\u1eadn thi\u1ebfu",
+     "flag_level": null,
+     "stale": [],
+     "sample": false
+    },
+    {
+     "sku_key": "savina-12v",
+     "channel": "shopee",
+     "stock_total": 60,
+     "demand_low": 26,
+     "demand_base": 36,
+     "demand_high": 48,
+     "proposed_qty": 36,
+     "note": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag_level": "high",
+     "stale": [],
+     "sample": true
+    },
+    {
+     "sku_key": "savina-12v",
+     "channel": "tiktok",
+     "stock_total": 60,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag_level": "high",
+     "stale": [],
+     "sample": true
+    },
+    {
+     "sku_key": "savina-12v",
+     "channel": "web",
+     "stock_total": 60,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag_level": "high",
+     "stale": [],
+     "sample": true
+    },
+    {
+     "sku_key": "savina-12v",
+     "channel": "facebook",
+     "stock_total": 60,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag_level": "high",
+     "stale": [],
+     "sample": true
+    },
+    {
+     "sku_key": "savina-12v",
+     "channel": "zalo",
+     "stock_total": 60,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag_level": "high",
+     "stale": [],
+     "sample": true
+    },
+    {
+     "sku_key": "savina-12v",
+     "channel": "chatbot",
+     "stock_total": 60,
+     "demand_low": 0,
+     "demand_base": 0,
+     "demand_high": 0,
+     "proposed_qty": 0,
+     "note": "k\u00eanh ch\u01b0a c\u00f3 trong allowed_channels (golden); R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag_level": "high",
+     "stale": [],
+     "sample": true
+    },
+    {
+     "sku_key": "savina-12v",
+     "channel": "offline",
+     "stock_total": 60,
+     "demand_low": 15,
+     "demand_base": 20,
+     "demand_high": 25,
+     "proposed_qty": 20,
+     "note": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao; d\u1ef1 ph\u00f2ng ch\u01b0a ph\u00e2n b\u1ed5 4",
+     "flag": "R\u1ee6I RO (k\u1ecbch b\u1ea3n cao) thi\u1ebfu 13 n\u1ebfu b\u00e1n theo m\u1ee9c cao",
+     "flag_level": "high",
+     "stale": [],
+     "sample": true
+    }
+   ]
+  }
+ },
+ "run_id": [
+  {
+   "cutoff": {
+    "id": "chot_11_11",
+    "date": "2026-10-25",
+    "covers_until": "2026-11-15",
+    "label": "ph\u00e2n b\u1ed5 \"T\u1ed2N\" \u2014 11.11"
+   },
+   "start_week": "2026-10-12",
+   "stock": {
+    "savina-12v": {
+     "qty": 60,
+     "kho": {
+      "kho-a": {
+       "qty": 40,
+       "captured_at": "2026-10-09",
+       "stale": false
+      },
+      "kho-b": {
+       "qty": 20,
+       "captured_at": "2026-10-09",
+       "stale": false
+      }
+     },
+     "stale": [],
+     "sample": true
+    },
+    "saphraton-20v": {
+     "qty": 70,
+     "kho": {
+      "kho-a": {
+       "qty": 50,
+       "captured_at": "2026-10-01",
+       "stale": true
+      },
+      "kho-b": {
+       "qty": 20,
+       "captured_at": "2026-10-09",
+       "stale": false
+      }
+     },
+     "stale": [
+      "kho-a"
+     ],
+     "sample": false
+    },
+    "ruou-sam-chai-thuy-tinh-500ml": {
+     "qty": 40,
+     "kho": {
+      "kho-b": {
+       "qty": 40,
+       "captured_at": "2026-10-09",
+       "stale": false
+      }
+     },
+     "stale": [],
+     "sample": false
+    },
+    "mat-ong-sam-120ml-1hu": {
+     "qty": 0,
+     "kho": {
+      "kho-a": {
+       "qty": 0,
+       "captured_at": "2026-10-09",
+       "stale": true
+      }
+     },
+     "stale": [
+      "kho-a\u001b[2J",
+      "kho-z"
+     ],
+     "sample": false
+    },
+    "saphraton-40v": {
+     "qty": 1000,
+     "kho": {
+      "kho-a": {
+       "qty": 1000,
+       "captured_at": "2026-10-09",
+       "stale": false
+      }
+     },
+     "stale": [],
+     "sample": false
+    }
+   },
+   "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd",
+   "a_hex": "616263",
+   "g_hex": "676f6c64656e",
+   "res": "94ee84ffbf5a",
+   "canon": "{\"cutoff\":{\"covers_until\":\"2026-11-15\",\"date\":\"2026-10-25\",\"id\":\"chot_11_11\",\"label\":\"ph\u00e2n b\u1ed5 \\\"T\u1ed2N\\\" \u2014 11.11\"},\"x\":\"\\u001b\u00e9\\\"\\\\\"}"
+  },
+  {
+   "cutoff": {
+    "id": "chot_11_11",
+    "date": "2026-10-25",
+    "covers_until": "2026-11-15",
+    "label": "ph\u00e2n b\u1ed5 \"T\u1ed2N\" \u2014 11.11"
+   },
+   "start_week": "2026-10-19",
+   "stock": {},
+   "status": "x",
+   "a_hex": "",
+   "g_hex": "",
+   "res": "eab19638311b",
+   "canon": "{\"cutoff\":{\"covers_until\":\"2026-11-15\",\"date\":\"2026-10-25\",\"id\":\"chot_11_11\",\"label\":\"ph\u00e2n b\u1ed5 \\\"T\u1ed2N\\\" \u2014 11.11\"},\"x\":\"\\u001b\u00e9\\\"\\\\\"}"
+  },
+  {
+   "cutoff": {
+    "id": "chot_11_11",
+    "date": "2026-10-25",
+    "covers_until": "2026-11-15",
+    "label": "ph\u00e2n b\u1ed5 \"T\u1ed2N\" \u2014 11.11"
+   },
+   "start_week": "2026-10-12",
+   "stock": {
+    "savina-12v": {
+     "qty": 60,
+     "kho": {
+      "kho-a": {
+       "qty": 40,
+       "captured_at": "2026-10-09",
+       "stale": false
+      },
+      "kho-b": {
+       "qty": 20,
+       "captured_at": "2026-10-09",
+       "stale": false
+      }
+     },
+     "stale": [],
+     "sample": true
+    },
+    "saphraton-20v": {
+     "qty": 70,
+     "kho": {
+      "kho-a": {
+       "qty": 50,
+       "captured_at": "2026-10-01",
+       "stale": true
+      },
+      "kho-b": {
+       "qty": 20,
+       "captured_at": "2026-10-09",
+       "stale": false
+      }
+     },
+     "stale": [
+      "kho-a"
+     ],
+     "sample": false
+    },
+    "ruou-sam-chai-thuy-tinh-500ml": {
+     "qty": 40,
+     "kho": {
+      "kho-b": {
+       "qty": 40,
+       "captured_at": "2026-10-09",
+       "stale": false
+      }
+     },
+     "stale": [],
+     "sample": false
+    },
+    "mat-ong-sam-120ml-1hu": {
+     "qty": 0,
+     "kho": {
+      "kho-a": {
+       "qty": 0,
+       "captured_at": "2026-10-09",
+       "stale": true
+      }
+     },
+     "stale": [
+      "kho-a\u001b[2J",
+      "kho-z"
+     ],
+     "sample": false
+    },
+    "saphraton-40v": {
+     "qty": 1000,
+     "kho": {
+      "kho-a": {
+       "qty": 1000,
+       "captured_at": "2026-10-09",
+       "stale": false
+      }
+     },
+     "stale": [],
+     "sample": false
+    }
+   },
+   "status": "GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd",
+   "a_hex": "616264",
+   "g_hex": "676f6c64656e",
+   "res": "5073d8893bf7",
+   "canon": "{\"cutoff\":{\"covers_until\":\"2026-11-15\",\"date\":\"2026-10-25\",\"id\":\"chot_11_11\",\"label\":\"ph\u00e2n b\u1ed5 \\\"T\u1ed2N\\\" \u2014 11.11\"},\"x\":\"\\u001b\u00e9\\\"\\\\\"}"
+  },
+  {
+   "cutoff": {
+    "id": "chot_11_11",
+    "date": "2026-10-25",
+    "covers_until": "2026-11-15",
+    "label": "ph\u00e2n b\u1ed5 \"T\u1ed2N\" \u2014 11.11"
+   },
+   "start_week": "2026-10-12",
+   "stock": {
+    "b": {
+     "qty": 1,
+     "kho": {
+      "z": {
+       "qty": 1,
+       "captured_at": "2026-10-01"
+      },
+      "a": {
+       "qty": 0,
+       "captured_at": "2026-10-02"
+      }
+     }
+    },
+    "a": {
+     "qty": 5,
+     "kho": {
+      "z": {
+       "qty": 5,
+       "captured_at": "2026-10-01"
+      }
+     }
+    }
+   },
+   "status": "ok\n\u2028",
+   "a_hex": "00ff",
+   "g_hex": "67",
+   "res": "00b15f9186cb",
+   "canon": "{\"cutoff\":{\"covers_until\":\"2026-11-15\",\"date\":\"2026-10-25\",\"id\":\"chot_11_11\",\"label\":\"ph\u00e2n b\u1ed5 \\\"T\u1ed2N\\\" \u2014 11.11\"},\"x\":\"\\u001b\u00e9\\\"\\\\\"}"
+  }
+ ]
+}

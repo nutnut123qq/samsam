@@ -62,10 +62,61 @@ jobs:
       - run: python scripts/apply_schema.py --roles
       - run: python -m ingest.core_store
       - run: python -m ingest.golden_store
+      # r22: client pg ĐÚNG major service (16) — pg_restore mới hơn trên PATH
+      # sinh `SET transaction_timeout`, server 16 từ chối (db_backup chọn
+      # /usr/lib/postgresql/16/bin trước PATH). Một dòng: scripts/ci_repro.sh
+      # chạy từng dòng bằng bash, không có apt-get → tự bỏ qua.
+      - run: if [ ! -x /usr/lib/postgresql/16/bin/pg_restore ] && command -v apt-get >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-common && sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && sudo apt-get install -y -qq postgresql-client-16; fi
       - run: python -m pytest -q
       - run: python scripts/agent_eval.py --deterministic
       # v4.2 PC-A9: bộ red-team cố định (luật thuần, không LLM/secret)
       - run: python scripts/redteam.py
+
+  # Bản viết lại TS (docs/rewrite/KE_HOACH.md): biome + typecheck + vitest một luồng. DB mẫu
+  # samsam_ts_tpl dựng như job test (apply_schema --roles x2, core_store, golden_store) + pgvector
+  # + docs/schema_ts.sql qua `npm run db:template` (ts/CONVENTIONS.md); test tạo DB riêng từ mẫu.
+  ts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg17-trixie
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TS_TEST_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/postgres
+    defaults:
+      run:
+        working-directory: ts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+        working-directory: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ts/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx biome ci .
+      - run: npm run typecheck
+      - run: npm run db:template
+      # r22: client pg đúng major service pgvector (17) cho backup/diễn tập (như job test)
+      - run: if [ ! -x /usr/lib/postgresql/17/bin/pg_restore ] && command -v apt-get >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-common && sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && sudo apt-get install -y -qq postgresql-client-17; fi
+      - run: npm test
 
   eval:
     needs: test

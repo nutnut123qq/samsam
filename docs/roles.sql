@@ -309,7 +309,9 @@ grant select on chat_kpi_facts to app_human;
 --     agent_writer (hàng duyệt cskh_handoff/cskh_reply qua enqueue_item,
 --     llm_usage, feature_rollout, action log) + SELECT `chunks` (KB công
 --     khai — KHÔNG `chunks_internal`) + SELECT/INSERT `chat_consents`
---     (append-only). KHÔNG leads/contacts/orders/payload hàng duyệt.
+--     (append-only) + (r22 A2) nhật ký/ảnh/ghi âm vườn qua Zalo: INSERT theo
+--     cột plot_logs/garden_media/garden_voice_drafts, chốt nguồn/tác giả
+--     bằng trigger. KHÔNG leads/contacts/orders/payload hàng duyệt.
 --   svc_job — job lịch (`pipelines.job_runs --run`, deploy/onprem/jobs.json)
 --     trừ backup/diễn tập: kế thừa agent_writer + đọc/ghi đúng bảng các bước
 --     dùng (dưới). KHÔNG contacts/consents (PII), KHÔNG UPDATE/DELETE bảng
@@ -351,6 +353,29 @@ end $$;
 grant agent_writer to svc_webhook;
 grant select on chunks to svc_webhook;
 grant select, insert on chat_consents to svc_webhook;
+-- r22 A2: nhật ký vườn qua Zalo OA (`connectors/zalo_garden.py`, TS
+-- `garden_zalo`) chạy trong tiến trình webhook — thiếu khối này thì chế độ
+-- thực MỌI tin chữ/ảnh/ghi âm của nhân viên vườn lỗi 42501. Cấp TỐI THIỂU
+-- theo cột, đúng các câu SQL webhook chạy (Python và TS cùng câu):
+--   * plots SELECT id: tra khoảnh `select id from plots where upper(id) = ..`.
+--   * plot_logs INSERT 6 cột của `garden.add_log` + SELECT id (`returning
+--     id`). id/created_at/prev_hash/row_hash do trigger `plot_logs_chain`
+--     (SECURITY DEFINER) đặt; id là identity → không cần quyền sequence.
+--   * garden_media INSERT 11 cột của `garden_media.record` + SELECT id
+--     (`returning id`) + sha256 (cột trọng tài `on conflict (sha256)` đòi
+--     SELECT — thiếu là 42501).
+--   * garden_voice_drafts INSERT 6 cột nháp ghi âm + SELECT sha256 (trọng tài).
+-- KHÔNG UPDATE/DELETE/TRUNCATE (append-only); khóa ngoại plots do Postgres
+-- kiểm bằng quyền owner. Grant cột không ràng buộc giá trị → trigger
+-- `webhook_garden_guard` (schema.sql khối r22 A2) chốt nguồn `zalo:garden` +
+-- tác giả `zalo:<mã NV>` cho login thuộc svc_webhook.
+grant select (id) on plots to svc_webhook;
+grant select (id), insert (plot_id, ts, activity, detail, author, source)
+  on plot_logs to svc_webhook;
+grant select (id, sha256), insert (sha256, ext, bytes, width, height, plot_id,
+  taken_on, author, exif_removed, had_gps, source) on garden_media to svc_webhook;
+grant select (sha256), insert (sha256, ext, bytes, staff_code, plot_id, source)
+  on garden_voice_drafts to svc_webhook;
 
 -- svc_job theo bước lịch: intel (crawler.intel + intel_bulletin), quét cảnh
 -- báo đỏ (intel_alert --run, red_alert --deliver), báo cáo TGĐ (ceo_report:

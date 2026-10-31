@@ -1,0 +1,23 @@
+# GREEN Python (sau vá) 2026-10-31T00:17:49+07:00
+$ git diff -- agents/bks_audit.py
+diff --git a/agents/bks_audit.py b/agents/bks_audit.py
+index b5518b7..5f06345 100644
+--- a/agents/bks_audit.py
++++ b/agents/bks_audit.py
+@@ -562,8 +562,10 @@ def chain_alert(conn, routing=None, sender=None) -> dict:
+     key = sorted(f"{f['code']}|{f.get('table')}|{f.get('id')}|"
+                  f"{f.get('problem') or f.get('detail') or ''}" for f in found)
+     fp = hashlib.sha256(chr(10).join(key).encode("utf-8")).hexdigest()
++    # raise_alert che PII cả fp hex (~2% có dãy giống SĐT) → so cả bản đã che.
+     if _rows(conn, "select 1 from red_alerts where source_agent = %s and"
+-                   " detail ->> 'fp' = %s limit 1", (CHAIN_AGENT, fp)):
++                   " detail ->> 'fp' in (%s, %s) limit 1",
++             (CHAIN_AGENT, fp, _mask_pii(fp))):
+         out["dup"] = True
+         return out
+     from pipelines import red_alert  # lười: red_alert → smtp
+$ python -m pytest -q tests/test_bks_audit.py tests/test_red_alert.py -p no:cacheprovider
+........................................................................ [ 84%]
+.............                                                            [100%]
+85 passed in 44.44s
+exit=0

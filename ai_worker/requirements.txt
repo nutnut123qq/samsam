@@ -1,0 +1,8 @@
+# Engine AI cục bộ của ai_worker (deploy/compose/ai_worker.Dockerfile cài SAU requirements.txt gốc).
+# Ghim đúng bản đã chạy được trên máy dev (r13/r14). Model KHÔNG tải lúc cài — mount AI_MODELS_DIR chỉ đọc.
+# PyMuPDF (AGPL) chỉ ở đây: engine OCR tùy chọn paddle_local render PDF scan (r20 — không vào requirements gốc).
+paddlepaddle==2.6.2
+paddleocr==2.10.0
+PyMuPDF==1.27.2.3
+faster-whisper==1.2.1
+av==18.1.0

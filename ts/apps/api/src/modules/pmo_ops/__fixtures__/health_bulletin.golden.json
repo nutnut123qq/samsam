@@ -1,0 +1,661 @@
+{
+ "cost": [
+  {
+   "spend": {
+    "chatbot": 15.8
+   },
+   "caps": {
+    "default": 5.0,
+    "chatbot": 20.0,
+    "smoke": 0.0
+   },
+   "rows": [
+    [
+     "chatbot",
+     15.8,
+     20.0,
+     79.0,
+     "OK"
+    ],
+    [
+     "smoke",
+     0.0,
+     0.0,
+     null,
+     "\u0110\u00c3 CH\u1eb6N (cap 0)"
+    ]
+   ]
+  },
+  {
+   "spend": {
+    "chatbot": 16.0
+   },
+   "caps": {
+    "default": 5.0,
+    "chatbot": 20.0,
+    "smoke": 0.0
+   },
+   "rows": [
+    [
+     "chatbot",
+     16.0,
+     20.0,
+     80.0,
+     "C\u1ea2NH B\u00c1O"
+    ],
+    [
+     "smoke",
+     0.0,
+     0.0,
+     null,
+     "\u0110\u00c3 CH\u1eb6N (cap 0)"
+    ]
+   ]
+  },
+  {
+   "spend": {
+    "chatbot": 20.0
+   },
+   "caps": {
+    "default": 5.0,
+    "chatbot": 20.0,
+    "smoke": 0.0
+   },
+   "rows": [
+    [
+     "chatbot",
+     20.0,
+     20.0,
+     100.0,
+     "\u0110\u00c3 CH\u1eb6N (gateway)"
+    ],
+    [
+     "smoke",
+     0.0,
+     0.0,
+     null,
+     "\u0110\u00c3 CH\u1eb6N (cap 0)"
+    ]
+   ]
+  },
+  {
+   "spend": {
+    "chatbot": 30.0
+   },
+   "caps": {
+    "default": 5.0,
+    "chatbot": 20.0,
+    "smoke": 0.0
+   },
+   "rows": [
+    [
+     "chatbot",
+     30.0,
+     20.0,
+     150.0,
+     "\u0110\u00c3 CH\u1eb6N (gateway)"
+    ],
+    [
+     "smoke",
+     0.0,
+     0.0,
+     null,
+     "\u0110\u00c3 CH\u1eb6N (cap 0)"
+    ]
+   ]
+  },
+  {
+   "spend": {
+    "newagent": 4.0,
+    "smoke": 0.3,
+    "\u00e4": 1,
+    "Z": 2
+   },
+   "caps": {
+    "default": 5.0,
+    "chatbot": 20.0,
+    "smoke": 0.0
+   },
+   "rows": [
+    [
+     "Z",
+     2.0,
+     5.0,
+     40.0,
+     "OK"
+    ],
+    [
+     "chatbot",
+     0.0,
+     20.0,
+     0.0,
+     "OK"
+    ],
+    [
+     "newagent",
+     4.0,
+     5.0,
+     80.0,
+     "C\u1ea2NH B\u00c1O"
+    ],
+    [
+     "smoke",
+     0.3,
+     0.0,
+     null,
+     "\u0110\u00c3 CH\u1eb6N (cap 0)"
+    ],
+    [
+     "\u00e4",
+     1.0,
+     5.0,
+     20.0,
+     "OK"
+    ]
+   ]
+  },
+  {
+   "spend": {},
+   "caps": {
+    "default": 0
+   },
+   "rows": []
+  },
+  {
+   "spend": {
+    "x": 1.0
+   },
+   "caps": {
+    "default": -1,
+    "x": 2
+   },
+   "rows": [
+    [
+     "x",
+     1.0,
+     2.0,
+     50.0,
+     "OK"
+    ]
+   ]
+  }
+ ],
+ "late": [
+  {
+   "h": {
+    "ingest.lead_store": 30.0,
+    "agents.report": 100.0
+   },
+   "exp": {
+    "ingest.lead_store": 24,
+    "agents.report": 192
+   },
+   "res": [
+    [
+     "ingest.lead_store",
+     30.0,
+     24
+    ]
+   ]
+  },
+  {
+   "h": {},
+   "exp": {
+    "ingest.lead_store": 24,
+    "agents.report": 192
+   },
+   "res": [
+    [
+     "ingest.lead_store",
+     null,
+     24
+    ],
+    [
+     "agents.report",
+     null,
+     192
+    ]
+   ]
+  },
+  {
+   "h": {
+    "job:backup": 1.0,
+    "job:x": 26.0,
+    "job:y": 26.0001
+   },
+   "exp": {
+    "job:backup": 26,
+    "job:x": 26,
+    "job:y": 26,
+    "job:z": 2
+   },
+   "res": [
+    [
+     "job:y",
+     26.0001,
+     26
+    ],
+    [
+     "job:z",
+     null,
+     2
+    ]
+   ]
+  }
+ ],
+ "data": {
+  "db_ok": true,
+  "jobs": {
+   "counts": [
+    [
+     "agents.report",
+     1,
+     0
+    ],
+    [
+     "ingest.lead_store",
+     0,
+     1
+    ]
+   ],
+   "failed": [
+    [
+     "ingest.lead_store",
+     {
+      "$dt": "2026-10-10T01:00:00+00:00"
+     },
+     "OperationalError: g\u1ecdi 0905123456 | x\ny postgresql://u:pw9@h/x"
+    ],
+    [
+     "job:x",
+     "kh\u00f4ng ph\u1ea3i ng\u00e0y",
+     null
+    ]
+   ],
+   "last_ok_hours": {
+    "agents.report": 2.0,
+    "job:backup": 30.25
+   },
+   "expected": {
+    "agents.report": 192,
+    "ingest.lead_store": 24,
+    "job:backup": 26
+   }
+  },
+  "spend": {
+   "chatbot": 16.0,
+   "content": 1.0,
+   "x|y": 0.03125
+  },
+  "llm_errors": [
+   [
+    "chatbot",
+    3
+   ],
+   [
+    "a|b",
+    2
+   ]
+  ],
+  "pending": 7
+ },
+ "caps": {
+  "default": 5.0,
+  "chatbot": 20.0,
+  "smoke": 0.0
+ },
+ "renders": {
+  "full": "# B\u1ea3n tin s\u1ee9c kh\u1ecfe h\u1ec7 th\u1ed1ng \u2014 2026-10-11\n\n_Sinh l\u00fac 2026-10-11 14:30 gi\u1edd VN \u2014 s\u1ed1 li\u1ec7u t\u1eeb SQL, kh\u00f4ng d\u00f9ng LLM. B\u1ea3n tin ch\u1ec9 B\u00c1O, kh\u00f4ng t\u1ef1 x\u1eed l\u00fd._\n\n## 1. DB\n\n- DB: s\u1ed1ng (connect + query OK)\n\n## 2. Job 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `job_runs` (24h qua)._\n\n| Job | OK | L\u1ed7i |\n|---|---:|---:|\n| agents.report | 1 | 0 |\n| ingest.lead_store | 0 | 1 |\n- L\u1ed6I `ingest.lead_store` l\u00fac 2026-10-10 08:00: OperationalError: g\u1ecdi *** / x y <secret>\n- L\u1ed6I `job:x` l\u00fac kh\u00f4ng ph\u1ea3i ng\u00e0y: \n- KH\u00d4NG CH\u1ea0Y/TR\u1ec4 `ingest.lead_store` \u2014 ch\u01b0a c\u00f3 l\u1ea7n OK n\u00e0o (h\u1ea1n 24 gi\u1edd)\n- KH\u00d4NG CH\u1ea0Y/TR\u1ec4 `job:backup` \u2014 l\u1ea7n OK g\u1ea7n nh\u1ea5t 30.2 gi\u1edd tr\u01b0\u1edbc (h\u1ea1n 26 gi\u1edd)\n\n## 3. Chi ph\u00ed AI th\u00e1ng n\u00e0y theo agent\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` (`sum(cost_usd)` t\u1eeb 00:00 ng\u00e0y 1 gi\u1edd VN) + tr\u1ea7n `data/llm_gateway.json` `monthly_cap_usd`. Ng\u01b0\u1ee1ng: \u226580% c\u1ea3nh b\u00e1o, \u2265100% gateway ch\u1eb7n._\n\n| Agent | \u0110\u00e3 d\u00f9ng (USD) | Tr\u1ea7n (USD) | % | Tr\u1ea1ng th\u00e1i |\n|---|---:|---:|---:|---|\n| chatbot | 16.0000 | 20.00 | 80% | C\u1ea2NH B\u00c1O |\n| content | 1.0000 | 5.00 | 20% | OK |\n| smoke | 0.0000 | 0.00 | \u2014 | \u0110\u00c3 CH\u1eb6N (cap 0) |\n| x/y | 0.0312 | 5.00 | 1% | OK |\n\n## 4. L\u1eddi g\u1ecdi LLM l\u1ed7i 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` `ok = false` (24h qua)._\n\n- T\u1ed5ng: 5\n  - `chatbot`: 3\n  - `a/b`: 2\n\n## 5. H\u00e0ng ch\u1edd duy\u1ec7t\n\n_Ngu\u1ed3n: b\u1ea3ng `content_drafts` `status = 'pending'`._\n\n- Draft ch\u1edd duy\u1ec7t: 7\n\n## 6. H\u1ea1n l\u01b0u d\u1eef li\u1ec7u c\u00e1 nh\u00e2n\n\n_Ngu\u1ed3n: `data/retention.json` (CV / ch\u1ea5m c\u00f4ng / \u1ea3nh-video / ghi \u00e2m v\u01b0\u1eddn); job `scripts/retention_purge.py`._\n\n- C\u1ea2NH B\u00c1O `hr_cv` (CV / h\u1ed3 s\u01a1 \u1ee9ng vi\u00ean (.txt/.md trong HR_INBOX_DIR)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Chuy\u00ean vi\u00ean ph\u00e1p ch\u1ebf \u2013 nh\u00e2n s\u1ef1 (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n- C\u1ea2NH B\u00c1O `hr_attendance` (File ch\u1ea5m c\u00f4ng (ma_nv, ng\u00e0y, gi\u1edd v\u00e0o/ra)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Chuy\u00ean vi\u00ean ph\u00e1p ch\u1ebf \u2013 nh\u00e2n s\u1ef1 (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n- C\u1ea2NH B\u00c1O `garden_media` (\u1ea2nh / video v\u01b0\u1eddn \u0111\u00e3 g\u1ee1 EXIF/GPS (GARDEN_MEDIA_DIR)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Gi\u00e1m \u0111\u1ed1c v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n- C\u1ea2NH B\u00c1O `garden_voice` (Ghi \u00e2m nh\u00e2n vi\u00ean v\u01b0\u1eddn (GARDEN_MEDIA_DIR/audio)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Gi\u00e1m \u0111\u1ed1c v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n",
+  "states": "# B\u1ea3n tin s\u1ee9c kh\u1ecfe h\u1ec7 th\u1ed1ng \u2014 2026-10-11\n\n_Sinh l\u00fac 2026-10-11 14:30 gi\u1edd VN \u2014 s\u1ed1 li\u1ec7u t\u1eeb SQL, kh\u00f4ng d\u00f9ng LLM. B\u1ea3n tin ch\u1ec9 B\u00c1O, kh\u00f4ng t\u1ef1 x\u1eed l\u00fd._\n\n## 1. DB\n\n- DB: s\u1ed1ng (connect + query OK)\n\n## 2. Job 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `job_runs` (24h qua)._\n\n- ch\u01b0a c\u00f3 b\u1ea3ng `job_runs` \u2014 ch\u1ea1y `python scripts/apply_schema.py`\n\n## 3. Chi ph\u00ed AI th\u00e1ng n\u00e0y theo agent\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` (`sum(cost_usd)` t\u1eeb 00:00 ng\u00e0y 1 gi\u1edd VN) + tr\u1ea7n `data/llm_gateway.json` `monthly_cap_usd`. Ng\u01b0\u1ee1ng: \u226580% c\u1ea3nh b\u00e1o, \u2265100% gateway ch\u1eb7n._\n\n| Agent | \u0110\u00e3 d\u00f9ng (USD) | Tr\u1ea7n (USD) | % | Tr\u1ea1ng th\u00e1i |\n|---|---:|---:|---:|---|\n| chatbot | 16.0000 | 20.00 | 80% | C\u1ea2NH B\u00c1O |\n| content | 1.0000 | 5.00 | 20% | OK |\n| smoke | 0.0000 | 0.00 | \u2014 | \u0110\u00c3 CH\u1eb6N (cap 0) |\n| x/y | 0.0312 | 5.00 | 1% | OK |\n\n## 4. L\u1eddi g\u1ecdi LLM l\u1ed7i 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` `ok = false` (24h qua)._\n\n- l\u1ed7i \u0111\u1ecdc `llm_usage` (X)\n\n## 5. H\u00e0ng ch\u1edd duy\u1ec7t\n\n_Ngu\u1ed3n: b\u1ea3ng `content_drafts` `status = 'pending'`._\n\n- l\u1ed7i \u0111\u1ecdc `content_drafts` (InsufficientPrivilege)\n\n## 6. H\u1ea1n l\u01b0u d\u1eef li\u1ec7u c\u00e1 nh\u00e2n\n\n_Ngu\u1ed3n: `data/retention.json` (CV / ch\u1ea5m c\u00f4ng / \u1ea3nh-video / ghi \u00e2m v\u01b0\u1eddn); job `scripts/retention_purge.py`._\n\n- r\n",
+  "cap_error": "# B\u1ea3n tin s\u1ee9c kh\u1ecfe h\u1ec7 th\u1ed1ng \u2014 2026-10-11\n\n_Sinh l\u00fac 2026-10-11 14:30 gi\u1edd VN \u2014 s\u1ed1 li\u1ec7u t\u1eeb SQL, kh\u00f4ng d\u00f9ng LLM. B\u1ea3n tin ch\u1ec9 B\u00c1O, kh\u00f4ng t\u1ef1 x\u1eed l\u00fd._\n\n## 1. DB\n\n- DB: s\u1ed1ng (connect + query OK)\n\n## 2. Job 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `job_runs` (24h qua)._\n\n| Job | OK | L\u1ed7i |\n|---|---:|---:|\n| agents.report | 1 | 0 |\n| ingest.lead_store | 0 | 1 |\n- L\u1ed6I `ingest.lead_store` l\u00fac 2026-10-10 08:00: OperationalError: g\u1ecdi *** / x y <secret>\n- L\u1ed6I `job:x` l\u00fac kh\u00f4ng ph\u1ea3i ng\u00e0y: \n- KH\u00d4NG CH\u1ea0Y/TR\u1ec4 `ingest.lead_store` \u2014 ch\u01b0a c\u00f3 l\u1ea7n OK n\u00e0o (h\u1ea1n 24 gi\u1edd)\n- KH\u00d4NG CH\u1ea0Y/TR\u1ec4 `job:backup` \u2014 l\u1ea7n OK g\u1ea7n nh\u1ea5t 30.2 gi\u1edd tr\u01b0\u1edbc (h\u1ea1n 26 gi\u1edd)\n\n## 3. Chi ph\u00ed AI th\u00e1ng n\u00e0y theo agent\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` (`sum(cost_usd)` t\u1eeb 00:00 ng\u00e0y 1 gi\u1edd VN) + tr\u1ea7n `data/llm_gateway.json` `monthly_cap_usd`. Ng\u01b0\u1ee1ng: \u226580% c\u1ea3nh b\u00e1o, \u2265100% gateway ch\u1eb7n._\n\n- kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c tr\u1ea7n chi ph\u00ed (GatewayError)\n\n## 4. L\u1eddi g\u1ecdi LLM l\u1ed7i 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` `ok = false` (24h qua)._\n\n- T\u1ed5ng: 5\n  - `chatbot`: 3\n  - `a/b`: 2\n\n## 5. H\u00e0ng ch\u1edd duy\u1ec7t\n\n_Ngu\u1ed3n: b\u1ea3ng `content_drafts` `status = 'pending'`._\n\n- Draft ch\u1edd duy\u1ec7t: 7\n\n## 6. H\u1ea1n l\u01b0u d\u1eef li\u1ec7u c\u00e1 nh\u00e2n\n\n_Ngu\u1ed3n: `data/retention.json` (CV / ch\u1ea5m c\u00f4ng / \u1ea3nh-video / ghi \u00e2m v\u01b0\u1eddn); job `scripts/retention_purge.py`._\n\n",
+  "down": "# B\u1ea3n tin s\u1ee9c kh\u1ecfe h\u1ec7 th\u1ed1ng \u2014 2026-10-11\n\n_Sinh l\u00fac 2026-10-11 14:30 gi\u1edd VN \u2014 s\u1ed1 li\u1ec7u t\u1eeb SQL, kh\u00f4ng d\u00f9ng LLM. B\u1ea3n tin ch\u1ec9 B\u00c1O, kh\u00f4ng t\u1ef1 x\u1eed l\u00fd._\n\n## 1. DB\n\n- **DB kh\u00f4ng truy c\u1eadp \u0111\u01b0\u1ee3c** (OperationalError) \u2014 ki\u1ec3m service Postgres / `DATABASE_URL` (SOP m\u1ee5c 7).\n\n## 2. Job 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `job_runs` (24h qua)._\n\n- kh\u00f4ng c\u00f3 s\u1ed1 li\u1ec7u (DB kh\u00f4ng truy c\u1eadp \u0111\u01b0\u1ee3c)\n\n## 3. Chi ph\u00ed AI th\u00e1ng n\u00e0y theo agent\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` (`sum(cost_usd)` t\u1eeb 00:00 ng\u00e0y 1 gi\u1edd VN) + tr\u1ea7n `data/llm_gateway.json` `monthly_cap_usd`. Ng\u01b0\u1ee1ng: \u226580% c\u1ea3nh b\u00e1o, \u2265100% gateway ch\u1eb7n._\n\n- kh\u00f4ng c\u00f3 s\u1ed1 li\u1ec7u (DB kh\u00f4ng truy c\u1eadp \u0111\u01b0\u1ee3c)\n\n## 4. L\u1eddi g\u1ecdi LLM l\u1ed7i 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` `ok = false` (24h qua)._\n\n- kh\u00f4ng c\u00f3 s\u1ed1 li\u1ec7u (DB kh\u00f4ng truy c\u1eadp \u0111\u01b0\u1ee3c)\n\n## 5. H\u00e0ng ch\u1edd duy\u1ec7t\n\n_Ngu\u1ed3n: b\u1ea3ng `content_drafts` `status = 'pending'`._\n\n- kh\u00f4ng c\u00f3 s\u1ed1 li\u1ec7u (DB kh\u00f4ng truy c\u1eadp \u0111\u01b0\u1ee3c)\n\n## 6. H\u1ea1n l\u01b0u d\u1eef li\u1ec7u c\u00e1 nh\u00e2n\n\n_Ngu\u1ed3n: `data/retention.json` (CV / ch\u1ea5m c\u00f4ng / \u1ea3nh-video / ghi \u00e2m v\u01b0\u1eddn); job `scripts/retention_purge.py`._\n\n- C\u1ea2NH B\u00c1O `hr_cv` (CV / h\u1ed3 s\u01a1 \u1ee9ng vi\u00ean (.txt/.md trong HR_INBOX_DIR)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Chuy\u00ean vi\u00ean ph\u00e1p ch\u1ebf \u2013 nh\u00e2n s\u1ef1 (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n- C\u1ea2NH B\u00c1O `hr_attendance` (File ch\u1ea5m c\u00f4ng (ma_nv, ng\u00e0y, gi\u1edd v\u00e0o/ra)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Chuy\u00ean vi\u00ean ph\u00e1p ch\u1ebf \u2013 nh\u00e2n s\u1ef1 (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n- C\u1ea2NH B\u00c1O `garden_media` (\u1ea2nh / video v\u01b0\u1eddn \u0111\u00e3 g\u1ee1 EXIF/GPS (GARDEN_MEDIA_DIR)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Gi\u00e1m \u0111\u1ed1c v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n- C\u1ea2NH B\u00c1O `garden_voice` (Ghi \u00e2m nh\u00e2n vi\u00ean v\u01b0\u1eddn (GARDEN_MEDIA_DIR/audio)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Gi\u00e1m \u0111\u1ed1c v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n",
+  "no_jobs": "# B\u1ea3n tin s\u1ee9c kh\u1ecfe h\u1ec7 th\u1ed1ng \u2014 2026-01-02\n\n_Sinh l\u00fac 2026-10-11 14:30 gi\u1edd VN \u2014 s\u1ed1 li\u1ec7u t\u1eeb SQL, kh\u00f4ng d\u00f9ng LLM. B\u1ea3n tin ch\u1ec9 B\u00c1O, kh\u00f4ng t\u1ef1 x\u1eed l\u00fd._\n\n## 1. DB\n\n- DB: s\u1ed1ng (connect + query OK)\n\n## 2. Job 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `job_runs` (24h qua)._\n\n- kh\u00f4ng c\u00f3 l\u1ea7n ch\u1ea1y n\u00e0o trong 24h\n- KH\u00d4NG CH\u1ea0Y/TR\u1ec4 `ingest.lead_store` \u2014 ch\u01b0a c\u00f3 l\u1ea7n OK n\u00e0o (h\u1ea1n 24 gi\u1edd)\n- KH\u00d4NG CH\u1ea0Y/TR\u1ec4 `agents.report` \u2014 ch\u01b0a c\u00f3 l\u1ea7n OK n\u00e0o (h\u1ea1n 192 gi\u1edd)\n\n## 3. Chi ph\u00ed AI th\u00e1ng n\u00e0y theo agent\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` (`sum(cost_usd)` t\u1eeb 00:00 ng\u00e0y 1 gi\u1edd VN) + tr\u1ea7n `data/llm_gateway.json` `monthly_cap_usd`. Ng\u01b0\u1ee1ng: \u226580% c\u1ea3nh b\u00e1o, \u2265100% gateway ch\u1eb7n._\n\n- ch\u01b0a c\u00f3 b\u1ea3ng `llm_usage` \u2014 ch\u1ea1y `python scripts/apply_schema.py`\n\n## 4. L\u1eddi g\u1ecdi LLM l\u1ed7i 24h\n\n_Ngu\u1ed3n: b\u1ea3ng `llm_usage` `ok = false` (24h qua)._\n\n- T\u1ed5ng: 0\n\n## 5. H\u00e0ng ch\u1edd duy\u1ec7t\n\n_Ngu\u1ed3n: b\u1ea3ng `content_drafts` `status = 'pending'`._\n\n- Draft ch\u1edd duy\u1ec7t: 7\n\n## 6. H\u1ea1n l\u01b0u d\u1eef li\u1ec7u c\u00e1 nh\u00e2n\n\n_Ngu\u1ed3n: `data/retention.json` (CV / ch\u1ea5m c\u00f4ng / \u1ea3nh-video / ghi \u00e2m v\u01b0\u1eddn); job `scripts/retention_purge.py`._\n\n- C\u1ea2NH B\u00c1O `hr_cv` (CV / h\u1ed3 s\u01a1 \u1ee9ng vi\u00ean (.txt/.md trong HR_INBOX_DIR)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Chuy\u00ean vi\u00ean ph\u00e1p ch\u1ebf \u2013 nh\u00e2n s\u1ef1 (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n- C\u1ea2NH B\u00c1O `hr_attendance` (File ch\u1ea5m c\u00f4ng (ma_nv, ng\u00e0y, gi\u1edd v\u00e0o/ra)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Chuy\u00ean vi\u00ean ph\u00e1p ch\u1ebf \u2013 nh\u00e2n s\u1ef1 (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n- C\u1ea2NH B\u00c1O `garden_media` (\u1ea2nh / video v\u01b0\u1eddn \u0111\u00e3 g\u1ee1 EXIF/GPS (GARDEN_MEDIA_DIR)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Gi\u00e1m \u0111\u1ed1c v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n- C\u1ea2NH B\u00c1O `garden_voice` (Ghi \u00e2m nh\u00e2n vi\u00ean v\u01b0\u1eddn (GARDEN_MEDIA_DIR/audio)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Gi\u00e1m \u0111\u1ed1c v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)\n"
+ },
+ "retention_real": [
+  "- C\u1ea2NH B\u00c1O `hr_cv` (CV / h\u1ed3 s\u01a1 \u1ee9ng vi\u00ean (.txt/.md trong HR_INBOX_DIR)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Chuy\u00ean vi\u00ean ph\u00e1p ch\u1ebf \u2013 nh\u00e2n s\u1ef1 (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)",
+  "- C\u1ea2NH B\u00c1O `hr_attendance` (File ch\u1ea5m c\u00f4ng (ma_nv, ng\u00e0y, gi\u1edd v\u00e0o/ra)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Chuy\u00ean vi\u00ean ph\u00e1p ch\u1ebf \u2013 nh\u00e2n s\u1ef1 (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)",
+  "- C\u1ea2NH B\u00c1O `garden_media` (\u1ea2nh / video v\u01b0\u1eddn \u0111\u00e3 g\u1ee1 EXIF/GPS (GARDEN_MEDIA_DIR)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Gi\u00e1m \u0111\u1ed1c v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)",
+  "- C\u1ea2NH B\u00c1O `garden_voice` (Ghi \u00e2m nh\u00e2n vi\u00ean v\u01b0\u1eddn (GARDEN_MEDIA_DIR/audio)): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Gi\u00e1m \u0111\u1ed1c v\u00f9ng tr\u1ed3ng + Ph\u00e1p ch\u1ebf (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)"
+ ],
+ "retention": [
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": null,
+      "kho": {
+       "loai": "thu_muc",
+       "env": "E",
+       "duoi": [
+        ".x"
+       ]
+      },
+      "ten": "T\u00ean A",
+      "owner": "Ph\u00e1p ch\u1ebf"
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": null, \"kho\": {\"loai\": \"thu_muc\", \"env\": \"E\", \"duoi\": [\".x\"]}, \"ten\": \"T\u00ean A\", \"owner\": \"Ph\u00e1p ch\u1ebf\"}]}",
+   "lines": [
+    "- C\u1ea2NH B\u00c1O `a` (T\u00ean A): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: Ph\u00e1p ch\u1ebf (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": 30,
+      "kho": {
+       "loai": "khong_luu_ban_sao"
+      }
+     },
+     {
+      "id": "b",
+      "ttl_days": 7,
+      "kho": {
+       "loai": "garden_media",
+       "env": "G"
+      },
+      "ten": "B"
+     },
+     {
+      "id": "c",
+      "ttl_days": null,
+      "kho": {
+       "loai": "garden_voice",
+       "env": "V"
+      },
+      "owner": ""
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": 30, \"kho\": {\"loai\": \"khong_luu_ban_sao\"}}, {\"id\": \"b\", \"ttl_days\": 7, \"kho\": {\"loai\": \"garden_media\", \"env\": \"G\"}, \"ten\": \"B\"}, {\"id\": \"c\", \"ttl_days\": null, \"kho\": {\"loai\": \"garden_voice\", \"env\": \"V\"}, \"owner\": \"\"}]}",
+   "lines": [
+    "- `a` (): h\u1ea1n 30 ng\u00e0y \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng gi\u1eef b\u1ea3n sao file, kh\u00f4ng c\u00f3 g\u00ec \u0111\u1ec3 x\u00f3a",
+    "- `b` (B): gi\u1eef 7 ng\u00e0y \u2014 job `python scripts/retention_purge.py`",
+    "- C\u1ea2NH B\u00c1O `c` (): CH\u01afA CH\u1ed0T h\u1ea1n l\u01b0u \u2014 job kh\u00f4ng x\u00f3a g\u00ec; ng\u01b0\u1eddi ch\u1ed1t: ch\u01b0a r\u00f5 (\u0111i\u1ec1n s\u1ed1 ng\u00e0y trong `data/retention.json`)"
+   ]
+  },
+  {
+   "doc": {
+    "muc": []
+   },
+   "text": "{\"muc\": []}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (thi\u1ebfu m\u1ea3ng 'muc') \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {},
+   "text": "{}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (thi\u1ebfu m\u1ea3ng 'muc') \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": [],
+   "text": "[]",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (thi\u1ebfu m\u1ea3ng 'muc') \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     "x"
+    ]
+   },
+   "text": "{\"muc\": [\"x\"]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (muc[0] sai d\u1ea1ng) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "",
+      "ttl_days": null,
+      "kho": {
+       "loai": "garden_media",
+       "env": "G"
+      }
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"\", \"ttl_days\": null, \"kho\": {\"loai\": \"garden_media\", \"env\": \"G\"}}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (muc[0] id r\u1ed7ng/tr\u00f9ng) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": null,
+      "kho": {
+       "loai": "garden_media",
+       "env": "G"
+      }
+     },
+     {
+      "id": "a",
+      "ttl_days": null,
+      "kho": {
+       "loai": "garden_media",
+       "env": "G"
+      }
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": null, \"kho\": {\"loai\": \"garden_media\", \"env\": \"G\"}}, {\"id\": \"a\", \"ttl_days\": null, \"kho\": {\"loai\": \"garden_media\", \"env\": \"G\"}}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (muc[1] id r\u1ed7ng/tr\u00f9ng) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": true,
+      "kho": {
+       "loai": "garden_media",
+       "env": "G"
+      }
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": true, \"kho\": {\"loai\": \"garden_media\", \"env\": \"G\"}}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (a: ttl_days ph\u1ea3i null ho\u1eb7c s\u1ed1 nguy\u00ean \u2265 1) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": 0,
+      "kho": {
+       "loai": "garden_media",
+       "env": "G"
+      }
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": 0, \"kho\": {\"loai\": \"garden_media\", \"env\": \"G\"}}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (a: ttl_days ph\u1ea3i null ho\u1eb7c s\u1ed1 nguy\u00ean \u2265 1) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": 1.0,
+      "kho": {
+       "loai": "garden_media",
+       "env": "G"
+      }
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": 1.0, \"kho\": {\"loai\": \"garden_media\", \"env\": \"G\"}}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (a: ttl_days ph\u1ea3i null ho\u1eb7c s\u1ed1 nguy\u00ean \u2265 1) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": 1,
+      "kho": {
+       "loai": "x"
+      }
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": 1, \"kho\": {\"loai\": \"x\"}}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (a: kho.loai ph\u1ea3i thu\u1ed9c ('thu_muc', 'garden_media', 'garden_voice', 'khong_luu_ban_sao')) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": 1,
+      "kho": {
+       "loai": "garden_media"
+      }
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": 1, \"kho\": {\"loai\": \"garden_media\"}}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (a: thi\u1ebfu kho.env) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": 1,
+      "kho": {
+       "loai": "thu_muc",
+       "env": "E",
+       "duoi": []
+      }
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": 1, \"kho\": {\"loai\": \"thu_muc\", \"env\": \"E\", \"duoi\": []}}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (a: thi\u1ebfu kho.duoi) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": "a",
+      "ttl_days": 1,
+      "kho": "x"
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": \"a\", \"ttl_days\": 1, \"kho\": \"x\"}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (a: kho.loai ph\u1ea3i thu\u1ed9c ('thu_muc', 'garden_media', 'garden_voice', 'khong_luu_ban_sao')) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "doc": {
+    "muc": [
+     {
+      "id": 5,
+      "ttl_days": 1,
+      "kho": {
+       "loai": "khong_luu_ban_sao"
+      }
+     }
+    ]
+   },
+   "text": "{\"muc\": [{\"id\": 5, \"ttl_days\": 1, \"kho\": {\"loai\": \"khong_luu_ban_sao\"}}]}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (muc[0] id r\u1ed7ng/tr\u00f9ng) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "raw": "{not json",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c retention.json (JSONDecodeError)) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "raw": "\u00ef\u00bb\u00bf{}",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (thi\u1ebfu m\u1ea3ng 'muc') \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "raw": "\u00ff\u00fe",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c retention.json (JSONDecodeError)) \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  },
+  {
+   "raw": "[1, NaN]",
+   "lines": [
+    "- L\u1ed6I c\u1ea5u h\u00ecnh h\u1ea1n l\u01b0u (thi\u1ebfu m\u1ea3ng 'muc') \u2014 job x\u00f3a kh\u00f4ng ch\u1ea1y"
+   ]
+  }
+ ],
+ "expected_jobs": {
+  "ingest.lead_store": 24,
+  "agents.report": 192,
+  "job:intel": 26,
+  "job:red_alert_sweep": 2,
+  "job:channel_scan": 26,
+  "job:hdtv_month": 768,
+  "job:vt_weather": 26,
+  "job:vt_harvest": 192,
+  "job:vt_pests": 26,
+  "job:webhook_health": 1,
+  "job:red_alert_escalate": 1,
+  "job:anchor_build": 26,
+  "job:legal_updates": 26,
+  "job:sales_sla": 1,
+  "job:b2b_followups": 26,
+  "job:order_watch": 26,
+  "job:dealer_price_watch": 26,
+  "job:ceo_promo": 26,
+  "job:intel_keywords": 192,
+  "job:ceo_weekly": 192,
+  "job:invoice_batch": 26,
+  "job:content_daily": 26,
+  "job:backup": 26,
+  "job:restore_drill": 192,
+  "job:dr_drill": 768,
+  "job:kpi_snapshot": 26,
+  "job:health_bulletin": 26,
+  "job:ops_monthly": 768,
+  "job:garden_remind": 26,
+  "job:intel_weekly": 192,
+  "job:listing_watch": 26,
+  "job:price_watch": 26,
+  "job:ceo_audit": 26,
+  "job:chain_watch": 26,
+  "job:production_week": 192,
+  "job:production_month": 768
+ }
+}

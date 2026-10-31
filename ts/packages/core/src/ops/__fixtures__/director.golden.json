@@ -1,0 +1,3439 @@
+{
+ "validate": [
+  {
+   "cfg": null,
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: c\u1ea5u h\u00ecnh kh\u00f4ng ph\u1ea3i object JSON"
+   }
+  },
+  {
+   "cfg": [],
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: c\u1ea5u h\u00ecnh kh\u00f4ng ph\u1ea3i object JSON"
+   }
+  },
+  {
+   "cfg": {
+    "block": "ceo",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: 'block' = 'ceo' l\u1ec7ch t\u00ean file"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": " ",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: thi\u1ebfu 'name'"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": null,
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: thi\u1ebfu 'director_agent'"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [],
+    "approvers": [],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: 'approver_roles' r\u1ed7ng"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "tgd",
+     "l\u1ea1"
+    ],
+    "approvers": [],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: vai tr\u00f2 l\u1ea1 ['l\u1ea1'] \u2014 ph\u1ea3i thu\u1ed9c ('tgd', 'phap_che', 'gd_ban_hang', 'gd_marketing', 'mxh', 'ha_tang')"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": "x",
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: 'approvers' ph\u1ea3i l\u00e0 list chu\u1ed7i"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [
+     1
+    ],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: 'digest_recipients' ph\u1ea3i l\u00e0 list chu\u1ed7i"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {},
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: 'object_types' r\u1ed7ng"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "content_draft": {
+      "sla_hours": 1,
+      "risk": "low"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: lo\u1ea1i vi\u1ec7c 'content_draft' kh\u00f4ng h\u1ee3p l\u1ec7 (content_draft \u0111i pipelines.store)"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "A_b": {
+      "sla_hours": 1,
+      "risk": "low"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: lo\u1ea1i vi\u1ec7c 'A_b' kh\u00f4ng h\u1ee3p l\u1ec7 (content_draft \u0111i pipelines.store)"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "ab": {
+      "sla_hours": 0,
+      "risk": "low"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales/ab: sla_hours ph\u1ea3i 1..720"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "ab": {
+      "sla_hours": true,
+      "risk": "low"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales/ab: sla_hours ph\u1ea3i 1..720"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "ab": {
+      "sla_hours": 721,
+      "risk": "low"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales/ab: sla_hours ph\u1ea3i 1..720"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "ab": {
+      "sla_hours": 1,
+      "risk": "x"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales/ab: risk ph\u1ea3i ('low', 'medium', 'high')"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "ab": 5
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales/ab: sla_hours ph\u1ea3i 1..720"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 0
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: due_soon_hours ph\u1ea3i 1..720"
+   }
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 24.0
+   },
+   "out": {
+    "error": "DirectorConfigError",
+    "msg": "sales: due_soon_hours ph\u1ea3i 1..720"
+   }
+  }
+ ],
+ "digests": [
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [],
+    "due_soon_hours": 8
+   },
+   "items": [
+    {
+     "id": 1,
+     "object_type": "x",
+     "object_id": "1",
+     "title": "vi\u1ec7c 1",
+     "risk": "low",
+     "qa_status": "none",
+     "status": "approved",
+     "created_by": "agent:x",
+     "created_at": "2026-10-11T16:59:00+00:00",
+     "due_at": null,
+     "decided_by": null,
+     "decided_at": "2026-10-12T16:59:00+00:00",
+     "lane": null
+    },
+    {
+     "id": 2,
+     "object_type": "x",
+     "object_id": "2",
+     "title": "vi\u1ec7c 2",
+     "risk": "low",
+     "qa_status": "none",
+     "status": "approved",
+     "created_by": "agent:x",
+     "created_at": "2026-10-11T16:59:00+00:00",
+     "due_at": null,
+     "decided_by": null,
+     "decided_at": "2026-10-12T17:00:00+00:00",
+     "lane": null
+    },
+    {
+     "id": 3,
+     "object_type": "x",
+     "object_id": "3",
+     "title": "vi\u1ec7c 3",
+     "risk": "low",
+     "qa_status": "none",
+     "status": "expired",
+     "created_by": "agent:x",
+     "created_at": "2026-10-11T16:59:00+00:00",
+     "due_at": "2026-10-11T16:59:00+00:00",
+     "decided_by": null,
+     "decided_at": "2026-10-12T16:59:00+00:00",
+     "lane": null
+    },
+    {
+     "id": 4,
+     "object_type": "x",
+     "object_id": "4",
+     "title": "vi\u1ec7c 4",
+     "risk": "low",
+     "qa_status": "none",
+     "status": "expired",
+     "created_by": "agent:x",
+     "created_at": "2026-10-11T16:59:00+00:00",
+     "due_at": "2026-10-11T16:59:00+00:00",
+     "decided_by": null,
+     "decided_at": "2026-10-11T16:59:00+00:00",
+     "lane": null
+    },
+    {
+     "id": 5,
+     "object_type": "x",
+     "object_id": "5",
+     "title": "vi\u1ec7c 5",
+     "risk": "low",
+     "qa_status": "none",
+     "status": "rejected",
+     "created_by": "agent:x",
+     "created_at": "2026-10-12T16:59:00+00:00",
+     "due_at": null,
+     "decided_by": null,
+     "decided_at": "2026-10-12T16:59:00+00:00",
+     "lane": null
+    },
+    {
+     "id": 6,
+     "object_type": "x",
+     "object_id": "6",
+     "title": "G\u1ecdi  0912 345 678 d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i ",
+     "risk": "low",
+     "qa_status": "none",
+     "status": "pending",
+     "created_by": "agent:x",
+     "created_at": "2026-10-12T16:59:00+00:00",
+     "due_at": "2026-10-13T01:30:00+07:00",
+     "decided_by": null,
+     "decided_at": null,
+     "lane": null
+    },
+    {
+     "id": 7,
+     "object_type": "x",
+     "object_id": "7",
+     "title": "vi\u1ec7c 7",
+     "risk": "low",
+     "qa_status": "none",
+     "status": "pending",
+     "created_by": "agent:x",
+     "created_at": "2026-10-12T17:00:00+00:00",
+     "due_at": "2026-10-15T23:30:00+07:00",
+     "decided_by": null,
+     "decided_at": null,
+     "lane": null
+    },
+    {
+     "id": 8,
+     "object_type": "x",
+     "object_id": "8",
+     "title": "vi\u1ec7c 8",
+     "risk": "low",
+     "qa_status": "none",
+     "status": "pending",
+     "created_by": "agent:x",
+     "created_at": "2026-10-12T16:59:00+00:00",
+     "due_at": null,
+     "decided_by": null,
+     "decided_at": null,
+     "lane": null
+    },
+    {
+     "id": 9,
+     "object_type": "x",
+     "object_id": "9",
+     "title": "\u0111\u00fang h\u1ea1n",
+     "risk": "low",
+     "qa_status": "none",
+     "status": "pending",
+     "created_by": "agent:x",
+     "created_at": "2026-10-12T16:59:00+00:00",
+     "due_at": "2026-10-12T23:30:00+07:00",
+     "decided_by": null,
+     "decided_at": null,
+     "lane": null
+    }
+   ],
+   "now": "2026-10-12T23:30:00+07:00",
+   "overrides": [
+    {
+     "queue_id": 6,
+     "decided_by": "Hoa",
+     "created_at": "2026-10-12T16:59:00+00:00"
+    },
+    {
+     "queue_id": 7,
+     "decided_by": "Mai",
+     "created_at": "2026-10-12T17:00:00+00:00"
+    }
+   ],
+   "qa": [
+    {
+     "agent": "kd_a1",
+     "suite_version": 3,
+     "passed": true,
+     "n_pass": 43,
+     "n_total": 43,
+     "failed_cases": [],
+     "commit_sha": "abcdef123456",
+     "ts": "2026-10-12T16:59:00+00:00"
+    },
+    {
+     "agent": "kd_a3",
+     "suite_version": 1,
+     "passed": false,
+     "n_pass": 1,
+     "n_total": 13,
+     "failed_cases": [
+      "c0",
+      "c1",
+      "c2",
+      "c3",
+      "c4",
+      "c5",
+      "c6",
+      "c7",
+      "c8",
+      "c9",
+      "c10",
+      "c11"
+     ],
+     "commit_sha": null,
+     "ts": "2026-10-12T16:59:00+00:00"
+    },
+    {
+     "agent": "old",
+     "suite_version": 1,
+     "passed": true,
+     "n_pass": 1,
+     "n_total": 1,
+     "failed_cases": null,
+     "commit_sha": "x",
+     "ts": "2026-10-11T16:59:00+00:00"
+    }
+   ],
+   "extra": [],
+   "out": "# B\u1ea3n tin G\u0110 Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T) \u2014 12/10/2026\n\nAgent: Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i) \u00b7 kh\u1ed1i `sales` \u00b7 gi\u1edd VN\n\n## S\u1ed1 li\u1ec7u trong ng\u00e0y\n\n| Ch\u1ec9 s\u1ed1 | S\u1ed1 |\n|---|---|\n| M\u1edbi v\u00e0o h\u00e0ng | 4 |\n| \u0110ang ch\u1edd duy\u1ec7t (t\u1ed3n) | 4 |\n| \u0110\u00e3 duy\u1ec7t | 1 |\n| T\u1eeb ch\u1ed1i | 1 |\n| H\u1ebft h\u1ea1n SLA (expired) | 1 |\n\n## S\u1eafp qu\u00e1 h\u1ea1n (\u2264 8 gi\u1edd)\n\n- #6 `x` G\u1ecdi 0912 345 678 d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i d\u00e0i \u2026 \u2014 h\u1ea1n 13/10 01:30\n\n## H\u1ebft h\u1ea1n h\u00f4m nay (kh\u00f4ng ai duy\u1ec7t \u2014 KH\u00d4NG t\u1ef1 duy\u1ec7t)\n\n- #3 `x` vi\u1ec7c 3 \u2014 h\u1ea1n 11/10 23:59\n\n## Override QA h\u00f4m nay (\u00e9p tr\u00ecnh b\u1ea3n QA FAIL)\n\n- m\u1ee5c #6 \u2014 b\u1edfi Hoa l\u00fac 12/10 23:59\n\n## Nghi\u1ec7m thu QA h\u00f4m nay\n\n- `kd_a1` v3 PASS 43/43 \u00b7 commit abcdef1\n- `kd_a3` v1 FAIL 1/13 \u00b7 commit  \u2014 ca FAIL: c0, c1, c2, c3, c4, c5, c6, c7, c8, c9 (+2)\n\n## Ng\u01b0\u1eddi duy\u1ec7t\n\n- Vai tr\u00f2 duy\u1ec7t: gd_ban_hang\n- Ng\u01b0\u1eddi duy\u1ec7t ch\u01b0a c\u1ea5u h\u00ecnh (external-dep)\n- Ng\u01b0\u1eddi nh\u1eadn b\u1ea3n tin ch\u01b0a c\u1ea5u h\u00ecnh (external-dep)\n\n---\n*B\u1ea2N NH\u00c1P \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 g\u1eedi. Ng\u01b0\u1eddi \u0111\u1ecdc r\u1ed3i chuy\u1ec3n tay cho G\u0110 kh\u1ed1i.*\n"
+  },
+  {
+   "cfg": {
+    "block": "sales",
+    "name": "Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T)",
+    "director_agent": "Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i)",
+    "approver_roles": [
+     "gd_ban_hang"
+    ],
+    "approvers": [
+     "B\u00e0 A"
+    ],
+    "object_types": {
+     "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "C\u00e2u h\u1ecfi chatbot ch\u01b0a tr\u1ea3 l\u1eddi (chuy\u1ec3n ng\u01b0\u1eddi)"
+     },
+     "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Tr\u1ea3 l\u1eddi CSKH c\u1ea7n duy\u1ec7t"
+     },
+     "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S1"
+     },
+     "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "X\u1eed l\u00fd c\u1ea3nh b\u00e1o s\u00e0n S2"
+     },
+     "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phi\u1ebfu l\u1ec7ch gi\u00e1 golden ch\u1edd duy\u1ec7t"
+     },
+     "price_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i gi\u00e1 \u0111\u1ec1 xu\u1ea5t"
+     },
+     "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ed5i listing \u0111\u1ec1 xu\u1ea5t"
+     },
+     "b2b_quote": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B"
+     },
+     "b2b_quote_matrix": {
+      "sla_hours": 96,
+      "risk": "low",
+      "handoff": "B",
+      "label": "B\u00e1o gi\u00e1 B2B trong ma tr\u1eadn (ch\u1edd auto_policy \u0111\u01b0\u1ee3c k\u00fd)"
+     },
+     "b2b_catalog": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Catalog qu\u00e0 T\u1ebft B2B (t\u00e0i li\u1ec7u ch\u00e0o h\u00e0ng)"
+     },
+     "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Ch\u01b0\u01a1ng tr\u00ecnh affiliate"
+     },
+     "message_template": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "M\u1eabu tin nh\u1eafn"
+     },
+     "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "L\u1ec7ch listing s\u00e0n so v\u1edbi b\u1ea3n duy\u1ec7t"
+     },
+     "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuy\u1ebfn m\u00e3i d\u1ef1 ki\u1ebfn c\u1ea7n xem l\u1ea1i"
+     },
+     "care_rebuy": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Nh\u00e1p tin nh\u1eafc mua l\u1ea1i (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd marketing)"
+     },
+     "care_review": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Nh\u00e1p tin xin \u0111\u00e1nh gi\u00e1 sau giao h\u00e0ng (kh\u00e1ch c\u00f3 \u0111\u1ed3ng \u00fd CSKH)"
+     },
+     "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "L\u00f4 t\u1ed5 ch\u1ee9c mua qu\u00e0 T\u1ebft B2B (kh\u00f4ng PII, h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "lead_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Lead qu\u00e1 h\u1ea1n ng\u01b0\u1eddi ph\u1ee5 tr\u00e1ch/x\u1eed l\u00fd"
+     },
+     "b2b_followup": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Nh\u00e1p nh\u1eafc ch\u1ed1t \u0111\u01a1n B2B (h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 li\u00ean h\u1ec7)"
+     },
+     "dealer_price_alert": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "\u0110\u1ea1i l\u00fd b\u00e1n d\u01b0\u1edbi gi\u00e1 s\u00e0n (quan s\u00e1t tay)"
+     },
+     "order_anomaly": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "T\u1ef7 l\u1ec7 \u0111\u01a1n h\u1ee7y/ho\u00e0n b\u1ea5t th\u01b0\u1eddng"
+     }
+    },
+    "handoff_classes": {
+     "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+     },
+     "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+     }
+    },
+    "business_hours": {
+     "start": "08:00",
+     "end": "18:00",
+     "workdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ],
+     "holidays": []
+    },
+    "sources": {
+     "convlog_lookback_hours": 72,
+     "lead_stale_business_hours": 8,
+     "max_cskh_per_run": 30,
+     "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+     ]
+    },
+    "regions": {
+     "Qu\u1ea3ng Nam \u2013 \u0110\u00e0 N\u1eb5ng": [
+      "qu\u1ea3ng nam",
+      "\u0111\u00e0 n\u1eb5ng",
+      "h\u1ed9i an",
+      "tam k\u1ef3",
+      "tr\u00e0 my"
+     ],
+     "Mi\u1ec1n Trung \u2013 T\u00e2y Nguy\u00ean kh\u00e1c": [
+      "hu\u1ebf",
+      "qu\u1ea3ng ng\u00e3i",
+      "qu\u1ea3ng tr\u1ecb",
+      "qu\u1ea3ng b\u00ecnh",
+      "b\u00ecnh \u0111\u1ecbnh",
+      "kon tum",
+      "gia lai",
+      "\u0111\u1eafk l\u1eafk",
+      "nha trang",
+      "kh\u00e1nh h\u00f2a"
+     ],
+     "H\u00e0 N\u1ed9i \u2013 mi\u1ec1n B\u1eafc": [
+      "h\u00e0 n\u1ed9i",
+      "h\u1ea3i ph\u00f2ng",
+      "qu\u1ea3ng ninh",
+      "b\u1eafc ninh",
+      "ngh\u1ec7 an",
+      "thanh h\u00f3a"
+     ],
+     "TP.HCM \u2013 mi\u1ec1n Nam": [
+      "h\u1ed3 ch\u00ed minh",
+      "tp.hcm",
+      "tphcm",
+      "s\u00e0i g\u00f2n",
+      "c\u1ea7n th\u01a1",
+      "b\u00ecnh d\u01b0\u01a1ng",
+      "\u0111\u1ed3ng nai",
+      "v\u0169ng t\u00e0u"
+     ]
+    },
+    "digest_recipients": [
+     "x"
+    ],
+    "due_soon_hours": 8
+   },
+   "items": [],
+   "now": "2026-10-12T23:30:00+07:00",
+   "overrides": [],
+   "qa": null,
+   "extra": [
+    "## C\u00f4ng n\u1ee3",
+    "",
+    "- x"
+   ],
+   "out": "# B\u1ea3n tin G\u0110 Gi\u00e1m \u0111\u1ed1c b\u00e1n h\u00e0ng + Sales (Ph\u00f2ng kinh doanh TM\u0110T) \u2014 12/10/2026\n\nAgent: Agent G\u0110 Kinh doanh TM\u0110T (\u0111i\u1ec1u ph\u1ed1i) \u00b7 kh\u1ed1i `sales` \u00b7 gi\u1edd VN\n\n## S\u1ed1 li\u1ec7u trong ng\u00e0y\n\n| Ch\u1ec9 s\u1ed1 | S\u1ed1 |\n|---|---|\n| M\u1edbi v\u00e0o h\u00e0ng | 0 |\n| \u0110ang ch\u1edd duy\u1ec7t (t\u1ed3n) | 0 |\n| \u0110\u00e3 duy\u1ec7t | 0 |\n| T\u1eeb ch\u1ed1i | 0 |\n| H\u1ebft h\u1ea1n SLA (expired) | 0 |\n\n## S\u1eafp qu\u00e1 h\u1ea1n (\u2264 8 gi\u1edd)\n\n- (kh\u00f4ng c\u00f3)\n\n## H\u1ebft h\u1ea1n h\u00f4m nay (kh\u00f4ng ai duy\u1ec7t \u2014 KH\u00d4NG t\u1ef1 duy\u1ec7t)\n\n- (kh\u00f4ng c\u00f3)\n\n## Override QA h\u00f4m nay (\u00e9p tr\u00ecnh b\u1ea3n QA FAIL)\n\n- (kh\u00f4ng c\u00f3)\n\n## Nghi\u1ec7m thu QA h\u00f4m nay\n\n- (kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c eval_runs \u2014 l\u1ed7i/quy\u1ec1n DB)\n\n## C\u00f4ng n\u1ee3\n\n- x\n\n## Ng\u01b0\u1eddi duy\u1ec7t\n\n- Vai tr\u00f2 duy\u1ec7t: gd_ban_hang\n\n---\n*B\u1ea2N NH\u00c1P \u2014 h\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 g\u1eedi. Ng\u01b0\u1eddi \u0111\u1ecdc r\u1ed3i chuy\u1ec3n tay cho G\u0110 kh\u1ed1i.*\n"
+  }
+ ]
+}

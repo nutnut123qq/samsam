@@ -1,0 +1,1470 @@
+{
+ "scrub": [
+  {
+   "msg": "connection to \"db.example.vn\" user \"bkuser\" pw s3cretPW dsn postgresql://bkuser:s3cretPW@db.example.vn:5432/samsam",
+   "dsn": "postgresql://bkuser:s3cretPW@db.example.vn:5432/samsam",
+   "out": "connection to \"<host>\" user \"<user>\" pw <password> dsn <dsn>"
+  },
+  {
+   "msg": "l\u1ed7i   nhi\u1ec1u\tkho\u1ea3ng\ntr\u1eafng postgres://a:b@c/d ti\u1ebfp",
+   "dsn": null,
+   "out": "l\u1ed7i nhi\u1ec1u kho\u1ea3ng tr\u1eafng <dsn> ti\u1ebfp"
+  },
+  {
+   "msg": "host ab kh\u00f4ng thay (ng\u1eafn)",
+   "dsn": "postgresql://ab:xy@ab:1/db",
+   "out": "host ab kh\u00f4ng thay (ng\u1eafn)"
+  },
+  {
+   "msg": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "dsn": null,
+   "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  {
+   "msg": "connect ETIMEDOUT 10.255.255.1:5432",
+   "dsn": "postgresql://u@10.255.255.1:5432/x",
+   "out": "connect ETIMEDOUT <host>:5432"
+  },
+  {
+   "msg": "key=value dsn host=h1.vn user=quantri",
+   "dsn": "host=h1.vn port=5432 user=quantri password='p w' dbname=db",
+   "out": "key=value dsn host=<host> user=<user>"
+  },
+  {
+   "msg": "kh\u00f4ng parse \u0111\u01b0\u1ee3c dsn",
+   "dsn": "postgresql://[bad",
+   "out": "kh\u00f4ng parse \u0111\u01b0\u1ee3c dsn"
+  },
+  {
+   "msg": "dsn nguy\u00ean v\u0103n host=127.0.0.1 port=55999 user=postgres password=pw dbname=postgres xong",
+   "dsn": "host=127.0.0.1 port=55999 user=postgres password=pw dbname=postgres",
+   "out": "dsn nguy\u00ean v\u0103n <dsn> xong"
+  },
+  {
+   "msg": "unicode\u2028sep\u00a0nbsp",
+   "dsn": null,
+   "out": "unicode sep nbsp"
+  },
+  {
+   "msg": "",
+   "dsn": "postgresql://u:p@h/d",
+   "out": ""
+  }
+ ],
+ "pg_env": [
+  {
+   "dsn": "postgresql://usr:s3cretPW@localhost:5432/db1",
+   "db": null,
+   "env": {
+    "PGUSER": "usr",
+    "PGPASSWORD": "s3cretPW",
+    "PGDATABASE": "db1",
+    "PGHOST": "localhost",
+    "PGPORT": "5432",
+    "PGCONNECT_TIMEOUT": "10"
+   }
+  },
+  {
+   "dsn": "postgresql://u%40x:p%2Fw@[::1]:6000/d%20b?sslmode=require&sslrootcert=/x.crt&application_name=z",
+   "db": null,
+   "env": {
+    "PGUSER": "u@x",
+    "PGPASSWORD": "p/w",
+    "PGDATABASE": "d b",
+    "PGHOST": "::1",
+    "PGPORT": "6000",
+    "PGSSLMODE": "require",
+    "PGSSLROOTCERT": "/x.crt",
+    "PGCONNECT_TIMEOUT": "10"
+   }
+  },
+  {
+   "dsn": "postgresql://u@h/db",
+   "db": "other_db",
+   "env": {
+    "PGUSER": "u",
+    "PGDATABASE": "other_db",
+    "PGHOST": "h",
+    "PGCONNECT_TIMEOUT": "10"
+   }
+  },
+  {
+   "dsn": "postgres://h:5433/db?host=/sock&port=7000",
+   "db": null,
+   "env": {
+    "PGDATABASE": "db",
+    "PGHOST": "/sock",
+    "PGPORT": "7000",
+    "PGCONNECT_TIMEOUT": "10"
+   }
+  },
+  {
+   "dsn": "host=127.0.0.1 port=55999 user=postgres password=pw dbname=postgres",
+   "db": "samsam_drill_x",
+   "env": {
+    "PGUSER": "postgres",
+    "PGPASSWORD": "pw",
+    "PGDATABASE": "samsam_drill_x",
+    "PGHOST": "127.0.0.1",
+    "PGPORT": "55999",
+    "PGCONNECT_TIMEOUT": "10"
+   }
+  },
+  {
+   "dsn": "host=h user='a b' password='it\\'s' dbname=d sslmode=disable",
+   "db": null,
+   "env": {
+    "PGUSER": "a b",
+    "PGPASSWORD": "it's",
+    "PGDATABASE": "d",
+    "PGHOST": "h",
+    "PGSSLMODE": "disable",
+    "PGCONNECT_TIMEOUT": "10"
+   }
+  }
+ ],
+ "passfile": [
+  {
+   "hex": "0a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE tr\u1ed1ng ho\u1eb7c ng\u1eafn h\u01a1n 16 k\u00fd t\u1ef1 (openssl ch\u1ec9 d\u00f9ng d\u00f2ng \u0111\u1ea7u)"
+  },
+  {
+   "hex": "0d0a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE tr\u1ed1ng ho\u1eb7c ng\u1eafn h\u01a1n 16 k\u00fd t\u1ef1 (openssl ch\u1ec9 d\u00f9ng d\u00f2ng \u0111\u1ea7u)"
+  },
+  {
+   "hex": "2020200a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE tr\u1ed1ng ho\u1eb7c ng\u1eafn h\u01a1n 16 k\u00fd t\u1ef1 (openssl ch\u1ec9 d\u00f9ng d\u00f2ng \u0111\u1ea7u)"
+  },
+  {
+   "hex": "0a64756e672d706173737068726173652d6f2d646f6e672d6861690a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE tr\u1ed1ng ho\u1eb7c ng\u1eafn h\u01a1n 16 k\u00fd t\u1ef1 (openssl ch\u1ec9 d\u00f9ng d\u00f2ng \u0111\u1ea7u)"
+  },
+  {
+   "hex": "6e67616e2d7175610a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE tr\u1ed1ng ho\u1eb7c ng\u1eafn h\u01a1n 16 k\u00fd t\u1ef1 (openssl ch\u1ec9 d\u00f9ng d\u00f2ng \u0111\u1ea7u)"
+  },
+  {
+   "hex": "",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE tr\u1ed1ng ho\u1eb7c ng\u1eafn h\u01a1n 16 k\u00fd t\u1ef1 (openssl ch\u1ec9 d\u00f9ng d\u00f2ng \u0111\u1ea7u)"
+  },
+  {
+   "hex": "fffe4d00610074004b00680061007500520061007400440061006900560061004d0061006e00680032003000320036000a00",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE ch\u1ee9a NUL/BOM UTF-16 \u2014 file passphrase ph\u1ea3i l\u00e0 UTF-8/ASCII (openssl c\u1eaft kh\u00f3a \u1edf byte NUL)"
+  },
+  {
+   "hex": "004d00610074004b00680061007500520061007400440061006900560061004d0061006e00680032003000320036000a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE ch\u1ee9a NUL/BOM UTF-16 \u2014 file passphrase ph\u1ea3i l\u00e0 UTF-8/ASCII (openssl c\u1eaft kh\u00f3a \u1edf byte NUL)"
+  },
+  {
+   "hex": "feff004d00610074004b00680061007500520061007400440061006900560061004d0061006e00680032003000320036000a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE ch\u1ee9a NUL/BOM UTF-16 \u2014 file passphrase ph\u1ea3i l\u00e0 UTF-8/ASCII (openssl c\u1eaft kh\u00f3a \u1edf byte NUL)"
+  },
+  {
+   "hex": "30313233343536373839616263646566007461696c0a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE ch\u1ee9a NUL/BOM UTF-16 \u2014 file passphrase ph\u1ea3i l\u00e0 UTF-8/ASCII (openssl c\u1eaft kh\u00f3a \u1edf byte NUL)"
+  },
+  {
+   "hex": "303132333435363738396162636465660d0a626f2d7175610a",
+   "err": null
+  },
+  {
+   "hex": "30313233343536373839616263646566",
+   "err": null
+  },
+  {
+   "hex": "3031323334353637383961626364650a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE tr\u1ed1ng ho\u1eb7c ng\u1eafn h\u01a1n 16 k\u00fd t\u1ef1 (openssl ch\u1ec9 d\u00f9ng d\u00f2ng \u0111\u1ea7u)"
+  },
+  {
+   "hex": "6de1baad742d6b68e1baa9752d64c3a0692dc491e1bba70a",
+   "err": null
+  },
+  {
+   "hex": "090909090909090909090909090909090a",
+   "err": "d\u00f2ng \u0111\u1ea7u BACKUP_PASSPHRASE_FILE tr\u1ed1ng ho\u1eb7c ng\u1eafn h\u01a1n 16 k\u00fd t\u1ef1 (openssl ch\u1ec9 d\u00f9ng d\u00f2ng \u0111\u1ea7u)"
+  },
+  {
+   "hex": "6162630d6465666768696a6b6c6d6e6f70710a",
+   "err": null
+  }
+ ],
+ "manifest": [
+  {
+   "id": "ok",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": true,
+   "created_ms": 1791657000000
+  },
+  {
+   "id": "enc",
+   "name": "samsam_v36_20261011_013000_vn.dump.enc.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump.enc\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": true,
+   "created_ms": 1791657000000
+  },
+  {
+   "id": "format2",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 2, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "format-true",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": true, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": true,
+   "created_ms": 1791657000000
+  },
+  {
+   "id": "format-float",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1.0, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": true,
+   "created_ms": 1791657000000
+  },
+  {
+   "id": "file-khac",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"../victim.txt\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "thieu-key",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"row_counts\": {\"products\": 1}}",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "row-list",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": []}",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "naive",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "z",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00Z\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": true,
+   "created_ms": 1791682200000
+  },
+  {
+   "id": "basic-iso",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"20261011T013000+0700\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": true,
+   "created_ms": 1791657000000
+  },
+  {
+   "id": "micro",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00.123456+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": true,
+   "created_ms": 1791657000123
+  },
+  {
+   "id": "ngay-sai",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-13-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "created-int",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": 5, \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "ten-sai",
+   "name": "x y_20261011_013000_vn.dump.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"x y_20261011_013000_vn.dump\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "ten-partial",
+   "name": "samsam_v36_20261011_013000_vn.dump.partial.manifest.json",
+   "body": "{\"format\": 1, \"created_at\": \"2026-10-11T01:30:00+07:00\", \"db_name\": \"samsam_v36\", \"server_version\": \"17.6\", \"pg_dump_version\": \"17\", \"tool\": \"x\", \"file\": \"samsam_v36_20261011_013000_vn.dump.partial\", \"size_bytes\": 5, \"sha256\": \"0\", \"encrypted\": false, \"cipher\": null, \"row_counts\": {\"products\": 1}}",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "khong-object",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "body": "[1, 2]",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "bom",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "hex": "efbbbf7b22666f726d6174223a20312c2022637265617465645f6174223a2022323032362d31302d31315430313a33303a30302b30373a3030222c202264625f6e616d65223a202273616d73616d5f763336222c20227365727665725f76657273696f6e223a202231372e36222c202270675f64756d705f76657273696f6e223a20223137222c2022746f6f6c223a202278222c202266696c65223a202273616d73616d5f7633365f32303236313031315f3031333030305f766e2e64756d70222c202273697a655f6279746573223a20352c2022736861323536223a202230222c2022656e63727970746564223a2066616c73652c2022636970686572223a206e756c6c2c2022726f775f636f756e7473223a207b2270726f6475637473223a20317d7d",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "rac",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "hex": "7b78",
+   "valid": false,
+   "created_ms": null
+  },
+  {
+   "id": "utf16",
+   "name": "samsam_v36_20261011_013000_vn.dump.manifest.json",
+   "hex": "fffe7b00220066006f0072006d006100740022003a00200031002c002000220063007200650061007400650064005f006100740022003a002000220032003000320036002d00310030002d00310031005400300031003a00330030003a00300030002b00300037003a003000300022002c0020002200640062005f006e0061006d00650022003a0020002200730061006d00730061006d005f0076003300360022002c00200022007300650072007600650072005f00760065007200730069006f006e0022003a0020002200310037002e00360022002c0020002200700067005f00640075006d0070005f00760065007200730069006f006e0022003a00200022003100370022002c002000220074006f006f006c0022003a0020002200780022002c0020002200660069006c00650022003a0020002200730061006d00730061006d005f007600330036005f00320030003200360031003000310031005f003000310033003000300030005f0076006e002e00640075006d00700022002c0020002200730069007a0065005f006200790074006500730022003a00200035002c002000220073006800610032003500360022003a0020002200300022002c002000220065006e00630072007900700074006500640022003a002000660061006c00730065002c002000220063006900700068006500720022003a0020006e0075006c006c002c002000220072006f0077005f0063006f0075006e007400730022003a0020007b002200700072006f006400750063007400730022003a00200031007d007d00",
+   "valid": false,
+   "created_ms": null
+  }
+ ],
+ "read_config": [
+  {
+   "id": "thieu",
+   "env": {},
+   "res": {
+    "ok": false,
+    "err": "thi\u1ebfu BACKUP_DIR"
+   },
+   "out": ""
+  },
+  {
+   "id": "trong-repo",
+   "env": {
+    "BACKUP_DIR": "D:\\code\\samsam\\backups"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_DIR n\u1eb1m trong repo \u2014 ph\u1ea3i \u0111\u1eb7t NGO\u00c0I repo"
+   },
+   "out": ""
+  },
+  {
+   "id": "keep0",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_KEEP": "0"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_KEEP ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean \u2265 1"
+   },
+   "out": ""
+  },
+  {
+   "id": "keep-am",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_KEEP": "-1"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_KEEP ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean \u2265 1"
+   },
+   "out": ""
+  },
+  {
+   "id": "keep-chu",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_KEEP": "abc"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_KEEP ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean \u2265 1"
+   },
+   "out": ""
+  },
+  {
+   "id": "keep-space",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_KEEP": "  "
+   },
+   "res": {
+    "ok": true,
+    "keep": 7,
+    "passfile": false,
+    "offsite": null
+   },
+   "out": ""
+  },
+  {
+   "id": "keep-pad",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_KEEP": " 3 "
+   },
+   "res": {
+    "ok": true,
+    "keep": 3,
+    "passfile": false,
+    "offsite": null
+   },
+   "out": ""
+  },
+  {
+   "id": "keep-plus",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_KEEP": "+3"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_KEEP ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean \u2265 1"
+   },
+   "out": ""
+  },
+  {
+   "id": "keep-fullwidth",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_KEEP": "\uff13"
+   },
+   "res": {
+    "ok": true,
+    "keep": 3,
+    "passfile": false,
+    "offsite": null
+   },
+   "out": ""
+  },
+  {
+   "id": "off-repo",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_OFFSITE": "dir:D:\\code\\samsam\\off"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_OFFSITE dir: n\u1eb1m trong repo \u2014 ph\u1ea3i \u0111\u1eb7t NGO\u00c0I repo"
+   },
+   "out": ""
+  },
+  {
+   "id": "off-ftp",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_OFFSITE": "ftp://x"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_OFFSITE ph\u1ea3i l\u00e0 dir:<path> ho\u1eb7c s3://..."
+   },
+   "out": ""
+  },
+  {
+   "id": "off-s3",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_OFFSITE": "s3://b/p"
+   },
+   "res": {
+    "ok": true,
+    "keep": 7,
+    "passfile": false,
+    "offsite": "s3"
+   },
+   "out": ""
+  },
+  {
+   "id": "off-pad",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_OFFSITE": "  s3://b/p  "
+   },
+   "res": {
+    "ok": true,
+    "keep": 7,
+    "passfile": false,
+    "offsite": "s3"
+   },
+   "out": ""
+  },
+  {
+   "id": "pass-repo",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_PASSPHRASE_FILE": "D:\\code\\samsam\\AGENTS.md"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_PASSPHRASE_FILE n\u1eb1m trong repo \u2014 ph\u1ea3i \u0111\u1eb7t NGO\u00c0I repo"
+   },
+   "out": ""
+  },
+  {
+   "id": "pass-missing",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_PASSPHRASE_FILE": "{T}/khong-co.txt"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_PASSPHRASE_FILE kh\u00f4ng t\u1ed3n t\u1ea1i"
+   },
+   "out": ""
+  },
+  {
+   "id": "pass-ok",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_PASSPHRASE_FILE": "{T}/pass.txt"
+   },
+   "res": {
+    "ok": true,
+    "keep": 7,
+    "passfile": true,
+    "offsite": null
+   },
+   "out": ""
+  },
+  {
+   "id": "require-enc",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_REQUIRE_ENCRYPTION": "1"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_REQUIRE_ENCRYPTION=1 nh\u01b0ng ch\u01b0a c\u00f3 BACKUP_PASSPHRASE_FILE \u2014 kh\u00f4ng ghi b\u1ea3n ch\u01b0a m\u00e3 h\u00f3a"
+   },
+   "out": ""
+  },
+  {
+   "id": "require-enc-pad",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_REQUIRE_ENCRYPTION": " 1 "
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_REQUIRE_ENCRYPTION=1 nh\u01b0ng ch\u01b0a c\u00f3 BACKUP_PASSPHRASE_FILE \u2014 kh\u00f4ng ghi b\u1ea3n ch\u01b0a m\u00e3 h\u00f3a"
+   },
+   "out": ""
+  },
+  {
+   "id": "require-enc-true",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_REQUIRE_ENCRYPTION": "true"
+   },
+   "res": {
+    "ok": true,
+    "keep": 7,
+    "passfile": false,
+    "offsite": null
+   },
+   "out": ""
+  },
+  {
+   "id": "require-enc-ok",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_REQUIRE_ENCRYPTION": "1",
+    "BACKUP_PASSPHRASE_FILE": "{T}/pass.txt"
+   },
+   "res": {
+    "ok": true,
+    "keep": 7,
+    "passfile": true,
+    "offsite": null
+   },
+   "out": ""
+  },
+  {
+   "id": "same-dev",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_OFFSITE": "dir:{T}/off"
+   },
+   "res": {
+    "ok": true,
+    "keep": 7,
+    "passfile": false,
+    "offsite": "dir"
+   },
+   "out": "[warn] BACKUP_OFFSITE c\u00f9ng thi\u1ebft b\u1ecb l\u01b0u tr\u1eef v\u1edbi BACKUP_DIR (st_dev) \u2014 ch\u01b0a ph\u1ea3i offsite th\u1eadt\n"
+  },
+  {
+   "id": "same-dev-require",
+   "env": {
+    "BACKUP_DIR": "{T}/bk",
+    "BACKUP_OFFSITE": "dir:{T}/off",
+    "BACKUP_OFFSITE_REQUIRE_OTHER_DEVICE": "1"
+   },
+   "res": {
+    "ok": false,
+    "err": "BACKUP_OFFSITE c\u00f9ng thi\u1ebft b\u1ecb l\u01b0u tr\u1eef v\u1edbi BACKUP_DIR \u2014 kh\u00f4ng ph\u1ea3i b\u1ea3n sao ngo\u00e0i m\u00e1y"
+   },
+   "out": ""
+  }
+ ],
+ "rpo": [
+  {
+   "created": "2026-10-11T01:30:00+07:00",
+   "now_ms": 1791657000000,
+   "out": 0.0
+  },
+  {
+   "created": "2026-10-11T01:30:00+07:00",
+   "now_ms": 1791664200000,
+   "out": 7200.0
+  },
+  {
+   "created": "2026-10-11T01:30:00+07:00",
+   "now_ms": 1791765000000,
+   "out": 108000.0
+  },
+  {
+   "created": "2026-10-11T01:30:00+07:00",
+   "now_ms": 1791657001125,
+   "out": 1.12
+  },
+  {
+   "created": "2026-10-11T01:30:00+07:00",
+   "now_ms": 1791657002675,
+   "out": 2.67
+  },
+  {
+   "created": "2026-10-11T01:30:00+07:00",
+   "now_ms": 1791657000123,
+   "out": 0.12
+  },
+  {
+   "created": "2026-10-11T01:30:00+07:00",
+   "now_ms": 1791656995000,
+   "out": -5.0
+  },
+  {
+   "created": "2026-10-11T01:30:00+07:00",
+   "now_ms": 1791657999999,
+   "out": 1000.0
+  }
+ ],
+ "positive": [
+  {
+   "raw": null,
+   "res": {
+    "ok": 24.0
+   }
+  },
+  {
+   "raw": "",
+   "res": {
+    "ok": 24.0
+   }
+  },
+  {
+   "raw": "  ",
+   "res": {
+    "ok": 24.0
+   }
+  },
+  {
+   "raw": "0",
+   "res": {
+    "err": "DR_RPO_MAX_HOURS ph\u1ea3i l\u00e0 s\u1ed1 > 0"
+   }
+  },
+  {
+   "raw": "-1",
+   "res": {
+    "err": "DR_RPO_MAX_HOURS ph\u1ea3i l\u00e0 s\u1ed1 > 0"
+   }
+  },
+  {
+   "raw": "abc",
+   "res": {
+    "err": "DR_RPO_MAX_HOURS ph\u1ea3i l\u00e0 s\u1ed1 > 0"
+   }
+  },
+  {
+   "raw": "nan",
+   "res": {
+    "err": "DR_RPO_MAX_HOURS ph\u1ea3i l\u00e0 s\u1ed1 > 0"
+   }
+  },
+  {
+   "raw": "inf",
+   "res": {
+    "err": "DR_RPO_MAX_HOURS ph\u1ea3i l\u00e0 s\u1ed1 > 0"
+   }
+  },
+  {
+   "raw": "-inf",
+   "res": {
+    "err": "DR_RPO_MAX_HOURS ph\u1ea3i l\u00e0 s\u1ed1 > 0"
+   }
+  },
+  {
+   "raw": "1e3",
+   "res": {
+    "ok": 1000.0
+   }
+  },
+  {
+   "raw": " 2.5 ",
+   "res": {
+    "ok": 2.5
+   }
+  },
+  {
+   "raw": "1_0",
+   "res": {
+    "ok": 10.0
+   }
+  },
+  {
+   "raw": "0x10",
+   "res": {
+    "err": "DR_RPO_MAX_HOURS ph\u1ea3i l\u00e0 s\u1ed1 > 0"
+   }
+  },
+  {
+   "raw": "36",
+   "res": {
+    "ok": 36.0
+   }
+  },
+  {
+   "raw": "\u0661\u0662",
+   "res": {
+    "ok": 12.0
+   }
+  },
+  {
+   "raw": "1e-400",
+   "res": {
+    "err": "DR_RPO_MAX_HOURS ph\u1ea3i l\u00e0 s\u1ed1 > 0"
+   }
+  },
+  {
+   "raw": "Infinity",
+   "res": {
+    "err": "DR_RPO_MAX_HOURS ph\u1ea3i l\u00e0 s\u1ed1 > 0"
+   }
+  },
+  {
+   "raw": "+7",
+   "res": {
+    "ok": 7.0
+   }
+  }
+ ],
+ "quota": [
+  {
+   "id": "json-hong",
+   "hex": "7b6e6f74206a736f6e",
+   "res": {
+    "err": "quota kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c: JSONDecodeError"
+   }
+  },
+  {
+   "id": "khong-utf8",
+   "hex": "fffe",
+   "res": {
+    "err": "quota kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c: UnicodeDecodeError"
+   }
+  },
+  {
+   "id": "khong-object",
+   "hex": "5b5d",
+   "res": {
+    "err": "quota ph\u1ea3i l\u00e0 object JSON"
+   }
+  },
+  {
+   "id": "phases-rong",
+   "hex": "7b22706861736573223a205b5d7d",
+   "res": {
+    "err": "quota.phases r\u1ed7ng ho\u1eb7c kh\u00f4ng ph\u1ea3i list"
+   }
+  },
+  {
+   "id": "ngay-sai",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31332d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20357d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases[0].from: ng\u00e0y kh\u00f4ng h\u1ee3p l\u1ec7 '2026-13-01'"
+   }
+  },
+  {
+   "id": "ngay-dinh-dang",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362f31302f3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20357d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases[0].from: c\u1ea7n ng\u00e0y YYYY-MM-DD, nh\u1eadn '2026/10/01'"
+   }
+  },
+  {
+   "id": "ngay-so",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2032303236313030312c2022746f223a206e756c6c2c20226461696c795f636170223a20357d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases[0].from: c\u1ea7n ng\u00e0y YYYY-MM-DD, nh\u1eadn 20261001"
+   }
+  },
+  {
+   "id": "ngay-fullwidth",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022efbc92efbc90efbc92efbc962d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20357d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases[0].from: ng\u00e0y kh\u00f4ng h\u1ee3p l\u1ec7 '\uff12\uff10\uff12\uff16-10-01'"
+   }
+  },
+  {
+   "id": "cap-am",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a202d317d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases[0].daily_cap ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0"
+   }
+  },
+  {
+   "id": "cap-str",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20223235227d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases[0].daily_cap ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0"
+   }
+  },
+  {
+   "id": "cap-bool",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20747275657d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases[0].daily_cap ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0"
+   }
+  },
+  {
+   "id": "cap-float",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20352e307d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases[0].daily_cap ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean >= 0"
+   }
+  },
+  {
+   "id": "chong-bien",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a2022323032362d31302d3230222c20226461696c795f636170223a20357d2c207b2266726f6d223a2022323032362d31302d3230222c2022746f223a206e756c6c2c20226461696c795f636170223a20367d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases ch\u1ed3ng nhau quanh 2026-10-20"
+   }
+  },
+  {
+   "id": "chong-mo",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20357d2c207b2266726f6d223a2022323032362d31322d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20367d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases ch\u1ed3ng nhau quanh 2026-12-01"
+   }
+  },
+  {
+   "id": "to-truoc-from",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3130222c2022746f223a2022323032362d31302d3031222c20226461696c795f636170223a20357d5d2c2022616273656e745f64617973223a205b5d7d",
+   "res": {
+    "err": "phases[0]: to < from"
+   }
+  },
+  {
+   "id": "absent-sai",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20357d5d2c2022616273656e745f64617973223a205b2268c3b46d206e6179225d7d",
+   "res": {
+    "err": "absent_days: c\u1ea7n ng\u00e0y YYYY-MM-DD, nh\u1eadn 'h\u00f4m nay'"
+   }
+  },
+  {
+   "id": "absent-khong-list",
+   "hex": "7b22737461747573223a202264655f78756174222c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20357d5d2c2022616273656e745f64617973223a2022323032362d31302d3032227d",
+   "res": {
+    "err": "absent_days ph\u1ea3i l\u00e0 list"
+   }
+  },
+  {
+   "id": "phase-khong-object",
+   "hex": "7b22706861736573223a205b355d7d",
+   "res": {
+    "err": "phases[0] ph\u1ea3i l\u00e0 object"
+   }
+  },
+  {
+   "id": "ok-sap-xep",
+   "hex": "7b22737461747573223a202263686f74222c2022706861736573223a205b7b2266726f6d223a2022323032362d31312d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20397d2c207b2266726f6d223a2022323032362d31302d3031222c2022746f223a2022323032362d31302d3331222c20226461696c795f636170223a20307d5d2c2022616273656e745f64617973223a205b22323032362d31302d3035225d7d",
+   "res": {
+    "status": "chot",
+    "phases": [
+     [
+      "2026-10-01",
+      "2026-10-31",
+      0
+     ],
+     [
+      "2026-11-01",
+      null,
+      9
+     ]
+    ],
+    "absent": [
+     "2026-10-05"
+    ]
+   }
+  },
+  {
+   "id": "status-so",
+   "hex": "7b22737461747573223a20352c2022706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20317d5d7d",
+   "res": {
+    "status": "",
+    "phases": [
+     [
+      "2026-10-01",
+      null,
+      1
+     ]
+    ],
+    "absent": []
+   }
+  },
+  {
+   "id": "bom",
+   "hex": "efbbbf7b22706861736573223a205b7b2266726f6d223a2022323032362d31302d3031222c2022746f223a206e756c6c2c20226461696c795f636170223a20317d5d7d",
+   "res": {
+    "err": "quota kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c: JSONDecodeError"
+   }
+  }
+ ],
+ "render": [
+  {
+   "id": "rong",
+   "stats": {
+    "days": 7,
+    "queue": {
+     "vao_hang": 0,
+     "tra_tac_gia": 0,
+     "khong_ro": 0
+    },
+    "queue_total": 0,
+    "oldest_age_days": null,
+    "inflow": {},
+    "throughput": {}
+   },
+   "quota": {
+    "status": "de_xuat",
+    "phases": [
+     [
+      "2026-10-01",
+      "2026-10-31",
+      25
+     ],
+     [
+      "2026-11-01",
+      "2026-11-15",
+      35
+     ],
+     [
+      "2026-11-16",
+      null,
+      55
+     ]
+    ],
+    "absent": []
+   },
+   "out": "# T\u1ea3i h\u00e0ng duy\u1ec7t \u2014 2026-10-12 (c\u1eeda s\u1ed5 2026-10-06..2026-10-12, gi\u1edd VN)\nQuota \u0110\u1ec0 XU\u1ea4T, ch\u01b0a TG\u0110 ch\u1ed1t (plan_legal_hr \u00a72).\nTr\u1ea7n h\u00f4m nay/ng\u01b0\u1eddi: 25\nH\u00e0ng ch\u1edd: v\u00e0o h\u00e0ng 0 \u00b7 KH\u00d4NG R\u00d5 0 (t\u00ednh v\u00e0o h\u00e0ng) \u00b7 tr\u1ea3 t\u00e1c gi\u1ea3 0 (kh\u00f4ng t\u00ednh quota) \u2192 t\u00ednh quota 0\nM\u1ee5c ch\u1edd c\u0169 nh\u1ea5t: \u2014\nNh\u00e1p v\u00e0o: 0 trong 7 ng\u00e0y (TB 0.0/ng\u00e0y)\nQuy\u1ebft \u0111\u1ecbnh duy\u1ec7t theo ng\u00e0y/ng\u01b0\u1eddi:\n  (kh\u00f4ng c\u00f3)\n\nKh\u00f4ng c\u00f3 c\u1ea3nh b\u00e1o t\u1ea3i.\n(Ch\u1ec9 nh\u1eafc \u2014 kh\u00f4ng ph\u00e2n vi\u1ec7c, kh\u00f4ng \u0111\u1ed5i tr\u1ea1ng th\u00e1i; ng\u01b0\u1eddi duy\u1ec7t quy\u1ebft.)\n"
+  },
+  {
+   "id": "qua-tai",
+   "stats": {
+    "days": 7,
+    "queue": {
+     "vao_hang": 26,
+     "tra_tac_gia": 3,
+     "khong_ro": 1
+    },
+    "queue_total": 27,
+    "oldest_age_days": 4,
+    "inflow": {
+     "2026-10-12": 33,
+     "2026-10-06": 1
+    },
+    "throughput": {
+     "2026-10-11": {
+      "REVIEWER_A": 26
+     },
+     "2026-10-10": {
+      "B": 5
+     }
+    }
+   },
+   "quota": {
+    "status": "de_xuat",
+    "phases": [
+     [
+      "2026-10-01",
+      "2026-10-31",
+      25
+     ],
+     [
+      "2026-11-01",
+      "2026-11-15",
+      35
+     ],
+     [
+      "2026-11-16",
+      null,
+      55
+     ]
+    ],
+    "absent": []
+   },
+   "out": "# T\u1ea3i h\u00e0ng duy\u1ec7t \u2014 2026-10-12 (c\u1eeda s\u1ed5 2026-10-06..2026-10-12, gi\u1edd VN)\nQuota \u0110\u1ec0 XU\u1ea4T, ch\u01b0a TG\u0110 ch\u1ed1t (plan_legal_hr \u00a72).\nTr\u1ea7n h\u00f4m nay/ng\u01b0\u1eddi: 25\nH\u00e0ng ch\u1edd: v\u00e0o h\u00e0ng 26 \u00b7 KH\u00d4NG R\u00d5 1 (t\u00ednh v\u00e0o h\u00e0ng) \u00b7 tr\u1ea3 t\u00e1c gi\u1ea3 3 (kh\u00f4ng t\u00ednh quota) \u2192 t\u00ednh quota 27\nM\u1ee5c ch\u1edd c\u0169 nh\u1ea5t: 4 ng\u00e0y\nNh\u00e1p v\u00e0o: 34 trong 7 ng\u00e0y (TB 4.9/ng\u00e0y)\nQuy\u1ebft \u0111\u1ecbnh duy\u1ec7t theo ng\u00e0y/ng\u01b0\u1eddi:\n  2026-10-10 B: 5\n  2026-10-11 REVIEWER_A: 26\n\nQU\u00c1 T\u1ea2I: h\u00e0ng ch\u1edd 27 m\u1ee5c > tr\u1ea7n 25/ng\u00e0y \u2014 c\u1ea7n \u2265 2 ng\u00e0y duy\u1ec7t\nQU\u00c1 T\u1ea2I: REVIEWER_A 26 quy\u1ebft \u0111\u1ecbnh ng\u00e0y 2026-10-11 > tr\u1ea7n 25 \u2014 v\u01b0\u1ee3t tr\u1ea7n, r\u1ee7i ro duy\u1ec7t v\u1ed9i\n(Ch\u1ec9 nh\u1eafc \u2014 kh\u00f4ng ph\u00e2n vi\u1ec7c, kh\u00f4ng \u0111\u1ed5i tr\u1ea1ng th\u00e1i; ng\u01b0\u1eddi duy\u1ec7t quy\u1ebft.)\n"
+  },
+  {
+   "id": "vang",
+   "stats": {
+    "days": 7,
+    "queue": {
+     "vao_hang": 3,
+     "tra_tac_gia": 0,
+     "khong_ro": 0
+    },
+    "queue_total": 3,
+    "oldest_age_days": null,
+    "inflow": {},
+    "throughput": {}
+   },
+   "quota": {
+    "status": "chot",
+    "phases": [
+     [
+      "2026-10-01",
+      "2026-10-31",
+      25
+     ],
+     [
+      "2026-11-01",
+      "2026-11-15",
+      35
+     ],
+     [
+      "2026-11-16",
+      null,
+      55
+     ]
+    ],
+    "absent": [
+     "2026-10-12"
+    ]
+   },
+   "out": "# T\u1ea3i h\u00e0ng duy\u1ec7t \u2014 2026-10-12 (c\u1eeda s\u1ed5 2026-10-06..2026-10-12, gi\u1edd VN)\nTr\u1ea7n h\u00f4m nay/ng\u01b0\u1eddi: 0\nH\u00e0ng ch\u1edd: v\u00e0o h\u00e0ng 3 \u00b7 KH\u00d4NG R\u00d5 0 (t\u00ednh v\u00e0o h\u00e0ng) \u00b7 tr\u1ea3 t\u00e1c gi\u1ea3 0 (kh\u00f4ng t\u00ednh quota) \u2192 t\u00ednh quota 3\nM\u1ee5c ch\u1edd c\u0169 nh\u1ea5t: \u2014\nNh\u00e1p v\u00e0o: 0 trong 7 ng\u00e0y (TB 0.0/ng\u00e0y)\nQuy\u1ebft \u0111\u1ecbnh duy\u1ec7t theo ng\u00e0y/ng\u01b0\u1eddi:\n  (kh\u00f4ng c\u00f3)\n\nC\u1ea2NH B\u00c1O: ng\u01b0\u1eddi duy\u1ec7t v\u1eafng h\u00f4m nay \u2014 3 m\u1ee5c pending gi\u1eef nguy\u00ean, kh\u00f4ng ai \u0111\u01b0\u1ee3c duy\u1ec7t thay\n(Ch\u1ec9 nh\u1eafc \u2014 kh\u00f4ng ph\u00e2n vi\u1ec7c, kh\u00f4ng \u0111\u1ed5i tr\u1ea1ng th\u00e1i; ng\u01b0\u1eddi duy\u1ec7t quy\u1ebft.)\n"
+  },
+  {
+   "id": "inflow-cao",
+   "stats": {
+    "days": 7,
+    "queue": {
+     "vao_hang": 0,
+     "tra_tac_gia": 0,
+     "khong_ro": 0
+    },
+    "queue_total": 0,
+    "oldest_age_days": null,
+    "inflow": {
+     "2026-10-12": 182
+    },
+    "throughput": {}
+   },
+   "quota": {
+    "status": "de_xuat",
+    "phases": [
+     [
+      "2026-10-01",
+      "2026-10-31",
+      25
+     ],
+     [
+      "2026-11-01",
+      "2026-11-15",
+      35
+     ],
+     [
+      "2026-11-16",
+      null,
+      55
+     ]
+    ],
+    "absent": []
+   },
+   "out": "# T\u1ea3i h\u00e0ng duy\u1ec7t \u2014 2026-10-12 (c\u1eeda s\u1ed5 2026-10-06..2026-10-12, gi\u1edd VN)\nQuota \u0110\u1ec0 XU\u1ea4T, ch\u01b0a TG\u0110 ch\u1ed1t (plan_legal_hr \u00a72).\nTr\u1ea7n h\u00f4m nay/ng\u01b0\u1eddi: 25\nH\u00e0ng ch\u1edd: v\u00e0o h\u00e0ng 0 \u00b7 KH\u00d4NG R\u00d5 0 (t\u00ednh v\u00e0o h\u00e0ng) \u00b7 tr\u1ea3 t\u00e1c gi\u1ea3 0 (kh\u00f4ng t\u00ednh quota) \u2192 t\u00ednh quota 0\nM\u1ee5c ch\u1edd c\u0169 nh\u1ea5t: \u2014\nNh\u00e1p v\u00e0o: 182 trong 7 ng\u00e0y (TB 26.0/ng\u00e0y)\nQuy\u1ebft \u0111\u1ecbnh duy\u1ec7t theo ng\u00e0y/ng\u01b0\u1eddi:\n  (kh\u00f4ng c\u00f3)\n\nC\u1ea2NH B\u00c1O: nh\u00e1p v\u00e0o TB 26.0/ng\u00e0y > tr\u1ea7n 25 \u2014 nh\u00e1p v\u00e0o nhanh h\u01a1n tr\u1ea7n \u2014 gi\u1ea3m volume, kh\u00f4ng h\u1ea1 chu\u1ea9n (\u00a72)\n(Ch\u1ec9 nh\u1eafc \u2014 kh\u00f4ng ph\u00e2n vi\u1ec7c, kh\u00f4ng \u0111\u1ed5i tr\u1ea1ng th\u00e1i; ng\u01b0\u1eddi duy\u1ec7t quy\u1ebft.)\n"
+  },
+  {
+   "id": "bang-tran",
+   "stats": {
+    "days": 7,
+    "queue": {
+     "vao_hang": 25,
+     "tra_tac_gia": 0,
+     "khong_ro": 0
+    },
+    "queue_total": 25,
+    "oldest_age_days": null,
+    "inflow": {},
+    "throughput": {}
+   },
+   "quota": {
+    "status": "de_xuat",
+    "phases": [
+     [
+      "2026-10-01",
+      "2026-10-31",
+      25
+     ],
+     [
+      "2026-11-01",
+      "2026-11-15",
+      35
+     ],
+     [
+      "2026-11-16",
+      null,
+      55
+     ]
+    ],
+    "absent": []
+   },
+   "out": "# T\u1ea3i h\u00e0ng duy\u1ec7t \u2014 2026-10-12 (c\u1eeda s\u1ed5 2026-10-06..2026-10-12, gi\u1edd VN)\nQuota \u0110\u1ec0 XU\u1ea4T, ch\u01b0a TG\u0110 ch\u1ed1t (plan_legal_hr \u00a72).\nTr\u1ea7n h\u00f4m nay/ng\u01b0\u1eddi: 25\nH\u00e0ng ch\u1edd: v\u00e0o h\u00e0ng 25 \u00b7 KH\u00d4NG R\u00d5 0 (t\u00ednh v\u00e0o h\u00e0ng) \u00b7 tr\u1ea3 t\u00e1c gi\u1ea3 0 (kh\u00f4ng t\u00ednh quota) \u2192 t\u00ednh quota 25\nM\u1ee5c ch\u1edd c\u0169 nh\u1ea5t: \u2014\nNh\u00e1p v\u00e0o: 0 trong 7 ng\u00e0y (TB 0.0/ng\u00e0y)\nQuy\u1ebft \u0111\u1ecbnh duy\u1ec7t theo ng\u00e0y/ng\u01b0\u1eddi:\n  (kh\u00f4ng c\u00f3)\n\nKh\u00f4ng c\u00f3 c\u1ea3nh b\u00e1o t\u1ea3i.\n(Ch\u1ec9 nh\u1eafc \u2014 kh\u00f4ng ph\u00e2n vi\u1ec7c, kh\u00f4ng \u0111\u1ed5i tr\u1ea1ng th\u00e1i; ng\u01b0\u1eddi duy\u1ec7t quy\u1ebft.)\n"
+  },
+  {
+   "id": "days1",
+   "stats": {
+    "days": 1,
+    "queue": {
+     "vao_hang": 26,
+     "tra_tac_gia": 0,
+     "khong_ro": 0
+    },
+    "queue_total": 26,
+    "oldest_age_days": null,
+    "inflow": {
+     "2026-10-12": 26
+    },
+    "throughput": {}
+   },
+   "quota": {
+    "status": "de_xuat",
+    "phases": [
+     [
+      "2026-10-01",
+      "2026-10-31",
+      25
+     ],
+     [
+      "2026-11-01",
+      "2026-11-15",
+      35
+     ],
+     [
+      "2026-11-16",
+      null,
+      55
+     ]
+    ],
+    "absent": []
+   },
+   "out": "# T\u1ea3i h\u00e0ng duy\u1ec7t \u2014 2026-10-12 (c\u1eeda s\u1ed5 2026-10-12..2026-10-12, gi\u1edd VN)\nQuota \u0110\u1ec0 XU\u1ea4T, ch\u01b0a TG\u0110 ch\u1ed1t (plan_legal_hr \u00a72).\nTr\u1ea7n h\u00f4m nay/ng\u01b0\u1eddi: 25\nH\u00e0ng ch\u1edd: v\u00e0o h\u00e0ng 26 \u00b7 KH\u00d4NG R\u00d5 0 (t\u00ednh v\u00e0o h\u00e0ng) \u00b7 tr\u1ea3 t\u00e1c gi\u1ea3 0 (kh\u00f4ng t\u00ednh quota) \u2192 t\u00ednh quota 26\nM\u1ee5c ch\u1edd c\u0169 nh\u1ea5t: \u2014\nNh\u00e1p v\u00e0o: 26 trong 1 ng\u00e0y (TB 26.0/ng\u00e0y)\nQuy\u1ebft \u0111\u1ecbnh duy\u1ec7t theo ng\u00e0y/ng\u01b0\u1eddi:\n  (kh\u00f4ng c\u00f3)\n\nQU\u00c1 T\u1ea2I: h\u00e0ng ch\u1edd 26 m\u1ee5c > tr\u1ea7n 25/ng\u00e0y \u2014 c\u1ea7n \u2265 2 ng\u00e0y duy\u1ec7t\nC\u1ea2NH B\u00c1O: nh\u00e1p v\u00e0o TB 26.0/ng\u00e0y > tr\u1ea7n 25 \u2014 nh\u00e1p v\u00e0o nhanh h\u01a1n tr\u1ea7n \u2014 gi\u1ea3m volume, kh\u00f4ng h\u1ea1 chu\u1ea9n (\u00a72)\n(Ch\u1ec9 nh\u1eafc \u2014 kh\u00f4ng ph\u00e2n vi\u1ec7c, kh\u00f4ng \u0111\u1ed5i tr\u1ea1ng th\u00e1i; ng\u01b0\u1eddi duy\u1ec7t quy\u1ebft.)\n"
+  },
+  {
+   "id": "tb-le",
+   "stats": {
+    "days": 3,
+    "queue": {
+     "vao_hang": 0,
+     "tra_tac_gia": 0,
+     "khong_ro": 0
+    },
+    "queue_total": 0,
+    "oldest_age_days": null,
+    "inflow": {
+     "2026-10-12": 10
+    },
+    "throughput": {}
+   },
+   "quota": {
+    "status": "de_xuat",
+    "phases": [
+     [
+      "2026-10-01",
+      "2026-10-31",
+      25
+     ],
+     [
+      "2026-11-01",
+      "2026-11-15",
+      35
+     ],
+     [
+      "2026-11-16",
+      null,
+      55
+     ]
+    ],
+    "absent": []
+   },
+   "out": "# T\u1ea3i h\u00e0ng duy\u1ec7t \u2014 2026-10-12 (c\u1eeda s\u1ed5 2026-10-10..2026-10-12, gi\u1edd VN)\nQuota \u0110\u1ec0 XU\u1ea4T, ch\u01b0a TG\u0110 ch\u1ed1t (plan_legal_hr \u00a72).\nTr\u1ea7n h\u00f4m nay/ng\u01b0\u1eddi: 25\nH\u00e0ng ch\u1edd: v\u00e0o h\u00e0ng 0 \u00b7 KH\u00d4NG R\u00d5 0 (t\u00ednh v\u00e0o h\u00e0ng) \u00b7 tr\u1ea3 t\u00e1c gi\u1ea3 0 (kh\u00f4ng t\u00ednh quota) \u2192 t\u00ednh quota 0\nM\u1ee5c ch\u1edd c\u0169 nh\u1ea5t: \u2014\nNh\u00e1p v\u00e0o: 10 trong 3 ng\u00e0y (TB 3.3/ng\u00e0y)\nQuy\u1ebft \u0111\u1ecbnh duy\u1ec7t theo ng\u00e0y/ng\u01b0\u1eddi:\n  (kh\u00f4ng c\u00f3)\n\nKh\u00f4ng c\u00f3 c\u1ea3nh b\u00e1o t\u1ea3i.\n(Ch\u1ec9 nh\u1eafc \u2014 kh\u00f4ng ph\u00e2n vi\u1ec7c, kh\u00f4ng \u0111\u1ed5i tr\u1ea1ng th\u00e1i; ng\u01b0\u1eddi duy\u1ec7t quy\u1ebft.)\n"
+  }
+ ],
+ "cap_for": [
+  {
+   "day": "2026-10-31",
+   "cap": 25
+  },
+  {
+   "day": "2026-11-01",
+   "cap": 35
+  },
+  {
+   "day": "2026-11-15",
+   "cap": 35
+  },
+  {
+   "day": "2026-11-16",
+   "cap": 55
+  },
+  {
+   "day": "2027-06-01",
+   "cap": 55
+  },
+  {
+   "day": "2026-09-30",
+   "cap": null
+  }
+ ],
+ "who_why": [
+  {
+   "by": "A",
+   "reason": null,
+   "res": {
+    "err": "--reason b\u1eaft bu\u1ed9c, \u2265 10 k\u00fd t\u1ef1"
+   }
+  },
+  {
+   "by": "A",
+   "reason": "123456789",
+   "res": {
+    "err": "--reason b\u1eaft bu\u1ed9c, \u2265 10 k\u00fd t\u1ef1"
+   }
+  },
+  {
+   "by": "A",
+   "reason": "   123456789   ",
+   "res": {
+    "err": "--reason b\u1eaft bu\u1ed9c, \u2265 10 k\u00fd t\u1ef1"
+   }
+  },
+  {
+   "by": null,
+   "reason": "S\u1ef1 c\u1ed1 webhook Zalo c\u1ea7n \u0111\u1ed5i",
+   "res": {
+    "err": "--by b\u1eaft bu\u1ed9c, 1..80 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   }
+  },
+  {
+   "by": "  ",
+   "reason": "S\u1ef1 c\u1ed1 webhook Zalo c\u1ea7n \u0111\u1ed5i",
+   "res": {
+    "err": "--by b\u1eaft bu\u1ed9c, 1..80 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   }
+  },
+  {
+   "by": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "reason": "S\u1ef1 c\u1ed1 webhook Zalo c\u1ea7n \u0111\u1ed5i",
+   "res": {
+    "err": "--by b\u1eaft bu\u1ed9c, 1..80 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   }
+  },
+  {
+   "by": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "reason": "S\u1ef1 c\u1ed1 webhook Zalo c\u1ea7n \u0111\u1ed5i",
+   "res": {
+    "ok": [
+     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "S\u1ef1 c\u1ed1 webhook Zalo c\u1ea7n \u0111\u1ed5i"
+    ]
+   }
+  },
+  {
+   "by": "A\u001b[31m",
+   "reason": "S\u1ef1 c\u1ed1 webhook Zalo c\u1ea7n \u0111\u1ed5i",
+   "res": {
+    "err": "--by b\u1eaft bu\u1ed9c, 1..80 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   }
+  },
+  {
+   "by": "  Nguy\u1ec5n V\u0103n A ",
+   "reason": "  Kh\u00e1ch 0905 123 456 b\u00e1o l\u1ed7i \u0111\u01a1n h\u00e0ng g\u1ea5p  ",
+   "res": {
+    "ok": [
+     "Nguy\u1ec5n V\u0103n A",
+     "Kh\u00e1ch *** b\u00e1o l\u1ed7i \u0111\u01a1n h\u00e0ng g\u1ea5p"
+    ]
+   }
+  },
+  {
+   "by": "B",
+   "reason": "li\u00ean h\u1ec7 a.b@vi.du ho\u1eb7c +84 905 123 456",
+   "res": {
+    "ok": [
+     "B",
+     "li\u00ean h\u1ec7 *** ho\u1eb7c ***"
+    ]
+   }
+  },
+  {
+   "by": "C",
+   "reason": "k\u00fd t\u1ef1\u2028l\u1ea1 \u0111\u1ee7 d\u00e0i r\u1ed3i",
+   "res": {
+    "ok": [
+     "C",
+     "k\u00fd t\u1ef1\u2028l\u1ea1 \u0111\u1ee7 d\u00e0i r\u1ed3i"
+    ]
+   }
+  },
+  {
+   "by": "D\u00a0E",
+   "reason": "\u1ed5n \u0111\u1ecbnh \u0111\u1ee7 m\u01b0\u1eddi k\u00fd t\u1ef1",
+   "res": {
+    "err": "--by b\u1eaft bu\u1ed9c, 1..80 k\u00fd t\u1ef1 in \u0111\u01b0\u1ee3c"
+   }
+  },
+  {
+   "by": "\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110",
+   "reason": "1234567890",
+   "res": {
+    "ok": [
+     "\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110\u0110",
+     "1234567890"
+    ]
+   }
+  }
+ ],
+ "printable": [
+  {
+   "v": "l\u00fd do\u001b[2Jxo\u00e1",
+   "out": "l\u00fd do?[2Jxo\u00e1"
+  },
+  {
+   "v": "d\u00f2ng\u2028c\u00f3",
+   "out": "d\u00f2ng?c\u00f3"
+  },
+  {
+   "v": null,
+   "out": "None"
+  },
+  {
+   "v": 5,
+   "out": "5"
+  },
+  {
+   "v": "tab\there",
+   "out": "tab?here"
+  },
+  {
+   "v": "ok b\u00ecnh th\u01b0\u1eddng",
+   "out": "ok b\u00ecnh th\u01b0\u1eddng"
+  },
+  {
+   "v": "\u200bzw",
+   "out": "?zw"
+  }
+ ],
+ "fmt_g": [
+  {
+   "x": 50.0,
+   "g": "50",
+   "f1": "50.0"
+  },
+  {
+   "x": 0.0,
+   "g": "0",
+   "f1": "0.0"
+  },
+  {
+   "x": 26.0,
+   "g": "26",
+   "f1": "26.0"
+  },
+  {
+   "x": 1.0,
+   "g": "1",
+   "f1": "1.0"
+  },
+  {
+   "x": 0.5,
+   "g": "0.5",
+   "f1": "0.5"
+  },
+  {
+   "x": 1e-05,
+   "g": "1e-05",
+   "f1": "0.0"
+  },
+  {
+   "x": 123456.0,
+   "g": "123456",
+   "f1": "123456.0"
+  },
+  {
+   "x": 1234567.0,
+   "g": "1.23457e+06",
+   "f1": "1234567.0"
+  },
+  {
+   "x": 2.5,
+   "g": "2.5",
+   "f1": "2.5"
+  },
+  {
+   "x": 0.25,
+   "g": "0.25",
+   "f1": "0.2"
+  },
+  {
+   "x": 1e+16,
+   "g": "1e+16",
+   "f1": "10000000000000000.0"
+  },
+  {
+   "x": 3.14159265,
+   "g": "3.14159",
+   "f1": "3.1"
+  },
+  {
+   "x": 100.05,
+   "g": "100.05",
+   "f1": "100.0"
+  },
+  {
+   "x": 0.05,
+   "g": "0.05",
+   "f1": "0.1"
+  },
+  {
+   "x": 99999.95,
+   "g": "99999.9",
+   "f1": "99999.9"
+  },
+  {
+   "x": 0.0001,
+   "g": "0.0001",
+   "f1": "0.0"
+  },
+  {
+   "x": 0.0001234,
+   "g": "0.0001234",
+   "f1": "0.0"
+  }
+ ]
+}

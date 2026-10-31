@@ -1,0 +1,2105 @@
+{
+ "cfg_repo": {
+  "weeks": 13,
+  "payout_lag_weeks": {
+   "shopee": 2,
+   "tiktok": 2,
+   "offline": 4
+  },
+  "net_ratio_default": {
+   "shopee": "0.85",
+   "tiktok": "0.85",
+   "offline": "1.0"
+  },
+  "offline_price_ratio": "0.7",
+  "unit_price_vnd": {},
+  "fixed_outflows": [
+   {
+    "name": "luong-van-phong",
+    "amount_vnd": 60000000,
+    "every_weeks": 4,
+    "first_week": 2
+   },
+   {
+    "name": "thue-mat-bang",
+    "amount_vnd": 15000000,
+    "every_weeks": 4,
+    "first_week": 0
+   },
+   {
+    "name": "chi-phi-ai-cloud",
+    "amount_vnd": 3000000,
+    "every_weeks": 4,
+    "first_week": 0
+   }
+  ],
+  "one_off": [
+   {
+    "name": "nhap-hang-tet",
+    "amount_vnd": 300000000,
+    "week_start": "2026-12-14"
+   }
+  ],
+  "min_balance_vnd": 0,
+  "opening_balance_vnd": null
+ },
+ "cfg_variants": [
+  {
+   "name": "weeks_0",
+   "over": {
+    "weeks": 0
+   },
+   "cfg": null,
+   "why": "cash.weeks: int 1..104"
+  },
+  {
+   "name": "weeks_bool",
+   "over": {
+    "weeks": true
+   },
+   "cfg": null,
+   "why": "cash.weeks: int 1..104"
+  },
+  {
+   "name": "weeks_float",
+   "over": {
+    "weeks": 13.0
+   },
+   "cfg": null,
+   "why": "cash.weeks: int 1..104"
+  },
+  {
+   "name": "weeks_105",
+   "over": {
+    "weeks": 105
+   },
+   "cfg": null,
+   "why": "cash.weeks: int 1..104"
+  },
+  {
+   "name": "lag_9",
+   "over": {
+    "payout_lag_weeks": {
+     "shopee": 9
+    }
+   },
+   "cfg": null,
+   "why": "cash.payout_lag_weeks: {k\u00eanh: int 0..8}"
+  },
+  {
+   "name": "lag_lazada",
+   "over": {
+    "payout_lag_weeks": {
+     "lazada": 1
+    }
+   },
+   "cfg": null,
+   "why": "cash.payout_lag_weeks: {k\u00eanh: int 0..8}"
+  },
+  {
+   "name": "lag_not_obj",
+   "over": {
+    "payout_lag_weeks": [
+     1
+    ]
+   },
+   "cfg": null,
+   "why": "cash.payout_lag_weeks: {k\u00eanh: int 0..8}"
+  },
+  {
+   "name": "lag_neg",
+   "over": {
+    "payout_lag_weeks": {
+     "shopee": -1
+    }
+   },
+   "cfg": null,
+   "why": "cash.payout_lag_weeks: {k\u00eanh: int 0..8}"
+  },
+  {
+   "name": "nr_over",
+   "over": {
+    "net_ratio_default": {
+     "shopee": 1.2
+    }
+   },
+   "cfg": null,
+   "why": "cash.net_ratio_default.shopee: ngo\u00e0i 0..1"
+  },
+  {
+   "name": "nr_bool",
+   "over": {
+    "net_ratio_default": {
+     "shopee": true
+    }
+   },
+   "cfg": null,
+   "why": "cash.net_ratio_default.shopee: ph\u1ea3i l\u00e0 s\u1ed1 0..1"
+  },
+  {
+   "name": "nr_str",
+   "over": {
+    "net_ratio_default": {
+     "shopee": "0.8"
+    }
+   },
+   "cfg": null,
+   "why": "cash.net_ratio_default.shopee: ph\u1ea3i l\u00e0 s\u1ed1 0..1"
+  },
+  {
+   "name": "nr_bad_ch",
+   "over": {
+    "net_ratio_default": {
+     "web": 0.8
+    }
+   },
+   "cfg": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "web": "0.8"
+    },
+    "offline_price_ratio": "0.7",
+    "unit_price_vnd": {},
+    "fixed_outflows": [
+     {
+      "name": "luong-van-phong",
+      "amount_vnd": 60000000,
+      "every_weeks": 4,
+      "first_week": 2
+     },
+     {
+      "name": "thue-mat-bang",
+      "amount_vnd": 15000000,
+      "every_weeks": 4,
+      "first_week": 0
+     },
+     {
+      "name": "chi-phi-ai-cloud",
+      "amount_vnd": 3000000,
+      "every_weeks": 4,
+      "first_week": 0
+     }
+    ],
+    "one_off": [
+     {
+      "name": "nhap-hang-tet",
+      "amount_vnd": 300000000,
+      "week_start": "2026-12-14"
+     }
+    ],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "why": null
+  },
+  {
+   "name": "nr_not_obj",
+   "over": {
+    "net_ratio_default": 0.8
+   },
+   "cfg": null,
+   "why": "cash.net_ratio_default: {k\u00eanh: 0..1}"
+  },
+  {
+   "name": "nr_int_1",
+   "over": {
+    "net_ratio_default": {
+     "shopee": 1,
+     "offline": 0
+    }
+   },
+   "cfg": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": "1",
+     "offline": "0"
+    },
+    "offline_price_ratio": "0.7",
+    "unit_price_vnd": {},
+    "fixed_outflows": [
+     {
+      "name": "luong-van-phong",
+      "amount_vnd": 60000000,
+      "every_weeks": 4,
+      "first_week": 2
+     },
+     {
+      "name": "thue-mat-bang",
+      "amount_vnd": 15000000,
+      "every_weeks": 4,
+      "first_week": 0
+     },
+     {
+      "name": "chi-phi-ai-cloud",
+      "amount_vnd": 3000000,
+      "every_weeks": 4,
+      "first_week": 0
+     }
+    ],
+    "one_off": [
+     {
+      "name": "nhap-hang-tet",
+      "amount_vnd": 300000000,
+      "week_start": "2026-12-14"
+     }
+    ],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "why": null
+  },
+  {
+   "name": "nr_small",
+   "over": {
+    "net_ratio_default": {
+     "shopee": 1e-05
+    }
+   },
+   "cfg": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": "0.00001"
+    },
+    "offline_price_ratio": "0.7",
+    "unit_price_vnd": {},
+    "fixed_outflows": [
+     {
+      "name": "luong-van-phong",
+      "amount_vnd": 60000000,
+      "every_weeks": 4,
+      "first_week": 2
+     },
+     {
+      "name": "thue-mat-bang",
+      "amount_vnd": 15000000,
+      "every_weeks": 4,
+      "first_week": 0
+     },
+     {
+      "name": "chi-phi-ai-cloud",
+      "amount_vnd": 3000000,
+      "every_weeks": 4,
+      "first_week": 0
+     }
+    ],
+    "one_off": [
+     {
+      "name": "nhap-hang-tet",
+      "amount_vnd": 300000000,
+      "week_start": "2026-12-14"
+     }
+    ],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "why": null
+  },
+  {
+   "name": "opr_over",
+   "over": {
+    "offline_price_ratio": 1.5
+   },
+   "cfg": null,
+   "why": "cash.offline_price_ratio: ngo\u00e0i 0..1"
+  },
+  {
+   "name": "opr_missing",
+   "over": {
+    "offline_price_ratio": null
+   },
+   "cfg": null,
+   "why": "cash.offline_price_ratio: ph\u1ea3i l\u00e0 s\u1ed1 0..1"
+  },
+  {
+   "name": "up_bad",
+   "over": {
+    "unit_price_vnd": {
+     "savina-12v": {
+      "offline": 0
+     }
+    }
+   },
+   "cfg": null,
+   "why": "cash.unit_price_vnd: {sku: {k\u00eanh: int > 0}}"
+  },
+  {
+   "name": "up_bad_ch",
+   "over": {
+    "unit_price_vnd": {
+     "savina-12v": {
+      "lazada": 5
+     }
+    }
+   },
+   "cfg": null,
+   "why": "cash.unit_price_vnd: {sku: {k\u00eanh: int > 0}}"
+  },
+  {
+   "name": "up_not_obj",
+   "over": {
+    "unit_price_vnd": {
+     "savina-12v": 5
+    }
+   },
+   "cfg": null,
+   "why": "cash.unit_price_vnd: {sku: {k\u00eanh: int > 0}}"
+  },
+  {
+   "name": "up_ok",
+   "over": {
+    "unit_price_vnd": {
+     "savina-12v": {
+      "offline": 99000
+     }
+    }
+   },
+   "cfg": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": "0.85",
+     "tiktok": "0.85",
+     "offline": "1.0"
+    },
+    "offline_price_ratio": "0.7",
+    "unit_price_vnd": {
+     "savina-12v": {
+      "offline": 99000
+     }
+    },
+    "fixed_outflows": [
+     {
+      "name": "luong-van-phong",
+      "amount_vnd": 60000000,
+      "every_weeks": 4,
+      "first_week": 2
+     },
+     {
+      "name": "thue-mat-bang",
+      "amount_vnd": 15000000,
+      "every_weeks": 4,
+      "first_week": 0
+     },
+     {
+      "name": "chi-phi-ai-cloud",
+      "amount_vnd": 3000000,
+      "every_weeks": 4,
+      "first_week": 0
+     }
+    ],
+    "one_off": [
+     {
+      "name": "nhap-hang-tet",
+      "amount_vnd": 300000000,
+      "week_start": "2026-12-14"
+     }
+    ],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "why": null
+  },
+  {
+   "name": "one_off_bad_date",
+   "over": {
+    "one_off": [
+     {
+      "name": "x1",
+      "amount_vnd": 5,
+      "week_start": "2026-02-30"
+     }
+    ]
+   },
+   "cfg": null,
+   "why": "cash.one_off[0].week_start: ph\u1ea3i YYYY-MM-DD"
+  },
+  {
+   "name": "one_off_not_obj",
+   "over": {
+    "one_off": [
+     "x"
+    ]
+   },
+   "cfg": null,
+   "why": "cash.one_off[0].week_start: ph\u1ea3i YYYY-MM-DD"
+  },
+  {
+   "name": "one_off_no_date",
+   "over": {
+    "one_off": [
+     {
+      "name": "x1",
+      "amount_vnd": 5
+     }
+    ]
+   },
+   "cfg": null,
+   "why": "cash.one_off[0].week_start: ph\u1ea3i YYYY-MM-DD"
+  },
+  {
+   "name": "one_off_bad_name",
+   "over": {
+    "one_off": [
+     {
+      "name": "Nh\u1eadp",
+      "amount_vnd": 5,
+      "week_start": "2026-12-14"
+     }
+    ]
+   },
+   "cfg": null,
+   "why": "cash.one_off[0]: c\u1ea7n name + amount_vnd > 0"
+  },
+  {
+   "name": "one_off_zero",
+   "over": {
+    "one_off": [
+     {
+      "name": "x1",
+      "amount_vnd": 0,
+      "week_start": "2026-12-14"
+     }
+    ]
+   },
+   "cfg": null,
+   "why": "cash.one_off[0]: c\u1ea7n name + amount_vnd > 0"
+  },
+  {
+   "name": "one_off_not_list",
+   "over": {
+    "one_off": {}
+   },
+   "cfg": null,
+   "why": "cash.one_off: ph\u1ea3i l\u00e0 list"
+  },
+  {
+   "name": "one_off_basic_date",
+   "over": {
+    "one_off": [
+     {
+      "name": "x1",
+      "amount_vnd": 5,
+      "week_start": "20261216"
+     }
+    ]
+   },
+   "cfg": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": "0.85",
+     "tiktok": "0.85",
+     "offline": "1.0"
+    },
+    "offline_price_ratio": "0.7",
+    "unit_price_vnd": {},
+    "fixed_outflows": [
+     {
+      "name": "luong-van-phong",
+      "amount_vnd": 60000000,
+      "every_weeks": 4,
+      "first_week": 2
+     },
+     {
+      "name": "thue-mat-bang",
+      "amount_vnd": 15000000,
+      "every_weeks": 4,
+      "first_week": 0
+     },
+     {
+      "name": "chi-phi-ai-cloud",
+      "amount_vnd": 3000000,
+      "every_weeks": 4,
+      "first_week": 0
+     }
+    ],
+    "one_off": [
+     {
+      "name": "x1",
+      "amount_vnd": 5,
+      "week_start": "2026-12-14"
+     }
+    ],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "why": null
+  },
+  {
+   "name": "fixed_bad_name",
+   "over": {
+    "fixed_outflows": [
+     {
+      "name": "L\u01b0\u01a1ng",
+      "amount_vnd": 5,
+      "every_weeks": 4,
+      "first_week": 0
+     }
+    ]
+   },
+   "cfg": null,
+   "why": "cash.fixed_outflows: [{name, amount_vnd > 0, every_weeks 1..52, first_week 0..weeks-1}]"
+  },
+  {
+   "name": "fixed_first_week_out",
+   "over": {
+    "fixed_outflows": [
+     {
+      "name": "luong",
+      "amount_vnd": 5,
+      "every_weeks": 4,
+      "first_week": 13
+     }
+    ]
+   },
+   "cfg": null,
+   "why": "cash.fixed_outflows: [{name, amount_vnd > 0, every_weeks 1..52, first_week 0..weeks-1}]"
+  },
+  {
+   "name": "fixed_every_53",
+   "over": {
+    "fixed_outflows": [
+     {
+      "name": "luong",
+      "amount_vnd": 5,
+      "every_weeks": 53,
+      "first_week": 0
+     }
+    ]
+   },
+   "cfg": null,
+   "why": "cash.fixed_outflows: [{name, amount_vnd > 0, every_weeks 1..52, first_week 0..weeks-1}]"
+  },
+  {
+   "name": "fixed_not_list",
+   "over": {
+    "fixed_outflows": {}
+   },
+   "cfg": null,
+   "why": "cash.fixed_outflows: [{name, amount_vnd > 0, every_weeks 1..52, first_week 0..weeks-1}]"
+  },
+  {
+   "name": "opening_str",
+   "over": {
+    "opening_balance_vnd": "100"
+   },
+   "cfg": null,
+   "why": "cash.min_balance_vnd/opening_balance_vnd: s\u1ed1 nguy\u00ean VND"
+  },
+  {
+   "name": "opening_neg_ok",
+   "over": {
+    "opening_balance_vnd": -5
+   },
+   "cfg": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": "0.85",
+     "tiktok": "0.85",
+     "offline": "1.0"
+    },
+    "offline_price_ratio": "0.7",
+    "unit_price_vnd": {},
+    "fixed_outflows": [
+     {
+      "name": "luong-van-phong",
+      "amount_vnd": 60000000,
+      "every_weeks": 4,
+      "first_week": 2
+     },
+     {
+      "name": "thue-mat-bang",
+      "amount_vnd": 15000000,
+      "every_weeks": 4,
+      "first_week": 0
+     },
+     {
+      "name": "chi-phi-ai-cloud",
+      "amount_vnd": 3000000,
+      "every_weeks": 4,
+      "first_week": 0
+     }
+    ],
+    "one_off": [
+     {
+      "name": "nhap-hang-tet",
+      "amount_vnd": 300000000,
+      "week_start": "2026-12-14"
+     }
+    ],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": -5
+   },
+   "why": null
+  },
+  {
+   "name": "opening_cap",
+   "over": {
+    "opening_balance_vnd": 10000000000001
+   },
+   "cfg": null,
+   "why": "cash.min_balance_vnd/opening_balance_vnd: s\u1ed1 nguy\u00ean VND"
+  },
+  {
+   "name": "min_bool",
+   "over": {
+    "min_balance_vnd": true
+   },
+   "cfg": null,
+   "why": "cash.min_balance_vnd/opening_balance_vnd: s\u1ed1 nguy\u00ean VND"
+  },
+  {
+   "name": "missing",
+   "raw": null,
+   "cfg": null,
+   "why": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c raw-missing.json: FileNotFoundError"
+  },
+  {
+   "name": "broken",
+   "raw": "{",
+   "cfg": null,
+   "why": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c raw-broken.json: JSONDecodeError"
+  },
+  {
+   "name": "no_section",
+   "raw": "{\"opscost\": {}}",
+   "cfg": null,
+   "why": "raw-no_section.json: thi\u1ebfu m\u1ee5c 'cash'"
+  },
+  {
+   "name": "section_not_obj",
+   "raw": "{\"cash\": []}",
+   "cfg": null,
+   "why": "raw-section_not_obj.json: thi\u1ebfu m\u1ee5c 'cash'"
+  },
+  {
+   "name": "root_list",
+   "raw": "[]",
+   "cfg": null,
+   "why": "raw-root_list.json: thi\u1ebfu m\u1ee5c 'cash'"
+  }
+ ],
+ "net_ratios": [
+  {
+   "measured": {},
+   "out": {
+    "shopee": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "tiktok": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "offline": {
+     "ratio": "1.0",
+     "fmt": "1.0000",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    }
+   }
+  },
+  {
+   "measured": {
+    "shopee": [
+     850,
+     1000,
+     3
+    ]
+   },
+   "out": {
+    "shopee": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "\u0111o t\u1eeb settlement 3 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)"
+    },
+    "tiktok": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "offline": {
+     "ratio": "1.0",
+     "fmt": "1.0000",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    }
+   }
+  },
+  {
+   "measured": {
+    "shopee": [
+     1,
+     3,
+     2
+    ]
+   },
+   "out": {
+    "shopee": {
+     "ratio": "0.3333333333333333333333333333",
+     "fmt": "0.3333",
+     "note": "\u0111o t\u1eeb settlement 2 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)"
+    },
+    "tiktok": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "offline": {
+     "ratio": "1.0",
+     "fmt": "1.0000",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    }
+   }
+  },
+  {
+   "measured": {
+    "shopee": [
+     5,
+     0,
+     1
+    ]
+   },
+   "out": {
+    "shopee": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "tiktok": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "offline": {
+     "ratio": "1.0",
+     "fmt": "1.0000",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    }
+   }
+  },
+  {
+   "measured": {
+    "tiktok": [
+     1200,
+     1000,
+     1
+    ]
+   },
+   "out": {
+    "shopee": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "tiktok": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "offline": {
+     "ratio": "1.0",
+     "fmt": "1.0000",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    }
+   }
+  },
+  {
+   "measured": {
+    "shopee": [
+     -1,
+     10,
+     1
+    ]
+   },
+   "out": {
+    "shopee": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "tiktok": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "offline": {
+     "ratio": "1.0",
+     "fmt": "1.0000",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    }
+   }
+  },
+  {
+   "measured": {
+    "tiktok": [
+     2,
+     7,
+     5
+    ],
+    "shopee": [
+     0,
+     9,
+     1
+    ]
+   },
+   "out": {
+    "shopee": {
+     "ratio": "0",
+     "fmt": "0.0000",
+     "note": "\u0111o t\u1eeb settlement 1 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)"
+    },
+    "tiktok": {
+     "ratio": "0.2857142857142857142857142857",
+     "fmt": "0.2857",
+     "note": "\u0111o t\u1eeb settlement 5 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)"
+    },
+    "offline": {
+     "ratio": "1.0",
+     "fmt": "1.0000",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    }
+   }
+  },
+  {
+   "measured": {
+    "shopee": [
+     123456789,
+     987654321987,
+     9
+    ]
+   },
+   "out": {
+    "shopee": {
+     "ratio": "0.0001249999987360203137789420458",
+     "fmt": "0.0001",
+     "note": "\u0111o t\u1eeb settlement 9 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)"
+    },
+    "tiktok": {
+     "ratio": "0.85",
+     "fmt": "0.8500",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    },
+    "offline": {
+     "ratio": "1.0",
+     "fmt": "1.0000",
+     "note": "m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh"
+    }
+   }
+  }
+ ],
+ "forecast": [
+  {
+   "name": "basic_fixed",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [
+     {
+      "name": "luong",
+      "amount_vnd": 3000000,
+      "every_weeks": 4,
+      "first_week": 1
+     }
+    ],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 10,
+     "offline": 5
+    },
+    "b-sku": {
+     "shopee": 4
+    },
+    "ruou-x": {
+     "shopee": 3,
+     "offline": 2
+    },
+    "no-price": {
+     "shopee": 1
+    },
+    "ngoai-golden": {
+     "offline": 2
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 3000000, \"close\": {\"low\": -125000, \"base\": 1140000, \"high\": 2405000}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 1312500, \"base\": 3210000, \"high\": 5107500}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 2750000, \"base\": 5280000, \"high\": 7810000}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 4187500, \"base\": 7350000, \"high\": 10512500}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 3000000, \"close\": {\"low\": 2625000, \"base\": 6420000, \"high\": 10215000}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 4062500, \"base\": 8490000, \"high\": 12917500}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 5500000, \"base\": 10560000, \"high\": 15620000}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 6937500, \"base\": 12630000, \"high\": 18322500}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 3000000, \"close\": {\"low\": 5375000, \"base\": 11700000, \"high\": 18025000}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 6812500, \"base\": 13770000, \"high\": 20727500}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 8250000, \"base\": 15840000, \"high\": 23430000}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 9687500, \"base\": 17910000, \"high\": 26132500}}], \"warn_weeks\": [\"2026-10-19\"], \"min_balance_vnd\": 0, \"pairs\": 5, \"thieu_gia\": [[\"no-price\", \"shopee\"]], \"thieu_sku\": [[\"ngoai-golden\", \"offline\"]], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 |\n| 19/10 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 3.000.000\u0111 | -125.000\u0111 | 1.140.000\u0111 | 2.405.000\u0111 |\n| 26/10 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 1.312.500\u0111 | 3.210.000\u0111 | 5.107.500\u0111 |\n| 02/11 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 2.750.000\u0111 | 5.280.000\u0111 | 7.810.000\u0111 |\n| 09/11 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 4.187.500\u0111 | 7.350.000\u0111 | 10.512.500\u0111 |\n| 16/11 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 3.000.000\u0111 | 2.625.000\u0111 | 6.420.000\u0111 | 10.215.000\u0111 |\n| 23/11 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 4.062.500\u0111 | 8.490.000\u0111 | 12.917.500\u0111 |\n| 30/11 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 5.500.000\u0111 | 10.560.000\u0111 | 15.620.000\u0111 |\n| 07/12 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 6.937.500\u0111 | 12.630.000\u0111 | 18.322.500\u0111 |\n| 14/12 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 3.000.000\u0111 | 5.375.000\u0111 | 11.700.000\u0111 | 18.025.000\u0111 |\n| 21/12 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 6.812.500\u0111 | 13.770.000\u0111 | 20.727.500\u0111 |\n| 28/12 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 8.250.000\u0111 | 15.840.000\u0111 | 23.430.000\u0111 |\n| 04/01 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 9.687.500\u0111 | 17.910.000\u0111 | 26.132.500\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): 19/10\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `no-price` \u00d7 shopee\nThi\u1ebfu SKU golden \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ngoai-golden` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+  },
+  {
+   "name": "lag_event",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "offline": 0,
+     "tiktok": 2
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "b-sku": {
+     "shopee": 4
+    }
+   },
+   "events": [
+    {
+     "id": "sale-test",
+     "date": "2026-09-28",
+     "window": [
+      {
+       "offset": 0,
+       "low": 3,
+       "base": 3,
+       "high": 3
+      }
+     ]
+    }
+   ],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 382500, \"base\": 510000, \"high\": 637500}, \"out\": 0, \"close\": {\"low\": 382500, \"base\": 510000, \"high\": 637500}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 510000, \"base\": 680000, \"high\": 850000}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 637500, \"base\": 850000, \"high\": 1062500}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 765000, \"base\": 1020000, \"high\": 1275000}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 892500, \"base\": 1190000, \"high\": 1487500}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 1020000, \"base\": 1360000, \"high\": 1700000}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 1147500, \"base\": 1530000, \"high\": 1912500}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 1275000, \"base\": 1700000, \"high\": 2125000}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 1402500, \"base\": 1870000, \"high\": 2337500}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 1530000, \"base\": 2040000, \"high\": 2550000}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 1657500, \"base\": 2210000, \"high\": 2762500}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 1785000, \"base\": 2380000, \"high\": 2975000}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 127500, \"base\": 170000, \"high\": 212500}, \"out\": 0, \"close\": {\"low\": 1912500, \"base\": 2550000, \"high\": 3187500}}], \"warn_weeks\": [], \"min_balance_vnd\": 0, \"pairs\": 1, \"thieu_gia\": [], \"thieu_sku\": [], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 382.500\u0111 | 510.000\u0111 | 637.500\u0111 | 0\u0111 | 382.500\u0111 | 510.000\u0111 | 637.500\u0111 |\n| 19/10 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 510.000\u0111 | 680.000\u0111 | 850.000\u0111 |\n| 26/10 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 637.500\u0111 | 850.000\u0111 | 1.062.500\u0111 |\n| 02/11 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 765.000\u0111 | 1.020.000\u0111 | 1.275.000\u0111 |\n| 09/11 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 892.500\u0111 | 1.190.000\u0111 | 1.487.500\u0111 |\n| 16/11 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 1.020.000\u0111 | 1.360.000\u0111 | 1.700.000\u0111 |\n| 23/11 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 1.147.500\u0111 | 1.530.000\u0111 | 1.912.500\u0111 |\n| 30/11 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 1.275.000\u0111 | 1.700.000\u0111 | 2.125.000\u0111 |\n| 07/12 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 1.402.500\u0111 | 1.870.000\u0111 | 2.337.500\u0111 |\n| 14/12 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 1.530.000\u0111 | 2.040.000\u0111 | 2.550.000\u0111 |\n| 21/12 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 1.657.500\u0111 | 2.210.000\u0111 | 2.762.500\u0111 |\n| 28/12 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 1.785.000\u0111 | 2.380.000\u0111 | 2.975.000\u0111 |\n| 04/01 | 127.500\u0111 | 170.000\u0111 | 212.500\u0111 | 0\u0111 | 1.912.500\u0111 | 2.550.000\u0111 | 3.187.500\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+  },
+  {
+   "name": "alcohol_online",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "ruou-x": {
+     "shopee": 3
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}], \"warn_weeks\": [], \"min_balance_vnd\": 0, \"pairs\": 1, \"thieu_gia\": [], \"thieu_sku\": [], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 19/10 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 26/10 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 02/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 09/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 16/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 23/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 30/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 07/12 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 14/12 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 21/12 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 28/12 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 04/01 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+  },
+  {
+   "name": "one_off_negative",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 0,
+     "offline": 0,
+     "tiktok": 0
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "offline": 1.0,
+     "tiktok": 0.85
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [
+     {
+      "name": "nhap-hang",
+      "amount_vnd": 500000000,
+      "week_start": "2026-11-18"
+     }
+    ],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 1000
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 136000000, \"base\": 170000000, \"high\": 204000000}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 204000000, \"base\": 255000000, \"high\": 306000000}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 272000000, \"base\": 340000000, \"high\": 408000000}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 340000000, \"base\": 425000000, \"high\": 510000000}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 500000000, \"close\": {\"low\": -92000000, \"base\": 10000000, \"high\": 112000000}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": -24000000, \"base\": 95000000, \"high\": 214000000}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 44000000, \"base\": 180000000, \"high\": 316000000}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 112000000, \"base\": 265000000, \"high\": 418000000}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 180000000, \"base\": 350000000, \"high\": 520000000}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 248000000, \"base\": 435000000, \"high\": 622000000}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 316000000, \"base\": 520000000, \"high\": 724000000}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 384000000, \"base\": 605000000, \"high\": 826000000}}], \"warn_weeks\": [\"2026-11-16\", \"2026-11-23\"], \"min_balance_vnd\": 0, \"pairs\": 1, \"thieu_gia\": [], \"thieu_sku\": [], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 |\n| 19/10 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 136.000.000\u0111 | 170.000.000\u0111 | 204.000.000\u0111 |\n| 26/10 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 204.000.000\u0111 | 255.000.000\u0111 | 306.000.000\u0111 |\n| 02/11 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 272.000.000\u0111 | 340.000.000\u0111 | 408.000.000\u0111 |\n| 09/11 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 340.000.000\u0111 | 425.000.000\u0111 | 510.000.000\u0111 |\n| 16/11 \u26a0 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 500.000.000\u0111 | -92.000.000\u0111 | 10.000.000\u0111 | 112.000.000\u0111 |\n| 23/11 \u26a0 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | -24.000.000\u0111 | 95.000.000\u0111 | 214.000.000\u0111 |\n| 30/11 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 44.000.000\u0111 | 180.000.000\u0111 | 316.000.000\u0111 |\n| 07/12 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 112.000.000\u0111 | 265.000.000\u0111 | 418.000.000\u0111 |\n| 14/12 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 180.000.000\u0111 | 350.000.000\u0111 | 520.000.000\u0111 |\n| 21/12 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 248.000.000\u0111 | 435.000.000\u0111 | 622.000.000\u0111 |\n| 28/12 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 316.000.000\u0111 | 520.000.000\u0111 | 724.000.000\u0111 |\n| 04/01 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 384.000.000\u0111 | 605.000.000\u0111 | 826.000.000\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): 16/11, 23/11\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+  },
+  {
+   "name": "one_off_opening",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 0,
+     "offline": 0,
+     "tiktok": 0
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "offline": 1.0,
+     "tiktok": 0.85
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [
+     {
+      "name": "nhap-hang",
+      "amount_vnd": 500000000,
+      "week_start": "2026-11-18"
+     }
+    ],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 1000
+    }
+   },
+   "events": [],
+   "opening": 100000000,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 168000000, \"base\": 185000000, \"high\": 202000000}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 236000000, \"base\": 270000000, \"high\": 304000000}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 304000000, \"base\": 355000000, \"high\": 406000000}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 372000000, \"base\": 440000000, \"high\": 508000000}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 440000000, \"base\": 525000000, \"high\": 610000000}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 500000000, \"close\": {\"low\": 8000000, \"base\": 110000000, \"high\": 212000000}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 76000000, \"base\": 195000000, \"high\": 314000000}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 144000000, \"base\": 280000000, \"high\": 416000000}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 212000000, \"base\": 365000000, \"high\": 518000000}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 280000000, \"base\": 450000000, \"high\": 620000000}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 348000000, \"base\": 535000000, \"high\": 722000000}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 416000000, \"base\": 620000000, \"high\": 824000000}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 68000000, \"base\": 85000000, \"high\": 102000000}, \"out\": 0, \"close\": {\"low\": 484000000, \"base\": 705000000, \"high\": 926000000}}], \"warn_weeks\": [], \"min_balance_vnd\": 0, \"pairs\": 1, \"thieu_gia\": [], \"thieu_sku\": [], \"opening\": 100000000, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 168.000.000\u0111 | 185.000.000\u0111 | 202.000.000\u0111 |\n| 19/10 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 236.000.000\u0111 | 270.000.000\u0111 | 304.000.000\u0111 |\n| 26/10 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 304.000.000\u0111 | 355.000.000\u0111 | 406.000.000\u0111 |\n| 02/11 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 372.000.000\u0111 | 440.000.000\u0111 | 508.000.000\u0111 |\n| 09/11 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 440.000.000\u0111 | 525.000.000\u0111 | 610.000.000\u0111 |\n| 16/11 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 500.000.000\u0111 | 8.000.000\u0111 | 110.000.000\u0111 | 212.000.000\u0111 |\n| 23/11 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 76.000.000\u0111 | 195.000.000\u0111 | 314.000.000\u0111 |\n| 30/11 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 144.000.000\u0111 | 280.000.000\u0111 | 416.000.000\u0111 |\n| 07/12 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 212.000.000\u0111 | 365.000.000\u0111 | 518.000.000\u0111 |\n| 14/12 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 280.000.000\u0111 | 450.000.000\u0111 | 620.000.000\u0111 |\n| 21/12 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 348.000.000\u0111 | 535.000.000\u0111 | 722.000.000\u0111 |\n| 28/12 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 416.000.000\u0111 | 620.000.000\u0111 | 824.000.000\u0111 |\n| 04/01 | 68.000.000\u0111 | 85.000.000\u0111 | 102.000.000\u0111 | 0\u0111 | 484.000.000\u0111 | 705.000.000\u0111 | 926.000.000\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n"
+  },
+  {
+   "name": "measured_third",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 10,
+     "offline": 5
+    },
+    "b-sku": {
+     "shopee": 4
+    },
+    "ruou-x": {
+     "shopee": 3,
+     "offline": 2
+    },
+    "no-price": {
+     "shopee": 1
+    },
+    "ngoai-golden": {
+     "offline": 2
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {
+    "shopee": [
+     1,
+     3,
+     2
+    ]
+   },
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 1893334, \"base\": 2900000, \"high\": 3906666}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 2840001, \"base\": 4350000, \"high\": 5859999}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 3786668, \"base\": 5800000, \"high\": 7813332}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 4733335, \"base\": 7250000, \"high\": 9766665}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 5680002, \"base\": 8700000, \"high\": 11719998}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 6626669, \"base\": 10150000, \"high\": 13673331}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 7573336, \"base\": 11600000, \"high\": 15626664}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 8520003, \"base\": 13050000, \"high\": 17579997}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 9466670, \"base\": 14500000, \"high\": 19533330}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 10413337, \"base\": 15950000, \"high\": 21486663}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 11360004, \"base\": 17400000, \"high\": 23439996}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 946667, \"base\": 1450000, \"high\": 1953333}, \"out\": 0, \"close\": {\"low\": 12306671, \"base\": 18850000, \"high\": 25393329}}], \"warn_weeks\": [], \"min_balance_vnd\": 0, \"pairs\": 5, \"thieu_gia\": [[\"no-price\", \"shopee\"]], \"thieu_sku\": [[\"ngoai-golden\", \"offline\"]], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.3333 \u2014 \u0111o t\u1eeb settlement 2 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 |\n| 19/10 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 1.893.334\u0111 | 2.900.000\u0111 | 3.906.666\u0111 |\n| 26/10 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 2.840.001\u0111 | 4.350.000\u0111 | 5.859.999\u0111 |\n| 02/11 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 3.786.668\u0111 | 5.800.000\u0111 | 7.813.332\u0111 |\n| 09/11 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 4.733.335\u0111 | 7.250.000\u0111 | 9.766.665\u0111 |\n| 16/11 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 5.680.002\u0111 | 8.700.000\u0111 | 11.719.998\u0111 |\n| 23/11 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 6.626.669\u0111 | 10.150.000\u0111 | 13.673.331\u0111 |\n| 30/11 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 7.573.336\u0111 | 11.600.000\u0111 | 15.626.664\u0111 |\n| 07/12 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 8.520.003\u0111 | 13.050.000\u0111 | 17.579.997\u0111 |\n| 14/12 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 9.466.670\u0111 | 14.500.000\u0111 | 19.533.330\u0111 |\n| 21/12 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 10.413.337\u0111 | 15.950.000\u0111 | 21.486.663\u0111 |\n| 28/12 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 11.360.004\u0111 | 17.400.000\u0111 | 23.439.996\u0111 |\n| 04/01 | 946.667\u0111 | 1.450.000\u0111 | 1.953.333\u0111 | 0\u0111 | 12.306.671\u0111 | 18.850.000\u0111 | 25.393.329\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `no-price` \u00d7 shopee\nThi\u1ebfu SKU golden \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ngoai-golden` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.3333 \u2014 \u0111o t\u1eeb settlement 2 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+  },
+  {
+   "name": "measured_long",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 0,
+     "offline": 0,
+     "tiktok": 0
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 777
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {
+    "shopee": [
+     123456789,
+     987654321987,
+     9
+    ]
+   },
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 15524, \"base\": 19424, \"high\": 23324}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 23286, \"base\": 29136, \"high\": 34986}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 31048, \"base\": 38848, \"high\": 46648}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 38810, \"base\": 48560, \"high\": 58310}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 46572, \"base\": 58272, \"high\": 69972}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 54334, \"base\": 67984, \"high\": 81634}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 62096, \"base\": 77696, \"high\": 93296}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 69858, \"base\": 87408, \"high\": 104958}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 77620, \"base\": 97120, \"high\": 116620}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 85382, \"base\": 106832, \"high\": 128282}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 93144, \"base\": 116544, \"high\": 139944}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 7762, \"base\": 9712, \"high\": 11662}, \"out\": 0, \"close\": {\"low\": 100906, \"base\": 126256, \"high\": 151606}}], \"warn_weeks\": [], \"min_balance_vnd\": 0, \"pairs\": 1, \"thieu_gia\": [], \"thieu_sku\": [], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.0001 \u2014 \u0111o t\u1eeb settlement 9 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 |\n| 19/10 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 15.524\u0111 | 19.424\u0111 | 23.324\u0111 |\n| 26/10 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 23.286\u0111 | 29.136\u0111 | 34.986\u0111 |\n| 02/11 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 31.048\u0111 | 38.848\u0111 | 46.648\u0111 |\n| 09/11 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 38.810\u0111 | 48.560\u0111 | 58.310\u0111 |\n| 16/11 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 46.572\u0111 | 58.272\u0111 | 69.972\u0111 |\n| 23/11 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 54.334\u0111 | 67.984\u0111 | 81.634\u0111 |\n| 30/11 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 62.096\u0111 | 77.696\u0111 | 93.296\u0111 |\n| 07/12 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 69.858\u0111 | 87.408\u0111 | 104.958\u0111 |\n| 14/12 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 77.620\u0111 | 97.120\u0111 | 116.620\u0111 |\n| 21/12 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 85.382\u0111 | 106.832\u0111 | 128.282\u0111 |\n| 28/12 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 93.144\u0111 | 116.544\u0111 | 139.944\u0111 |\n| 04/01 | 7.762\u0111 | 9.712\u0111 | 11.662\u0111 | 0\u0111 | 100.906\u0111 | 126.256\u0111 | 151.606\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.0001 \u2014 \u0111o t\u1eeb settlement 9 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 0 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+  },
+  {
+   "name": "min_balance",
+   "cash": {
+    "weeks": 6,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [
+     {
+      "name": "thue",
+      "amount_vnd": 1234567,
+      "every_weeks": 1,
+      "first_week": 0
+     }
+    ],
+    "one_off": [],
+    "min_balance_vnd": 5000000,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 10,
+     "offline": 5
+    },
+    "b-sku": {
+     "shopee": 4
+    },
+    "ruou-x": {
+     "shopee": 3,
+     "offline": 2
+    },
+    "no-price": {
+     "shopee": 1
+    },
+    "ngoai-golden": {
+     "offline": 2
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 1234567, \"close\": {\"low\": 202933, \"base\": 835433, \"high\": 1467933}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 1234567, \"close\": {\"low\": 405866, \"base\": 1670866, \"high\": 2935866}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 1234567, \"close\": {\"low\": 608799, \"base\": 2506299, \"high\": 4403799}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 1234567, \"close\": {\"low\": 811732, \"base\": 3341732, \"high\": 5871732}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 1234567, \"close\": {\"low\": 1014665, \"base\": 4177165, \"high\": 7339665}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 1234567, \"close\": {\"low\": 1217598, \"base\": 5012598, \"high\": 8807598}}], \"warn_weeks\": [\"2026-10-12\", \"2026-10-19\", \"2026-10-26\", \"2026-11-02\", \"2026-11-09\", \"2026-11-16\"], \"min_balance_vnd\": 5000000, \"pairs\": 5, \"thieu_gia\": [[\"no-price\", \"shopee\"]], \"thieu_sku\": [[\"ngoai-golden\", \"offline\"]], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 6 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 1.234.567\u0111 | 202.933\u0111 | 835.433\u0111 | 1.467.933\u0111 |\n| 19/10 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 1.234.567\u0111 | 405.866\u0111 | 1.670.866\u0111 | 2.935.866\u0111 |\n| 26/10 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 1.234.567\u0111 | 608.799\u0111 | 2.506.299\u0111 | 4.403.799\u0111 |\n| 02/11 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 1.234.567\u0111 | 811.732\u0111 | 3.341.732\u0111 | 5.871.732\u0111 |\n| 09/11 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 1.234.567\u0111 | 1.014.665\u0111 | 4.177.165\u0111 | 7.339.665\u0111 |\n| 16/11 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 1.234.567\u0111 | 1.217.598\u0111 | 5.012.598\u0111 | 8.807.598\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 5.000.000\u0111): 12/10, 19/10, 26/10, 02/11, 09/11, 16/11\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `no-price` \u00d7 shopee\nThi\u1ebfu SKU golden \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ngoai-golden` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+  },
+  {
+   "name": "missing_lag",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 10,
+     "offline": 5
+    },
+    "b-sku": {
+     "shopee": 4
+    },
+    "ruou-x": {
+     "shopee": 3,
+     "offline": 2
+    },
+    "no-price": {
+     "shopee": 1
+    },
+    "ngoai-golden": {
+     "offline": 2
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-12",
+   "err": "ValueError: thi\u1ebfu \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 / t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn cho k\u00eanh offline"
+  },
+  {
+   "name": "missing_ratio_tiktok",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "tiktok": 3
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "tiktok",
+     10
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 0, \"base\": 0, \"high\": 0}, \"out\": 0, \"close\": {\"low\": 0, \"base\": 0, \"high\": 0}}], \"warn_weeks\": [], \"min_balance_vnd\": 0, \"pairs\": 1, \"thieu_gia\": [], \"thieu_sku\": [], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 19/10 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 26/10 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 02/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 09/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 16/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 23/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 30/11 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 07/12 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 14/12 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 21/12 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 28/12 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n| 04/01 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+  },
+  {
+   "name": "negative_opening",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 10,
+     "offline": 5
+    },
+    "b-sku": {
+     "shopee": 4
+    },
+    "ruou-x": {
+     "shopee": 3,
+     "offline": 2
+    },
+    "no-price": {
+     "shopee": 1
+    },
+    "ngoai-golden": {
+     "offline": 2
+    }
+   },
+   "events": [],
+   "opening": -7000000,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-12",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": -5562500, \"base\": -4930000, \"high\": -4297500}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": -4125000, \"base\": -2860000, \"high\": -1595000}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": -2687500, \"base\": -790000, \"high\": 1107500}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": -1250000, \"base\": 1280000, \"high\": 3810000}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 187500, \"base\": 3350000, \"high\": 6512500}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 1625000, \"base\": 5420000, \"high\": 9215000}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 3062500, \"base\": 7490000, \"high\": 11917500}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 4500000, \"base\": 9560000, \"high\": 14620000}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 5937500, \"base\": 11630000, \"high\": 17322500}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 7375000, \"base\": 13700000, \"high\": 20025000}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 8812500, \"base\": 15770000, \"high\": 22727500}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 10250000, \"base\": 17840000, \"high\": 25430000}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 11687500, \"base\": 19910000, \"high\": 28132500}}], \"warn_weeks\": [\"2026-10-12\", \"2026-10-19\", \"2026-10-26\", \"2026-11-02\"], \"min_balance_vnd\": 0, \"pairs\": 5, \"thieu_gia\": [[\"no-price\", \"shopee\"]], \"thieu_sku\": [[\"ngoai-golden\", \"offline\"]], \"opening\": -7000000, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | -5.562.500\u0111 | -4.930.000\u0111 | -4.297.500\u0111 |\n| 19/10 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | -4.125.000\u0111 | -2.860.000\u0111 | -1.595.000\u0111 |\n| 26/10 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | -2.687.500\u0111 | -790.000\u0111 | 1.107.500\u0111 |\n| 02/11 \u26a0 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | -1.250.000\u0111 | 1.280.000\u0111 | 3.810.000\u0111 |\n| 09/11 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 187.500\u0111 | 3.350.000\u0111 | 6.512.500\u0111 |\n| 16/11 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 1.625.000\u0111 | 5.420.000\u0111 | 9.215.000\u0111 |\n| 23/11 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 3.062.500\u0111 | 7.490.000\u0111 | 11.917.500\u0111 |\n| 30/11 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 4.500.000\u0111 | 9.560.000\u0111 | 14.620.000\u0111 |\n| 07/12 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 5.937.500\u0111 | 11.630.000\u0111 | 17.322.500\u0111 |\n| 14/12 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 7.375.000\u0111 | 13.700.000\u0111 | 20.025.000\u0111 |\n| 21/12 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 8.812.500\u0111 | 15.770.000\u0111 | 22.727.500\u0111 |\n| 28/12 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 10.250.000\u0111 | 17.840.000\u0111 | 25.430.000\u0111 |\n| 04/01 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 11.687.500\u0111 | 19.910.000\u0111 | 28.132.500\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): 12/10, 19/10, 26/10, 02/11\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `no-price` \u00d7 shopee\nThi\u1ebfu SKU golden \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ngoai-golden` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n"
+  },
+  {
+   "name": "start_wed",
+   "cash": {
+    "weeks": 2,
+    "payout_lag_weeks": {
+     "shopee": 2,
+     "tiktok": 2,
+     "offline": 4
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 10,
+     "offline": 5
+    },
+    "b-sku": {
+     "shopee": 4
+    },
+    "ruou-x": {
+     "shopee": 3,
+     "offline": 2
+    },
+    "no-price": {
+     "shopee": 1
+    },
+    "ngoai-golden": {
+     "offline": 2
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2026-10-14",
+   "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 1437500, \"base\": 2070000, \"high\": 2702500}, \"out\": 0, \"close\": {\"low\": 2875000, \"base\": 4140000, \"high\": 5405000}}], \"warn_weeks\": [], \"min_balance_vnd\": 0, \"pairs\": 5, \"thieu_gia\": [[\"no-price\", \"shopee\"]], \"thieu_sku\": [[\"ngoai-golden\", \"offline\"]], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+   "render": "# D\u00f2ng ti\u1ec1n 2 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 |\n| 19/10 | 1.437.500\u0111 | 2.070.000\u0111 | 2.702.500\u0111 | 0\u0111 | 2.875.000\u0111 | 4.140.000\u0111 | 5.405.000\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `no-price` \u00d7 shopee\nThi\u1ebfu SKU golden \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ngoai-golden` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH TEST \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+  },
+  {
+   "name": "lag_out_of_range",
+   "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {
+     "shopee": 8,
+     "offline": 8,
+     "tiktok": 8
+    },
+    "net_ratio_default": {
+     "shopee": 0.85,
+     "tiktok": 0.85,
+     "offline": 1.0
+    },
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [],
+    "one_off": [],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+   },
+   "base": {
+    "a-sku": {
+     "shopee": 10,
+     "offline": 5
+    },
+    "b-sku": {
+     "shopee": 4
+    },
+    "ruou-x": {
+     "shopee": 3,
+     "offline": 2
+    },
+    "no-price": {
+     "shopee": 1
+    },
+    "ngoai-golden": {
+     "offline": 2
+    }
+   },
+   "events": [],
+   "opening": null,
+   "prices": [
+    [
+     "a-sku",
+     "shopee",
+     100000
+    ],
+    [
+     "a-sku",
+     "offline",
+     70000
+    ],
+    [
+     "b-sku",
+     "shopee",
+     50000
+    ],
+    [
+     "ruou-x",
+     "shopee",
+     500000
+    ],
+    [
+     "ruou-x",
+     "offline",
+     350000
+    ]
+   ],
+   "measured": {},
+   "start": "2000-01-05",
+   "err": "ScenarioError: start ph\u1ea3i trong 2000-01-01..2100-12-31"
+  }
+ ],
+ "unit_prices": [
+  [
+   "savina-12v",
+   "shopee",
+   159000
+  ],
+  [
+   "savina-12v",
+   "offline",
+   99000
+  ],
+  [
+   "saphraton-20v",
+   "shopee",
+   299000
+  ],
+  [
+   "saphraton-20v",
+   "offline",
+   209300
+  ],
+  [
+   "saphraton-combo-2x20v",
+   "shopee",
+   698000
+  ],
+  [
+   "saphraton-combo-2x20v",
+   "offline",
+   488600
+  ],
+  [
+   "saphraton-80v",
+   "shopee",
+   1490000
+  ],
+  [
+   "saphraton-80v",
+   "offline",
+   1043000
+  ],
+  [
+   "savigout-30v",
+   "shopee",
+   439000
+  ],
+  [
+   "savigout-30v",
+   "offline",
+   307300
+  ],
+  [
+   "sapentol-30v",
+   "shopee",
+   417000
+  ],
+  [
+   "sapentol-30v",
+   "offline",
+   291900
+  ],
+  [
+   "da-an-sam-30v",
+   "shopee",
+   506000
+  ],
+  [
+   "da-an-sam-30v",
+   "offline",
+   354200
+  ],
+  [
+   "mat-ong-sam-120ml-1hu",
+   "shopee",
+   745000
+  ],
+  [
+   "mat-ong-sam-120ml-1hu",
+   "offline",
+   521500
+  ],
+  [
+   "mat-ong-sam-120ml-2hu",
+   "shopee",
+   1340000
+  ],
+  [
+   "mat-ong-sam-120ml-2hu",
+   "offline",
+   938000
+  ],
+  [
+   "mat-ong-sam-300ml",
+   "shopee",
+   2980000
+  ],
+  [
+   "mat-ong-sam-300ml",
+   "offline",
+   2086000
+  ],
+  [
+   "ruou-sam-chai-thuy-tinh-500ml",
+   "shopee",
+   745000
+  ],
+  [
+   "ruou-sam-chai-thuy-tinh-500ml",
+   "offline",
+   521500
+  ]
+ ],
+ "unit_prices_033": [
+  [
+   "savina-12v",
+   "shopee",
+   159000
+  ],
+  [
+   "savina-12v",
+   "offline",
+   52470
+  ],
+  [
+   "saphraton-20v",
+   "shopee",
+   299000
+  ],
+  [
+   "saphraton-20v",
+   "offline",
+   98670
+  ],
+  [
+   "saphraton-combo-2x20v",
+   "shopee",
+   698000
+  ],
+  [
+   "saphraton-combo-2x20v",
+   "offline",
+   230340
+  ],
+  [
+   "saphraton-80v",
+   "shopee",
+   1490000
+  ],
+  [
+   "saphraton-80v",
+   "offline",
+   491700
+  ],
+  [
+   "savigout-30v",
+   "shopee",
+   439000
+  ],
+  [
+   "savigout-30v",
+   "offline",
+   144870
+  ],
+  [
+   "sapentol-30v",
+   "shopee",
+   417000
+  ],
+  [
+   "sapentol-30v",
+   "offline",
+   137610
+  ],
+  [
+   "da-an-sam-30v",
+   "shopee",
+   506000
+  ],
+  [
+   "da-an-sam-30v",
+   "offline",
+   166980
+  ],
+  [
+   "mat-ong-sam-120ml-1hu",
+   "shopee",
+   745000
+  ],
+  [
+   "mat-ong-sam-120ml-1hu",
+   "offline",
+   245850
+  ],
+  [
+   "mat-ong-sam-120ml-2hu",
+   "shopee",
+   1340000
+  ],
+  [
+   "mat-ong-sam-120ml-2hu",
+   "offline",
+   442200
+  ],
+  [
+   "mat-ong-sam-300ml",
+   "shopee",
+   2980000
+  ],
+  [
+   "mat-ong-sam-300ml",
+   "offline",
+   983400
+  ],
+  [
+   "ruou-sam-chai-thuy-tinh-500ml",
+   "shopee",
+   745000
+  ],
+  [
+   "ruou-sam-chai-thuy-tinh-500ml",
+   "offline",
+   245850
+  ]
+ ],
+ "run_repo": {
+  "json": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 18000000, \"close\": {\"low\": 48038900, \"base\": 67408000, \"high\": 86777100}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 0, \"close\": {\"low\": 114077800, \"base\": 152816000, \"high\": 191554200}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 60000000, \"close\": {\"low\": 120116700, \"base\": 178224000, \"high\": 236331300}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 0, \"close\": {\"low\": 186155600, \"base\": 263632000, \"high\": 341108400}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 18000000, \"close\": {\"low\": 234194500, \"base\": 331040000, \"high\": 427885500}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 66038900, \"base\": 91539050, \"high\": 119761750}, \"out\": 0, \"close\": {\"low\": 300233400, \"base\": 422579050, \"high\": 547647250}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 78692000, \"base\": 125706500, \"high\": 193719400}, \"out\": 60000000, \"close\": {\"low\": 318925400, \"base\": 488285550, \"high\": 681366650}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 0, \"close\": {\"low\": 384964300, \"base\": 573693550, \"high\": 786143750}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 18000000, \"close\": {\"low\": 433003200, \"base\": 641101550, \"high\": 872920850}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 300000000, \"close\": {\"low\": 199042100, \"base\": 426509550, \"high\": 677697950}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 77804600, \"base\": 112791600, \"high\": 164174250}, \"out\": 60000000, \"close\": {\"low\": 216846700, \"base\": 479301150, \"high\": 781872200}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 0, \"close\": {\"low\": 282885600, \"base\": 564709150, \"high\": 886649300}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 69205150, \"base\": 97173700, \"high\": 127727950}, \"out\": 18000000, \"close\": {\"low\": 334090750, \"base\": 643882850, \"high\": 996377250}}], \"warn_weeks\": [], \"min_balance_vnd\": 0, \"pairs\": 21, \"thieu_gia\": [[\"ruou-sam-binh-su-do-500ml\", \"offline\"], [\"saphraton-40v\", \"offline\"]], \"thieu_sku\": [], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}",
+  "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 48.038.900\u0111 | 67.408.000\u0111 | 86.777.100\u0111 |\n| 19/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 114.077.800\u0111 | 152.816.000\u0111 | 191.554.200\u0111 |\n| 26/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 60.000.000\u0111 | 120.116.700\u0111 | 178.224.000\u0111 | 236.331.300\u0111 |\n| 02/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 186.155.600\u0111 | 263.632.000\u0111 | 341.108.400\u0111 |\n| 09/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 234.194.500\u0111 | 331.040.000\u0111 | 427.885.500\u0111 |\n| 16/11 | 66.038.900\u0111 | 91.539.050\u0111 | 119.761.750\u0111 | 0\u0111 | 300.233.400\u0111 | 422.579.050\u0111 | 547.647.250\u0111 |\n| 23/11 | 78.692.000\u0111 | 125.706.500\u0111 | 193.719.400\u0111 | 60.000.000\u0111 | 318.925.400\u0111 | 488.285.550\u0111 | 681.366.650\u0111 |\n| 30/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 384.964.300\u0111 | 573.693.550\u0111 | 786.143.750\u0111 |\n| 07/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 433.003.200\u0111 | 641.101.550\u0111 | 872.920.850\u0111 |\n| 14/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 300.000.000\u0111 | 199.042.100\u0111 | 426.509.550\u0111 | 677.697.950\u0111 |\n| 21/12 | 77.804.600\u0111 | 112.791.600\u0111 | 164.174.250\u0111 | 60.000.000\u0111 | 216.846.700\u0111 | 479.301.150\u0111 | 781.872.200\u0111 |\n| 28/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 282.885.600\u0111 | 564.709.150\u0111 | 886.649.300\u0111 |\n| 04/01 | 69.205.150\u0111 | 97.173.700\u0111 | 127.727.950\u0111 | 18.000.000\u0111 | 334.090.750\u0111 | 643.882.850\u0111 | 996.377.250\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ruou-sam-binh-su-do-500ml` \u00d7 offline, `saphraton-40v` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n"
+ },
+ "run_repo_measured": {
+  "json": "{\"start\": \"2026-11-30\", \"weeks\": [{\"week_start\": \"2026-11-30\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 18000000, \"close\": {\"low\": 98038900, \"base\": 117408000, \"high\": 136777100}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 0, \"close\": {\"low\": 164077800, \"base\": 202816000, \"high\": 241554200}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 360000000, \"close\": {\"low\": -129883300, \"base\": -71776000, \"high\": -13668700}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 77804600, \"base\": 112791600, \"high\": 164174250}, \"out\": 0, \"close\": {\"low\": -52078700, \"base\": 41015600, \"high\": 150505550}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 18000000, \"close\": {\"low\": -4039800, \"base\": 108423600, \"high\": 237282650}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 69205150, \"base\": 97173700, \"high\": 127727950}, \"out\": 0, \"close\": {\"low\": 65165350, \"base\": 205597300, \"high\": 365010600}}, {\"week_start\": \"2027-01-11\", \"in\": {\"low\": 70092550, \"base\": 105394050, \"high\": 145075600}, \"out\": 60000000, \"close\": {\"low\": 75257900, \"base\": 250991350, \"high\": 450086200}}, {\"week_start\": \"2027-01-18\", \"in\": {\"low\": 78901300, \"base\": 130051400, \"high\": 187213300}, \"out\": 0, \"close\": {\"low\": 154159200, \"base\": 381042750, \"high\": 637299500}}, {\"week_start\": \"2027-01-25\", \"in\": {\"low\": 89922000, \"base\": 149984700, \"high\": 222880200}, \"out\": 18000000, \"close\": {\"low\": 226081200, \"base\": 513027450, \"high\": 842179700}}, {\"week_start\": \"2027-02-01\", \"in\": {\"low\": 100744150, \"base\": 171849300, \"high\": 262899900}, \"out\": 0, \"close\": {\"low\": 326825350, \"base\": 684876750, \"high\": 1105079600}}, {\"week_start\": \"2027-02-08\", \"in\": {\"low\": 91413800, \"base\": 159050300, \"high\": 249205550}, \"out\": 60000000, \"close\": {\"low\": 358239150, \"base\": 783927050, \"high\": 1294285150}}, {\"week_start\": \"2027-02-15\", \"in\": {\"low\": 58048050, \"base\": 105526350, \"high\": 168224550}, \"out\": 0, \"close\": {\"low\": 416287200, \"base\": 889453400, \"high\": 1462509700}}, {\"week_start\": \"2027-02-22\", \"in\": {\"low\": 52903600, \"base\": 97809800, \"high\": 155947850}, \"out\": 18000000, \"close\": {\"low\": 451190800, \"base\": 969263200, \"high\": 1600457550}}], \"warn_weeks\": [\"2026-12-14\", \"2026-12-21\", \"2026-12-28\"], \"min_balance_vnd\": 0, \"pairs\": 21, \"thieu_gia\": [[\"ruou-sam-binh-su-do-500ml\", \"offline\"], [\"saphraton-40v\", \"offline\"]], \"thieu_sku\": [], \"opening\": 50000000, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 \u0111o t\u1eeb settlement 12 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\"]}",
+  "render": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 30/11/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 30/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 98.038.900\u0111 | 117.408.000\u0111 | 136.777.100\u0111 |\n| 07/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 164.077.800\u0111 | 202.816.000\u0111 | 241.554.200\u0111 |\n| 14/12 \u26a0 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 360.000.000\u0111 | -129.883.300\u0111 | -71.776.000\u0111 | -13.668.700\u0111 |\n| 21/12 \u26a0 | 77.804.600\u0111 | 112.791.600\u0111 | 164.174.250\u0111 | 0\u0111 | -52.078.700\u0111 | 41.015.600\u0111 | 150.505.550\u0111 |\n| 28/12 \u26a0 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | -4.039.800\u0111 | 108.423.600\u0111 | 237.282.650\u0111 |\n| 04/01 | 69.205.150\u0111 | 97.173.700\u0111 | 127.727.950\u0111 | 0\u0111 | 65.165.350\u0111 | 205.597.300\u0111 | 365.010.600\u0111 |\n| 11/01 | 70.092.550\u0111 | 105.394.050\u0111 | 145.075.600\u0111 | 60.000.000\u0111 | 75.257.900\u0111 | 250.991.350\u0111 | 450.086.200\u0111 |\n| 18/01 | 78.901.300\u0111 | 130.051.400\u0111 | 187.213.300\u0111 | 0\u0111 | 154.159.200\u0111 | 381.042.750\u0111 | 637.299.500\u0111 |\n| 25/01 | 89.922.000\u0111 | 149.984.700\u0111 | 222.880.200\u0111 | 18.000.000\u0111 | 226.081.200\u0111 | 513.027.450\u0111 | 842.179.700\u0111 |\n| 01/02 | 100.744.150\u0111 | 171.849.300\u0111 | 262.899.900\u0111 | 0\u0111 | 326.825.350\u0111 | 684.876.750\u0111 | 1.105.079.600\u0111 |\n| 08/02 | 91.413.800\u0111 | 159.050.300\u0111 | 249.205.550\u0111 | 60.000.000\u0111 | 358.239.150\u0111 | 783.927.050\u0111 | 1.294.285.150\u0111 |\n| 15/02 | 58.048.050\u0111 | 105.526.350\u0111 | 168.224.550\u0111 | 0\u0111 | 416.287.200\u0111 | 889.453.400\u0111 | 1.462.509.700\u0111 |\n| 22/02 | 52.903.600\u0111 | 97.809.800\u0111 | 155.947.850\u0111 | 18.000.000\u0111 | 451.190.800\u0111 | 969.263.200\u0111 | 1.600.457.550\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): 14/12, 21/12, 28/12\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ruou-sam-binh-su-do-500ml` \u00d7 offline, `saphraton-40v` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 \u0111o t\u1eeb settlement 12 d\u00f2ng (8 tu\u1ea7n tr\u01b0\u1edbc)\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n"
+ },
+ "cli": [
+  {
+   "argv": [
+    "--forecast",
+    "--start",
+    "2026-10-12"
+   ],
+   "rc": 0,
+   "out": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 48.038.900\u0111 | 67.408.000\u0111 | 86.777.100\u0111 |\n| 19/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 114.077.800\u0111 | 152.816.000\u0111 | 191.554.200\u0111 |\n| 26/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 60.000.000\u0111 | 120.116.700\u0111 | 178.224.000\u0111 | 236.331.300\u0111 |\n| 02/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 186.155.600\u0111 | 263.632.000\u0111 | 341.108.400\u0111 |\n| 09/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 234.194.500\u0111 | 331.040.000\u0111 | 427.885.500\u0111 |\n| 16/11 | 66.038.900\u0111 | 91.539.050\u0111 | 119.761.750\u0111 | 0\u0111 | 300.233.400\u0111 | 422.579.050\u0111 | 547.647.250\u0111 |\n| 23/11 | 78.692.000\u0111 | 125.706.500\u0111 | 193.719.400\u0111 | 60.000.000\u0111 | 318.925.400\u0111 | 488.285.550\u0111 | 681.366.650\u0111 |\n| 30/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 384.964.300\u0111 | 573.693.550\u0111 | 786.143.750\u0111 |\n| 07/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 433.003.200\u0111 | 641.101.550\u0111 | 872.920.850\u0111 |\n| 14/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 300.000.000\u0111 | 199.042.100\u0111 | 426.509.550\u0111 | 677.697.950\u0111 |\n| 21/12 | 77.804.600\u0111 | 112.791.600\u0111 | 164.174.250\u0111 | 60.000.000\u0111 | 216.846.700\u0111 | 479.301.150\u0111 | 781.872.200\u0111 |\n| 28/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 282.885.600\u0111 | 564.709.150\u0111 | 886.649.300\u0111 |\n| 04/01 | 69.205.150\u0111 | 97.173.700\u0111 | 127.727.950\u0111 | 18.000.000\u0111 | 334.090.750\u0111 | 643.882.850\u0111 | 996.377.250\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ruou-sam-binh-su-do-500ml` \u00d7 offline, `saphraton-40v` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\n\n",
+   "err": "[warn] kh\u00f4ng k\u1ebft n\u1ed1i \u0111\u01b0\u1ee3c Postgres \u2014 t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn d\u00f9ng m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh (ch\u01b0a x\u00e1c minh)\n"
+  },
+  {
+   "argv": [
+    "--forecast",
+    "--start",
+    "2026-10-12",
+    "--json"
+   ],
+   "rc": 0,
+   "out": "{\"start\": \"2026-10-12\", \"weeks\": [{\"week_start\": \"2026-10-12\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 18000000, \"close\": {\"low\": 48038900, \"base\": 67408000, \"high\": 86777100}}, {\"week_start\": \"2026-10-19\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 0, \"close\": {\"low\": 114077800, \"base\": 152816000, \"high\": 191554200}}, {\"week_start\": \"2026-10-26\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 60000000, \"close\": {\"low\": 120116700, \"base\": 178224000, \"high\": 236331300}}, {\"week_start\": \"2026-11-02\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 0, \"close\": {\"low\": 186155600, \"base\": 263632000, \"high\": 341108400}}, {\"week_start\": \"2026-11-09\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 18000000, \"close\": {\"low\": 234194500, \"base\": 331040000, \"high\": 427885500}}, {\"week_start\": \"2026-11-16\", \"in\": {\"low\": 66038900, \"base\": 91539050, \"high\": 119761750}, \"out\": 0, \"close\": {\"low\": 300233400, \"base\": 422579050, \"high\": 547647250}}, {\"week_start\": \"2026-11-23\", \"in\": {\"low\": 78692000, \"base\": 125706500, \"high\": 193719400}, \"out\": 60000000, \"close\": {\"low\": 318925400, \"base\": 488285550, \"high\": 681366650}}, {\"week_start\": \"2026-11-30\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 0, \"close\": {\"low\": 384964300, \"base\": 573693550, \"high\": 786143750}}, {\"week_start\": \"2026-12-07\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 18000000, \"close\": {\"low\": 433003200, \"base\": 641101550, \"high\": 872920850}}, {\"week_start\": \"2026-12-14\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 300000000, \"close\": {\"low\": 199042100, \"base\": 426509550, \"high\": 677697950}}, {\"week_start\": \"2026-12-21\", \"in\": {\"low\": 77804600, \"base\": 112791600, \"high\": 164174250}, \"out\": 60000000, \"close\": {\"low\": 216846700, \"base\": 479301150, \"high\": 781872200}}, {\"week_start\": \"2026-12-28\", \"in\": {\"low\": 66038900, \"base\": 85408000, \"high\": 104777100}, \"out\": 0, \"close\": {\"low\": 282885600, \"base\": 564709150, \"high\": 886649300}}, {\"week_start\": \"2027-01-04\", \"in\": {\"low\": 69205150, \"base\": 97173700, \"high\": 127727950}, \"out\": 18000000, \"close\": {\"low\": 334090750, \"base\": 643882850, \"high\": 996377250}}], \"warn_weeks\": [], \"min_balance_vnd\": 0, \"pairs\": 21, \"thieu_gia\": [[\"ruou-sam-binh-su-do-500ml\", \"offline\"], [\"saphraton-40v\", \"offline\"]], \"thieu_sku\": [], \"opening\": null, \"notes\": [\"offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"\u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\", \"k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t \u2014 `data/scenario_assumptions.json`\", \"\u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\", \"chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\", \"ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0\"]}\n",
+   "err": "[warn] kh\u00f4ng k\u1ebft n\u1ed1i \u0111\u01b0\u1ee3c Postgres \u2014 t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn d\u00f9ng m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh (ch\u01b0a x\u00e1c minh)\n"
+  },
+  {
+   "argv": [
+    "--forecast",
+    "--start",
+    "2026-10-14",
+    "--opening",
+    "1.000.000"
+   ],
+   "rc": 0,
+   "out": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 49.038.900\u0111 | 68.408.000\u0111 | 87.777.100\u0111 |\n| 19/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 115.077.800\u0111 | 153.816.000\u0111 | 192.554.200\u0111 |\n| 26/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 60.000.000\u0111 | 121.116.700\u0111 | 179.224.000\u0111 | 237.331.300\u0111 |\n| 02/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 187.155.600\u0111 | 264.632.000\u0111 | 342.108.400\u0111 |\n| 09/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 235.194.500\u0111 | 332.040.000\u0111 | 428.885.500\u0111 |\n| 16/11 | 66.038.900\u0111 | 91.539.050\u0111 | 119.761.750\u0111 | 0\u0111 | 301.233.400\u0111 | 423.579.050\u0111 | 548.647.250\u0111 |\n| 23/11 | 78.692.000\u0111 | 125.706.500\u0111 | 193.719.400\u0111 | 60.000.000\u0111 | 319.925.400\u0111 | 489.285.550\u0111 | 682.366.650\u0111 |\n| 30/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 385.964.300\u0111 | 574.693.550\u0111 | 787.143.750\u0111 |\n| 07/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 434.003.200\u0111 | 642.101.550\u0111 | 873.920.850\u0111 |\n| 14/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 300.000.000\u0111 | 200.042.100\u0111 | 427.509.550\u0111 | 678.697.950\u0111 |\n| 21/12 | 77.804.600\u0111 | 112.791.600\u0111 | 164.174.250\u0111 | 60.000.000\u0111 | 217.846.700\u0111 | 480.301.150\u0111 | 782.872.200\u0111 |\n| 28/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 283.885.600\u0111 | 565.709.150\u0111 | 887.649.300\u0111 |\n| 04/01 | 69.205.150\u0111 | 97.173.700\u0111 | 127.727.950\u0111 | 18.000.000\u0111 | 335.090.750\u0111 | 644.882.850\u0111 | 997.377.250\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ruou-sam-binh-su-do-500ml` \u00d7 offline, `saphraton-40v` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n\n",
+   "err": "[warn] kh\u00f4ng k\u1ebft n\u1ed1i \u0111\u01b0\u1ee3c Postgres \u2014 t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn d\u00f9ng m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh (ch\u01b0a x\u00e1c minh)\n"
+  },
+  {
+   "argv": [
+    "--forecast",
+    "--start",
+    "2026-10-12",
+    "--opening",
+    "-2500000"
+   ],
+   "rc": 0,
+   "out": "# D\u00f2ng ti\u1ec1n 13 tu\u1ea7n t\u1eeb 12/10/2026 \u2014 kho\u1ea3ng th\u1ea5p/c\u01a1 s\u1edf/cao\n\n**Kho\u1ea3ng \u01b0\u1edbc l\u01b0\u1ee3ng tr\u00ean gi\u1ea3 \u0111\u1ecbnh \u2014 KH\u00d4NG ph\u1ea3i cam k\u1ebft; agent kh\u00f4ng \u0111\u1ec1 xu\u1ea5t vay, chuy\u1ec3n kho\u1ea3n hay d\u1eddi h\u1ea1n thanh to\u00e1n.**\n\n| Tu\u1ea7n | Thu th\u1ea5p | Thu c\u01a1 s\u1edf | Thu cao | Chi | S\u1ed1 d\u01b0 th\u1ea5p | S\u1ed1 d\u01b0 c\u01a1 s\u1edf | S\u1ed1 d\u01b0 cao |\n|---|---|---|---|---|---|---|---|\n| 12/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 45.538.900\u0111 | 64.908.000\u0111 | 84.277.100\u0111 |\n| 19/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 111.577.800\u0111 | 150.316.000\u0111 | 189.054.200\u0111 |\n| 26/10 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 60.000.000\u0111 | 117.616.700\u0111 | 175.724.000\u0111 | 233.831.300\u0111 |\n| 02/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 183.655.600\u0111 | 261.132.000\u0111 | 338.608.400\u0111 |\n| 09/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 231.694.500\u0111 | 328.540.000\u0111 | 425.385.500\u0111 |\n| 16/11 | 66.038.900\u0111 | 91.539.050\u0111 | 119.761.750\u0111 | 0\u0111 | 297.733.400\u0111 | 420.079.050\u0111 | 545.147.250\u0111 |\n| 23/11 | 78.692.000\u0111 | 125.706.500\u0111 | 193.719.400\u0111 | 60.000.000\u0111 | 316.425.400\u0111 | 485.785.550\u0111 | 678.866.650\u0111 |\n| 30/11 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 382.464.300\u0111 | 571.193.550\u0111 | 783.643.750\u0111 |\n| 07/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 18.000.000\u0111 | 430.503.200\u0111 | 638.601.550\u0111 | 870.420.850\u0111 |\n| 14/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 300.000.000\u0111 | 196.542.100\u0111 | 424.009.550\u0111 | 675.197.950\u0111 |\n| 21/12 | 77.804.600\u0111 | 112.791.600\u0111 | 164.174.250\u0111 | 60.000.000\u0111 | 214.346.700\u0111 | 476.801.150\u0111 | 779.372.200\u0111 |\n| 28/12 | 66.038.900\u0111 | 85.408.000\u0111 | 104.777.100\u0111 | 0\u0111 | 280.385.600\u0111 | 562.209.150\u0111 | 884.149.300\u0111 |\n| 04/01 | 69.205.150\u0111 | 97.173.700\u0111 | 127.727.950\u0111 | 18.000.000\u0111 | 331.590.750\u0111 | 641.382.850\u0111 | 993.877.250\u0111 |\n\nC\u1ea3nh b\u00e1o \u2014 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p (s\u1ed1 d\u01b0 < 0\u0111): (kh\u00f4ng c\u00f3)\nThi\u1ebfu gi\u00e1 \u2014 lo\u1ea1i kh\u1ecfi d\u1ef1 b\u00e1o: `ruou-sam-binh-su-do-500ml` \u00d7 offline, `saphraton-40v` \u00d7 offline\n\nGi\u1ea3 \u0111\u1ecbnh:\n- offline: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 1.0000 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- shopee: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- tiktok: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn 0.8500 \u2014 m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh \u2014 ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 offline: 4 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 shopee: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- \u0111\u1ed9 tr\u1ec5 ti\u1ec1n v\u1ec1 tiktok: 2 tu\u1ea7n \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh\n- k\u1ecbch b\u1ea3n b\u00e1n (\u0111\u01a1n v\u1ecb/tu\u1ea7n): GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 KD/T\u00e0i ch\u00ednh ch\u1ed1t \u2014 `data/scenario_assumptions.json`\n- \u0111\u01a1n gi\u00e1: gi\u00e1 `list` golden cho k\u00eanh online; offline = list shopee \u00d7 0.7 (GI\u1ea2 \u0110\u1ecaNH)\n- chi c\u1ed1 \u0111\u1ecbnh + m\u1ed9t l\u1ea7n, t\u1ef7 l\u1ec7/\u0111\u1ed9 tr\u1ec5 m\u1eb7c \u0111\u1ecbnh: `data/fpa_config.json` m\u1ee5c cash \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t\n\n",
+   "err": "[warn] kh\u00f4ng k\u1ebft n\u1ed1i \u0111\u01b0\u1ee3c Postgres \u2014 t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn d\u00f9ng m\u1eb7c \u0111\u1ecbnh c\u1ea5u h\u00ecnh (ch\u01b0a x\u00e1c minh)\n"
+  }
+ ]
+}

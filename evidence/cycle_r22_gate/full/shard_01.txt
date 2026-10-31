@@ -1,0 +1,41 @@
+................F....................................................... [ 10%]
+........................................................................ [ 21%]
+........................................................................ [ 32%]
+........................................................................ [ 42%]
+........................................................................ [ 53%]
+........................................................................ [ 64%]
+........................................................................ [ 75%]
+........................................................................ [ 85%]
+........................................................................ [ 96%]
+.......................                                                  [100%]
+================================== FAILURES ===================================
+___________________ test_stt_ok_masked_draft_and_child_env ____________________
+
+base = 'http://127.0.0.1:50694', stt_ready = None
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-4065/test_stt_ok_masked_draft_and_c0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B212740EC0>
+
+    def test_stt_ok_masked_draft_and_child_env(base, stt_ready, tmp_path, monkeypatch):
+        seen = tmp_path / "req.json"
+        _child(monkeypatch, "import sys,os,json,pathlib; r=json.loads(sys.stdin.read());"
+                            " bad=[k for k in os.environ if k.endswith('DATABASE_URL') or k.startswith('PG')];"
+                            " pathlib.Path(sys.argv[1]).write_text(json.dumps([r['path'], bad]));"
+                            " print('log engine'); print('STT_RESULT ' + json.dumps({'ok': True, 'text': 'KV-A01 tưới'}))",
+               seen)
+        monkeypatch.setenv("PGPASSWORD", "khong-dung")
+        assert call(base + "/stt", WAV) == (200, {"ok": True, "text": "KV-A01 tưới"})
+        path, bad = json.loads(seen.read_text())
+>       assert path.endswith("audio.wav") and bad == []
+E       AssertionError: assert (True and ['BACKUP_DATA...ASE_URL', ...] == []
+E        +  where True = <built-in method endswith of str object at 0x000001B21155F670>('audio.wav')
+E        +    where <built-in method endswith of str object at 0x000001B21155F670> = 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\aiw-stt-ycs3m13m\\audio.wav'.endswith
+E         
+E         Left contains 7 more items, first extra item: 'BACKUP_DATABASE_URL'
+E         Use -v to get more diff)
+
+ai_worker\tests\test_ai_worker_server.py:115: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[ai-worker] "POST /stt HTTP/1.1" 200 -
+=========================== short test summary info ===========================
+FAILED ai_worker/tests/test_ai_worker_server.py::test_stt_ok_masked_draft_and_child_env
+1 failed, 670 passed in 341.56s (0:05:41)

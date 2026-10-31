@@ -1,0 +1,2692 @@
+{
+ "config": {
+  "term_days": 30,
+  "rates_pct": {
+   "tpbvsk": "0.08",
+   "food": "0.05",
+   "alcohol": "0.03"
+  },
+  "zero_rules": [
+   {
+    "category": "alcohol",
+    "channel": "online"
+   }
+  ],
+  "tncn_types": [
+   "ho_kinh_doanh",
+   "ca_nhan"
+  ]
+ },
+ "config_cases": [
+  {
+   "name": "not_object",
+   "raw": "[]",
+   "cfg": null,
+   "why": "dealer_commission.json: ph\u1ea3i l\u00e0 object"
+  },
+  {
+   "name": "broken",
+   "raw": "{",
+   "cfg": null,
+   "why": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c dealer_commission.json: JSONDecodeError"
+  },
+  {
+   "name": "term0",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 0, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.term_days: ph\u1ea3i int 1..365"
+  },
+  {
+   "name": "term366",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 366, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.term_days: ph\u1ea3i int 1..365"
+  },
+  {
+   "name": "term_bool",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": true, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.term_days: ph\u1ea3i int 1..365"
+  },
+  {
+   "name": "term_float",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30.0, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.term_days: ph\u1ea3i int 1..365"
+  },
+  {
+   "name": "term_str",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": \"30\", \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.term_days: ph\u1ea3i int 1..365"
+  },
+  {
+   "name": "term_missing",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.term_days: ph\u1ea3i int 1..365"
+  },
+  {
+   "name": "rates_missing",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.rates_pct: ph\u1ea3i \u0111\u1ee7 ('tpbvsk', 'food', 'alcohol')"
+  },
+  {
+   "name": "rates_extra",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0, \"x\": 0}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.rates_pct: ph\u1ea3i \u0111\u1ee7 ('tpbvsk', 'food', 'alcohol')"
+  },
+  {
+   "name": "rate_bool",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": true, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.rates_pct.tpbvsk: ph\u1ea3i l\u00e0 s\u1ed1"
+  },
+  {
+   "name": "rate_str",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": \"0.1\", \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.rates_pct.tpbvsk: ph\u1ea3i l\u00e0 s\u1ed1"
+  },
+  {
+   "name": "rate_big",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0.6, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.rates_pct.tpbvsk: ngo\u00e0i 0..0.5"
+  },
+  {
+   "name": "rate_neg",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": -0.1, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.rates_pct.tpbvsk: ngo\u00e0i 0..0.5"
+  },
+  {
+   "name": "rates_list",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": [1], \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.rates_pct: ph\u1ea3i \u0111\u1ee7 ('tpbvsk', 'food', 'alcohol')"
+  },
+  {
+   "name": "zr_not_list",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": {}, \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.zero_rules: [{category, channel}]"
+  },
+  {
+   "name": "zr_bad_channel",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"shopee\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.zero_rules: [{category, channel}]"
+  },
+  {
+   "name": "zr_bad_cat",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"ruou\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.zero_rules: [{category, channel}]"
+  },
+  {
+   "name": "zr_not_dict",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [\"alcohol\"], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.zero_rules: [{category, channel}]"
+  },
+  {
+   "name": "tncn_bad",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"x\"]}",
+   "cfg": null,
+   "why": "dealer_commission.json.tncn_types: \u2282 ('doanh_nghiep', 'ho_kinh_doanh', 'ca_nhan')"
+  },
+  {
+   "name": "tncn_str",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0.08, \"food\": 0.05, \"alcohol\": 0.03}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": \"ca_nhan\"}",
+   "cfg": null,
+   "why": "dealer_commission.json.tncn_types: \u2282 ('doanh_nghiep', 'ho_kinh_doanh', 'ca_nhan')"
+  },
+  {
+   "name": "ok_rates_mixed",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 0, \"food\": 0.50, \"alcohol\": 1e-05}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": {
+    "term_days": 30,
+    "rates_pct": {
+     "tpbvsk": "0",
+     "food": "0.5",
+     "alcohol": "0.00001"
+    },
+    "zero_rules": [
+     {
+      "category": "alcohol",
+      "channel": "online"
+     }
+    ],
+    "tncn_types": [
+     "ho_kinh_doanh",
+     "ca_nhan"
+    ]
+   },
+   "why": null
+  },
+  {
+   "name": "ok_rates_tiny",
+   "raw": "{\"_doc\": \"v9.0 ACC-AR \u2014 M\u1eaaU \u2014 ch\u00ednh s\u00e1ch hoa h\u1ed3ng CH\u01afA k\u00fd (external-dep: G\u0110 t\u00e0i ch\u00ednh/TG\u0110 k\u00fd ch\u00ednh s\u00e1ch th\u1eadt); \u0111i\u1ec3m n\u1ed1i b\u1ea3ng `dealers` CRM v5.2 khi g\u1ed9p (kh\u00f3a `dealer_code`). term_days = h\u1ea1n thanh to\u00e1n m\u1eb7c \u0111\u1ecbnh (ng\u00e0y) khi d\u00f2ng c\u00f4ng n\u1ee3 kh\u00f4ng c\u00f3 due_date. rates_pct = t\u1ef7 l\u1ec7 hoa h\u1ed3ng theo nh\u00f3m h\u00e0ng golden (sku_master.category), t\u00ednh tr\u00ean doanh s\u1ed1 ph\u00e1t sinh + \u0111i\u1ec1u ch\u1ec9nh trong k\u1ef3 (s\u00e0n 0), Decimal ROUND_HALF_UP. zero_rules = (nh\u00f3m, k\u00eanh) hoa h\u1ed3ng 0 \u2014 r\u01b0\u1ee3u b\u00e1n online KH\u00d4NG \u0111\u01b0\u1ee3c khuy\u1ebfn kh\u00edch (kh\u1edbp lu\u1eadt ch\u1eb7n r\u01b0\u1ee3u online). tncn_types = lo\u1ea1i \u0111\u1ea1i l\u00fd c\u00e1 nh\u00e2n/h\u1ed9 kinh doanh \u2192 c\u1edd kh\u1ea5u tr\u1eeb thu\u1ebf TNCN (k\u1ebf to\u00e1n x\u1eed l\u00fd, agent kh\u00f4ng t\u00ednh thu\u1ebf). Output l\u00e0 B\u1ea2N NH\u00c1P \u2014 kh\u00f4ng ph\u1ea3i l\u1ec7nh chi.\", \"term_days\": 30, \"rates_pct\": {\"tpbvsk\": 1e-07, \"food\": 0.125, \"alcohol\": 0.0}, \"zero_rules\": [{\"category\": \"alcohol\", \"channel\": \"online\"}], \"tncn_types\": [\"ho_kinh_doanh\", \"ca_nhan\"]}",
+   "cfg": {
+    "term_days": 30,
+    "rates_pct": {
+     "tpbvsk": "1E-7",
+     "food": "0.125",
+     "alcohol": "0.0"
+    },
+    "zero_rules": [
+     {
+      "category": "alcohol",
+      "channel": "online"
+     }
+    ],
+    "tncn_types": [
+     "ho_kinh_doanh",
+     "ca_nhan"
+    ]
+   },
+   "why": null
+  },
+  {
+   "name": "bad_utf8",
+   "raw_b64": "//57fQ==",
+   "cfg": null,
+   "why": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c dealer_commission.json: UnicodeDecodeError"
+  }
+ ],
+ "age_bucket": [
+  [
+   -1,
+   null
+  ],
+  [
+   0,
+   "0-30"
+  ],
+  [
+   30,
+   "0-30"
+  ],
+  [
+   31,
+   "31-60"
+  ],
+  [
+   60,
+   "31-60"
+  ],
+  [
+   61,
+   "61-90"
+  ],
+  [
+   90,
+   "61-90"
+  ],
+  [
+   91,
+   ">90"
+  ],
+  [
+   400,
+   ">90"
+  ]
+ ],
+ "fixture": {
+  "entries": [
+   {
+    "row_no": 2,
+    "dealer_code": "DL-HN01",
+    "dealer_type": "doanh_nghiep",
+    "kind": "so_du_dau",
+    "doc_ref": "SDD-2026",
+    "doc_date": "2026-06-30",
+    "due_date": null,
+    "amount_vnd": 20000000,
+    "sku_key": null,
+    "channel": null
+   },
+   {
+    "row_no": 3,
+    "dealer_code": "DL-HN01",
+    "dealer_type": "doanh_nghiep",
+    "kind": "phat_sinh",
+    "doc_ref": "PX-GIA-001",
+    "doc_date": "2026-09-01",
+    "due_date": "2026-10-01",
+    "amount_vnd": 15000000,
+    "sku_key": "savina-12v",
+    "channel": "offline"
+   },
+   {
+    "row_no": 4,
+    "dealer_code": "DL-HN01",
+    "dealer_type": "doanh_nghiep",
+    "kind": "thanh_toan",
+    "doc_ref": "PT-GIA-001",
+    "doc_date": "2026-09-20",
+    "due_date": null,
+    "amount_vnd": -25000000,
+    "sku_key": null,
+    "channel": null
+   },
+   {
+    "row_no": 5,
+    "dealer_code": "DL-DN02",
+    "dealer_type": "ho_kinh_doanh",
+    "kind": "phat_sinh",
+    "doc_ref": "PX-GIA-002",
+    "doc_date": "2026-10-02",
+    "due_date": null,
+    "amount_vnd": 8000000,
+    "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+    "channel": "online"
+   },
+   {
+    "row_no": 6,
+    "dealer_code": "DL-DN02",
+    "dealer_type": "ho_kinh_doanh",
+    "kind": "phat_sinh",
+    "doc_ref": "PX-GIA-003",
+    "doc_date": "2026-10-03",
+    "due_date": null,
+    "amount_vnd": 6000000,
+    "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+    "channel": "offline"
+   },
+   {
+    "row_no": 7,
+    "dealer_code": "DL-DN02",
+    "dealer_type": "ho_kinh_doanh",
+    "kind": "phat_sinh",
+    "doc_ref": "PX-GIA-004",
+    "doc_date": "2026-07-01",
+    "due_date": "2026-07-31",
+    "amount_vnd": 4000000,
+    "sku_key": "mat-ong-sam-300ml",
+    "channel": "offline"
+   },
+   {
+    "row_no": 8,
+    "dealer_code": "DL-QN03",
+    "dealer_type": "ca_nhan",
+    "kind": "phat_sinh",
+    "doc_ref": "PX-GIA-005",
+    "doc_date": "2026-10-05",
+    "due_date": null,
+    "amount_vnd": 3000000,
+    "sku_key": "savigout-30v",
+    "channel": "online"
+   },
+   {
+    "row_no": 9,
+    "dealer_code": "DL-QN03",
+    "dealer_type": "ca_nhan",
+    "kind": "dieu_chinh",
+    "doc_ref": "DC-GIA-001",
+    "doc_date": "2026-10-06",
+    "due_date": null,
+    "amount_vnd": -500000,
+    "sku_key": "savigout-30v",
+    "channel": "online"
+   },
+   {
+    "row_no": 10,
+    "dealer_code": "DL-QN03",
+    "dealer_type": "ca_nhan",
+    "kind": "phat_sinh",
+    "doc_ref": "PX-GIA-006",
+    "doc_date": "2026-10-07",
+    "due_date": null,
+    "amount_vnd": 1000000,
+    "sku_key": "sku-khong-co",
+    "channel": "offline"
+   }
+  ],
+  "errs": [],
+  "sha": "3635b15b105b43ad211af004023eb78133f443bd67060ae2423344a995ff4607"
+ },
+ "read_ar": [
+  {
+   "name": "tt_pos",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,doanh_nghiep,thanh_toan,,2026-10-01,,5.000,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'amount_vnd' ph\u1ea3i < 0 v\u1edbi kind thanh_toan"
+   ],
+   "sha": "0c09dc6c3e678f385ed47bd4704bd9d265671b2e81b7a765dfab2d28fd83669c"
+  },
+  {
+   "name": "code_space",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL 01,doanh_nghiep,phat_sinh,,2026-10-01,,5.000,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'dealer_code' ph\u1ea3i ^[A-Z0-9_-]{2,32}$ (m\u00e3, kh\u00f4ng t\u00ean)"
+   ],
+   "sha": "6139d9b62d2f8499a5aa49172c2ab31f3e69ef3bbf0d5d1d0c154c2afa171309"
+  },
+  {
+   "name": "due_before",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,doanh_nghiep,phat_sinh,,2026-10-05,2026-10-01,5.000,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'due_date' tr\u01b0\u1edbc doc_date"
+   ],
+   "sha": "d43306aec2992f40ff33f9a7ec68da7144141091fa31d75667d49682c6261faf"
+  },
+  {
+   "name": "dtype",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_si,phat_sinh,,2026-10-01,,5.000,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'dealer_type' ph\u1ea3i thu\u1ed9c ('doanh_nghiep', 'ho_kinh_doanh', 'ca_nhan')"
+   ],
+   "sha": "ffa49691ca2467d798a3b1f15b28b1d3e68de1068982ac72f2c17a3e25a81f5e"
+  },
+  {
+   "name": "channel",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,,2026-10-01,,5.000,,shopee\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'channel' ph\u1ea3i tr\u1ed1ng ho\u1eb7c ('offline', 'online')"
+   ],
+   "sha": "81b29417b85d26160c82bbc12af3c9fddd3cc774ae830d2713a94be39c3af83a"
+  },
+  {
+   "name": "extra_col",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel,ten_dai_ly\nDL-01,ca_nhan,phat_sinh,,2026-10-01,,5,,,NGUYEN VAN GIA\n",
+   "entries": [],
+   "errs": [
+    "c\u1ed9t l\u1ea1 'ten_dai_ly' (kh\u00f4ng thu\u1ed9c required/optional/drop \u2014 th\u00eam v\u00e0o mapping sau khi x\u00e1c minh)"
+   ],
+   "sha": "9aa5541831d4073ad79f11f46990fc65822d6022080802bfbc150687de3d202b"
+  },
+  {
+   "name": "two_bad",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,thanh_toan,,2026-10-01,,5,,\nDL 02,ca_nhan,phat_sinh,,2026-10-01,,5,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'amount_vnd' ph\u1ea3i < 0 v\u1edbi kind thanh_toan",
+    "d\u00f2ng 3: field 'dealer_code' ph\u1ea3i ^[A-Z0-9_-]{2,32}$ (m\u00e3, kh\u00f4ng t\u00ean)"
+   ],
+   "sha": "a2ca860eac65cccce69614f123a45edd67c72babca231fb627217735c2e27482"
+  },
+  {
+   "name": "required_empty",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\n,,phat_sinh,,,,,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'dealer_code' tr\u1ed1ng",
+    "d\u00f2ng 2: field 'dealer_type' tr\u1ed1ng",
+    "d\u00f2ng 2: field 'doc_date' tr\u1ed1ng",
+    "d\u00f2ng 2: field 'amount_vnd' tr\u1ed1ng"
+   ],
+   "sha": "9aeae33e774c37e9b724157ad34be9250af508efdf25225f9077d8d4708bf0b9"
+  },
+  {
+   "name": "bad_dates",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,,2026-02-30,31/04/2026,5,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'doc_date' kh\u00f4ng ph\u1ea3i ng\u00e0y h\u1ee3p l\u1ec7",
+    "d\u00f2ng 2: field 'due_date' kh\u00f4ng ph\u1ea3i ng\u00e0y h\u1ee3p l\u1ec7"
+   ],
+   "sha": "b2f4b696567356855efd21ef8e99e0d338a82812f7f749c0052509262aad2bdc"
+  },
+  {
+   "name": "dmy_ok",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,R1,1/9/2026,15/10/2026,1.234.567,savina-12v,online\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "R1",
+     "doc_date": "2026-09-01",
+     "due_date": "2026-10-15",
+     "amount_vnd": 1234567,
+     "sku_key": "savina-12v",
+     "channel": "online"
+    }
+   ],
+   "errs": [],
+   "sha": "a27fb7ba96d8c6dc36d477eb3de8ed2f9924fc6cf9a6c8e8043d6c7ed2947bda"
+  },
+  {
+   "name": "xlsx_datetime",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,R1,2026-09-01 00:00:00,2026-10-01T00:00,7,,\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "R1",
+     "doc_date": "2026-09-01",
+     "due_date": "2026-10-01",
+     "amount_vnd": 7,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "errs": [],
+   "sha": "fcc4f96b2889451c6e982d6b87eafb97b183d0a52864ad711d527a245d3a8479"
+  },
+  {
+   "name": "amount_bad",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,,2026-10-01,,12,5,,\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-01",
+     "due_date": null,
+     "amount_vnd": 12,
+     "sku_key": "5",
+     "channel": null
+    }
+   ],
+   "errs": [],
+   "sha": "639b9e013048db32675ed54876a9b2887b9197a97bd3b48ca977f82c5ed2e5b1"
+  },
+  {
+   "name": "amount_dec",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,,2026-10-01,,\"1.234,50\",,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'amount_vnd' kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean VND h\u1ee3p l\u1ec7"
+   ],
+   "sha": "5b36e146200b63485b38a2a9da8cb66d6b4cb747febb9c62d625034a9515ecb6"
+  },
+  {
+   "name": "sdd_neg",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,so_du_dau,,2026-10-01,,-5,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'amount_vnd' ph\u1ea3i > 0 v\u1edbi kind so_du_dau"
+   ],
+   "sha": "7acb74839444e8bf5fdf435c594320880861d43938d1166f36ff02d892b2d2cf"
+  },
+  {
+   "name": "dc_zero",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,dieu_chinh,,2026-10-01,,0,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'amount_vnd' ph\u1ea3i \u2260 0 v\u1edbi kind dieu_chinh"
+   ],
+   "sha": "19dc6da010c96724725a90b891fe79cc6439327b2219d614367720828facc5a0"
+  },
+  {
+   "name": "dc_neg_ok",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,dieu_chinh,,2026-10-01,,-5.000 \u20ab,,\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "dieu_chinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-01",
+     "due_date": null,
+     "amount_vnd": -5000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "errs": [],
+   "sha": "ccda7560c27db66c9677e1ae3bbd126374006e597529d306fdf962dacbbf194f"
+  },
+  {
+   "name": "kind_bad",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,ban_le,,2026-10-01,,5,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'kind' ph\u1ea3i thu\u1ed9c ('so_du_dau', 'phat_sinh', 'thanh_toan', 'dieu_chinh')"
+   ],
+   "sha": "8b47e5457d5abeb0d53472a7f4a72a2ff938753db06246475253c509f14b1c78"
+  },
+  {
+   "name": "sku_bad",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,,2026-10-01,,5,Savina 12v,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'sku_key' kh\u00f4ng ph\u1ea3i m\u00e3 SKU golden h\u1ee3p l\u1ec7"
+   ],
+   "sha": "514e7401421165815e8a8f62a0538e7a50b47329d2acbf204033d695d2887657"
+  },
+  {
+   "name": "sku_upper",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,,2026-10-01,,5,-abc,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'sku_key' kh\u00f4ng ph\u1ea3i m\u00e3 SKU golden h\u1ee3p l\u1ec7"
+   ],
+   "sha": "41c38f424d5f9c47cb0b2f7bdc2f8b178a55118b86819ff9442c1439a66fb31f"
+  },
+  {
+   "name": "ref_long",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR,2026-10-01,,5,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: field 'doc_ref' d\u00e0i qu\u00e1 64"
+   ],
+   "sha": "1b93b3a44234322db57e3abfcdf6eaa21062374344f4884faccb28a78adb8a3e"
+  },
+  {
+   "name": "ref_64",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af,2026-10-01,,5,,\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af",
+     "doc_date": "2026-10-01",
+     "due_date": null,
+     "amount_vnd": 5,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "errs": [],
+   "sha": "e42c57dcdb0e2c474924b86f5ddb805c2c8defd27c27938c5269ac16acc1462f"
+  },
+  {
+   "name": "extra_cell",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\nDL-01,ca_nhan,phat_sinh,,2026-10-01,,5,,,EXTRA\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng 2: th\u1eeba \u00f4 ngo\u00e0i header"
+   ],
+   "sha": "4c079f2aba56e8eefb99fe99053f9019f7478af49b53cd78290da653c2af167a"
+  },
+  {
+   "name": "header_only",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\n",
+   "entries": [],
+   "errs": [
+    "file ch\u1ec9 c\u00f3 header, kh\u00f4ng c\u00f3 d\u00f2ng d\u1eef li\u1ec7u"
+   ],
+   "sha": "3b0710a0a4d6675197551e931a41fd45a45e952bcc5cf9dea43406c780d52b5a"
+  },
+  {
+   "name": "header_only_blank",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\n\n,,,\n",
+   "entries": [],
+   "errs": [
+    "file ch\u1ec9 c\u00f3 header, kh\u00f4ng c\u00f3 d\u00f2ng d\u1eef li\u1ec7u"
+   ],
+   "sha": "cce7cf297e29ebc0554e1e44545eeeedc5db13621ba7cf6f63bdfc95ce19745d"
+  },
+  {
+   "name": "empty",
+   "text": "",
+   "entries": [],
+   "errs": [
+    "file r\u1ed7ng"
+   ],
+   "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "name": "spaces",
+   "text": " \r\n\t ",
+   "entries": [],
+   "errs": [
+    "file r\u1ed7ng"
+   ],
+   "sha": "e735970f938a5045770123997c2d309cc74c50826e0a94277457203e121a0fb7"
+  },
+  {
+   "name": "data_first",
+   "text": "DL-01,ca_nhan,phat_sinh,,2026-10-01,,5,,\n",
+   "entries": [],
+   "errs": [
+    "d\u00f2ng \u0111\u1ea7u kh\u00f4ng kh\u1edbp header c\u00f4ng n\u1ee3 \u0111\u1ea1i l\u00fd (7 c\u1ed9t, 0/5 c\u1ed9t b\u1eaft bu\u1ed9c) \u2014 sai k\u00eanh/lo\u1ea1i file ho\u1eb7c thi\u1ebfu d\u00f2ng header"
+   ],
+   "sha": "0cd13adccb6c5fd0303acd659de358d5b814897e7a0bc3841aa5d72b7b329ba3"
+  },
+  {
+   "name": "missing_req",
+   "text": "dealer_code,dealer_type,kind,doc_date\nDL-01,ca_nhan,phat_sinh,2026-10-01\n",
+   "entries": [],
+   "errs": [
+    "thi\u1ebfu c\u1ed9t b\u1eaft bu\u1ed9c: 'amount_vnd'"
+   ],
+   "sha": "affff6324912262ae600f82f3960222eb72ce0fe78806864013c973fbed400d4"
+  },
+  {
+   "name": "dup_header",
+   "text": "dealer_code,dealer_code,dealer_type,kind,doc_date,amount_vnd\nA,B,ca_nhan,phat_sinh,2026-10-01,5\n",
+   "entries": [],
+   "errs": [
+    "header tr\u00f9ng: 'dealer_code'"
+   ],
+   "sha": "2915e9ec35f59fc45211fb26e35931f925b1dedaad71092ae8f777cd5df2b208"
+  },
+  {
+   "name": "blank_header",
+   "text": "dealer_code,,dealer_type,kind,doc_date,amount_vnd\nAA,,ca_nhan,phat_sinh,2026-10-01,5\n",
+   "entries": [],
+   "errs": [
+    "header c\u1ed9t 2 tr\u1ed1ng"
+   ],
+   "sha": "8751b86b638697e902672ab25bd7d3254ba28120d43c8078669eec7f0cccfc31"
+  },
+  {
+   "name": "unicode_space",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\n\u00a0DL-01\u3000,ca_nhan,phat_sinh,,2026-10-01,,5,,\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-01",
+     "due_date": null,
+     "amount_vnd": 5,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "errs": [],
+   "sha": "6aebf554ca514508e3a2465ff4922641c7277c62a5034d669a7bb275618316cb"
+  },
+  {
+   "name": "short_row",
+   "text": "amount_vnd,doc_date,kind,dealer_type,dealer_code,channel\n5,2026-10-01,phat_sinh,ca_nhan,AB\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "AB",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-01",
+     "due_date": null,
+     "amount_vnd": 5,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "errs": [],
+   "sha": "ef0bcee33a7843483c8b2dba439d92315ce27299ef56fedd2b886b33508b13c8"
+  },
+  {
+   "name": "bom_crlf",
+   "text": "\ufeffdealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel\r\nDL-01,ca_nhan,phat_sinh,,2026-10-01,,5,,\r\n",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-01",
+     "due_date": null,
+     "amount_vnd": 5,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "errs": [],
+   "sha": "439b71deb3ce6483341f0d249fa55882cab5443b470a5f942f2c8e2269ea062f"
+  },
+  {
+   "name": "pii_header",
+   "text": "dealer_code,dealer_type,kind,doc_ref,doc_date,due_date,amount_vnd,sku_key,channel,0905123456\nDL-01,ca_nhan,phat_sinh,,2026-10-01,,5,,,x\n",
+   "entries": [],
+   "errs": [
+    "c\u1ed9t l\u1ea1 '***' (kh\u00f4ng thu\u1ed9c required/optional/drop \u2014 th\u00eam v\u00e0o mapping sau khi x\u00e1c minh)"
+   ],
+   "sha": "0888ade097cb5d6367b46cc35fad7e887494f5215b0cba154924d390a4e01adf"
+  }
+ ],
+ "read_ar_ext": {
+  "entries": [],
+  "errs": [
+   "\u0111u\u00f4i '.txt' kh\u00f4ng h\u1ed7 tr\u1ee3 \u2014 ch\u1ec9 .csv / .xlsx"
+  ],
+  "sha": null
+ },
+ "read_ar_badutf8": {
+  "b64": "ZGVhbGVyX2NvZGUsZGVhbGVyX3R5cGUsa2luZCxkb2NfcmVmLGRvY19kYXRlLGR1ZV9kYXRlLGFtb3VudF92bmQsc2t1X2tleSxjaGFubmVsCv/+LDEK",
+  "entries": [],
+  "errs": [
+   "file CSV kh\u00f4ng ph\u1ea3i UTF-8 (byte 82)"
+  ],
+  "sha": "86ed4d82def37345c1715dcc301cc9380fc22117f241257fc639e023e7b1a640"
+ },
+ "aging": [
+  {
+   "name": "fifo_future",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-07-14",
+     "due_date": null,
+     "amount_vnd": 10000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-02",
+     "due_date": null,
+     "amount_vnd": 5000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "thanh_toan",
+     "doc_ref": null,
+     "doc_date": "2026-10-11",
+     "due_date": null,
+     "amount_vnd": -12000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-13",
+     "due_date": null,
+     "amount_vnd": 7000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "term": 30,
+   "rows": [
+    {
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 3000000,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han": 0,
+     "du_co": 0,
+     "con_no": 3000000
+    }
+   ],
+   "open": {
+    "DL-01": {
+     "type": "doanh_nghiep",
+     "items": [
+      {
+       "entry": {
+        "row_no": 2,
+        "dealer_code": "DL-01",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-10-02",
+        "due_date": null,
+        "amount_vnd": 5000000,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 3000000,
+       "han": "2026-11-01",
+       "qua_han": false
+      }
+     ],
+     "du_co": 0
+    }
+   }
+  },
+  {
+   "name": "du_co",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 1000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "thanh_toan",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": -1500,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "term": 30,
+   "rows": [
+    {
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han": 0,
+     "du_co": 500,
+     "con_no": 0
+    }
+   ],
+   "open": {
+    "DL-01": {
+     "type": "doanh_nghiep",
+     "items": [],
+     "du_co": 500
+    }
+   }
+  },
+  {
+   "name": "dc_neg",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 1000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "dieu_chinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": -400,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "term": 30,
+   "rows": [
+    {
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 600,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han": 0,
+     "du_co": 0,
+     "con_no": 600
+    }
+   ],
+   "open": {
+    "DL-01": {
+     "type": "doanh_nghiep",
+     "items": [
+      {
+       "entry": {
+        "row_no": 2,
+        "dealer_code": "DL-01",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-10-12",
+        "due_date": null,
+        "amount_vnd": 1000,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 600,
+       "han": "2026-11-11",
+       "qua_han": false
+      }
+     ],
+     "du_co": 0
+    }
+   }
+  },
+  {
+   "name": "due_eq",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-07",
+     "due_date": "2026-10-12",
+     "amount_vnd": 1000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "term": 30,
+   "rows": [
+    {
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 1000000,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han": 0,
+     "du_co": 0,
+     "con_no": 1000000
+    }
+   ],
+   "open": {
+    "DL-01": {
+     "type": "doanh_nghiep",
+     "items": [
+      {
+       "entry": {
+        "row_no": 2,
+        "dealer_code": "DL-01",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-10-07",
+        "due_date": "2026-10-12",
+        "amount_vnd": 1000000,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 1000000,
+       "han": "2026-10-12",
+       "qua_han": false
+      }
+     ],
+     "du_co": 0
+    }
+   }
+  },
+  {
+   "name": "due_minus1",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-07",
+     "due_date": "2026-10-11",
+     "amount_vnd": 1000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "term": 30,
+   "rows": [
+    {
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 1000000,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 1000000,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han": 1000000,
+     "du_co": 0,
+     "con_no": 1000000
+    }
+   ],
+   "open": {
+    "DL-01": {
+     "type": "doanh_nghiep",
+     "items": [
+      {
+       "entry": {
+        "row_no": 2,
+        "dealer_code": "DL-01",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-10-07",
+        "due_date": "2026-10-11",
+        "amount_vnd": 1000000,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 1000000,
+       "han": "2026-10-11",
+       "qua_han": true
+      }
+     ],
+     "du_co": 0
+    }
+   }
+  },
+  {
+   "name": "term30",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-09-12",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "term": 30,
+   "rows": [
+    {
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 1000000,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han": 0,
+     "du_co": 0,
+     "con_no": 1000000
+    }
+   ],
+   "open": {
+    "DL-01": {
+     "type": "doanh_nghiep",
+     "items": [
+      {
+       "entry": {
+        "row_no": 2,
+        "dealer_code": "DL-01",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-09-12",
+        "due_date": null,
+        "amount_vnd": 1000000,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 1000000,
+       "han": "2026-10-12",
+       "qua_han": false
+      }
+     ],
+     "du_co": 0
+    }
+   }
+  },
+  {
+   "name": "term31",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-09-11",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "term": 30,
+   "rows": [
+    {
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 0,
+      "31-60": 1000000,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 1000000,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han": 1000000,
+     "du_co": 0,
+     "con_no": 1000000
+    }
+   ],
+   "open": {
+    "DL-01": {
+     "type": "doanh_nghiep",
+     "items": [
+      {
+       "entry": {
+        "row_no": 2,
+        "dealer_code": "DL-01",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-09-11",
+        "due_date": null,
+        "amount_vnd": 1000000,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 1000000,
+       "han": "2026-10-11",
+       "qua_han": true
+      }
+     ],
+     "du_co": 0
+    }
+   }
+  },
+  {
+   "name": "multi_dealer",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "ZZ",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-07-04",
+     "due_date": null,
+     "amount_vnd": 5,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 3,
+     "dealer_code": "AA",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-08-28",
+     "due_date": null,
+     "amount_vnd": 7,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 1,
+     "dealer_code": "AA",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-08-28",
+     "due_date": null,
+     "amount_vnd": 9,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "AA",
+     "dealer_type": "doanh_nghiep",
+     "kind": "thanh_toan",
+     "doc_ref": null,
+     "doc_date": "2026-10-10",
+     "due_date": null,
+     "amount_vnd": -8,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "MM",
+     "dealer_type": "doanh_nghiep",
+     "kind": "thanh_toan",
+     "doc_ref": null,
+     "doc_date": "2026-10-10",
+     "due_date": null,
+     "amount_vnd": -3,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "term": 10,
+   "rows": [
+    {
+     "dealer_code": "AA",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 0,
+      "31-60": 8,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 8,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han": 8,
+     "du_co": 0,
+     "con_no": 8
+    },
+    {
+     "dealer_code": "MM",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 0
+     },
+     "qua_han": 0,
+     "du_co": 3,
+     "con_no": 0
+    },
+    {
+     "dealer_code": "ZZ",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 5
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 0,
+      ">90": 5
+     },
+     "qua_han": 5,
+     "du_co": 0,
+     "con_no": 5
+    }
+   ],
+   "open": {
+    "AA": {
+     "type": "doanh_nghiep",
+     "items": [
+      {
+       "entry": {
+        "row_no": 1,
+        "dealer_code": "AA",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-08-28",
+        "due_date": null,
+        "amount_vnd": 9,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 1,
+       "han": "2026-09-07",
+       "qua_han": true
+      },
+      {
+       "entry": {
+        "row_no": 3,
+        "dealer_code": "AA",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-08-28",
+        "due_date": null,
+        "amount_vnd": 7,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 7,
+       "han": "2026-09-07",
+       "qua_han": true
+      }
+     ],
+     "du_co": 0
+    },
+    "MM": {
+     "type": "doanh_nghiep",
+     "items": [],
+     "du_co": 3
+    },
+    "ZZ": {
+     "type": "doanh_nghiep",
+     "items": [
+      {
+       "entry": {
+        "row_no": 2,
+        "dealer_code": "ZZ",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-07-04",
+        "due_date": null,
+        "amount_vnd": 5,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 5,
+       "han": "2026-07-14",
+       "qua_han": true
+      }
+     ],
+     "du_co": 0
+    }
+   }
+  },
+  {
+   "name": "same_date_rowno",
+   "entries": [
+    {
+     "row_no": 9,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-08-03",
+     "due_date": null,
+     "amount_vnd": 100,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 3,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-08-03",
+     "due_date": null,
+     "amount_vnd": 200,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 4,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "thanh_toan",
+     "doc_ref": null,
+     "doc_date": "2026-10-11",
+     "due_date": null,
+     "amount_vnd": -150,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "term": 60,
+   "rows": [
+    {
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 150,
+      ">90": 0
+     },
+     "qua_han_buckets": {
+      "0-30": 0,
+      "31-60": 0,
+      "61-90": 150,
+      ">90": 0
+     },
+     "qua_han": 150,
+     "du_co": 0,
+     "con_no": 150
+    }
+   ],
+   "open": {
+    "DL-01": {
+     "type": "doanh_nghiep",
+     "items": [
+      {
+       "entry": {
+        "row_no": 3,
+        "dealer_code": "DL-01",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-08-03",
+        "due_date": null,
+        "amount_vnd": 200,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 50,
+       "han": "2026-10-02",
+       "qua_han": true
+      },
+      {
+       "entry": {
+        "row_no": 9,
+        "dealer_code": "DL-01",
+        "dealer_type": "doanh_nghiep",
+        "kind": "phat_sinh",
+        "doc_ref": null,
+        "doc_date": "2026-08-03",
+        "due_date": null,
+        "amount_vnd": 100,
+        "sku_key": "savina-12v",
+        "channel": "offline"
+       },
+       "con_lai": 100,
+       "han": "2026-10-02",
+       "qua_han": true
+      }
+     ],
+     "du_co": 0
+    }
+   }
+  }
+ ],
+ "skus": {
+  "savina-12v": "tpbvsk",
+  "ruou-sam-chai-thuy-tinh-500ml": "alcohol",
+  "mat-ong-sam-300ml": "food"
+ },
+ "commission": [
+  {
+   "name": "ruou_online",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 8000000,
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "online"
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": [
+    {
+     "dealer_code": "DL-01",
+     "category": "alcohol",
+     "channel": "online",
+     "co_so": 8000000,
+     "ty_le": "0",
+     "hoa_hong": 0,
+     "flags": [
+      "ruou_online"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ruou_offline",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 6000000,
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "offline"
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": [
+    {
+     "dealer_code": "DL-01",
+     "category": "alcohol",
+     "channel": "offline",
+     "co_so": 6000000,
+     "ty_le": "0.03",
+     "hoa_hong": 180000,
+     "flags": []
+    }
+   ]
+  },
+  {
+   "name": "tpbvsk_half",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 1250005,
+     "sku_key": "savina-12v",
+     "channel": "online"
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": [
+    {
+     "dealer_code": "DL-01",
+     "category": "tpbvsk",
+     "channel": "online",
+     "co_so": 1250005,
+     "ty_le": "0.08",
+     "hoa_hong": 100000,
+     "flags": []
+    }
+   ]
+  },
+  {
+   "name": "sku_unknown",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 5000000,
+     "sku_key": "sku-khong-co",
+     "channel": "offline"
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": [
+    {
+     "dealer_code": "DL-01",
+     "category": null,
+     "channel": "offline",
+     "co_so": 5000000,
+     "ty_le": "0",
+     "hoa_hong": 0,
+     "flags": [
+      "thieu_sku"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "sku_none",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 5000000,
+     "sku_key": null,
+     "channel": "offline"
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": [
+    {
+     "dealer_code": "DL-01",
+     "category": null,
+     "channel": "offline",
+     "co_so": 5000000,
+     "ty_le": "0",
+     "hoa_hong": 0,
+     "flags": [
+      "thieu_sku"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ruou_no_channel",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 5000000,
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": null
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": [
+    {
+     "dealer_code": "DL-01",
+     "category": "alcohol",
+     "channel": null,
+     "co_so": 5000000,
+     "ty_le": "0",
+     "hoa_hong": 0,
+     "flags": [
+      "thieu_kenh"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "tncn",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ho_kinh_doanh",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": [
+    {
+     "dealer_code": "DL-01",
+     "category": "tpbvsk",
+     "channel": "offline",
+     "co_so": 1000000,
+     "ty_le": "0.08",
+     "hoa_hong": 80000,
+     "flags": [
+      "tncn"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "floor0",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 1000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "dieu_chinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": -5000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": [
+    {
+     "dealer_code": "DL-01",
+     "category": "tpbvsk",
+     "channel": "offline",
+     "co_so": 0,
+     "ty_le": "0.08",
+     "hoa_hong": 0,
+     "flags": []
+    }
+   ]
+  },
+  {
+   "name": "outside",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-03-26",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "doanh_nghiep",
+     "kind": "thanh_toan",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": -1,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": []
+  },
+  {
+   "name": "mixed",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "B1",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 333333,
+     "sku_key": "mat-ong-sam-300ml",
+     "channel": null
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "A1",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 10,
+     "sku_key": null,
+     "channel": "online"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "A1",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 6250000,
+     "sku_key": "savina-12v",
+     "channel": null
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "A1",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 999,
+     "sku_key": "savina-12v",
+     "channel": "offline"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "A1",
+     "dealer_type": "doanh_nghiep",
+     "kind": "so_du_dau",
+     "doc_ref": null,
+     "doc_date": "2026-10-12",
+     "due_date": null,
+     "amount_vnd": 5,
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "online"
+    },
+    {
+     "row_no": 2,
+     "dealer_code": "B1",
+     "dealer_type": "doanh_nghiep",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-13",
+     "due_date": null,
+     "amount_vnd": 10,
+     "sku_key": "mat-ong-sam-300ml",
+     "channel": "online"
+    }
+   ],
+   "start": "2026-08-13",
+   "end": "2026-10-13",
+   "lines": [
+    {
+     "dealer_code": "A1",
+     "category": null,
+     "channel": "online",
+     "co_so": 10,
+     "ty_le": "0",
+     "hoa_hong": 0,
+     "flags": [
+      "thieu_sku"
+     ]
+    },
+    {
+     "dealer_code": "A1",
+     "category": "tpbvsk",
+     "channel": null,
+     "co_so": 6250000,
+     "ty_le": "0.08",
+     "hoa_hong": 500000,
+     "flags": []
+    },
+    {
+     "dealer_code": "A1",
+     "category": "tpbvsk",
+     "channel": "offline",
+     "co_so": 999,
+     "ty_le": "0.08",
+     "hoa_hong": 80,
+     "flags": []
+    },
+    {
+     "dealer_code": "B1",
+     "category": "food",
+     "channel": null,
+     "co_so": 333333,
+     "ty_le": "0.05",
+     "hoa_hong": 16667,
+     "flags": [
+      "tncn"
+     ]
+    }
+   ]
+  }
+ ],
+ "commission_cfg2": {
+  "cfg_rates": {
+   "tpbvsk": "0.0725",
+   "food": "0.05",
+   "alcohol": "0.03"
+  },
+  "zero_rules": [
+   {
+    "category": "food",
+    "channel": "online"
+   },
+   {
+    "category": "alcohol",
+    "channel": "online"
+   }
+  ],
+  "lines": [
+   {
+    "dealer_code": "A1",
+    "category": null,
+    "channel": "online",
+    "co_so": 10,
+    "ty_le": "0",
+    "hoa_hong": 0,
+    "flags": [
+     "thieu_sku"
+    ]
+   },
+   {
+    "dealer_code": "A1",
+    "category": "tpbvsk",
+    "channel": null,
+    "co_so": 6250000,
+    "ty_le": "0.0725",
+    "hoa_hong": 453125,
+    "flags": []
+   },
+   {
+    "dealer_code": "A1",
+    "category": "tpbvsk",
+    "channel": "offline",
+    "co_so": 999,
+    "ty_le": "0.0725",
+    "hoa_hong": 72,
+    "flags": []
+   },
+   {
+    "dealer_code": "B1",
+    "category": "food",
+    "channel": null,
+    "co_so": 333333,
+    "ty_le": "0",
+    "hoa_hong": 0,
+    "flags": [
+     "thieu_kenh",
+     "tncn"
+    ]
+   },
+   {
+    "dealer_code": "C1",
+    "category": "food",
+    "channel": "online",
+    "co_so": 77,
+    "ty_le": "0",
+    "hoa_hong": 0,
+    "flags": [
+     "zero_rule"
+    ]
+   },
+   {
+    "dealer_code": "C1",
+    "category": "tpbvsk",
+    "channel": "online",
+    "co_so": 8,
+    "ty_le": "0.0725",
+    "hoa_hong": 1,
+    "flags": []
+   }
+  ],
+  "entries": [
+   {
+    "row_no": 2,
+    "dealer_code": "B1",
+    "dealer_type": "ca_nhan",
+    "kind": "phat_sinh",
+    "doc_ref": null,
+    "doc_date": "2026-10-12",
+    "due_date": null,
+    "amount_vnd": 333333,
+    "sku_key": "mat-ong-sam-300ml",
+    "channel": null
+   },
+   {
+    "row_no": 2,
+    "dealer_code": "A1",
+    "dealer_type": "doanh_nghiep",
+    "kind": "phat_sinh",
+    "doc_ref": null,
+    "doc_date": "2026-10-12",
+    "due_date": null,
+    "amount_vnd": 10,
+    "sku_key": null,
+    "channel": "online"
+   },
+   {
+    "row_no": 2,
+    "dealer_code": "A1",
+    "dealer_type": "doanh_nghiep",
+    "kind": "phat_sinh",
+    "doc_ref": null,
+    "doc_date": "2026-10-12",
+    "due_date": null,
+    "amount_vnd": 6250000,
+    "sku_key": "savina-12v",
+    "channel": null
+   },
+   {
+    "row_no": 2,
+    "dealer_code": "A1",
+    "dealer_type": "doanh_nghiep",
+    "kind": "phat_sinh",
+    "doc_ref": null,
+    "doc_date": "2026-10-12",
+    "due_date": null,
+    "amount_vnd": 999,
+    "sku_key": "savina-12v",
+    "channel": "offline"
+   },
+   {
+    "row_no": 2,
+    "dealer_code": "A1",
+    "dealer_type": "doanh_nghiep",
+    "kind": "so_du_dau",
+    "doc_ref": null,
+    "doc_date": "2026-10-12",
+    "due_date": null,
+    "amount_vnd": 5,
+    "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+    "channel": "online"
+   },
+   {
+    "row_no": 2,
+    "dealer_code": "B1",
+    "dealer_type": "doanh_nghiep",
+    "kind": "phat_sinh",
+    "doc_ref": null,
+    "doc_date": "2026-10-13",
+    "due_date": null,
+    "amount_vnd": 10,
+    "sku_key": "mat-ong-sam-300ml",
+    "channel": "online"
+   },
+   {
+    "row_no": 2,
+    "dealer_code": "C1",
+    "dealer_type": "doanh_nghiep",
+    "kind": "phat_sinh",
+    "doc_ref": null,
+    "doc_date": "2026-10-12",
+    "due_date": null,
+    "amount_vnd": 77,
+    "sku_key": "mat-ong-sam-300ml",
+    "channel": "online"
+   },
+   {
+    "row_no": 2,
+    "dealer_code": "C1",
+    "dealer_type": "doanh_nghiep",
+    "kind": "dieu_chinh",
+    "doc_ref": null,
+    "doc_date": "2026-10-12",
+    "due_date": null,
+    "amount_vnd": -13,
+    "sku_key": "savina-12v",
+    "channel": "online"
+   },
+   {
+    "row_no": 2,
+    "dealer_code": "C1",
+    "dealer_type": "doanh_nghiep",
+    "kind": "phat_sinh",
+    "doc_ref": null,
+    "doc_date": "2026-10-12",
+    "due_date": null,
+    "amount_vnd": 21,
+    "sku_key": "savina-12v",
+    "channel": "online"
+   }
+  ]
+ },
+ "overdue_fixture": [
+  "## C\u00f4ng n\u1ee3 \u0111\u1ea1i l\u00fd qu\u00e1 h\u1ea1n (t\u00ednh t\u1edbi 12/10/2026)",
+  "",
+  "| \u0110\u1ea1i l\u00fd | Qu\u00e1 h\u1ea1n | 0-30 | 31-60 | 61-90 | >90 |",
+  "|---|---|---|---|---|---|",
+  "| `DL-HN01` | 10.000.000\u0111 | 0\u0111 | 10.000.000\u0111 | 0\u0111 | 0\u0111 |",
+  "| `DL-DN02` | 4.000.000\u0111 | 0\u0111 | 0\u0111 | 0\u0111 | 4.000.000\u0111 |",
+  "",
+  "T\u1ed5ng qu\u00e1 h\u1ea1n: 14.000.000\u0111 \u2014 ngu\u1ed3n: s\u1ed5 c\u00f4ng n\u1ee3 n\u1ea1p tay (`dealer_ar`); th\u01b0 nh\u1eafc n\u1ee3 do k\u1ebf to\u00e1n g\u1eedi tay, agent kh\u00f4ng g\u1eedi."
+ ],
+ "overdue_empty": [
+  "## C\u00f4ng n\u1ee3 \u0111\u1ea1i l\u00fd qu\u00e1 h\u1ea1n (t\u00ednh t\u1edbi 12/10/2026)",
+  "",
+  "- (kh\u00f4ng c\u00f3)"
+ ],
+ "overdue_short_term": [
+  "## C\u00f4ng n\u1ee3 \u0111\u1ea1i l\u00fd qu\u00e1 h\u1ea1n (t\u00ednh t\u1edbi 12/10/2026)",
+  "",
+  "| \u0110\u1ea1i l\u00fd | Qu\u00e1 h\u1ea1n | 0-30 | 31-60 | 61-90 | >90 |",
+  "|---|---|---|---|---|---|",
+  "| `DL-DN02` | 18.000.000\u0111 | 14.000.000\u0111 | 0\u0111 | 0\u0111 | 4.000.000\u0111 |",
+  "| `DL-HN01` | 10.000.000\u0111 | 0\u0111 | 10.000.000\u0111 | 0\u0111 | 0\u0111 |",
+  "| `DL-QN03` | 2.500.000\u0111 | 2.500.000\u0111 | 0\u0111 | 0\u0111 | 0\u0111 |",
+  "",
+  "T\u1ed5ng qu\u00e1 h\u1ea1n: 30.500.000\u0111 \u2014 ngu\u1ed3n: s\u1ed5 c\u00f4ng n\u1ee3 n\u1ea1p tay (`dealer_ar`); th\u01b0 nh\u1eafc n\u1ee3 do k\u1ebf to\u00e1n g\u1eedi tay, agent kh\u00f4ng g\u1eedi."
+ ],
+ "reminders": [
+  {
+   "name": "basis",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "HD-001",
+     "doc_date": "2026-08-13",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    },
+    {
+     "row_no": 3,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "HD-002",
+     "doc_date": "2026-09-02",
+     "due_date": null,
+     "amount_vnd": 2000000,
+     "sku_key": null,
+     "channel": null
+    },
+    {
+     "row_no": 4,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "HD-003",
+     "doc_date": "2026-10-07",
+     "due_date": null,
+     "amount_vnd": 500000,
+     "sku_key": null,
+     "channel": null
+    },
+    {
+     "row_no": 5,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "thanh_toan",
+     "doc_ref": "PT-9",
+     "doc_date": "2026-10-09",
+     "due_date": null,
+     "amount_vnd": -1200000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "as_of": "2026-10-12",
+   "dealers": {
+    "DL-01": "active"
+   },
+   "sources": {
+    "DL-01": [
+     [
+      "cong_no_T9.csv",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    ]
+   },
+   "res": {
+    "drafts": [
+     {
+      "dealer_code": "DL-01",
+      "object_id": "ar:DL-01:4f5ea5498f54",
+      "qua_han": 1800000,
+      "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-01)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| HD-002 | 02/09/2026 | 02/10/2026 | 1.800.000\u0111 | 10 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 1.800.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 2.300.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file cong_no_T9.csv (sha256 aaaaaaaa); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: active. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+      "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-01 \u2014 qu\u00e1 h\u1ea1n 1.800.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "registry",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "HD-001",
+     "doc_date": "2026-09-02",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    },
+    {
+     "row_no": 3,
+     "dealer_code": "DL-02",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "HD-001",
+     "doc_date": "2026-09-02",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "as_of": "2026-10-12",
+   "dealers": {
+    "DL-01": "ended"
+   },
+   "sources": {
+    "DL-01": [
+     [
+      "cong_no_T9.csv",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    ]
+   },
+   "res": {
+    "drafts": [
+     {
+      "dealer_code": "DL-01",
+      "object_id": "ar:DL-01:86d650d41472",
+      "qua_han": 1000000,
+      "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-01)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| HD-001 | 02/09/2026 | 02/10/2026 | 1.000.000\u0111 | 10 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 1.000.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 1.000.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file cong_no_T9.csv (sha256 aaaaaaaa); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: ended. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+      "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-01 \u2014 qu\u00e1 h\u1ea1n 1.000.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+     }
+    ],
+    "skipped": [
+     {
+      "dealer_code": "DL-02",
+      "reason": "kh\u00f4ng c\u00f3 trong s\u1ed5 \u0111\u1ea1i l\u00fd `dealers` \u2014 kh\u00f4ng c\u00f3 c\u0103n c\u1ee9 quan h\u1ec7 \u0111\u1ec3 li\u00ean h\u1ec7, kh\u00f4ng so\u1ea1n th\u01b0"
+     }
+    ]
+   }
+  },
+  {
+   "name": "none_overdue",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "HD-001",
+     "doc_date": "2026-10-09",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "as_of": "2026-10-12",
+   "dealers": {
+    "DL-01": "active"
+   },
+   "sources": {
+    "DL-01": [
+     [
+      "cong_no_T9.csv",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    ]
+   },
+   "res": {
+    "drafts": [],
+    "skipped": []
+   }
+  },
+  {
+   "name": "state1",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "HD-001",
+     "doc_date": "2026-09-02",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "as_of": "2026-10-12",
+   "dealers": {
+    "DL-01": "active"
+   },
+   "sources": {
+    "DL-01": [
+     [
+      "cong_no_T9.csv",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    ]
+   },
+   "res": {
+    "drafts": [
+     {
+      "dealer_code": "DL-01",
+      "object_id": "ar:DL-01:86d650d41472",
+      "qua_han": 1000000,
+      "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-01)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| HD-001 | 02/09/2026 | 02/10/2026 | 1.000.000\u0111 | 10 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 1.000.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 1.000.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file cong_no_T9.csv (sha256 aaaaaaaa); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: active. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+      "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-01 \u2014 qu\u00e1 h\u1ea1n 1.000.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "state2",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "HD-001",
+     "doc_date": "2026-09-02",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "as_of": "2026-10-15",
+   "dealers": {
+    "DL-01": "active"
+   },
+   "sources": {
+    "DL-01": [
+     [
+      "cong_no_T9.csv",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    ]
+   },
+   "res": {
+    "drafts": [
+     {
+      "dealer_code": "DL-01",
+      "object_id": "ar:DL-01:86d650d41472",
+      "qua_han": 1000000,
+      "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-01)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 15/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| HD-001 | 02/09/2026 | 02/10/2026 | 1.000.000\u0111 | 13 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 1.000.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 1.000.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file cong_no_T9.csv (sha256 aaaaaaaa); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: active. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+      "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-01 \u2014 qu\u00e1 h\u1ea1n 1.000.000\u0111 (t\u00ednh t\u1edbi 15/10/2026)"
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "paid",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "HD-001",
+     "doc_date": "2026-09-02",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    },
+    {
+     "row_no": 9,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "thanh_toan",
+     "doc_ref": "HD-001",
+     "doc_date": "2026-10-11",
+     "due_date": null,
+     "amount_vnd": -300000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "as_of": "2026-10-12",
+   "dealers": {
+    "DL-01": "active"
+   },
+   "sources": {
+    "DL-01": [
+     [
+      "cong_no_T9.csv",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    ]
+   },
+   "res": {
+    "drafts": [
+     {
+      "dealer_code": "DL-01",
+      "object_id": "ar:DL-01:4e4e230e12ad",
+      "qua_han": 700000,
+      "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-01)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| HD-001 | 02/09/2026 | 02/10/2026 | 700.000\u0111 | 10 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 700.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 700.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file cong_no_T9.csv (sha256 aaaaaaaa); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: active. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+      "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-01 \u2014 qu\u00e1 h\u1ea1n 700.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "pii",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "0905123456",
+     "doc_date": "2026-09-02",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "as_of": "2026-10-12",
+   "dealers": {
+    "DL-01": "active"
+   },
+   "sources": {
+    "DL-01": [
+     [
+      "Nguyen 0905123456.csv",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+     ]
+    ]
+   },
+   "res": {
+    "drafts": [
+     {
+      "dealer_code": "DL-01",
+      "object_id": "ar:DL-01:3a7bbbbc5655",
+      "qua_han": 1000000,
+      "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-01)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| *** | 02/09/2026 | 02/10/2026 | 1.000.000\u0111 | 10 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 1.000.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 1.000.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file Nguyen ***.csv (sha256 bbbbbbbb); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: active. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+      "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-01 \u2014 qu\u00e1 h\u1ea1n 1.000.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "no_ref_no_src",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": null,
+     "doc_date": "2026-10-08",
+     "due_date": "2026-10-10",
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "as_of": "2026-10-12",
+   "dealers": {
+    "DL-01": "paused"
+   },
+   "sources": {},
+   "res": {
+    "drafts": [
+     {
+      "dealer_code": "DL-01",
+      "object_id": "ar:DL-01:ea7020c7fef6",
+      "qua_han": 1000000,
+      "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-01)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| (kh\u00f4ng s\u1ed1) | 08/10/2026 | 10/10/2026 | 1.000.000\u0111 | 2 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 1.000.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 1.000.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file (kh\u00f4ng r\u00f5); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: paused. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+      "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-01 \u2014 qu\u00e1 h\u1ea1n 1.000.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+     }
+    ],
+    "skipped": []
+   }
+  },
+  {
+   "name": "multi_src",
+   "entries": [
+    {
+     "row_no": 2,
+     "dealer_code": "DL-01",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "A\tB\nC  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "doc_date": "2026-09-02",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    },
+    {
+     "row_no": 7,
+     "dealer_code": "ZZ-9",
+     "dealer_type": "ca_nhan",
+     "kind": "phat_sinh",
+     "doc_ref": "\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af",
+     "doc_date": "2026-09-02",
+     "due_date": null,
+     "amount_vnd": 1000000,
+     "sku_key": null,
+     "channel": null
+    }
+   ],
+   "as_of": "2026-10-12",
+   "dealers": {
+    "DL-01": "active",
+    "ZZ-9": "active"
+   },
+   "sources": {
+    "DL-01": [
+     [
+      "b.csv",
+      "1111111111111111111111111111111111111111111111111111111111111111"
+     ],
+     [
+      "a.csv",
+      "2222222222222222222222222222222222222222222222222222222222222222"
+     ],
+     [
+      "b.csv",
+      "1111111111111111111111111111111111111111111111111111111111111111"
+     ]
+    ],
+    "ZZ-9": [
+     [
+      "x\u0007y.xlsx",
+      "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     ]
+    ]
+   },
+   "res": {
+    "drafts": [
+     {
+      "dealer_code": "DL-01",
+      "object_id": "ar:DL-01:703ce5ed2357",
+      "qua_han": 1000000,
+      "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-01)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| A?B?C xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | 02/09/2026 | 02/10/2026 | 1.000.000\u0111 | 10 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 1.000.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 1.000.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file a.csv (sha256 22222222), b.csv (sha256 11111111); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: active. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+      "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-01 \u2014 qu\u00e1 h\u1ea1n 1.000.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+     },
+     {
+      "dealer_code": "ZZ-9",
+      "object_id": "ar:ZZ-9:f20b99e41f57",
+      "qua_han": 1000000,
+      "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd ZZ-9)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| \u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af\u01af | 02/09/2026 | 02/10/2026 | 1.000.000\u0111 | 10 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 1.000.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 1.000.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file x?y.xlsx (sha256 ffffffff); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: active. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+      "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 ZZ-9 \u2014 qu\u00e1 h\u1ea1n 1.000.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+     }
+    ],
+    "skipped": []
+   }
+  }
+ ],
+ "reminders_fixture": {
+  "dealers": {
+   "DL-HN01": "active",
+   "DL-DN02": "paused"
+  },
+  "sources": {
+   "DL-HN01": [
+    [
+     "dealer_ar_MAU.csv",
+     "3635b15b105b43ad211af004023eb78133f443bd67060ae2423344a995ff4607"
+    ]
+   ],
+   "DL-DN02": [
+    [
+     "dealer_ar_MAU.csv",
+     "3635b15b105b43ad211af004023eb78133f443bd67060ae2423344a995ff4607"
+    ]
+   ]
+  },
+  "res": {
+   "drafts": [
+    {
+     "dealer_code": "DL-DN02",
+     "object_id": "ar:DL-DN02:91e1ebea9938",
+     "qua_han": 4000000,
+     "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-DN02)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| PX-GIA-004 | 01/07/2026 | 31/07/2026 | 4.000.000\u0111 | 73 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 4.000.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 18.000.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file dealer_ar_MAU.csv (sha256 3635b15b); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: paused. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+     "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-DN02 \u2014 qu\u00e1 h\u1ea1n 4.000.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+    },
+    {
+     "dealer_code": "DL-HN01",
+     "object_id": "ar:DL-HN01:b951515a49b9",
+     "qua_han": 10000000,
+     "body": "NH\u00c1P TH\u01af NH\u1eaeC N\u1ee2 \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh duy\u1ec7t; k\u1ebf to\u00e1n \u0111i\u1ec1n placeholder v\u00e0 g\u1eedi tay. Agent KH\u00d4NG g\u1eedi.\n\nK\u00ednh g\u1eedi: {{TEN_DAI_LY}} (m\u00e3 \u0111\u1ea1i l\u00fd DL-HN01)\nNg\u01b0\u1eddi nh\u1eadn: {{NGUOI_LIEN_HE}}\n\nTheo s\u1ed5 c\u00f4ng n\u1ee3 c\u1ee7a C\u00f4ng ty TNHH S\u00e2m S\u00e2m t\u00ednh t\u1edbi ng\u00e0y 12/10/2026, qu\u00fd \u0111\u1ea1i l\u00fd c\u00f2n c\u00e1c kho\u1ea3n \u0111\u00e3 qu\u00e1 h\u1ea1n thanh to\u00e1n sau:\n\n| Ch\u1ee9ng t\u1eeb | Ng\u00e0y ch\u1ee9ng t\u1eeb | H\u1ea1n thanh to\u00e1n | S\u1ed1 c\u00f2n n\u1ee3 | Qu\u00e1 h\u1ea1n |\n|---|---|---|---|---|\n| PX-GIA-001 | 01/09/2026 | 01/10/2026 | 10.000.000\u0111 | 11 ng\u00e0y |\n\nT\u1ed5ng qu\u00e1 h\u1ea1n: 10.000.000\u0111 (t\u1ed5ng c\u00f2n n\u1ee3: 10.000.000\u0111).\n\nK\u00ednh \u0111\u1ec1 ngh\u1ecb qu\u00fd \u0111\u1ea1i l\u00fd thanh to\u00e1n ho\u1eb7c ph\u1ea3n h\u1ed3i \u0111\u1ed1i chi\u1ebfu tr\u01b0\u1edbc ng\u00e0y {{HAN_THANH_TOAN}}. N\u1ebfu \u0111\u00e3 thanh to\u00e1n, xin b\u1ecf qua th\u01b0 n\u00e0y v\u00e0 g\u1eedi ch\u1ee9ng t\u1eeb \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu.\n\nTr\u00e2n tr\u1ecdng,\n{{NGUOI_KY}} \u2014 Ph\u00f2ng k\u1ebf to\u00e1n C\u00f4ng ty TNHH S\u00e2m S\u00e2m\n\n---\nC\u0103n c\u1ee9 (n\u1ed9i b\u1ed9, kh\u00f4ng g\u1eedi k\u00e8m): s\u1ed5 c\u00f4ng n\u1ee3 `dealer_ar` n\u1ea1p tay \u2014 file dealer_ar_MAU.csv (sha256 3635b15b); ghi c\u00f3 tr\u1eeb FIFO theo ng\u00e0y ch\u1ee9ng t\u1eeb; h\u1ea1n = due_date ho\u1eb7c ng\u00e0y ch\u1ee9ng t\u1eeb + 30 ng\u00e0y (data/dealer_commission.json); tr\u1ea1ng th\u00e1i \u0111\u1ea1i l\u00fd trong s\u1ed5: active. Nh\u00e1p n\u00e0y thay nh\u00e1p nh\u1eafc n\u1ee3 c\u0169 c\u1ee7a c\u00f9ng \u0111\u1ea1i l\u00fd n\u1ebfu c\u00f2n ch\u1edd duy\u1ec7t.",
+     "title": "Nh\u00e1p th\u01b0 nh\u1eafc n\u1ee3 DL-HN01 \u2014 qu\u00e1 h\u1ea1n 10.000.000\u0111 (t\u00ednh t\u1edbi 12/10/2026)"
+    }
+   ],
+   "skipped": []
+  }
+ }
+}

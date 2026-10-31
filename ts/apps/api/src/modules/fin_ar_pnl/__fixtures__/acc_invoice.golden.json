@@ -1,0 +1,3502 @@
+{
+ "config": {
+  "_doc": "v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.",
+  "invoice_trigger": "giao_thanh_cong",
+  "confirmed_by": null,
+  "trigger_status": {
+   "shopee": {
+    "giao_thanh_cong": [
+     "Ho\u00e0n th\u00e0nh"
+    ],
+    "ban_giao_van_chuyen": [
+     "\u0110ang giao",
+     "Ho\u00e0n th\u00e0nh"
+    ]
+   },
+   "tiktok": {
+    "giao_thanh_cong": [
+     "Delivered",
+     "Completed"
+    ],
+    "ban_giao_van_chuyen": [
+     "Shipped",
+     "In transit",
+     "Delivered",
+     "Completed"
+    ]
+   }
+  },
+  "return_status": {
+   "shopee": [
+    "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n"
+   ],
+   "tiktok": [
+    "Returned",
+    "Refunded"
+   ]
+  },
+  "request_columns": {
+   "order_id": "M\u00e3 \u0111\u01a1n h\u00e0ng",
+   "buyer_name": "T\u00ean \u0111\u01a1n v\u1ecb mua",
+   "tax_code": "M\u00e3 s\u1ed1 thu\u1ebf",
+   "address": "\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n",
+   "email": "Email nh\u1eadn h\u00f3a \u0111\u01a1n"
+  },
+  "csv_columns": [
+   "lan_lap",
+   "ma_tham_chieu",
+   "ngay_lap",
+   "kenh",
+   "loai",
+   "ten_nguoi_mua",
+   "mst",
+   "dia_chi",
+   "email",
+   "ten_hang",
+   "so_luong",
+   "don_gia",
+   "thanh_tien",
+   "lo_goc"
+  ],
+  "retail_buyer": "Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n",
+  "cancel_status": {
+   "shopee": [
+    "\u0110\u00e3 h\u1ee7y"
+   ],
+   "tiktok": [
+    "Cancelled",
+    "Canceled"
+   ]
+  }
+ },
+ "config_cases": [
+  {
+   "name": "trigger",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"khi_thanh_toan\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "invoice_trigger ph\u1ea3i thu\u1ed9c ('giao_thanh_cong', 'ban_giao_van_chuyen')"
+  },
+  {
+   "name": "confirmed_blank",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": \"\", \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "confirmed_by ph\u1ea3i null ho\u1eb7c t\u00ean ng\u01b0\u1eddi ch\u1ed1t"
+  },
+  {
+   "name": "confirmed_int",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": 5, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "confirmed_by ph\u1ea3i null ho\u1eb7c t\u00ean ng\u01b0\u1eddi ch\u1ed1t"
+  },
+  {
+   "name": "confirmed_ok",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": \"K\u1ebf to\u00e1n tr\u01b0\u1edfng\", \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": {
+    "_doc": "v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.",
+    "invoice_trigger": "giao_thanh_cong",
+    "confirmed_by": "K\u1ebf to\u00e1n tr\u01b0\u1edfng",
+    "trigger_status": {
+     "shopee": {
+      "giao_thanh_cong": [
+       "Ho\u00e0n th\u00e0nh"
+      ],
+      "ban_giao_van_chuyen": [
+       "\u0110ang giao",
+       "Ho\u00e0n th\u00e0nh"
+      ]
+     },
+     "tiktok": {
+      "giao_thanh_cong": [
+       "Delivered",
+       "Completed"
+      ],
+      "ban_giao_van_chuyen": [
+       "Shipped",
+       "In transit",
+       "Delivered",
+       "Completed"
+      ]
+     }
+    },
+    "return_status": {
+     "shopee": [
+      "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n"
+     ],
+     "tiktok": [
+      "Returned",
+      "Refunded"
+     ]
+    },
+    "request_columns": {
+     "order_id": "M\u00e3 \u0111\u01a1n h\u00e0ng",
+     "buyer_name": "T\u00ean \u0111\u01a1n v\u1ecb mua",
+     "tax_code": "M\u00e3 s\u1ed1 thu\u1ebf",
+     "address": "\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n",
+     "email": "Email nh\u1eadn h\u00f3a \u0111\u01a1n"
+    },
+    "csv_columns": [
+     "lan_lap",
+     "ma_tham_chieu",
+     "ngay_lap",
+     "kenh",
+     "loai",
+     "ten_nguoi_mua",
+     "mst",
+     "dia_chi",
+     "email",
+     "ten_hang",
+     "so_luong",
+     "don_gia",
+     "thanh_tien",
+     "lo_goc"
+    ],
+    "retail_buyer": "Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n",
+    "cancel_status": {
+     "shopee": [
+      "\u0110\u00e3 h\u1ee7y"
+     ],
+     "tiktok": [
+      "Cancelled",
+      "Canceled"
+     ]
+    }
+   },
+   "why": null
+  },
+  {
+   "name": "csv_cols_bad",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"ma_tham_chieu\", \"so_cmnd\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "csv_columns ph\u1ea3i \u2282 ('lan_lap', 'ma_tham_chieu', 'ngay_lap', 'kenh', 'loai', 'ten_nguoi_mua', 'mst', 'dia_chi', 'email', 'ten_hang', 'so_luong', 'don_gia', 'thanh_tien', 'lo_goc'), kh\u00f4ng tr\u00f9ng"
+  },
+  {
+   "name": "csv_cols_dup",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"ma_tham_chieu\", \"kenh\", \"kenh\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "csv_columns ph\u1ea3i \u2282 ('lan_lap', 'ma_tham_chieu', 'ngay_lap', 'kenh', 'loai', 'ten_nguoi_mua', 'mst', 'dia_chi', 'email', 'ten_hang', 'so_luong', 'don_gia', 'thanh_tien', 'lo_goc'), kh\u00f4ng tr\u00f9ng"
+  },
+  {
+   "name": "csv_cols_no_ref",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"kenh\", \"loai\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "csv_columns ph\u1ea3i \u2282 ('lan_lap', 'ma_tham_chieu', 'ngay_lap', 'kenh', 'loai', 'ten_nguoi_mua', 'mst', 'dia_chi', 'email', 'ten_hang', 'so_luong', 'don_gia', 'thanh_tien', 'lo_goc'), kh\u00f4ng tr\u00f9ng"
+  },
+  {
+   "name": "csv_cols_one",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"ma_tham_chieu\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": {
+    "_doc": "v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.",
+    "invoice_trigger": "giao_thanh_cong",
+    "confirmed_by": null,
+    "trigger_status": {
+     "shopee": {
+      "giao_thanh_cong": [
+       "Ho\u00e0n th\u00e0nh"
+      ],
+      "ban_giao_van_chuyen": [
+       "\u0110ang giao",
+       "Ho\u00e0n th\u00e0nh"
+      ]
+     },
+     "tiktok": {
+      "giao_thanh_cong": [
+       "Delivered",
+       "Completed"
+      ],
+      "ban_giao_van_chuyen": [
+       "Shipped",
+       "In transit",
+       "Delivered",
+       "Completed"
+      ]
+     }
+    },
+    "return_status": {
+     "shopee": [
+      "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n"
+     ],
+     "tiktok": [
+      "Returned",
+      "Refunded"
+     ]
+    },
+    "request_columns": {
+     "order_id": "M\u00e3 \u0111\u01a1n h\u00e0ng",
+     "buyer_name": "T\u00ean \u0111\u01a1n v\u1ecb mua",
+     "tax_code": "M\u00e3 s\u1ed1 thu\u1ebf",
+     "address": "\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n",
+     "email": "Email nh\u1eadn h\u00f3a \u0111\u01a1n"
+    },
+    "csv_columns": [
+     "ma_tham_chieu"
+    ],
+    "retail_buyer": "Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n",
+    "cancel_status": {
+     "shopee": [
+      "\u0110\u00e3 h\u1ee7y"
+     ],
+     "tiktok": [
+      "Cancelled",
+      "Canceled"
+     ]
+    }
+   },
+   "why": null
+  },
+  {
+   "name": "req_cols",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "request_columns ph\u1ea3i \u0111\u1ee7 ('order_id', 'buyer_name', 'tax_code', 'address', 'email')"
+  },
+  {
+   "name": "req_cols_blank",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \" \", \"tax_code\": \"a\", \"address\": \"b\", \"email\": \"c\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "request_columns ph\u1ea3i \u0111\u1ee7 ('order_id', 'buyer_name', 'tax_code', 'address', 'email')"
+  },
+  {
+   "name": "return_empty",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": []}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "return_status.tiktok ph\u1ea3i l\u00e0 list chu\u1ed7i"
+  },
+  {
+   "name": "trigger_status_missing",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "trigger_status.tiktok thi\u1ebfu m\u1ed1c ('giao_thanh_cong', 'ban_giao_van_chuyen')"
+  },
+  {
+   "name": "trigger_status_empty_list",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\"], \"ban_giao_van_chuyen\": []}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": {
+    "_doc": "v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.",
+    "invoice_trigger": "giao_thanh_cong",
+    "confirmed_by": null,
+    "trigger_status": {
+     "shopee": {
+      "giao_thanh_cong": [
+       "Ho\u00e0n th\u00e0nh"
+      ],
+      "ban_giao_van_chuyen": [
+       "\u0110ang giao",
+       "Ho\u00e0n th\u00e0nh"
+      ]
+     },
+     "tiktok": {
+      "giao_thanh_cong": [
+       "Delivered"
+      ],
+      "ban_giao_van_chuyen": []
+     }
+    },
+    "return_status": {
+     "shopee": [
+      "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n"
+     ],
+     "tiktok": [
+      "Returned",
+      "Refunded"
+     ]
+    },
+    "request_columns": {
+     "order_id": "M\u00e3 \u0111\u01a1n h\u00e0ng",
+     "buyer_name": "T\u00ean \u0111\u01a1n v\u1ecb mua",
+     "tax_code": "M\u00e3 s\u1ed1 thu\u1ebf",
+     "address": "\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n",
+     "email": "Email nh\u1eadn h\u00f3a \u0111\u01a1n"
+    },
+    "csv_columns": [
+     "lan_lap",
+     "ma_tham_chieu",
+     "ngay_lap",
+     "kenh",
+     "loai",
+     "ten_nguoi_mua",
+     "mst",
+     "dia_chi",
+     "email",
+     "ten_hang",
+     "so_luong",
+     "don_gia",
+     "thanh_tien",
+     "lo_goc"
+    ],
+    "retail_buyer": "Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n",
+    "cancel_status": {
+     "shopee": [
+      "\u0110\u00e3 h\u1ee7y"
+     ],
+     "tiktok": [
+      "Cancelled",
+      "Canceled"
+     ]
+    }
+   },
+   "why": null
+  },
+  {
+   "name": "trigger_status_blank",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"  \"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \"Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n\"}",
+   "cfg": null,
+   "why": "trigger_status.shopee thi\u1ebfu m\u1ed1c ('giao_thanh_cong', 'ban_giao_van_chuyen')"
+  },
+  {
+   "name": "retail_blank",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"], \"retail_buyer\": \" \"}",
+   "cfg": null,
+   "why": "thi\u1ebfu retail_buyer"
+  },
+  {
+   "name": "retail_missing",
+   "raw": "{\"_doc\": \"v9.0 ACC-Invoice \u2014 GI\u1ea2 \u0110\u1ecaNH \u2014 invoice_trigger ch\u1edd t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026, confirmed_by null = CH\u01afA ch\u1ed1t); format CSV ch\u1edd nh\u00e0 cung c\u1ea5p H\u0110\u0110T (m\u1eabu file nh\u1eadp th\u1eadt = external-dep). invoice_trigger \u2208 giao_thanh_cong | ban_giao_van_chuyen (m\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n); trigger_status {k\u00eanh: {m\u1ed1c: [tr\u1ea1ng th\u00e1i \u0111\u01a1n s\u00e0n \u0111\u1ea1t m\u1ed1c]}}; return_status {k\u00eanh: [tr\u1ea1ng th\u00e1i tr\u1ea3 h\u00e0ng/ho\u00e0n ti\u1ec1n]} \u2014 \u0111\u01a1n \u0110\u00c3 thu\u1ed9c l\u00f4 approved m\u00e0 nay \u1edf tr\u1ea1ng th\u00e1i n\u00e0y \u2192 d\u00f2ng \u0111i\u1ec1u ch\u1ec9nh; \u0111\u01a1n h\u1ee7y l\u1ea5y cancel_status c\u1ee7a data/market_csv_map.json. request_columns = header file y\u00eau c\u1ea7u xu\u1ea5t h\u00f3a \u0111\u01a1n (GI\u1ea2 \u0110\u1ecaNH \u2014 m\u1ed7i d\u00f2ng PH\u1ea2I c\u00f3 MST 10 ho\u1eb7c 10-3 s\u1ed1; y\u00eau c\u1ea7u kh\u00f4ng MST ch\u01b0a h\u1ed7 tr\u1ee3). csv_columns = th\u1ee9 t\u1ef1 c\u1ed9t file NH\u00c1P (t\u00ean c\u1ed9t GI\u1ea2 \u0110\u1ecaNH). retail_buyer = t\u00ean ng\u01b0\u1eddi mua b\u00e1n l\u1ebb kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n. Agent KH\u00d4NG c\u00f3 ch\u1eef k\u00fd s\u1ed1, KH\u00d4NG ph\u00e1t h\u00e0nh, KH\u00d4NG g\u1eedi \u2014 k\u1ebf to\u00e1n nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T sau khi l\u00f4 \u0111\u01b0\u1ee3c duy\u1ec7t v\u00e0 --verify-draft pass.\", \"invoice_trigger\": \"giao_thanh_cong\", \"confirmed_by\": null, \"trigger_status\": {\"shopee\": {\"giao_thanh_cong\": [\"Ho\u00e0n th\u00e0nh\"], \"ban_giao_van_chuyen\": [\"\u0110ang giao\", \"Ho\u00e0n th\u00e0nh\"]}, \"tiktok\": {\"giao_thanh_cong\": [\"Delivered\", \"Completed\"], \"ban_giao_van_chuyen\": [\"Shipped\", \"In transit\", \"Delivered\", \"Completed\"]}}, \"return_status\": {\"shopee\": [\"Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n\"], \"tiktok\": [\"Returned\", \"Refunded\"]}, \"request_columns\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"buyer_name\": \"T\u00ean \u0111\u01a1n v\u1ecb mua\", \"tax_code\": \"M\u00e3 s\u1ed1 thu\u1ebf\", \"address\": \"\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n\", \"email\": \"Email nh\u1eadn h\u00f3a \u0111\u01a1n\"}, \"csv_columns\": [\"lan_lap\", \"ma_tham_chieu\", \"ngay_lap\", \"kenh\", \"loai\", \"ten_nguoi_mua\", \"mst\", \"dia_chi\", \"email\", \"ten_hang\", \"so_luong\", \"don_gia\", \"thanh_tien\", \"lo_goc\"]}",
+   "cfg": null,
+   "why": "thi\u1ebfu retail_buyer"
+  },
+  {
+   "name": "not_object",
+   "raw": "[1]",
+   "cfg": null,
+   "why": "invoice_trigger ph\u1ea3i thu\u1ed9c ('giao_thanh_cong', 'ban_giao_van_chuyen')"
+  },
+  {
+   "name": "broken",
+   "raw": "{",
+   "cfg": null,
+   "why": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c c\u1ea5u h\u00ecnh h\u00f3a \u0111\u01a1n: JSONDecodeError"
+  }
+ ],
+ "config_mm_bad": {
+  "mm": "{\"_doc\": \"v3.3 mapping c\u1ed9t file xu\u1ea5t tay t\u1eeb Seller Center \u2192 field chu\u1ea9n c\u1ee7a ingest.market_csv. T\u00caN C\u1ed8T L\u00c0 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh v\u1edbi file th\u1eadt (external-dep: ng\u01b0\u1eddi c\u00f3 t\u00e0i kho\u1ea3n Seller Center xu\u1ea5t 1 file m\u1ed7i lo\u1ea1i \u0111\u1ec3 \u0111\u1ed1i chi\u1ebfu header, d\u00f2ng header, \u0111\u1ecbnh d\u1ea1ng gi\u00e1/tr\u1ea1ng th\u00e1i). M\u1ed7i k\u00eanh \u00d7 lo\u1ea1i export: required {field: header} (thi\u1ebfu = l\u1ed7i schema), optional {field: header}, drop [header] (b\u1ecf NGAY khi \u0111\u1ecdc \u2014 g\u1ed3m m\u1ecdi c\u1ed9t PII ng\u01b0\u1eddi mua/ng\u01b0\u1eddi nh\u1eadn), inactive_status (listing: tr\u1ea1ng th\u00e1i coi l\u00e0 KH\u00d4NG c\u00f2n b\u00e1n; tr\u1ea1ng th\u00e1i l\u1ea1 = \u0111ang b\u00e1n), cancel_status (order: tr\u1ea1ng th\u00e1i \u0111\u01a1n h\u1ee7y). C\u1ed9t kh\u00f4ng thu\u1ed9c required/optional/drop = c\u1ed9t l\u1ea1 \u2192 ch\u1eb7n c\u1ea3 file. Field chu\u1ea9n: item_id, seller_sku, title, price, stock, status, ads_spend, qty, order_id, sale_price, voucher_code. v5.3: sale_price (listing, t\u00f9y ch\u1ecdn \u2014 gi\u00e1 sau khuy\u1ebfn m\u00e3i; header 'Gi\u00e1 khuy\u1ebfn m\u00e3i' / 'Sale Price' GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh v\u1edbi file th\u1eadt) ch\u1ec9 l\u01b0u trong market_rows.raw, agents.kd_price \u0111\u1ecdc l\u00e0m gi\u00e1 b\u00e1n th\u1ef1c. v5.4: voucher_code (order, t\u00f9y ch\u1ecdn, \u2264 64 k\u00fd t\u1ef1 \u2014 m\u00e3 voucher/affiliate \u0111\u1ea1i l\u00fd; header 'M\u00e3 gi\u1ea3m gi\u00e1 c\u1ee7a Shop' / 'Seller Voucher Code' GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a x\u00e1c minh v\u1edbi file th\u1eadt; \u0111\u1ed9 d\u00e0i/\u0111\u1ecbnh d\u1ea1ng m\u00e3 c\u1ee7a t\u1eebng s\u00e0n = external-dep) ch\u1ec9 l\u01b0u trong market_rows.raw, agents.kd_affiliate --attribute ghi nh\u1eadn \u0111\u01a1n qua m\u00e3.\", \"shopee\": {\"listing\": {\"required\": {\"item_id\": \"M\u00e3 s\u1ea3n ph\u1ea9m\", \"title\": \"T\u00ean s\u1ea3n ph\u1ea9m\", \"price\": \"Gi\u00e1\", \"status\": \"Tr\u1ea1ng th\u00e1i\"}, \"optional\": {\"seller_sku\": \"SKU ph\u00e2n lo\u1ea1i\", \"stock\": \"Kho h\u00e0ng\", \"sale_price\": \"Gi\u00e1 khuy\u1ebfn m\u00e3i\"}, \"drop\": [\"M\u00f4 t\u1ea3 s\u1ea3n ph\u1ea9m\", \"\u1ea2nh b\u00eca\"], \"inactive_status\": [\"\u0110\u00e3 \u1ea9n\", \"\u0110\u00e3 x\u00f3a\", \"B\u1ecb kh\u00f3a\", \"Vi ph\u1ea1m\"]}, \"order\": {\"required\": {\"order_id\": \"M\u00e3 \u0111\u01a1n h\u00e0ng\", \"status\": \"Tr\u1ea1ng th\u00e1i \u0111\u01a1n h\u00e0ng\", \"title\": \"T\u00ean s\u1ea3n ph\u1ea9m\", \"qty\": \"S\u1ed1 l\u01b0\u1ee3ng\", \"price\": \"Gi\u00e1 \u01b0u \u0111\u00e3i\"}, \"optional\": {\"seller_sku\": \"SKU ph\u00e2n lo\u1ea1i h\u00e0ng\", \"item_id\": \"M\u00e3 s\u1ea3n ph\u1ea9m\", \"voucher_code\": \"M\u00e3 gi\u1ea3m gi\u00e1 c\u1ee7a Shop\"}, \"drop\": [\"Ng\u01b0\u1eddi mua\", \"T\u00ean ng\u01b0\u1eddi mua\", \"T\u00ean ng\u01b0\u1eddi nh\u1eadn\", \"S\u1ed1 \u0111i\u1ec7n tho\u1ea1i\", \"\u0110\u1ecba ch\u1ec9 nh\u1eadn h\u00e0ng\", \"T\u1ec9nh/Th\u00e0nh ph\u1ed1\", \"Qu\u1eadn/Huy\u1ec7n\", \"Ph\u01b0\u1eddng/X\u00e3\", \"Ghi ch\u00fa\", \"Nh\u1eadn x\u00e9t t\u1eeb ng\u01b0\u1eddi mua\", \"M\u00e3 v\u1eadn \u0111\u01a1n\"], \"cancel_status\": [\"\u0110\u00e3 h\u1ee7y\"]}, \"ads\": {\"required\": {\"item_id\": \"M\u00e3 s\u1ea3n ph\u1ea9m\", \"title\": \"T\u00ean qu\u1ea3ng c\u00e1o\", \"ads_spend\": \"Chi ph\u00ed\"}, \"optional\": {\"status\": \"Tr\u1ea1ng th\u00e1i\", \"seller_sku\": \"SKU ph\u00e2n lo\u1ea1i\"}, \"drop\": [\"L\u01b0\u1ee3t xem\", \"L\u01b0\u1ee3t click\", \"Doanh thu\"]}}, \"tiktok\": {\"listing\": {\"required\": {\"item_id\": \"Product ID\", \"title\": \"Product Name\", \"price\": \"Price\", \"status\": \"Status\"}, \"optional\": {\"seller_sku\": \"Seller SKU\", \"stock\": \"Quantity\", \"sale_price\": \"Sale Price\"}, \"drop\": [\"Description\", \"Main Image\"], \"inactive_status\": [\"Deactivated\", \"Deleted\", \"Suspended\", \"Draft\", \"Frozen\"]}, \"order\": {\"required\": {\"order_id\": \"Order ID\", \"status\": \"Order Status\", \"title\": \"Product Name\", \"qty\": \"Quantity\", \"price\": \"SKU Unit Original Price\"}, \"optional\": {\"seller_sku\": \"Seller SKU\", \"item_id\": \"Product ID\", \"voucher_code\": \"Seller Voucher Code\"}, \"drop\": [\"Buyer Username\", \"Buyer Message\", \"Recipient\", \"Phone #\", \"Detail Address\", \"Province\", \"District\", \"Zipcode\", \"Tracking ID\"]}, \"ads\": {\"required\": {\"item_id\": \"Product ID\", \"title\": \"Campaign name\", \"ads_spend\": \"Cost\"}, \"optional\": {\"status\": \"Status\", \"seller_sku\": \"Seller SKU\"}, \"drop\": [\"Impressions\", \"Clicks\", \"Gross revenue\"]}}}",
+  "cfg": null,
+  "why": "market_csv_map thi\u1ebfu tiktok/order/cancel_status"
+ },
+ "reqs": {
+  "got": {
+   "shopee|01eb6b7302b1af18": {
+    "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+    "tax_code": "0109999999",
+    "address": "SO 99 PHO HOA DON GIA LAP",
+    "email": "hoadon.gialap@example.invalid"
+   }
+  },
+  "errs": []
+ },
+ "reqs_cases": [
+  {
+   "name": "mst_short",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf,\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n,Email nh\u1eadn h\u00f3a \u0111\u01a1n\nFAKEINV0001,CONG TY GIA,010999999,DC,e@x.vn\n",
+   "got": {},
+   "errs": [
+    "d\u00f2ng 2: field 'tax_code' kh\u00f4ng ph\u1ea3i MST 10 ho\u1eb7c 10-3 ch\u1eef s\u1ed1"
+   ]
+  },
+  {
+   "name": "no_name",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf,\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n,Email nh\u1eadn h\u00f3a \u0111\u01a1n\nFAKEINV0001,,0109999999,DC,e@x.vn\n",
+   "got": {},
+   "errs": [
+    "d\u00f2ng 2: thi\u1ebfu field 'buyer_name'"
+   ]
+  },
+  {
+   "name": "dup",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf,\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n,Email nh\u1eadn h\u00f3a \u0111\u01a1n\nFAKEINV0001,A,0109999999,,\nFAKEINV0001,B,0109999999-001,,\n",
+   "got": {},
+   "errs": [
+    "d\u00f2ng 3: m\u00e3 \u0111\u01a1n tr\u00f9ng d\u00f2ng 2"
+   ]
+  },
+  {
+   "name": "ok_two",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf,\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n,Email nh\u1eadn h\u00f3a \u0111\u01a1n\nFAKEINV0001,A,0109999999,,\nFAKEINV0002,B,0109999999-001,\u0110C,\n",
+   "got": {
+    "shopee|e45f5707a035b845": {
+     "buyer_name": "A",
+     "tax_code": "0109999999",
+     "address": null,
+     "email": null
+    },
+    "shopee|f93d32f8a76fdfab": {
+     "buyer_name": "B",
+     "tax_code": "0109999999-001",
+     "address": "\u0110C",
+     "email": null
+    }
+   },
+   "errs": []
+  },
+  {
+   "name": "long_name",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf,\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n,Email nh\u1eadn h\u00f3a \u0111\u01a1n\nFAKEINV0001,NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN,0109999999,,\n",
+   "got": {},
+   "errs": [
+    "d\u00f2ng 2: field 'buyer_name' d\u00e0i qu\u00e1 200"
+   ]
+  },
+  {
+   "name": "long_email",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf,\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n,Email nh\u1eadn h\u00f3a \u0111\u01a1n\nFAKEINV0001,A,0109999999,,eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n",
+   "got": {},
+   "errs": [
+    "d\u00f2ng 2: field 'email' d\u00e0i qu\u00e1 254"
+   ]
+  },
+  {
+   "name": "mst_fullwidth",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf,\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n,Email nh\u1eadn h\u00f3a \u0111\u01a1n\nFAKEINV0001,A,\uff10\uff11\uff10\uff19\uff19\uff19\uff19\uff19\uff19\uff19,,\n",
+   "got": {},
+   "errs": [
+    "d\u00f2ng 2: field 'tax_code' kh\u00f4ng ph\u1ea3i MST 10 ho\u1eb7c 10-3 ch\u1eef s\u1ed1"
+   ]
+  },
+  {
+   "name": "extra_cell",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf,\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n,Email nh\u1eadn h\u00f3a \u0111\u01a1n\nFAKEINV0001,A,0109999999,,,X\n",
+   "got": {},
+   "errs": [
+    "d\u00f2ng 2: th\u1eeba \u00f4 ngo\u00e0i header"
+   ]
+  },
+  {
+   "name": "header_only",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf,\u0110\u1ecba ch\u1ec9 xu\u1ea5t h\u00f3a \u0111\u01a1n,Email nh\u1eadn h\u00f3a \u0111\u01a1n\n",
+   "got": {},
+   "errs": [
+    "file ch\u1ec9 c\u00f3 header, kh\u00f4ng c\u00f3 d\u00f2ng d\u1eef li\u1ec7u"
+   ]
+  },
+  {
+   "name": "empty",
+   "text": "",
+   "got": {},
+   "errs": [
+    "file r\u1ed7ng"
+   ]
+  },
+  {
+   "name": "min_cols",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf\nFAKEINV0009,A,0109999999\n",
+   "got": {
+    "shopee|3f4f49805ece0f9b": {
+     "buyer_name": "A",
+     "tax_code": "0109999999",
+     "address": null,
+     "email": null
+    }
+   },
+   "errs": []
+  },
+  {
+   "name": "missing_mst_col",
+   "text": "M\u00e3 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua\nFAKEINV0009,A\n",
+   "got": {},
+   "errs": [
+    "thi\u1ebfu c\u1ed9t b\u1eaft bu\u1ed9c: 'M\u00e3 s\u1ed1 thu\u1ebf'"
+   ]
+  },
+  {
+   "name": "nfd_header",
+   "text": "Ma\u0303 \u0111\u01a1n h\u00e0ng,T\u00ean \u0111\u01a1n v\u1ecb mua,M\u00e3 s\u1ed1 thu\u1ebf\nFAKEINV0009,A,0109999999\n",
+   "got": {
+    "shopee|3f4f49805ece0f9b": {
+     "buyer_name": "A",
+     "tax_code": "0109999999",
+     "address": null,
+     "email": null
+    }
+   },
+   "errs": []
+  }
+ ],
+ "reqs_tiktok": {
+  "got": {
+   "tiktok|39829b31ae0e5110": {
+    "buyer_name": "A",
+    "tax_code": "0109999999",
+    "address": null,
+    "email": null
+   }
+  },
+  "errs": []
+ },
+ "market_invoice": {
+  "sha": "28d0efcb041b6c492eae88530872a6cbd723ade7200b4e5c7b6bfac72b11712b",
+  "name": "order_invoice_MAU.csv",
+  "rows": [
+   {
+    "row_no": 2,
+    "channel": "shopee",
+    "sku_key": "savina-12v",
+    "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 159000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 2,
+    "order_id_hash": "e45f5707a035b845",
+    "item_id": null,
+    "seller_sku": "savina-12v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "savina-12v",
+     "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+     "price": 159000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 2,
+     "order_id_hash": "e45f5707a035b845",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 3,
+    "channel": "shopee",
+    "sku_key": "saphraton-20v",
+    "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 299000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 1,
+    "order_id_hash": "f93d32f8a76fdfab",
+    "item_id": null,
+    "seller_sku": "saphraton-20v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "saphraton-20v",
+     "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+     "price": 299000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "f93d32f8a76fdfab",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 4,
+    "channel": "shopee",
+    "sku_key": "savigout-30v",
+    "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 439000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 1,
+    "order_id_hash": "26f9afdb033b3c89",
+    "item_id": null,
+    "seller_sku": "savigout-30v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "savigout-30v",
+     "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+     "price": 439000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "26f9afdb033b3c89",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 5,
+    "channel": "shopee",
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+    "price_vnd": 245000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 2,
+    "order_id_hash": "3829e76938e5d155",
+    "item_id": null,
+    "seller_sku": "mat-ong-sam-120ml-1hu",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "mat-ong-sam-120ml-1hu",
+     "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+     "price": 245000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 2,
+     "order_id_hash": "3829e76938e5d155",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 6,
+    "channel": "shopee",
+    "sku_key": "mat-ong-sam-300ml",
+    "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+    "price_vnd": 598000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 1,
+    "order_id_hash": "01eb6b7302b1af18",
+    "item_id": null,
+    "seller_sku": "mat-ong-sam-300ml",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "mat-ong-sam-300ml",
+     "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+     "price": 598000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "01eb6b7302b1af18",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 7,
+    "channel": "shopee",
+    "sku_key": "sapentol-30v",
+    "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 389000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 1,
+    "order_id_hash": "be62a4bf2d62b387",
+    "item_id": null,
+    "seller_sku": "sapentol-30v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "sapentol-30v",
+     "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+     "price": 389000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "be62a4bf2d62b387",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 8,
+    "channel": "shopee",
+    "sku_key": "savina-12v",
+    "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 159000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 1,
+    "order_id_hash": "be62a4bf2d62b387",
+    "item_id": null,
+    "seller_sku": "savina-12v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "savina-12v",
+     "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+     "price": 159000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "be62a4bf2d62b387",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 9,
+    "channel": "shopee",
+    "sku_key": "saphraton-20v",
+    "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 299000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 2,
+    "order_id_hash": "f8fb523fa8a932ec",
+    "item_id": null,
+    "seller_sku": "saphraton-20v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "saphraton-20v",
+     "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+     "price": 299000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 2,
+     "order_id_hash": "f8fb523fa8a932ec",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 10,
+    "channel": "shopee",
+    "sku_key": "savigout-30v",
+    "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 439000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 2,
+    "order_id_hash": "4bb545be66b9c0cb",
+    "item_id": null,
+    "seller_sku": "savigout-30v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "savigout-30v",
+     "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+     "price": 439000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 2,
+     "order_id_hash": "4bb545be66b9c0cb",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 11,
+    "channel": "shopee",
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+    "price_vnd": 245000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 1,
+    "order_id_hash": "3f4f49805ece0f9b",
+    "item_id": null,
+    "seller_sku": "mat-ong-sam-120ml-1hu",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "mat-ong-sam-120ml-1hu",
+     "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+     "price": 245000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "3f4f49805ece0f9b",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 12,
+    "channel": "shopee",
+    "sku_key": "savina-12v",
+    "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 159000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 3,
+    "order_id_hash": "f6547ee86a155de9",
+    "item_id": null,
+    "seller_sku": "savina-12v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "savina-12v",
+     "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+     "price": 159000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 3,
+     "order_id_hash": "f6547ee86a155de9",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 13,
+    "channel": "shopee",
+    "sku_key": "mat-ong-sam-300ml",
+    "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+    "price_vnd": 598000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 2,
+    "order_id_hash": "cb7b8ea63f11296b",
+    "item_id": null,
+    "seller_sku": "mat-ong-sam-300ml",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "mat-ong-sam-300ml",
+     "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+     "price": 598000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 2,
+     "order_id_hash": "cb7b8ea63f11296b",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 14,
+    "channel": "shopee",
+    "sku_key": "sapentol-30v",
+    "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 389000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 2,
+    "order_id_hash": "eb4114dbee67dab5",
+    "item_id": null,
+    "seller_sku": "sapentol-30v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "sapentol-30v",
+     "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+     "price": 389000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 2,
+     "order_id_hash": "eb4114dbee67dab5",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 15,
+    "channel": "shopee",
+    "sku_key": "saphraton-20v",
+    "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 299000,
+    "status": "Ho\u00e0n th\u00e0nh",
+    "qty": 1,
+    "order_id_hash": "94946327dc8c8deb",
+    "item_id": null,
+    "seller_sku": "saphraton-20v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "saphraton-20v",
+     "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+     "price": 299000,
+     "stock": null,
+     "status": "Ho\u00e0n th\u00e0nh",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "94946327dc8c8deb",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 16,
+    "channel": "shopee",
+    "sku_key": "savigout-30v",
+    "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 439000,
+    "status": "\u0110\u00e3 h\u1ee7y",
+    "qty": 1,
+    "order_id_hash": "6e36c2b3d6733de0",
+    "item_id": null,
+    "seller_sku": "savigout-30v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "savigout-30v",
+     "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+     "price": 439000,
+     "stock": null,
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "6e36c2b3d6733de0",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 17,
+    "channel": "shopee",
+    "sku_key": "mat-ong-sam-120ml-1hu",
+    "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+    "price_vnd": 245000,
+    "status": "\u0110\u00e3 h\u1ee7y",
+    "qty": 1,
+    "order_id_hash": "eadeabd467c17091",
+    "item_id": null,
+    "seller_sku": "mat-ong-sam-120ml-1hu",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "mat-ong-sam-120ml-1hu",
+     "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+     "price": 245000,
+     "stock": null,
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "eadeabd467c17091",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   },
+   {
+    "row_no": 18,
+    "channel": "shopee",
+    "sku_key": "saphraton-20v",
+    "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+    "price_vnd": 299000,
+    "status": "\u0110ang giao",
+    "qty": 1,
+    "order_id_hash": "5ac8b45b6f1d1876",
+    "item_id": null,
+    "seller_sku": "saphraton-20v",
+    "raw": {
+     "item_id": null,
+     "seller_sku": "saphraton-20v",
+     "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+     "price": 299000,
+     "stock": null,
+     "status": "\u0110ang giao",
+     "ads_spend": null,
+     "qty": 1,
+     "order_id_hash": "5ac8b45b6f1d1876",
+     "sale_price": null,
+     "voucher_code": null
+    }
+   }
+  ]
+ },
+ "orders": [
+  {
+   "channel": "shopee",
+   "order_id_hash": "e45f5707a035b845",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 318000,
+   "items": [
+    {
+     "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+     "qty": 2,
+     "price_vnd": 159000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "f93d32f8a76fdfab",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 299000,
+   "items": [
+    {
+     "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 299000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "26f9afdb033b3c89",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 439000,
+   "items": [
+    {
+     "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 439000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "3829e76938e5d155",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 490000,
+   "items": [
+    {
+     "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+     "qty": 2,
+     "price_vnd": 245000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "01eb6b7302b1af18",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 598000,
+   "items": [
+    {
+     "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 598000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "be62a4bf2d62b387",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 548000,
+   "items": [
+    {
+     "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 389000
+    },
+    {
+     "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 159000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "f8fb523fa8a932ec",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 598000,
+   "items": [
+    {
+     "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+     "qty": 2,
+     "price_vnd": 299000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "4bb545be66b9c0cb",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 878000,
+   "items": [
+    {
+     "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+     "qty": 2,
+     "price_vnd": 439000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "3f4f49805ece0f9b",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 245000,
+   "items": [
+    {
+     "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 245000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "f6547ee86a155de9",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 477000,
+   "items": [
+    {
+     "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+     "qty": 3,
+     "price_vnd": 159000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "cb7b8ea63f11296b",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 1196000,
+   "items": [
+    {
+     "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+     "qty": 2,
+     "price_vnd": 598000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "eb4114dbee67dab5",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 778000,
+   "items": [
+    {
+     "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+     "qty": 2,
+     "price_vnd": 389000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "94946327dc8c8deb",
+   "status": "Ho\u00e0n th\u00e0nh",
+   "amount_vnd": 299000,
+   "items": [
+    {
+     "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 299000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "6e36c2b3d6733de0",
+   "status": "\u0110\u00e3 h\u1ee7y",
+   "amount_vnd": 439000,
+   "items": [
+    {
+     "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 439000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "eadeabd467c17091",
+   "status": "\u0110\u00e3 h\u1ee7y",
+   "amount_vnd": 245000,
+   "items": [
+    {
+     "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 245000
+    }
+   ]
+  },
+  {
+   "channel": "shopee",
+   "order_id_hash": "5ac8b45b6f1d1876",
+   "status": "\u0110ang giao",
+   "amount_vnd": 299000,
+   "items": [
+    {
+     "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+     "qty": 1,
+     "price_vnd": 299000
+    }
+   ]
+  }
+ ],
+ "batches": [
+  {
+   "name": "base",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "e45f5707a035b845",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 318000,
+     "items": [
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f93d32f8a76fdfab",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "26f9afdb033b3c89",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 439000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 439000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "3829e76938e5d155",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 490000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 245000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "01eb6b7302b1af18",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 598000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 598000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "be62a4bf2d62b387",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 548000,
+     "items": [
+      {
+       "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 389000
+      },
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f8fb523fa8a932ec",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 598000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "4bb545be66b9c0cb",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 878000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 439000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "3f4f49805ece0f9b",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 245000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 245000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f6547ee86a155de9",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 477000,
+     "items": [
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 3,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "cb7b8ea63f11296b",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 1196000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 598000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "eb4114dbee67dab5",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 778000,
+     "items": [
+      {
+       "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 389000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "94946327dc8c8deb",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "6e36c2b3d6733de0",
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "amount_vnd": 439000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 439000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "eadeabd467c17091",
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "amount_vnd": 245000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 245000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "5ac8b45b6f1d1876",
+     "status": "\u0110ang giao",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [
+    [
+     "shopee",
+     "01eb6b7302b1af18",
+     {
+      "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+      "tax_code": "0109999999",
+      "address": "SO 99 PHO HOA DON GIA LAP",
+      "email": "hoadon.gialap@example.invalid"
+     }
+    ]
+   ],
+   "invoiced": [],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [
+     {
+      "channel": "shopee",
+      "order_id_hash": "26f9afdb033b3c89",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 439000,
+      "items": [
+       {
+        "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 439000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "3829e76938e5d155",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 490000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 245000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "3f4f49805ece0f9b",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 245000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 245000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "4bb545be66b9c0cb",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 878000,
+      "items": [
+       {
+        "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 439000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "94946327dc8c8deb",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 299000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "be62a4bf2d62b387",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 548000,
+      "items": [
+       {
+        "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 389000
+       },
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "cb7b8ea63f11296b",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 1196000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 598000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "e45f5707a035b845",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 318000,
+      "items": [
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "eb4114dbee67dab5",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 778000,
+      "items": [
+       {
+        "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 389000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f6547ee86a155de9",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 477000,
+      "items": [
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 3,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f8fb523fa8a932ec",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 598000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f93d32f8a76fdfab",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 299000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "01eb6b7302b1af18",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 598000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 598000
+       }
+      ],
+      "kind": "can_mst",
+      "buyer": {
+       "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+       "tax_code": "0109999999",
+       "address": "SO 99 PHO HOA DON GIA LAP",
+       "email": "hoadon.gialap@example.invalid"
+      },
+      "orig_kind": null,
+      "ref_batch_key": null
+     }
+    ],
+    "excluded": {
+     "huy": 2,
+     "chua_dat_moc": 1,
+     "da_lap": 0
+    },
+    "unmatched_yeu_cau": 0
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n1,26f9afdb033b3c89,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savigout 30 vi\u00ean (M\u1eaaU),1,439000,439000,\r\n1,3829e76938e5d155,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,M\u1eadt ong s\u00e2m 120ml (M\u1eaaU),2,245000,490000,\r\n1,3f4f49805ece0f9b,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,M\u1eadt ong s\u00e2m 120ml (M\u1eaaU),1,245000,245000,\r\n1,4bb545be66b9c0cb,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savigout 30 vi\u00ean (M\u1eaaU),2,439000,878000,\r\n1,94946327dc8c8deb,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),1,299000,299000,\r\n1,be62a4bf2d62b387,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Sapentol 30 vi\u00ean (M\u1eaaU),1,389000,389000,\r\n1,be62a4bf2d62b387,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),1,159000,159000,\r\n1,cb7b8ea63f11296b,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,M\u1eadt ong s\u00e2m 300ml (M\u1eaaU),2,598000,1196000,\r\n1,e45f5707a035b845,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),2,159000,318000,\r\n1,eb4114dbee67dab5,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Sapentol 30 vi\u00ean (M\u1eaaU),2,389000,778000,\r\n1,f6547ee86a155de9,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),3,159000,477000,\r\n1,f8fb523fa8a932ec,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),2,299000,598000,\r\n1,f93d32f8a76fdfab,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),1,299000,299000,\r\n1,01eb6b7302b1af18,2026-10-12,shopee,can_mst,CONG TY GIA LAP HOA DON MAU,0109999999,SO 99 PHO HOA DON GIA LAP,hoadon.gialap@example.invalid,M\u1eadt ong s\u00e2m 300ml (M\u1eaaU),1,598000,598000,\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (13 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 13 (th\u01b0\u1eddng 12 \u00b7 c\u1ea7n MST 1 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 0) \u2014 t\u1ed5ng 7.163.000\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 2 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 1 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 0\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n- `26f9afdb` shopee 439.000\u0111\n- `3829e769` shopee 490.000\u0111\n- `3f4f4980` shopee 245.000\u0111\n- `4bb545be` shopee 878.000\u0111\n- `94946327` shopee 299.000\u0111\n- `be62a4bf` shopee 548.000\u0111\n- `cb7b8ea6` shopee 1.196.000\u0111\n- `e45f5707` shopee 318.000\u0111\n- `eb4114db` shopee 778.000\u0111\n- `f6547ee8` shopee 477.000\u0111\n- `f8fb523f` shopee 598.000\u0111\n- `f93d32f8` shopee 299.000\u0111\n- `01eb6b73` shopee 598.000\u0111 \u2014 c\u1ea7n MST\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "ban_giao",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "e45f5707a035b845",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 318000,
+     "items": [
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f93d32f8a76fdfab",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "26f9afdb033b3c89",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 439000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 439000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "3829e76938e5d155",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 490000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 245000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "01eb6b7302b1af18",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 598000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 598000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "be62a4bf2d62b387",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 548000,
+     "items": [
+      {
+       "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 389000
+      },
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f8fb523fa8a932ec",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 598000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "4bb545be66b9c0cb",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 878000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 439000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "3f4f49805ece0f9b",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 245000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 245000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f6547ee86a155de9",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 477000,
+     "items": [
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 3,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "cb7b8ea63f11296b",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 1196000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 598000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "eb4114dbee67dab5",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 778000,
+     "items": [
+      {
+       "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 389000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "94946327dc8c8deb",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "6e36c2b3d6733de0",
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "amount_vnd": 439000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 439000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "eadeabd467c17091",
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "amount_vnd": 245000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 245000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "5ac8b45b6f1d1876",
+     "status": "\u0110ang giao",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [
+    [
+     "shopee",
+     "01eb6b7302b1af18",
+     {
+      "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+      "tax_code": "0109999999",
+      "address": "SO 99 PHO HOA DON GIA LAP",
+      "email": "hoadon.gialap@example.invalid"
+     }
+    ]
+   ],
+   "invoiced": [],
+   "trigger": "ban_giao_van_chuyen",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 3,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "ban_giao_van_chuyen",
+    "lines": [
+     {
+      "channel": "shopee",
+      "order_id_hash": "26f9afdb033b3c89",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 439000,
+      "items": [
+       {
+        "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 439000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "3829e76938e5d155",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 490000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 245000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "3f4f49805ece0f9b",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 245000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 245000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "4bb545be66b9c0cb",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 878000,
+      "items": [
+       {
+        "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 439000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "5ac8b45b6f1d1876",
+      "status": "\u0110ang giao",
+      "amount_vnd": 299000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "94946327dc8c8deb",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 299000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "be62a4bf2d62b387",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 548000,
+      "items": [
+       {
+        "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 389000
+       },
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "cb7b8ea63f11296b",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 1196000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 598000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "e45f5707a035b845",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 318000,
+      "items": [
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "eb4114dbee67dab5",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 778000,
+      "items": [
+       {
+        "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 389000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f6547ee86a155de9",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 477000,
+      "items": [
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 3,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f8fb523fa8a932ec",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 598000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f93d32f8a76fdfab",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 299000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "01eb6b7302b1af18",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 598000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 598000
+       }
+      ],
+      "kind": "can_mst",
+      "buyer": {
+       "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+       "tax_code": "0109999999",
+       "address": "SO 99 PHO HOA DON GIA LAP",
+       "email": "hoadon.gialap@example.invalid"
+      },
+      "orig_kind": null,
+      "ref_batch_key": null
+     }
+    ],
+    "excluded": {
+     "huy": 2,
+     "chua_dat_moc": 0,
+     "da_lap": 0
+    },
+    "unmatched_yeu_cau": 0
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n3,26f9afdb033b3c89,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savigout 30 vi\u00ean (M\u1eaaU),1,439000,439000,\r\n3,3829e76938e5d155,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,M\u1eadt ong s\u00e2m 120ml (M\u1eaaU),2,245000,490000,\r\n3,3f4f49805ece0f9b,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,M\u1eadt ong s\u00e2m 120ml (M\u1eaaU),1,245000,245000,\r\n3,4bb545be66b9c0cb,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savigout 30 vi\u00ean (M\u1eaaU),2,439000,878000,\r\n3,5ac8b45b6f1d1876,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),1,299000,299000,\r\n3,94946327dc8c8deb,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),1,299000,299000,\r\n3,be62a4bf2d62b387,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Sapentol 30 vi\u00ean (M\u1eaaU),1,389000,389000,\r\n3,be62a4bf2d62b387,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),1,159000,159000,\r\n3,cb7b8ea63f11296b,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,M\u1eadt ong s\u00e2m 300ml (M\u1eaaU),2,598000,1196000,\r\n3,e45f5707a035b845,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),2,159000,318000,\r\n3,eb4114dbee67dab5,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Sapentol 30 vi\u00ean (M\u1eaaU),2,389000,778000,\r\n3,f6547ee86a155de9,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),3,159000,477000,\r\n3,f8fb523fa8a932ec,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),2,299000,598000,\r\n3,f93d32f8a76fdfab,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),1,299000,299000,\r\n3,01eb6b7302b1af18,2026-10-12,shopee,can_mst,CONG TY GIA LAP HOA DON MAU,0109999999,SO 99 PHO HOA DON GIA LAP,hoadon.gialap@example.invalid,M\u1eadt ong s\u00e2m 300ml (M\u1eaaU),1,598000,598000,\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (14 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `ban_giao_van_chuyen` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 3\n- S\u1ed1 d\u00f2ng: 14 (th\u01b0\u1eddng 13 \u00b7 c\u1ea7n MST 1 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 0) \u2014 t\u1ed5ng 7.462.000\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 2 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 0 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 0\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n- `26f9afdb` shopee 439.000\u0111\n- `3829e769` shopee 490.000\u0111\n- `3f4f4980` shopee 245.000\u0111\n- `4bb545be` shopee 878.000\u0111\n- `5ac8b45b` shopee 299.000\u0111\n- `94946327` shopee 299.000\u0111\n- `be62a4bf` shopee 548.000\u0111\n- `cb7b8ea6` shopee 1.196.000\u0111\n- `e45f5707` shopee 318.000\u0111\n- `eb4114db` shopee 778.000\u0111\n- `f6547ee8` shopee 477.000\u0111\n- `f8fb523f` shopee 598.000\u0111\n- `f93d32f8` shopee 299.000\u0111\n- `01eb6b73` shopee 598.000\u0111 \u2014 c\u1ea7n MST\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "pending_first",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "e45f5707a035b845",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 318000,
+     "items": [
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f93d32f8a76fdfab",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "26f9afdb033b3c89",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 439000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 439000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "3829e76938e5d155",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 490000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 245000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "01eb6b7302b1af18",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 598000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 598000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "be62a4bf2d62b387",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 548000,
+     "items": [
+      {
+       "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 389000
+      },
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f8fb523fa8a932ec",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 598000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "4bb545be66b9c0cb",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 878000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 439000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "3f4f49805ece0f9b",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 245000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 245000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f6547ee86a155de9",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 477000,
+     "items": [
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 3,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "cb7b8ea63f11296b",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 1196000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 598000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "eb4114dbee67dab5",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 778000,
+     "items": [
+      {
+       "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 389000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "94946327dc8c8deb",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "6e36c2b3d6733de0",
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "amount_vnd": 439000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 439000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "eadeabd467c17091",
+     "status": "\u0110\u00e3 h\u1ee7y",
+     "amount_vnd": 245000,
+     "items": [
+      {
+       "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 245000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "5ac8b45b6f1d1876",
+     "status": "\u0110ang giao",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [
+    [
+     "shopee",
+     "01eb6b7302b1af18",
+     {
+      "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+      "tax_code": "0109999999",
+      "address": "SO 99 PHO HOA DON GIA LAP",
+      "email": "hoadon.gialap@example.invalid"
+     }
+    ]
+   ],
+   "invoiced": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "26f9afdb033b3c89",
+     "kind": "thuong",
+     "batch_key": "2026-10-11-aaaaaaaaaaaa",
+     "status": "pending",
+     "amount_vnd": 439000
+    }
+   ],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [
+     {
+      "channel": "shopee",
+      "order_id_hash": "3829e76938e5d155",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 490000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 245000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "3f4f49805ece0f9b",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 245000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 120ml (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 245000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "4bb545be66b9c0cb",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 878000,
+      "items": [
+       {
+        "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 439000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "94946327dc8c8deb",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 299000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "be62a4bf2d62b387",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 548000,
+      "items": [
+       {
+        "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 389000
+       },
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "cb7b8ea63f11296b",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 1196000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 598000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "e45f5707a035b845",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 318000,
+      "items": [
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "eb4114dbee67dab5",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 778000,
+      "items": [
+       {
+        "title": "Sapentol 30 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 389000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f6547ee86a155de9",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 477000,
+      "items": [
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 3,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f8fb523fa8a932ec",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 598000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f93d32f8a76fdfab",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 299000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "01eb6b7302b1af18",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 598000,
+      "items": [
+       {
+        "title": "M\u1eadt ong s\u00e2m 300ml (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 598000
+       }
+      ],
+      "kind": "can_mst",
+      "buyer": {
+       "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+       "tax_code": "0109999999",
+       "address": "SO 99 PHO HOA DON GIA LAP",
+       "email": "hoadon.gialap@example.invalid"
+      },
+      "orig_kind": null,
+      "ref_batch_key": null
+     }
+    ],
+    "excluded": {
+     "huy": 2,
+     "chua_dat_moc": 1,
+     "da_lap": 1
+    },
+    "unmatched_yeu_cau": 0
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n1,3829e76938e5d155,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,M\u1eadt ong s\u00e2m 120ml (M\u1eaaU),2,245000,490000,\r\n1,3f4f49805ece0f9b,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,M\u1eadt ong s\u00e2m 120ml (M\u1eaaU),1,245000,245000,\r\n1,4bb545be66b9c0cb,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savigout 30 vi\u00ean (M\u1eaaU),2,439000,878000,\r\n1,94946327dc8c8deb,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),1,299000,299000,\r\n1,be62a4bf2d62b387,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Sapentol 30 vi\u00ean (M\u1eaaU),1,389000,389000,\r\n1,be62a4bf2d62b387,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),1,159000,159000,\r\n1,cb7b8ea63f11296b,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,M\u1eadt ong s\u00e2m 300ml (M\u1eaaU),2,598000,1196000,\r\n1,e45f5707a035b845,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),2,159000,318000,\r\n1,eb4114dbee67dab5,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Sapentol 30 vi\u00ean (M\u1eaaU),2,389000,778000,\r\n1,f6547ee86a155de9,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),3,159000,477000,\r\n1,f8fb523fa8a932ec,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),2,299000,598000,\r\n1,f93d32f8a76fdfab,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,Saphraton 20 vi\u00ean (M\u1eaaU),1,299000,299000,\r\n1,01eb6b7302b1af18,2026-10-12,shopee,can_mst,CONG TY GIA LAP HOA DON MAU,0109999999,SO 99 PHO HOA DON GIA LAP,hoadon.gialap@example.invalid,M\u1eadt ong s\u00e2m 300ml (M\u1eaaU),1,598000,598000,\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (12 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 12 (th\u01b0\u1eddng 11 \u00b7 c\u1ea7n MST 1 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 0) \u2014 t\u1ed5ng 6.724.000\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 2 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 1 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 1\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n- `3829e769` shopee 490.000\u0111\n- `3f4f4980` shopee 245.000\u0111\n- `4bb545be` shopee 878.000\u0111\n- `94946327` shopee 299.000\u0111\n- `be62a4bf` shopee 548.000\u0111\n- `cb7b8ea6` shopee 1.196.000\u0111\n- `e45f5707` shopee 318.000\u0111\n- `eb4114db` shopee 778.000\u0111\n- `f6547ee8` shopee 477.000\u0111\n- `f8fb523f` shopee 598.000\u0111\n- `f93d32f8` shopee 299.000\u0111\n- `01eb6b73` shopee 598.000\u0111 \u2014 c\u1ea7n MST\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "formula",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "aaaaaaaaaaaaaaaa",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 1,
+     "items": [
+      {
+       "title": "=HYPERLINK(\"x\")",
+       "qty": 1,
+       "price_vnd": 1
+      },
+      {
+       "title": "-1,5\n\"q\"",
+       "qty": null,
+       "price_vnd": 3
+      },
+      {
+       "title": "@a",
+       "qty": 2,
+       "price_vnd": 0
+      },
+      {
+       "title": "\tx",
+       "qty": 1,
+       "price_vnd": 1
+      },
+      {
+       "title": null,
+       "qty": 1,
+       "price_vnd": null
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [],
+   "invoiced": [],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [
+     {
+      "channel": "shopee",
+      "order_id_hash": "aaaaaaaaaaaaaaaa",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 1,
+      "items": [
+       {
+        "title": "=HYPERLINK(\"x\")",
+        "qty": 1,
+        "price_vnd": 1
+       },
+       {
+        "title": "-1,5\n\"q\"",
+        "qty": null,
+        "price_vnd": 3
+       },
+       {
+        "title": "@a",
+        "qty": 2,
+        "price_vnd": 0
+       },
+       {
+        "title": "\tx",
+        "qty": 1,
+        "price_vnd": 1
+       },
+       {
+        "title": null,
+        "qty": 1,
+        "price_vnd": null
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     }
+    ],
+    "excluded": {
+     "huy": 0,
+     "chua_dat_moc": 0,
+     "da_lap": 0
+    },
+    "unmatched_yeu_cau": 0
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n1,aaaaaaaaaaaaaaaa,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,\"'=HYPERLINK(\"\"x\"\")\",1,1,1,\r\n1,aaaaaaaaaaaaaaaa,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,\"'-1,5\n\"\"q\"\"\",,3,,\r\n1,aaaaaaaaaaaaaaaa,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,'@a,2,0,0,\r\n1,aaaaaaaaaaaaaaaa,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,'\tx,1,1,1,\r\n1,aaaaaaaaaaaaaaaa,2026-10-12,shopee,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,,1,,,\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (1 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 1 (th\u01b0\u1eddng 1 \u00b7 c\u1ea7n MST 0 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 0) \u2014 t\u1ed5ng 1\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 0 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 0 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 0\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n- `aaaaaaaa` shopee 1\u0111\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "empty_items_tiktok",
+   "orders": [
+    {
+     "channel": "tiktok",
+     "order_id_hash": "bbbbbbbbbbbbbbbb",
+     "status": "Completed",
+     "amount_vnd": 0,
+     "items": []
+    },
+    {
+     "channel": "tiktok",
+     "order_id_hash": "cccccccccccccccc",
+     "status": " Delivered ",
+     "amount_vnd": 0,
+     "items": []
+    },
+    {
+     "channel": "tiktok",
+     "order_id_hash": "eeeeeeeeeeeeeeee",
+     "status": null,
+     "amount_vnd": 0,
+     "items": []
+    },
+    {
+     "channel": "tiktok",
+     "order_id_hash": "ffffffffffffffff",
+     "status": "Cancelled",
+     "amount_vnd": 0,
+     "items": []
+    }
+   ],
+   "yeu_cau": [],
+   "invoiced": [],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [
+     {
+      "channel": "tiktok",
+      "order_id_hash": "bbbbbbbbbbbbbbbb",
+      "status": "Completed",
+      "amount_vnd": 0,
+      "items": [],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "tiktok",
+      "order_id_hash": "cccccccccccccccc",
+      "status": " Delivered ",
+      "amount_vnd": 0,
+      "items": [],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     }
+    ],
+    "excluded": {
+     "huy": 1,
+     "chua_dat_moc": 1,
+     "da_lap": 0
+    },
+    "unmatched_yeu_cau": 0
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n1,bbbbbbbbbbbbbbbb,2026-10-12,tiktok,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,,,,,\r\n1,cccccccccccccccc,2026-10-12,tiktok,thuong,Ng\u01b0\u1eddi mua kh\u00f4ng l\u1ea5y h\u00f3a \u0111\u01a1n,,,,,,,,\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (2 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 2 (th\u01b0\u1eddng 2 \u00b7 c\u1ea7n MST 0 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 0) \u2014 t\u1ed5ng 0\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 1 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 1 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 0\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n- `bbbbbbbb` tiktok 0\u0111\n- `cccccccc` tiktok 0\u0111\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "adj_can_mst",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "status": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n",
+     "amount_vnd": 100,
+     "items": [
+      {
+       "title": "X",
+       "qty": 1,
+       "price_vnd": 100
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [],
+   "invoiced": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "kind": "can_mst",
+     "batch_key": "2026-10-11-abcdefabcdef",
+     "status": "approved",
+     "amount_vnd": 100
+    }
+   ],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [
+     {
+      "channel": "shopee",
+      "order_id_hash": "dddddddddddddddd",
+      "status": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n",
+      "amount_vnd": 100,
+      "items": [
+       {
+        "title": "X",
+        "qty": 1,
+        "price_vnd": 100
+       }
+      ],
+      "kind": "dieu_chinh",
+      "buyer": null,
+      "orig_kind": "can_mst",
+      "ref_batch_key": "2026-10-11-abcdefabcdef"
+     }
+    ],
+    "excluded": {
+     "huy": 0,
+     "chua_dat_moc": 0,
+     "da_lap": 0
+    },
+    "unmatched_yeu_cau": 0
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n1,dddddddddddddddd,2026-10-12,shopee,dieu_chinh,THEO H\u0110 G\u1ed0C l\u00f4 2026-10-11-abcdefabcdef \u2014 g\u1ed1c c\u1ea7n MST: l\u1ea5y t\u00ean/MST/\u0111\u1ecba ch\u1ec9 t\u1eeb H\u0110 g\u1ed1c,,,,X,1,100,100,2026-10-11-abcdefabcdef\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (1 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 1 (th\u01b0\u1eddng 0 \u00b7 c\u1ea7n MST 0 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 1) \u2014 t\u1ed5ng 100\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 0 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 0 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 0\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n- `dddddddd` shopee 100\u0111 \u2014 \u0111i\u1ec1u ch\u1ec9nh \u2014 l\u00f4 g\u1ed1c `2026-10-11-abcdefabcdef` \u2014 g\u1ed1c c\u1ea7n MST \u2014 ng\u01b0\u1eddi mua THEO H\u0110 G\u1ed0C\n\nD\u00f2ng \u0111i\u1ec1u ch\u1ec9nh: s\u1ed1 ti\u1ec1n ghi D\u01af\u01a0NG = gi\u00e1 tr\u1ecb \u0111i\u1ec1u ch\u1ec9nh GI\u1ea2M theo H\u0110 g\u1ed1c (quy \u01b0\u1edbc d\u1ea5u GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd m\u1eabu file nh\u1eadp c\u1ee7a nh\u00e0 cung c\u1ea5p H\u0110\u0110T); ng\u01b0\u1eddi mua l\u1ea5y \u0111\u00fang nh\u01b0 H\u0110 g\u1ed1c.\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "adj_thuong",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "status": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n",
+     "amount_vnd": 100,
+     "items": [
+      {
+       "title": "X",
+       "qty": 1,
+       "price_vnd": 100
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [],
+   "invoiced": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "kind": "thuong",
+     "batch_key": "2026-10-11-abcdefabcdef",
+     "status": "approved",
+     "amount_vnd": 100
+    }
+   ],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [
+     {
+      "channel": "shopee",
+      "order_id_hash": "dddddddddddddddd",
+      "status": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n",
+      "amount_vnd": 100,
+      "items": [
+       {
+        "title": "X",
+        "qty": 1,
+        "price_vnd": 100
+       }
+      ],
+      "kind": "dieu_chinh",
+      "buyer": null,
+      "orig_kind": "thuong",
+      "ref_batch_key": "2026-10-11-abcdefabcdef"
+     }
+    ],
+    "excluded": {
+     "huy": 0,
+     "chua_dat_moc": 0,
+     "da_lap": 0
+    },
+    "unmatched_yeu_cau": 0
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n1,dddddddddddddddd,2026-10-12,shopee,dieu_chinh,THEO H\u0110 G\u1ed0C l\u00f4 2026-10-11-abcdefabcdef,,,,X,1,100,100,2026-10-11-abcdefabcdef\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (1 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 1 (th\u01b0\u1eddng 0 \u00b7 c\u1ea7n MST 0 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 1) \u2014 t\u1ed5ng 100\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 0 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 0 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 0\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n- `dddddddd` shopee 100\u0111 \u2014 \u0111i\u1ec1u ch\u1ec9nh \u2014 l\u00f4 g\u1ed1c `2026-10-11-abcdefabcdef` \u2014 ng\u01b0\u1eddi mua THEO H\u0110 G\u1ed0C\n\nD\u00f2ng \u0111i\u1ec1u ch\u1ec9nh: s\u1ed1 ti\u1ec1n ghi D\u01af\u01a0NG = gi\u00e1 tr\u1ecb \u0111i\u1ec1u ch\u1ec9nh GI\u1ea2M theo H\u0110 g\u1ed1c (quy \u01b0\u1edbc d\u1ea5u GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd m\u1eabu file nh\u1eadp c\u1ee7a nh\u00e0 cung c\u1ea5p H\u0110\u0110T); ng\u01b0\u1eddi mua l\u1ea5y \u0111\u00fang nh\u01b0 H\u0110 g\u1ed1c.\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "adj_yeu_cau",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "status": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n",
+     "amount_vnd": 100,
+     "items": [
+      {
+       "title": "X",
+       "qty": 1,
+       "price_vnd": 100
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [
+    [
+     "shopee",
+     "dddddddddddddddd",
+     {
+      "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+      "tax_code": "0109999999",
+      "address": "SO 99 PHO HOA DON GIA LAP",
+      "email": "hoadon.gialap@example.invalid"
+     }
+    ],
+    [
+     "shopee",
+     "9999999999999999",
+     {
+      "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+      "tax_code": "0109999999",
+      "address": "SO 99 PHO HOA DON GIA LAP",
+      "email": "hoadon.gialap@example.invalid"
+     }
+    ]
+   ],
+   "invoiced": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "kind": "can_mst",
+     "batch_key": "2026-10-11-abcdefabcdef",
+     "status": "approved",
+     "amount_vnd": 100
+    }
+   ],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [
+     {
+      "channel": "shopee",
+      "order_id_hash": "dddddddddddddddd",
+      "status": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n",
+      "amount_vnd": 100,
+      "items": [
+       {
+        "title": "X",
+        "qty": 1,
+        "price_vnd": 100
+       }
+      ],
+      "kind": "dieu_chinh",
+      "buyer": {
+       "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+       "tax_code": "0109999999",
+       "address": "SO 99 PHO HOA DON GIA LAP",
+       "email": "hoadon.gialap@example.invalid"
+      },
+      "orig_kind": "can_mst",
+      "ref_batch_key": "2026-10-11-abcdefabcdef"
+     }
+    ],
+    "excluded": {
+     "huy": 0,
+     "chua_dat_moc": 0,
+     "da_lap": 0
+    },
+    "unmatched_yeu_cau": 1
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n1,dddddddddddddddd,2026-10-12,shopee,dieu_chinh,CONG TY GIA LAP HOA DON MAU,0109999999,SO 99 PHO HOA DON GIA LAP,hoadon.gialap@example.invalid,X,1,100,100,2026-10-11-abcdefabcdef\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (1 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 1 (th\u01b0\u1eddng 0 \u00b7 c\u1ea7n MST 0 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 1) \u2014 t\u1ed5ng 100\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 0 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 0 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 0\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n- `dddddddd` shopee 100\u0111 \u2014 \u0111i\u1ec1u ch\u1ec9nh \u2014 l\u00f4 g\u1ed1c `2026-10-11-abcdefabcdef` \u2014 g\u1ed1c c\u1ea7n MST \u2014 ng\u01b0\u1eddi mua theo file y\u00eau c\u1ea7u\n\nD\u00f2ng \u0111i\u1ec1u ch\u1ec9nh: s\u1ed1 ti\u1ec1n ghi D\u01af\u01a0NG = gi\u00e1 tr\u1ecb \u0111i\u1ec1u ch\u1ec9nh GI\u1ea2M theo H\u0110 g\u1ed1c (quy \u01b0\u1edbc d\u1ea5u GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd m\u1eabu file nh\u1eadp c\u1ee7a nh\u00e0 cung c\u1ea5p H\u0110\u0110T); ng\u01b0\u1eddi mua l\u1ea5y \u0111\u00fang nh\u01b0 H\u0110 g\u1ed1c.\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "adj_already",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "status": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n",
+     "amount_vnd": 100,
+     "items": [
+      {
+       "title": "X",
+       "qty": 1,
+       "price_vnd": 100
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [],
+   "invoiced": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "kind": "thuong",
+     "batch_key": "2026-10-11-abcdefabcdef",
+     "status": "approved",
+     "amount_vnd": 100
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "kind": "dieu_chinh",
+     "batch_key": "2026-10-12-abcdefabcdef",
+     "status": "pending",
+     "amount_vnd": 100
+    }
+   ],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [],
+    "excluded": {
+     "huy": 0,
+     "chua_dat_moc": 0,
+     "da_lap": 1
+    },
+    "unmatched_yeu_cau": 0
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (0 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 0 (th\u01b0\u1eddng 0 \u00b7 c\u1ea7n MST 0 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 0) \u2014 t\u1ed5ng 0\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 0 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 0 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 1\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "adj_pending_orig",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "status": "Tr\u1ea3 h\u00e0ng/Ho\u00e0n ti\u1ec1n",
+     "amount_vnd": 100,
+     "items": [
+      {
+       "title": "X",
+       "qty": 1,
+       "price_vnd": 100
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [],
+   "invoiced": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "dddddddddddddddd",
+     "kind": "thuong",
+     "batch_key": "2026-10-11-abcdefabcdef",
+     "status": "pending",
+     "amount_vnd": 100
+    }
+   ],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "lan_lap",
+    "ma_tham_chieu",
+    "ngay_lap",
+    "kenh",
+    "loai",
+    "ten_nguoi_mua",
+    "mst",
+    "dia_chi",
+    "email",
+    "ten_hang",
+    "so_luong",
+    "don_gia",
+    "thanh_tien",
+    "lo_goc"
+   ],
+   "confirmed_by": null,
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [],
+    "excluded": {
+     "huy": 0,
+     "chua_dat_moc": 0,
+     "da_lap": 1
+    },
+    "unmatched_yeu_cau": 0
+   },
+   "csv": "lan_lap,ma_tham_chieu,ngay_lap,kenh,loai,ten_nguoi_mua,mst,dia_chi,email,ten_hang,so_luong,don_gia,thanh_tien,lo_goc\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (0 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 GI\u1ea2 \u0110\u1ecaNH, ch\u01b0a t\u01b0 v\u1ea5n thu\u1ebf ch\u1ed1t (h\u1ea1n 25/10/2026)\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 0 (th\u01b0\u1eddng 0 \u00b7 c\u1ea7n MST 0 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 0) \u2014 t\u1ed5ng 0\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 0 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 0 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 1\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  {
+   "name": "cols_subset",
+   "orders": [
+    {
+     "channel": "shopee",
+     "order_id_hash": "e45f5707a035b845",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 318000,
+     "items": [
+      {
+       "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+       "qty": 2,
+       "price_vnd": 159000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "f93d32f8a76fdfab",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 299000,
+     "items": [
+      {
+       "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 299000
+      }
+     ]
+    },
+    {
+     "channel": "shopee",
+     "order_id_hash": "26f9afdb033b3c89",
+     "status": "Ho\u00e0n th\u00e0nh",
+     "amount_vnd": 439000,
+     "items": [
+      {
+       "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+       "qty": 1,
+       "price_vnd": 439000
+      }
+     ]
+    }
+   ],
+   "yeu_cau": [
+    [
+     "shopee",
+     "01eb6b7302b1af18",
+     {
+      "buyer_name": "CONG TY GIA LAP HOA DON MAU",
+      "tax_code": "0109999999",
+      "address": "SO 99 PHO HOA DON GIA LAP",
+      "email": "hoadon.gialap@example.invalid"
+     }
+    ]
+   ],
+   "invoiced": [],
+   "trigger": "giao_thanh_cong",
+   "csv_columns": [
+    "ma_tham_chieu",
+    "ten_hang",
+    "thanh_tien"
+   ],
+   "confirmed_by": "T\u01b0 v\u1ea5n thu\u1ebf A",
+   "attempt": 1,
+   "batch": {
+    "day": "2026-10-12",
+    "trigger": "giao_thanh_cong",
+    "lines": [
+     {
+      "channel": "shopee",
+      "order_id_hash": "26f9afdb033b3c89",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 439000,
+      "items": [
+       {
+        "title": "Savigout 30 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 439000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "e45f5707a035b845",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 318000,
+      "items": [
+       {
+        "title": "Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU)",
+        "qty": 2,
+        "price_vnd": 159000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     },
+     {
+      "channel": "shopee",
+      "order_id_hash": "f93d32f8a76fdfab",
+      "status": "Ho\u00e0n th\u00e0nh",
+      "amount_vnd": 299000,
+      "items": [
+       {
+        "title": "Saphraton 20 vi\u00ean (M\u1eaaU)",
+        "qty": 1,
+        "price_vnd": 299000
+       }
+      ],
+      "kind": "thuong",
+      "buyer": null,
+      "orig_kind": null,
+      "ref_batch_key": null
+     }
+    ],
+    "excluded": {
+     "huy": 0,
+     "chua_dat_moc": 0,
+     "da_lap": 0
+    },
+    "unmatched_yeu_cau": 1
+   },
+   "csv": "ma_tham_chieu,ten_hang,thanh_tien\r\n26f9afdb033b3c89,Savigout 30 vi\u00ean (M\u1eaaU),439000\r\ne45f5707a035b845,Savina tu\u00fdp 12 vi\u00ean (M\u1eaaU),318000\r\nf93d32f8a76fdfab,Saphraton 20 vi\u00ean (M\u1eaaU),299000\r\n",
+   "title": "L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 2026-10-12 (3 d\u00f2ng)",
+   "payload": "# L\u00f4 h\u00f3a \u0111\u01a1n NH\u00c1P 12/10/2026 \u2014 `2026-10-12-abcdef012345`\n\n- M\u1ed1c l\u1eadp h\u00f3a \u0111\u01a1n: `giao_thanh_cong` \u2014 \u0111\u00e3 ch\u1ed1t b\u1edfi T\u01b0 v\u1ea5n thu\u1ebf A\n- L\u1ea7n l\u1eadp trong ng\u00e0y: 1\n- S\u1ed1 d\u00f2ng: 3 (th\u01b0\u1eddng 3 \u00b7 c\u1ea7n MST 0 \u00b7 \u0111i\u1ec1u ch\u1ec9nh 0) \u2014 t\u1ed5ng 1.056.000\u0111\n- Lo\u1ea1i kh\u1ecfi l\u00f4: \u0111\u01a1n h\u1ee7y 0 \u00b7 ch\u01b0a \u0111\u1ea1t m\u1ed1c 0 \u00b7 \u0111\u00e3 l\u1eadp \u1edf l\u00f4 kh\u00e1c 0\n\n## D\u00f2ng (m\u00e3 tham chi\u1ebfu r\u00fat g\u1ecdn 8 k\u00fd t\u1ef1)\n\n- `26f9afdb` shopee 439.000\u0111\n- `e45f5707` shopee 318.000\u0111\n- `f93d32f8` shopee 299.000\u0111\n\ncsv_sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n\nB\u1ea2N NH\u00c1P \u2014 agent kh\u00f4ng k\u00fd s\u1ed1, kh\u00f4ng ph\u00e1t h\u00e0nh, kh\u00f4ng g\u1eedi. K\u1ebf to\u00e1n ch\u1ea1y `python -m agents.acc_invoice --verify-draft <id> --file <file nh\u00e1p>` tr\u01b0\u1edbc khi nh\u1eadp tay v\u00e0o ph\u1ea7n m\u1ec1m H\u0110\u0110T.\n",
+   "batch_key": "2026-10-12-abcdef012345",
+   "csv_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  }
+ ],
+ "cell_safe": [
+  [
+   null,
+   ""
+  ],
+  [
+   "",
+   ""
+  ],
+  [
+   "=1",
+   "'=1"
+  ],
+  [
+   "+1",
+   "'+1"
+  ],
+  [
+   "-1",
+   "'-1"
+  ],
+  [
+   "@1",
+   "'@1"
+  ],
+  [
+   "\t1",
+   "'\t1"
+  ],
+  [
+   "\r1",
+   "'\r1"
+  ],
+  [
+   " =1",
+   " =1"
+  ],
+  [
+   "a=1",
+   "a=1"
+  ],
+  [
+   5,
+   "5"
+  ],
+  [
+   -5,
+   "'-5"
+  ],
+  [
+   0,
+   "0"
+  ]
+ ],
+ "mst_re": [
+  [
+   "\uff10\uff11\uff10\uff19\uff19\uff19\uff19\uff19\uff19\uff19",
+   false
+  ],
+  [
+   "0109999999\n",
+   false
+  ],
+  [
+   "0109999999-01",
+   false
+  ],
+  [
+   "01099999990",
+   false
+  ],
+  [
+   "0109999999",
+   true
+  ],
+  [
+   "0109999999-001",
+   true
+  ]
+ ]
+}

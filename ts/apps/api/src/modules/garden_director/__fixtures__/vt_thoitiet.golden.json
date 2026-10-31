@@ -1,0 +1,3012 @@
+{
+ "config": {
+  "repo": {
+   "ok": true,
+   "urls": [
+    "https://api.open-meteo.com/v1/forecast?latitude=15.1&longitude=107.9&daily=precipitation_sum,temperature_2m_min,temperature_2m_max&timezone=Asia%2FHo_Chi_Minh&forecast_days=7",
+    "https://api.open-meteo.com/v1/forecast?latitude=15.0&longitude=108.0&daily=precipitation_sum,temperature_2m_min,temperature_2m_max&timezone=Asia%2FHo_Chi_Minh&forecast_days=7"
+   ]
+  },
+  "areas_empty": {
+   "err": "ConfigError",
+   "msg": "areas r\u1ed7ng/sai ki\u1ec3u"
+  },
+  "areas_str": {
+   "err": "ConfigError",
+   "msg": "areas r\u1ed7ng/sai ki\u1ec3u"
+  },
+  "lat_round": {
+   "err": "ConfigError",
+   "msg": "areas[0].lat ph\u1ea3i l\u00e0 s\u1ed1 |v|\u226490 \u0111\u00e3 l\u00e0m tr\u00f2n 0,1\u00b0"
+  },
+  "lat_big": {
+   "err": "ConfigError",
+   "msg": "areas[0].lat ph\u1ea3i l\u00e0 s\u1ed1 |v|\u226490 \u0111\u00e3 l\u00e0m tr\u00f2n 0,1\u00b0"
+  },
+  "lon_big": {
+   "err": "ConfigError",
+   "msg": "areas[0].lon ph\u1ea3i l\u00e0 s\u1ed1 |v|\u2264180 \u0111\u00e3 l\u00e0m tr\u00f2n 0,1\u00b0"
+  },
+  "lat_bool": {
+   "err": "ConfigError",
+   "msg": "areas[0].lat ph\u1ea3i l\u00e0 s\u1ed1 |v|\u226490 \u0111\u00e3 l\u00e0m tr\u00f2n 0,1\u00b0"
+  },
+  "code_bad": {
+   "err": "ConfigError",
+   "msg": "areas[0].code thi\u1ebfu/sai d\u1ea1ng/tr\u00f9ng"
+  },
+  "plot_dup": {
+   "err": "ConfigError",
+   "msg": "areas[1].plots sai/tr\u00f9ng kho\u1ea3nh"
+  },
+  "plot_dup_in": {
+   "err": "ConfigError",
+   "msg": "areas[0].plots sai/tr\u00f9ng kho\u1ea3nh"
+  },
+  "code_dup": {
+   "err": "ConfigError",
+   "msg": "areas[1].code thi\u1ebfu/sai d\u1ea1ng/tr\u00f9ng"
+  },
+  "name_blank": {
+   "err": "ConfigError",
+   "msg": "areas[0].name thi\u1ebfu"
+  },
+  "area_not_obj": {
+   "err": "ConfigError",
+   "msg": "areas[0] ph\u1ea3i l\u00e0 object"
+  },
+  "plot_bad": {
+   "err": "ConfigError",
+   "msg": "areas[0].plots sai/tr\u00f9ng kho\u1ea3nh"
+  },
+  "lat_int": {
+   "ok": true,
+   "urls": [
+    "https://api.open-meteo.com/v1/forecast?latitude=15.0&longitude=-108.0&daily=precipitation_sum,temperature_2m_min,temperature_2m_max&timezone=Asia%2FHo_Chi_Minh&forecast_days=7"
+   ]
+  },
+  "rain_str": {
+   "err": "ConfigError",
+   "msg": "thresholds.rain_mm_day/tmin_c thi\u1ebfu/ngo\u00e0i kho\u1ea3ng"
+  },
+  "tmin_big": {
+   "err": "ConfigError",
+   "msg": "thresholds.rain_mm_day/tmin_c thi\u1ebfu/ngo\u00e0i kho\u1ea3ng"
+  },
+  "rain_bool": {
+   "err": "ConfigError",
+   "msg": "thresholds.rain_mm_day/tmin_c thi\u1ebfu/ngo\u00e0i kho\u1ea3ng"
+  },
+  "fetch_str": {
+   "err": "ConfigError",
+   "msg": "fetch.enabled/url_template/days sai"
+  },
+  "http": {
+   "err": "ConfigError",
+   "msg": "fetch.enabled/url_template/days sai"
+  },
+  "no_ph": {
+   "err": "ConfigError",
+   "msg": "fetch.enabled/url_template/days sai"
+  },
+  "days0": {
+   "err": "ConfigError",
+   "msg": "fetch.enabled/url_template/days sai"
+  },
+  "days17": {
+   "err": "ConfigError",
+   "msg": "fetch.enabled/url_template/days sai"
+  },
+  "days_bool": {
+   "err": "ConfigError",
+   "msg": "fetch.enabled/url_template/days sai"
+  },
+  "days_float": {
+   "err": "ConfigError",
+   "msg": "fetch.enabled/url_template/days sai"
+  },
+  "fd0": {
+   "err": "ConfigError",
+   "msg": "flag_days ph\u1ea3i 1..60"
+  },
+  "fd_bool": {
+   "err": "ConfigError",
+   "msg": "flag_days ph\u1ea3i 1..60"
+  },
+  "fd61": {
+   "err": "ConfigError",
+   "msg": "flag_days ph\u1ea3i 1..60"
+  },
+  "ph_x": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template c\u00f3 placeholder l\u1ea1"
+  },
+  "ph_0": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template c\u00f3 placeholder l\u1ea1"
+  },
+  "ph_brace": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template c\u00f3 placeholder l\u1ea1"
+  },
+  "ph_close": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template c\u00f3 placeholder l\u1ea1"
+  },
+  "ph_double": {
+   "ok": true,
+   "urls": [
+    "https://api.example/15.1/107.9?a={x}",
+    "https://api.example/15.0/108.0?a={x}"
+   ]
+  },
+  "ph_attr": {
+   "err": "ConfigError",
+   "msg": "fetch.enabled/url_template/days sai"
+  },
+  "ph_spec": {
+   "err": "ConfigError",
+   "msg": "fetch.enabled/url_template/days sai"
+  },
+  "ssrf_ip": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template ph\u1ea3i l\u00e0 host c\u00f4ng khai (kh\u00f4ng IP/localhost/m\u1ea1ng n\u1ed9i b\u1ed9 \u2014 ch\u1ed1ng SSRF)"
+  },
+  "ssrf_meta": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template ph\u1ea3i l\u00e0 host c\u00f4ng khai (kh\u00f4ng IP/localhost/m\u1ea1ng n\u1ed9i b\u1ed9 \u2014 ch\u1ed1ng SSRF)"
+  },
+  "ssrf_local": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template ph\u1ea3i l\u00e0 host c\u00f4ng khai (kh\u00f4ng IP/localhost/m\u1ea1ng n\u1ed9i b\u1ed9 \u2014 ch\u1ed1ng SSRF)"
+  },
+  "ssrf_internal": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template ph\u1ea3i l\u00e0 host c\u00f4ng khai (kh\u00f4ng IP/localhost/m\u1ea1ng n\u1ed9i b\u1ed9 \u2014 ch\u1ed1ng SSRF)"
+  },
+  "ssrf_v6": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template ph\u1ea3i l\u00e0 host c\u00f4ng khai (kh\u00f4ng IP/localhost/m\u1ea1ng n\u1ed9i b\u1ed9 \u2014 ch\u1ed1ng SSRF)"
+  },
+  "ssrf_dotless": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template ph\u1ea3i l\u00e0 host c\u00f4ng khai (kh\u00f4ng IP/localhost/m\u1ea1ng n\u1ed9i b\u1ed9 \u2014 ch\u1ed1ng SSRF)"
+  },
+  "ssrf_upper": {
+   "err": "ConfigError",
+   "msg": "fetch.url_template ph\u1ea3i l\u00e0 host c\u00f4ng khai (kh\u00f4ng IP/localhost/m\u1ea1ng n\u1ed9i b\u1ed9 \u2014 ch\u1ed1ng SSRF)"
+  },
+  "ok_port": {
+   "ok": true,
+   "urls": [
+    "https://api.example.com:8443/f?lat=15.1&lon=107.9",
+    "https://api.example.com:8443/f?lat=15.0&lon=108.0"
+   ]
+  },
+  "ok_user": {
+   "ok": true,
+   "urls": [
+    "https://u:p@api.example.com/f?lat=15.1&lon=107.9",
+    "https://u:p@api.example.com/f?lat=15.0&lon=108.0"
+   ]
+  },
+  "root_list": {
+   "err": "ConfigError",
+   "msg": "g\u1ed1c ph\u1ea3i l\u00e0 object"
+  },
+  "missing": {
+   "err": "ConfigError",
+   "msg": "kh\u00f4ng c\u00f3 file w_missing.json"
+  },
+  "broken": {
+   "err": "ConfigError",
+   "msg": "w_broken.json h\u1ecfng: JSONDecodeError"
+  },
+  "bad_utf8": {
+   "err": "ConfigError",
+   "msg": "w_bad_utf8.json h\u1ecfng: UnicodeDecodeError"
+  },
+  "nan": {
+   "err": "ConfigError",
+   "msg": "thresholds.rain_mm_day/tmin_c thi\u1ebfu/ngo\u00e0i kho\u1ea3ng"
+  }
+ },
+ "internal_host": [
+  [
+   "",
+   true
+  ],
+  [
+   "localhost",
+   true
+  ],
+  [
+   "a.localhost",
+   true
+  ],
+  [
+   "x.local",
+   true
+  ],
+  [
+   "x.internal",
+   true
+  ],
+  [
+   "x.lan",
+   true
+  ],
+  [
+   "intranet",
+   true
+  ],
+  [
+   "127.0.0.1",
+   true
+  ],
+  [
+   "10.0.0.1",
+   true
+  ],
+  [
+   "::1",
+   true
+  ],
+  [
+   "api.open-meteo.com",
+   false
+  ],
+  [
+   "API.EXAMPLE.COM.",
+   false
+  ],
+  [
+   ".com",
+   true
+  ],
+  [
+   "1.2",
+   false
+  ],
+  [
+   "1.2.3",
+   false
+  ],
+  [
+   "a.lan.",
+   true
+  ],
+  [
+   "x.LOCAL",
+   true
+  ],
+  [
+   "999.1.1.1",
+   false
+  ],
+  [
+   "fe80::1",
+   true
+  ]
+ ],
+ "csv": {
+  "good": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 60.0,
+     "tmin_c": 10.0,
+     "tmax_c": 20.0
+    },
+    {
+     "area": "vung-b",
+     "day": "2026-10-16",
+     "rain_mm": 0.5,
+     "tmin_c": -3.0,
+     "tmax_c": 10.0
+    }
+   ],
+   "errs": []
+  },
+  "bom": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 60.0,
+     "tmin_c": 10.0,
+     "tmax_c": 20.0
+    }
+   ],
+   "errs": []
+  },
+  "header": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 1: header ph\u1ea3i \u0111\u00fang area_code,day,rain_mm,tmin_c,tmax_c"
+   ]
+  },
+  "header_ws": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 1.0,
+     "tmin_c": 2.0,
+     "tmax_c": 3.0
+    }
+   ],
+   "errs": []
+  },
+  "utf8": {
+   "rows": [],
+   "errs": [
+    "c_utf8.csv: kh\u00f4ng ph\u1ea3i UTF-8"
+   ]
+  },
+  "empty": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 1: header ph\u1ea3i \u0111\u00fang area_code,day,rain_mm,tmin_c,tmax_c"
+   ]
+  },
+  "blank_lines": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 1.0,
+     "tmin_c": 2.0,
+     "tmax_c": 3.0
+    }
+   ],
+   "errs": []
+  },
+  "area": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3 c\u1ed9t area_code: v\u00f9ng kh\u00f4ng c\u00f3 trong c\u1ea5u h\u00ecnh"
+   ]
+  },
+  "day": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t day: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "rain_abc": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t rain_mm: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "rain_big": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t rain_mm: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "rain_neg": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t rain_mm: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "rain_nan": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t rain_mm: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "tmin": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t tmin_c: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "tmax_inf": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t tmax_c: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "cols": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2: c\u1ea7n 5 c\u1ed9t"
+   ]
+  },
+  "dup": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 3: tr\u00f9ng (area_code, day)"
+   ]
+  },
+  "quoted": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t rain_mm: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "num_forms": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 1000.0,
+     "tmin_c": 10.0,
+     "tmax_c": 20.0
+    },
+    {
+     "area": "vung-b",
+     "day": "2026-10-15",
+     "rain_mm": 5.0,
+     "tmin_c": 0.5,
+     "tmax_c": 10.0
+    }
+   ],
+   "errs": []
+  },
+  "day_compact": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 1.0,
+     "tmin_c": 2.0,
+     "tmax_c": 3.0
+    }
+   ],
+   "errs": []
+  },
+  "infinity": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t rain_mm: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "edge": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 1000.0,
+     "tmin_c": -20.0,
+     "tmax_c": 50.0
+    },
+    {
+     "area": "vung-b",
+     "day": "2026-10-15",
+     "rain_mm": 0.0,
+     "tmin_c": 50.0,
+     "tmax_c": -20.0
+    }
+   ],
+   "errs": []
+  },
+  "cr_only": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 1.0,
+     "tmin_c": 2.0,
+     "tmax_c": 3.0
+    }
+   ],
+   "errs": []
+  },
+  "nul": {
+   "rows": [],
+   "errs": [
+    "d\u00f2ng 2 c\u1ed9t rain_mm: sai \u0111\u1ecbnh d\u1ea1ng/ngo\u00e0i kho\u1ea3ng"
+   ]
+  },
+  "size": {
+   "rows": [],
+   "errs": [
+    "c_big.csv: qu\u00e1 1000000 byte"
+   ]
+  },
+  "missing": {
+   "rows": [],
+   "errs": [
+    "khong-co.csv: kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c (FileNotFoundError)"
+   ]
+  }
+ },
+ "open_meteo": {
+  "ok": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 12.0,
+     "tmin_c": 6.0,
+     "tmax_c": 20.0
+    },
+    {
+     "area": "vung-a",
+     "day": "2026-10-16",
+     "rain_mm": 80.5,
+     "tmin_c": 4.0,
+     "tmax_c": 18.0
+    }
+   ],
+   "in": "eyJkYWlseSI6IHsidGltZSI6IFsiMjAyNi0xMC0xNSIsICIyMDI2LTEwLTE2IiwgIjIwMjYtMTAtMTciXSwgInByZWNpcGl0YXRpb25fc3VtIjogWzEyLjAsIDgwLjUsIG51bGxdLCAidGVtcGVyYXR1cmVfMm1fbWluIjogWzYuMCwgNC4wLCA3LjBdLCAidGVtcGVyYXR1cmVfMm1fbWF4IjogWzIwLjAsIDE4LjAsIDIyLjBdfX0="
+  },
+  "broken": {
+   "err": "SourceError",
+   "msg": "JSON d\u1ef1 b\u00e1o h\u1ecfng (JSONDecodeError)",
+   "in": "e3g="
+  },
+  "empty_obj": {
+   "err": "SourceError",
+   "msg": "JSON d\u1ef1 b\u00e1o h\u1ecfng (KeyError)",
+   "in": "e30="
+  },
+  "missing_cols": {
+   "err": "SourceError",
+   "msg": "JSON d\u1ef1 b\u00e1o h\u1ecfng (KeyError)",
+   "in": "eyJkYWlseSI6IHsidGltZSI6IFsiMjAyNi0xMC0xNSJdfX0="
+  },
+  "len": {
+   "err": "SourceError",
+   "msg": "m\u1ea3ng d\u1ef1 b\u00e1o thi\u1ebfu/\u0111\u1ed9 d\u00e0i l\u1ec7ch",
+   "in": "eyJkYWlseSI6IHsidGltZSI6IFsiMjAyNi0xMC0xNSJdLCAicHJlY2lwaXRhdGlvbl9zdW0iOiBbMSwgMl0sICJ0ZW1wZXJhdHVyZV8ybV9taW4iOiBbMV0sICJ0ZW1wZXJhdHVyZV8ybV9tYXgiOiBbMV19fQ=="
+  },
+  "bad_day": {
+   "err": "SourceError",
+   "msg": "day",
+   "in": "eyJkYWlseSI6IHsidGltZSI6IFsieCJdLCAicHJlY2lwaXRhdGlvbl9zdW0iOiBbMV0sICJ0ZW1wZXJhdHVyZV8ybV9taW4iOiBbMV0sICJ0ZW1wZXJhdHVyZV8ybV9tYXgiOiBbMV19fQ=="
+  },
+  "list_root": {
+   "err": "SourceError",
+   "msg": "JSON d\u1ef1 b\u00e1o h\u1ecfng (TypeError)",
+   "in": "WzFd"
+  },
+  "daily_list": {
+   "err": "SourceError",
+   "msg": "JSON d\u1ef1 b\u00e1o h\u1ecfng (TypeError)",
+   "in": "eyJkYWlseSI6IFsxXX0="
+  },
+  "time_str": {
+   "err": "SourceError",
+   "msg": "m\u1ea3ng d\u1ef1 b\u00e1o thi\u1ebfu/\u0111\u1ed9 d\u00e0i l\u1ec7ch",
+   "in": "eyJkYWlseSI6IHsidGltZSI6ICJ4IiwgInByZWNpcGl0YXRpb25fc3VtIjogIngiLCAidGVtcGVyYXR1cmVfMm1fbWluIjogIngiLCAidGVtcGVyYXR1cmVfMm1fbWF4IjogIngifX0="
+  },
+  "bool_val": {
+   "err": "SourceError",
+   "msg": "rain_mm",
+   "in": "eyJkYWlseSI6IHsidGltZSI6IFsiMjAyNi0xMC0xNSJdLCAicHJlY2lwaXRhdGlvbl9zdW0iOiBbdHJ1ZV0sICJ0ZW1wZXJhdHVyZV8ybV9taW4iOiBbMV0sICJ0ZW1wZXJhdHVyZV8ybV9tYXgiOiBbMV19fQ=="
+  },
+  "str_val": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 3.5,
+     "tmin_c": 1.0,
+     "tmax_c": 1.0
+    }
+   ],
+   "in": "eyJkYWlseSI6IHsidGltZSI6IFsiMjAyNi0xMC0xNSJdLCAicHJlY2lwaXRhdGlvbl9zdW0iOiBbIjMuNSJdLCAidGVtcGVyYXR1cmVfMm1fbWluIjogWzFdLCAidGVtcGVyYXR1cmVfMm1fbWF4IjogWzFdfX0="
+  },
+  "range": {
+   "err": "SourceError",
+   "msg": "rain_mm",
+   "in": "eyJkYWlseSI6IHsidGltZSI6IFsiMjAyNi0xMC0xNSJdLCAicHJlY2lwaXRhdGlvbl9zdW0iOiBbMjAwMF0sICJ0ZW1wZXJhdHVyZV8ybV9taW4iOiBbMV0sICJ0ZW1wZXJhdHVyZV8ybV9tYXgiOiBbMV19fQ=="
+  },
+  "utf8": {
+   "err": "SourceError",
+   "msg": "JSON d\u1ef1 b\u00e1o h\u1ecfng (UnicodeDecodeError)",
+   "in": "/w=="
+  },
+  "day_num": {
+   "rows": [
+    {
+     "area": "vung-a",
+     "day": "2026-10-15",
+     "rain_mm": 1.0,
+     "tmin_c": 1.0,
+     "tmax_c": 1.0
+    }
+   ],
+   "in": "eyJkYWlseSI6IHsidGltZSI6IFsyMDI2MTAxNV0sICJwcmVjaXBpdGF0aW9uX3N1bSI6IFsxXSwgInRlbXBlcmF0dXJlXzJtX21pbiI6IFsxXSwgInRlbXBlcmF0dXJlXzJtX21heCI6IFsxXX19"
+  }
+ },
+ "evaluate": {
+  "rows": [
+   {
+    "area": "vung-a",
+    "day": "2026-07-01",
+    "rain_mm": 0.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-02",
+    "rain_mm": 12.5,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-03",
+    "rain_mm": 50.0,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-04",
+    "rain_mm": 50.1,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-05",
+    "rain_mm": 120.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-06",
+    "rain_mm": 3.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-07",
+    "rain_mm": 49.9,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-08",
+    "rain_mm": 0.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-09",
+    "rain_mm": 12.5,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-10",
+    "rain_mm": 50.0,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-11",
+    "rain_mm": 50.1,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-12",
+    "rain_mm": 120.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-13",
+    "rain_mm": 3.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-14",
+    "rain_mm": 49.9,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-15",
+    "rain_mm": 0.0,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-16",
+    "rain_mm": 12.5,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-17",
+    "rain_mm": 50.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-18",
+    "rain_mm": 50.1,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-19",
+    "rain_mm": 120.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-20",
+    "rain_mm": 3.0,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-21",
+    "rain_mm": 49.9,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-22",
+    "rain_mm": 0.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-23",
+    "rain_mm": 12.5,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-24",
+    "rain_mm": 50.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-25",
+    "rain_mm": 50.1,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-26",
+    "rain_mm": 120.0,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-27",
+    "rain_mm": 3.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-28",
+    "rain_mm": 49.9,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-29",
+    "rain_mm": 0.0,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-30",
+    "rain_mm": 12.5,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-31",
+    "rain_mm": 50.0,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-01",
+    "rain_mm": 50.1,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-02",
+    "rain_mm": 120.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-03",
+    "rain_mm": 3.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-04",
+    "rain_mm": 49.9,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-05",
+    "rain_mm": 0.0,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-06",
+    "rain_mm": 12.5,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-07",
+    "rain_mm": 50.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-08",
+    "rain_mm": 50.1,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-09",
+    "rain_mm": 120.0,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-10",
+    "rain_mm": 3.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-11",
+    "rain_mm": 49.9,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-12",
+    "rain_mm": 0.0,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-13",
+    "rain_mm": 12.5,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-14",
+    "rain_mm": 50.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-15",
+    "rain_mm": 50.1,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-16",
+    "rain_mm": 120.0,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-17",
+    "rain_mm": 3.0,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-18",
+    "rain_mm": 49.9,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-19",
+    "rain_mm": 0.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-20",
+    "rain_mm": 12.5,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-21",
+    "rain_mm": 50.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-22",
+    "rain_mm": 50.1,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-23",
+    "rain_mm": 120.0,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-24",
+    "rain_mm": 3.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-25",
+    "rain_mm": 49.9,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-26",
+    "rain_mm": 0.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-27",
+    "rain_mm": 12.5,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-28",
+    "rain_mm": 50.0,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-29",
+    "rain_mm": 50.1,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-30",
+    "rain_mm": 120.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-31",
+    "rain_mm": 3.0,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-01",
+    "rain_mm": 49.9,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-02",
+    "rain_mm": 0.0,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-03",
+    "rain_mm": 12.5,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-04",
+    "rain_mm": 50.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-05",
+    "rain_mm": 50.1,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-06",
+    "rain_mm": 120.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-07",
+    "rain_mm": 3.0,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-08",
+    "rain_mm": 49.9,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-09",
+    "rain_mm": 0.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-10",
+    "rain_mm": 12.5,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-11",
+    "rain_mm": 50.0,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-12",
+    "rain_mm": 50.1,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-13",
+    "rain_mm": 120.0,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-14",
+    "rain_mm": 3.0,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-15",
+    "rain_mm": 49.9,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-16",
+    "rain_mm": 0.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-17",
+    "rain_mm": 12.5,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-18",
+    "rain_mm": 50.0,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-19",
+    "rain_mm": 50.1,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-20",
+    "rain_mm": 120.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-21",
+    "rain_mm": 3.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-22",
+    "rain_mm": 49.9,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-23",
+    "rain_mm": 0.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-24",
+    "rain_mm": 12.5,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-25",
+    "rain_mm": 50.0,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-26",
+    "rain_mm": 50.1,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-27",
+    "rain_mm": 120.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-28",
+    "rain_mm": 3.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-01",
+    "rain_mm": 12.5,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-02",
+    "rain_mm": 50.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-03",
+    "rain_mm": 50.1,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-04",
+    "rain_mm": 120.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-05",
+    "rain_mm": 3.0,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-06",
+    "rain_mm": 49.9,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-07",
+    "rain_mm": 0.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-08",
+    "rain_mm": 12.5,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-09",
+    "rain_mm": 50.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-10",
+    "rain_mm": 50.1,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-11",
+    "rain_mm": 120.0,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-12",
+    "rain_mm": 3.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-13",
+    "rain_mm": 49.9,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-14",
+    "rain_mm": 0.0,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-15",
+    "rain_mm": 12.5,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-16",
+    "rain_mm": 50.0,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-17",
+    "rain_mm": 50.1,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-18",
+    "rain_mm": 120.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-19",
+    "rain_mm": 3.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-20",
+    "rain_mm": 49.9,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-21",
+    "rain_mm": 0.0,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-22",
+    "rain_mm": 12.5,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-23",
+    "rain_mm": 50.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-24",
+    "rain_mm": 50.1,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-25",
+    "rain_mm": 120.0,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-26",
+    "rain_mm": 3.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-27",
+    "rain_mm": 49.9,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-28",
+    "rain_mm": 0.0,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-29",
+    "rain_mm": 12.5,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-30",
+    "rain_mm": 50.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-31",
+    "rain_mm": 50.1,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-01",
+    "rain_mm": 120.0,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-02",
+    "rain_mm": 3.0,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-03",
+    "rain_mm": 49.9,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-04",
+    "rain_mm": 0.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-05",
+    "rain_mm": 12.5,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-06",
+    "rain_mm": 50.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-07",
+    "rain_mm": 50.1,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-08",
+    "rain_mm": 120.0,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-09",
+    "rain_mm": 3.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-10",
+    "rain_mm": 49.9,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-11",
+    "rain_mm": 0.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-12",
+    "rain_mm": 12.5,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-13",
+    "rain_mm": 50.0,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-14",
+    "rain_mm": 50.1,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-15",
+    "rain_mm": 120.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-16",
+    "rain_mm": 3.0,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-17",
+    "rain_mm": 49.9,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-18",
+    "rain_mm": 0.0,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-19",
+    "rain_mm": 12.5,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-20",
+    "rain_mm": 50.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-21",
+    "rain_mm": 50.1,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-22",
+    "rain_mm": 120.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-23",
+    "rain_mm": 3.0,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-24",
+    "rain_mm": 49.9,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-25",
+    "rain_mm": 0.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-26",
+    "rain_mm": 12.5,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-27",
+    "rain_mm": 50.0,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-28",
+    "rain_mm": 50.1,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-29",
+    "rain_mm": 120.0,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-30",
+    "rain_mm": 3.0,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-31",
+    "rain_mm": 49.9,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-01",
+    "rain_mm": 0.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-02",
+    "rain_mm": 12.5,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-03",
+    "rain_mm": 50.0,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-04",
+    "rain_mm": 50.1,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-05",
+    "rain_mm": 120.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-06",
+    "rain_mm": 3.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-07",
+    "rain_mm": 49.9,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-08",
+    "rain_mm": 0.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-09",
+    "rain_mm": 12.5,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-10",
+    "rain_mm": 50.0,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-11",
+    "rain_mm": 50.1,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-12",
+    "rain_mm": 120.0,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-13",
+    "rain_mm": 3.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-14",
+    "rain_mm": 49.9,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-15",
+    "rain_mm": 0.0,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-16",
+    "rain_mm": 12.5,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-17",
+    "rain_mm": 50.0,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-18",
+    "rain_mm": 50.1,
+    "tmin_c": 6.0,
+    "tmax_c": 16.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-19",
+    "rain_mm": 120.0,
+    "tmin_c": 7.0,
+    "tmax_c": 17.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-20",
+    "rain_mm": 3.0,
+    "tmin_c": 4.9,
+    "tmax_c": 14.9
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-21",
+    "rain_mm": 49.9,
+    "tmin_c": -1.0,
+    "tmax_c": 9.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-22",
+    "rain_mm": 0.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-23",
+    "rain_mm": 12.5,
+    "tmin_c": 12.0,
+    "tmax_c": 22.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-24",
+    "rain_mm": 50.0,
+    "tmin_c": 8.0,
+    "tmax_c": 18.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-25",
+    "rain_mm": 50.1,
+    "tmin_c": 10.0,
+    "tmax_c": 20.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-26",
+    "rain_mm": 120.0,
+    "tmin_c": 2.5,
+    "tmax_c": 12.5
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-27",
+    "rain_mm": 3.0,
+    "tmin_c": 5.0,
+    "tmax_c": 15.0
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-28",
+    "rain_mm": 49.9,
+    "tmin_c": 5.1,
+    "tmax_c": 15.1
+   }
+  ],
+  "th": {
+   "rain_mm_day": 50,
+   "tmin_c": 5
+  },
+  "out": [
+   {
+    "area": "vung-a",
+    "day": "2026-07-04",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 50.1,
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-05",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-09",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-10",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-11",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-12",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-15",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-18",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-19",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-20",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-21",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-25",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-26",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 120.0,
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-07-31",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-01",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 50.1,
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-02",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-06",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-08",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-09",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-11",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-12",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-15",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-16",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-17",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-22",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 50.1,
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-23",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 120.0,
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-28",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-29",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-08-30",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-02",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-03",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-05",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-06",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-08",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-12",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-13",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 120.0,
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-14",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-19",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 50.1,
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-20",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-24",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-25",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-26",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-09-27",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-03",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-04",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-05",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-06",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-10",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-11",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 120.0,
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-16",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-17",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 50.1,
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-18",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-22",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-24",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-25",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-27",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-28",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-07-31",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-01",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-02",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-07",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 50.1,
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-08",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 120.0,
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-13",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-14",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-15",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-18",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-19",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-21",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-22",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-24",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-28",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-29",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 120.0,
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-08-30",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-04",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 50.1,
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-05",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-09",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-10",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-11",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-12",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-15",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 2.5
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-18",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-19",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 120.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-20",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": 4.9
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-21",
+    "kinds": [
+     "ret"
+    ],
+    "value": {
+     "tmin_c": -1.0
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-25",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 50.1
+    }
+   },
+   {
+    "area": "vung-b",
+    "day": "2026-09-26",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 120.0,
+     "tmin_c": 2.5
+    }
+   }
+  ]
+ },
+ "digest": {
+  "alerts": [
+   {
+    "area": "vung-a",
+    "day": "2026-10-14",
+    "kinds": [
+     "mua_lon"
+    ],
+    "value": {
+     "rain_mm": 55.55
+    }
+   },
+   {
+    "area": "vung-a",
+    "day": "2026-10-15",
+    "kinds": [
+     "mua_lon",
+     "ret"
+    ],
+    "value": {
+     "rain_mm": 120.0,
+     "tmin_c": 4.9
+    }
+   }
+  ],
+  "flags": [
+   {
+    "plot": "KV-A01",
+    "day": "2026-10-12",
+    "flag": "s\u00e2u b\u1ec7nh"
+   },
+   {
+    "plot": "![x](https://e.x/t.png)",
+    "day": "2026-10-12",
+    "flag": "r\u1ec7p"
+   }
+  ],
+  "plots_by_area": {
+   "vung-a": [
+    "KV-A01",
+    "KV-A02"
+   ],
+   "vung-b": [
+    "KV-B01"
+   ]
+  },
+  "areas": [
+   {
+    "code": "vung-a",
+    "name": "V\u00f9ng A (GI\u1ea2 \u0110\u1ecaNH)",
+    "lat": 15.1,
+    "lon": 107.9,
+    "plots": [
+     "KV-A01",
+     "KV-A02"
+    ]
+   },
+   {
+    "code": "vung-b",
+    "name": "V\u00f9ng B (GI\u1ea2 \u0110\u1ecaNH)",
+    "lat": 15.0,
+    "lon": 108.0,
+    "plots": [
+     "KV-B01"
+    ]
+   }
+  ],
+  "now": "2026-10-14T02:00:00Z",
+  "out": {
+   "full": "# C\u1ea3nh b\u00e1o th\u1eddi ti\u1ebft & s\u00e2u b\u1ec7nh \u2014 2026-10-14\n\nN\u1ed8I B\u1ed8 kh\u1ed1i V\u00f9ng tr\u1ed3ng \u2014 ch\u1ec9 g\u1ee3i \u00fd \"c\u1ea7n \u0111i ki\u1ec3m tra\"; kh\u00f4ng ch\u1ea9n \u0111o\u00e1n, kh\u00f4ng khuy\u1ebfn ngh\u1ecb x\u1eed l\u00fd. G\u0110 v\u00f9ng tr\u1ed3ng duy\u1ec7t m\u1ee5c n\u00e0y = \u0111\u00e3 xem.\n\nNg\u01b0\u1ee1ng GI\u1ea2 \u0110\u1ecaNH (ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng ch\u1ed1t): m\u01b0a > 50.0 mm/ng\u00e0y, nhi\u1ec7t \u0111\u1ed9 th\u1ea5p nh\u1ea5t < 5.0 \u00b0C.\n\n## Th\u1eddi ti\u1ebft theo v\u00f9ng\n\n### V\u00f9ng A (GI\u1ea2 \u0110\u1ecaNH) \u2014 kho\u1ea3nh: KV-A01, KV-A02\n- 2026-10-14: m\u01b0a 55.5 mm \u2014 c\u1ea7n \u0111i ki\u1ec3m tra tho\u00e1t n\u01b0\u1edbc t\u1ea1i kho\u1ea3nh KV-A01, KV-A02\n- 2026-10-15: m\u01b0a 120.0 mm \u2014 c\u1ea7n \u0111i ki\u1ec3m tra tho\u00e1t n\u01b0\u1edbc t\u1ea1i kho\u1ea3nh KV-A01, KV-A02\n- 2026-10-15: nhi\u1ec7t \u0111\u1ed9 th\u1ea5p nh\u1ea5t 4.9 \u00b0C \u2014 c\u1ea7n \u0111i ki\u1ec3m tra che ch\u1eafn t\u1ea1i kho\u1ea3nh KV-A01, KV-A02\n\n### V\u00f9ng B (GI\u1ea2 \u0110\u1ecaNH) \u2014 kho\u1ea3nh: KV-B01\n- kh\u00f4ng v\u01b0\u1ee3t ng\u01b0\u1ee1ng\n\n## Kho\u1ea3nh ch\u01b0a g\u00e1n v\u00f9ng\n\n- KV-Z09: ch\u01b0a g\u00e1n v\u00f9ng \u2014 ch\u01b0a c\u00f3 c\u1ea3nh b\u00e1o th\u1eddi ti\u1ebft\n- \\<img src=x\\>: ch\u01b0a g\u00e1n v\u00f9ng \u2014 ch\u01b0a c\u00f3 c\u1ea3nh b\u00e1o th\u1eddi ti\u1ebft\n\n## Nh\u1eadt k\u00fd v\u00f9ng tr\u1ed3ng c\u1ea7n ch\u00fa \u00fd\n\n- kho\u1ea3nh KV-A01: ghi nh\u1eadn 's\u00e2u b\u1ec7nh' ng\u00e0y 2026-10-12 \u2014 c\u1ea7n \u0111i ki\u1ec3m tra\n- kho\u1ea3nh \\!\\[x\\](https://e.x/t.png): ghi nh\u1eadn 'r\u1ec7p' ng\u00e0y 2026-10-12 \u2014 c\u1ea7n \u0111i ki\u1ec3m tra\n\n*Agent kh\u00f4ng g\u1eedi/\u0111\u0103ng g\u00ec; G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft \u0111\u1ecbnh vi\u1ec7c \u0111i ki\u1ec3m tra.*\n",
+   "missing": "# C\u1ea3nh b\u00e1o th\u1eddi ti\u1ebft & s\u00e2u b\u1ec7nh \u2014 2026-10-14\n\nN\u1ed8I B\u1ed8 kh\u1ed1i V\u00f9ng tr\u1ed3ng \u2014 ch\u1ec9 g\u1ee3i \u00fd \"c\u1ea7n \u0111i ki\u1ec3m tra\"; kh\u00f4ng ch\u1ea9n \u0111o\u00e1n, kh\u00f4ng khuy\u1ebfn ngh\u1ecb x\u1eed l\u00fd. G\u0110 v\u00f9ng tr\u1ed3ng duy\u1ec7t m\u1ee5c n\u00e0y = \u0111\u00e3 xem.\n\nNg\u01b0\u1ee1ng GI\u1ea2 \u0110\u1ecaNH (ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng ch\u1ed1t): m\u01b0a > 50.0 mm/ng\u00e0y, nhi\u1ec7t \u0111\u1ed9 th\u1ea5p nh\u1ea5t < 5.0 \u00b0C.\n\n## Th\u1eddi ti\u1ebft theo v\u00f9ng\n\n### V\u00f9ng A (GI\u1ea2 \u0110\u1ecaNH) \u2014 kho\u1ea3nh: KV-A01, KV-A02\n- ch\u01b0a c\u00f3 d\u1ef1 b\u00e1o\n- 2026-10-14: m\u01b0a 55.5 mm \u2014 c\u1ea7n \u0111i ki\u1ec3m tra tho\u00e1t n\u01b0\u1edbc t\u1ea1i kho\u1ea3nh KV-A01, KV-A02\n- 2026-10-15: m\u01b0a 120.0 mm \u2014 c\u1ea7n \u0111i ki\u1ec3m tra tho\u00e1t n\u01b0\u1edbc t\u1ea1i kho\u1ea3nh KV-A01, KV-A02\n- 2026-10-15: nhi\u1ec7t \u0111\u1ed9 th\u1ea5p nh\u1ea5t 4.9 \u00b0C \u2014 c\u1ea7n \u0111i ki\u1ec3m tra che ch\u1eafn t\u1ea1i kho\u1ea3nh KV-A01, KV-A02\n\n### V\u00f9ng B (GI\u1ea2 \u0110\u1ecaNH) \u2014 kho\u1ea3nh: KV-B01\n- kh\u00f4ng v\u01b0\u1ee3t ng\u01b0\u1ee1ng\n\n## Nh\u1eadt k\u00fd v\u00f9ng tr\u1ed3ng c\u1ea7n ch\u00fa \u00fd\n\n- ch\u01b0a n\u1ea1p nh\u1eadt k\u00fd (kh\u00f4ng k\u1ebft n\u1ed1i \u0111\u01b0\u1ee3c DB)\n\n*Agent kh\u00f4ng g\u1eedi/\u0111\u0103ng g\u00ec; G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft \u0111\u1ecbnh vi\u1ec7c \u0111i ki\u1ec3m tra.*\n",
+   "bare": "# C\u1ea3nh b\u00e1o th\u1eddi ti\u1ebft & s\u00e2u b\u1ec7nh \u2014 2026-10-14\n\nN\u1ed8I B\u1ed8 kh\u1ed1i V\u00f9ng tr\u1ed3ng \u2014 ch\u1ec9 g\u1ee3i \u00fd \"c\u1ea7n \u0111i ki\u1ec3m tra\"; kh\u00f4ng ch\u1ea9n \u0111o\u00e1n, kh\u00f4ng khuy\u1ebfn ngh\u1ecb x\u1eed l\u00fd. G\u0110 v\u00f9ng tr\u1ed3ng duy\u1ec7t m\u1ee5c n\u00e0y = \u0111\u00e3 xem.\n\n## Th\u1eddi ti\u1ebft theo v\u00f9ng\n\n## Nh\u1eadt k\u00fd v\u00f9ng tr\u1ed3ng c\u1ea7n ch\u00fa \u00fd\n\n- kh\u00f4ng c\u00f3 ghi nh\u1eadn c\u1ea7n ch\u00fa \u00fd\n\n*Agent kh\u00f4ng g\u1eedi/\u0111\u0103ng g\u00ec; G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft \u0111\u1ecbnh vi\u1ec7c \u0111i ki\u1ec3m tra.*\n",
+   "noplots": "# C\u1ea3nh b\u00e1o th\u1eddi ti\u1ebft & s\u00e2u b\u1ec7nh \u2014 2026-10-14\n\nN\u1ed8I B\u1ed8 kh\u1ed1i V\u00f9ng tr\u1ed3ng \u2014 ch\u1ec9 g\u1ee3i \u00fd \"c\u1ea7n \u0111i ki\u1ec3m tra\"; kh\u00f4ng ch\u1ea9n \u0111o\u00e1n, kh\u00f4ng khuy\u1ebfn ngh\u1ecb x\u1eed l\u00fd. G\u0110 v\u00f9ng tr\u1ed3ng duy\u1ec7t m\u1ee5c n\u00e0y = \u0111\u00e3 xem.\n\nNg\u01b0\u1ee1ng GI\u1ea2 \u0110\u1ecaNH (ch\u1edd G\u0110 v\u00f9ng tr\u1ed3ng ch\u1ed1t): m\u01b0a > 50.2 mm/ng\u00e0y, nhi\u1ec7t \u0111\u1ed9 th\u1ea5p nh\u1ea5t < -0.1 \u00b0C.\n\n## Th\u1eddi ti\u1ebft theo v\u00f9ng\n\n### vung-z \u2014 kho\u1ea3nh: (ch\u01b0a g\u00e1n kho\u1ea3nh)\n- kh\u00f4ng v\u01b0\u1ee3t ng\u01b0\u1ee1ng\n\n## Nh\u1eadt k\u00fd v\u00f9ng tr\u1ed3ng c\u1ea7n ch\u00fa \u00fd\n\n- kh\u00f4ng c\u00f3 ghi nh\u1eadn c\u1ea7n ch\u00fa \u00fd\n\n*Agent kh\u00f4ng g\u1eedi/\u0111\u0103ng g\u00ec; G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft \u0111\u1ecbnh vi\u1ec7c \u0111i ki\u1ec3m tra.*\n",
+   "pest": "# C\u1ea3nh b\u00e1o s\u00e2u b\u1ec7nh \u2014 2026-10-14\n\nN\u1ed8I B\u1ed8 kh\u1ed1i V\u00f9ng tr\u1ed3ng \u2014 t\u1eeb nh\u1eadt k\u00fd v\u01b0\u1eddn \u0111\u00e3 ghi; ch\u1ec9 g\u1ee3i \u00fd \"c\u1ea7n \u0111i ki\u1ec3m tra\", kh\u00f4ng ch\u1ea9n \u0111o\u00e1n, kh\u00f4ng khuy\u1ebfn ngh\u1ecb x\u1eed l\u00fd. G\u0110 v\u00f9ng tr\u1ed3ng duy\u1ec7t m\u1ee5c n\u00e0y = \u0111\u00e3 xem.\n\n- kho\u1ea3nh KV-A01: ghi nh\u1eadn 's\u00e2u b\u1ec7nh' ng\u00e0y 2026-10-12 \u2014 c\u1ea7n \u0111i ki\u1ec3m tra\n- kho\u1ea3nh \\!\\[x\\](https://e.x/t.png): ghi nh\u1eadn 'r\u1ec7p' ng\u00e0y 2026-10-12 \u2014 c\u1ea7n \u0111i ki\u1ec3m tra\n\n*Agent kh\u00f4ng g\u1eedi/\u0111\u0103ng g\u00ec; G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft \u0111\u1ecbnh vi\u1ec7c \u0111i ki\u1ec3m tra.*\n",
+   "pest_empty": "# C\u1ea3nh b\u00e1o s\u00e2u b\u1ec7nh \u2014 2026-10-14\n\nN\u1ed8I B\u1ed8 kh\u1ed1i V\u00f9ng tr\u1ed3ng \u2014 t\u1eeb nh\u1eadt k\u00fd v\u01b0\u1eddn \u0111\u00e3 ghi; ch\u1ec9 g\u1ee3i \u00fd \"c\u1ea7n \u0111i ki\u1ec3m tra\", kh\u00f4ng ch\u1ea9n \u0111o\u00e1n, kh\u00f4ng khuy\u1ebfn ngh\u1ecb x\u1eed l\u00fd. G\u0110 v\u00f9ng tr\u1ed3ng duy\u1ec7t m\u1ee5c n\u00e0y = \u0111\u00e3 xem.\n\n\n*Agent kh\u00f4ng g\u1eedi/\u0111\u0103ng g\u00ec; G\u0110 v\u00f9ng tr\u1ed3ng quy\u1ebft \u0111\u1ecbnh vi\u1ec7c \u0111i ki\u1ec3m tra.*\n"
+  }
+ },
+ "md": [
+  [
+   "KV-A01",
+   "KV-A01"
+  ],
+  [
+   "![x](y)",
+   "\\!\\[x\\](y)"
+  ],
+  [
+   "a\\b`c*d_e|f<g>h[i]",
+   "a\\\\b\\`c\\*d\\_e\\|f\\<g\\>h\\[i\\]"
+  ],
+  [
+   "!!",
+   "\\!\\!"
+  ]
+ ],
+ "fmt": [
+  [
+   0.05,
+   "0.1"
+  ],
+  [
+   0.15,
+   "0.1"
+  ],
+  [
+   0.25,
+   "0.2"
+  ],
+  [
+   2.675,
+   "2.7"
+  ],
+  [
+   50,
+   "50.0"
+  ],
+  [
+   -0.05,
+   "-0.1"
+  ],
+  [
+   1e-07,
+   "0.0"
+  ],
+  [
+   120.0,
+   "120.0"
+  ],
+  [
+   49.95,
+   "50.0"
+  ]
+ ],
+ "day_end": [
+  [
+   "2026-10-14",
+   "2026-10-14T16:59:59.999999Z"
+  ],
+  [
+   "2027-01-01",
+   "2027-01-01T16:59:59.999999Z"
+  ]
+ ],
+ "pest_dedupe": {
+  "s\u00e2u b\u1ec7nh, b\u1ec7nh": [
+   "s\u00e2u b\u1ec7nh"
+  ],
+  "b\u1ec7nh": [
+   "b\u1ec7nh"
+  ],
+  "r\u1ec7p, s\u00e2u b\u1ec7nh, b\u1ec7nh, v\u00e0ng l\u00e1": [
+   "r\u1ec7p",
+   "s\u00e2u b\u1ec7nh",
+   "v\u00e0ng l\u00e1"
+  ],
+  "n\u1ea5m, d\u1ecbch": [
+   "n\u1ea5m",
+   "d\u1ecbch"
+  ]
+ },
+ "files": {
+  "w_repo.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_areas_empty.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW10sICJ0aHJlc2hvbGRzIjogeyJyYWluX21tX2RheSI6IDUwLCAidG1pbl9jIjogNX0sICJmZXRjaCI6IHsiZW5hYmxlZCI6IGZhbHNlLCAidXJsX3RlbXBsYXRlIjogImh0dHBzOi8vYXBpLm9wZW4tbWV0ZW8uY29tL3YxL2ZvcmVjYXN0P2xhdGl0dWRlPXtsYXR9JmxvbmdpdHVkZT17bG9ufSZkYWlseT1wcmVjaXBpdGF0aW9uX3N1bSx0ZW1wZXJhdHVyZV8ybV9taW4sdGVtcGVyYXR1cmVfMm1fbWF4JnRpbWV6b25lPUFzaWElMkZIb19DaGlfTWluaCZmb3JlY2FzdF9kYXlzPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_areas_str.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogIngiLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_lat_round.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiQSIsICJsYXQiOiAxNS4xMiwgImxvbiI6IDEwOC4wLCAicGxvdHMiOiBbXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_lat_big.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiQSIsICJsYXQiOiA5NS4wLCAibG9uIjogMTA4LjAsICJwbG90cyI6IFtdfV0sICJ0aHJlc2hvbGRzIjogeyJyYWluX21tX2RheSI6IDUwLCAidG1pbl9jIjogNX0sICJmZXRjaCI6IHsiZW5hYmxlZCI6IGZhbHNlLCAidXJsX3RlbXBsYXRlIjogImh0dHBzOi8vYXBpLm9wZW4tbWV0ZW8uY29tL3YxL2ZvcmVjYXN0P2xhdGl0dWRlPXtsYXR9JmxvbmdpdHVkZT17bG9ufSZkYWlseT1wcmVjaXBpdGF0aW9uX3N1bSx0ZW1wZXJhdHVyZV8ybV9taW4sdGVtcGVyYXR1cmVfMm1fbWF4JnRpbWV6b25lPUFzaWElMkZIb19DaGlfTWluaCZmb3JlY2FzdF9kYXlzPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_lon_big.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiQSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTgxLjAsICJwbG90cyI6IFtdfV0sICJ0aHJlc2hvbGRzIjogeyJyYWluX21tX2RheSI6IDUwLCAidG1pbl9jIjogNX0sICJmZXRjaCI6IHsiZW5hYmxlZCI6IGZhbHNlLCAidXJsX3RlbXBsYXRlIjogImh0dHBzOi8vYXBpLm9wZW4tbWV0ZW8uY29tL3YxL2ZvcmVjYXN0P2xhdGl0dWRlPXtsYXR9JmxvbmdpdHVkZT17bG9ufSZkYWlseT1wcmVjaXBpdGF0aW9uX3N1bSx0ZW1wZXJhdHVyZV8ybV9taW4sdGVtcGVyYXR1cmVfMm1fbWF4JnRpbWV6b25lPUFzaWElMkZIb19DaGlfTWluaCZmb3JlY2FzdF9kYXlzPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_lat_bool.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiQSIsICJsYXQiOiB0cnVlLCAibG9uIjogMTA4LjAsICJwbG90cyI6IFtdfV0sICJ0aHJlc2hvbGRzIjogeyJyYWluX21tX2RheSI6IDUwLCAidG1pbl9jIjogNX0sICJmZXRjaCI6IHsiZW5hYmxlZCI6IGZhbHNlLCAidXJsX3RlbXBsYXRlIjogImh0dHBzOi8vYXBpLm9wZW4tbWV0ZW8uY29tL3YxL2ZvcmVjYXN0P2xhdGl0dWRlPXtsYXR9JmxvbmdpdHVkZT17bG9ufSZkYWlseT1wcmVjaXBpdGF0aW9uX3N1bSx0ZW1wZXJhdHVyZV8ybV9taW4sdGVtcGVyYXR1cmVfMm1fbWF4JnRpbWV6b25lPUFzaWElMkZIb19DaGlfTWluaCZmb3JlY2FzdF9kYXlzPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_code_bad.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJBIEIiLCAibmFtZSI6ICJBIiwgImxhdCI6IDE1LjEsICJsb24iOiAxMDguMCwgInBsb3RzIjogW119XSwgInRocmVzaG9sZHMiOiB7InJhaW5fbW1fZGF5IjogNTAsICJ0bWluX2MiOiA1fSwgImZldGNoIjogeyJlbmFibGVkIjogZmFsc2UsICJ1cmxfdGVtcGxhdGUiOiAiaHR0cHM6Ly9hcGkub3Blbi1tZXRlby5jb20vdjEvZm9yZWNhc3Q/bGF0aXR1ZGU9e2xhdH0mbG9uZ2l0dWRlPXtsb259JmRhaWx5PXByZWNpcGl0YXRpb25fc3VtLHRlbXBlcmF0dXJlXzJtX21pbix0ZW1wZXJhdHVyZV8ybV9tYXgmdGltZXpvbmU9QXNpYSUyRkhvX0NoaV9NaW5oJmZvcmVjYXN0X2RheXM9e2RheXN9IiwgImRheXMiOiA3fSwgImZsYWdfZGF5cyI6IDd9",
+  "w_plot_dup.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiQSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA4LjAsICJwbG90cyI6IFsiS1YtMSJdfSwgeyJjb2RlIjogImIiLCAibmFtZSI6ICJCIiwgImxhdCI6IDE1LjEsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi0xIl19XSwgInRocmVzaG9sZHMiOiB7InJhaW5fbW1fZGF5IjogNTAsICJ0bWluX2MiOiA1fSwgImZldGNoIjogeyJlbmFibGVkIjogZmFsc2UsICJ1cmxfdGVtcGxhdGUiOiAiaHR0cHM6Ly9hcGkub3Blbi1tZXRlby5jb20vdjEvZm9yZWNhc3Q/bGF0aXR1ZGU9e2xhdH0mbG9uZ2l0dWRlPXtsb259JmRhaWx5PXByZWNpcGl0YXRpb25fc3VtLHRlbXBlcmF0dXJlXzJtX21pbix0ZW1wZXJhdHVyZV8ybV9tYXgmdGltZXpvbmU9QXNpYSUyRkhvX0NoaV9NaW5oJmZvcmVjYXN0X2RheXM9e2RheXN9IiwgImRheXMiOiA3fSwgImZsYWdfZGF5cyI6IDd9",
+  "w_plot_dup_in.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiQSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA4LjAsICJwbG90cyI6IFsiSyIsICJLIl19XSwgInRocmVzaG9sZHMiOiB7InJhaW5fbW1fZGF5IjogNTAsICJ0bWluX2MiOiA1fSwgImZldGNoIjogeyJlbmFibGVkIjogZmFsc2UsICJ1cmxfdGVtcGxhdGUiOiAiaHR0cHM6Ly9hcGkub3Blbi1tZXRlby5jb20vdjEvZm9yZWNhc3Q/bGF0aXR1ZGU9e2xhdH0mbG9uZ2l0dWRlPXtsb259JmRhaWx5PXByZWNpcGl0YXRpb25fc3VtLHRlbXBlcmF0dXJlXzJtX21pbix0ZW1wZXJhdHVyZV8ybV9tYXgmdGltZXpvbmU9QXNpYSUyRkhvX0NoaV9NaW5oJmZvcmVjYXN0X2RheXM9e2RheXN9IiwgImRheXMiOiA3fSwgImZsYWdfZGF5cyI6IDd9",
+  "w_code_dup.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiQSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA4LjAsICJwbG90cyI6IFtdfSwgeyJjb2RlIjogImEiLCAibmFtZSI6ICJCIiwgImxhdCI6IDE1LjEsICJsb24iOiAxMDguMCwgInBsb3RzIjogW119XSwgInRocmVzaG9sZHMiOiB7InJhaW5fbW1fZGF5IjogNTAsICJ0bWluX2MiOiA1fSwgImZldGNoIjogeyJlbmFibGVkIjogZmFsc2UsICJ1cmxfdGVtcGxhdGUiOiAiaHR0cHM6Ly9hcGkub3Blbi1tZXRlby5jb20vdjEvZm9yZWNhc3Q/bGF0aXR1ZGU9e2xhdH0mbG9uZ2l0dWRlPXtsb259JmRhaWx5PXByZWNpcGl0YXRpb25fc3VtLHRlbXBlcmF0dXJlXzJtX21pbix0ZW1wZXJhdHVyZV8ybV9tYXgmdGltZXpvbmU9QXNpYSUyRkhvX0NoaV9NaW5oJmZvcmVjYXN0X2RheXM9e2RheXN9IiwgImRheXMiOiA3fSwgImZsYWdfZGF5cyI6IDd9",
+  "w_name_blank.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiICAiLCAibGF0IjogMTUuMSwgImxvbiI6IDEwOC4wLCAicGxvdHMiOiBbXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_area_not_obj.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogWzFdLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_plot_bad.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiQSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA4LjAsICJwbG90cyI6IFsiLi4veCJdfV0sICJ0aHJlc2hvbGRzIjogeyJyYWluX21tX2RheSI6IDUwLCAidG1pbl9jIjogNX0sICJmZXRjaCI6IHsiZW5hYmxlZCI6IGZhbHNlLCAidXJsX3RlbXBsYXRlIjogImh0dHBzOi8vYXBpLm9wZW4tbWV0ZW8uY29tL3YxL2ZvcmVjYXN0P2xhdGl0dWRlPXtsYXR9JmxvbmdpdHVkZT17bG9ufSZkYWlseT1wcmVjaXBpdGF0aW9uX3N1bSx0ZW1wZXJhdHVyZV8ybV9taW4sdGVtcGVyYXR1cmVfMm1fbWF4JnRpbWV6b25lPUFzaWElMkZIb19DaGlfTWluaCZmb3JlY2FzdF9kYXlzPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_lat_int.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJhIiwgIm5hbWUiOiAiQSIsICJsYXQiOiAxNSwgImxvbiI6IC0xMDgsICJwbG90cyI6IFtdfV0sICJ0aHJlc2hvbGRzIjogeyJyYWluX21tX2RheSI6IDUwLCAidG1pbl9jIjogNX0sICJmZXRjaCI6IHsiZW5hYmxlZCI6IGZhbHNlLCAidXJsX3RlbXBsYXRlIjogImh0dHBzOi8vYXBpLm9wZW4tbWV0ZW8uY29tL3YxL2ZvcmVjYXN0P2xhdGl0dWRlPXtsYXR9JmxvbmdpdHVkZT17bG9ufSZkYWlseT1wcmVjaXBpdGF0aW9uX3N1bSx0ZW1wZXJhdHVyZV8ybV9taW4sdGVtcGVyYXR1cmVfMm1fbWF4JnRpbWV6b25lPUFzaWElMkZIb19DaGlfTWluaCZmb3JlY2FzdF9kYXlzPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_rain_str.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiAiNTAiLCAidG1pbl9jIjogNX0sICJmZXRjaCI6IHsiZW5hYmxlZCI6IGZhbHNlLCAidXJsX3RlbXBsYXRlIjogImh0dHBzOi8vYXBpLm9wZW4tbWV0ZW8uY29tL3YxL2ZvcmVjYXN0P2xhdGl0dWRlPXtsYXR9JmxvbmdpdHVkZT17bG9ufSZkYWlseT1wcmVjaXBpdGF0aW9uX3N1bSx0ZW1wZXJhdHVyZV8ybV9taW4sdGVtcGVyYXR1cmVfMm1fbWF4JnRpbWV6b25lPUFzaWElMkZIb19DaGlfTWluaCZmb3JlY2FzdF9kYXlzPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_tmin_big.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDk5fSwgImZldGNoIjogeyJlbmFibGVkIjogZmFsc2UsICJ1cmxfdGVtcGxhdGUiOiAiaHR0cHM6Ly9hcGkub3Blbi1tZXRlby5jb20vdjEvZm9yZWNhc3Q/bGF0aXR1ZGU9e2xhdH0mbG9uZ2l0dWRlPXtsb259JmRhaWx5PXByZWNpcGl0YXRpb25fc3VtLHRlbXBlcmF0dXJlXzJtX21pbix0ZW1wZXJhdHVyZV8ybV9tYXgmdGltZXpvbmU9QXNpYSUyRkhvX0NoaV9NaW5oJmZvcmVjYXN0X2RheXM9e2RheXN9IiwgImRheXMiOiA3fSwgImZsYWdfZGF5cyI6IDd9",
+  "w_rain_bool.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiB0cnVlLCAidG1pbl9jIjogNX0sICJmZXRjaCI6IHsiZW5hYmxlZCI6IGZhbHNlLCAidXJsX3RlbXBsYXRlIjogImh0dHBzOi8vYXBpLm9wZW4tbWV0ZW8uY29tL3YxL2ZvcmVjYXN0P2xhdGl0dWRlPXtsYXR9JmxvbmdpdHVkZT17bG9ufSZkYWlseT1wcmVjaXBpdGF0aW9uX3N1bSx0ZW1wZXJhdHVyZV8ybV9taW4sdGVtcGVyYXR1cmVfMm1fbWF4JnRpbWV6b25lPUFzaWElMkZIb19DaGlfTWluaCZmb3JlY2FzdF9kYXlzPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_fetch_str.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiAiZmFsc2UiLCAidXJsX3RlbXBsYXRlIjogImh0dHBzOi8vYXBpLm9wZW4tbWV0ZW8uY29tL3YxL2ZvcmVjYXN0P2xhdGl0dWRlPXtsYXR9JmxvbmdpdHVkZT17bG9ufSZkYWlseT1wcmVjaXBpdGF0aW9uX3N1bSx0ZW1wZXJhdHVyZV8ybV9taW4sdGVtcGVyYXR1cmVfMm1fbWF4JnRpbWV6b25lPUFzaWElMkZIb19DaGlfTWluaCZmb3JlY2FzdF9kYXlzPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_http.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwOi8vYXBpLmV4YW1wbGUve2xhdH0ve2xvbn0iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_no_ph.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5leGFtcGxlL3giLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_days0.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDB9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_days17.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDE3fSwgImZsYWdfZGF5cyI6IDd9",
+  "w_days_bool.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IHRydWV9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_days_float.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDcuMH0sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_fd0.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogMH0=",
+  "w_fd_bool.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogdHJ1ZX0=",
+  "w_fd61.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogNjF9",
+  "w_ph_x.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5leGFtcGxlL3tsYXR9L3tsb259L3t4fSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_ph_0.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5leGFtcGxlL3tsYXR9L3tsb259L3swfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_ph_brace.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5leGFtcGxlL3tsYXR9L3tsb259L3siLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_ph_close.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5leGFtcGxlL3tsYXR9L3tsb259L30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_ph_double.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5leGFtcGxlL3tsYXR9L3tsb259P2E9e3t4fX0iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_ph_attr.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5leGFtcGxlL3tsYXQucmVhbH0ve2xvbn0iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_ph_spec.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5leGFtcGxlL3tsYXQ6Pjh9L3tsb259IiwgImRheXMiOiA3fSwgImZsYWdfZGF5cyI6IDd9",
+  "w_ssrf_ip.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovLzEyNy4wLjAuMS9mP2xhdD17bGF0fSZsb249e2xvbn0mZD17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_ssrf_meta.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovLzE2OS4yNTQuMTY5LjI1NC9mP2xhdD17bGF0fSZsb249e2xvbn0mZD17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_ssrf_local.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2xvY2FsaG9zdC9mP2xhdD17bGF0fSZsb249e2xvbn0mZD17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "w_ssrf_internal.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2RiLmludGVybmFsL2Y/bGF0PXtsYXR9Jmxvbj17bG9ufSZkPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_ssrf_v6.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL1s6OjFdL2Y/bGF0PXtsYXR9Jmxvbj17bG9ufSZkPXtkYXlzfSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_ssrf_dotless.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2ludHJhbmV0L2Y/bGF0PXtsYXR9Jmxvbj17bG9ufSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_ssrf_upper.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL0RCLkxBTi4vZj9sYXQ9e2xhdH0mbG9uPXtsb259IiwgImRheXMiOiA3fSwgImZsYWdfZGF5cyI6IDd9",
+  "w_ok_port.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5leGFtcGxlLmNvbTo4NDQzL2Y/bGF0PXtsYXR9Jmxvbj17bG9ufSIsICJkYXlzIjogN30sICJmbGFnX2RheXMiOiA3fQ==",
+  "w_ok_user.json": "eyJfZG9jIjogIkdJ4bqiIMSQ4buKTkgg4oCUIGPhuqV1IGjDrG5oIFZUIEFnZW50IEPhuqNuaCBiw6FvIHRo4budaSB0aeG6v3QgJiBzw6J1IGLhu4duaCAodjEwLjIsIGFnZW50cy92dF90aG9pdGlldC5weSkuIFbDuW5nL3Thu41hIMSR4buZL2fDoW4ga2hv4bqjbmjihpJ2w7luZyB2w6AgbmfGsOG7oW5nIG3GsGEvbmhp4buHdCBsw6AgR0nhuqIgxJDhu4pOSCBj4bunYSBkZXYg4oCUIEfEkCB2w7luZyB0cuG7k25nIGNo4buRdCAoZXh0ZXJuYWwtZGVwKS4gVOG7jWEgxJHhu5kgbMOgIHThu41hIMSR4buZIFbDmU5HIMSRw6MgbMOgbSB0csOybiAwLDHCsCAofjExIGttKSwgS0jDlE5HIHBo4bqjaSB04buNYSDEkeG7mSBraG/huqNuaDsgY2jhu4kgZ+G7rWkgcmEgbmjDoCBjdW5nIGPhuqVwIGThu7EgYsOhbyBraGkgZmV0Y2guZW5hYmxlZCA9IHRydWUuIGZldGNoLmVuYWJsZWQgbeG6t2MgxJHhu4tuaCBmYWxzZTogxJFp4buBdSBraG/huqNuIHRoxrDGoW5nIG3huqFpIE9wZW4tTWV0ZW8gLyBBUEkgY8OzIHBow60gY2jGsGEgeMOhYyBtaW5oIOKGkiBkw7luZyAtLWZyb20tY3N2IG5o4bqtcCB0YXkuIE5nxrDhu6FuZzogbcawYSA+IHJhaW5fbW1fZGF5IG1tL25nw6B5IOKGkiAnbXVhX2xvbic7IG5oaeG7h3QgxJHhu5kgdGjhuqVwIG5o4bqldCA8IHRtaW5fYyDCsEMg4oaSICdyZXQnIChi4bqxbmcgbmfGsOG7oW5nIGtow7RuZyBj4bqjbmggYsOhbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWw7luZyBBIChHSeG6oiDEkOG7ik5IKSIsICJsYXQiOiAxNS4xLCAibG9uIjogMTA3LjksICJwbG90cyI6IFsiS1YtQTAxIiwgIktWLUEwMiJdfSwgeyJjb2RlIjogInZ1bmctYiIsICJuYW1lIjogIlbDuW5nIEIgKEdJ4bqiIMSQ4buKTkgpIiwgImxhdCI6IDE1LjAsICJsb24iOiAxMDguMCwgInBsb3RzIjogWyJLVi1CMDEiXX1dLCAidGhyZXNob2xkcyI6IHsicmFpbl9tbV9kYXkiOiA1MCwgInRtaW5fYyI6IDV9LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL3U6cEBhcGkuZXhhbXBsZS5jb20vZj9sYXQ9e2xhdH0mbG9uPXtsb259IiwgImRheXMiOiA3fSwgImZsYWdfZGF5cyI6IDd9",
+  "w_root_list.json": "WzFd",
+  "w_missing.json": null,
+  "w_broken.json": "e2FyZWFz",
+  "w_bad_utf8.json": "/w==",
+  "w_nan.json": "eyJfZG9jIjogIkdJXHUxZWEyIFx1MDExMFx1MWVjYU5IIFx1MjAxNCBjXHUxZWE1dSBoXHUwMGVjbmggVlQgQWdlbnQgQ1x1MWVhM25oIGJcdTAwZTFvIHRoXHUxZWRkaSB0aVx1MWViZnQgJiBzXHUwMGUydSBiXHUxZWM3bmggKHYxMC4yLCBhZ2VudHMvdnRfdGhvaXRpZXQucHkpLiBWXHUwMGY5bmcvdFx1MWVjZGEgXHUwMTExXHUxZWQ5L2dcdTAwZTFuIGtob1x1MWVhM25oXHUyMTkydlx1MDBmOW5nIHZcdTAwZTAgbmdcdTAxYjBcdTFlZTFuZyBtXHUwMWIwYS9uaGlcdTFlYzd0IGxcdTAwZTAgR0lcdTFlYTIgXHUwMTEwXHUxZWNhTkggY1x1MWVlN2EgZGV2IFx1MjAxNCBHXHUwMTEwIHZcdTAwZjluZyB0clx1MWVkM25nIGNoXHUxZWQxdCAoZXh0ZXJuYWwtZGVwKS4gVFx1MWVjZGEgXHUwMTExXHUxZWQ5IGxcdTAwZTAgdFx1MWVjZGEgXHUwMTExXHUxZWQ5IFZcdTAwZDlORyBcdTAxMTFcdTAwZTMgbFx1MDBlMG0gdHJcdTAwZjJuIDAsMVx1MDBiMCAofjExIGttKSwgS0hcdTAwZDRORyBwaFx1MWVhM2kgdFx1MWVjZGEgXHUwMTExXHUxZWQ5IGtob1x1MWVhM25oOyBjaFx1MWVjOSBnXHUxZWVkaSByYSBuaFx1MDBlMCBjdW5nIGNcdTFlYTVwIGRcdTFlZjEgYlx1MDBlMW8ga2hpIGZldGNoLmVuYWJsZWQgPSB0cnVlLiBmZXRjaC5lbmFibGVkIG1cdTFlYjdjIFx1MDExMVx1MWVjYm5oIGZhbHNlOiBcdTAxMTFpXHUxZWMxdSBraG9cdTFlYTNuIHRoXHUwMWIwXHUwMWExbmcgbVx1MWVhMWkgT3Blbi1NZXRlbyAvIEFQSSBjXHUwMGYzIHBoXHUwMGVkIGNoXHUwMWIwYSB4XHUwMGUxYyBtaW5oIFx1MjE5MiBkXHUwMGY5bmcgLS1mcm9tLWNzdiBuaFx1MWVhZHAgdGF5LiBOZ1x1MDFiMFx1MWVlMW5nOiBtXHUwMWIwYSA+IHJhaW5fbW1fZGF5IG1tL25nXHUwMGUweSBcdTIxOTIgJ211YV9sb24nOyBuaGlcdTFlYzd0IFx1MDExMVx1MWVkOSB0aFx1MWVhNXAgbmhcdTFlYTV0IDwgdG1pbl9jIFx1MDBiMEMgXHUyMTkyICdyZXQnIChiXHUxZWIxbmcgbmdcdTAxYjBcdTFlZTFuZyBraFx1MDBmNG5nIGNcdTFlYTNuaCBiXHUwMGUxbykuIiwgImFyZWFzIjogW3siY29kZSI6ICJ2dW5nLWEiLCAibmFtZSI6ICJWXHUwMGY5bmcgQSAoR0lcdTFlYTIgXHUwMTEwXHUxZWNhTkgpIiwgImxhdCI6IDE1LjEsICJsb24iOiAxMDcuOSwgInBsb3RzIjogWyJLVi1BMDEiLCAiS1YtQTAyIl19LCB7ImNvZGUiOiAidnVuZy1iIiwgIm5hbWUiOiAiVlx1MDBmOW5nIEIgKEdJXHUxZWEyIFx1MDExMFx1MWVjYU5IKSIsICJsYXQiOiAxNS4wLCAibG9uIjogMTA4LjAsICJwbG90cyI6IFsiS1YtQjAxIl19XSwgInRocmVzaG9sZHMiOiB7InJhaW5fbW1fZGF5IjogNTAsICJ0bWluX2MiOiBOYU59LCAiZmV0Y2giOiB7ImVuYWJsZWQiOiBmYWxzZSwgInVybF90ZW1wbGF0ZSI6ICJodHRwczovL2FwaS5vcGVuLW1ldGVvLmNvbS92MS9mb3JlY2FzdD9sYXRpdHVkZT17bGF0fSZsb25naXR1ZGU9e2xvbn0mZGFpbHk9cHJlY2lwaXRhdGlvbl9zdW0sdGVtcGVyYXR1cmVfMm1fbWluLHRlbXBlcmF0dXJlXzJtX21heCZ0aW1lem9uZT1Bc2lhJTJGSG9fQ2hpX01pbmgmZm9yZWNhc3RfZGF5cz17ZGF5c30iLCAiZGF5cyI6IDd9LCAiZmxhZ19kYXlzIjogN30=",
+  "c_good.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsNjAsMTAsMjAKdnVuZy1iLCAyMDI2LTEwLTE2ICwwLjUsIC0zICwxZTEK",
+  "c_bom.csv": "77u/YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MNCnZ1bmctYSwyMDI2LTEwLTE1LDYwLDEwLDIwDQo=",
+  "c_header.csv": "YSxiLGMK",
+  "c_header_ws.csv": "IGFyZWFfY29kZSAsIGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsMSwyLDMK",
+  "c_utf8.csv": "//4AeA==",
+  "c_empty.csv": "",
+  "c_blank_lines.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKCiAsICwgCnZ1bmctYSwyMDI2LTEwLTE1LDEsMiwzCg==",
+  "c_area.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1iLDIwMjYtMTAtMTUsMTIwLDEwLDIwCnZ1bmcteCwyMDI2LTEwLTE1LDEsMTAsMjAK",
+  "c_day.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDE1LzEwLzIwMjYsMSwxMCwyMAo=",
+  "c_rain_abc.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsYWJjLDEwLDIwCg==",
+  "c_rain_big.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsMTAwMSwxMCwyMAo=",
+  "c_rain_neg.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsLTEsMTAsMjAK",
+  "c_rain_nan.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsbmFuLDEwLDIwCg==",
+  "c_tmin.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsMSwtMjEsMjAK",
+  "c_tmax_inf.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsMSwxMCxpbmYK",
+  "c_cols.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsMSwxMAo=",
+  "c_dup.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsMSwxMCwyMAp2dW5nLWEsMjAyNi0xMC0xNSwyLDEwLDIwCg==",
+  "c_quoted.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKInZ1bmctYSIsIjIwMjYtMTAtMTUiLCIxLDUiLDEwLDIwCnZ1bmctYSwyMDI2LTEwLTE2LCI3IiwxLDIK",
+  "c_num_forms.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsMV8wMDAsMTAsMjAKdnVuZy1iLDIwMjYtMTAtMTUsICs1LiwuNSwxRTEK",
+  "c_day_compact.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYxMDE1LDEsMiwzCg==",
+  "c_infinity.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsSW5maW5pdHksMTAsMjAK",
+  "c_edge.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsMTAwMCwtMjAsNTAKdnVuZy1iLDIwMjYtMTAtMTUsMCw1MCwtMjAK",
+  "c_cr_only.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MNdnVuZy1hLDIwMjYtMTAtMTUsMSwyLDMN",
+  "c_nul.csv": "YXJlYV9jb2RlLGRheSxyYWluX21tLHRtaW5fYyx0bWF4X2MKdnVuZy1hLDIwMjYtMTAtMTUsMQAsMiwzCg=="
+ }
+}

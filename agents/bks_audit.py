@@ -562,8 +562,10 @@ def chain_alert(conn, routing=None, sender=None) -> dict:
     key = sorted(f"{f['code']}|{f.get('table')}|{f.get('id')}|"
                  f"{f.get('problem') or f.get('detail') or ''}" for f in found)
     fp = hashlib.sha256(chr(10).join(key).encode("utf-8")).hexdigest()
+    # raise_alert che PII cả fp hex (~2% có dãy giống SĐT) → so cả bản đã che.
     if _rows(conn, "select 1 from red_alerts where source_agent = %s and"
-                   " detail ->> 'fp' = %s limit 1", (CHAIN_AGENT, fp)):
+                   " detail ->> 'fp' in (%s, %s) limit 1",
+             (CHAIN_AGENT, fp, _mask_pii(fp))):
         out["dup"] = True
         return out
     from pipelines import red_alert  # lười: red_alert → smtp

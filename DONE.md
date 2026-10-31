@@ -23,6 +23,116 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Vòng r22 (31/10/2026) — phần A còn lại: nhập bản viết lại TS + diễn tập khôi phục dùng pg client ĐÚNG major + quyền svc_webhook ghi vườn + fp chain-alert bị che — CLOSED 31/10/2026 (/cycle 5 lượt 2), commit local, CHƯA push/merge/deploy
+
+Base: dbf5d2e (ghi 31/10/2026 khi mở).
+
+Căn cứ scope (user 30/10: "triển hết phần A … dùng đúng skill, bung workflow triển khai"): A1 CI `main` đỏ — tên ca fail đã có ở r21
+(3 ca diễn tập `test_db_backup`: runner ubuntu-26.04 `pg_dump` trên PATH mới hơn service `postgres:16` → `SET transaction_timeout`);
+A2 `docs/roles.sql` thiếu quyền svc_webhook trên bảng vườn (Zalo vườn chế độ thực 42501 — bản TS đã vá tạm ở `docs/schema_ts.sql`);
+A3 `bks_audit --chain-alert` khóa chống lặp `detail ->> 'fp'` so với giá trị đã bị `red_alert._mask` che (~2% hex) → cảnh báo đỏ lặp mỗi
+ngày (Python + TS); A4 bản viết lại NestJS/Next.js (`ts/`, `ai_worker/`, `deploy/compose/`, `docs/rewrite/`, `docs/schema_ts.sql`, job `ts`
+trong `ci.yml`) đã nghiệm thu nội bộ (`docs/rewrite/BAN_GIAO.md` completed) nhưng chưa commit. Phương án (chọn): một version, vá Python +
+TS song song (parity). Không làm: ghim `runs-on` (quyết của người, someday r21 (4)), push/merge (chưa có quyền).
+
+Must-have:
+- [x] M1 Nhập bản viết lại TS: 717 tệp chưa theo dõi (`ts/`, `ai_worker/`, `deploy/compose/`, `docs/rewrite/`, `docs/schema_ts.sql`,
+      `data/ai_policy.json`, `.dockerignore`) + tracked `ci.yml` (job `ts`), `.gitignore`, `data/data_flow_map.json`,
+      `docs/legal/{DPIA,TIA}-nhap.md`. Vá `.gitignore` `ts/node_modules/` → `ts/**/node_modules/` (cache vitest
+      `ts/apps/web/node_modules/.vite/` đang lọt). Quét bí mật: chỉ placeholder/giá trị giả trong test (`CHANGE_ME`, `u:p`, `s3cretPW`);
+      mật khẩu container test thật 0 tệp. Gate M5 lượt 1 (ứng viên `f2cae5d`) bắt 1 ca chỉ đỏ khi chạy CHUNG suite:
+      `ai_worker/tests/test_ai_worker_server.py::test_stt_ok_masked_draft_and_child_env` thấy 7 biến `*DATABASE_URL` trong env tiến trình
+      con — do `tests/_db_guard.py:151` cố ý chèn DSN RỖNG vào env mọi tiến trình con (chặn dotenv), `ai_worker/server._child_env` vẫn lọc
+      đúng. Vá ca test: chỉ bắt biến CÓ giá trị. RED 1 failed (kèm guard) → GREEN 27 passed (kèm guard và riêng `ai_worker/tests`); đột biến
+      `_child_env` trả nguyên env → FAIL `['DATABASE_URL', 'PGPASSWORD']` (`evidence/cycle_r22_gate/m1fix/`, lượt 1 đỏ giữ ở `full/`).
+- [x] M2 A1 `scripts/db_backup.py`: `PG_BIN` vẫn thắng (khác major chỉ `[warn]`, thấp hơn → lỗi); không có thì `tool_candidates` (sinh
+      lười) `/usr/lib/postgresql/<M>/bin` → `C:/Program Files/PostgreSQL/<M>/bin` → PATH → docker `postgres:<M>-alpine` → `postgres:<M>`
+      (chỉ image ĐÃ có), `resolve_tool` lấy ứng viên đầu tiên CÙNG major server, không có mới lấy bản mới hơn + `[warn]` (backup vẫn chạy
+      như trước), `--version` lỗi → bỏ qua ứng viên; `find_tool` giữ API (test skip, `db_restore_drill`); docker thêm
+      `--add-host=host.docker.internal:host-gateway` (engine Linux). `ci.yml`: job `test` cài `postgresql-client-16` (PGDG) trước pytest,
+      job `ts` cài `-17` trước `npm test` — mỗi bước một dòng, chỉ chạy khi thiếu `/usr/lib/postgresql/<M>/bin/pg_restore` VÀ có
+      `apt-get` (Git Bash của `ci_repro.sh` bỏ qua sạch). TS `ops_scripts/backup.ts` cùng thiết kế + test đơn vị. RED thật (mã gốc, client
+      17.6 đầu PATH ↔ container riêng `postgres:16-alpine`): 3 ca diễn tập **3 failed** `unrecognized configuration parameter
+      "transaction_timeout"` — đúng lỗi CI run 40715909367; GREEN 3 passed (chọn `docker:postgres:16-alpine`, diễn tập 100/100 bảng khớp),
+      không pg trên PATH 3 passed; `test_db_backup` + `test_dr_drill` với PG17 đầu PATH 82 passed; 6 tệp liên quan 159 passed; TS biome/
+      tsc sạch, vitest đơn vị 94 passed, `.db` trên samsam-ts-db 84 passed, `dr-drill.docker` 3 passed (`evidence/cycle_r22_gate/a1/`).
+- [x] M3 A2 `docs/roles.sql` (ngay sau khối svc_webhook): SELECT `plots(id)`; `plot_logs` INSERT 6 cột `garden.add_log` + SELECT id;
+      `garden_media` INSERT 11 cột + SELECT (id, sha256) (cột trọng tài `on conflict` đòi SELECT — probe thiếu là 42501);
+      `garden_voice_drafts` INSERT 6 cột + SELECT sha256 — truy từ đúng câu SQL Python + TS chạy bằng login webhook; KHÔNG UPDATE/DELETE.
+      `docs/schema.sql` khối "r22 A2": function `webhook_garden_guard` (SECURITY DEFINER, revoke public) + 3 trigger — login `in role
+      svc_webhook` (không owner) chỉ ghi `source='zalo:garden'` + `author='zalo:<mã NV ≤32>'`/`staff_code` 1..32 (idiom repo: trigger/
+      function ở schema.sql, roles.sql chỉ grant; tên trigger giữ như bản TS → DB đã áp `schema_ts.sql` được thay, không nhân đôi). Bỏ khối
+      vườn khỏi `docs/schema_ts.sql`; sửa `deploy/compose/README.md`, `docs/rewrite/{BAN_GIAO,TIEN_DO}.md`. Test mới
+      `tests/test_r22_webhook_garden.py` (login tạm thật `in role svc_webhook`, đường `zalo_garden.handle` thật): RED mã gốc **4 failed**
+      `permission denied for table plots` (probe 4 câu: 42501 ×4) → GREEN 4 passed (chữ/ảnh/ghi âm ghi được, chain `verify_plot_logs()`
+      rỗng; nguồn/tác giả sai, UPDATE/DELETE/TRUNCATE, cột ngoài grant → 42501); đột biến bỏ trigger → ca từ chối FAIL; 23 tệp liên quan
+      908 passed; DB mẫu `samsam_ts_tpl` dựng lại, vitest garden_zalo 157 + zalo/messenger/bks/rag/testing 761 passed
+      (`evidence/cycle_r22_gate/a2/`). Áp lên DB thật = quyết của user/Bên B (đi cùng `apply_schema.py --roles`).
+- [x] M4 A3 `agents/bks_audit.py` + TS `bks-audit.ts`: `detail ->> 'fp' in (fp, _mask_pii(fp))` (TS dùng `maskPii` THẬT, không qua
+      dep giả) — khớp cả dòng cũ đã bị che. RED mã gốc: Python **2 failed** (3 lần chạy → cảnh báo #1 #2 #3; dòng cũ đã che → mở thêm),
+      TS **1 failed** (dup [false,false,false]) → GREEN Python `test_bks_audit` + `test_red_alert` 85 passed, TS bks_hdtv + pii 128 passed;
+      `pii.test.ts` ghim 2 hex che giống Python (parity chạy thật). Rà cùng idiom `detail ->> '<khóa>'` Python + TS
+      (`evidence/cycle_r22_gate/a3/grep_idiom.txt`): `post_id`/`intel_item_id`/`escalation_of` cấp 1 lưu số (không bị che), `approval_id`/
+      `file_sha256` không qua raise_alert → khác cơ chế; `escalation_of` cấp 2 `"<id>:cap2"` chỉ bị che khi id ≥ 8,4 tỷ → someday.
+- [x] M5 Gate trên commit tạm chỉ chứa nội dung r22: `ci_repro.sh <SHA> shards sim` (job `test`), TS biome/typecheck/vitest, ruff, quét
+      bí mật; evidence `evidence/cycle_r22_gate/`. Lượt 1 (`f2cae5d`) đỏ 1 ca ai_worker → vá ở M1. Lượt 2 (`4acde94`): 10 bước job `test`
+      exit 0 — ruff, `apply_schema --roles` ×2, core/golden store, bước PGDG (bỏ qua sạch vì không có `apt-get`), pytest 12 lượt
+      7144 passed + 7 skipped = 7151 collect, 0×0xC0000142, `agent_eval --deterministic`, redteam 0/50 lọt; cây sạch sau pytest
+      (`full2/`). TS trên cùng nội dung: biome ci exit 0 (36 warning có sẵn), typecheck 3 project exit 0, `db:template` exit 0, vitest
+      **1 failed** `mkt-koc.test.ts › load_contract` — golden ghim sha `loadContract('AGENTS.md')` lúc sinh golden (AGENTS.md đổi mỗi
+      retro) và 2 file mẫu ghim sha bản checkout CRLF (CI Linux LF sẽ lệch). Vá test: `has_text`/lỗi vẫn so golden Python, sha so với
+      `sha256(chữ trả về)`; tệp 74 passed, đột biến `sha256(text + "x")` → FAIL (`tsfix/`). Ứng viên cuối `f4d5e45` = `4acde94` + đúng
+      tệp test đó (quét Python chỉ đi `*.py` → gate Python giữ nguyên); biome/tsc lại exit 0, vitest toàn bộ 5948 passed + 9 skipped
+      (`ts_vitest.txt`; lượt đỏ giữ `tsfix/ts_vitest_luot1_red.txt`). Quét bí mật evidence + tệp r22: DSN có mật khẩu/`sk-or` 0 tệp
+      (`secret_scan.txt`). UNVERIFIED tới khi push: bước PGDG + `--add-host host-gateway` trên runner Linux, job `ts` trên Linux.
+
+Cold-check (reviewer ngữ cảnh mới, prompt cố định, read-only, workflow; nguyên văn `evidence/cycle_r22_gate/coldcheck_verdicts.txt`):
+vòng 1 (31/10, ứng viên `f4d5e45`) **UNVERIFIED** — 0 BLOCKER, 0 lỗi mã; 755/757 tệp ứng viên trùng cây (khác chỉ DONE/CYCLE_LOOP); tự chạy
+lại: RED A1 trên base 3 failed / ứng viên 82 passed, `ci_repro.sh f4d5e45 probe sim` 10 tệp 416 passed + 10 bước exit 0, vitest 5 nhóm 568
+passed + `dr-drill.docker` 3 passed, biome/tsc exit 0. Lý do UNVERIFIED: KHÔNG chạy lại full pytest 7151 + full vitest vì session `crawl`
+sắp chạy gate E2E nặng (mem_guard, cửa sổ tới 4 giờ) — cấm chạy chồng. Finding: MINOR cây lẫn luồng khác (ứng viên đã loại đúng — commit
+stage theo danh sách); NIT comment `docs/schema.sql` nói quá (webhook bị chiếm vẫn ghi được `zalo:<chuỗi bất kỳ>`) → ĐÃ sửa comment; NIT
+`ts/CONVENTIONS.md` ghi cứng đường scratchpad của session → ĐÃ thay bằng mô tả chung; NIT `ci.yml` ghim `postgresql-client-16/17` tách
+khỏi major image service, chưa drift-guard → someday; NIT `mkt-koc.test.ts` sha so `sha256(text)` của TS chứ không so golden Python (hai
+bên cùng decode utf-8-sig, không chuẩn hóa xuống dòng) → chấp nhận; NIT `scripts/ci_repro.sh` (runner gate) thuộc luồng dọn Docker chưa
+commit → quyết của user. Ứng viên `2b44c8a` = `f4d5e45` + 2 sửa tài liệu/comment đó (không đổi hành vi); gate đầy đủ chạy lại trên
+`2b44c8a` khi máy rảnh rồi audit lại vòng 2.
+Vòng 2 (31/10, ứng viên `2b44c8a`, máy rảnh) **FIX** — tự chạy lại `ci_repro.sh 2b44c8a shards sim` 10 bước exit 0, pytest 12 lượt 7144 passed
++ 7 skipped = 7151, `agent_eval`/redteam/biome/tsc/`db:template` xanh, đọc diff A1/A2/A3/M1 không thấy lỗi mã; **BLOCKER** full vitest
+5948 passed / 9 skipped nhưng `npm test` exit 1 vì "1 unhandled error": `zalo.reply.test.ts` (ca zalo_seen.db bị tiến trình khác giữ
+khóa) — Worker giữ `BEGIN IMMEDIATE` KHÔNG `busy_timeout` (node:sqlite mặc định 0, Python sqlite3 mặc định 5 giây), `COMMIT` cần
+EXCLUSIVE trúng lúc `SeenDb` luồng chính thử lại đang giữ SHARED chớp mắt → `database is locked` ném trong Worker → job CI `ts` đỏ
+ngẫu nhiên (1/1 lượt full của reviewer; M5 0, chạy riêng 0/12). MINOR môi trường: `test_safety_s01_rotation.py` bản base để lại 2 volume
+Docker ẩn danh (bản vá thuộc luồng dọn Docker chưa commit — user tự `docker volume rm`); NIT `ci.yml` client-16/17 + `ci_repro.sh` như vòng 1.
+- [x] FIX1 (sau vòng 2): Worker trong test đặt `PRAGMA busy_timeout = 5000` trước `BEGIN IMMEDIATE` (đúng 1 chỗ dùng mẫu này trong `ts/`;
+      mã sản phẩm `SeenDb` đã có `busy_timeout`). RED/GREEN tất định cơ chế (`zfix/busy_commit_rg.mjs.txt`: Worker giữ RESERVED, luồng
+      chính giữ SHARED rồi nhả sau 150 ms; `busy_timeout=0` → `database is locked` 3/3, `=5000` → COMMIT ok 3/3 — `zfix/red_green.txt`);
+      tệp test chạy riêng 6 lượt 52/52 (`zfix/green_6x.txt`), biome exit 0. Ứng viên `ab90b20` = `2b44c8a` + đúng tệp test đó (`ts/`
+      cây làm việc 0 tệp lệch ứng viên); full `npm test` lúc máy rảnh (sau chain E2E crawl 07:11): 5948 passed + 9 skipped, KHÔNG có
+      dòng `Errors`, EXIT 0 (`zfix/ts_vitest_full.txt`). Gate Python không đổi (tệp `.ts` duy nhất; vòng 2 đã chạy lại xanh trên `2b44c8a`).
+Vòng 3 (31/10, ứng viên `ab90b20`, chạy sau khi gate E2E crawl xong) **PASS**: ứng viên trùng byte cây làm việc trừ DONE/CYCLE_LOOP (board)
+và 2 tệp luồng dọn Docker (đã loại đúng); A1 RED trên base (`ci_repro.sh dbf5d2e probe sim`, pg_restore 17.6 đầu PATH, server PG16 →
+3 failed `transaction_timeout`) → GREEN ứng viên 8 nhóm 287 passed; `ci_repro.sh ab90b20 shards sim` EXIT 0 — pytest 12 lượt 7144 passed +
+7 skipped = 7151, 0×0xC0000142, `agent_eval`/redteam 0/50 xanh, fp mã đầu = cuối `81e1a168…`; TS biome/typecheck/`db:template` exit 0,
+`npm test` 5948 passed + 9 skipped, KHÔNG `Errors`, exit 0 (BLOCKER vòng 2 hết), `dr-drill.docker` riêng 3 passed; đọc lại diff A1/A2/A3/M1
+khớp claim; quét bí mật chỉ giá trị giả. Verdict nguyên văn: "VERDICT: PASS (r22, trong phạm vi M1–M5 + FIX1; vòng 3 trên ứng viên
+`ab90b20`)". Findings: MINOR môi trường `tests/test_safety_s01_rotation.py:96` `docker rm -f` thiếu `-v` → 2 volume ẩn danh mỗi lượt full
+(ngoài r22, bản vá ở luồng dọn Docker chưa commit); MINOR cây lẫn luồng khác → commit đóng stage theo danh sách (đã làm); NIT `ci.yml`
+client 16/17 chưa drift-guard + job `ts` `timeout-minutes: 30` chưa đo trên runner (local 693–799 s, 1 worker) → someday; NIT
+`mkt-koc.test.ts:97` sha so `sha256(text)` của TS → chấp nhận (vòng 1). UNVERIFIED tới khi push (không claim pass): bước PGDG
+`postgresql-client-16/17` trên runner (ubuntu-26.04 có bản PGDG chưa kiểm), `--add-host host-gateway` trên docker Linux, job `ts` trên Linux;
+`npm ci` sạch chưa chạy (dùng `node_modules` có sẵn). Retro: 4 bài học → AGENTS.md Gotchas + dòng lệnh r22.
+
+Someday (thấy trên đường, KHÔNG làm): (1) drift-guard `ci.yml` major `postgresql-client-*` ↔ major image service (`postgres:16`,
+`pgvector…pg17`); (2) đo job `ts` trên runner rồi chỉnh `timeout-minutes: 30`; (3) `onprem_preflight` đường Debian/major pg client chưa
+theo luật chọn công cụ của A1; (4) diễn tập khôi phục không ghi lại đã dùng công cụ nào (native/docker, major) vào kết quả; (5)
+`escalation_of` cấp 2 `"<id>:cap2"` có thể bị che như fp khi id ≥ 8,4 tỷ; (6) thứ tự trigger `plot_logs` dựa vào tên (`chain_ins` <
+`webhook_garden_guard`) — đổi tên là đổi thứ tự; (7) regex tác giả `zalo:<chuỗi bất kỳ>` lỏng (không biết danh sách mã NV ở DB); (8)
+comment r12 cũ trong `docs/schema.sql` còn lệch; (9) `red_alerts` trùng lặp do lỗi A3 đã có trên môi trường thật — dọn là quyết của người.
+Chờ user quyết: push/merge (cần để CI GitHub kiểm A1 + job `ts`); ghim `runs-on`; chạy `apply_schema.py --roles` trên DB thật (A2);
+commit `scripts/ci_repro.sh` + bản vá Docker của luồng dọn Docker (AGENTS.md đã trỏ runner này); xóa volume Docker ẩn danh do
+`test_safety_s01_rotation` để lại.
+
 ## Vòng r21 (28/10/2026) — 3 test chập chờn thành tất định (CI GitHub nay là cổng thật) — CLOSED 31/10/2026 (/cycle 5 lượt 1), commit local, CHƯA push/merge/deploy
 
 Base: 43263c5fd92760d0d36356f39cfd9049955ef045 (ghi 28/10/2026 khi mở).

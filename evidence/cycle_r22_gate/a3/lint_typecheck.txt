@@ -1,0 +1,13 @@
+# lint/typecheck sau vá 2026-10-31T00:20:14+07:00
+$ node_modules/.bin/biome check apps/api/src/modules/bks_hdtv packages/core/src/security/pii.test.ts
+Checked 9 files in 146ms. No fixes applied.
+exit=0
+$ (repo) ruff check agents/bks_audit.py tests/test_bks_audit.py
+All checks passed!
+exit=0
+$ node_modules/.bin/tsc -p apps/api --noEmit (lọc lỗi bks_hdtv + pii)
+exit=0; tổng dòng lỗi=0; lỗi trong bks_hdtv/pii:
+(hết)
+$ node_modules/.bin/tsc -p packages/core --noEmit
+exit=0; tổng dòng lỗi=0; lỗi pii:
+(hết)

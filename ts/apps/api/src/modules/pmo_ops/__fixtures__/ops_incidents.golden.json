@@ -1,0 +1,860 @@
+{
+ "parse": [
+  {
+   "in": "2026-10-16T16:00:00+07:00",
+   "res": {
+    "ok": {
+     "$dt": "2026-10-16T16:00:00+07:00"
+    }
+   }
+  },
+  {
+   "in": "2026-10-16 16:00",
+   "res": {
+    "ok": {
+     "$dt": "2026-10-16T16:00:00+07:00"
+    }
+   }
+  },
+  {
+   "in": "2026-10-16",
+   "res": {
+    "ok": {
+     "$dt": "2026-10-16T00:00:00+07:00"
+    }
+   }
+  },
+  {
+   "in": "20261016T160000Z",
+   "res": {
+    "ok": {
+     "$dt": "2026-10-16T16:00:00+00:00"
+    }
+   }
+  },
+  {
+   "in": " 2026-10-16T09:00:00Z ",
+   "res": {
+    "ok": {
+     "$dt": "2026-10-16T09:00:00+00:00"
+    }
+   }
+  },
+  {
+   "in": "2026-10-16T16:00",
+   "res": {
+    "ok": {
+     "$dt": "2026-10-16T16:00:00+07:00"
+    }
+   }
+  },
+  {
+   "in": "16/10/2026 16:00",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--at: c\u1ea7n th\u1eddi \u0111i\u1ec3m ISO (YYYY-MM-DD HH:MM[+07:00])"
+   }
+  },
+  {
+   "in": "",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--at: c\u1ea7n th\u1eddi \u0111i\u1ec3m ISO (YYYY-MM-DD HH:MM[+07:00])"
+   }
+  },
+  {
+   "in": "2026-13-01T00:00",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--at: c\u1ea7n th\u1eddi \u0111i\u1ec3m ISO (YYYY-MM-DD HH:MM[+07:00])"
+   }
+  },
+  {
+   "in": "2026-10-16T16:00:00.5",
+   "res": {
+    "ok": {
+     "$dt": "2026-10-16T16:00:00.500000+07:00"
+    }
+   }
+  },
+  {
+   "in": "2026-10-16T16:00:00+0530",
+   "res": {
+    "ok": {
+     "$dt": "2026-10-16T16:00:00+05:30"
+    }
+   }
+  },
+  {
+   "in": "2026-W42-5T08:00",
+   "res": {
+    "ok": {
+     "$dt": "2026-10-16T08:00:00+07:00"
+    }
+   }
+  },
+  {
+   "in": "2026-10-16T24:00",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--at: c\u1ea7n th\u1eddi \u0111i\u1ec3m ISO (YYYY-MM-DD HH:MM[+07:00])"
+   }
+  }
+ ],
+ "shift": {
+  "start": "00:00",
+  "end": "23:59",
+  "workdays": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "holidays": [
+   "2026-10-20"
+  ]
+ },
+ "incidents": [
+  [
+   1,
+   "t",
+   "nghiem_trong",
+   "kuma",
+   "ben_a",
+   "2026-10-16T15:46:00+07:00",
+   "2026-10-16T16:00:00+07:00"
+  ],
+  [
+   2,
+   "t",
+   "nghiem_trong",
+   "kuma",
+   "ben_a",
+   "2026-10-16T15:44:00+07:00",
+   "2026-10-16T16:00:00+07:00"
+  ],
+  [
+   3,
+   "t",
+   "thuong",
+   "khach",
+   "ben_b",
+   null,
+   "2026-10-16T16:00:00+07:00"
+  ],
+  [
+   4,
+   "t",
+   "thuong",
+   "khach",
+   "ben_b",
+   null,
+   "2026-10-16T16:00:00+07:00"
+  ],
+  [
+   5,
+   "t",
+   "nghiem_trong",
+   "agent",
+   "ben_a",
+   null,
+   "2026-10-16T16:00:00+07:00"
+  ],
+  [
+   6,
+   "t",
+   "thuong",
+   "x",
+   "chua_xac_dinh",
+   "2026-10-16T15:45:00+07:00",
+   "2026-10-16T16:00:00+07:00"
+  ]
+ ],
+ "events": [
+  [
+   1,
+   "responded",
+   "2026-10-16T18:59:00+07:00"
+  ],
+  [
+   1,
+   "fixed",
+   "2026-10-23T16:00:00+07:00"
+  ],
+  [
+   1,
+   "responded",
+   "2026-10-16T17:00:00+07:00"
+  ],
+  [
+   2,
+   "responded",
+   "2026-10-16T19:01:00+07:00"
+  ],
+  [
+   2,
+   "fixed",
+   "2026-10-23T16:01:00+07:00"
+  ],
+  [
+   3,
+   "responded",
+   "2026-10-21T17:00:00+07:00"
+  ],
+  [
+   4,
+   "responded",
+   "2026-10-23T09:00:00+07:00"
+  ],
+  [
+   5,
+   "customer_resolved",
+   "2026-10-16T16:30:00+07:00"
+  ],
+  [
+   6,
+   "note",
+   "2026-10-16T16:01:00+07:00"
+  ]
+ ],
+ "evals": [
+  {
+   "now": "2026-10-16T17:00:00+07:00",
+   "rows": [
+    {
+     "id": 1,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "ok",
+     "respond": "ok",
+     "fix": "ok",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 2,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "late",
+     "respond": "late",
+     "fix": "late",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 3,
+     "severity": "thuong",
+     "ben": "ben_b",
+     "detect": "unmeasured",
+     "respond": "ok",
+     "fix": "pending",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 4,
+     "severity": "thuong",
+     "ben": "ben_b",
+     "detect": "unmeasured",
+     "respond": "late",
+     "fix": "pending",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 5,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "unmeasured",
+     "respond": "pending",
+     "fix": "pending",
+     "customer_resolved_at": {
+      "$dt": "2026-10-16T16:30:00+07:00"
+     }
+    },
+    {
+     "id": 6,
+     "severity": "thuong",
+     "ben": "chua_xac_dinh",
+     "detect": "ok",
+     "respond": "pending",
+     "fix": "pending",
+     "customer_resolved_at": null
+    }
+   ],
+   "sum": {
+    "detect|None": {
+     "ok": 2,
+     "late": 1,
+     "pending": 0,
+     "unmeasured": 3
+    },
+    "detect|nghiem_trong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 0,
+     "unmeasured": 1
+    },
+    "detect|thuong": {
+     "ok": 1,
+     "late": 0,
+     "pending": 0,
+     "unmeasured": 2
+    },
+    "respond|None": {
+     "ok": 2,
+     "late": 2,
+     "pending": 2,
+     "unmeasured": 0
+    },
+    "respond|nghiem_trong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 1,
+     "unmeasured": 0
+    },
+    "respond|thuong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 1,
+     "unmeasured": 0
+    },
+    "fix|None": {
+     "ok": 1,
+     "late": 1,
+     "pending": 4,
+     "unmeasured": 0
+    },
+    "fix|nghiem_trong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 1,
+     "unmeasured": 0
+    },
+    "fix|thuong": {
+     "ok": 0,
+     "late": 0,
+     "pending": 3,
+     "unmeasured": 0
+    }
+   }
+  },
+  {
+   "now": "2026-10-16T20:00:00+07:00",
+   "rows": [
+    {
+     "id": 1,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "ok",
+     "respond": "ok",
+     "fix": "ok",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 2,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "late",
+     "respond": "late",
+     "fix": "late",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 3,
+     "severity": "thuong",
+     "ben": "ben_b",
+     "detect": "unmeasured",
+     "respond": "ok",
+     "fix": "pending",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 4,
+     "severity": "thuong",
+     "ben": "ben_b",
+     "detect": "unmeasured",
+     "respond": "late",
+     "fix": "pending",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 5,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "unmeasured",
+     "respond": "late",
+     "fix": "pending",
+     "customer_resolved_at": {
+      "$dt": "2026-10-16T16:30:00+07:00"
+     }
+    },
+    {
+     "id": 6,
+     "severity": "thuong",
+     "ben": "chua_xac_dinh",
+     "detect": "ok",
+     "respond": "pending",
+     "fix": "pending",
+     "customer_resolved_at": null
+    }
+   ],
+   "sum": {
+    "detect|None": {
+     "ok": 2,
+     "late": 1,
+     "pending": 0,
+     "unmeasured": 3
+    },
+    "detect|nghiem_trong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 0,
+     "unmeasured": 1
+    },
+    "detect|thuong": {
+     "ok": 1,
+     "late": 0,
+     "pending": 0,
+     "unmeasured": 2
+    },
+    "respond|None": {
+     "ok": 2,
+     "late": 3,
+     "pending": 1,
+     "unmeasured": 0
+    },
+    "respond|nghiem_trong": {
+     "ok": 1,
+     "late": 2,
+     "pending": 0,
+     "unmeasured": 0
+    },
+    "respond|thuong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 1,
+     "unmeasured": 0
+    },
+    "fix|None": {
+     "ok": 1,
+     "late": 1,
+     "pending": 4,
+     "unmeasured": 0
+    },
+    "fix|nghiem_trong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 1,
+     "unmeasured": 0
+    },
+    "fix|thuong": {
+     "ok": 0,
+     "late": 0,
+     "pending": 3,
+     "unmeasured": 0
+    }
+   }
+  },
+  {
+   "now": "2026-10-18T16:00:00+07:00",
+   "rows": [
+    {
+     "id": 1,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "ok",
+     "respond": "ok",
+     "fix": "ok",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 2,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "late",
+     "respond": "late",
+     "fix": "late",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 3,
+     "severity": "thuong",
+     "ben": "ben_b",
+     "detect": "unmeasured",
+     "respond": "ok",
+     "fix": "pending",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 4,
+     "severity": "thuong",
+     "ben": "ben_b",
+     "detect": "unmeasured",
+     "respond": "late",
+     "fix": "pending",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 5,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "unmeasured",
+     "respond": "late",
+     "fix": "pending",
+     "customer_resolved_at": {
+      "$dt": "2026-10-16T16:30:00+07:00"
+     }
+    },
+    {
+     "id": 6,
+     "severity": "thuong",
+     "ben": "chua_xac_dinh",
+     "detect": "ok",
+     "respond": "pending",
+     "fix": "pending",
+     "customer_resolved_at": null
+    }
+   ],
+   "sum": {
+    "detect|None": {
+     "ok": 2,
+     "late": 1,
+     "pending": 0,
+     "unmeasured": 3
+    },
+    "detect|nghiem_trong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 0,
+     "unmeasured": 1
+    },
+    "detect|thuong": {
+     "ok": 1,
+     "late": 0,
+     "pending": 0,
+     "unmeasured": 2
+    },
+    "respond|None": {
+     "ok": 2,
+     "late": 3,
+     "pending": 1,
+     "unmeasured": 0
+    },
+    "respond|nghiem_trong": {
+     "ok": 1,
+     "late": 2,
+     "pending": 0,
+     "unmeasured": 0
+    },
+    "respond|thuong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 1,
+     "unmeasured": 0
+    },
+    "fix|None": {
+     "ok": 1,
+     "late": 1,
+     "pending": 4,
+     "unmeasured": 0
+    },
+    "fix|nghiem_trong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 1,
+     "unmeasured": 0
+    },
+    "fix|thuong": {
+     "ok": 0,
+     "late": 0,
+     "pending": 3,
+     "unmeasured": 0
+    }
+   }
+  },
+  {
+   "now": "2026-10-26T16:00:00+07:00",
+   "rows": [
+    {
+     "id": 1,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "ok",
+     "respond": "ok",
+     "fix": "ok",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 2,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "late",
+     "respond": "late",
+     "fix": "late",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 3,
+     "severity": "thuong",
+     "ben": "ben_b",
+     "detect": "unmeasured",
+     "respond": "ok",
+     "fix": "late",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 4,
+     "severity": "thuong",
+     "ben": "ben_b",
+     "detect": "unmeasured",
+     "respond": "late",
+     "fix": "late",
+     "customer_resolved_at": null
+    },
+    {
+     "id": 5,
+     "severity": "nghiem_trong",
+     "ben": "ben_a",
+     "detect": "unmeasured",
+     "respond": "late",
+     "fix": "late",
+     "customer_resolved_at": {
+      "$dt": "2026-10-16T16:30:00+07:00"
+     }
+    },
+    {
+     "id": 6,
+     "severity": "thuong",
+     "ben": "chua_xac_dinh",
+     "detect": "ok",
+     "respond": "late",
+     "fix": "late",
+     "customer_resolved_at": null
+    }
+   ],
+   "sum": {
+    "detect|None": {
+     "ok": 2,
+     "late": 1,
+     "pending": 0,
+     "unmeasured": 3
+    },
+    "detect|nghiem_trong": {
+     "ok": 1,
+     "late": 1,
+     "pending": 0,
+     "unmeasured": 1
+    },
+    "detect|thuong": {
+     "ok": 1,
+     "late": 0,
+     "pending": 0,
+     "unmeasured": 2
+    },
+    "respond|None": {
+     "ok": 2,
+     "late": 4,
+     "pending": 0,
+     "unmeasured": 0
+    },
+    "respond|nghiem_trong": {
+     "ok": 1,
+     "late": 2,
+     "pending": 0,
+     "unmeasured": 0
+    },
+    "respond|thuong": {
+     "ok": 1,
+     "late": 2,
+     "pending": 0,
+     "unmeasured": 0
+    },
+    "fix|None": {
+     "ok": 1,
+     "late": 5,
+     "pending": 0,
+     "unmeasured": 0
+    },
+    "fix|nghiem_trong": {
+     "ok": 1,
+     "late": 2,
+     "pending": 0,
+     "unmeasured": 0
+    },
+    "fix|thuong": {
+     "ok": 0,
+     "late": 3,
+     "pending": 0,
+     "unmeasured": 0
+    }
+   }
+  }
+ ],
+ "texts": [
+  {
+   "in": "  a\n b  ",
+   "n": 10,
+   "res": {
+    "ok": "a b"
+   }
+  },
+  {
+   "in": "  a\n b  ",
+   "n": 200,
+   "res": {
+    "ok": "a b"
+   }
+  },
+  {
+   "in": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "n": 10,
+   "res": {
+    "ok": "xxxxxxxxxx"
+   }
+  },
+  {
+   "in": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "n": 200,
+   "res": {
+    "ok": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   }
+  },
+  {
+   "in": "g\u1ecdi 0912 345 678 nh\u00e9",
+   "n": 10,
+   "res": {
+    "ok": "g\u1ecdi *** nh"
+   }
+  },
+  {
+   "in": "g\u1ecdi 0912 345 678 nh\u00e9",
+   "n": 200,
+   "res": {
+    "ok": "g\u1ecdi *** nh\u00e9"
+   }
+  },
+  {
+   "in": "",
+   "n": 10,
+   "res": {
+    "ok": null
+   }
+  },
+  {
+   "in": "",
+   "n": 200,
+   "res": {
+    "ok": null
+   }
+  },
+  {
+   "in": null,
+   "n": 10,
+   "res": {
+    "ok": null
+   }
+  },
+  {
+   "in": null,
+   "n": 200,
+   "res": {
+    "ok": null
+   }
+  },
+  {
+   "in": "\u2028a\u3000b",
+   "n": 10,
+   "res": {
+    "ok": "a b"
+   }
+  },
+  {
+   "in": "\u2028a\u3000b",
+   "n": 200,
+   "res": {
+    "ok": "a b"
+   }
+  },
+  {
+   "in": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab 0912345678",
+   "n": 10,
+   "res": {
+    "ok": "ababababab"
+   }
+  },
+  {
+   "in": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab 0912345678",
+   "n": 200,
+   "res": {
+    "ok": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+   }
+  }
+ ],
+ "bys": [
+  {
+   "in": "Ng\u01b0\u1eddi Tr\u1ef1c",
+   "res": {
+    "ok": "Ng\u01b0\u1eddi Tr\u1ef1c"
+   }
+  },
+  {
+   "in": "  Ng\u01b0\u1eddi   Tr\u1ef1c ",
+   "res": {
+    "ok": "Ng\u01b0\u1eddi Tr\u1ef1c"
+   }
+  },
+  {
+   "in": "agent:bot",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--by ph\u1ea3i l\u00e0 t\u00ean NG\u01af\u1edcI th\u1eadt (1..100 k\u00fd t\u1ef1, kh\u00f4ng agent:/system:)"
+   }
+  },
+  {
+   "in": "System:x",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--by ph\u1ea3i l\u00e0 t\u00ean NG\u01af\u1edcI th\u1eadt (1..100 k\u00fd t\u1ef1, kh\u00f4ng agent:/system:)"
+   }
+  },
+  {
+   "in": "",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--by ph\u1ea3i l\u00e0 t\u00ean NG\u01af\u1edcI th\u1eadt (1..100 k\u00fd t\u1ef1, kh\u00f4ng agent:/system:)"
+   }
+  },
+  {
+   "in": null,
+   "res": {
+    "error": "IncidentError",
+    "msg": "--by ph\u1ea3i l\u00e0 t\u00ean NG\u01af\u1edcI th\u1eadt (1..100 k\u00fd t\u1ef1, kh\u00f4ng agent:/system:)"
+   }
+  },
+  {
+   "in": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--by ph\u1ea3i l\u00e0 t\u00ean NG\u01af\u1edcI th\u1eadt (1..100 k\u00fd t\u1ef1, kh\u00f4ng agent:/system:)"
+   }
+  },
+  {
+   "in": "G\u1ecdi 0912345678",
+   "res": {
+    "ok": "G\u1ecdi ***"
+   }
+  },
+  {
+   "in": "AGENT:x",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--by ph\u1ea3i l\u00e0 t\u00ean NG\u01af\u1edcI th\u1eadt (1..100 k\u00fd t\u1ef1, kh\u00f4ng agent:/system:)"
+   }
+  },
+  {
+   "in": "auto_policy:y",
+   "res": {
+    "error": "IncidentError",
+    "msg": "--by ph\u1ea3i l\u00e0 t\u00ean NG\u01af\u1edcI th\u1eadt (1..100 k\u00fd t\u1ef1, kh\u00f4ng agent:/system:)"
+   }
+  }
+ ]
+}

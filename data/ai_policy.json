@@ -1,0 +1,21 @@
+{
+  "_doc": "Chính sách nhà cung cấp AI của AI Gateway TS (ts/packages/core/src/ai/gateway.ts; viết lại TS — docs/rewrite/KE_HOACH.md mục 2). Không chứa secret. MẶC ĐỊNH mọi tính năng chạy Ollama NỘI BỘ (local) — không gọi cloud. Claude (cloud) CHỈ khi caller xin provider 'claude' VÀ features[<mã tính năng>] có đủ: cloud=true, approved_by (người thật — không 'agent:'/'system:'), approved_until (YYYY-MM-DD, còn hạn tính theo ngày giờ VN), data_classes (lớp dữ liệu được gửi: xanh|vang|do như data/data_flow_map.json classes; lời gọi phải khai đúng lớp) VÀ cloud.price_usd_per_1m đã điền (trần chi phí). Thiếu/hết hạn/sai = CHẶN (GatewayBlocked), KHÔNG tự chuyển local → cloud. Mục features do Quản lý AI (Bên B) + Pháp chế điền theo văn bản phê duyệt — agent không điền. Mẫu mục: \"sales-03\": {\"cloud\": true, \"approved_by\": \"<họ tên>\", \"approved_until\": \"2027-01-11\", \"data_classes\": [\"xanh\"]}. Kill-switch/trần agent + tính năng/pii_allow vẫn ở data/llm_gateway.json (dùng chung với Python). prices_usd_per_1m: model nội bộ = 0 USD (chi phí AI chỉ tính cloud); model không có giá → tính theo giá cao nhất đã biết (như Python).",
+  "local": {
+    "provider": "ollama",
+    "chat_model": "qwen3:8b",
+    "embed_model": "bge-m3",
+    "embed_dim": 1024,
+    "timeout_s": 120
+  },
+  "cloud": {
+    "provider": "claude",
+    "model": "claude-sonnet-5-5",
+    "max_tokens": 1024,
+    "price_usd_per_1m": null
+  },
+  "prices_usd_per_1m": {
+    "qwen3:8b": {"in": 0, "out": 0},
+    "bge-m3": {"in": 0, "out": 0}
+  },
+  "features": {}
+}

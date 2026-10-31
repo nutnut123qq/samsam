@@ -1,7 +1,7 @@
 # DPIA — Đánh giá tác động xử lý dữ liệu cá nhân (NHÁP)
 
 > **BẢN NHÁP — chưa có giá trị pháp lý; chờ Chuyên viên Pháp chế ký, luật sư rà — agent không kết luận tuân thủ.**
-> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-14). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
+> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-30). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
 > Căn cứ: Luật BVDLCN 91/2025/QH15 + NĐ 356/2025 (hiệu lực 01/01/2026, NĐ 356/2025 thay NĐ 13/2023). Khung mục dựng theo cấu trúc hồ sơ đánh giá tác động xử lý của NĐ 13/2023 Điều 24 — mẫu biểu chính thức theo NĐ 356/2025: CẦN LUẬT SƯ XÁC NHẬN.
 
 ## 1. Bên kiểm soát / bên xử lý dữ liệu
@@ -25,7 +25,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-01 |
-| Module (code) | `connectors/zalo.py`; `connectors/channels.py` |
+| Module (code) | `connectors/zalo.py`; `connectors/channels.py`; `ts/apps/api/src/modules/zalo/zalo.sender.ts` |
 | Mục đích | Chăm sóc khách hàng (CSKH) — trả lời câu hỏi sản phẩm qua chatbot |
 | Dữ liệu | user_id Zalo thô, nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại |
 | Lớp | Đỏ |
@@ -43,7 +43,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-02 |
-| Module (code) | `scripts/zalo_preflight.py` |
+| Module (code) | `scripts/zalo_preflight.py`; `ts/apps/api/src/modules/zalo/zalo-preflight.ts` |
 | Mục đích | Kiểm tra cấu hình kênh trước khi deploy |
 | Dữ liệu | Access/refresh token OA, thông tin OA (getoa) — không có dữ liệu khách |
 | Lớp | Xanh |
@@ -223,7 +223,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-12 |
-| Module (code) | `scripts/health_bulletin.py`; `scripts/webhook_probe.py` |
+| Module (code) | `scripts/health_bulletin.py`; `scripts/webhook_probe.py`; `ts/apps/api/src/modules/pmo_ops/health-bulletin.ts`; `ts/apps/api/src/modules/zalo/webhook-probe.ts` |
 | Mục đích | Giám sát vận hành |
 | Dữ liệu | Chỉ số tổng hợp vận hành (job, eval, chi phí, số mục) — không có dữ liệu cá nhân |
 | Lớp | Xanh |
@@ -241,7 +241,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-13 |
-| Module (code) | `crawler/collect.py`; `crawler/sources.py` |
+| Module (code) | `crawler/collect.py`; `crawler/sources.py`; `ts/apps/api/src/modules/intel_crawl/collect.ts` |
 | Mục đích | Xây KB public cho chatbot |
 | Dữ liệu | Trang public (sản phẩm, bài viết) — không thu dữ liệu cá nhân |
 | Lớp | Xanh |
@@ -295,7 +295,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-16 |
-| Module (code) | `crawler/intel.py`; `scripts/intel_bulletin.py` |
+| Module (code) | `crawler/intel.py`; `scripts/intel_bulletin.py`; `ts/apps/api/src/modules/intel_crawl/intel.ts` |
 | Mục đích | Tình báo thị trường: tin về sâm, TPBVSK, đồ ăn giới trẻ, quảng cáo, đối thủ |
 | Dữ liệu | Tiêu đề + trích ≤300 ký tự + link tin RSS/Atom công khai (đã che SĐT/email); có thể nhắc tên người trong tin báo chí |
 | Lớp | Xanh |
@@ -475,7 +475,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-26 |
-| Module (code) | `agents/ra_kenh.py`; `connectors/fanpage.py` |
+| Module (code) | `agents/ra_kenh.py`; `connectors/fanpage.py`; `ts/apps/api/src/modules/messenger_fanpage/fanpage.ts` |
 | Mục đích | Phát hiện bài đang đăng vi phạm luật quảng cáo/lệch bản đã duyệt để Pháp chế ra lệnh gỡ/sửa trong 24 giờ |
 | Dữ liệu | Text bài CÔNG KHAI của công ty trên website/fanpage/sàn (url, kênh, ngày đăng, draft_id) do Quản lý MXH xuất tay; r16: bài do CHÍNH Fanpage công ty đăng đọc qua Graph API (chỉ id, message, created_time, permalink_url — không bài khách, không bình luận/inbox, không field người); kết quả guardrail, mã vi phạm, hạn 24 giờ |
 | Lớp | Xanh |
@@ -511,7 +511,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-29 |
-| Module (code) | `connectors/messenger.py`; `connectors/zalo.py`; `connectors/channels.py` |
+| Module (code) | `connectors/messenger.py`; `connectors/zalo.py`; `connectors/channels.py`; `ts/apps/api/src/modules/messenger_fanpage/messenger.service.ts` |
 | Mục đích | Chăm sóc khách hàng (CSKH) — trả lời câu hỏi sản phẩm qua chatbot, dùng chung pipeline Zalo |
 | Dữ liệu | PSID Messenger thô (trong RAM/khóa lock), nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại |
 | Lớp | Đỏ |
@@ -547,7 +547,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-31 |
-| Module (code) | `agents/seo_web.py` |
+| Module (code) | `agents/seo_web.py`; `ts/apps/api/src/modules/mkt_koc_ugc_seo/seo-web.ts` |
 | Mục đích | Phát hiện lỗi SEO/nội dung vi phạm trên website công ty để người quản trị web sửa TAY sau khi GĐ Marketing duyệt |
 | Dữ liệu | HTML công khai các trang của chính website công ty (title, meta description, H1, thẻ img/alt, link nội bộ, mã HTTP) + dữ liệu đã crawl data/*.jsonl; không có dữ liệu cá nhân |
 | Lớp | Xanh |
@@ -565,7 +565,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-32 |
-| Module (code) | `ingest/market_api.py` |
+| Module (code) | `ingest/market_api.py`; `ts/apps/api/src/modules/market/market-api.ts`; `ts/apps/api/src/modules/settlement/market-api-lite.ts` |
 | Mục đích | Đối soát listing/giá với golden + cảnh báo rượu/giá lệch (v3.3) mà không cần MXH xuất file tay |
 | Dữ liệu | Gửi đi: thông tin xác thực app (partner_id/app_key, access token, chữ ký HMAC) + tham số truy vấn (offset/cursor, khoảng thời gian, danh sách mã sản phẩm/mã đơn) — không dữ liệu cá nhân. Nhận về: listing (mã/tên sản phẩm, SKU, giá, tồn, trạng thái) và đơn (mã đơn, trạng thái, dòng hàng) — response đơn CÓ THỂ chứa PII người mua (tên/SĐT/địa chỉ người nhận) chỉ nằm trong RAM của lời gọi và bị bỏ NGAY: chỉ trích field allowlist như market_csv, mã đơn → order_id_hash |
 | Lớp | Đỏ |
@@ -619,7 +619,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-35 |
-| Module (code) | `connectors/b2b_form.py`; `agents/kd_quote.py`; `ingest/crm.py` |
+| Module (code) | `connectors/b2b_form.py`; `agents/kd_quote.py`; `ingest/crm.py`; `ts/apps/api/src/modules/channels/b2b-form.service.ts` |
 | Mục đích | Nhận yêu cầu báo giá quà Tết B2B; lập báo giá NHÁP cho GĐ bán hàng duyệt rồi NGƯỜI tự gửi (đồng ý mục đích `b2b`) |
 | Dữ liệu | Tên + loại + tỉnh của TỔ CHỨC, tên/SĐT/email NGƯỜI LIÊN HỆ của tổ chức (vault Fernet), sản phẩm/số lượng/ngày cần hàng, IP người gửi (chỉ băm sha256 in-memory cho rate-limit, không ghi đĩa) |
 | Lớp | Đỏ |
@@ -655,7 +655,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-37 |
-| Module (code) | `agents/vt_thoitiet.py` |
+| Module (code) | `agents/vt_thoitiet.py`; `ts/apps/api/src/modules/garden_director/vt-thoitiet.ts` |
 | Mục đích | Cảnh báo mưa lớn/rét và dấu hiệu sâu bệnh theo khoảnh → gợi ý "cần đi kiểm tra" cho GĐ vùng trồng |
 | Dữ liệu | Tọa độ VÙNG trồng đã làm tròn 0,1° (~11 km, không phải tọa độ khoảnh) + số ngày dự báo gửi nhà cung cấp dự báo; dự báo mưa/nhiệt trả về; nhật ký `plot_logs` (chỉ mã khoảnh, ngày, cờ từ `detail`) đọc nội bộ |
 | Lớp | Xanh |
@@ -727,7 +727,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-44 |
-| Module (code) | `connectors/zalo_garden.py`; `connectors/zalo.py`; `scripts/garden_media.py` |
+| Module (code) | `connectors/zalo_garden.py`; `connectors/zalo.py`; `scripts/garden_media.py`; `ts/apps/api/src/modules/garden_zalo/garden-zalo.service.ts` |
 | Mục đích | Ghi nhật ký vùng trồng (chuỗi băm không sửa/xóa) + kho tư liệu ảnh vườn; ghi âm chờ người chép lời |
 | Dữ liệu | Tin của NHÂN VIÊN vườn (trong allowlist `user_hash`): chữ nhật ký (mã khoảnh, hoạt động, chi tiết — đã `_mask_pii`), ảnh vườn (có thể có mặt người; EXIF/GPS bị gỡ), video vườn (có thể có mặt/giọng người; metadata/GPS gỡ bằng remux ffmpeg cục bộ), ghi âm giọng nói nhân viên; user_id Zalo thô chỉ trong RAM lúc xử lý |
 | Lớp | Vàng |
@@ -745,7 +745,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-45 |
-| Module (code) | `pipelines/red_alert.py` |
+| Module (code) | `pipelines/red_alert.py`; `ts/packages/core/src/ops/red-alert.ts` |
 | Mục đích | PL02 mục 3: báo động đỏ phải tới người nhận độc lập và được xác nhận trong 02 giờ kể cả cuối tuần/Tết |
 | Dữ liệu | Tiêu đề cảnh báo đỏ đã `_mask_pii` (vd 'SLA trễ', 'tin pháp lý mới', 'bài vi phạm'), mã cảnh báo, câu hướng dẫn xác nhận; KHÔNG gửi `detail`/nội dung khách/URL bài. Địa chỉ email người nhận (nhân sự Pháp chế/BKS) chỉ nằm trong env máy chủ (`email:$BIEN`) hoặc `data/red_alert_routing.json` |
 | Lớp | Vàng |
@@ -763,7 +763,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-47 |
-| Module (code) | `pipelines/anchor.py` |
+| Module (code) | `pipelines/anchor.py`; `ts/apps/api/src/modules/qr_anchor/anchor.ts` |
 | Mục đích | PL01 mục 4b — neo mã xác thực chuỗi dữ liệu truy xuất định kỳ để bên thứ ba kiểm chứng |
 | Dữ liệu | sha256 của bản kê lần gom (gốc Merkle trên đầu chuỗi plot_logs + chữ ký/phát hành/thu hồi QR: mã lô, vai, sha, thời điểm) — 32 byte; KHÔNG tên người ký, KHÔNG nội dung nhật ký, KHÔNG tọa độ/khoảnh/GPS |
 | Lớp | Xanh |
@@ -781,7 +781,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-48 |
-| Module (code) | `pipelines/image_provider_openrouter.py` |
+| Module (code) | `pipelines/image_provider_openrouter.py`; `ts/apps/api/src/modules/image_video/openrouter.ts` |
 | Mục đích | Sinh nền ảnh quanh packshot thật cho nháp ảnh marketing (PL01 Marketing — ảnh bối cảnh AI) |
 | Dữ liệu | Gửi đi: CHỈ mô tả nền (prompt dựng từ --scene đã qua check_scene/guardrail, không tên người/SĐT/sản phẩm thật) + kích thước ảnh + model + danh sách provider được phép; KHÔNG gửi ảnh sản phẩm/packshot (ghép tại chỗ). Nhận về: ảnh nền PNG (base64) + usage.cost |
 | Lớp | Vàng |
@@ -793,6 +793,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Biện pháp bảo vệ (có trong code) | MẶC ĐỊNH TẮT: IMAGE_PROVIDER=none; cần IMAGE_MODEL + OPENROUTER_API_KEY tường minh; Cổng llm_gateway._gate TRƯỚC mọi request: kill agent/tính năng, trần tháng agent `image` + tính năng marketing-02.1, không đọc được chi tiêu → chặn, rollout TẮT → chặn, whitelist provider rỗng → chặn; Không theo redirect, timeout 120 s, tối đa 1 lần thử lại 429/502/503 (502 không tính phí), trần ảnh 20 MB, kiểm định dạng/kích thước (sai cỡ → từ chối, không resize ngầm); Packshot/nhãn sản phẩm KHÔNG rời máy; ảnh luôn là NHÁP chờ người duyệt, nhãn 'Nội dung có sử dụng AI' |
 | Căn cứ xử lý | Lợi ích hợp pháp (không dữ liệu cá nhân) — điều khoản bản quyền ảnh sinh CẦN Pháp chế xác nhận |
 | GAP | Chưa chọn vendor/model, chưa có DPA/điều khoản bản quyền ảnh sinh (external-dep); Chỉ kiểm bằng transport giả theo schema tài liệu — chưa gọi API thật |
+
+### DF-49 — AI Gateway bản viết lại TS — Ollama nội bộ (mặc định), Claude/Anthropic CHỈ khi data/ai_policy.json cho phép
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-49 |
+| Module (code) | `ts/packages/core/src/ai/gateway.ts`; `ts/packages/core/src/ai/providers.ts`; `ts/packages/core/src/ai/ai-worker.ts`; `ts/packages/core/src/security/guardrail-llm.ts`; `ts/apps/api/src/modules/rag/rag.service.ts`; `ts/apps/api/src/modules/rag/embed-store.ts`; `ts/apps/api/src/modules/content/content.ts`; `ts/apps/api/src/modules/image_video/video-studio.ts`; `ts/apps/api/src/modules/ceo_report/ceo-report.ts`; `ts/apps/api/src/modules/intel_alert/intel-bulletin.ts`; `ts/apps/api/src/modules/intel_alert/persona-sim.ts`; `ts/apps/api/src/modules/intel_crawl/intel.ts`; `ts/apps/api/src/modules/intel_crawl/intel-crawl.command.ts`; `ts/apps/api/src/modules/intel_import/intel-weekly.ts`; `ts/apps/api/src/modules/kd_listing_live/kd-live.ts`; `ts/apps/api/src/modules/mkt_koc_ugc_seo/mkt-youtube.ts`; `ts/apps/api/src/modules/sx_docs/sx-tracuu.ts` |
+| Mục đích | Sinh câu trả lời/nháp/tóm tắt + embedding BGE-M3 1024 chiều cho các tính năng AI; OCR/STT tài liệu và ghi âm |
+| Dữ liệu | Prompt + đầu vào embedding của từng tính năng AI (cùng dữ liệu các luồng Python DF-06/07/08/09/16/17/21/23/24/36/39) SAU `maskPii`/`maskIdentity` ở gateway; ảnh scan/ghi âm vườn gửi ai_worker nội bộ (OCR/STT, nháp STT đã che PII) |
+| Lớp | Vàng |
+| Chủ thể | Khách hàng chat, nhân viên (tài liệu nội bộ, ghi âm nhật ký vườn) |
+| Nơi lưu | Gateway không lưu prompt/response; `llm_usage` (metadata, feature_id); Ollama + ai_worker chạy trên server vật lý Sâm Sâm, mạng `ai_private` internal (không ra internet) |
+| Thời hạn lưu | Theo luồng nguồn của từng tính năng; Ollama `OLLAMA_NO_CLOUD=1`, không lưu hội thoại; phía Anthropic (khi được phép) — điều khoản lưu CHƯA rà |
+| Bên nhận | Ollama nội bộ (qwen3:8b + bge-m3, mạng ai_private) — MẶC ĐỊNH; ai_worker nội bộ (OCR/STT); Anthropic api.anthropic.com (Mỹ) CHỈ khi data/ai_policy.json cho phép đúng tính năng (người phê duyệt + hạn + lớp dữ liệu) — không tự fallback từ local lên cloud |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | `feature=` bắt buộc; kill switch agent/tính năng, trần chi phí, cổng rollout `tat` → GatewayBlocked (fail-closed); `maskPii` + `maskIdentity` mọi message và input embedding trước khi gửi nhà cung cấp; Cloud chỉ theo data/ai_policy.json (repo hiện: chưa tính năng nào được cloud); thiếu điều kiện → chặn, không fallback local → cloud; Ollama/ai_worker trong mạng internal, 1 request song song; drift-guard ts/apps/api/src/data-flow-map.test.ts bắt egress TS chưa khai |
+| Căn cứ xử lý | Như luồng nguồn của từng tính năng; chuyển ra nước ngoài (Anthropic) CHƯA bật — cần đồng ý + TIA trước khi ai_policy cho phép: GAP |
+| GAP | Chưa có DPA/điều khoản lưu với Anthropic (external-dep, chỉ cần khi bật cloud); Chất lượng tiếng Việt Qwen3 8B chưa đo trên server đích (KE_HOACH mục 5); Server đích (RTX 5060 Ti) chưa xác nhận là server vật lý của Sâm Sâm theo HĐ |
 
 ## 3. Đánh giá rủi ro
 
@@ -843,6 +861,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-45 | Cảnh báo đỏ gửi email tới người nhận độc lập (v13.7) | Vàng | trung bình | không | 2 |
 | DF-47 | Neo mã xác thực chuỗi truy xuất lên blockchain — chỉ digest 32 byte (v13.8 C09) | Xanh | thấp | có | 2 |
 | DF-48 | Ảnh nền AI cho nháp ảnh marketing qua OpenRouter Images API (r13, marketing-02.1) | Vàng | trung bình | có | 2 |
+| DF-49 | AI Gateway bản viết lại TS — Ollama nội bộ (mặc định), Claude/Anthropic CHỈ khi data/ai_policy.json cho phép | Vàng | trung bình | có | 3 |
 
 ## 4. Tổng hợp GAP
 
@@ -936,6 +955,9 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-47] Calendar OpenTimestamps đặt ở nước ngoài — dù chỉ là digest, Pháp chế xác nhận trước khi bật
 - [DF-48] Chưa chọn vendor/model, chưa có DPA/điều khoản bản quyền ảnh sinh (external-dep)
 - [DF-48] Chỉ kiểm bằng transport giả theo schema tài liệu — chưa gọi API thật
+- [DF-49] Chưa có DPA/điều khoản lưu với Anthropic (external-dep, chỉ cần khi bật cloud)
+- [DF-49] Chất lượng tiếng Việt Qwen3 8B chưa đo trên server đích (KE_HOACH mục 5)
+- [DF-49] Server đích (RTX 5060 Ti) chưa xác nhận là server vật lý của Sâm Sâm theo HĐ
 
 ## 5. Câu hỏi cho luật sư
 

@@ -1,0 +1,293 @@
+{
+ "cases": [
+  {
+   "path": [
+    "la"
+   ],
+   "value": 1,
+   "value_json": "1",
+   "error": "sales_watch.json: kh\u00f3a l\u1ea1 ['la']"
+  },
+  {
+   "path": [
+    "lead_owner",
+    "max_per_run"
+   ],
+   "value": 0,
+   "value_json": "0",
+   "error": "sales_watch.json: lead_owner.max_per_run ph\u1ea3i s\u1ed1 nguy\u00ean 1..1000"
+  },
+  {
+   "path": [
+    "lead_owner",
+    "staff_codes"
+   ],
+   "value": [
+    "Nguy\u1ec5n An"
+   ],
+   "value_json": "[\"Nguy\u1ec5n An\"]",
+   "error": "sales_watch.json: lead_owner.staff_codes ph\u1ea3i list m\u00e3 [A-Z0-9_-]{2,20} kh\u00f4ng tr\u00f9ng (KH\u00d4NG ghi t\u00ean)"
+  },
+  {
+   "path": [
+    "lead_owner",
+    "staff_codes"
+   ],
+   "value": [
+    "nv01"
+   ],
+   "value_json": "[\"nv01\"]",
+   "error": "sales_watch.json: lead_owner.staff_codes ph\u1ea3i list m\u00e3 [A-Z0-9_-]{2,20} kh\u00f4ng tr\u00f9ng (KH\u00d4NG ghi t\u00ean)"
+  },
+  {
+   "path": [
+    "lead_owner",
+    "staff_codes"
+   ],
+   "value": [
+    "NV01",
+    "NV01"
+   ],
+   "value_json": "[\"NV01\", \"NV01\"]",
+   "error": "sales_watch.json: lead_owner.staff_codes ph\u1ea3i list m\u00e3 [A-Z0-9_-]{2,20} kh\u00f4ng tr\u00f9ng (KH\u00d4NG ghi t\u00ean)"
+  },
+  {
+   "path": [
+    "lead_owner",
+    "staff_codes"
+   ],
+   "value": [
+    " NV01"
+   ],
+   "value_json": "[\" NV01\"]",
+   "error": "sales_watch.json: lead_owner.staff_codes ph\u1ea3i list m\u00e3 [A-Z0-9_-]{2,20} kh\u00f4ng tr\u00f9ng (KH\u00d4NG ghi t\u00ean)"
+  },
+  {
+   "path": [
+    "lead_owner",
+    "staff_codes"
+   ],
+   "value": [
+    "NV01"
+   ],
+   "value_json": "[\"NV01\"]",
+   "error": null
+  },
+  {
+   "path": [
+    "quote_followup",
+    "after_business_hours"
+   ],
+   "value": true,
+   "value_json": "true",
+   "error": "sales_watch.json: quote_followup.after_business_hours ph\u1ea3i s\u1ed1 nguy\u00ean 1..720"
+  },
+  {
+   "path": [
+    "quote_followup",
+    "max_reminders"
+   ],
+   "value": "__DEL__",
+   "value_json": "\"__DEL__\"",
+   "error": "sales_watch.json: 'quote_followup' ph\u1ea3i c\u00f3 \u0111\u00fang c\u00e1c kh\u00f3a ['after_business_hours', 'max_reminders']"
+  },
+  {
+   "path": [
+    "quote_followup",
+    "max_reminders"
+   ],
+   "value": 2.0,
+   "value_json": "2.0",
+   "error": "sales_watch.json: quote_followup.max_reminders ph\u1ea3i s\u1ed1 nguy\u00ean 1..10"
+  },
+  {
+   "path": [
+    "dealer_price",
+    "channels"
+   ],
+   "value": [],
+   "value_json": "[]",
+   "error": "sales_watch.json: dealer_price.channels ph\u1ea3i list m\u00e3 k\u00eanh [a-z0-9_]{2,20} kh\u00f4ng tr\u00f9ng, kh\u00f4ng r\u1ed7ng"
+  },
+  {
+   "path": [
+    "dealer_price",
+    "channels"
+   ],
+   "value": [
+    "Shopee"
+   ],
+   "value_json": "[\"Shopee\"]",
+   "error": "sales_watch.json: dealer_price.channels ph\u1ea3i list m\u00e3 k\u00eanh [a-z0-9_]{2,20} kh\u00f4ng tr\u00f9ng, kh\u00f4ng r\u1ed7ng"
+  },
+  {
+   "path": [
+    "order_watch",
+    "return_status"
+   ],
+   "value": {},
+   "value_json": "{}",
+   "error": "sales_watch.json: order_watch.return_status ph\u1ea3i {k\u00eanh: [tr\u1ea1ng th\u00e1i ho\u00e0n/tr\u1ea3]} kh\u00f4ng r\u1ed7ng"
+  },
+  {
+   "path": [
+    "order_watch",
+    "return_status"
+   ],
+   "value": {
+    "shopee": []
+   },
+   "value_json": "{\"shopee\": []}",
+   "error": "sales_watch.json: order_watch.return_status ph\u1ea3i {k\u00eanh: [tr\u1ea1ng th\u00e1i ho\u00e0n/tr\u1ea3]} kh\u00f4ng r\u1ed7ng"
+  },
+  {
+   "path": [
+    "order_watch",
+    "return_status"
+   ],
+   "value": {
+    "Shopee": [
+     "x"
+    ]
+   },
+   "value_json": "{\"Shopee\": [\"x\"]}",
+   "error": "sales_watch.json: order_watch.return_status ph\u1ea3i {k\u00eanh: [tr\u1ea1ng th\u00e1i ho\u00e0n/tr\u1ea3]} kh\u00f4ng r\u1ed7ng"
+  },
+  {
+   "path": [
+    "confirmed_by"
+   ],
+   "value": "",
+   "value_json": "\"\"",
+   "error": "sales_watch.json: 'confirmed_by' ph\u1ea3i null ho\u1eb7c t\u00ean ng\u01b0\u1eddi ch\u1ed1t"
+  },
+  {
+   "path": [
+    "confirmed_by"
+   ],
+   "value": "__DEL__",
+   "value_json": "\"__DEL__\"",
+   "error": "sales_watch.json: 'confirmed_by' ph\u1ea3i null ho\u1eb7c t\u00ean ng\u01b0\u1eddi ch\u1ed1t"
+  },
+  {
+   "path": [
+    "confirmed_by"
+   ],
+   "value": "Lan",
+   "value_json": "\"Lan\"",
+   "error": null
+  },
+  {
+   "path": [
+    "confirmed_by"
+   ],
+   "value": 5,
+   "value_json": "5",
+   "error": "sales_watch.json: 'confirmed_by' ph\u1ea3i null ho\u1eb7c t\u00ean ng\u01b0\u1eddi ch\u1ed1t"
+  },
+  {
+   "path": [
+    "status"
+   ],
+   "value": " ",
+   "value_json": "\" \"",
+   "error": "sales_watch.json: thi\u1ebfu 'status'"
+  },
+  {
+   "path": [
+    "status"
+   ],
+   "value": "__DEL__",
+   "value_json": "\"__DEL__\"",
+   "error": "sales_watch.json: thi\u1ebfu 'status'"
+  },
+  {
+   "path": [
+    "lead_owner",
+    "extra"
+   ],
+   "value": 1,
+   "value_json": "1",
+   "error": "sales_watch.json: 'lead_owner' ph\u1ea3i c\u00f3 \u0111\u00fang c\u00e1c kh\u00f3a ['assign_within_business_hours', 'handle_within_business_hours', 'lookback_days', 'max_per_run', 'staff_codes']"
+  },
+  {
+   "path": [
+    "lead_owner"
+   ],
+   "value": "__DEL__",
+   "value_json": "\"__DEL__\"",
+   "error": "sales_watch.json: 'lead_owner' ph\u1ea3i c\u00f3 \u0111\u00fang c\u00e1c kh\u00f3a ['assign_within_business_hours', 'handle_within_business_hours', 'lookback_days', 'max_per_run', 'staff_codes']"
+  },
+  {
+   "path": [
+    "_doc"
+   ],
+   "value": "__DEL__",
+   "value_json": "\"__DEL__\"",
+   "error": null
+  },
+  {
+   "path": [
+    "order_watch",
+    "spike_ratio"
+   ],
+   "value": 21,
+   "value_json": "21",
+   "error": "sales_watch.json: order_watch.spike_ratio ph\u1ea3i s\u1ed1 nguy\u00ean 1..20"
+  },
+  {
+   "path": [
+    "order_watch",
+    "min_orders"
+   ],
+   "value": 100000,
+   "value_json": "100000",
+   "error": null
+  },
+  {
+   "path": [
+    "dealer_price",
+    "max_rows"
+   ],
+   "value": 50001,
+   "value_json": "50001",
+   "error": "sales_watch.json: dealer_price.max_rows ph\u1ea3i s\u1ed1 nguy\u00ean 1..50000"
+  },
+  {
+   "path": [
+    "zz"
+   ],
+   "value": 1,
+   "value_json": "1",
+   "error": "sales_watch.json: kh\u00f3a l\u1ea1 ['zz']"
+  },
+  {
+   "path": [
+    "Z'q"
+   ],
+   "value": 1,
+   "value_json": "1",
+   "error": "sales_watch.json: kh\u00f3a l\u1ea1 [\"Z'q\"]"
+  }
+ ],
+ "root": [
+  "sales_watch.json ph\u1ea3i l\u00e0 object JSON",
+  "sales_watch.json ph\u1ea3i l\u00e0 object JSON",
+  "sales_watch.json ph\u1ea3i l\u00e0 object JSON",
+  "sales_watch.json ph\u1ea3i l\u00e0 object JSON"
+ ],
+ "load": {
+  "bom.json": null,
+  "broken.json": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c broken.json (JSONDecodeError)",
+  "bad_utf8.json": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c bad_utf8.json (UnicodeDecodeError)",
+  "float.json": "sales_watch.json: lead_owner.max_per_run ph\u1ea3i s\u1ed1 nguy\u00ean 1..1000",
+  "missing.json": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c missing.json (FileNotFoundError)"
+ },
+ "lead_owner": {
+  "assign_within_business_hours": 4,
+  "handle_within_business_hours": 8,
+  "lookback_days": 14,
+  "max_per_run": 30,
+  "staff_codes": []
+ }
+}

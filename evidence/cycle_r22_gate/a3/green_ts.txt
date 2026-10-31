@@ -1,0 +1,41 @@
+# GREEN TS (sau vá; nạp db.env → test DB bks_hdtv chạy trên DB tạm tạo từ mẫu) 2026-10-31T00:18:58+07:00
+$ git diff -- apps/api/src/modules/bks_hdtv/bks-audit.ts
+$ node_modules/.bin/vitest run apps/api/src/modules/bks_hdtv packages/core/src/security/pii.test.ts
+
+ RUN  v5.0.5 D:/code/samsam/ts
+
+
+ Test Files  4 passed (4)
+      Tests  128 passed (128)
+   Start at  00:18:59
+   Duration  41.16s (tests 77%, import 21%, transform 2%)
+
+exit=0
+
+# ts/ chưa được git theo dõi (?? ts/) → git diff rỗng; đoạn đã sửa (grep):
+$ grep -n -B1 -A1 "detail ->> 'fp'" apps/api/src/modules/bks_hdtv/bks-audit.ts
+678-        // raiseAlert che PII cả fp hex (~2% có dãy giống SĐT) → so cả bản đã che (maskPii THẬT).
+679:        "select 1 from red_alerts where source_agent = %s and detail ->> 'fp' in (%s, %s) limit 1",
+680-        [CHAIN_AGENT, fp, maskPii(fp)],
+
+$ node_modules/.bin/vitest run apps/api/src/modules/bks_hdtv/bks-hdtv.test.ts packages/core/src/security/pii.test.ts -t 'che' --reporter=verbose   (unit, không db.env)
+
+ RUN  v5.0.5 D:/code/samsam/ts
+
+stderr | apps/api/src/modules/bks_hdtv/bks-hdtv.test.ts > chainAlert: fp bị che khi lưu vẫn chống lặp > 3 lần chạy → 1 cảnh báo; dòng cũ đã che → không mở thêm
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+ ✓ apps/api/src/modules/bks_hdtv/bks-hdtv.test.ts > chainAlert: fp bị che khi lưu vẫn chống lặp > 3 lần chạy → 1 cảnh báo; dòng cũ đã che → không mở thêm 25ms
+ ✓ apps/api/src/modules/bks_hdtv/bks-hdtv.test.ts > override_line (OWASP A03) > lý do/tên do người nhập không tạo link/HTML/bảng; SĐT bị che 3ms
+ ✓ packages/core/src/security/pii.test.ts > pii: biên regex (AGENTS.md Gotcha) > không ăn giá / khoảng giá / ngày; che SĐT nhiều dạng 28ms
+ ✓ packages/core/src/security/pii.test.ts > pii: biên regex (AGENTS.md Gotcha) > sha256 hex có dãy giống SĐT bị che y Python (khóa fp chain_alert, r22 A3) 1ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed | 64 skipped (68)
+   Start at  00:20:01
+   Duration  6.66s (import 87%, transform 11%, tests 1%)
+
+    Isolate  2 workers spawned · ~357ms startup each (spawn + environment, per file)
+             at least ~357ms faster with isolate: false — reuses workers across files instead of one per file
+
+exit=0

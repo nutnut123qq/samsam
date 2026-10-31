@@ -1,0 +1,843 @@
+{
+ "cfg": {
+  "status": " GI\u1ea2 \u0110\u1ecaNH ",
+  "cutoffs": [
+   {
+    "id": "a",
+    "date": "2026-10-25",
+    "covers_until": "2026-11-15"
+   },
+   {
+    "id": "b_c-1",
+    "date": "2026-11-01",
+    "covers_until": "2027-02-14",
+    "label": "nh\u00e3n"
+   }
+  ],
+  "sla_hours": 48,
+  "remind_hours": 24,
+  "near_expiry_days": 90
+ },
+ "variants": {
+  "valid": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "ok": {
+     "status": "GI\u1ea2 \u0110\u1ecaNH",
+     "cutoffs": [
+      {
+       "id": "a",
+       "date": "2026-10-25",
+       "covers_until": "2026-11-15",
+       "label": ""
+      },
+      {
+       "id": "b_c-1",
+       "date": "2026-11-01",
+       "covers_until": "2027-02-14",
+       "label": "nh\u00e3n"
+      }
+     ],
+     "sla_hours": 48,
+     "remind_hours": 24,
+     "near_expiry_days": 90
+    }
+   }
+  },
+  "dup_id": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     },
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[2].id: tr\u00f9ng"
+   }
+  },
+  "until_le_date": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-10-25"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[0]: covers_until ph\u1ea3i sau date"
+   }
+  },
+  "remind_ge_sla": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 48,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: c\u1ea7n s\u1ed1 nguy\u00ean 0 < remind_hours < sla_hours <= 8760"
+   }
+  },
+  "bool_sla": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": true,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: c\u1ea7n s\u1ed1 nguy\u00ean 0 < remind_hours < sla_hours <= 8760"
+   }
+  },
+  "float_sla": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48.0,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: c\u1ea7n s\u1ed1 nguy\u00ean 0 < remind_hours < sla_hours <= 8760"
+   }
+  },
+  "bad_date": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "25/10/2026",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[0].date: kh\u00f4ng ph\u1ea3i ng\u00e0y YYYY-MM-DD"
+   }
+  },
+  "compact_date": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "20261025",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[0].date: kh\u00f4ng ph\u1ea3i ng\u00e0y YYYY-MM-DD"
+   }
+  },
+  "date_range": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "1999-12-31",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[0].date: ph\u1ea3i trong 2000-01-01..2100-12-31"
+   }
+  },
+  "date_int": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": 20261025,
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[0].date: kh\u00f4ng ph\u1ea3i ng\u00e0y YYYY-MM-DD"
+   }
+  },
+  "no_status": {
+   "doc": {
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: thi\u1ebfu 'status'"
+   }
+  },
+  "blank_status": {
+   "doc": {
+    "status": "  ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: thi\u1ebfu 'status'"
+   }
+  },
+  "near_missing": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: near_expiry_days ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean 1..3650"
+   }
+  },
+  "near_zero": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 0
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: near_expiry_days ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean 1..3650"
+   }
+  },
+  "near_bool": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": true
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: near_expiry_days ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean 1..3650"
+   }
+  },
+  "near_str": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": "90"
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: near_expiry_days ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean 1..3650"
+   }
+  },
+  "near_huge": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 3651
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: near_expiry_days ph\u1ea3i l\u00e0 s\u1ed1 nguy\u00ean 1..3650"
+   }
+  },
+  "near_max": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 3650
+   },
+   "res": {
+    "ok": {
+     "status": "GI\u1ea2 \u0110\u1ecaNH",
+     "cutoffs": [
+      {
+       "id": "a",
+       "date": "2026-10-25",
+       "covers_until": "2026-11-15",
+       "label": ""
+      },
+      {
+       "id": "b_c-1",
+       "date": "2026-11-01",
+       "covers_until": "2027-02-14",
+       "label": "nh\u00e3n"
+      }
+     ],
+     "sla_hours": 48,
+     "remind_hours": 24,
+     "near_expiry_days": 3650
+    }
+   }
+  },
+  "cut_empty": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: 'cutoffs' ph\u1ea3i l\u00e0 list kh\u00f4ng r\u1ed7ng"
+   }
+  },
+  "cut_notlist": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": {
+     "a": 1
+    },
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: 'cutoffs' ph\u1ea3i l\u00e0 list kh\u00f4ng r\u1ed7ng"
+   }
+  },
+  "cut_notobj": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     "a"
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[0]: ph\u1ea3i l\u00e0 object"
+   }
+  },
+  "id_upper": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "A",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[0].id: ph\u1ea3i l\u00e0 slug a-z0-9_-"
+   }
+  },
+  "id_long": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[0].id: ph\u1ea3i l\u00e0 slug a-z0-9_-"
+   }
+  },
+  "id_40": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "ok": {
+     "status": "GI\u1ea2 \u0110\u1ecaNH",
+     "cutoffs": [
+      {
+       "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+       "date": "2026-10-25",
+       "covers_until": "2026-11-15",
+       "label": ""
+      },
+      {
+       "id": "b_c-1",
+       "date": "2026-11-01",
+       "covers_until": "2027-02-14",
+       "label": "nh\u00e3n"
+      }
+     ],
+     "sla_hours": 48,
+     "remind_hours": 24,
+     "near_expiry_days": 90
+    }
+   }
+  },
+  "label_int": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15",
+      "label": 5
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "cutoffs[0].label: ph\u1ea3i l\u00e0 chu\u1ed7i"
+   }
+  },
+  "sla_huge": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 8761,
+    "remind_hours": 24,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: c\u1ea7n s\u1ed1 nguy\u00ean 0 < remind_hours < sla_hours <= 8760"
+   }
+  },
+  "remind_zero": {
+   "doc": {
+    "status": " GI\u1ea2 \u0110\u1ecaNH ",
+    "cutoffs": [
+     {
+      "id": "a",
+      "date": "2026-10-25",
+      "covers_until": "2026-11-15"
+     },
+     {
+      "id": "b_c-1",
+      "date": "2026-11-01",
+      "covers_until": "2027-02-14",
+      "label": "nh\u00e3n"
+     }
+    ],
+    "sla_hours": 48,
+    "remind_hours": 0,
+    "near_expiry_days": 90
+   },
+   "res": {
+    "err": "ProductionError",
+    "msg": "config: c\u1ea7n s\u1ed1 nguy\u00ean 0 < remind_hours < sla_hours <= 8760"
+   }
+  }
+ },
+ "read": {
+  "empty": {
+   "text": "",
+   "res": {
+    "err": "ProductionError",
+    "msg": "c.json r\u1ed7ng"
+   }
+  },
+  "spaces": {
+   "text": "  \n",
+   "res": {
+    "err": "ProductionError",
+    "msg": "c.json r\u1ed7ng"
+   }
+  },
+  "broken": {
+   "text": "{\"status\": ",
+   "res": {
+    "err": "ProductionError",
+    "msg": "c.json JSON h\u1ecfng: JSONDecodeError"
+   }
+  },
+  "list_root": {
+   "text": "[1]",
+   "res": {
+    "err": "ProductionError",
+    "msg": "c.json: root ph\u1ea3i l\u00e0 object"
+   }
+  },
+  "obj_empty": {
+   "text": "{}",
+   "res": {
+    "err": "ProductionError",
+    "msg": "c.json: kh\u00f4ng c\u00f3 d\u1eef li\u1ec7u (0 record)"
+   }
+  },
+  "only_doc": {
+   "text": "{\"_doc\": \"x\"}",
+   "res": {
+    "err": "ProductionError",
+    "msg": "c.json: kh\u00f4ng c\u00f3 d\u1eef li\u1ec7u (0 record)"
+   }
+  },
+  "nan": {
+   "text": "{\"status\": \" GI\\u1ea2 \\u0110\\u1ecaNH \", \"cutoffs\": [{\"id\": \"a\", \"date\": \"2026-10-25\", \"covers_until\": \"2026-11-15\"}, {\"id\": \"b_c-1\", \"date\": \"2026-11-01\", \"covers_until\": \"2027-02-14\", \"label\": \"nh\\u00e3n\"}], \"sla_hours\": NaN, \"remind_hours\": 24, \"near_expiry_days\": 90}",
+   "res": {
+    "err": "ProductionError",
+    "msg": "c.json JSON h\u1ecfng: ValueError"
+   }
+  },
+  "bom_ok": {
+   "text": "\ufeff{\"status\": \" GI\\u1ea2 \\u0110\\u1ecaNH \", \"cutoffs\": [{\"id\": \"a\", \"date\": \"2026-10-25\", \"covers_until\": \"2026-11-15\"}, {\"id\": \"b_c-1\", \"date\": \"2026-11-01\", \"covers_until\": \"2027-02-14\", \"label\": \"nh\\u00e3n\"}], \"sla_hours\": 48, \"remind_hours\": 24, \"near_expiry_days\": 90}",
+   "res": {
+    "ok": {
+     "status": "GI\u1ea2 \u0110\u1ecaNH",
+     "cutoffs": [
+      {
+       "id": "a",
+       "date": "2026-10-25",
+       "covers_until": "2026-11-15",
+       "label": ""
+      },
+      {
+       "id": "b_c-1",
+       "date": "2026-11-01",
+       "covers_until": "2027-02-14",
+       "label": "nh\u00e3n"
+      }
+     ],
+     "sla_hours": 48,
+     "remind_hours": 24,
+     "near_expiry_days": 90
+    }
+   }
+  },
+  "combos_no_key": {
+   "text": "{\"x\": 1}",
+   "key": "combos",
+   "res": {
+    "err": "ProductionError",
+    "msg": "b.json: 'combos' ph\u1ea3i l\u00e0 list kh\u00f4ng r\u1ed7ng"
+   }
+  },
+  "combos_empty_list": {
+   "text": "{\"combos\": []}",
+   "key": "combos",
+   "res": {
+    "err": "ProductionError",
+    "msg": "b.json: 'combos' ph\u1ea3i l\u00e0 list kh\u00f4ng r\u1ed7ng"
+   }
+  },
+  "combos_not_list": {
+   "text": "{\"combos\": {}}",
+   "key": "combos",
+   "res": {
+    "err": "ProductionError",
+    "msg": "b.json: 'combos' ph\u1ea3i l\u00e0 list kh\u00f4ng r\u1ed7ng"
+   }
+  },
+  "combos_ok": {
+   "text": "{\"combos\": [1]}",
+   "key": "combos",
+   "res": {
+    "ok": {
+     "combos": [
+      1
+     ]
+    }
+   }
+  }
+ },
+ "read_not_utf8": {
+  "err": "ProductionError",
+  "msg": "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c bad.json (UnicodeDecodeError)"
+ },
+ "read_missing": {
+  "err": "ProductionError",
+  "msg": "thi\u1ebfu file nope.json"
+ }
+}

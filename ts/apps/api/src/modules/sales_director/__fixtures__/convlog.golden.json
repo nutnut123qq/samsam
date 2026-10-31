@@ -1,0 +1,785 @@
+{
+ "parse_ts": [
+  [
+   "2026-10-13T01:00:00Z",
+   "2026-10-13T01:00:00+00:00"
+  ],
+  [
+   "2026-1-5T1:2:3Z",
+   "2026-01-05T01:02:03+00:00"
+  ],
+  [
+   "2026-10-13t01:00:00z",
+   "2026-10-13T01:00:00+00:00"
+  ],
+  [
+   "2026-10-13T01:00:00",
+   null
+  ],
+  [
+   "2026-10-13T01:00:00.5Z",
+   null
+  ],
+  [
+   "2026-02-30T00:00:00Z",
+   null
+  ],
+  [
+   "2026-10-13T01:00:60Z",
+   null
+  ],
+  [
+   "2026-10-13T01:00:61Z",
+   null
+  ],
+  [
+   "2026-10-13T24:00:00Z",
+   null
+  ],
+  [
+   "0000-01-01T00:00:00Z",
+   null
+  ],
+  [
+   "0001-01-01T00:00:00Z",
+   "0001-01-01T00:00:00+00:00"
+  ],
+  [
+   "9999-12-31T23:59:59Z",
+   "9999-12-31T23:59:59+00:00"
+  ],
+  [
+   "2026-10- 3T01:00:00Z",
+   "2026-10-03T01:00:00+00:00"
+  ],
+  [
+   "\u0662\u0660\u0662\u0666-10-13T01:00:00Z",
+   "2026-10-13T01:00:00+00:00"
+  ],
+  [
+   "\uff12\uff10\uff12\uff16-10-13T01:00:00Z",
+   "2026-10-13T01:00:00+00:00"
+  ],
+  [
+   " 2026-10-13T01:00:00Z",
+   null
+  ],
+  [
+   "2026-10-13T01:00:00Z ",
+   null
+  ],
+  [
+   "2026-10-13 01:00:00Z",
+   null
+  ],
+  [
+   "",
+   null
+  ],
+  [
+   "2026-10-13T1:00:00Z",
+   "2026-10-13T01:00:00+00:00"
+  ],
+  [
+   "2026-10-13T01:0:0Z",
+   "2026-10-13T01:00:00+00:00"
+  ],
+  [
+   "2026-10-13T01:00:00+00:00",
+   null
+  ],
+  [
+   "2024-02-29T12:00:00Z",
+   "2024-02-29T12:00:00+00:00"
+  ],
+  [
+   "2023-02-29T12:00:00Z",
+   null
+  ],
+  [
+   "0099-03-01T00:00:00Z",
+   "0099-03-01T00:00:00+00:00"
+  ]
+ ],
+ "parse_ts_nonstr": [
+  null,
+  null,
+  null
+ ],
+ "misc": [
+  {
+   "rec": {
+    "msg_id": "m1",
+    "ts": "x",
+    "user_hash": "u",
+    "question": "q"
+   },
+   "dedup": "convlog:m1",
+   "channel": "zalo"
+  },
+  {
+   "rec": {
+    "msg_id": "  m2  ",
+    "ts": "x"
+   },
+   "dedup": "convlog:m2",
+   "channel": "zalo"
+  },
+  {
+   "rec": {
+    "msg_id": "",
+    "ts": "2026-10-13T01:00:00Z",
+    "user_hash": "uh",
+    "question": "h\u1ecfi gi\u00e1"
+   },
+   "dedup": "convlog:fd32214b07ec9911",
+   "channel": "streamlit"
+  },
+  {
+   "rec": {
+    "msg_id": "   ",
+    "ts": "2026-10-13T01:00:00Z",
+    "user_hash": 5,
+    "question": null
+   },
+   "dedup": "convlog:dc982f347f4909b3",
+   "channel": "streamlit"
+  },
+  {
+   "rec": {
+    "msg_id": 7,
+    "ts": null,
+    "user_hash": null,
+    "question": "\u0111\u1ee3t"
+   },
+   "dedup": "convlog:00726861872c5f9f",
+   "channel": "streamlit"
+  },
+  {
+   "rec": {},
+   "dedup": "convlog:c65f37b2cb1ae26c",
+   "channel": "streamlit"
+  },
+  {
+   "rec": {
+    "channel": "messenger",
+    "msg_id": ""
+   },
+   "dedup": "convlog:c65f37b2cb1ae26c",
+   "channel": "messenger"
+  },
+  {
+   "rec": {
+    "channel": "zalo"
+   },
+   "dedup": "convlog:c65f37b2cb1ae26c",
+   "channel": "zalo"
+  },
+  {
+   "rec": {
+    "channel": "web",
+    "msg_id": "abc"
+   },
+   "dedup": "convlog:abc",
+   "channel": "zalo"
+  },
+  {
+   "rec": {
+    "channel": [
+     "zalo"
+    ],
+    "msg_id": null
+   },
+   "dedup": "convlog:c65f37b2cb1ae26c",
+   "channel": "streamlit"
+  },
+  {
+   "rec": {
+    "msg_id": "\u3000m\u3000"
+   },
+   "dedup": "convlog:m",
+   "channel": "zalo"
+  }
+ ],
+ "kinds": [
+  [
+   {},
+   "thieu_provenance"
+  ],
+  [
+   {
+    "provenance": "live"
+   },
+   "live"
+  ],
+  [
+   {
+    "provenance": "live",
+    "mock": 0
+   },
+   "live"
+  ],
+  [
+   {
+    "provenance": "live",
+    "mock": false
+   },
+   "live"
+  ],
+  [
+   {
+    "provenance": "live",
+    "mock": null
+   },
+   "live"
+  ],
+  [
+   {
+    "provenance": "live",
+    "mock": 0.0
+   },
+   "live"
+  ],
+  [
+   {
+    "provenance": "live",
+    "test": ""
+   },
+   "thu_nghiem"
+  ],
+  [
+   {
+    "provenance": "live",
+    "replay": []
+   },
+   "thu_nghiem"
+  ],
+  [
+   {
+    "provenance": "live",
+    "is_sample": true
+   },
+   "thu_nghiem"
+  ],
+  [
+   {
+    "provenance": "sample"
+   },
+   "thu_nghiem"
+  ],
+  [
+   {
+    "provenance": null
+   },
+   "thu_nghiem"
+  ],
+  [
+   {
+    "provenance": "Live"
+   },
+   "thu_nghiem"
+  ],
+  [
+   {
+    "provenance": "live",
+    "dry_run": 1
+   },
+   "thu_nghiem"
+  ]
+ ],
+ "iter_raw_hex": "7b227473223a2022323032362d31302d31335430313a30303a30305a222c20226d73675f6964223a202261222c2022757365725f68617368223a2022756831222c20227175657374696f6e223a20227131222c2022616e737765726564223a2066616c73652c202270726f76656e616e6365223a20226c697665227d0a2020200a7b636f7272757074206a736f6e0a5b312c20325d0a7b225f646f63223a202278227d0aefbbbf7b227473223a202278222c202270726f76656e616e6365223a20226c697665227d0a7b227473223a2022323032362d31302d31335430323a30303a30305a222c20226d73675f6964223a202262222c2022757365725f68617368223a2022756831222c20227175657374696f6e223a20226361e280a875222c2022616e737765726564223a2066616c73652c202270726f76656e616e6365223a20226c697665227d0a7b227473223a2022323032362d31302d31335430333a30303a30305a222c202271223a2022fffe222c202270726f76656e616e6365223a20226c697665227d0a7b227473223a2022323032362d31302d31335430343a30303a30305a222c202270726f76656e616e6365223a202273616d706c65222c2022616e737765726564223a2066616c73657d0a7b227473223a2022323032362d31302d31335430353a30303a30305a222c2022616e737765726564223a2066616c73657d0a0b0c7b2270726f76656e616e6365223a20226c697665222c20226e223a20317d0d0a7b2270726f76656e616e6365223a20226c697665222c202278223a204e614e7d0a097b2270726f76656e616e6365223a20226c697665222c2022616e737765726564223a20747275657d0ae280a87b2270726f76656e616e6365223a20226c697665222c20226b223a20327d0a0a",
+ "iter": {
+  "all": {
+   "recs": [
+    {
+     "ts": "2026-10-13T01:00:00Z",
+     "msg_id": "a",
+     "user_hash": "uh1",
+     "question": "q1",
+     "answered": false,
+     "provenance": "live"
+    },
+    {
+     "ts": "2026-10-13T02:00:00Z",
+     "msg_id": "b",
+     "user_hash": "uh1",
+     "question": "ca\u2028u",
+     "answered": false,
+     "provenance": "live"
+    },
+    {
+     "ts": "2026-10-13T03:00:00Z",
+     "q": "\ufffd\ufffd",
+     "provenance": "live"
+    },
+    {
+     "ts": "2026-10-13T04:00:00Z",
+     "provenance": "sample",
+     "answered": false
+    },
+    {
+     "ts": "2026-10-13T05:00:00Z",
+     "answered": false
+    },
+    {
+     "provenance": "live",
+     "n": 1
+    },
+    {
+     "provenance": "live",
+     "answered": true
+    }
+   ],
+   "stats": {
+    "corrupt": 4,
+    "doc": 1,
+    "io_error": 0
+   }
+  },
+  "live": {
+   "recs": [
+    {
+     "ts": "2026-10-13T01:00:00Z",
+     "msg_id": "a",
+     "user_hash": "uh1",
+     "question": "q1",
+     "answered": false,
+     "provenance": "live"
+    },
+    {
+     "ts": "2026-10-13T02:00:00Z",
+     "msg_id": "b",
+     "user_hash": "uh1",
+     "question": "ca\u2028u",
+     "answered": false,
+     "provenance": "live"
+    },
+    {
+     "ts": "2026-10-13T03:00:00Z",
+     "q": "\ufffd\ufffd",
+     "provenance": "live"
+    },
+    {
+     "provenance": "live",
+     "n": 1
+    },
+    {
+     "provenance": "live",
+     "answered": true
+    }
+   ],
+   "stats": {
+    "corrupt": 4,
+    "doc": 1,
+    "io_error": 0,
+    "thu_nghiem": 1,
+    "thieu_provenance": 1
+   }
+  },
+  "missing_stats": {
+   "corrupt": 0,
+   "doc": 0,
+   "io_error": 1
+  }
+ },
+ "unanswered": {
+  "now": "2026-10-13T12:00:00+07:00",
+  "recs": [
+   {
+    "ts": "2026-10-12T01:00:00Z",
+    "msg_id": "s-1-0",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T01:07:00Z",
+    "msg_id": "s-1-7",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T01:14:00Z",
+    "msg_id": "s-1-14",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T02:00:00Z",
+    "msg_id": "s-2-0",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T02:07:00Z",
+    "msg_id": "s-2-7",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T02:14:00Z",
+    "msg_id": "s-2-14",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T03:00:00Z",
+    "msg_id": "s-3-0",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T03:07:00Z",
+    "msg_id": "s-3-7",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T03:14:00Z",
+    "msg_id": "s-3-14",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T17:30:00Z",
+    "msg_id": "s-next-1",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T18:00:00Z",
+    "msg_id": "s-next-2",
+    "user_hash": "uh_spam",
+    "question": "[non-text:sticker]",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T05:00:00Z",
+    "msg_id": "u-a",
+    "user_hash": "uh_a",
+    "question": "h\u1ecfi gi\u00e1",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T05:00:00Z",
+    "msg_id": "u-a",
+    "user_hash": "uh_a",
+    "question": "tr\u00f9ng msg_id",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T04:00:00Z",
+    "msg_id": "u-a2",
+    "user_hash": "  uh_a  ",
+    "question": "kho\u1ea3ng tr\u1eafng",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T06:00:00Z",
+    "msg_id": "",
+    "user_hash": "",
+    "question": "kh\u00f4ng user_hash",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T06:00:00Z",
+    "msg_id": "",
+    "user_hash": null,
+    "question": "kh\u00f4ng user_hash 2",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-09T00:00:00Z",
+    "msg_id": "old",
+    "user_hash": "uh_old",
+    "question": "ngo\u00e0i c\u1eeda s\u1ed5",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-13T06:00:00Z",
+    "msg_id": "fut",
+    "user_hash": "uh_future",
+    "question": "t\u01b0\u01a1ng lai",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T07:00:00Z",
+    "msg_id": "ok",
+    "user_hash": "uh_b",
+    "question": "\u0111\u00e3 tr\u1ea3 l\u1eddi",
+    "answer": "",
+    "answered": true,
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T07:00:00Z",
+    "msg_id": "str",
+    "user_hash": "uh_b",
+    "question": "chu\u1ed7i false",
+    "answer": "",
+    "answered": "false",
+    "provenance": "live"
+   },
+   {
+    "ts": "2026-10-12T07:00:00Z",
+    "msg_id": "mock",
+    "user_hash": "uh_c",
+    "question": "m\u1eabu",
+    "answer": "",
+    "answered": false,
+    "provenance": "sample"
+   },
+   {
+    "ts": "2026-10-12T07:00:00Z",
+    "msg_id": "noprov",
+    "user_hash": "uh_d",
+    "question": "thi\u1ebfu",
+    "answer": "",
+    "answered": false
+   },
+   {
+    "ts": "2026-10-12T08:00:00Z",
+    "msg_id": "",
+    "user_hash": "uh_e",
+    "question": "messenger",
+    "answer": "",
+    "answered": false,
+    "provenance": "live",
+    "channel": "messenger"
+   },
+   {
+    "ts": "2026-10-12T08:30:00Z",
+    "msg_id": "z1",
+    "user_hash": "uh_e",
+    "question": "zalo",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   },
+   {
+    "ts": "bad-ts",
+    "msg_id": "bad",
+    "user_hash": "uh_f",
+    "question": "ts h\u1ecfng",
+    "answer": "",
+    "answered": false,
+    "provenance": "live"
+   }
+  ],
+  "groups": [
+   {
+    "object_id": "cskh:1cfadf99f56e7714",
+    "channel": "zalo",
+    "ts": "2026-10-11T23:00:00+00:00",
+    "n": 1,
+    "recs": [
+     [
+      "2026-10-11T23:00:00+00:00",
+      "zalo"
+     ]
+    ]
+   },
+   {
+    "object_id": "cskh:e54a26e6b6e6109a",
+    "channel": "zalo",
+    "ts": "2026-10-12T01:00:00+00:00",
+    "n": 9,
+    "recs": [
+     [
+      "2026-10-12T01:00:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T01:07:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T01:14:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T02:00:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T02:07:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T02:14:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T03:00:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T03:07:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T03:14:00+00:00",
+      "zalo"
+     ]
+    ]
+   },
+   {
+    "object_id": "cskh:b2f801d01ad44c80",
+    "channel": "zalo",
+    "ts": "2026-10-12T04:00:00+00:00",
+    "n": 2,
+    "recs": [
+     [
+      "2026-10-12T04:00:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T05:00:00+00:00",
+      "zalo"
+     ]
+    ]
+   },
+   {
+    "object_id": "convlog:95863004790fb31a",
+    "channel": "streamlit",
+    "ts": "2026-10-12T06:00:00+00:00",
+    "n": 1,
+    "recs": [
+     [
+      "2026-10-12T06:00:00+00:00",
+      "streamlit"
+     ]
+    ]
+   },
+   {
+    "object_id": "convlog:abd29c250c1d6617",
+    "channel": "streamlit",
+    "ts": "2026-10-12T06:00:00+00:00",
+    "n": 1,
+    "recs": [
+     [
+      "2026-10-12T06:00:00+00:00",
+      "streamlit"
+     ]
+    ]
+   },
+   {
+    "object_id": "cskh:9ed13cecc67e66fa",
+    "channel": "messenger",
+    "ts": "2026-10-12T08:00:00+00:00",
+    "n": 2,
+    "recs": [
+     [
+      "2026-10-12T08:00:00+00:00",
+      "messenger"
+     ],
+     [
+      "2026-10-12T08:30:00+00:00",
+      "zalo"
+     ]
+    ]
+   },
+   {
+    "object_id": "cskh:e50fb454ff1c833b",
+    "channel": "zalo",
+    "ts": "2026-10-12T17:30:00+00:00",
+    "n": 2,
+    "recs": [
+     [
+      "2026-10-12T17:30:00+00:00",
+      "zalo"
+     ],
+     [
+      "2026-10-12T18:00:00+00:00",
+      "zalo"
+     ]
+    ]
+   }
+  ]
+ },
+ "cskh_ids": [
+  {
+   "rec": {
+    "user_hash": "uh_5f2c9a7e1b"
+   },
+   "ts": "2026-10-13T01:00:00+00:00",
+   "id": "cskh:aa1fb948417cf898"
+  },
+  {
+   "rec": {
+    "user_hash": " uh "
+   },
+   "ts": "2026-10-12T17:00:00+00:00",
+   "id": "cskh:8c33209099e06665"
+  },
+  {
+   "rec": {
+    "user_hash": "uh"
+   },
+   "ts": "2026-10-12T16:59:00+00:00",
+   "id": "cskh:cad67f658396006c"
+  },
+  {
+   "rec": {
+    "user_hash": "  ",
+    "msg_id": "m"
+   },
+   "ts": "2026-10-12T00:00:00+00:00",
+   "id": "convlog:m"
+  },
+  {
+   "rec": {
+    "user_hash": 5,
+    "ts": "t",
+    "question": "q"
+   },
+   "ts": "2026-10-12T00:00:00+00:00",
+   "id": "convlog:c90e2db708d81d5b"
+  }
+ ]
+}

@@ -1,0 +1,50 @@
+# r22 A3 — grep cùng idiom: tra cứu/chống lặp theo khóa jsonb so với giá trị đã đi qua
+# red_alert.raise_alert/_mask (TS: raiseAlert/mask = dep('maskPii')). _mask/mask CHỈ che CHUỖI
+# (int/number giữ nguyên). Regex che: (?<!\d)0 + ≥9 số | (?<![\d+])(\+84|84) + ≥8 số | email.
+#
+# Lệnh:
+#   rg -n "detail\s*->>?\s*'" --glob '*.py'          (agents/ pipelines/ scripts/ ...)
+#   rg -n "detail\s*->>?\s*'" ts/apps ts/packages --glob '*.ts' (bỏ *.test.ts, node_modules)
+#   rg -n "raise_alert\(" --glob '*.py' ; rg -n "red_alerts[^\"']*where" agents pipelines scripts
+#
+# Kết quả từng chỗ (Python | TS):
+#
+# 1. agents/bks_audit.py chain_alert `detail ->> 'fp' = %s` | bks-audit.ts chainAlert
+#    fp = sha256 hex (CHUỖI) → bị che ~2% → CÙNG CƠ CHẾ → ĐÃ VÁ cả hai: `in (fp, mask(fp))`.
+#    Test: tests/test_bks_audit.py::test_chain_alert_dup_when_stored_fp_masked,
+#          ::test_chain_alert_dup_against_old_masked_row ; bks-hdtv.test.ts
+#          "chainAlert: fp bị che khi lưu vẫn chống lặp" (maskPii THẬT) ; pii.test.ts ghim 2 hex.
+#
+# 2. agents/ra_kenh.py:491/502 `detail->>'post_id' = %s` | ra-kenh.ts:728
+#    post_id = channel_posts.id lưu dạng INT (Python p["id"]; TS Number(p.id)) → _mask không đụng
+#    số → KHÁC cơ chế, không vá.
+#
+# 3. pipelines/intel_alert.py:107/249 `detail->>'intel_item_id'` (+ unique index schema.sql:1598)
+#    | intel-alert.ts:90/321 — intel_item_id = intel_items.id INT (TS Number) → không bị che →
+#    KHÁC cơ chế, không vá.
+#
+# 4. pipelines/red_alert.py:528/542 `e.detail->>'escalation_of' = r.id::text` (cấp 1) |
+#    red-alert.ts:582/591 — escalation_of = aid INT (TS Number(row.id)) → không bị che → không vá.
+#
+# 5. pipelines/red_alert.py:544 `e2.detail->>'escalation_of' = r.id::text || ':cap2'` (cấp 2) |
+#    red-alert.ts:592 — escalation_of = f"{aid}:cap2" là CHUỖI → về lý thuyết CÙNG cơ chế, nhưng
+#    chỉ bị che khi chuỗi số của id bắt đầu "84" và dài ≥10 chữ số (id ≥ 8.400.000.000; id
+#    identity bắt đầu từ 1 không bao giờ bắt đầu bằng 0) → KHÔNG đạt được trên thực tế →
+#    BÁO CÁO, không vá (ghi someday).
+#
+# 6. red_alert.py:529/537 + red-alert.ts:583/588 `r.detail->>'url'` — chỉ ĐỌC hiển thị, không so
+#    khớp → không thuộc idiom.
+#
+# 7. bks_audit.py:256 | bks-audit.ts:273 `l.detail ->> 'approval_id'` — bảng agent_action_log, ghi
+#    bởi function DB (không qua raise_alert/_mask) → không thuộc idiom.
+#
+# 8. scripts/ops_monthly.py:272 | ops-monthly.ts:273 `detail->>'file_sha256'` — agent_action_log,
+#    không qua raise_alert/_mask → không thuộc idiom.
+#
+# 9. pipelines/rollout.py:955/961/983/993 | rollout/counters.ts:233/237/266/273 — bộ đếm đầu ra
+#    (khóa dealer/pii_included/intel_item_id/rules), không phải tra cứu chống lặp theo giá trị
+#    caller đã che → không thuộc idiom.
+#
+# 10. Caller raise_alert khác: sales_director.py:647 (không tra detail), webhook_probe.py:73 (chống
+#     lặp theo source_agent + ts 24h, không theo detail), agent_eval.py:2193 (không tra) → không
+#     thuộc idiom.

@@ -1,0 +1,1225 @@
+{
+ "day": "2026-10-12",
+ "allowed": {
+  "mat-ong-sam-120ml-1hu": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)",
+  "mat-ong-sam-300ml": "M\u1eadt ong"
+ },
+ "parse_form": {
+  "ok": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "ok-2-dong": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=&consent=b2b&policy_version=b2b-v0-nhap&website=&sku2=mat-ong-sam-300ml&qty2=5",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": null
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     },
+     {
+      "key": "mat-ong-sam-300ml",
+      "qty": 5
+     }
+    ],
+    "need_by": null
+   },
+   "code": "ok"
+  },
+  "thieu-dong-y": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "thieu_dong_y"
+  },
+  "policy-khac": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=v9&website=",
+   "form": null,
+   "code": "thieu_dong_y"
+  },
+  "honeypot": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=http%3A%2F%2Fspam.example",
+   "form": null,
+   "code": "spam"
+  },
+  "honeypot-space": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=++",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "key-ruou": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=ruou-sam-chai-thuy-tinh-500ml&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ma_khong_hop_le"
+  },
+  "key-la": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=khong-co&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ma_khong_hop_le"
+  },
+  "qty-0": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=0&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "so_luong"
+  },
+  "qty-1e3": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=1e3&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "so_luong"
+  },
+  "qty-100001": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=100001&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "so_luong"
+  },
+  "qty-am": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=-5&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "so_luong"
+  },
+  "qty-100000": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=100000&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 100000
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "qty-space": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=+7+&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 7
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "qty-fullwidth": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=%EF%BC%92&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "so_luong"
+  },
+  "11-dong": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=&sku11=mat-ong-sam-120ml-1hu&qty11=1",
+   "form": null,
+   "code": "so_dong"
+  },
+  "0-dong": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=&qty1=&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "so_dong"
+  },
+  "dong-trung": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=&sku2=mat-ong-sam-120ml-1hu&qty2=3",
+   "form": null,
+   "code": "dong_trung"
+  },
+  "chi-qty": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=&qty1=3&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ma_khong_hop_le"
+  },
+  "sku010": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=&sku010=mat-ong-sam-120ml-1hu&qty010=1",
+   "form": null,
+   "code": "truong_la"
+  },
+  "sku1000": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=&sku1000=mat-ong-sam-120ml-1hu",
+   "form": null,
+   "code": "truong_la"
+  },
+  "field-lap": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=&org_name=X",
+   "form": null,
+   "code": "truong_lap"
+  },
+  "field-la": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=&admin=1",
+   "form": null,
+   "code": "truong_la"
+  },
+  "tinh-la": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=X%E1%BB%A9+Th%E1%BA%A7n+Ti%C3%AAn&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "tinh"
+  },
+  "tinh-mo-ho": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng+v%C3%A0+H%C3%A0+N%E1%BB%99i&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "tinh"
+  },
+  "tinh-alias": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=qu%E1%BA%A3ng+nam&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "tinh-khong-dau": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=da+nang&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "tinh-dai": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "tinh"
+  },
+  "tinh-hoa-hue": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=hoa+hu%E1%BB%87&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "tinh"
+  },
+  "sdt-sai": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0905-12x-98765&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "sdt"
+  },
+  "sdt-00": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=00905123456&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "sdt"
+  },
+  "sdt-84": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=%2B84+905+123+456&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0905123456",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "email-sai": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=khong-phai-email&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "email"
+  },
+  "email-255": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%40bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.cccccccccc&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "email"
+  },
+  "email-unicode-local": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=t%C3%AAn%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "t\u00ean@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "email-space": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=+a%40b.co+&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "a@b.co"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "ten-to-chuc-co-sdt": {
+   "body": "org_name=C%C3%B4ng+ty+0905123456&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ten_to_chuc"
+  },
+  "ten-to-chuc-1-ky-tu": {
+   "body": "org_name=Q&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ten_to_chuc"
+  },
+  "ten-to-chuc-201": {
+   "body": "org_name=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ten_to_chuc"
+  },
+  "ten-to-chuc-200": {
+   "body": "org_name=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "ten-to-chuc-space": {
+   "body": "org_name=++C%C3%B4ng+++ty%09A++&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty A",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "ten-to-chuc-ctrl": {
+   "body": "org_name=C%C3%B4ng%07ty&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ten_to_chuc"
+  },
+  "loai-la": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=ca_nhan&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "loai_to_chuc"
+  },
+  "ten-lien-he-email": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=a%40b.example.com&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ten_lien_he"
+  },
+  "ten-lien-he-rong": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=+++&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ten_lien_he"
+  },
+  "need-by-qua-khu": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-10-11&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ngay_can"
+  },
+  "need-by-xa": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2027-10-13&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ngay_can"
+  },
+  "need-by-365": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2027-10-12&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2027-10-12"
+   },
+   "code": "ok"
+  },
+  "need-by-hom-nay": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-10-12&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-10-12"
+   },
+   "code": "ok"
+  },
+  "need-by-sai": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=20%2F12%2F2026&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ngay_can"
+  },
+  "need-by-30-02": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-02-30&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ngay_can"
+  },
+  "need-by-fullwidth": {
+   "body": "org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=%EF%BC%92%EF%BC%90%EF%BC%92%EF%BC%96-%EF%BC%91%EF%BC%92-%EF%BC%92%EF%BC%90&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "ngay_can"
+  },
+  "khong-utf8": {
+   "body": "org_name=%FF&org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "khong_utf8"
+  },
+  "byte-thuong-khong-utf8": {
+   "body": "\u00ff\u00fe=1",
+   "form": null,
+   "code": "khong_utf8"
+  },
+  "qua-nhieu-field": {
+   "body": "x0=1&x1=1&x2=1&x3=1&x4=1&x5=1&x6=1&x7=1&x8=1&x9=1&x10=1&x11=1&x12=1&x13=1&x14=1&x15=1&x16=1&x17=1&x18=1&x19=1&x20=1&x21=1&x22=1&x23=1&x24=1&x25=1&x26=1&x27=1&x28=1&x29=1&x30=1&x31=1&x32=1&x33=1&x34=1&x35=1&x36=1&x37=1&x38=1&x39=1&x40=1&x41=1&x42=1&x43=1&x44=1&x45=1&x46=1&x47=1&x48=1&x49=1&x50=1&x51=1&x52=1&x53=1&x54=1&x55=1&x56=1&x57=1&x58=1&x59=1",
+   "form": null,
+   "code": "qua_nhieu_truong"
+  },
+  "40-field": {
+   "body": "x0=1&x1=1&x2=1&x3=1&x4=1&x5=1&x6=1&x7=1&x8=1&x9=1&x10=1&x11=1&x12=1&x13=1&x14=1&x15=1&x16=1&x17=1&x18=1&x19=1&x20=1&x21=1&x22=1&x23=1&x24=1&x25=1&x26=1&x27=1&x28=1&x29=1&x30=1&x31=1&x32=1&x33=1&x34=1&x35=1&x36=1&x37=1&x38=1&x39=1",
+   "form": null,
+   "code": "truong_la"
+  },
+  "41-field": {
+   "body": "x0=1&x1=1&x2=1&x3=1&x4=1&x5=1&x6=1&x7=1&x8=1&x9=1&x10=1&x11=1&x12=1&x13=1&x14=1&x15=1&x16=1&x17=1&x18=1&x19=1&x20=1&x21=1&x22=1&x23=1&x24=1&x25=1&x26=1&x27=1&x28=1&x29=1&x30=1&x31=1&x32=1&x33=1&x34=1&x35=1&x36=1&x37=1&x38=1&x39=1&x40=1",
+   "form": null,
+   "code": "qua_nhieu_truong"
+  },
+  "rong": {
+   "body": "",
+   "form": null,
+   "code": "thieu_dong_y"
+  },
+  "chi-ampersand": {
+   "body": "&&&",
+   "form": null,
+   "code": "thieu_dong_y"
+  },
+  "plus-space": {
+   "body": "org_name=Cong%2Bty%2BA&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "Cong+ty+A",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "percent-lech": {
+   "body": "org_name=Cong%25ZZty&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "Cong%ZZty",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "khong-bang": {
+   "body": "org_name&org_name=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": null,
+   "code": "truong_lap"
+  },
+  "semicolon": {
+   "body": "org_name=A%3BB&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "A;B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  },
+  "key-encoded": {
+   "body": "org%5Fname=C%C3%B4ng+ty+M%E1%BA%AAU+B2B&org_type=doanh_nghiep&region=%C4%90%C3%A0+N%E1%BA%B5ng&contact_name=Nguoi+Lien+He+Mau&phone=0901234567&email=lienhe.mau%40example.com&sku1=mat-ong-sam-120ml-1hu&qty1=20&need_by=2026-12-20&consent=b2b&policy_version=b2b-v0-nhap&website=",
+   "form": {
+    "org_name": "C\u00f4ng ty M\u1eaaU B2B",
+    "org_type": "doanh_nghiep",
+    "region": "\u0110\u00e0 N\u1eb5ng",
+    "contact": {
+     "name": "Nguoi Lien He Mau",
+     "phone": "0901234567",
+     "email": "lienhe.mau@example.com"
+    },
+    "items": [
+     {
+      "key": "mat-ong-sam-120ml-1hu",
+      "qty": 20
+     }
+    ],
+    "need_by": "2026-12-20"
+   },
+   "code": "ok"
+  }
+ },
+ "request_key": {
+  "ok": [
+   "b2r:fcd230c545e5ad541c1a3dbb8e89b19a5d15b8ab368df29a8d3d6ec5bbee89de",
+   "b2r:f2f9e5b4f0db857b7220b674a49e170c65a89afe022d06cc49879c06c9255bbd"
+  ],
+  "ok-2-dong": [
+   "b2r:781f3664d8f7b68768b128b3c5bc63c86b7c2295cb39fdefcbc2c27a44bee6a9",
+   "b2r:7a267cce02090918512a34f66dfc5dcbfff547a6717319c432d8c7437180fed8"
+  ],
+  "ten-to-chuc-space": [
+   "b2r:85b619d06aeeb3565f5a6bfb6742d6def498a961613dea8554d76b035b01185a",
+   "b2r:1fef34090b47a0e81b3cdbb1235fa620ce42c4399300527f2158c99c7d74d1f7"
+  ],
+  "ok-chuan-hoa": [
+   "b2r:fcd230c545e5ad541c1a3dbb8e89b19a5d15b8ab368df29a8d3d6ec5bbee89de",
+   "b2r:f2f9e5b4f0db857b7220b674a49e170c65a89afe022d06cc49879c06c9255bbd"
+  ]
+ },
+ "request_key_raw": {
+  "unicode-key": "b2r:22c8ed2b727d982f06d04e481f73039a13914be9540b296dcb0c3d2de84f7bda"
+ },
+ "norm": [
+  [
+   "C\u00f4ng ty M\u1eaaU B2B",
+   "cong ty mau b2b"
+  ],
+  [
+   "C\u00d4NG TY  m\u1eabu-b2b",
+   "cong ty mau b2b"
+  ],
+  [
+   "\u0110\u00e0 N\u1eb5ng",
+   "da nang"
+  ],
+  [
+   "\ufb01_x__y",
+   "fi x y"
+  ],
+  [
+   "  a  ",
+   "a"
+  ],
+  [
+   "\u216b\u00bd",
+   "xii1 2"
+  ],
+  [
+   "\u1e9e stra\u00dfe",
+   "ss strasse"
+  ],
+  [
+   "\u01c4",
+   "dz"
+  ],
+  [
+   "a\u0301b",
+   "ab"
+  ],
+  [
+   "",
+   ""
+  ],
+  [
+   "x\u2014y",
+   "x y"
+  ],
+  [
+   "\ud83d\ude00a",
+   "a"
+  ]
+ ],
+ "province_of": [
+  [
+   "\u0110\u00e0 N\u1eb5ng",
+   "\u0110\u00e0 N\u1eb5ng"
+  ],
+  [
+   "\u0111\u00e0 n\u1eb5ng",
+   "\u0110\u00e0 N\u1eb5ng"
+  ],
+  [
+   "da nang",
+   "\u0110\u00e0 N\u1eb5ng"
+  ],
+  [
+   "Qu\u1ea3ng Nam",
+   "\u0110\u00e0 N\u1eb5ng"
+  ],
+  [
+   "quang nam",
+   "\u0110\u00e0 N\u1eb5ng"
+  ],
+  [
+   "H\u00e0 N\u1ed9i",
+   "H\u00e0 N\u1ed9i"
+  ],
+  [
+   "TP. H\u1ed3 Ch\u00ed Minh",
+   "TP. H\u1ed3 Ch\u00ed Minh"
+  ],
+  [
+   "tp hcm",
+   "TP. H\u1ed3 Ch\u00ed Minh"
+  ],
+  [
+   "S\u00e0i G\u00f2n",
+   "TP. H\u1ed3 Ch\u00ed Minh"
+  ],
+  [
+   "\u0110\u00e0 N\u1eb5ng v\u00e0 H\u00e0 N\u1ed9i",
+   null
+  ],
+  [
+   "hoa hu\u1ec7",
+   null
+  ],
+  [
+   "s\u01a1n l\u00e0",
+   null
+  ],
+  [
+   "Hu\u1ebf",
+   "Hu\u1ebf"
+  ],
+  [
+   "hue",
+   "Hu\u1ebf"
+  ],
+  [
+   "X\u1ee9 Th\u1ea7n Ti\u00ean",
+   null
+  ],
+  [
+   "",
+   null
+  ],
+  [
+   "   ",
+   null
+  ],
+  [
+   "\u0110\u00e0 N\u1eb5ng, Qu\u1ea3ng Nam",
+   "\u0110\u00e0 N\u1eb5ng"
+  ],
+  [
+   "Th\u00e0nh ph\u1ed1 \u0110\u00e0 N\u1eb5ng",
+   "\u0110\u00e0 N\u1eb5ng"
+  ],
+  [
+   "\u0110\u00c0 N\u1eb4NG",
+   "\u0110\u00e0 N\u1eb5ng"
+  ],
+  [
+   "\u0110\u00e0\u00a0N\u1eb5ng",
+   "\u0110\u00e0 N\u1eb5ng"
+  ],
+  [
+   "Da\u0300 Na\u0306\u0303ng",
+   null
+  ],
+  [
+   "abc\u0110\u00e0 N\u1eb5ng",
+   null
+  ],
+  [
+   "\u0110\u00e0 N\u1eb5ngx",
+   null
+  ],
+  [
+   "\u0110\u00e0 N\u1eb5ng_",
+   null
+  ],
+  [
+   "ha noi",
+   "H\u00e0 N\u1ed9i"
+  ],
+  [
+   "H\u00e0 N\u1ed9i 2",
+   "H\u00e0 N\u1ed9i"
+  ],
+  [
+   "H\u00f2a B\u00ecnh",
+   "Ph\u00fa Th\u1ecd"
+  ],
+  [
+   "Ho\u00e0 B\u00ecnh",
+   "Ph\u00fa Th\u1ecd"
+  ],
+  [
+   "L\u00e2m \u0110\u1ed3ng",
+   "L\u00e2m \u0110\u1ed3ng"
+  ],
+  [
+   "lam dong",
+   "L\u00e2m \u0110\u1ed3ng"
+  ]
+ ],
+ "eligible_real": {
+  "items": [
+   {
+    "key": "mat-ong-sam-120ml-1hu",
+    "kind": "sku",
+    "name": "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)",
+    "spec": "120ml x 1 h\u0169",
+    "parts": [
+     [
+      "mat-ong-sam-120ml-1hu",
+      1
+     ]
+    ],
+    "tp": false
+   },
+   {
+    "key": "mat-ong-sam-120ml-2hu",
+    "kind": "sku",
+    "name": "M\u1eadt ong s\u00e2m 120ml (2 h\u0169)",
+    "spec": "120ml x 2 h\u0169",
+    "parts": [
+     [
+      "mat-ong-sam-120ml-2hu",
+      1
+     ]
+    ],
+    "tp": false
+   },
+   {
+    "key": "mat-ong-sam-300ml",
+    "kind": "sku",
+    "name": "M\u1eadt ong s\u00e2m 300ml",
+    "spec": "300ml x 1 h\u0169",
+    "parts": [
+     [
+      "mat-ong-sam-300ml",
+      1
+     ]
+    ],
+    "tp": false
+   }
+  ],
+  "excluded": [
+   {
+    "key": "savina-12v",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "saphraton-20v",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "saphraton-combo-2x20v",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "saphraton-40v",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "saphraton-80v",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "savigout-30v",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "sapentol-30v",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "da-an-sam-30v",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "ruou-sam-chai-thuy-tinh-500ml",
+    "code": "ruou"
+   },
+   {
+    "key": "ruou-sam-binh-su-do-500ml",
+    "code": "ruou"
+   },
+   {
+    "key": "combo-saphraton-mat-ong-shopee",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "hop-qua-tet-sam-sam-mau",
+    "code": "tpbvsk_chua_xnqc"
+   }
+  ]
+ },
+ "eligible_synthetic": {
+  "golden": {
+   "skus": [
+    {
+     "sku_key": "a-food",
+     "name": "A",
+     "category": "food"
+    },
+    {
+     "sku_key": "b-tp",
+     "name": "B",
+     "category": "tpbvsk",
+     "xnqc_status": "approved",
+     "pack_spec": "10v"
+    },
+    {
+     "sku_key": "c-tp",
+     "name": "C",
+     "category": "tpbvsk",
+     "xnqc_status": "pending"
+    },
+    {
+     "sku_key": "ruou-x",
+     "name": "R\u01b0\u1ee3u s\u00e2m",
+     "category": "food"
+    },
+    {
+     "sku_key": "d-alc",
+     "name": "D",
+     "category": "alcohol"
+    },
+    {
+     "sku_key": "e-other",
+     "name": "",
+     "category": "khac"
+    },
+    {
+     "sku_key": 5,
+     "name": "bad"
+    },
+    "bad"
+   ]
+  },
+  "combos": [
+   {
+    "combo_key": "z-combo",
+    "name": "Z",
+    "items": [
+     {
+      "sku_key": "a-food",
+      "qty": 2
+     },
+     {
+      "sku_key": "b-tp",
+      "qty": 1
+     }
+    ]
+   },
+   {
+    "combo_key": "y-combo",
+    "name": "",
+    "items": [
+     {
+      "sku_key": "a-food",
+      "qty": 1
+     },
+     {
+      "sku_key": "c-tp",
+      "qty": 1
+     }
+    ]
+   },
+   {
+    "combo_key": "x-combo",
+    "name": "X",
+    "items": [
+     {
+      "sku_key": "a-food",
+      "qty": 1
+     },
+     {
+      "sku_key": "missing",
+      "qty": 1
+     }
+    ]
+   },
+   {
+    "combo_key": "w-combo",
+    "name": "W",
+    "items": [
+     {
+      "sku_key": "e-other",
+      "qty": 1
+     },
+     {
+      "sku_key": "c-tp",
+      "qty": 1
+     }
+    ]
+   },
+   {
+    "combo_key": "v-combo",
+    "name": "V",
+    "items": [
+     {
+      "sku_key": "d-alc",
+      "qty": 1
+     },
+     {
+      "sku_key": "c-tp",
+      "qty": 1
+     }
+    ]
+   },
+   {
+    "combo_key": "u-ruou-combo",
+    "name": "U",
+    "items": [
+     {
+      "sku_key": "a-food",
+      "qty": 1
+     }
+    ]
+   },
+   {
+    "combo_key": "t-combo",
+    "name": "T",
+    "items": []
+   },
+   {
+    "combo_key": "s-combo",
+    "name": "S",
+    "items": [
+     {
+      "sku_key": "a-food",
+      "qty": 0
+     }
+    ]
+   },
+   {
+    "combo_key": "r-combo",
+    "name": "R",
+    "items": [
+     {
+      "sku_key": "a-food",
+      "qty": true
+     }
+    ]
+   },
+   {
+    "combo_key": "q-combo",
+    "name": "Q",
+    "items": [
+     {
+      "qty": 1
+     }
+    ]
+   },
+   {
+    "combo_key": "\u00c4-combo",
+    "name": "\u00c4",
+    "items": [
+     {
+      "sku_key": "a-food",
+      "qty": 1
+     }
+    ]
+   },
+   {
+    "name": "no key"
+   },
+   7
+  ],
+  "items": [
+   {
+    "key": "a-food",
+    "kind": "sku",
+    "name": "A",
+    "spec": "\u2014",
+    "parts": [
+     [
+      "a-food",
+      1
+     ]
+    ],
+    "tp": false
+   },
+   {
+    "key": "b-tp",
+    "kind": "sku",
+    "name": "B",
+    "spec": "10v",
+    "parts": [
+     [
+      "b-tp",
+      1
+     ]
+    ],
+    "tp": true
+   },
+   {
+    "key": "z-combo",
+    "kind": "combo",
+    "name": "Z",
+    "spec": "A \u00d72 + B \u00d71",
+    "parts": [
+     [
+      "a-food",
+      2
+     ],
+     [
+      "b-tp",
+      1
+     ]
+    ],
+    "tp": true
+   },
+   {
+    "key": "\u00c4-combo",
+    "kind": "combo",
+    "name": "\u00c4",
+    "spec": "A \u00d71",
+    "parts": [
+     [
+      "a-food",
+      1
+     ]
+    ],
+    "tp": false
+   }
+  ],
+  "excluded": [
+   {
+    "key": "c-tp",
+    "code": "tpbvsk_chua_xnqc"
+   },
+   {
+    "key": "ruou-x",
+    "code": "ruou"
+   },
+   {
+    "key": "d-alc",
+    "code": "ruou"
+   },
+   {
+    "key": "e-other",
+    "code": "loai_khong_ho_tro"
+   },
+   {
+    "key": "q-combo",
+    "code": "thanh_phan_khong_ro"
+   },
+   {
+    "key": "r-combo",
+    "code": "thanh_phan_khong_ro"
+   },
+   {
+    "key": "s-combo",
+    "code": "thanh_phan_khong_ro"
+   },
+   {
+    "key": "t-combo",
+    "code": "thanh_phan_khong_ro"
+   },
+   {
+    "key": "u-ruou-combo",
+    "code": "ruou"
+   },
+   {
+    "key": "v-combo",
+    "code": "ruou"
+   },
+   {
+    "key": "w-combo",
+    "code": "loai_khong_ho_tro"
+   },
+   {
+    "key": "x-combo",
+    "code": "thanh_phan_khong_ro"
+   },
+   {
+    "key": "y-combo",
+    "code": "tpbvsk_chua_xnqc"
+   }
+  ]
+ },
+ "options_real": [
+  [
+   "mat-ong-sam-120ml-1hu",
+   "M\u1eadt ong s\u00e2m 120ml (1 h\u0169)"
+  ],
+  [
+   "mat-ong-sam-120ml-2hu",
+   "M\u1eadt ong s\u00e2m 120ml (2 h\u0169)"
+  ],
+  [
+   "mat-ong-sam-300ml",
+   "M\u1eadt ong s\u00e2m 300ml"
+  ]
+ ],
+ "render_page": "<select><option value=\"mat-ong-sam-120ml-1hu\">M\u1eadt ong s\u00e2m 120ml (1 h\u0169)</option><option value=\"mat-ong-sam-120ml-2hu\">M\u1eadt ong s\u00e2m 120ml (2 h\u0169)</option><option value=\"mat-ong-sam-300ml\">M\u1eadt ong s\u00e2m 300ml</option><option value=\"x&quot;&gt;&lt;b\">&lt;script&gt;alert(&#x27;1&#x27;)&amp;&lt;/script&gt;</option></select><select><option value=\"mat-ong-sam-120ml-1hu\">M\u1eadt ong s\u00e2m 120ml (1 h\u0169)</option><option value=\"mat-ong-sam-120ml-2hu\">M\u1eadt ong s\u00e2m 120ml (2 h\u0169)</option><option value=\"mat-ong-sam-300ml\">M\u1eadt ong s\u00e2m 300ml</option><option value=\"x&quot;&gt;&lt;b\">&lt;script&gt;alert(&#x27;1&#x27;)&amp;&lt;/script&gt;</option></select>",
+ "render_page_real_sha": "6bf948d125501434251303cc4e11289e09fa40ad6915a6e34e64abc8387f4b9e",
+ "ev_ref": "B2BF-fcdijgclkleladlk",
+ "page_ok": "<!doctype html><html lang=\"vi\"><head><meta charset=\"utf-8\"><title>\u0110\u00e3 nh\u1eadn y\u00eau c\u1ea7u</title></head><body><h1>\u0110\u00e3 nh\u1eadn y\u00eau c\u1ea7u</h1><p>G\u0110 b\u00e1n h\u00e0ng s\u1ebd li\u00ean h\u1ec7. H\u1ec7 th\u1ed1ng kh\u00f4ng t\u1ef1 g\u1eedi b\u00e1o gi\u00e1.</p></body></html>",
+ "page_err": "<!doctype html><html lang=\"vi\"><head><meta charset=\"utf-8\"><title>Ch\u01b0a g\u1eedi \u0111\u01b0\u1ee3c</title></head><body><h1>Ch\u01b0a g\u1eedi \u0111\u01b0\u1ee3c y\u00eau c\u1ea7u</h1><p>{msg}</p><p><a href=\"/b2b\">Quay l\u1ea1i form</a></p></body></html>",
+ "msg": {
+  "400": "Th\u00f4ng tin ch\u01b0a h\u1ee3p l\u1ec7 \u2014 ki\u1ec3m tra l\u1ea1i c\u00e1c \u00f4 b\u1eaft bu\u1ed9c, s\u1ed1 \u0111i\u1ec7n tho\u1ea1i, t\u1ec9nh/th\u00e0nh, s\u1ea3n ph\u1ea9m v\u00e0 \u00f4 \u0111\u1ed3ng \u00fd.",
+  "404": "Kh\u00f4ng c\u00f3 trang n\u00e0y.",
+  "411": "Thi\u1ebfu \u0111\u1ed9 d\u00e0i n\u1ed9i dung.",
+  "413": "N\u1ed9i dung qu\u00e1 l\u1edbn.",
+  "415": "\u0110\u1ecbnh d\u1ea1ng g\u1eedi kh\u00f4ng h\u1ed7 tr\u1ee3.",
+  "429": "G\u1eedi qu\u00e1 nhi\u1ec1u l\u1ea7n \u2014 th\u1eed l\u1ea1i sau.",
+  "503": "H\u1ec7 th\u1ed1ng \u0111ang b\u1eadn \u2014 th\u1eed l\u1ea1i sau."
+ }
+}

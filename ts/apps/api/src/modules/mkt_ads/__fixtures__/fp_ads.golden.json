@@ -1,0 +1,847 @@
+{
+ "load_cfg": [
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0.3, \"budget_share_of_margin\": 0.2, \"channels\": [\"shopee\", \"tiktok\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   {
+    "min_gross_margin_pct": {
+     "dec": "0.3"
+    },
+    "budget_share_of_margin": {
+     "dec": "0.2"
+    },
+    "channels": [
+     "shopee",
+     "tiktok"
+    ]
+   },
+   null
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 1.5, \"budget_share_of_margin\": 0.2, \"channels\": [\"shopee\", \"tiktok\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   null,
+   "ads.min_gross_margin_pct: ngo\u00e0i 0..1"
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0.3, \"budget_share_of_margin\": \"0.2\", \"channels\": [\"shopee\", \"tiktok\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   null,
+   "ads.budget_share_of_margin: ph\u1ea3i l\u00e0 s\u1ed1 0..1"
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0.3, \"budget_share_of_margin\": 0.2, \"channels\": [\"shopee\", \"lazada\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   null,
+   "ads.channels: list k\u00eanh \u2282 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot'), kh\u00f4ng tr\u00f9ng"
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0.3, \"budget_share_of_margin\": 0.2, \"channels\": []}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   null,
+   "ads.channels: list k\u00eanh \u2282 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot'), kh\u00f4ng tr\u00f9ng"
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0.3, \"budget_share_of_margin\": 0.2, \"channels\": [\"shopee\", \"shopee\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   null,
+   "ads.channels: list k\u00eanh \u2282 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot'), kh\u00f4ng tr\u00f9ng"
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": true, \"budget_share_of_margin\": 0.2, \"channels\": [\"shopee\", \"tiktok\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   null,
+   "ads.min_gross_margin_pct: ph\u1ea3i l\u00e0 s\u1ed1 0..1"
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0, \"budget_share_of_margin\": 0.2, \"channels\": [\"shopee\", \"tiktok\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   {
+    "min_gross_margin_pct": {
+     "dec": "0"
+    },
+    "budget_share_of_margin": {
+     "dec": "0.2"
+    },
+    "channels": [
+     "shopee",
+     "tiktok"
+    ]
+   },
+   null
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0.3, \"budget_share_of_margin\": 1, \"channels\": [\"shopee\", \"tiktok\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   {
+    "min_gross_margin_pct": {
+     "dec": "0.3"
+    },
+    "budget_share_of_margin": {
+     "dec": "1"
+    },
+    "channels": [
+     "shopee",
+     "tiktok"
+    ]
+   },
+   null
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0.25, \"budget_share_of_margin\": 1.0, \"channels\": [\"shopee\", \"tiktok\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   {
+    "min_gross_margin_pct": {
+     "dec": "0.25"
+    },
+    "budget_share_of_margin": {
+     "dec": "1.0"
+    },
+    "channels": [
+     "shopee",
+     "tiktok"
+    ]
+   },
+   null
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 1e-05, \"budget_share_of_margin\": 0.2, \"channels\": [\"shopee\", \"tiktok\"]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   {
+    "min_gross_margin_pct": {
+     "dec": "0.00001"
+    },
+    "budget_share_of_margin": {
+     "dec": "0.2"
+    },
+    "channels": [
+     "shopee",
+     "tiktok"
+    ]
+   },
+   null
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0.3, \"budget_share_of_margin\": 0.2, \"channels\": \"shopee\"}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   null,
+   "ads.channels: list k\u00eanh \u2282 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot'), kh\u00f4ng tr\u00f9ng"
+  ],
+  [
+   "{\"_doc\": \"v9.1 FP&A (WP12) \u2014 c\u1ea5u h\u00ecnh FP-AdsBudget / FP-OpsCost / FP-Cash. GI\u1ea2 \u0110\u1ecaNH \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t (external-dep): m\u1ecdi ng\u01b0\u1ee1ng, h\u1ec7 s\u1ed1, tr\u1ea7n, t\u1ef7 gi\u00e1, chi c\u1ed1 \u0111\u1ecbnh, \u0111\u1ed9 tr\u1ec5 ti\u1ec1n s\u00e0n v\u1ec1, s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 l\u00e0 \u01b0\u1edbc l\u01b0\u1ee3ng c\u1ee7a team tri\u1ec3n khai, KH\u00d4NG ph\u1ea3i s\u1ed1 th\u1eadt. confirmed_by = null t\u1edbi khi G\u0110 t\u00e0i ch\u00ednh k\u00fd. ads: min_gross_margin_pct (0..1, bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u \u0111\u1ec3 \u0111\u01b0\u1ee3c \u0111\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch), budget_share_of_margin (0..1, ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 h\u1ec7 s\u1ed1), channels (k\u00eanh online \u0111\u01b0\u1ee3c ch\u1ea5m). opscost: usd_vnd (t\u1ef7 gi\u00e1 quy chi ph\u00ed AI), budget_vnd {scope: tr\u1ea7n th\u00e1ng VND} v\u1edbi scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (m\u1ee9c c\u1ea3nh b\u00e1o %), threshold_x_vnd (kho\u1ea3n chi > X ch\u1ec9 '\u0111\u01b0\u1ee3c chi' khi TG\u0110 k\u00fd trong h\u00e0ng duy\u1ec7t). cash: weeks, payout_lag_weeks {k\u00eanh: tu\u1ea7n ti\u1ec1n v\u1ec1 sau khi b\u00e1n}, net_ratio_default {k\u00eanh: t\u1ef7 l\u1ec7 th\u1ef1c nh\u1eadn khi ch\u01b0a \u0111o \u0111\u01b0\u1ee3c t\u1eeb settlement}, offline_price_ratio (gi\u00e1 \u0111\u1ea1i l\u00fd so gi\u00e1 list shopee golden), unit_price_vnd {sku: {k\u00eanh: gi\u00e1}} ghi \u0111\u00e8, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 th\u1eadt).\", \"confirmed_by\": null, \"ads\": {\"min_gross_margin_pct\": 0.3, \"budget_share_of_margin\": 0.2, \"channels\": [1]}, \"opscost\": {\"usd_vnd\": 25000, \"budget_vnd\": {\"ai\": 5000000, \"cloud\": 4000000, \"saas\": 7000000, \"ads\": 20000000, \"khac\": 2000000, \"tong\": 35000000}, \"warn_pct\": 80, \"stop_pct\": 100, \"threshold_x_vnd\": 5000000}, \"cash\": {\"weeks\": 13, \"payout_lag_weeks\": {\"shopee\": 2, \"tiktok\": 2, \"offline\": 4}, \"net_ratio_default\": {\"shopee\": 0.85, \"tiktok\": 0.85, \"offline\": 1.0}, \"offline_price_ratio\": 0.7, \"unit_price_vnd\": {}, \"fixed_outflows\": [{\"name\": \"luong-van-phong\", \"amount_vnd\": 60000000, \"every_weeks\": 4, \"first_week\": 2}, {\"name\": \"thue-mat-bang\", \"amount_vnd\": 15000000, \"every_weeks\": 4, \"first_week\": 0}, {\"name\": \"chi-phi-ai-cloud\", \"amount_vnd\": 3000000, \"every_weeks\": 4, \"first_week\": 0}], \"one_off\": [{\"name\": \"nhap-hang-tet\", \"amount_vnd\": 300000000, \"week_start\": \"2026-12-14\"}], \"min_balance_vnd\": 0, \"opening_balance_vnd\": null}}",
+   null,
+   "ads.channels: list k\u00eanh \u2282 ('shopee', 'tiktok', 'web', 'facebook', 'zalo', 'chatbot'), kh\u00f4ng tr\u00f9ng"
+  ],
+  [
+   "{",
+   null,
+   "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c f0.9245081179077987.json: JSONDecodeError"
+  ],
+  [
+   "{}",
+   null,
+   "f0.2018571095980516.json: thi\u1ebfu m\u1ee5c 'ads'"
+  ],
+  [
+   "{\"ads\": 1}",
+   null,
+   "f0.593734370497649.json: thi\u1ebfu m\u1ee5c 'ads'"
+  ],
+  [
+   "\ufeff{\"ads\": {}}",
+   null,
+   "kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c f0.9696846654194116.json: JSONDecodeError"
+  ],
+  [
+   "{\"ads\": {}}",
+   null,
+   "ads.min_gross_margin_pct: ph\u1ea3i l\u00e0 s\u1ed1 0..1"
+  ]
+ ],
+ "propose": [
+  {
+   "cells": [
+    {
+     "sku_key": "ruou-x",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "90"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "tp-mota",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "80"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "tp-qc",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "50"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "food-ok",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "45"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "food-cam",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "60"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "thieu-gv",
+     "channel": "shopee",
+     "lai_gop": null,
+     "bien_gop_pct": null,
+     "nhan": null
+    },
+    {
+     "sku_key": "bang",
+     "channel": "shopee",
+     "lai_gop": 500000,
+     "bien_gop_pct": {
+      "dec": "30.0"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "duoi",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "29.9"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "la",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "70"
+     },
+     "nhan": null
+    }
+   ],
+   "readiness": [
+    [
+     "ruou-x",
+     "shopee",
+     "CAM"
+    ],
+    [
+     "tp-mota",
+     "shopee",
+     "MO_TA"
+    ],
+    [
+     "tp-qc",
+     "shopee",
+     "QC_DAY_DU"
+    ],
+    [
+     "food-ok",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "food-cam",
+     "shopee",
+     "CAM"
+    ],
+    [
+     "thieu",
+     "shopee",
+     "QC_DAY_DU"
+    ],
+    [
+     "thieu-gv",
+     "shopee",
+     "QC_DAY_DU"
+    ],
+    [
+     "bang",
+     "shopee",
+     "QC_DAY_DU"
+    ],
+    [
+     "duoi",
+     "shopee",
+     "TP_THUONG"
+    ]
+   ],
+   "cfg": {
+    "min_gross_margin_pct": "0.3",
+    "budget_share_of_margin": "0.2",
+    "channels": [
+     "shopee"
+    ]
+   },
+   "out": [
+    {
+     "sku_key": "bang",
+     "channel": "shopee",
+     "code": "DE_XUAT",
+     "budget_vnd": 100000,
+     "bien_gop_pct": {
+      "dec": "30.0"
+     },
+     "lai_gop": 500000
+    },
+    {
+     "sku_key": "duoi",
+     "channel": "shopee",
+     "code": "DUOI_NGUONG",
+     "budget_vnd": 0,
+     "bien_gop_pct": {
+      "dec": "29.9"
+     },
+     "lai_gop": 1000000
+    },
+    {
+     "sku_key": "food-cam",
+     "channel": "shopee",
+     "code": "CHAN_CAM",
+     "budget_vnd": 0,
+     "bien_gop_pct": {
+      "dec": "60"
+     },
+     "lai_gop": 1000000
+    },
+    {
+     "sku_key": "food-ok",
+     "channel": "shopee",
+     "code": "DE_XUAT",
+     "budget_vnd": 200000,
+     "bien_gop_pct": {
+      "dec": "45"
+     },
+     "lai_gop": 1000000
+    },
+    {
+     "sku_key": "la",
+     "channel": "shopee",
+     "code": "CHAN_CAM",
+     "budget_vnd": 0,
+     "bien_gop_pct": {
+      "dec": "70"
+     },
+     "lai_gop": 1000000
+    },
+    {
+     "sku_key": "ruou-x",
+     "channel": "shopee",
+     "code": "CHAN_CAM",
+     "budget_vnd": 0,
+     "bien_gop_pct": {
+      "dec": "90"
+     },
+     "lai_gop": 1000000
+    },
+    {
+     "sku_key": "thieu",
+     "channel": "shopee",
+     "code": "CHO_DU_LIEU",
+     "budget_vnd": 0,
+     "bien_gop_pct": null,
+     "lai_gop": null
+    },
+    {
+     "sku_key": "thieu-gv",
+     "channel": "shopee",
+     "code": "CHO_DU_LIEU",
+     "budget_vnd": 0,
+     "bien_gop_pct": null,
+     "lai_gop": null
+    },
+    {
+     "sku_key": "tp-mota",
+     "channel": "shopee",
+     "code": "CHAN_XNQC",
+     "budget_vnd": 0,
+     "bien_gop_pct": {
+      "dec": "80"
+     },
+     "lai_gop": 1000000
+    },
+    {
+     "sku_key": "tp-qc",
+     "channel": "shopee",
+     "code": "DE_XUAT",
+     "budget_vnd": 200000,
+     "bien_gop_pct": {
+      "dec": "50"
+     },
+     "lai_gop": 1000000
+    }
+   ],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 10/2026\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 30.0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.2 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| `bang` | shopee | 30.0% | 500.000\u0111 | 100.000\u0111 | DE_XUAT |\n| `duoi` | shopee | 29.9% | 1.000.000\u0111 | 0\u0111 | DUOI_NGUONG |\n| `food-ok` | shopee | 45% | 1.000.000\u0111 | 200.000\u0111 | DE_XUAT |\n| `thieu` | shopee | \u2014 | \u2014 | 0\u0111 | CHO_DU_LIEU |\n| `thieu-gv` | shopee | \u2014 | \u2014 | 0\u0111 | CHO_DU_LIEU |\n| `tp-mota` | shopee | 80% | 1.000.000\u0111 | 0\u0111 | CHAN_XNQC |\n| `tp-qc` | shopee | 50% | 1.000.000\u0111 | 200.000\u0111 | DE_XUAT |\n\n- 3 c\u1eb7p SKU \u00d7 k\u00eanh (3 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 500.000\u0111.\n"
+  },
+  {
+   "cells": [
+    {
+     "sku_key": "(ch\u01b0a r\u00f5 SKU)",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "90"
+     },
+     "nhan": null
+    }
+   ],
+   "readiness": [],
+   "cfg": {
+    "min_gross_margin_pct": "0.3",
+    "budget_share_of_margin": "0.2",
+    "channels": [
+     "shopee"
+    ]
+   },
+   "out": [],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 10/2026\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 30.0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.2 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| (kh\u00f4ng c\u00f3) | | | | | |\n\n- 0 c\u1eb7p SKU \u00d7 k\u00eanh (0 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 0\u0111.\n"
+  },
+  {
+   "cells": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "25"
+     },
+     "nhan": null
+    }
+   ],
+   "readiness": [
+    [
+     "a",
+     "shopee",
+     "QC_DAY_DU"
+    ]
+   ],
+   "cfg": {
+    "min_gross_margin_pct": "0.3",
+    "budget_share_of_margin": "0.2",
+    "channels": [
+     "shopee"
+    ]
+   },
+   "out": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "code": "DUOI_NGUONG",
+     "budget_vnd": 0,
+     "bien_gop_pct": {
+      "dec": "25"
+     },
+     "lai_gop": 1000000
+    }
+   ],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 10/2026\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 30.0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.2 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| `a` | shopee | 25% | 1.000.000\u0111 | 0\u0111 | DUOI_NGUONG |\n\n- 0 c\u1eb7p SKU \u00d7 k\u00eanh (0 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 0\u0111.\n"
+  },
+  {
+   "cells": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "25"
+     },
+     "nhan": null
+    }
+   ],
+   "readiness": [
+    [
+     "a",
+     "shopee",
+     "QC_DAY_DU"
+    ]
+   ],
+   "cfg": {
+    "min_gross_margin_pct": "0.2",
+    "budget_share_of_margin": "0.2",
+    "channels": [
+     "shopee"
+    ]
+   },
+   "out": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "code": "DE_XUAT",
+     "budget_vnd": 200000,
+     "bien_gop_pct": {
+      "dec": "25"
+     },
+     "lai_gop": 1000000
+    }
+   ],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 10/2026\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 20.0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.2 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| `a` | shopee | 25% | 1.000.000\u0111 | 200.000\u0111 | DE_XUAT |\n\n- 0 c\u1eb7p SKU \u00d7 k\u00eanh (0 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 200.000\u0111.\n"
+  },
+  {
+   "cells": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "lai_gop": 0,
+     "bien_gop_pct": {
+      "dec": "0"
+     },
+     "nhan": null
+    }
+   ],
+   "readiness": [
+    [
+     "a",
+     "shopee",
+     "QC_DAY_DU"
+    ]
+   ],
+   "cfg": {
+    "min_gross_margin_pct": "0",
+    "budget_share_of_margin": "0.2",
+    "channels": [
+     "shopee"
+    ]
+   },
+   "out": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "code": "AM_BIEN",
+     "budget_vnd": 0,
+     "bien_gop_pct": {
+      "dec": "0"
+     },
+     "lai_gop": 0
+    }
+   ],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 10/2026\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.2 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| `a` | shopee | 0% | 0\u0111 | 0\u0111 | AM_BIEN |\n\n- 0 c\u1eb7p SKU \u00d7 k\u00eanh (0 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 0\u0111.\n"
+  },
+  {
+   "cells": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "lai_gop": -10,
+     "bien_gop_pct": {
+      "dec": "-5"
+     },
+     "nhan": null
+    }
+   ],
+   "readiness": [
+    [
+     "a",
+     "shopee",
+     "QC_DAY_DU"
+    ]
+   ],
+   "cfg": {
+    "min_gross_margin_pct": "0.3",
+    "budget_share_of_margin": "0.2",
+    "channels": [
+     "shopee"
+    ]
+   },
+   "out": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "code": "DUOI_NGUONG",
+     "budget_vnd": 0,
+     "bien_gop_pct": {
+      "dec": "-5"
+     },
+     "lai_gop": -10
+    }
+   ],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 10/2026\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 30.0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.2 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| `a` | shopee | -5% | -10\u0111 | 0\u0111 | DUOI_NGUONG |\n\n- 0 c\u1eb7p SKU \u00d7 k\u00eanh (0 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 0\u0111.\n"
+  },
+  {
+   "cells": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "lai_gop": 3,
+     "bien_gop_pct": {
+      "dec": "50"
+     },
+     "nhan": null
+    }
+   ],
+   "readiness": [
+    [
+     "a",
+     "shopee",
+     "QC_DAY_DU"
+    ]
+   ],
+   "cfg": {
+    "min_gross_margin_pct": "0.3",
+    "budget_share_of_margin": "0.5",
+    "channels": [
+     "shopee"
+    ]
+   },
+   "out": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "code": "DE_XUAT",
+     "budget_vnd": 2,
+     "bien_gop_pct": {
+      "dec": "50"
+     },
+     "lai_gop": 3
+    }
+   ],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 10/2026\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 30.0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.5 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| `a` | shopee | 50% | 3\u0111 | 2\u0111 | DE_XUAT |\n\n- 0 c\u1eb7p SKU \u00d7 k\u00eanh (0 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 2\u0111.\n"
+  },
+  {
+   "cells": [
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "lai_gop": 5,
+     "bien_gop_pct": {
+      "dec": "50"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "b",
+     "channel": "tiktok",
+     "lai_gop": 7,
+     "bien_gop_pct": {
+      "dec": "40"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "c",
+     "channel": "shopee",
+     "lai_gop": 999999,
+     "bien_gop_pct": {
+      "dec": "31"
+     },
+     "nhan": null
+    }
+   ],
+   "readiness": [
+    [
+     "a",
+     "shopee",
+     "TP_THUONG"
+    ],
+    [
+     "a",
+     "tiktok",
+     "MO_TA"
+    ],
+    [
+     "b",
+     "tiktok",
+     "QC_DAY_DU"
+    ],
+    [
+     "c",
+     "shopee",
+     "QC_DAY_DU"
+    ],
+    [
+     "\u0111",
+     "shopee",
+     "QC_DAY_DU"
+    ],
+    [
+     "Z",
+     "tiktok",
+     "CAM"
+    ]
+   ],
+   "cfg": {
+    "min_gross_margin_pct": "0.3",
+    "budget_share_of_margin": "0.15",
+    "channels": [
+     "tiktok",
+     "shopee"
+    ]
+   },
+   "out": [
+    {
+     "sku_key": "Z",
+     "channel": "tiktok",
+     "code": "CHAN_CAM",
+     "budget_vnd": 0,
+     "bien_gop_pct": null,
+     "lai_gop": null
+    },
+    {
+     "sku_key": "Z",
+     "channel": "shopee",
+     "code": "CHAN_CAM",
+     "budget_vnd": 0,
+     "bien_gop_pct": null,
+     "lai_gop": null
+    },
+    {
+     "sku_key": "a",
+     "channel": "tiktok",
+     "code": "CHAN_XNQC",
+     "budget_vnd": 0,
+     "bien_gop_pct": null,
+     "lai_gop": null
+    },
+    {
+     "sku_key": "a",
+     "channel": "shopee",
+     "code": "DE_XUAT",
+     "budget_vnd": 1,
+     "bien_gop_pct": {
+      "dec": "50"
+     },
+     "lai_gop": 5
+    },
+    {
+     "sku_key": "b",
+     "channel": "tiktok",
+     "code": "DE_XUAT",
+     "budget_vnd": 1,
+     "bien_gop_pct": {
+      "dec": "40"
+     },
+     "lai_gop": 7
+    },
+    {
+     "sku_key": "b",
+     "channel": "shopee",
+     "code": "CHAN_CAM",
+     "budget_vnd": 0,
+     "bien_gop_pct": null,
+     "lai_gop": null
+    },
+    {
+     "sku_key": "c",
+     "channel": "tiktok",
+     "code": "CHAN_CAM",
+     "budget_vnd": 0,
+     "bien_gop_pct": null,
+     "lai_gop": null
+    },
+    {
+     "sku_key": "c",
+     "channel": "shopee",
+     "code": "DE_XUAT",
+     "budget_vnd": 150000,
+     "bien_gop_pct": {
+      "dec": "31"
+     },
+     "lai_gop": 999999
+    },
+    {
+     "sku_key": "\u0111",
+     "channel": "tiktok",
+     "code": "CHAN_CAM",
+     "budget_vnd": 0,
+     "bien_gop_pct": null,
+     "lai_gop": null
+    },
+    {
+     "sku_key": "\u0111",
+     "channel": "shopee",
+     "code": "CHO_DU_LIEU",
+     "budget_vnd": 0,
+     "bien_gop_pct": null,
+     "lai_gop": null
+    }
+   ],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 10/2026\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 30.0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.15 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| `a` | tiktok | \u2014 | \u2014 | 0\u0111 | CHAN_XNQC |\n| `a` | shopee | 50% | 5\u0111 | 1\u0111 | DE_XUAT |\n| `b` | tiktok | 40% | 7\u0111 | 1\u0111 | DE_XUAT |\n| `c` | shopee | 31% | 999.999\u0111 | 150.000\u0111 | DE_XUAT |\n| `\u0111` | shopee | \u2014 | \u2014 | 0\u0111 | CHO_DU_LIEU |\n\n- 5 c\u1eb7p SKU \u00d7 k\u00eanh (4 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 150.002\u0111.\n"
+  },
+  {
+   "cells": [
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "90"
+     },
+     "nhan": null
+    },
+    {
+     "sku_key": "savina-12v",
+     "channel": "shopee",
+     "lai_gop": 1000000,
+     "bien_gop_pct": {
+      "dec": "50"
+     },
+     "nhan": null
+    }
+   ],
+   "readiness": [
+    [
+     "ruou-sam-chai-thuy-tinh-500ml",
+     "shopee",
+     "CAM"
+    ],
+    [
+     "savina-12v",
+     "shopee",
+     "QC_DAY_DU"
+    ]
+   ],
+   "cfg": {
+    "min_gross_margin_pct": "0.3",
+    "budget_share_of_margin": "0.2",
+    "channels": [
+     "shopee"
+    ]
+   },
+   "out": [
+    {
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "channel": "shopee",
+     "code": "CHAN_CAM",
+     "budget_vnd": 0,
+     "bien_gop_pct": {
+      "dec": "90"
+     },
+     "lai_gop": 1000000
+    },
+    {
+     "sku_key": "savina-12v",
+     "channel": "shopee",
+     "code": "DE_XUAT",
+     "budget_vnd": 200000,
+     "bien_gop_pct": {
+      "dec": "50"
+     },
+     "lai_gop": 1000000
+    }
+   ],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 10/2026\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 30.0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.2 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| `savina-12v` | shopee | 50% | 1.000.000\u0111 | 200.000\u0111 | DE_XUAT |\n\n- 1 c\u1eb7p SKU \u00d7 k\u00eanh (1 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 200.000\u0111.\n"
+  },
+  {
+   "cells": [],
+   "readiness": [],
+   "cfg": {
+    "min_gross_margin_pct": "0.3",
+    "budget_share_of_margin": "0.2",
+    "channels": [
+     "shopee"
+    ]
+   },
+   "out": [],
+   "payload": "# \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch qu\u1ea3ng c\u00e1o theo bi\u00ean g\u1ed9p \u2014 P&L th\u00e1ng 01/2027\n\n**\u0110\u1ec0 XU\u1ea4T \u2014 agent kh\u00f4ng chi ti\u1ec1n, kh\u00f4ng b\u1eadt voucher, kh\u00f4ng \u0111\u1ed5i gi\u00e1, kh\u00f4ng c\u00e0i ng\u00e2n s\u00e1ch tr\u00ean n\u1ec1n t\u1ea3ng; qu\u1ea3n l\u00fd MXH c\u00e0i tay sau khi duy\u1ec7t.**\n\nNg\u01b0\u1ee1ng bi\u00ean g\u1ed9p t\u1ed1i thi\u1ec3u 30.0%; ng\u00e2n s\u00e1ch = l\u00e3i g\u1ed9p th\u00e1ng tham chi\u1ebfu \u00d7 0.2 (GI\u1ea2 \u0110\u1ecaNH `data/fpa_config.json` \u2014 ch\u1edd G\u0110 t\u00e0i ch\u00ednh ch\u1ed1t).\n\n| SKU | K\u00eanh | Bi\u00ean g\u1ed9p | L\u00e3i g\u1ed9p | Ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t | M\u00e3 |\n|---|---|---|---|---|---|\n| (kh\u00f4ng c\u00f3) | | | | | |\n\n- 0 c\u1eb7p SKU \u00d7 k\u00eanh (0 SKU) readiness CAM \u2014 ng\u00e2n s\u00e1ch 0 (kh\u00f4ng li\u1ec7t k\u00ea t\u00ean).\n- CHAN_XNQC: TPBVSK ch\u01b0a c\u00f3 x\u00e1c nh\u1eadn n\u1ed9i dung qu\u1ea3ng c\u00e1o \u2014 0.\n- CHO_DU_LIEU: thi\u1ebfu gi\u00e1 v\u1ed1n duy\u1ec7t ho\u1eb7c ch\u01b0a c\u00f3 doanh thu th\u00e1ng tham chi\u1ebfu \u2014 kh\u00f4ng t\u00ednh.\n- T\u1ed5ng ng\u00e2n s\u00e1ch \u0111\u1ec1 xu\u1ea5t: 0\u0111.\n"
+  }
+ ]
+}

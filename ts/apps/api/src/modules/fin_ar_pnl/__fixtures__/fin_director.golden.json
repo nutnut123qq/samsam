@@ -1,0 +1,270 @@
+{
+ "pnl_section": [
+  "## P&L th\u00e1ng 10/2026",
+  "",
+  "- T\u1ed5ng th\u1ef1c nh\u1eadn: 1.000.000\u0111 (3 d\u00f2ng quy\u1ebft to\u00e1n trong th\u00e1ng)",
+  "- T\u1ed5ng l\u00e3i g\u1ed9p (ch\u1ec9 \u00f4 c\u00f3 gi\u00e1 v\u1ed1n duy\u1ec7t): -5\u0111",
+  "- 2 SKU ch\u01b0a c\u00f3 gi\u00e1 v\u1ed1n duy\u1ec7t: `savina-12v`, `b`",
+  "- B\u1ea2N NH\u00c1P \u2014 chi ti\u1ebft: `python -m agents.fp_pnl --pnl --month 2026-10`"
+ ],
+ "pnl_section_empty": [
+  "## P&L th\u00e1ng 01/2026",
+  "",
+  "- T\u1ed5ng th\u1ef1c nh\u1eadn: 0\u0111 (0 d\u00f2ng quy\u1ebft to\u00e1n trong th\u00e1ng)",
+  "- T\u1ed5ng l\u00e3i g\u1ed9p (ch\u1ec9 \u00f4 c\u00f3 gi\u00e1 v\u1ed1n duy\u1ec7t): 0\u0111",
+  "- 0 SKU ch\u01b0a c\u00f3 gi\u00e1 v\u1ed1n duy\u1ec7t: (kh\u00f4ng c\u00f3)",
+  "- B\u1ea2N NH\u00c1P \u2014 chi ti\u1ebft: `python -m agents.fp_pnl --pnl --month 2026-01`"
+ ],
+ "ads": [
+  "## \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch ads",
+  "",
+  "- M\u1ee5c `budget_change` \u0111ang ch\u1edd duy\u1ec7t: 2 \u2014 \u0110\u1ec0 XU\u1ea4T, agent kh\u00f4ng chi ti\u1ec1n; duy\u1ec7t qua `python -m pipelines.approval_queue`"
+ ],
+ "nodata": [
+  "## C\u00f4ng n\u1ee3 \u0111\u1ea1i l\u00fd qu\u00e1 h\u1ea1n",
+  "",
+  "(ch\u01b0a c\u00f3 d\u1eef li\u1ec7u: l\u1ed7i nhi\u1ec1u d\u00f2ng xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\u2026)"
+ ],
+ "ops": {
+  "cfg": {
+   "warn_pct": 80,
+   "stop_pct": 100,
+   "threshold_x_vnd": 5000000
+  },
+  "summary": {
+   "alerts": [
+    {
+     "scope": "cloud",
+     "level": 80,
+     "label": "C\u1ea2NH B\u00c1O",
+     "spent": 3300000,
+     "budget": 4000000
+    },
+    {
+     "scope": "saas",
+     "level": 100,
+     "label": "V\u01af\u1ee2T TR\u1ea6N",
+     "spent": 7200000,
+     "budget": 6000000
+    }
+   ],
+   "over": [
+    [
+     {
+      "id": 1
+     },
+     "cho_tgd_ky"
+    ],
+    [
+     {
+      "id": 2
+     },
+     "duoc_chi"
+    ],
+    [
+     {
+      "id": 3
+     },
+     "cho_tgd_ky"
+    ]
+   ]
+  },
+  "lines": [
+   "## Chi ph\u00ed v\u1eadn h\u00e0nh th\u00e1ng 10/2026",
+   "",
+   "- [C\u1ea2NH B\u00c1O 80%] `cloud`: 3.300.000\u0111 / tr\u1ea7n 4.000.000\u0111",
+   "- [V\u01af\u1ee2T TR\u1ea6N 100%] `saas`: 7.200.000\u0111 / tr\u1ea7n 6.000.000\u0111",
+   "- Kho\u1ea3n > ng\u01b0\u1ee1ng X (5.000.000\u0111) \u0111ang ch\u1edd TG\u0110 k\u00fd: 2",
+   "- Tr\u1ea7n/ng\u01b0\u1ee1ng l\u00e0 GI\u1ea2 \u0110\u1ecaNH (`data/fpa_config.json`) \u2014 agent kh\u00f4ng chi, kh\u00f4ng t\u1eaft key"
+  ]
+ },
+ "ops_empty": [
+  "## Chi ph\u00ed v\u1eadn h\u00e0nh th\u00e1ng 10/2026",
+  "",
+  "- Kh\u00f4ng ph\u1ea1m vi n\u00e0o ch\u1ea1m 80%/100% tr\u1ea7n",
+  "- Kho\u1ea3n > ng\u01b0\u1ee1ng X (5.000.000\u0111) \u0111ang ch\u1edd TG\u0110 k\u00fd: 0",
+  "- Tr\u1ea7n/ng\u01b0\u1ee1ng l\u00e0 GI\u1ea2 \u0110\u1ecaNH (`data/fpa_config.json`) \u2014 agent kh\u00f4ng chi, kh\u00f4ng t\u1eaft key"
+ ],
+ "cash": {
+  "fc": {
+   "weeks": [
+    {
+     "week_start": "2026-10-12",
+     "close": {
+      "low": 0,
+      "base": 0,
+      "high": 0
+     }
+    },
+    {
+     "week_start": "2026-10-19",
+     "close": {
+      "low": -100,
+      "base": 1000,
+      "high": 2000
+     }
+    },
+    {
+     "week_start": "2026-10-26",
+     "close": {
+      "low": -200,
+      "base": 2000,
+      "high": 4000
+     }
+    },
+    {
+     "week_start": "2026-11-02",
+     "close": {
+      "low": -300,
+      "base": 3000,
+      "high": 6000
+     }
+    },
+    {
+     "week_start": "2026-11-09",
+     "close": {
+      "low": -400,
+      "base": 4000,
+      "high": 8000
+     }
+    },
+    {
+     "week_start": "2026-11-16",
+     "close": {
+      "low": -500,
+      "base": 5000,
+      "high": 10000
+     }
+    },
+    {
+     "week_start": "2026-11-23",
+     "close": {
+      "low": -600,
+      "base": 6000,
+      "high": 12000
+     }
+    },
+    {
+     "week_start": "2026-11-30",
+     "close": {
+      "low": -700,
+      "base": 7000,
+      "high": 14000
+     }
+    },
+    {
+     "week_start": "2026-12-07",
+     "close": {
+      "low": -800,
+      "base": 8000,
+      "high": 16000
+     }
+    },
+    {
+     "week_start": "2026-12-14",
+     "close": {
+      "low": -900,
+      "base": 9000,
+      "high": 18000
+     }
+    },
+    {
+     "week_start": "2026-12-21",
+     "close": {
+      "low": -1000,
+      "base": 10000,
+      "high": 20000
+     }
+    },
+    {
+     "week_start": "2026-12-28",
+     "close": {
+      "low": -1100,
+      "base": 11000,
+      "high": 22000
+     }
+    },
+    {
+     "week_start": "2027-01-04",
+     "close": {
+      "low": -1200,
+      "base": 12000,
+      "high": 24000
+     }
+    }
+   ],
+   "warn_weeks": [
+    "2026-10-19",
+    "2026-10-26"
+   ],
+   "min_balance_vnd": 0,
+   "opening": null
+  },
+  "lines": [
+   "## D\u00f2ng ti\u1ec1n 13 tu\u1ea7n",
+   "",
+   "- Tu\u1ea7n \u0111\u1ea7u ti\u00ean s\u1ed1 d\u01b0 k\u1ecbch b\u1ea3n th\u1ea5p < 0\u0111: 19/10/2026",
+   "- S\u1ed1 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p: 2/13",
+   "- S\u1ed1 d\u01b0 cu\u1ed1i k\u1ef3 (tu\u1ea7n 04/01): th\u1ea5p -1.200\u0111 \u00b7 c\u01a1 s\u1edf 12.000\u0111 \u00b7 cao 24.000\u0111",
+   "- ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0",
+   "- Kho\u1ea3ng tr\u00ean GI\u1ea2 \u0110\u1ecaNH \u2014 chi ti\u1ebft: `python -m agents.fp_cash --forecast`"
+  ]
+ },
+ "cash2": {
+  "fc": {
+   "weeks": [
+    {
+     "week_start": "2026-10-12",
+     "close": {
+      "low": 0,
+      "base": 0,
+      "high": 0
+     }
+    },
+    {
+     "week_start": "2026-10-19",
+     "close": {
+      "low": -100,
+      "base": 1000,
+      "high": 2000
+     }
+    },
+    {
+     "week_start": "2026-10-26",
+     "close": {
+      "low": -200,
+      "base": 2000,
+      "high": 4000
+     }
+    },
+    {
+     "week_start": "2026-11-02",
+     "close": {
+      "low": -300,
+      "base": 3000,
+      "high": 6000
+     }
+    }
+   ],
+   "warn_weeks": [],
+   "min_balance_vnd": -1,
+   "opening": 5000000
+  },
+  "lines": [
+   "## D\u00f2ng ti\u1ec1n 4 tu\u1ea7n",
+   "",
+   "- Tu\u1ea7n \u0111\u1ea7u ti\u00ean s\u1ed1 d\u01b0 k\u1ecbch b\u1ea3n th\u1ea5p < -1\u0111: (kh\u00f4ng c\u00f3)",
+   "- S\u1ed1 tu\u1ea7n \u00e2m \u1edf k\u1ecbch b\u1ea3n th\u1ea5p: 0/4",
+   "- S\u1ed1 d\u01b0 cu\u1ed1i k\u1ef3 (tu\u1ea7n 02/11): th\u1ea5p -300\u0111 \u00b7 c\u01a1 s\u1edf 3.000\u0111 \u00b7 cao 6.000\u0111",
+   "- Kho\u1ea3ng tr\u00ean GI\u1ea2 \u0110\u1ecaNH \u2014 chi ti\u1ebft: `python -m agents.fp_cash --forecast`"
+  ]
+ },
+ "no_opening": "ch\u01b0a c\u00f3 s\u1ed1 d\u01b0 \u0111\u1ea7u k\u1ef3 th\u1eadt \u2014 s\u1ed1 d\u01b0 = d\u00f2ng ti\u1ec1n r\u00f2ng l\u0169y k\u1ebf t\u1eeb 0",
+ "heads": [
+  "## P&L th\u00e1ng 10/2026",
+  "## Chi ph\u00ed v\u1eadn h\u00e0nh th\u00e1ng 10/2026",
+  "## D\u00f2ng ti\u1ec1n 13 tu\u1ea7n",
+  "## C\u00f4ng n\u1ee3 \u0111\u1ea1i l\u00fd qu\u00e1 h\u1ea1n",
+  "## \u0110\u1ec1 xu\u1ea5t ng\u00e2n s\u00e1ch ads"
+ ]
+}
